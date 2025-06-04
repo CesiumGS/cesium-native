@@ -1,7 +1,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
-#include <CesiumCurl/UrlAssetAccessor.h>
+#include <CesiumCurl/CurlAssetAccessor.h>
 #include <CesiumNativeTests/ThreadTaskProcessor.h>
 #include <CesiumUtility/ScopeGuard.h>
 #include <CesiumUtility/Uri.h>
@@ -21,10 +21,10 @@ using namespace CesiumCurl;
 using namespace CesiumNativeTests;
 using namespace CesiumUtility;
 
-TEST_CASE("UrlAssetAccessor") {
+TEST_CASE("CurlAssetAccessor") {
   CesiumAsync::AsyncSystem asyncSystem(std::make_shared<ThreadTaskProcessor>());
-  std::shared_ptr<UrlAssetAccessor> pAssetAccessor =
-      std::make_shared<UrlAssetAccessor>();
+  std::shared_ptr<CurlAssetAccessor> pAssetAccessor =
+      std::make_shared<CurlAssetAccessor>();
 
   SUBCASE("can do HTTP requests") {
     std::shared_ptr<httplib::Server> pServer =

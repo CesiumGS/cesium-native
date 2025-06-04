@@ -30,7 +30,7 @@ SOFTWARE.
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
-#include <CesiumCurl/UrlAssetAccessor.h>
+#include <CesiumCurl/CurlAssetAccessor.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/Uri.h>
 
@@ -66,7 +66,7 @@ const auto CURL_BUFFERSIZE = 3145728L; // 3 MiB
 // performance because libcurl will keep existing connections open if a curl
 // handle is not destroyed ("cleaned up").
 
-struct UrlAssetAccessor::CurlCache {
+struct CurlAssetAccessor::CurlCache {
   struct CacheEntry {
     CacheEntry() : curl(nullptr), free(false) {}
     CacheEntry(CURL* curl_, bool free_) : curl(curl_), free(free_) {}
@@ -102,9 +102,9 @@ struct UrlAssetAccessor::CurlCache {
 };
 
 // RAII wrapper for the CurlCache.
-class UrlAssetAccessor::CurlHandle {
+class CurlAssetAccessor::CurlHandle {
 public:
-  CurlHandle(UrlAssetAccessor* accessor) : _accessor(accessor) {
+  CurlHandle(CurlAssetAccessor* accessor) : _accessor(accessor) {
     this->_curl = this->_accessor->_pCurlCache->get();
   }
 
@@ -132,7 +132,7 @@ public:
   CurlHandle(const CurlHandle& rhs) = delete;
 
 private:
-  UrlAssetAccessor* _accessor;
+  CurlAssetAccessor* _accessor;
   CURL* _curl;
 };
 
@@ -335,7 +335,7 @@ curl_slist* setCommonOptions(
 
 } // namespace
 
-UrlAssetAccessor::UrlAssetAccessor(
+CurlAssetAccessor::CurlAssetAccessor(
     const std::filesystem::path& certificatePath,
     const std::filesystem::path& certificateFile)
     : _pCurlCache(std::make_unique<CurlCache>()),
@@ -346,9 +346,9 @@ UrlAssetAccessor::UrlAssetAccessor(
   curl_global_init(CURL_GLOBAL_ALL);
 }
 
-UrlAssetAccessor::~UrlAssetAccessor() { curl_global_cleanup(); }
+CurlAssetAccessor::~CurlAssetAccessor() { curl_global_cleanup(); }
 
-Future<std::shared_ptr<IAssetRequest>> UrlAssetAccessor::get(
+Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::get(
     const AsyncSystem& asyncSystem,
     const std::string& url,
     const std::vector<IAssetAccessor::THeader>& headers) {
@@ -356,7 +356,7 @@ Future<std::shared_ptr<IAssetRequest>> UrlAssetAccessor::get(
       [url,
        headers,
        pThis = this->shared_from_this()]() -> std::shared_ptr<IAssetRequest> {
-        CESIUM_TRACE("UrlAssetAccessor::get");
+        CESIUM_TRACE("CurlAssetAccessor::get");
         std::shared_ptr<UrlAssetRequest> pRequest =
             std::make_shared<UrlAssetRequest>(
                 "GET",
@@ -437,7 +437,7 @@ std::string convertFileUriToFilename(const std::string& url) {
 
 } // namespace
 
-Future<std::shared_ptr<IAssetRequest>> UrlAssetAccessor::request(
+Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
     const AsyncSystem& asyncSystem,
     const std::string& verb,
     const std::string& url,
@@ -453,7 +453,7 @@ Future<std::shared_ptr<IAssetRequest>> UrlAssetAccessor::request(
        payloadCopy = std::move(payloadCopy),
        pThis = this->shared_from_this()]() mutable
       -> std::shared_ptr<IAssetRequest> {
-        CESIUM_TRACE("UrlAssetAccessor::request");
+        CESIUM_TRACE("CurlAssetAccessor::request");
 
         CURLoption verbOption;
         if (verb == "POST") {
@@ -462,7 +462,7 @@ Future<std::shared_ptr<IAssetRequest>> UrlAssetAccessor::request(
           verbOption = CURLOPT_UPLOAD;
         } else {
           throw std::runtime_error(fmt::format(
-              "UrlAssetAccessor does not support verb `{}`.",
+              "CurlAssetAccessor does not support verb `{}`.",
               verb));
         }
 
@@ -533,6 +533,6 @@ Future<std::shared_ptr<IAssetRequest>> UrlAssetAccessor::request(
       });
 }
 
-void UrlAssetAccessor::tick() noexcept {}
+void CurlAssetAccessor::tick() noexcept {}
 
 } // namespace CesiumCurl

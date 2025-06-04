@@ -41,8 +41,8 @@ namespace CesiumCurl {
  * @brief An implementation of `IAssetAccessor` that can make network and local
  * requests to a variety of servers using libcurl.
  */
-class UrlAssetAccessor final
-    : public std::enable_shared_from_this<UrlAssetAccessor>,
+class CurlAssetAccessor final
+    : public std::enable_shared_from_this<CurlAssetAccessor>,
       public CesiumAsync::IAssetAccessor {
 public:
   /**
@@ -53,10 +53,10 @@ public:
    * @param certificateFile A file containing TLS certificates. If non-empty,
    * this will be provided to libcurl as `CURLOPT_CAINFO`.
    */
-  UrlAssetAccessor(
+  CurlAssetAccessor(
       const std::filesystem::path& certificatePath = {},
       const std::filesystem::path& certificateFile = {});
-  ~UrlAssetAccessor() override;
+  ~CurlAssetAccessor() override;
 
   CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   get(const CesiumAsync::AsyncSystem& asyncSystem,
