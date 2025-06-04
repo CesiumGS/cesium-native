@@ -1,5 +1,3 @@
-#include "CesiumGeometry/AxisAlignedBox.h"
-
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
@@ -7,6 +5,7 @@
 #include <CesiumAsync/Promise.h>
 #include <CesiumClientCommon/ErrorResponse.h>
 #include <CesiumClientCommon/OAuth2PKCE.h>
+#include <CesiumGeometry/AxisAlignedBox.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumITwinClient/AuthenticationToken.h>
@@ -21,7 +20,6 @@
 #include <CesiumITwinClient/Profile.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumVectorData/GeoJsonDocument.h>

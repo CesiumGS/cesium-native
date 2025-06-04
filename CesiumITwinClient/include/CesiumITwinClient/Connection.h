@@ -214,8 +214,8 @@ public:
    * @param asyncSystem The \ref CesiumAsync::AsyncSystem to use.
    * @param pAssetAccessor The \ref CesiumAsync::IAssetAccessor to use for
    * making requests to the iTwin API.
-   * @param authToken An \ref AuthenticationToken object created from parsing
-   * the obtained iTwin access or share token.
+   * @param authenticationToken An \ref AuthenticationToken object created from
+   * parsing the obtained iTwin access or share token.
    * @param refreshToken A refresh token to use to fetch new access tokens as
    * needed, if any.
    * @param clientOptions The set of options to use when interacting with the
