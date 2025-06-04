@@ -12,7 +12,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <format>
 #include <fstream>
 #include <memory>
 #include <span>
@@ -82,7 +81,7 @@ TEST_CASE("CurlAssetAccessor") {
               ->request(
                   asyncSystem,
                   "POST",
-                  std::format("http://127.0.01:{}/my/post/target", port),
+                  fmt::format("http://127.0.01:{}/my/post/target", port),
                   {},
                   postPayload)
               .waitInMainThread();
@@ -118,7 +117,7 @@ TEST_CASE("CurlAssetAccessor") {
               ->request(
                   asyncSystem,
                   "PUT",
-                  std::format("http://127.0.01:{}/my/put/target", port),
+                  fmt::format("http://127.0.01:{}/my/put/target", port),
                   {},
                   putPayload)
               .waitInMainThread();
