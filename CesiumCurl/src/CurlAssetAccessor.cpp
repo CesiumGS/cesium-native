@@ -48,13 +48,13 @@ SOFTWARE.
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
-#include <format>
 #include <iterator>
 #include <memory>
 #include <mutex>
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -107,9 +107,8 @@ struct CurlAssetAccessor::CurlCache {
 // RAII wrapper for the CurlCache.
 class CurlAssetAccessor::CurlHandle {
 public:
-  CurlHandle(CurlAssetAccessor* accessor) : _accessor(accessor) {
-    this->_curl = this->_accessor->_pCurlCache->get();
-  }
+  CurlHandle(CurlAssetAccessor* accessor)
+      : _accessor(accessor), _curl(accessor->_pCurlCache->get()) {}
 
   ~CurlHandle() {
     if (this->_accessor) {
@@ -386,6 +385,9 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::get(
         CURLcode responseCode = curl_easy_perform(curl());
         curl_slist_free_all(list);
         if (responseCode == 0) {
+          // Use `long` instead of int64_t to match the documented
+          // `CURLINFO_RESPONSE_CODE` type.
+          // NOLINTNEXTLINE(google-runtime-int)
           long httpResponseCode = 0;
           curl_easy_getinfo(curl(), CURLINFO_RESPONSE_CODE, &httpResponseCode);
           pResponse->_statusCode = static_cast<uint16_t>(httpResponseCode);
@@ -498,6 +500,9 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
         CURLcode responseCode = curl_easy_perform(curl());
         curl_slist_free_all(list);
         if (responseCode == 0) {
+          // Use `long` instead of int64_t to match the documented
+          // `CURLINFO_RESPONSE_CODE` type.
+          // NOLINTNEXTLINE(google-runtime-int)
           long httpResponseCode = 0;
           curl_easy_getinfo(curl(), CURLINFO_RESPONSE_CODE, &httpResponseCode);
           pResponse->_statusCode = static_cast<uint16_t>(httpResponseCode);
