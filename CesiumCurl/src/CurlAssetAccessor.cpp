@@ -342,7 +342,7 @@ CurlAssetAccessor::CurlAssetAccessor(
     const std::filesystem::path& certificatePath,
     const std::filesystem::path& certificateFile)
     : _pCurlCache(std::make_unique<CurlCache>()),
-      _userAgent("Mozilla/5.0 Cesium Tilers"),
+      _userAgent("Mozilla/5.0 Cesium Native CurlAssetAccessor"),
       _certificatePath(certificatePath.generic_string()),
       _certificateFile(certificateFile.generic_string()) {
   // XXX Do we need to worry about the thread safety problems with this?
