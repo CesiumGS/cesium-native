@@ -29,7 +29,6 @@ SOFTWARE.
 #include <CesiumAsync/IAssetRequest.h>
 
 #include <cstddef>
-#include <filesystem>
 #include <memory>
 #include <span>
 #include <string>
@@ -48,14 +47,17 @@ public:
   /**
    * @brief Constructs a new instance.
    *
+   * @param allowDirectoryCreation Whether a PUT or POST to a file: URL is
+   * allowed to create file system directories to hold the target file.
    * @param certificatePath The path to TLS certificates. If non-empty, this
    * will be provided to libcurl as `CURLOPT_CAPATH`.
    * @param certificateFile A file containing TLS certificates. If non-empty,
    * this will be provided to libcurl as `CURLOPT_CAINFO`.
    */
   CurlAssetAccessor(
-      const std::filesystem::path& certificatePath = {},
-      const std::filesystem::path& certificateFile = {});
+      bool allowDirectoryCreation = false,
+      const std::string& certificatePath = {},
+      const std::string& certificateFile = {});
   ~CurlAssetAccessor() override;
 
   CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
@@ -79,6 +81,7 @@ private:
 
   std::unique_ptr<CurlCache> _pCurlCache;
   std::string _userAgent;
+  bool _allowDirectoryCreation;
   std::string _certificatePath;
   std::string _certificateFile;
 };

@@ -23,6 +23,9 @@ SOFTWARE.
 </editor-fold> */
 
 // Copyright 2024 CesiumGS, Inc. and Contributors
+
+// The curl headers include Windows headers. Don't let Windows create `min` and
+// `max` #defines.
 #define NOMINMAX
 
 #include <CesiumAsync/AsyncSystem.h>
@@ -339,12 +342,14 @@ curl_slist* setCommonOptions(
 } // namespace
 
 CurlAssetAccessor::CurlAssetAccessor(
-    const std::filesystem::path& certificatePath,
-    const std::filesystem::path& certificateFile)
+    bool allowDirectoryCreation,
+    const std::string& certificatePath,
+    const std::string& certificateFile)
     : _pCurlCache(std::make_unique<CurlCache>()),
       _userAgent("Mozilla/5.0 Cesium Native CurlAssetAccessor"),
-      _certificatePath(certificatePath.generic_string()),
-      _certificateFile(certificateFile.generic_string()) {
+      _allowDirectoryCreation(allowDirectoryCreation),
+      _certificatePath(certificatePath),
+      _certificateFile(certificateFile) {
   // XXX Do we need to worry about the thread safety problems with this?
   curl_global_init(CURL_GLOBAL_ALL);
 }
@@ -405,37 +410,14 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::get(
 
 namespace {
 
-const char fileProtocol[] = "file:///";
+constexpr std::string_view fileProtocol("file:");
 
 bool isFile(const std::string& url) {
-  return url.compare(0, sizeof(fileProtocol) - 1, fileProtocol) == 0;
+  return Uri(url).getScheme() == fileProtocol;
 }
 
 std::string convertFileUriToFilename(const std::string& url) {
-  // from Cesium Native:
-  // Refactor CesiumUtility::Uri to use ada instead of uriparser #1072
-  std::string path = Uri::unescape(url);
-  // If there is a file prefix remove it
-  // but keep the last slash before the path
-  if (isFile(path)) {
-    path = path.substr(sizeof(fileProtocol) - 2);
-  }
-
-  std::string result = Uri::uriPathToNativePath(path);
-
-  // Truncate the string if necessary by finding the first null character.
-  size_t end = result.find('\0');
-  if (end != std::string::npos) {
-    result.resize(end);
-  }
-
-  // Remove query parameters from the URL if present.
-  size_t pos = result.find('?');
-  if (pos != std::string::npos) {
-    result.erase(pos);
-  }
-
-  return result;
+  return Uri::uriPathToNativePath(std::string(Uri(url).getPath()));
 }
 
 } // namespace
@@ -477,7 +459,7 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
 
         // libcurl will not automatically create the target directory when
         // PUTting to a `file:///` URL. So we do that manually here.
-        if (isFile(pRequest->url())) {
+        if (pThis->_allowDirectoryCreation && isFile(pRequest->url())) {
           std::filesystem::path filePath =
               convertFileUriToFilename(pRequest->url());
           if (filePath.has_parent_path()) {
