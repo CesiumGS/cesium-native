@@ -2,9 +2,16 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+- Renamed `CesiumITwinClient::Connection::getAccessToken` to `CesiumITwinClient::Connection::getAuthenticationToken`.
+- Renamed `CesiumITwinClient::Connection::setAccessToken` to `CesiumITwinClient::Connection::setAuthenticationToken`.
+
 ##### Additions :tada:
 
 - Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
+- Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
+  - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
+  - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
 
 ### v0.48.0 - 2025-06-02
 
