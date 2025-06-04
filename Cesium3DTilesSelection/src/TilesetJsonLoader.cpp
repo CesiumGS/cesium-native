@@ -863,7 +863,8 @@ TilesetJsonLoader::createLoader(
           return asyncSystem.createResolvedFuture(std::move(result));
         }
 
-        // Let the optional modifier parse any extra information from tileset.json
+        // Let the optional modifier parse any extra information from
+        // tileset.json
         if (gltfModifier) {
           gltfModifier->parseTilesetJson(tilesetJson);
         }

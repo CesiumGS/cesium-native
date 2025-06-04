@@ -208,9 +208,8 @@ private:
           loadErrorCallback,
       TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
 
-  bool discardOutdatedRenderResources(
-      Tile& tile,
-      TileRenderContent& renderContent);
+  bool
+  discardOutdatedRenderResources(Tile& tile, TileRenderContent& renderContent);
 
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
