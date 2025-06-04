@@ -26,15 +26,6 @@ struct AccessTokenContents {
 };
 
 /**
- * @brief The possible contents of an authentication token.
- *
- * An access token contains information about the user that produced it and the
- * scope of access. A share token only contains the iTwin ID that it is for.
- */
-using AuthenticationTokenContents =
-    std::variant<AccessTokenContents, std::string>;
-
-/**
  * @brief An authentication token obtained from the iTwin OAuth2 flow.
  */
 class CESIUMITWINCLIENT_API AuthenticationToken {
@@ -118,6 +109,16 @@ public:
       : _token(token), _contents(std::move(iTwinId)), _expires(expires) {}
 
 private:
+  /**
+   * @brief The possible contents of an authentication token.
+   *
+   * An access token contains information about the user that produced it and
+   * the scope of access. A share token only contains the iTwin ID that it is
+   * for.
+   */
+  using AuthenticationTokenContents =
+      std::variant<AccessTokenContents, std::string>;
+
   std::string _token;
   AuthenticationTokenContents _contents;
   int64_t _expires;
