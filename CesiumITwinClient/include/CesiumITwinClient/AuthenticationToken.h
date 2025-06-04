@@ -12,20 +12,6 @@
 namespace CesiumITwinClient {
 
 /**
- * @brief The contents of a user's access token.
- */
-struct AccessTokenContents {
-  /** @brief The name of this token. */
-  std::string name;
-  /** @brief The name of the user this token belongs to. */
-  std::string userName;
-  /** @brief The list of scopes this token is valid for. */
-  std::vector<std::string> scopes;
-  /** @brief The timestamp this token is not valid before. */
-  int64_t notValidBefore;
-};
-
-/**
  * @brief An authentication token obtained from the iTwin OAuth2 flow.
  */
 class CESIUMITWINCLIENT_API AuthenticationToken {
@@ -109,6 +95,20 @@ public:
       : _token(token), _contents(std::move(iTwinId)), _expires(expires) {}
 
 private:
+  /**
+   * @brief The contents of a user's access token.
+   */
+  struct AccessTokenContents {
+    /** @brief The name of this token. */
+    std::string name;
+    /** @brief The name of the user this token belongs to. */
+    std::string userName;
+    /** @brief The list of scopes this token is valid for. */
+    std::vector<std::string> scopes;
+    /** @brief The timestamp this token is not valid before. */
+    int64_t notValidBefore;
+  };
+
   /**
    * @brief The possible contents of an authentication token.
    *
