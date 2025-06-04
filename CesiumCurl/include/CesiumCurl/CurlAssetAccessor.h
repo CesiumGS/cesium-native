@@ -27,6 +27,7 @@ SOFTWARE.
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
+#include <CesiumCurl/Library.h>
 
 #include <cstddef>
 #include <memory>
@@ -40,7 +41,7 @@ namespace CesiumCurl {
  * @brief An implementation of `IAssetAccessor` that can make network and local
  * requests to a variety of servers using libcurl.
  */
-class CurlAssetAccessor final
+class CESIUMCURL_API CurlAssetAccessor final
     : public std::enable_shared_from_this<CurlAssetAccessor>,
       public CesiumAsync::IAssetAccessor {
 public:
@@ -60,12 +61,14 @@ public:
       const std::string& certificateFile = {});
   ~CurlAssetAccessor() override;
 
+  /** @inheritdoc */
   CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   get(const CesiumAsync::AsyncSystem& asyncSystem,
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers)
       override;
 
+  /** @inheritdoc */
   CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>> request(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::string& verb,
@@ -73,6 +76,7 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers,
       const std::span<const std::byte>& contentPayload) override;
 
+  /** @inheritdoc */
   void tick() noexcept override;
 
 private:
