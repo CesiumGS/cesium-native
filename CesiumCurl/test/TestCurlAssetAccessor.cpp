@@ -138,6 +138,36 @@ TEST_CASE("CurlAssetAccessor") {
               pResponse->data().size()),
           "this is my response text");
     }
+
+    SUBCASE("specific request headers take precendence over accessor-wide "
+            "headers") {
+      options.requestHeaders.emplace_back("Test-Header", "accessor");
+      pAssetAccessor = std::make_shared<CurlAssetAccessor>(options);
+
+      pServer->Get(
+          "/test/some/file.txt",
+          [](const httplib::Request& request, httplib::Response& response) {
+            response.set_header(
+                "Test-Header",
+                request.get_header_value("Test-Header"));
+            response.set_content("this is my response text", "text/plain");
+          });
+
+      std::shared_ptr<CesiumAsync::IAssetRequest> pRequest =
+          pAssetAccessor
+              ->get(
+                  asyncSystem,
+                  fmt::format("http://127.0.01:{}/test/some/file.txt", port),
+                  {{"tEst-hEadEr", "request"}})
+              .waitInMainThread();
+
+      REQUIRE(pRequest);
+
+      const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
+      auto it = pResponse->headers().find("Test-Header");
+      REQUIRE(it != pResponse->headers().end());
+      CHECK(it->second == "request");
+    }
   }
 
   SUBCASE("can do file:/// requests") {
