@@ -37,6 +37,9 @@ SOFTWARE.
 
 namespace CesiumCurl {
 
+/**
+ * @brief Options for constructing a \ref CurlAssetAccessor.
+ */
 struct CESIUMCURL_API CurlAssetAccessorOptions {
   /**
    * @brief The `User-Agent` header to include with each request.
