@@ -399,10 +399,12 @@ void parseImplicitTileset(
   auto subtreeLevelsIt = implicitTiling.FindMember("subtreeLevels");
   auto subtreesIt = implicitTiling.FindMember("subtrees");
   auto availableLevelsIt = implicitTiling.FindMember("availableLevels");
+  bool isMaximumLevel = false;
   if (availableLevelsIt == implicitTiling.MemberEnd()) {
     // old version of implicit uses maximumLevel instead of availableLevels.
-    // They have the same semantic
+    // they have similar semantic except that max = index available = count
     availableLevelsIt = implicitTiling.FindMember("maximumLevel");
+    isMaximumLevel = true;
   }
 
   // check that all the required properties above are available
@@ -429,7 +431,7 @@ void parseImplicitTileset(
 
   // create implicit loaders
   uint32_t subtreeLevels = subtreeLevelsIt->value.GetUint();
-  uint32_t availableLevels = availableLevelsIt->value.GetUint();
+  uint32_t availableLevels = availableLevelsIt->value.GetUint() + isMaximumLevel;
   const char* subtreesUri = subtreesUriIt->value.GetString();
   const char* subdivisionScheme = tilingSchemeIt->value.GetString();
 
