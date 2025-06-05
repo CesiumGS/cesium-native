@@ -11,6 +11,7 @@ if(DOXYGEN_FOUND)
         ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
         ../CesiumAsync/include
+        ../CesiumCurl/include
         ../CesiumGeometry/include
         ../CesiumGeospatial/include
         ../CesiumGltf/include
@@ -54,6 +55,7 @@ if(DOXYGEN_FOUND)
         "CESIUM3DTILESSELECTION_API"
         "CESIUM3DTILESWRITER_API"
         "CESIUMASYNC_API"
+        "CESIUMCURL_API"
         "CESIUMCLIENTCOMMON_API"
         "CESIUMGEOMETRY_API"
         "CESIUMGEOSPATIAL_API"

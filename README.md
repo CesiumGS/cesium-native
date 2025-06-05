@@ -69,6 +69,7 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | **Cesium3DTilesSelection**     | Runtime streaming, level of detail selection, culling, cache management, and decoding of 3D Tiles.              |
 | **CesiumAsync**                | Classes for multi-threaded asynchronous tasks.                                                                  |
 | **CesiumClientCommon**         | Functionality shared between ion and iTwin client implementations, primarily shared authentication code.        |
+| **CesiumCurl**                 | Provides the ability to access HTTP and other network resources using libcurl.                                  |
 | **CesiumGeometry**             | Common 3D geometry classes; and bounds testing, intersection testing, and spatial indexing algorithms.          |
 | **CesiumGeospatial**           | 3D geospatial math types and functions for ellipsoids, transforms, projections.                                 |
 | **CesiumGltf**                 | Lightweight glTF processing and optimization functions.                                                         |
