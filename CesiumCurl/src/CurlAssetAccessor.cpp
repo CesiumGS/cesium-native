@@ -181,13 +181,19 @@ public:
   CurlAssetRequest(
       const std::string& method,
       const std::string& url,
-      const std::vector<IAssetAccessor::THeader>& headers,
+      const std::vector<IAssetAccessor::THeader>& thisRequestHeaders,
+      const std::vector<IAssetAccessor::THeader>& accessorRequestHeaders,
       std::vector<std::byte>&& contentPayload)
       : _method(method),
         _url(url),
         _contentPayload(std::move(contentPayload)),
         _bytesSent(0) {
-    this->_headers.insert(headers.begin(), headers.end());
+    // Add the accessor headers second because we want this request's headers to
+    // take precedence. `insert` will skip insertion if the key already exists.
+    this->_headers.insert(thisRequestHeaders.begin(), thisRequestHeaders.end());
+    this->_headers.insert(
+        accessorRequestHeaders.begin(),
+        accessorRequestHeaders.end());
   }
 
   [[nodiscard]] const std::string& method() const override {
@@ -340,20 +346,22 @@ curl_slist* setCommonOptions(
 
 } // namespace
 
-CurlAssetAccessor::CurlAssetAccessor(
-    bool allowDirectoryCreation,
-    const std::string& certificatePath,
-    const std::string& certificateFile)
-    : _pCurlCache(std::make_unique<CurlCache>()),
-      _userAgent("Mozilla/5.0 Cesium Native CurlAssetAccessor"),
-      _allowDirectoryCreation(allowDirectoryCreation),
-      _certificatePath(certificatePath),
-      _certificateFile(certificateFile) {
-  // XXX Do we need to worry about the thread safety problems with this?
-  curl_global_init(CURL_GLOBAL_ALL);
+CurlAssetAccessor::CurlAssetAccessor(const CurlAssetAccessorOptions& options)
+    : _pCurlCache(std::make_unique<CurlCache>()), _options(options) {
+  if (this->_options.doGlobalInit) {
+    curl_global_init(CURL_GLOBAL_ALL);
+  }
 }
 
-CurlAssetAccessor::~CurlAssetAccessor() { curl_global_cleanup(); }
+CurlAssetAccessor::~CurlAssetAccessor() {
+  if (this->_options.doGlobalInit) {
+    curl_global_cleanup();
+  }
+}
+
+const CurlAssetAccessorOptions& CurlAssetAccessor::getOptions() const {
+  return this->_options;
+}
 
 Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::get(
     const AsyncSystem& asyncSystem,
@@ -369,6 +377,7 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::get(
                 "GET",
                 url,
                 headers,
+                pThis->_options.requestHeaders,
                 std::vector<std::byte>());
 
         CurlHandle curl(pThis.get());
@@ -376,9 +385,9 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::get(
             curl(),
             pRequest->url(),
             pRequest->headers(),
-            pThis->_userAgent,
-            pThis->_certificatePath,
-            pThis->_certificateFile);
+            pThis->_options.userAgent,
+            pThis->_options.certificatePath,
+            pThis->_options.certificateFile);
         std::unique_ptr<CurlAssetResponse> pResponse =
             std::make_unique<CurlAssetResponse>();
         pResponse->setCallbacks(curl());
@@ -457,11 +466,12 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
             verb,
             url,
             headers,
+            pThis->_options.requestHeaders,
             std::move(payloadCopy));
 
         // libcurl will not automatically create the target directory when
         // PUTting to a `file:///` URL. So we do that manually here.
-        if (pThis->_allowDirectoryCreation && isFile(pRequest->url())) {
+        if (pThis->_options.allowDirectoryCreation && isFile(pRequest->url())) {
           std::filesystem::path filePath =
               convertFileUriToFilename(pRequest->url());
           if (filePath.has_parent_path()) {
@@ -475,9 +485,9 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
             curl(),
             pRequest->url(),
             pRequest->headers(),
-            pThis->_userAgent,
-            pThis->_certificatePath,
-            pThis->_certificateFile);
+            pThis->_options.userAgent,
+            pThis->_options.certificatePath,
+            pThis->_options.certificateFile);
 
         curl_easy_setopt(curl(), verbOption, 1);
         curl_easy_setopt(

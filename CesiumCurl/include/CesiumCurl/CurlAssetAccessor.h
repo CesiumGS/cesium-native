@@ -37,6 +37,46 @@ SOFTWARE.
 
 namespace CesiumCurl {
 
+struct CESIUMCURL_API CurlAssetAccessorOptions {
+  /**
+   * @brief The `User-Agent` header to include with each request.
+   */
+  std::string userAgent{"Mozilla/5.0 Cesium Native CurlAssetAccessor"};
+
+  /**
+   * @brief Request headers to automatically include in each request.
+   *
+   * Request headers passed to \ref CurlAssetAccessor::get or \ref
+   * CurlAssetAccessor::request take precendence over these.
+   */
+  std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders{};
+
+  /**
+   * @brief Whether a PUT or POST to a `file:` URL is allowed to create file
+   * system directories to hold the target file.
+   */
+  bool allowDirectoryCreation{false};
+
+  /**
+   * @brief The path to TLS certificates. If non-empty, this will be provided to
+   * libcurl as `CURLOPT_CAPATH`.
+   */
+  std::string certificatePath{};
+
+  /**
+   * @brief A file containing TLS certificates. If non-empty, this will be
+   * provided to libcurl as `CURLOPT_CAINFO`.
+   */
+  std::string certificateFile{};
+
+  /**
+   * @brief Whether to call `curl_global_init(CURL_GLOBAL_ALL)` at construction
+   * time and `curl_global_cleanup()` at destruction time. Only set this to
+   * false if the initialization and cleanup are done elsewhere.
+   */
+  bool doGlobalInit{true};
+};
+
 /**
  * @brief An implementation of `IAssetAccessor` that can make network and local
  * requests to a variety of servers using libcurl.
@@ -48,18 +88,15 @@ public:
   /**
    * @brief Constructs a new instance.
    *
-   * @param allowDirectoryCreation Whether a PUT or POST to a file: URL is
-   * allowed to create file system directories to hold the target file.
-   * @param certificatePath The path to TLS certificates. If non-empty, this
-   * will be provided to libcurl as `CURLOPT_CAPATH`.
-   * @param certificateFile A file containing TLS certificates. If non-empty,
-   * this will be provided to libcurl as `CURLOPT_CAINFO`.
+   * @param options The options with which to construct this instance.
    */
-  CurlAssetAccessor(
-      bool allowDirectoryCreation = false,
-      const std::string& certificatePath = {},
-      const std::string& certificateFile = {});
+  CurlAssetAccessor(const CurlAssetAccessorOptions& options = {});
   ~CurlAssetAccessor() override;
+
+  /**
+   * @brief Gets the options that were used to construct this accessor.
+   */
+  const CurlAssetAccessorOptions& getOptions() const;
 
   /** @inheritdoc */
   CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
@@ -84,10 +121,7 @@ private:
   class CurlHandle;
 
   std::unique_ptr<CurlCache> _pCurlCache;
-  std::string _userAgent;
-  bool _allowDirectoryCreation;
-  std::string _certificatePath;
-  std::string _certificateFile;
+  CurlAssetAccessorOptions _options;
 };
 
 } // namespace CesiumCurl

@@ -22,8 +22,12 @@ using namespace CesiumUtility;
 
 TEST_CASE("CurlAssetAccessor") {
   CesiumAsync::AsyncSystem asyncSystem(std::make_shared<ThreadTaskProcessor>());
+
+  CurlAssetAccessorOptions options{};
+  options.allowDirectoryCreation = true;
+
   std::shared_ptr<CurlAssetAccessor> pAssetAccessor =
-      std::make_shared<CurlAssetAccessor>(true);
+      std::make_shared<CurlAssetAccessor>(options);
 
   SUBCASE("can do HTTP requests") {
     std::shared_ptr<httplib::Server> pServer =
