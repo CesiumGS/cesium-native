@@ -107,6 +107,18 @@ public:
   auto end() const { return _items.end(); }
 
   /**
+   * @brief Checks whether this PagedList contains a URL to another page that
+   * can be fetched.
+   */
+  bool hasNextUrl() const { return this->_nextUrl.has_value(); }
+
+  /**
+   * @brief Checks whether this PagedList contains a URL to a previous page that
+   * can be fetched.
+   */
+  bool hasPrevUrl() const { return this->_prevUrl.has_value(); }
+
+  /**
    * @brief Returns a future that will return the next page of items.
    *
    * @param asyncSystem The `AsyncSystem` to use.

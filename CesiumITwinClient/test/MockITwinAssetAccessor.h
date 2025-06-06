@@ -1,26 +1,25 @@
 #pragma once
 
-#include "CesiumUtility/Uri.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumUtility/Uri.h>
 
 #include <doctest/doctest.h>
 
 #include <cstddef>
-#include <map>
 #include <memory>
 
 std::string randomStringOfLen(size_t len);
-std::string generateAuthToken();
+std::string generateAuthToken(bool isAccessToken);
 
 class MockITwinAssetAccessor : public CesiumAsync::IAssetAccessor {
 public:
-  MockITwinAssetAccessor()
-      : authToken(generateAuthToken()), refreshToken(randomStringOfLen(42)) {}
+  MockITwinAssetAccessor(bool isAccessToken)
+      : authToken(generateAuthToken(isAccessToken)),
+        refreshToken(randomStringOfLen(42)) {}
 
   virtual CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
   get(const CesiumAsync::AsyncSystem& asyncSystem,

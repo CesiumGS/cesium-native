@@ -1,9 +1,9 @@
 #include "MockITwinAssetAccessor.h"
 
-#include "CesiumNativeTests/SimpleAssetRequest.h"
-#include "CesiumUtility/Uri.h"
-
 #include <CesiumClientCommon/fillWithRandomBytes.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/readFile.h>
+#include <CesiumUtility/Uri.h>
 
 #include <modp_b64.h>
 #include <rapidjson/document.h>
@@ -11,6 +11,7 @@
 #include <rapidjson/writer.h>
 
 #include <chrono>
+#include <filesystem>
 
 namespace {
 void writeMap(
@@ -51,29 +52,34 @@ std::string randomStringOfLen(size_t len) {
   return str;
 }
 
-std::string generateAuthToken() {
+std::string generateAuthToken(bool isAccessToken) {
   rapidjson::StringBuffer tokenBuffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(tokenBuffer);
 
-  const std::chrono::time_point nbf =
-      std::chrono::system_clock::now() - std::chrono::minutes(5);
   const std::chrono::time_point exp =
       std::chrono::system_clock::now() + std::chrono::hours(1);
 
   writer.StartObject();
-  writer.Key("scope");
-  writer.StartArray();
-  writer.String("itwin-platform");
-  writer.String("offline_access");
-  writer.EndArray();
-  writer.Key("name");
-  writer.String("Example.User@example.com");
-  writer.Key("preferred_username");
-  writer.String("Example.User@example.com");
-  writer.Key("nbf");
-  writer.Int64(
-      std::chrono::duration_cast<std::chrono::seconds>(nbf.time_since_epoch())
-          .count());
+  if (isAccessToken) {
+    writer.Key("scope");
+    writer.StartArray();
+    writer.String("itwin-platform");
+    writer.String("offline_access");
+    writer.EndArray();
+    writer.Key("name");
+    writer.String("Example.User@example.com");
+    writer.Key("preferred_username");
+    writer.String("Example.User@example.com");
+    const std::chrono::time_point nbf =
+        std::chrono::system_clock::now() - std::chrono::minutes(5);
+    writer.Key("nbf");
+    writer.Int64(
+        std::chrono::duration_cast<std::chrono::seconds>(nbf.time_since_epoch())
+            .count());
+  } else {
+    writer.Key("iTwinId");
+    writer.String("00000000-0000-0000-0000-000000000000");
+  }
   writer.Key("exp");
   writer.Int64(
       std::chrono::duration_cast<std::chrono::seconds>(exp.time_since_epoch())
@@ -145,7 +151,7 @@ MockITwinAssetAccessor::handleAuthServer(
       CHECK(bodyParams.getValue("refresh_token") == this->refreshToken);
     }
 
-    this->authToken = generateAuthToken();
+    this->authToken = generateAuthToken(true);
     this->refreshToken = randomStringOfLen(42);
 
     writer.Key("access_token");
@@ -188,15 +194,56 @@ MockITwinAssetAccessor::handleApiServer(
       });
 
   REQUIRE(authIt != headers.end());
-  REQUIRE(authIt->second.starts_with("Bearer "));
-
-  const std::string& headerToken = authIt->second.substr(strlen("Bearer "));
-  CHECK(headerToken == this->authToken);
+  if (authIt->second.starts_with("Bearer ")) {
+    const std::string& headerToken = authIt->second.substr(strlen("Bearer "));
+    CHECK(headerToken == this->authToken);
+  } else if (authIt->second.starts_with("Basic ")) {
+    const std::string& headerToken = authIt->second.substr(strlen("Basic "));
+    CHECK(headerToken == this->authToken);
+  } else {
+    FAIL("No auth token found");
+  }
 
   const std::string bodyStr(
       reinterpret_cast<const char*>(body.data()),
       body.size());
   CesiumUtility::UriQuery bodyParams((std::string_view(bodyStr)));
+
+  // handle JSON loaded from test data
+  if (uri.getPath() ==
+      "/geospatial-features/itwins/00000000-0000-0000-0000-000000000000/ogc/"
+      "collections") {
+    return asyncSystem
+        .createResolvedFuture<std::shared_ptr<CesiumAsync::IAssetRequest>>(
+            std::make_shared<CesiumNativeTests::SimpleAssetRequest>(
+                verb,
+                std::string(uri.toString()),
+                CesiumAsync::HttpHeaders{},
+                std::make_unique<CesiumNativeTests::SimpleAssetResponse>(
+                    200,
+                    "application/json",
+                    CesiumAsync::HttpHeaders{},
+                    readFile(
+                        std::filesystem::path(CesiumITwinClient_TEST_DATA_DIR) /
+                        "FeatureCollections.json"))));
+  } else if (
+      uri.getPath() ==
+      "/geospatial-features/itwins/00000000-0000-0000-0000-000000000000/ogc/"
+      "collections/00000000-0000-0000-0000-000000000000/items") {
+    return asyncSystem
+        .createResolvedFuture<std::shared_ptr<CesiumAsync::IAssetRequest>>(
+            std::make_shared<CesiumNativeTests::SimpleAssetRequest>(
+                verb,
+                std::string(uri.toString()),
+                CesiumAsync::HttpHeaders{},
+                std::make_unique<CesiumNativeTests::SimpleAssetResponse>(
+                    200,
+                    "application/json",
+                    CesiumAsync::HttpHeaders{},
+                    readFile(
+                        std::filesystem::path(CesiumITwinClient_TEST_DATA_DIR) /
+                        "FeatureService.json"))));
+  }
 
   rapidjson::StringBuffer outputBuffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(outputBuffer);
