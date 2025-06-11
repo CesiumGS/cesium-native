@@ -63,7 +63,7 @@ void TileRenderContent::resetModifiedRenderResources() noexcept {
 
 void TileRenderContent::replaceWithModifiedModel() noexcept {
   _model = std::move(*_modifiedModel);
-  // reset after move because tested in tileNeedsWorkerThreadLoading:
+  // reset after move because tested in Tile::needsWorkerThreadLoading:
   _modifiedModel.reset();
   _pRenderResources = _pModifiedRenderResources;
   _pModifiedRenderResources = nullptr;
