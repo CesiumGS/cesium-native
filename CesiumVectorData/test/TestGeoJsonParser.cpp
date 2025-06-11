@@ -1,14 +1,14 @@
-#include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
-#include <CesiumNativeTests/SimpleAssetAccessor.h>
-#include <CesiumNativeTests/SimpleAssetRequest.h>
-#include <CesiumNativeTests/SimpleAssetResponse.h>
 
 #include <doctest/doctest.h>
 
@@ -718,28 +718,32 @@ TEST_CASE("Load GeoJSON from URL") {
       std::filesystem::path(CesiumVectorData_TEST_DATA_DIR) / "geojson");
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
       mockCompletedRequests;
-    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
-        std::make_unique<SimpleAssetResponse>(
-            static_cast<uint16_t>(200),
-            "doesn't matter",
-            CesiumAsync::HttpHeaders{},
-            readFile(dir / "point.geojson"));
-    mockCompletedRequests.insert(
-        {url,
-         std::make_shared<SimpleAssetRequest>(
-             "GET",
-             url,
-             CesiumAsync::HttpHeaders{},
-             std::move(mockCompletedResponse))});
+  std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+      std::make_unique<SimpleAssetResponse>(
+          static_cast<uint16_t>(200),
+          "doesn't matter",
+          CesiumAsync::HttpHeaders{},
+          readFile(dir / "point.geojson"));
+  mockCompletedRequests.insert(
+      {url,
+       std::make_shared<SimpleAssetRequest>(
+           "GET",
+           url,
+           CesiumAsync::HttpHeaders{},
+           std::move(mockCompletedResponse))});
 
   std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
       std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
   CesiumAsync::AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
 
-  CesiumUtility::Result<GeoJsonDocument> result = GeoJsonDocument::fromUrl(asyncSystem, mockAssetAccessor, url).waitInMainThread();
+  CesiumUtility::Result<GeoJsonDocument> result =
+      GeoJsonDocument::fromUrl(asyncSystem, mockAssetAccessor, url)
+          .waitInMainThread();
 
   CHECK(!result.errors.hasErrors());
   REQUIRE(result.value);
   REQUIRE(result.value->rootObject.isType<GeoJsonPoint>());
-  CHECK(result.value->rootObject.get<GeoJsonPoint>().coordinates == glm::dvec3(42.3, 49.34, 11.3413));
+  CHECK(
+      result.value->rootObject.get<GeoJsonPoint>().coordinates ==
+      glm::dvec3(42.3, 49.34, 11.3413));
 }
