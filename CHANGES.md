@@ -10,12 +10,15 @@
 
 ##### Additions :tada:
 
+- Switched to vcpkg registry version `dbe35ceb30c688bf72e952ab23778e009a578f18`, from `2024.11.16`. We expect to upgrade again to an official tagged version in the next release.
 - Added `SubtreeWriter::writeSubtreeBinary`.
 
 ##### Fixes :wrench:
 
 - Fixed a bug where `SubtreeAvailability` wasn't updating the `constant` and `bitstream` properties of the availability object when converting constant availability to a bitstream.
 - Fixed a bug where `SubtreeAvailability` attempted to update buffer data that was no longer valid.
+- Fixed a bug where `TilesetContentLoaderResult` would drop its `statusCode` between `std::move`s due to its omission in the move constructor.
+- Fixed a bug introduced in v0.47.0 that caused tiles upsampled for raster overlays to lose their water mask.
 
 ### v0.47.0 - 2025-05-01
 
