@@ -86,6 +86,25 @@ public:
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
 
   /**
+   * @brief Attempts to load a \ref GeoJsonDocument from the provided URL.
+   *
+   * @param asyncSystem The \ref CesiumAsync::AsyncSystem.
+   * @param pAssetAccessor The \ref CesiumAsync::IAssetAccessor.
+   * @param url The URL that this method will attempt to get a GeoJSON document
+   * from.
+   * @param headers Any additional headers to attach to the HTTP request to
+   * obtain the GeoJSON document.
+   * @returns A future that resolves into a \ref CesiumUtility::Result
+   * containing the parsed \ref GeoJsonDocument or any errors and warnings that
+   * came up while loading or parsing the data.
+   */
+  static CesiumAsync::Future<CesiumUtility::Result<GeoJsonDocument>> fromUrl(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& url,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {});
+
+  /**
    * @brief Creates a new \ref GeoJsonDocument directly from a \ref
    * GeoJsonObject.
    */
