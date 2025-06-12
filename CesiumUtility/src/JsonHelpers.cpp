@@ -1,4 +1,5 @@
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/JsonValue.h>
 
 #include <glm/ext/matrix_double4x4.hpp>
 #include <rapidjson/document.h>
@@ -71,17 +72,22 @@ std::optional<std::vector<double>> JsonHelpers::getDoubles(
     return std::nullopt;
   }
   const auto& value = it->value;
-  if (!value.IsArray()) {
+  return JsonHelpers::getDoubles(value, expectedSize);
+}
+
+std::optional<std::vector<double>>
+JsonHelpers::getDoubles(const rapidjson::Value& json, int32_t expectedSize) {
+  if (!json.IsArray()) {
     return std::nullopt;
   }
   if (expectedSize >= 0 &&
-      value.Size() != static_cast<rapidjson::SizeType>(expectedSize)) {
+      json.Size() != static_cast<rapidjson::SizeType>(expectedSize)) {
     return std::nullopt;
   }
-  const auto& a = value.GetArray();
+  const auto& a = json.GetArray();
   std::vector<double> result;
-  result.reserve(value.Size());
-  for (rapidjson::SizeType i = 0; i < value.Size(); ++i) {
+  result.reserve(json.Size());
+  for (rapidjson::SizeType i = 0; i < json.Size(); ++i) {
     if (!a[i].IsNumber()) {
       return std::nullopt;
     }
@@ -263,5 +269,41 @@ JsonHelpers::getInt64s(const rapidjson::Value& json, const std::string& key) {
   }
 
   return result;
+}
+
+JsonValue JsonHelpers::toJsonValue(const rapidjson::Value& json) {
+  if (json.IsBool()) {
+    return JsonValue(json.GetBool());
+  } else if (json.IsDouble()) {
+    return JsonValue(json.GetDouble());
+  } else if (json.IsFloat()) {
+    return JsonValue(json.GetFloat());
+  } else if (json.IsInt64()) {
+    return JsonValue(json.GetInt64());
+  } else if (json.IsInt()) {
+    return JsonValue(json.GetInt());
+  } else if (json.IsNull()) {
+    return JsonValue(nullptr);
+  } else if (json.IsString()) {
+    return JsonValue(json.GetString());
+  } else if (json.IsUint64()) {
+    return JsonValue(json.GetUint64());
+  } else if (json.IsUint()) {
+    return JsonValue(json.GetUint());
+  } else if (json.IsArray()) {
+    JsonValue::Array arr;
+    for (auto& value : json.GetArray()) {
+      arr.emplace_back(JsonHelpers::toJsonValue(value));
+    }
+    return arr;
+  } else if (json.IsObject()) {
+    JsonValue::Object obj;
+    for (auto& [key, value] : json.GetObject()) {
+      obj.emplace(key.GetString(), JsonHelpers::toJsonValue(value));
+    }
+    return obj;
+  }
+
+  return JsonValue::Null();
 }
 } // namespace CesiumUtility

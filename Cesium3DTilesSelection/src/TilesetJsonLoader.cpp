@@ -560,7 +560,15 @@ std::optional<Tile> parseTileJsonRecursively(
     auto contentResult = contentReader.readFromJson(contentIt->value);
     maybeContent = std::move(contentResult.value);
   }
-  const char* contentUri = maybeContent ? maybeContent->uri.c_str() : nullptr;
+
+  const char* contentUri = nullptr;
+  if (maybeContent && !maybeContent->uri.empty()) {
+    contentUri = maybeContent->uri.c_str();
+  } else if (maybeContent && maybeContent->unknownProperties.contains("url")) {
+    std::string url =
+        maybeContent->unknownProperties["url"].getStringOrDefault({});
+    contentUri = !url.empty() ? url.c_str() : nullptr;
+  }
 
   // determine if tile has implicit tiling
   const rapidjson::Value* implicitTilingJson = nullptr;
