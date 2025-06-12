@@ -159,7 +159,7 @@ public:
    * page if you want all results.
    *
    * @param asyncSystem The `AsyncSystem` to use.
-   * @param connection The `Connection` to use to fetch the next pages of
+   * @param pConnection The `Connection` to use to fetch the next pages of
    * results, if any.
    */
   CesiumAsync::Future<CesiumUtility::Result<std::vector<T>>> allAfter(

@@ -23,7 +23,7 @@ namespace CesiumITwinClient {
 
 /**
  * @brief A raster overlay made from rasterizing a \ref
- * CesiumVectorData::VectorDocument.
+ * CesiumVectorData::GeoJsonDocument.
  */
 class CESIUMITWINCLIENT_API ITwinGeospatialFeaturesRasterOverlay final
     : public CesiumRasterOverlays::RasterOverlay {
