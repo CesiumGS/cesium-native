@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CesiumAsync/IAssetAccessor.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -75,11 +77,22 @@ struct IonGeoJsonDocumentRasterOverlaySource {
 };
 
 /**
+ * @brief Information required to load a GeoJSON document from a URL.
+ */
+struct UrlGeoJsonDocumentRasterOverlaySource {
+  /** @brief The URL to load a GeoJSON document from. */
+  std::string url;
+  /** @brief Headers to attach to the request. */
+  std::vector<CesiumAsync::IAssetAccessor::THeader> headers = {};
+};
+
+/**
  * @brief Possible sources for a GeoJsonDocumentRasterOverlay's vector data.
  */
 using GeoJsonDocumentRasterOverlaySource = std::variant<
     std::shared_ptr<CesiumVectorData::GeoJsonDocument>,
-    IonGeoJsonDocumentRasterOverlaySource>;
+    IonGeoJsonDocumentRasterOverlaySource,
+    UrlGeoJsonDocumentRasterOverlaySource>;
 
 /**
  * @brief A raster overlay made from rasterizing a \ref

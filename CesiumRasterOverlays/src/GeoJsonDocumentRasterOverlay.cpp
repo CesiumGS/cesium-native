@@ -599,6 +599,22 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
                 std::make_shared<GeoJsonDocument>(std::move(*result.value)));
           });
     }
+    CesiumAsync::Future<Result<std::shared_ptr<GeoJsonDocument>>>
+    operator()(const UrlGeoJsonDocumentRasterOverlaySource& url) {
+      return GeoJsonDocument::fromUrl(
+                 asyncSystem,
+                 pAssetAccessor,
+                 url.url,
+                 url.headers)
+          .thenImmediately([](Result<GeoJsonDocument>&& result) {
+            if (!result.value) {
+              return Result<std::shared_ptr<GeoJsonDocument>>(result.errors);
+            }
+
+            return Result<std::shared_ptr<GeoJsonDocument>>(
+                std::make_shared<GeoJsonDocument>(std::move(*result.value)));
+          });
+    }
   };
 
   return std::visit(
@@ -618,7 +634,7 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
                   RasterOverlayLoadType::CesiumIon,
                   nullptr,
                   fmt::format(
-                      "Errors while loading GeoJSON from Cesium ion: {}",
+                      "Errors while loading GeoJSON: {}",
                       CesiumUtility::joinToString(
                           result.errors.errors,
                           ", "))});
