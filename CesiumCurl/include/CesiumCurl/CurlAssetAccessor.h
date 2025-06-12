@@ -84,7 +84,7 @@ struct CESIUMCURL_API CurlAssetAccessorOptions {
  * @brief An implementation of `IAssetAccessor` that can make network and local
  * requests to a variety of servers using libcurl.
  */
-class CESIUMCURL_API CurlAssetAccessor final
+class CESIUMCURL_API CurlAssetAccessor
     : public std::enable_shared_from_this<CurlAssetAccessor>,
       public CesiumAsync::IAssetAccessor {
 public:
