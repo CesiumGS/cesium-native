@@ -738,6 +738,8 @@ TilesetContentManager::TilesetContentManager(
   this->_upsampler.setOwner(*this);
 
   CESIUM_ASSERT(this->_pLoader != nullptr);
+  this->_overlayCollection.setLoadedTileEnumerator(
+      LoadedTileEnumerator(this->_pRootTile.get()));
   this->_pLoader->setOwner(*this);
   this->_rootTileAvailablePromise.resolve();
 }
