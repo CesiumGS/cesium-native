@@ -431,7 +431,7 @@ void parseImplicitTileset(
 
   // create implicit loaders
   uint32_t subtreeLevels = subtreeLevelsIt->value.GetUint();
-  uint32_t availableLevels = availableLevelsIt->value.GetUint() + isMaximumLevel;
+  uint32_t availableLevels = availableLevelsIt->value.GetUint() + uint32_t(isMaximumLevel);
   const char* subtreesUri = subtreesUriIt->value.GetString();
   const char* subdivisionScheme = tilingSchemeIt->value.GetString();
 
