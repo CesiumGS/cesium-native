@@ -152,7 +152,49 @@ public:
     return _operation(connection, *this->_prevUrl);
   }
 
+  /**
+   * @brief Returns all items in this page as well as all subsequent pages.
+   *
+   * This does not return items on previous pages, so call this on the first
+   * page if you want all results.
+   *
+   * @param asyncSystem The `AsyncSystem` to use.
+   * @param connection The `Connection` to use to fetch the next pages of
+   * results, if any.
+   */
+  CesiumAsync::Future<CesiumUtility::Result<std::vector<T>>> allAfter(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      CesiumUtility::IntrusivePointer<Connection>& pConnection) {
+    return this->allAfter(asyncSystem, pConnection, std::vector<T>());
+  }
+
 private:
+  CesiumAsync::Future<CesiumUtility::Result<std::vector<T>>> allAfter(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      CesiumUtility::IntrusivePointer<Connection>& pConnection,
+      std::vector<T>&& results) {
+    results.insert(results.end(), this->_items.begin(), this->_items.end());
+    if (!this->_nextUrl) {
+      return asyncSystem.createResolvedFuture(
+          CesiumUtility::Result<std::vector<T>>(std::move(results)));
+    }
+
+    return this->_operation(pConnection, *this->_nextUrl)
+        .thenImmediately(
+            [asyncSystem, pConnection, results = std::move(results)](
+                CesiumUtility::Result<PagedList<T>>&& result) mutable {
+              if (!result.value) {
+                return asyncSystem.createResolvedFuture(
+                    CesiumUtility::Result<std::vector<T>>(result.errors));
+              }
+
+              return result.value->allAfter(
+                  asyncSystem,
+                  pConnection,
+                  std::move(results));
+            });
+  }
+
   PageOperation _operation;
   std::vector<T> _items;
   std::optional<std::string> _selfUrl = std::nullopt;
