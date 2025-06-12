@@ -163,5 +163,7 @@ void ImageAsset::convertToChannels(
 
     this->pixelData = std::move(newPixelData);
   }
+
+  this->channels = newChannels;
 }
 } // namespace CesiumGltf

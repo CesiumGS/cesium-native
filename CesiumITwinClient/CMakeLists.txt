@@ -42,6 +42,7 @@ target_link_libraries(CesiumITwinClient
         CesiumAsync
         CesiumUtility
         CesiumClientCommon
+        CesiumGeometry
         CesiumGeospatial
         CesiumRasterOverlays
         CesiumVectorData

@@ -1,6 +1,9 @@
+#include "CesiumNativeTests/readFile.h"
+
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 
@@ -10,14 +13,38 @@
 
 #include <chrono>
 #include <cstddef>
+#include <filesystem>
 #include <iostream>
 #include <random>
 
 using namespace CesiumGeospatial;
 using namespace CesiumVectorData;
+using namespace CesiumUtility;
+
+namespace {
+void checkFilesEqual(
+    const std::filesystem::path& fileA,
+    const std::filesystem::path& fileB) {
+  const std::vector<std::byte>& bytes = readFile(fileA);
+  const std::vector<std::byte>& bytes2 = readFile(fileB);
+
+  REQUIRE(bytes.size() == bytes2.size());
+  for (size_t i = 0; i < bytes.size(); i++) {
+    CHECK(bytes[i] == bytes2[i]);
+  }
+}
+} // namespace
 
 TEST_CASE("VectorRasterizer::rasterize") {
-  GlobeRectangle rect{0.0, 0.0, 1.0, 1.0};
+  const std::filesystem::path dir(
+      std::filesystem::path(CesiumVectorData_TEST_DATA_DIR) / "rasterized");
+  const std::filesystem::path thisDir = std::filesystem::current_path();
+
+  GlobeRectangle rect{
+      0.0,
+      0.0,
+      Math::degreesToRadians(1.0),
+      Math::degreesToRadians(1.0)};
 
   SUBCASE("Renders a single triangle") {
     CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
@@ -33,19 +60,16 @@ TEST_CASE("VectorRasterizer::rasterize") {
     VectorRasterizer rasterizer(rect, asset);
 
     CartographicPolygon triangle(std::vector<glm::dvec2>{
-        glm::dvec2(0.25, 0.25),
-        glm::dvec2(0.5, 0.75),
-        glm::dvec2(0.75, 0.25)});
+        glm::dvec2(Math::degreesToRadians(0.25), Math::degreesToRadians(0.25)),
+        glm::dvec2(Math::degreesToRadians(0.5), Math::degreesToRadians(0.75)),
+        glm::dvec2(
+            Math::degreesToRadians(0.75),
+            Math::degreesToRadians(0.25))});
 
-    rasterizer.drawPolygon(
-        triangle,
-        VectorStyle{Color{
-            std::byte{0},
-            std::byte{255},
-            std::byte{255},
-            std::byte{255}}});
+    rasterizer.drawPolygon(triangle, VectorStyle{Color{0, 255, 255, 255}});
     rasterizer.finalize();
     asset->writeTga("triangle.tga");
+    checkFilesEqual(dir / "triangle.tga", thisDir / "triangle.tga");
   }
 
   SUBCASE("Triangle as tiles lines up") {
@@ -60,11 +84,12 @@ TEST_CASE("VectorRasterizer::rasterize") {
         std::byte{255});
 
     CartographicPolygon triangle(std::vector<glm::dvec2>{
-        glm::dvec2(0.25, 0.25),
-        glm::dvec2(0.5, 0.75),
-        glm::dvec2(0.75, 0.25)});
-    VectorStyle style{
-        Color{std::byte{0}, std::byte{255}, std::byte{255}, std::byte{255}}};
+        glm::dvec2(Math::degreesToRadians(0.25), Math::degreesToRadians(0.25)),
+        glm::dvec2(Math::degreesToRadians(0.5), Math::degreesToRadians(0.75)),
+        glm::dvec2(
+            Math::degreesToRadians(0.75),
+            Math::degreesToRadians(0.25))});
+    VectorStyle style{Color{0, 255, 255, 255}};
     {
       VectorRasterizer rasterizer(rect, asset);
 
@@ -85,15 +110,17 @@ TEST_CASE("VectorRasterizer::rasterize") {
             std::byte{255});
         VectorRasterizer rasterizer(
             GlobeRectangle(
-                (double)i * 0.5,
-                (double)j * 0.5,
-                0.5 + (double)i * 0.5,
-                0.5 + (double)j * 0.5),
+                Math::degreesToRadians((double)i * 0.5),
+                Math::degreesToRadians((double)j * 0.5),
+                Math::degreesToRadians(0.5 + (double)i * 0.5),
+                Math::degreesToRadians(0.5 + (double)j * 0.5)),
             tile);
         rasterizer.drawPolygon(triangle, style);
         rasterizer.finalize();
 
-        tile->writeTga(fmt::format("tile-{}-{}.tga", i, j));
+        const std::string fileName = fmt::format("tile-{}-{}.tga", i, j);
+        tile->writeTga(fileName);
+        checkFilesEqual(dir / fileName, thisDir / fileName);
 
         for (size_t x = 0; x < (size_t)128; x++) {
           for (size_t y = 0; y < (size_t)128; y++) {
@@ -119,28 +146,27 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     VectorRasterizer rasterizer(rect, asset);
 
-    std::vector<Cartographic> polyline{
-        Cartographic(0.25, 0.25),
-        Cartographic(0.25, 0.5),
-        Cartographic(0.3, 0.7),
-        Cartographic(0.25, 0.8),
-        Cartographic(0.8, 1.0),
-        Cartographic(0.8, 0.9),
-        Cartographic(0.9, 0.9)};
+    std::vector<glm::dvec3> polyline{
+        glm::dvec3(0.25, 0.25, 0.0),
+        glm::dvec3(0.25, 0.5, 0.0),
+        glm::dvec3(0.3, 0.7, 0.0),
+        glm::dvec3(0.25, 0.8, 0.0),
+        glm::dvec3(0.8, 1.0, 0.0),
+        glm::dvec3(0.8, 0.9, 0.0),
+        glm::dvec3(0.9, 0.9, 0.0)};
 
-    rasterizer.drawPolyline(
-        polyline,
-        VectorStyle{Color{
-            std::byte{81},
-            std::byte{33},
-            std::byte{255},
-            std::byte{255}}});
+    rasterizer.drawPolyline(polyline, VectorStyle{Color{81, 33, 255, 255}});
     rasterizer.finalize();
     asset->writeTga("polyline.tga");
+    checkFilesEqual(dir / "polyline.tga", thisDir / "polyline.tga");
   }
 
   SUBCASE("Transforms bounds properly") {
-    GlobeRectangle rect2(0.25, 0.25, 0.75, 0.5);
+    GlobeRectangle rect2(
+        Math::degreesToRadians(0.25),
+        Math::degreesToRadians(0.25),
+        Math::degreesToRadians(0.75),
+        Math::degreesToRadians(0.5));
     CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
@@ -154,19 +180,20 @@ TEST_CASE("VectorRasterizer::rasterize") {
     VectorRasterizer rasterizer(rect2, asset);
 
     CartographicPolygon triangle(std::vector<glm::dvec2>{
-        glm::dvec2(0.375, 0.3125),
-        glm::dvec2(0.5, 0.4375),
-        glm::dvec2(0.625, 0.3125)});
+        glm::dvec2(
+            Math::degreesToRadians(0.375),
+            Math::degreesToRadians(0.3125)),
+        glm::dvec2(Math::degreesToRadians(0.5), Math::degreesToRadians(0.4375)),
+        glm::dvec2(
+            Math::degreesToRadians(0.625),
+            Math::degreesToRadians(0.3125))});
 
-    rasterizer.drawPolygon(
-        triangle,
-        VectorStyle{Color{
-            std::byte{255},
-            std::byte{127},
-            std::byte{100},
-            std::byte{255}}});
+    rasterizer.drawPolygon(triangle, VectorStyle{Color{255, 127, 100, 255}});
     rasterizer.finalize();
     asset->writeTga("triangle-scaled.tga");
+    checkFilesEqual(
+        dir / "triangle-scaled.tga",
+        thisDir / "triangle-scaled.tga");
   }
 
   SUBCASE("Polygon with holes") {
@@ -182,29 +209,24 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     VectorRasterizer rasterizer(rect, asset);
 
-    std::vector<std::vector<Cartographic>> composite{
-        std::vector<Cartographic>{
-            Cartographic(0.25, 0.25),
-            Cartographic(0.75, 0.25),
-            Cartographic(0.75, 0.75),
-            Cartographic(0.25, 0.75),
-            Cartographic(0.25, 0.25)},
-        std::vector<Cartographic>{
-            Cartographic(0.4, 0.4),
-            Cartographic(0.4, 0.6),
-            Cartographic(0.6, 0.6),
-            Cartographic(0.6, 0.4),
-            Cartographic(0.4, 0.4)}};
+    std::vector<std::vector<glm::dvec3>> composite{
+        std::vector<glm::dvec3>{
+            glm::dvec3(0.25, 0.25, 0.0),
+            glm::dvec3(0.75, 0.25, 0.0),
+            glm::dvec3(0.75, 0.75, 0.0),
+            glm::dvec3(0.25, 0.75, 0.0),
+            glm::dvec3(0.25, 0.25, 0.0)},
+        std::vector<glm::dvec3>{
+            glm::dvec3(0.4, 0.4, 0.0),
+            glm::dvec3(0.4, 0.6, 0.0),
+            glm::dvec3(0.6, 0.6, 0.0),
+            glm::dvec3(0.6, 0.4, 0.0),
+            glm::dvec3(0.4, 0.4, 0.0)}};
 
-    rasterizer.drawPolygon(
-        composite,
-        VectorStyle{Color{
-            std::byte{255},
-            std::byte{50},
-            std::byte{12},
-            std::byte{255}}});
+    rasterizer.drawPolygon(composite, VectorStyle{Color{255, 50, 12, 255}});
     rasterizer.finalize();
     asset->writeTga("polygon-holes.tga");
+    checkFilesEqual(dir / "polygon-holes.tga", thisDir / "polygon-holes.tga");
   }
 
   SUBCASE("Mip levels") {
@@ -225,16 +247,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     asset->pixelData.resize(totalSize, std::byte{255});
 
-    std::vector<Cartographic> polyline{
-        Cartographic(0.25, 0.25),
-        Cartographic(0.25, 0.5),
-        Cartographic(0.3, 0.7),
-        Cartographic(0.25, 0.8),
-        Cartographic(0.8, 1.0),
-        Cartographic(0.8, 0.9),
-        Cartographic(0.9, 0.9)};
-    VectorStyle style{
-        Color{std::byte{255}, std::byte{50}, std::byte{12}, std::byte{255}}};
+    std::vector<glm::dvec3> polyline{
+        glm::dvec3(0.25, 0.25, 0.0),
+        glm::dvec3(0.25, 0.5, 0.0),
+        glm::dvec3(0.3, 0.7, 0.0),
+        glm::dvec3(0.25, 0.8, 0.0),
+        glm::dvec3(0.8, 1.0, 0.0),
+        glm::dvec3(0.8, 0.9, 0.0),
+        glm::dvec3(0.9, 0.9, 0.0)};
+    VectorStyle style{Color{255, 50, 12, 255}};
 
     for (uint32_t i = 0; i < 4; i++) {
       VectorRasterizer rasterizer(rect, asset, i);
@@ -243,6 +264,10 @@ TEST_CASE("VectorRasterizer::rasterize") {
     }
 
     asset->writeTga("mipmap.tga");
+    checkFilesEqual(dir / "mipmap-mip0.tga", thisDir / "mipmap-mip0.tga");
+    checkFilesEqual(dir / "mipmap-mip1.tga", thisDir / "mipmap-mip1.tga");
+    checkFilesEqual(dir / "mipmap-mip2.tga", thisDir / "mipmap-mip2.tga");
+    checkFilesEqual(dir / "mipmap-mip3.tga", thisDir / "mipmap-mip3.tga");
   }
 
   SUBCASE("Styling") {
@@ -257,25 +282,29 @@ TEST_CASE("VectorRasterizer::rasterize") {
         std::byte{255});
 
     CartographicPolygon square(std::vector<glm::dvec2>{
-        glm::dvec2(0.25, 0.25),
-        glm::dvec2(0.25, 0.75),
-        glm::dvec2(0.75, 0.75),
-        glm::dvec2(0.75, 0.25)});
+        glm::dvec2(Math::degreesToRadians(0.25), Math::degreesToRadians(0.25)),
+        glm::dvec2(Math::degreesToRadians(0.25), Math::degreesToRadians(0.75)),
+        glm::dvec2(Math::degreesToRadians(0.75), Math::degreesToRadians(0.75)),
+        glm::dvec2(
+            Math::degreesToRadians(0.75),
+            Math::degreesToRadians(0.25))});
 
     CartographicPolygon triangle(std::vector<glm::dvec2>{
-        glm::dvec2(0.25, 0.25),
-        glm::dvec2(0.5, 0.75),
-        glm::dvec2(0.75, 0.25)});
+        glm::dvec2(Math::degreesToRadians(0.25), Math::degreesToRadians(0.25)),
+        glm::dvec2(Math::degreesToRadians(0.5), Math::degreesToRadians(0.75)),
+        glm::dvec2(
+            Math::degreesToRadians(0.75),
+            Math::degreesToRadians(0.25))});
 
-    std::vector<Cartographic> polyline{
-        Cartographic(0.1, 0.1),
-        Cartographic(0.9, 0.1),
-        Cartographic(0.9, 0.9)};
+    std::vector<glm::dvec3> polyline{
+        glm::dvec3(0.1, 0.1, 0.0),
+        glm::dvec3(0.9, 0.1, 0.0),
+        glm::dvec3(0.9, 0.9, 0.0)};
 
     VectorStyle style{
         LineStyle{ColorStyle{Color{0xff, 0xaa, 0x33}, ColorMode::Normal}, 2.0},
         PolygonStyle{
-            ColorStyle{Color{0x33, 0xaa, 0xff}, ColorMode::Random},
+            ColorStyle{Color{0x33, 0xaa, 0xff}, ColorMode::Normal},
             true,
             true}};
 
@@ -286,11 +315,16 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.finalize();
 
     asset->writeTga("styling.tga");
+    checkFilesEqual(dir / "styling.tga", thisDir / "styling.tga");
   }
 }
 
 TEST_CASE("VectorRasterizer::rasterize benchmark") {
-  GlobeRectangle rect{0.0, 0.0, 1.0, 1.0};
+  GlobeRectangle rect{
+      0.0,
+      0.0,
+      Math::degreesToRadians(1.0),
+      Math::degreesToRadians(1.0)};
   std::chrono::steady_clock clock;
   std::random_device r;
   std::default_random_engine rand(r());
@@ -313,15 +347,21 @@ TEST_CASE("VectorRasterizer::rasterize benchmark") {
     std::uniform_real_distribution<double> uniformDist;
     for (int j = 0; j < 1000; j++) {
       polygons.emplace_back(std::vector<glm::dvec2>{
-          glm::dvec2(uniformDist(rand), uniformDist(rand)),
-          glm::dvec2(uniformDist(rand), uniformDist(rand)),
-          glm::dvec2(uniformDist(rand), uniformDist(rand)),
+          glm::dvec2(
+              Math::degreesToRadians(uniformDist(rand)),
+              Math::degreesToRadians(uniformDist(rand))),
+          glm::dvec2(
+              Math::degreesToRadians(uniformDist(rand)),
+              Math::degreesToRadians(uniformDist(rand))),
+          glm::dvec2(
+              Math::degreesToRadians(uniformDist(rand)),
+              Math::degreesToRadians(uniformDist(rand))),
       });
       styles.emplace_back(Color{
-          (std::byte)(uniformDist(rand) * 255.0),
-          (std::byte)(uniformDist(rand) * 255.0),
-          (std::byte)(uniformDist(rand) * 255.0),
-          (std::byte)(uniformDist(rand) * 255.0)});
+          (uint8_t)(uniformDist(rand) * 255.0),
+          (uint8_t)(uniformDist(rand) * 255.0),
+          (uint8_t)(uniformDist(rand) * 255.0),
+          (uint8_t)(uniformDist(rand) * 255.0)});
     }
 
     std::chrono::steady_clock::time_point start = clock.now();

@@ -1,9 +1,10 @@
-#include <CesiumVectorData/Color.h>
+#include <CesiumUtility/Color.h>
 #include <CesiumVectorData/VectorStyle.h>
 
-#include <cstddef>
 #include <cstdint>
 #include <random>
+
+using namespace CesiumUtility;
 
 namespace CesiumVectorData {
 Color ColorStyle::getColor() const {
@@ -16,9 +17,9 @@ Color ColorStyle::getColor() const {
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
   return Color{
-      std::byte{(uint8_t)(dist(mt) * (float)this->color.r)},
-      std::byte{(uint8_t)(dist(mt) * (float)this->color.g)},
-      std::byte{(uint8_t)(dist(mt) * (float)this->color.b)},
+      (uint8_t)(dist(mt) * (float)this->color.r),
+      (uint8_t)(dist(mt) * (float)this->color.g),
+      (uint8_t)(dist(mt) * (float)this->color.b),
       this->color.a};
 }
 } // namespace CesiumVectorData

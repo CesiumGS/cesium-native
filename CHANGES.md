@@ -1,39 +1,42 @@
 # Change Log
 
-### v0.48.0 - 2025-06-02
+### ? - ?
 
-<<<<<<< HEAD
 ##### Breaking Changes :mega:
 
-- Renamed `SubtreeWriter::writeSubtree` to `SubtreeWriter::writeSubtreeJson`.
-- `SubtreeAvailability::createEmpty` now requires a boolean parameter to set initial tile availability.
-- `Cesium3DTilesSelection::Tile` constructors that take initially empty or external content now also require a `TileID` to be supplied.
+- Renamed `CesiumITwinClient::Connection::getAccessToken` to `CesiumITwinClient::Connection::getAuthenticationToken`.
+- Renamed `CesiumITwinClient::Connection::setAccessToken` to `CesiumITwinClient::Connection::setAuthenticationToken`.
 
-=======
->>>>>>> bb13b045973545ee2f1181d9703f88025e98f79b
 ##### Additions :tada:
 
 - Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
-<<<<<<< HEAD
-- Added `VectorDocumentRasterOverlay` for displaying VectorDocument objects loaded from GeoJSON as a raster overlay.
-=======
-- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
-- Added support for building in `vcpkg` manifest mode.
-- Added `SubtreeWriter::writeSubtreeBinary`.
-- 
+
+##### Fixes :wrench:
+
+- Fixed crash when unloading tilesets with raster overlays when the `EllipsoidTilesetLoader` was used.
+
+### v0.48.0 - 2025-06-02
+
 ##### Breaking Changes :mega:
 
 - Renamed `SubtreeWriter::writeSubtree` to `SubtreeWriter::writeSubtreeJson`.
 - `SubtreeAvailability::createEmpty` now requires a boolean parameter to set initial tile availability.
->>>>>>> bb13b045973545ee2f1181d9703f88025e98f79b
+- `Cesium3DTilesSelection::Tile` constructors that take initially empty or external content now also require a `TileID` to be supplied.
+
+##### Additions :tada:
+
+- Switched to vcpkg registry version `dbe35ceb30c688bf72e952ab23778e009a578f18`, from `2024.11.16`. We expect to upgrade again to an official tagged version in the next release.
+- Added `SubtreeWriter::writeSubtreeBinary`.
 
 ##### Fixes :wrench:
 
 - Fixed a bug where `SubtreeAvailability` wasn't updating the `constant` and `bitstream` properties of the availability object when converting constant availability to a bitstream.
 - Fixed a bug where `SubtreeAvailability` attempted to update buffer data that was no longer valid.
+- Fixed a bug where `TilesetContentLoaderResult` would drop its `statusCode` between `std::move`s due to its omission in the move constructor.
+- Fixed a bug introduced in v0.47.0 that caused tiles upsampled for raster overlays to lose their water mask.
 
 ### v0.47.0 - 2025-05-01
 

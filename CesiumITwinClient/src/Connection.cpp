@@ -18,13 +18,12 @@
 #include <CesiumITwinClient/PagedList.h>
 #include <CesiumITwinClient/Profile.h>
 #include <CesiumUtility/ErrorList.h>
-#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
+#include <CesiumVectorData/GeoJsonObjectTypes.h>
 
 #include <fmt/format.h>
 #include <rapidjson/document.h>
@@ -37,7 +36,6 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 
 using namespace CesiumAsync;
@@ -615,7 +613,7 @@ using ITwinCCCListResponse = std::vector<CesiumCuratedContentAsset>;
 CesiumAsync::Future<Result<ITwinCCCListResponse>>
 Connection::cesiumCuratedContent() {
   const std::vector<CesiumAsync::IAssetAccessor::THeader> headers{
-      {"Authorization", "Bearer " + this->_authToken.getToken()},
+      {"Authorization", "Bearer " + this->_authenticationToken.getToken()},
       {"Accept", "application/vnd.bentley.itwin-platform.v1+json"}};
   return this->_pAssetAccessor
       ->get(this->_asyncSystem, LIST_CCC_ENDPOINT_URL, headers)
@@ -753,17 +751,11 @@ Connection::geospatialFeatureCollections(const std::string& iTwinId) {
                   }
 
                   collectionResult.extents.spatial.emplace_back(
-                      CesiumGeospatial::GlobeRectangle{
-                          Math::degreesToRadians((*coords)[1]),
-                          Math::degreesToRadians((*coords)[0]),
-                          Math::degreesToRadians(
-                              coords->size() == 4 ? (*coords)[3]
-                                                  : (*coords)[4]),
-                          Math::degreesToRadians(
-                              coords->size() == 4 ? (*coords)[2]
-                                                  : (*coords)[3]),
-                      },
+                      (*coords)[0],
+                      (*coords)[1],
                       coords->size() == 4 ? 0 : (*coords)[2],
+                      coords->size() == 4 ? (*coords)[2] : (*coords)[3],
+                      coords->size() == 4 ? (*coords)[3] : (*coords)[4],
                       coords->size() == 4 ? 0 : (*coords)[5]);
                 }
 
@@ -900,33 +892,42 @@ Connection::listGeospatialFeatures(const std::string& url) {
                 return Result<PagedList<GeoJsonFeature>>(docResult.errors);
               }
 
-              Result<IntrusivePointer<GeoJsonDocument>> geoJsonDocResult =
+              Result<GeoJsonDocument> geoJsonDocResult =
                   GeoJsonDocument::fromGeoJson(*docResult.value, {});
-              if (!geoJsonDocResult.pValue) {
+              if (!geoJsonDocResult.value) {
                 return Result<PagedList<GeoJsonFeature>>(
                     geoJsonDocResult.errors);
               }
 
               GeoJsonFeatureCollection* pFeatureCollection =
-                  std::get_if<GeoJsonFeatureCollection>(
-                      &geoJsonDocResult.pValue->getRootObject().value);
+                  geoJsonDocResult.value->rootObject
+                      .getIf<GeoJsonFeatureCollection>();
               if (!pFeatureCollection) {
                 return Result<PagedList<GeoJsonFeature>>(
                     ErrorList::error("Expected 'FeatureCollection' in "
                                      "geospatial features result"));
               }
 
-              std::vector<GeoJsonFeature> nodes =
-                  std::move(pFeatureCollection->features);
+              std::vector<GeoJsonFeature> features;
+              features.reserve(pFeatureCollection->features.size());
+              for (GeoJsonObject& object : pFeatureCollection->features) {
+                GeoJsonFeature* pFeature = object.getIf<GeoJsonFeature>();
+                if (!pFeature) {
+                  return Result<PagedList<GeoJsonFeature>>(
+                      ErrorList::error(fmt::format(
+                          "Expected only Feature objects to be in "
+                          "FeatureCollection, found {}",
+                          geoJsonObjectTypeToString(object.getType()))));
+                }
+                features.emplace_back(std::move(*pFeature));
+              }
 
               return Result<PagedList<GeoJsonFeature>>(
                   PagedList<GeoJsonFeature>(
                       *docResult.value,
-                      std::move(nodes),
-                      [](CesiumUtility::IntrusivePointer<Connection>&
-                             pConnection,
-                         const std::string& url) {
-                        return pConnection->listGeospatialFeatures(url);
+                      std::move(features),
+                      [](Connection& connection, const std::string& url) {
+                        return connection.listGeospatialFeatures(url);
                       }));
             });
       });
@@ -934,9 +935,9 @@ Connection::listGeospatialFeatures(const std::string& url) {
 
 CesiumAsync::Future<CesiumUtility::Result<std::string>>
 Connection::ensureValidToken() {
-  if (this->_authToken.isValid()) {
+  if (this->_authenticationToken.isValid()) {
     return _asyncSystem.createResolvedFuture(
-        Result<std::string>(this->_authToken.getTokenHeader()));
+        Result<std::string>(this->_authenticationToken.getTokenHeader()));
   }
 
   if (!this->_refreshToken) {
@@ -962,10 +963,11 @@ Connection::ensureValidToken() {
               return Result<std::string>(tokenResult.errors);
             }
 
-            this->_authToken = std::move(*tokenResult.value);
+            this->_authenticationToken = std::move(*tokenResult.value);
             this->_refreshToken = std::move(response.value->refreshToken);
 
-            return Result<std::string>(this->_authToken.getTokenHeader());
+            return Result<std::string>(
+                this->_authenticationToken.getTokenHeader());
           });
 }
 

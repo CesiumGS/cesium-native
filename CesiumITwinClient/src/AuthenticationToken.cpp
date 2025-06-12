@@ -83,12 +83,10 @@ AuthenticationToken::parse(const std::string& tokenStr) {
 
   return Result<AuthenticationToken>(AuthenticationToken(
       tokenStr,
-      AccessTokenContents{
-          std::move(name),
-          std::move(userName),
-          std::move(scopes),
-          notValidBefore,
-      },
+      std::move(name),
+      std::move(userName),
+      std::move(scopes),
+      notValidBefore,
       expired));
 }
 
@@ -102,10 +100,10 @@ bool AuthenticationToken::isValid() const {
       std::get_if<AccessTokenContents>(&this->_contents);
   if (pAccessTokenContents) {
     return currentTimeSinceEpoch >= pAccessTokenContents->notValidBefore &&
-           currentTimeSinceEpoch < _expires;
+           currentTimeSinceEpoch < this->_expires;
   }
 
-  return currentTimeSinceEpoch < _expires;
+  return currentTimeSinceEpoch < this->_expires;
 }
 
 std::string AuthenticationToken::getTokenHeader() const {
@@ -121,4 +119,18 @@ std::string AuthenticationToken::getTokenHeader() const {
 
   return std::visit(TokenHeaderVisitor{this->_token}, this->_contents);
 }
+AuthenticationToken::AuthenticationToken(
+    const std::string& token,
+    std::string&& name,
+    std::string&& userName,
+    std::vector<std::string>&& scopes,
+    int64_t notValidBefore,
+    int64_t expires)
+    : _token(token),
+      _contents(AccessTokenContents{
+          std::move(name),
+          std::move(userName),
+          std::move(scopes),
+          notValidBefore}),
+      _expires(expires) {}
 } // namespace CesiumITwinClient

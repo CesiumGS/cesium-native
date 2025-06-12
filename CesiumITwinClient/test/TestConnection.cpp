@@ -1,11 +1,8 @@
-<<<<<<< HEAD
-#include "CesiumUtility/IntrusivePointer.h"
-=======
->>>>>>> bb13b045973545ee2f1181d9703f88025e98f79b
 #include "CesiumVectorData/GeoJsonObject.h"
 #include "MockITwinAssetAccessor.h"
 
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -71,21 +68,20 @@ TEST_CASE("CesiumITwinClient::Connection::me") {
   }
 
   SUBCASE("Handles refreshing token") {
-    const AuthenticationToken prevToken = pConn->getAuthToken();
+    const AuthenticationToken prevToken = pConn->getAuthenticationToken();
     const std::optional<std::string> prevRefreshToken =
         pConn->getRefreshToken();
     REQUIRE(prevRefreshToken);
 
     // Set an invalid access token.
-    pConn->setAuthToken(
-        AuthenticationToken("", AccessTokenContents{"", "", {}, 0}, 0));
+    pConn->setAuthenticationToken(AuthenticationToken("", "", "", {}, 0, 0));
 
     CesiumAsync::Future<Result<UserProfile>> future = pConn->me();
     Result<UserProfile> profileResult = future.waitInMainThread();
 
     CHECK(profileResult.value);
-    CHECK(pConn->getAuthToken().getToken() != prevToken.getToken());
-    CHECK(pConn->getAuthToken().isValid());
+    CHECK(pConn->getAuthenticationToken().getToken() != prevToken.getToken());
+    CHECK(pConn->getAuthenticationToken().isValid());
     CHECK(pConn->getRefreshToken());
     CHECK(pConn->getRefreshToken() != prevRefreshToken);
   }
@@ -118,14 +114,12 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatures") {
     CHECK((*list[5].properties)["type"].getString() == "Lamp_post");
 
     REQUIRE(list[5].geometry);
-    CesiumVectorData::GeoJsonPoint* pPoint =
-        std::get_if<CesiumVectorData::GeoJsonPoint>(&list[5].geometry->value);
+    const CesiumVectorData::GeoJsonPoint* pPoint =
+        list[5].geometry->getIf<CesiumVectorData::GeoJsonPoint>();
     REQUIRE(pPoint);
     CHECK(
-        pPoint->coordinates == CesiumGeospatial::Cartographic::fromDegrees(
-                                   103.839238468,
-                                   1.348559984,
-                                   7.813700195));
+        pPoint->coordinates ==
+        glm::dvec3(103.839238468, 1.348559984, 7.813700195));
   }
 }
 
@@ -153,26 +147,14 @@ TEST_CASE("CesiumITwinClient::Connection::geospatialFeatureCollections") {
     CHECK(collection.description == "Description");
 
     REQUIRE(!collection.extents.spatial.empty());
-    const CesiumGeospatial::BoundingRegion region{
-        CesiumGeospatial::GlobeRectangle{
-            Math::degreesToRadians(50.94487570541774),
-            Math::degreesToRadians(-50.08876885548398),
-            Math::degreesToRadians(50.94521538951092),
-            Math::degreesToRadians(-50.08830149142197)},
-        0.0003396840931770839,
-        0.0004673640620040942};
-    CHECK(
-        collection.extents.spatial[0].getRectangle().getNortheast() ==
-        region.getRectangle().getNortheast());
-    CHECK(
-        collection.extents.spatial[0].getRectangle().getSouthwest() ==
-        region.getRectangle().getSouthwest());
-    CHECK(
-        collection.extents.spatial[0].getMinimumHeight() ==
-        region.getMinimumHeight());
-    CHECK(
-        collection.extents.spatial[0].getMaximumHeight() ==
-        region.getMaximumHeight());
+    const CesiumGeometry::AxisAlignedBox& spatialExtents =
+        collection.extents.spatial[0];
+    CHECK(spatialExtents.minimumX == -50.08876885548398);
+    CHECK(spatialExtents.minimumY == 50.94487570541774);
+    CHECK(spatialExtents.maximumX == -50.08830149142197);
+    CHECK(spatialExtents.maximumY == 50.94521538951092);
+    CHECK(spatialExtents.minimumZ == 0.0003396840931770839);
+    CHECK(spatialExtents.maximumZ == 0.0004673640620040942);
     CHECK(
         collection.extents.coordinateReferenceSystem ==
         "https://www.opengis.net/def/crs/OGC/1.3/CRS84");

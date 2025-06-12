@@ -21,7 +21,7 @@ struct GeospatialFeatureCollectionExtents {
    * > may support additional areas. If multiple areas are provided, the union
    * > of the bounding boxes describes the spatial extent.
    */
-  std::vector<CesiumGeospatial::BoundingRegion> spatial;
+  std::vector<CesiumGeometry::AxisAlignedBox> spatial;
   /**
    * @brief The coordinate reference system used for the spatial extents.
    *
@@ -84,7 +84,7 @@ struct GeospatialFeatureCollection {
   /**
    * @brief The epoch of the storage coordinate reference system, if applicable.
    */
-  std::optional<std::string> storageCrsCoordinateEpoch = std::nullopt;
+  std::optional<std::string> storageCrsCoordinateEpoch;
 };
 
 } // namespace CesiumITwinClient
