@@ -402,7 +402,7 @@ void parseImplicitTileset(
   bool isMaximumLevel = false;
   if (availableLevelsIt == implicitTiling.MemberEnd()) {
     // old version of implicit uses maximumLevel instead of availableLevels.
-    // they have similar semantic except that max = index available = count
+    // They have similar semantics, except that "maximum" = index while "available" = count
     availableLevelsIt = implicitTiling.FindMember("maximumLevel");
     isMaximumLevel = true;
   }
