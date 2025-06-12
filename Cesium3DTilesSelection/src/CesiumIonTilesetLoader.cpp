@@ -212,9 +212,11 @@ mainThreadLoadTilesetJsonFromAssetEndpoint(
   }
 
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
-  requestHeaders.emplace_back(
-      "Authorization",
-      "Bearer " + endpoint.accessToken);
+  if (!endpoint.accessToken.empty()) {
+    requestHeaders.emplace_back(
+        "Authorization",
+        "Bearer " + endpoint.accessToken);
+  }
 
   return TilesetJsonLoader::createLoader(
              externals,
@@ -279,9 +281,11 @@ mainThreadLoadLayerJsonFromAssetEndpoint(
   }
 
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
-  requestHeaders.emplace_back(
-      "Authorization",
-      "Bearer " + endpoint.accessToken);
+  if (!endpoint.accessToken.empty()) {
+    requestHeaders.emplace_back(
+        "Authorization",
+        "Bearer " + endpoint.accessToken);
+  }
 
   std::string url =
       CesiumUtility::Uri::resolve(endpoint.url, "layer.json", true);
