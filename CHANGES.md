@@ -9,6 +9,7 @@
 ##### Additions :tada:
 
 - Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
+- Added `CesiumCurl` library containing `CurlAssetAccessor`, an implementation of `IAssetAccessor` based on libcurl.
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
