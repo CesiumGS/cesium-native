@@ -14,6 +14,10 @@
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
 
+##### Fixes :wrench:
+
+- Fixed crash when unloading tilesets with raster overlays when the `EllipsoidTilesetLoader` was used.
+
 ### v0.48.0 - 2025-06-02
 
 ##### Breaking Changes :mega:
