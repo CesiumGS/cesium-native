@@ -725,8 +725,11 @@ Future<Result<GeoJsonDocument>> GeoJsonDocument::fromUrl(
           -> Result<GeoJsonDocument> {
             const IAssetResponse* pAssetResponse = pAssetRequest->response();
 
-            if (pAssetResponse->statusCode() < 200 ||
-                pAssetResponse->statusCode() >= 300) {
+            // Curl returns a status code of zero with a file URL, so we want to
+            // consider that a success too.
+            if (pAssetResponse->statusCode() != 0 &&
+                (pAssetResponse->statusCode() < 200 ||
+                 pAssetResponse->statusCode() >= 300)) {
               return Result<GeoJsonDocument>(ErrorList::error(fmt::format(
                   "Status code {} while requesting GeoJSON data from URL.",
                   pAssetResponse->statusCode())));
