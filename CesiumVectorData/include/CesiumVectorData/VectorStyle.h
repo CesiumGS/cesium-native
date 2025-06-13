@@ -2,6 +2,8 @@
 
 #include <CesiumUtility/Color.h>
 
+#include <optional>
+
 namespace CesiumVectorData {
 
 /**
@@ -24,7 +26,7 @@ enum class ColorMode : uint8_t {
 };
 
 /**
- * @brief A base struct used for specifying the color of style types.
+ * @brief Specifies the color of a style type.
  */
 struct ColorStyle {
   /** @brief The color to be used. */
@@ -40,21 +42,6 @@ struct ColorStyle {
    * the rules described in \ref ColorMode.
    */
   CesiumUtility::Color getColor() const;
-};
-
-/** @brief The style used to draw a Polygon. */
-struct PolygonStyle : public ColorStyle {
-  /**
-   * @brief Whether the polygon should be filled. The `ColorStyle` specified
-   * here will be used for the fill color.
-   */
-  bool fill = true;
-  /**
-   * @brief Whether the polygon should be outlined. If true, then the
-   * `PolygonStyle` should be paired with a `LineStyle` that specifies the
-   * stroke color.
-   */
-  bool outline = false;
 };
 
 /** @brief The mode to use when interpreting a given line width. */
@@ -86,12 +73,26 @@ struct LineStyle : public ColorStyle {
   LineWidthMode widthMode = LineWidthMode::Pixels;
 };
 
+/** @brief The style used to draw a Polygon. */
+struct PolygonStyle {
+  /**
+   * @brief The color used to fill this polygon. If `std::nullopt`, the polygon
+   * will not be filled.
+   */
+  std::optional<ColorStyle> fill;
+  /**
+   * @brief The style used to outline this polygon. If `std::nullopt`, the
+   * polygon will not be outlined.
+   */
+  std::optional<LineStyle> outline;
+};
+
 /**
  * @brief Style information to use when drawing vector data.
  */
 struct VectorStyle {
   /**
-   * @brief The style to use when drawing polylines and stroking shapes.
+   * @brief The style to use when drawing polylines.
    */
   LineStyle line;
   /**
@@ -102,13 +103,11 @@ struct VectorStyle {
   /**
    * @brief Initializes style information for all types.
    */
-  VectorStyle(const LineStyle& lineStyle, const PolygonStyle& polygonStyle)
-      : line(lineStyle), polygon(polygonStyle) {}
+  VectorStyle(const LineStyle& lineStyle, const PolygonStyle& polygonStyle);
 
   /**
    * @brief Initializes all styles to the given color.
    */
-  VectorStyle(const CesiumUtility::Color& color)
-      : line{{color}}, polygon{{color}} {}
+  VectorStyle(const CesiumUtility::Color& color);
 };
 } // namespace CesiumVectorData

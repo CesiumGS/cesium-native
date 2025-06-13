@@ -1,9 +1,8 @@
 #pragma once
 
-#include "CesiumVectorData/VectorStyle.h"
-#include "GeoJsonObjectTypes.h"
-
 #include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumVectorData/GeoJsonObjectTypes.h>
+#include <CesiumVectorData/VectorStyle.h>
 
 #include <array>
 #include <vector>

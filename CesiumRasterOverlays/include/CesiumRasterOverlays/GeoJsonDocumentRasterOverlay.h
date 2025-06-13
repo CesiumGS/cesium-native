@@ -1,8 +1,7 @@
 #pragma once
 
-#include "CesiumAsync/IAssetAccessor.h"
-
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/Projection.h>

@@ -80,16 +80,24 @@ public:
       const VectorStyle& style);
 
   /**
-   * @brief Rasterizes the provided `GeoJsonObject` to the canvas.
+   * @brief Rasterizes a `GeoJsonObject` to the canvas.
    *
-   * Polygons are equivalent to calls to `drawPolygon`. Polylines are equivalent
-   * to calls to `drawPolyline`. Points are currently not drawn.
+   * This will recurse through any children of the `GeoJsonObject` as well. All
+   * GeoJSON objects will be *considered* (that is, no object's children will be
+   * ignored), but only `LineString` types (`LineString` and `MultiLineString`)
+   * and `Polygon` types (`Polygon` and `MultiPolygon`) will actually be
+   * rendered.
+   *
+   * This method can potentially be very slow if a large tree is passed in. If
+   * better performance is needed, selecting a subset of leaf objects (those
+   * without any children) and calling `drawGeoJsonObject` on each one will have
+   * better results.
    *
    * @param geoJsonObject The GeoJSON object to draw.
    * @param style The \ref VectorStyle to use when drawing the object.
    */
   void drawGeoJsonObject(
-      const GeoJsonObject* geoJsonObject,
+      const GeoJsonObject& geoJsonObject,
       const VectorStyle& style);
 
   /**

@@ -116,7 +116,7 @@ void VectorRasterizer::drawPolygon(
     this->_context.fillPolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.polygon.getColor().toRgba32()));
+        BLRgba32(style.polygon.fill->getColor().toRgba32()));
   }
 
   if (style.polygon.outline) {
@@ -124,7 +124,7 @@ void VectorRasterizer::drawPolygon(
     this->_context.strokePolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.line.getColor().toRgba32()));
+        BLRgba32(style.polygon.outline->getColor().toRgba32()));
   }
 }
 
@@ -153,7 +153,7 @@ void VectorRasterizer::drawPolygon(
     this->_context.fillPolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.polygon.getColor().toRgba32()));
+        BLRgba32(style.polygon.fill->getColor().toRgba32()));
   }
 
   if (style.polygon.outline) {
@@ -161,7 +161,7 @@ void VectorRasterizer::drawPolygon(
     this->_context.strokePolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.line.getColor().toRgba32()));
+        BLRgba32(style.polygon.outline->getColor().toRgba32()));
   }
 }
 
@@ -193,7 +193,7 @@ void VectorRasterizer::drawPolyline(
 }
 
 void VectorRasterizer::drawGeoJsonObject(
-    const GeoJsonObject* geoJsonObject,
+    const GeoJsonObject& geoJsonObject,
     const VectorStyle& style) {
   struct PrimitiveDrawVisitor {
     VectorRasterizer& rasterizer;
@@ -222,7 +222,9 @@ void VectorRasterizer::drawGeoJsonObject(
     void operator()(const GeoJsonGeometryCollection& /*catchAll*/) {}
   };
 
-  std::visit(PrimitiveDrawVisitor{*this, style}, geoJsonObject->value);
+  for (const GeoJsonObject& object : geoJsonObject) {
+    object.visit(PrimitiveDrawVisitor{*this, style});
+  }
 }
 
 void VectorRasterizer::clear(const CesiumUtility::Color& clearColor) {

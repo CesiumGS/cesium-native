@@ -2,7 +2,7 @@
 
 #include <doctest/doctest.h>
 
-TEST_CASE("ImageAsset::convertToChannels") {
+TEST_CASE("ImageAsset::changeNumberOfChannels") {
   SUBCASE("Converts to fewer channels") {
     CesiumGltf::ImageAsset asset;
     asset.channels = 4;
@@ -27,7 +27,7 @@ TEST_CASE("ImageAsset::convertToChannels") {
         std::byte{0x01},
         std::byte{0x9b}};
 
-    asset.convertToChannels(2);
+    asset.changeNumberOfChannels(2);
     CHECK(asset.pixelData[0] == std::byte{0xff});
     CHECK(asset.pixelData[1] == std::byte{0xaa});
     CHECK(asset.pixelData[2] == std::byte{0xaa});
@@ -49,7 +49,7 @@ TEST_CASE("ImageAsset::convertToChannels") {
     asset.pixelData =
         {std::byte{0xab}, std::byte{0xbc}, std::byte{0xcd}, std::byte{0xde}};
 
-    asset.convertToChannels(2, std::byte{0x99});
+    asset.changeNumberOfChannels(2, std::byte{0x99});
     CHECK(asset.pixelData[0] == std::byte{0xab});
     CHECK(asset.pixelData[1] == std::byte{0x99});
     CHECK(asset.pixelData[2] == std::byte{0xbc});

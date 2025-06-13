@@ -22,4 +22,10 @@ Color ColorStyle::getColor() const {
       (uint8_t)(dist(mt) * (float)this->color.b),
       this->color.a};
 }
+VectorStyle::VectorStyle(const CesiumUtility::Color& color)
+    : line{{color}}, polygon{ColorStyle{color}, std::nullopt} {}
+VectorStyle::VectorStyle(
+    const LineStyle& lineStyle,
+    const PolygonStyle& polygonStyle)
+    : line(lineStyle), polygon(polygonStyle) {}
 } // namespace CesiumVectorData

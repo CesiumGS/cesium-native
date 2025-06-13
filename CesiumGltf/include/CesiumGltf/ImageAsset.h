@@ -120,15 +120,6 @@ struct CESIUMGLTF_API ImageAsset final
   ImageAsset() = default;
 
   /**
-   * @brief Writes this image to a TGA file. If the image has any mip levels,
-   * they will be written as `filename-mip{level}.tga`, where `{level}` is the mip level.
-   *
-   * This method is only meant to be used for debugging. It does not support any
-   * compressed pixel formats.
-   */
-  void writeTga(const std::string& outputPath) const;
-
-  /**
    * @brief Converts this image to the given number of channels.
    *
    * If the new channel count is lower than the current channel count (for
@@ -143,8 +134,9 @@ struct CESIUMGLTF_API ImageAsset final
    *
    * @warning Currently only works with one-byte-per-channel images.
    */
-  void
-  convertToChannels(int32_t newChannels, std::byte defaultValue = std::byte{0});
+  void changeNumberOfChannels(
+      int32_t newChannels,
+      std::byte defaultValue = std::byte{0});
 
   /**
    * @brief Gets the size of this asset, in bytes.

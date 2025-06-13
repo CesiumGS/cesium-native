@@ -115,7 +115,7 @@ void rasterizePolygons(
 
   rasterizer.finalize();
   // Convert RGBA32 -> R8
-  image.convertToChannels(1);
+  image.changeNumberOfChannels(1);
 }
 } // namespace
 

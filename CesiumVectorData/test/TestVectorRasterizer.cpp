@@ -3,6 +3,7 @@
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumNativeTests/writeTga.h>
 #include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/VectorRasterizer.h>
@@ -20,6 +21,7 @@
 using namespace CesiumGeospatial;
 using namespace CesiumVectorData;
 using namespace CesiumUtility;
+using namespace CesiumNativeTests;
 
 namespace {
 void checkFilesEqual(
@@ -68,7 +70,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolygon(triangle, VectorStyle{Color{0, 255, 255, 255}});
     rasterizer.finalize();
-    asset->writeTga("triangle.tga");
+    writeImageToTgaFile(*asset, "triangle.tga");
     checkFilesEqual(dir / "triangle.tga", thisDir / "triangle.tga");
   }
 
@@ -119,7 +121,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         rasterizer.finalize();
 
         const std::string fileName = fmt::format("tile-{}-{}.tga", i, j);
-        tile->writeTga(fileName);
+        writeImageToTgaFile(*tile, fileName);
         checkFilesEqual(dir / fileName, thisDir / fileName);
 
         for (size_t x = 0; x < (size_t)128; x++) {
@@ -157,7 +159,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolyline(polyline, VectorStyle{Color{81, 33, 255, 255}});
     rasterizer.finalize();
-    asset->writeTga("polyline.tga");
+    writeImageToTgaFile(*asset, "polyline.tga");
     checkFilesEqual(dir / "polyline.tga", thisDir / "polyline.tga");
   }
 
@@ -190,7 +192,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolygon(triangle, VectorStyle{Color{255, 127, 100, 255}});
     rasterizer.finalize();
-    asset->writeTga("triangle-scaled.tga");
+    writeImageToTgaFile(*asset, "triangle-scaled.tga");
     checkFilesEqual(
         dir / "triangle-scaled.tga",
         thisDir / "triangle-scaled.tga");
@@ -225,7 +227,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolygon(composite, VectorStyle{Color{255, 50, 12, 255}});
     rasterizer.finalize();
-    asset->writeTga("polygon-holes.tga");
+    writeImageToTgaFile(*asset, "polygon-holes.tga");
     checkFilesEqual(dir / "polygon-holes.tga", thisDir / "polygon-holes.tga");
   }
 
@@ -263,7 +265,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
       rasterizer.finalize();
     }
 
-    asset->writeTga("mipmap.tga");
+    writeImageToTgaFile(*asset, "mipmap.tga");
     checkFilesEqual(dir / "mipmap-mip0.tga", thisDir / "mipmap-mip0.tga");
     checkFilesEqual(dir / "mipmap-mip1.tga", thisDir / "mipmap-mip1.tga");
     checkFilesEqual(dir / "mipmap-mip2.tga", thisDir / "mipmap-mip2.tga");
@@ -314,7 +316,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.drawPolyline(polyline, style);
     rasterizer.finalize();
 
-    asset->writeTga("styling.tga");
+    writeImageToTgaFile(*asset, "styling.tga");
     checkFilesEqual(dir / "styling.tga", thisDir / "styling.tga");
   }
 }
@@ -378,7 +380,7 @@ TEST_CASE("VectorRasterizer::rasterize benchmark") {
     total += time;
     std::cout << "rasterized 1000 triangles in " << time.count()
               << " microseconds\n";
-    asset->writeTga("rand.tga");
+    writeImageToTgaFile(*asset, "rand.tga");
   }
 
   double seconds =
