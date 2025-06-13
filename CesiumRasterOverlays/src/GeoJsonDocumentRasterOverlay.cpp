@@ -368,7 +368,7 @@ void rasterizeQuadtreeNode(
       }
       primitivesRendered[dataIdx] = true;
       const QuadtreeGeometryData& data = tree.data[dataIdx];
-      rasterizer.drawGeoJsonObject(data.pObject, *data.pStyle);
+      rasterizer.drawGeoJsonObject(*data.pObject, *data.pStyle);
     }
   } else {
     for (size_t i = 0; i < 2; i++) {

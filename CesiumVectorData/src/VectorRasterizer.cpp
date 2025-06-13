@@ -99,8 +99,8 @@ VectorRasterizer::VectorRasterizer(
 
 void VectorRasterizer::drawPolygon(
     const CesiumGeospatial::CartographicPolygon& polygon,
-    const VectorStyle& style) {
-  if (_finalized || (!style.polygon.fill && !style.polygon.outline)) {
+    const PolygonStyle& style) {
+  if (_finalized || (!style.fill && !style.outline)) {
     return;
   }
 
@@ -112,26 +112,30 @@ void VectorRasterizer::drawPolygon(
         radiansToPoint(pos.x, pos.y, this->_bounds, this->_context));
   }
 
-  if (style.polygon.fill) {
+  if (style.fill) {
     this->_context.fillPolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.polygon.fill->getColor().toRgba32()));
+        BLRgba32(style.fill->getColor().toRgba32()));
   }
 
-  if (style.polygon.outline) {
-    setStrokeWidth(this->_context, style.line, this->_ellipsoid, this->_bounds);
+  if (style.outline) {
+    setStrokeWidth(
+        this->_context,
+        *style.outline,
+        this->_ellipsoid,
+        this->_bounds);
     this->_context.strokePolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.polygon.outline->getColor().toRgba32()));
+        BLRgba32(style.outline->getColor().toRgba32()));
   }
 }
 
 void VectorRasterizer::drawPolygon(
     const std::vector<std::vector<glm::dvec3>>& polygon,
-    const VectorStyle& style) {
-  if (_finalized || (!style.polygon.fill && !style.polygon.outline)) {
+    const PolygonStyle& style) {
+  if (_finalized || (!style.fill && !style.outline)) {
     return;
   }
 
@@ -149,25 +153,29 @@ void VectorRasterizer::drawPolygon(
     }
   }
 
-  if (style.polygon.fill) {
+  if (style.fill) {
     this->_context.fillPolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.polygon.fill->getColor().toRgba32()));
+        BLRgba32(style.fill->getColor().toRgba32()));
   }
 
-  if (style.polygon.outline) {
-    setStrokeWidth(this->_context, style.line, this->_ellipsoid, this->_bounds);
+  if (style.outline) {
+    setStrokeWidth(
+        this->_context,
+        *style.outline,
+        this->_ellipsoid,
+        this->_bounds);
     this->_context.strokePolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.polygon.outline->getColor().toRgba32()));
+        BLRgba32(style.outline->getColor().toRgba32()));
   }
 }
 
 void VectorRasterizer::drawPolyline(
     const std::span<const glm::dvec3>& points,
-    const VectorStyle& style) {
+    const LineStyle& style) {
   if (_finalized) {
     return;
   }
@@ -184,12 +192,12 @@ void VectorRasterizer::drawPolyline(
     vertices.emplace_back(point);
   }
 
-  setStrokeWidth(this->_context, style.line, this->_ellipsoid, this->_bounds);
+  setStrokeWidth(this->_context, style, this->_ellipsoid, this->_bounds);
 
   this->_context.strokePolyline(
       vertices.data(),
       vertices.size(),
-      BLRgba32(style.line.getColor().toRgba32()));
+      BLRgba32(style.getColor().toRgba32()));
 }
 
 void VectorRasterizer::drawGeoJsonObject(
@@ -199,20 +207,20 @@ void VectorRasterizer::drawGeoJsonObject(
     VectorRasterizer& rasterizer;
     const VectorStyle& style;
     void operator()(const GeoJsonLineString& line) {
-      rasterizer.drawPolyline(line.coordinates, style);
+      rasterizer.drawPolyline(line.coordinates, style.line);
     }
     void operator()(const GeoJsonMultiLineString& lines) {
       for (const std::vector<glm::dvec3>& line : lines.coordinates) {
-        rasterizer.drawPolyline(line, style);
+        rasterizer.drawPolyline(line, style.line);
       }
     }
     void operator()(const GeoJsonPolygon& polygon) {
-      rasterizer.drawPolygon(polygon.coordinates, style);
+      rasterizer.drawPolygon(polygon.coordinates, style.polygon);
     }
     void operator()(const GeoJsonMultiPolygon& polygons) {
       for (const std::vector<std::vector<glm::dvec3>>& polygon :
            polygons.coordinates) {
-        rasterizer.drawPolygon(polygon, style);
+        rasterizer.drawPolygon(polygon, style.polygon);
       }
     }
     void operator()(const GeoJsonPoint& /*catchAll*/) {}
