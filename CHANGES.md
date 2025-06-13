@@ -10,6 +10,7 @@
 
 - Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
 - Added `GeoJsonDocumentRasterOverlay` for displaying VectorDocument objects loaded from GeoJSON as a raster overlay.
+- Added `CesiumCurl` library containing `CurlAssetAccessor`, an implementation of `IAssetAccessor` based on libcurl.
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
@@ -17,6 +18,7 @@
 ##### Fixes :wrench:
 
 - Fixed crash when unloading tilesets with raster overlays when the `EllipsoidTilesetLoader` was used.
+- Fixed incorrect handling of legacy maximumLevel property when the `TilesetJsonLoader` was used.
 
 ### v0.48.0 - 2025-06-02
 

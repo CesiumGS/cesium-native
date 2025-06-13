@@ -89,10 +89,15 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
 set(PACKAGES_PRIVATE
-    abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
+    abseil curl draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp cpp-httplib[core] libmorton zstd blend2d asmjit # asmjit needed by blend2d
+    earcut-hpp cpp-httplib[core] libmorton zstd blend2d
 )
+
+# asmjit needed by blend2d on non-iOS platforms (iOS doesn't support JIT)
+if(NOT IOS)
+    list(APPEND PACKAGES_PRIVATE asmjit)
+endif()
 
 # Packages only used for testing
 set(PACKAGES_TEST doctest)
@@ -290,25 +295,29 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 find_package(zlib-ng REQUIRED)
 find_package(modp_b64 REQUIRED)
 
+find_package(ada CONFIG REQUIRED)
 find_package(Async++ CONFIG REQUIRED)
+find_package(CURL REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(meshoptimizer CONFIG REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(libmorton CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
+find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
-find_package(ada CONFIG REQUIRED)
 find_package(blend2d CONFIG REQUIRED)
-find_package(asmjit CONFIG REQUIRED)
+# asmjit should not be included with iOS builds as iOS doesn't support JIT compilation.
+if(NOT IOS)
+    find_package(asmjit CONFIG REQUIRED)
+endif()
 
 
 # Private Library (s2geometry)
@@ -336,6 +345,7 @@ add_subdirectory(CesiumIonClient)
 add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
 add_subdirectory(CesiumVectorData)
+add_subdirectory(CesiumCurl)
 
 # Private Targets
 if (CESIUM_TESTS_ENABLED)
