@@ -257,8 +257,8 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                                 cacheControl)) {
 
                           // Remove the If-None-Match header if exists to avoid reusing it in future requests
-                          HttpHeaders headers = pRequestToStore->headers();
-                          headers.erase("If-None-Match");
+                          HttpHeaders headersToStore = pRequestToStore->headers();
+                          headersToStore.erase("If-None-Match");
 
                           pCacheDatabase->storeEntry(
                               calculateCacheKey(*pRequestToStore),
@@ -267,7 +267,7 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                                   cacheControl),
                               pRequestToStore->url(),
                               pRequestToStore->method(),
-                              headers,
+                              headersToStore,
                               pResponseToStore->statusCode(),
                               pResponseToStore->headers(),
                               pResponseToStore->data());
