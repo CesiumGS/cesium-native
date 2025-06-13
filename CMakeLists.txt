@@ -91,12 +91,15 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 set(PACKAGES_PRIVATE
     abseil curl draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp cpp-httplib[core] libmorton zstd blend2d
+    earcut-hpp cpp-httplib[core] libmorton zstd
 )
 
 # asmjit needed by blend2d on non-iOS platforms (iOS doesn't support JIT)
 if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
-    list(APPEND PACKAGES_PRIVATE asmjit)
+    list(APPEND PACKAGES_PRIVATE blend2d asmjit)
+else()
+    # Use [core] feature to disable default jit feature.
+    list(APPEND PACKAGES_PRIVATE blend2d[core])
 endif()
 
 # Packages only used for testing
