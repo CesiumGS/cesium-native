@@ -414,7 +414,7 @@ void rasterizeVectorData(
 }
 } // namespace
 
-class CESIUMRASTEROVERLAYS_API VectorDocumentRasterOverlayTileProvider final
+class CESIUMRASTEROVERLAYS_API GeoJsonDocumentRasterOverlayTileProvider final
     : public RasterOverlayTileProvider {
 
 private:
@@ -423,10 +423,9 @@ private:
   Quadtree _tree;
   Ellipsoid _ellipsoid;
   uint32_t _mipLevels;
-  std::optional<GeoJsonDocumentRasterOverlayStyleCallback> _styleCallback;
 
 public:
-  VectorDocumentRasterOverlayTileProvider(
+  GeoJsonDocumentRasterOverlayTileProvider(
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -450,11 +449,7 @@ public:
         _defaultStyle(options.defaultStyle),
         _tree(),
         _ellipsoid(options.ellipsoid),
-        _mipLevels(options.mipLevels),
-        _styleCallback(options.styleCallback) {
-    // Compute styles before building the quadtree so we can cache the computed
-    // styles in QuadtreePrimitiveData
-    this->recomputeStyles();
+        _mipLevels(options.mipLevels) {
     this->_tree = buildQuadtree(this->_document, this->_defaultStyle);
   }
 
@@ -531,33 +526,30 @@ public:
           return result;
         });
   }
-
-  void
-  setStyleCallback(GeoJsonDocumentRasterOverlayStyleCallback&& newCallback) {
-    this->_styleCallback = std::move(newCallback);
-  }
-
-  void recomputeStyles() {
-    if (!this->_styleCallback) {
-      return;
-    }
-
-    for (GeoJsonObject& object : this->_document->rootObject) {
-      const std::optional<VectorStyle>& style =
-          (*this->_styleCallback)(this->_document, &object);
-      object.getStyle() = style;
-    }
-  }
 };
 
 GeoJsonDocumentRasterOverlay::GeoJsonDocumentRasterOverlay(
+    const CesiumAsync::AsyncSystem& asyncSystem,
     const std::string& name,
-    const GeoJsonDocumentRasterOverlaySource& source,
-    const GeoJsonDocumentRasterOverlayOptions& vectorOptions,
+    const std::shared_ptr<GeoJsonDocument>& document,
+    const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
-      _source(source),
-      _options(vectorOptions) {}
+      _documentFuture(
+          asyncSystem
+              .createResolvedFuture(std::shared_ptr<GeoJsonDocument>(document))
+              .share()),
+      _options(vectorOverlayOptions) {}
+
+GeoJsonDocumentRasterOverlay::GeoJsonDocumentRasterOverlay(
+    const std::string& name,
+    CesiumAsync::Future<std::shared_ptr<CesiumVectorData::GeoJsonDocument>>&&
+        documentFuture,
+    const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
+    const RasterOverlayOptions& overlayOptions)
+    : RasterOverlay(name, overlayOptions),
+      _documentFuture(std::move(documentFuture).share()),
+      _options(vectorOverlayOptions) {}
 
 GeoJsonDocumentRasterOverlay::~GeoJsonDocumentRasterOverlay() = default;
 
@@ -573,82 +565,24 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  struct DocumentSourceVisitor {
-    CesiumAsync::AsyncSystem asyncSystem;
-    std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
-    CesiumAsync::Future<Result<std::shared_ptr<GeoJsonDocument>>>
-    operator()(const std::shared_ptr<GeoJsonDocument>& document) {
-      return asyncSystem
-          .createResolvedFuture<Result<std::shared_ptr<GeoJsonDocument>>>(
-              Result(document));
-    }
-    CesiumAsync::Future<Result<std::shared_ptr<GeoJsonDocument>>>
-    operator()(const IonGeoJsonDocumentRasterOverlaySource& ion) {
-      return GeoJsonDocument::fromCesiumIonAsset(
-                 asyncSystem,
-                 pAssetAccessor,
-                 ion.ionAssetID,
-                 ion.ionAccessToken,
-                 ion.ionAssetEndpointUrl)
-          .thenImmediately([](Result<GeoJsonDocument>&& result) {
-            if (!result.value) {
-              return Result<std::shared_ptr<GeoJsonDocument>>(result.errors);
-            }
-
-            return Result<std::shared_ptr<GeoJsonDocument>>(
-                std::make_shared<GeoJsonDocument>(std::move(*result.value)));
-          });
-    }
-    CesiumAsync::Future<Result<std::shared_ptr<GeoJsonDocument>>>
-    operator()(const UrlGeoJsonDocumentRasterOverlaySource& url) {
-      return GeoJsonDocument::fromUrl(
-                 asyncSystem,
-                 pAssetAccessor,
-                 url.url,
-                 url.headers)
-          .thenImmediately([](Result<GeoJsonDocument>&& result) {
-            if (!result.value) {
-              return Result<std::shared_ptr<GeoJsonDocument>>(result.errors);
-            }
-
-            return Result<std::shared_ptr<GeoJsonDocument>>(
-                std::make_shared<GeoJsonDocument>(std::move(*result.value)));
-          });
-    }
-  };
-
-  return std::visit(
-             DocumentSourceVisitor{asyncSystem, pAssetAccessor},
-             this->_source)
-      .thenImmediately(
+  return const_cast<GeoJsonDocumentRasterOverlay*>(this)
+      ->_documentFuture.thenImmediately(
           [pOwner,
            asyncSystem,
            pAssetAccessor,
            pPrepareRendererResources,
            pLogger,
-           options = this->_options](
-              Result<std::shared_ptr<GeoJsonDocument>>&& result)
+           options = this->_options](const std::shared_ptr<GeoJsonDocument>& result)
               -> CreateTileProviderResult {
-            if (!result.value) {
-              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                  RasterOverlayLoadType::CesiumIon,
-                  nullptr,
-                  fmt::format(
-                      "Errors while loading GeoJSON: {}",
-                      CesiumUtility::joinToString(
-                          result.errors.errors,
-                          ", "))});
-            }
-
             return IntrusivePointer<RasterOverlayTileProvider>(
-                new VectorDocumentRasterOverlayTileProvider(
+                new GeoJsonDocumentRasterOverlayTileProvider(
                     pOwner,
                     asyncSystem,
                     pAssetAccessor,
                     pPrepareRendererResources,
                     pLogger,
                     options,
-                    *result.value));
+                    result));
           });
 }
 

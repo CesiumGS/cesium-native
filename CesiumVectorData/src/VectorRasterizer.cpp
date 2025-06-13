@@ -25,7 +25,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
-#include <variant>
 #include <vector>
 
 using namespace CesiumGeospatial;

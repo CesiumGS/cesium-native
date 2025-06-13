@@ -23,7 +23,7 @@ void ImageAsset::changeNumberOfChannels(
     for (size_t i = 0; i < this->pixelData.size();
          i += (size_t)this->channels) {
       for (size_t j = 0; j < (size_t)newChannels; j++) {
-        this->pixelData[writePos + j] = this->pixelData[i + j];
+        this->pixelData[writePos] = this->pixelData[i + j];
         ++writePos;
       }
     }
@@ -37,12 +37,12 @@ void ImageAsset::changeNumberOfChannels(
     for (size_t i = 0; i < this->pixelData.size();
          i += (size_t)this->channels) {
       for (size_t j = 0; j < (size_t)this->channels; j++) {
-        newPixelData[writePos + j] = this->pixelData[i + j];
+        newPixelData[writePos] = this->pixelData[i + j];
         ++writePos;
       }
 
       for (size_t j = 0; j < (size_t)(newChannels - this->channels); j++) {
-        newPixelData[writePos + (size_t)this->channels + j] = defaultValue;
+        newPixelData[writePos] = defaultValue;
         ++writePos;
       }
     }

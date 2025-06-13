@@ -1,3 +1,5 @@
+#include "CesiumVectorData/GeoJsonObjectTypes.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
@@ -26,6 +28,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -107,8 +110,10 @@ void rasterizePolygons(
       ellipsoid);
   rasterizer.clear(CesiumUtility::Color{outsideColor, 0x00, 0x00, 0xff});
 
-  CesiumVectorData::VectorStyle insideStyle{
-      CesiumUtility::Color{insideColor, 0x00, 0x00, 0xff}};
+  CesiumVectorData::PolygonStyle insideStyle{
+      CesiumVectorData::ColorStyle{
+          CesiumUtility::Color{insideColor, 0x00, 0x00, 0xff}},
+      std::nullopt};
   for (const CartographicPolygon& selection : cartographicPolygons) {
     rasterizer.drawPolygon(selection, insideStyle);
   }

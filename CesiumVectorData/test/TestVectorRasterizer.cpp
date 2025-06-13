@@ -56,7 +56,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -68,7 +69,9 @@ TEST_CASE("VectorRasterizer::rasterize") {
             Math::degreesToRadians(0.75),
             Math::degreesToRadians(0.25))});
 
-    rasterizer.drawPolygon(triangle, VectorStyle{Color{0, 255, 255, 255}});
+    rasterizer.drawPolygon(
+        triangle,
+        VectorStyle{Color{0, 255, 255, 255}}.polygon);
     rasterizer.finalize();
     writeImageToTgaFile(*asset, "triangle.tga");
     checkFilesEqual(dir / "triangle.tga", thisDir / "triangle.tga");
@@ -82,7 +85,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     CartographicPolygon triangle(std::vector<glm::dvec2>{
@@ -95,7 +99,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     {
       VectorRasterizer rasterizer(rect, asset);
 
-      rasterizer.drawPolygon(triangle, style);
+      rasterizer.drawPolygon(triangle, style.polygon);
       rasterizer.finalize();
     }
 
@@ -108,7 +112,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
         tile->channels = 4;
         tile->bytesPerChannel = 1;
         tile->pixelData.resize(
-            (size_t)(tile->width * tile->height * tile->channels * tile->bytesPerChannel),
+            (size_t)(tile->width * tile->height * tile->channels *
+                     tile->bytesPerChannel),
             std::byte{255});
         VectorRasterizer rasterizer(
             GlobeRectangle(
@@ -117,7 +122,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
                 Math::degreesToRadians(0.5 + (double)i * 0.5),
                 Math::degreesToRadians(0.5 + (double)j * 0.5)),
             tile);
-        rasterizer.drawPolygon(triangle, style);
+        rasterizer.drawPolygon(triangle, style.polygon);
         rasterizer.finalize();
 
         const std::string fileName = fmt::format("tile-{}-{}.tga", i, j);
@@ -143,7 +148,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -157,7 +163,9 @@ TEST_CASE("VectorRasterizer::rasterize") {
         glm::dvec3(0.8, 0.9, 0.0),
         glm::dvec3(0.9, 0.9, 0.0)};
 
-    rasterizer.drawPolyline(polyline, VectorStyle{Color{81, 33, 255, 255}});
+    rasterizer.drawPolyline(
+        polyline,
+        VectorStyle{Color{81, 33, 255, 255}}.line);
     rasterizer.finalize();
     writeImageToTgaFile(*asset, "polyline.tga");
     checkFilesEqual(dir / "polyline.tga", thisDir / "polyline.tga");
@@ -176,7 +184,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect2, asset);
@@ -190,7 +199,9 @@ TEST_CASE("VectorRasterizer::rasterize") {
             Math::degreesToRadians(0.625),
             Math::degreesToRadians(0.3125))});
 
-    rasterizer.drawPolygon(triangle, VectorStyle{Color{255, 127, 100, 255}});
+    rasterizer.drawPolygon(
+        triangle,
+        VectorStyle{Color{255, 127, 100, 255}}.polygon);
     rasterizer.finalize();
     writeImageToTgaFile(*asset, "triangle-scaled.tga");
     checkFilesEqual(
@@ -206,7 +217,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -225,7 +237,9 @@ TEST_CASE("VectorRasterizer::rasterize") {
             glm::dvec3(0.6, 0.4, 0.0),
             glm::dvec3(0.4, 0.4, 0.0)}};
 
-    rasterizer.drawPolygon(composite, VectorStyle{Color{255, 50, 12, 255}});
+    rasterizer.drawPolygon(
+        composite,
+        VectorStyle{Color{255, 50, 12, 255}}.polygon);
     rasterizer.finalize();
     writeImageToTgaFile(*asset, "polygon-holes.tga");
     checkFilesEqual(dir / "polygon-holes.tga", thisDir / "polygon-holes.tga");
@@ -261,7 +275,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     for (uint32_t i = 0; i < 4; i++) {
       VectorRasterizer rasterizer(rect, asset, i);
-      rasterizer.drawPolyline(polyline, style);
+      rasterizer.drawPolyline(polyline, style.line);
       rasterizer.finalize();
     }
 
@@ -280,7 +294,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     CartographicPolygon square(std::vector<glm::dvec2>{
@@ -307,13 +322,14 @@ TEST_CASE("VectorRasterizer::rasterize") {
         LineStyle{ColorStyle{Color{0xff, 0xaa, 0x33}, ColorMode::Normal}, 2.0},
         PolygonStyle{
             ColorStyle{Color{0x33, 0xaa, 0xff}, ColorMode::Normal},
-            true,
-            true}};
+            LineStyle{
+                ColorStyle{Color{0xff, 0xaa, 0x33}, ColorMode::Normal},
+                2.0}}};
 
     VectorRasterizer rasterizer(rect, asset);
-    rasterizer.drawPolygon(square, style);
-    rasterizer.drawPolygon(triangle, style);
-    rasterizer.drawPolyline(polyline, style);
+    rasterizer.drawPolygon(square, style.polygon);
+    rasterizer.drawPolygon(triangle, style.polygon);
+    rasterizer.drawPolyline(polyline, style.line);
     rasterizer.finalize();
 
     writeImageToTgaFile(*asset, "styling.tga");
@@ -340,7 +356,8 @@ TEST_CASE("VectorRasterizer::rasterize benchmark") {
   asset->channels = 4;
   asset->bytesPerChannel = 1;
   asset->pixelData.resize(
-      (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+      (size_t)(asset->width * asset->height * asset->channels *
+               asset->bytesPerChannel),
       std::byte{255});
 
   for (int i = 0; i < 100; i++) {
@@ -370,7 +387,7 @@ TEST_CASE("VectorRasterizer::rasterize benchmark") {
 
     VectorRasterizer rasterizer(rect, asset);
     for (size_t j = 0; j < polygons.size(); j++) {
-      rasterizer.drawPolygon(polygons[j], styles[j]);
+      rasterizer.drawPolygon(polygons[j], styles[j].polygon);
     }
     rasterizer.finalize();
 

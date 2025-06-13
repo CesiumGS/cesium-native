@@ -16,20 +16,10 @@
 
 #include <spdlog/fwd.h>
 
-#include <functional>
 #include <memory>
 #include <string>
-#include <variant>
 
 namespace CesiumRasterOverlays {
-
-/**
- * @brief A callback used to set new styles on vector documents.
- */
-using GeoJsonDocumentRasterOverlayStyleCallback =
-    std::function<std::optional<CesiumVectorData::VectorStyle>(
-        const std::shared_ptr<CesiumVectorData::GeoJsonDocument>&,
-        CesiumVectorData::GeoJsonObject*)>;
 
 /**
  * @brief A set of options for configuring a GeoJsonDocumentRasterOverlay.
@@ -40,12 +30,6 @@ struct GeoJsonDocumentRasterOverlayOptions {
    * \ref CesiumVectorData::GeoJsonObject.
    */
   CesiumVectorData::VectorStyle defaultStyle;
-
-  /**
-   * @brief If specified, this callback will be run for every object in the
-   * document and can be used to set new styles for the objects.
-   */
-  std::optional<GeoJsonDocumentRasterOverlayStyleCallback> styleCallback;
 
   /**
    * @brief The projection to use for this overlay.
@@ -64,36 +48,6 @@ struct GeoJsonDocumentRasterOverlayOptions {
 };
 
 /**
- * @brief Information required to load a GeoJSON document from Cesium ion.
- */
-struct IonGeoJsonDocumentRasterOverlaySource {
-  /** @brief The ion Asset ID to load. */
-  int64_t ionAssetID;
-  /** @brief The ion access token to use to access the asset. */
-  std::string ionAccessToken;
-  /** @brief The URL of the Cesium ion endpoint. */
-  std::string ionAssetEndpointUrl = "https://api.cesium.com";
-};
-
-/**
- * @brief Information required to load a GeoJSON document from a URL.
- */
-struct UrlGeoJsonDocumentRasterOverlaySource {
-  /** @brief The URL to load a GeoJSON document from. */
-  std::string url;
-  /** @brief Headers to attach to the request. */
-  std::vector<CesiumAsync::IAssetAccessor::THeader> headers = {};
-};
-
-/**
- * @brief Possible sources for a GeoJsonDocumentRasterOverlay's vector data.
- */
-using GeoJsonDocumentRasterOverlaySource = std::variant<
-    std::shared_ptr<CesiumVectorData::GeoJsonDocument>,
-    IonGeoJsonDocumentRasterOverlaySource,
-    UrlGeoJsonDocumentRasterOverlaySource>;
-
-/**
  * @brief A raster overlay made from rasterizing a \ref
  * CesiumVectorData::GeoJsonDocument.
  */
@@ -104,17 +58,37 @@ public:
   /**
    * @brief Creates a new GeoJsonDocumentRasterOverlay.
    *
+   * @param asyncSystem The async system to use.
    * @param name The user-given name of this polygon layer.
-   * @param source The source of the vector data to use for the overlay.
+   * @param document The GeoJSON document to use for the overlay.
+   * @param vectorOverlayOptions Options to configure this
+   * GeoJsonDocumentRasterOverlay.
+   * @param overlayOptions Options to use for this RasterOverlay.
+   */
+  GeoJsonDocumentRasterOverlay(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::string& name,
+      const std::shared_ptr<CesiumVectorData::GeoJsonDocument>& document,
+      const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
+      const RasterOverlayOptions& overlayOptions = {});
+
+  /**
+   * @brief Creates a new GeoJsonDocumentRasterOverlay from a future.
+   *
+   * @param name The user-given name of this polygon layer.
+   * @param documentFuture A future resolving into a GeoJSON document to use for
+   * the overlay.
    * @param vectorOverlayOptions Options to configure this
    * GeoJsonDocumentRasterOverlay.
    * @param overlayOptions Options to use for this RasterOverlay.
    */
   GeoJsonDocumentRasterOverlay(
       const std::string& name,
-      const GeoJsonDocumentRasterOverlaySource& source,
+      CesiumAsync::Future<std::shared_ptr<CesiumVectorData::GeoJsonDocument>>&&
+          documentFuture,
       const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
       const RasterOverlayOptions& overlayOptions = {});
+
   virtual ~GeoJsonDocumentRasterOverlay() override;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
@@ -128,7 +102,8 @@ public:
       const override;
 
 private:
-  GeoJsonDocumentRasterOverlaySource _source;
+  CesiumAsync::SharedFuture<std::shared_ptr<CesiumVectorData::GeoJsonDocument>>
+      _documentFuture;
   GeoJsonDocumentRasterOverlayOptions _options;
 };
 } // namespace CesiumRasterOverlays
