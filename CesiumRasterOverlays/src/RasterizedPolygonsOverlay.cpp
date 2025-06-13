@@ -1,5 +1,3 @@
-#include "CesiumVectorData/GeoJsonObjectTypes.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
@@ -28,7 +26,6 @@
 #include <optional>
 #include <string>
 #include <vector>
-
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

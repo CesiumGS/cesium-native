@@ -2,6 +2,7 @@
 #include <CesiumVectorData/VectorStyle.h>
 
 #include <cstdint>
+#include <optional>
 #include <random>
 
 using namespace CesiumUtility;

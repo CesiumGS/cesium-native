@@ -1,7 +1,4 @@
 #include <CesiumGltf/ImageAsset.h>
-#include <CesiumUtility/Assert.h>
-
-#include <fmt/format.h>
 
 #include <cstddef>
 #include <cstdint>

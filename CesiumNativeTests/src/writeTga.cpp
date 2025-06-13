@@ -1,4 +1,6 @@
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumNativeTests/writeTga.h>
+#include <CesiumUtility/Assert.h>
 
 #include <fmt/format.h>
 
