@@ -69,6 +69,7 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | **Cesium3DTilesSelection**     | Runtime streaming, level of detail selection, culling, cache management, and decoding of 3D Tiles.              |
 | **CesiumAsync**                | Classes for multi-threaded asynchronous tasks.                                                                  |
 | **CesiumClientCommon**         | Functionality shared between ion and iTwin client implementations, primarily shared authentication code.        |
+| **CesiumCurl**                 | Provides the ability to access HTTP and other network resources using libcurl.                                  |
 | **CesiumGeometry**             | Common 3D geometry classes; and bounds testing, intersection testing, and spatial indexing algorithms.          |
 | **CesiumGeospatial**           | 3D geospatial math types and functions for ellipsoids, transforms, projections.                                 |
 | **CesiumGltf**                 | Lightweight glTF processing and optimization functions.                                                         |
@@ -100,6 +101,8 @@ The following official Cesium integrations are built on top of Cesium Native:
 In addition, Cesium Native has been used by the community to build projects including:
 - [vsgCs](https://github.com/timoore/vsgCs) integrates Cesium Native with VulkanSceneGraph.
 - [osgEarth](https://github.com/gwaldron/osgearth) uses Cesium Native to load 3D Tiles in OpenSceneGraph.
+- [3D Tiles for Godot](https://github.com/Battle-Road-Labs/3D-Tiles-For-Godot) integrates Cesium Native with the Godot game engine.
+- [cesium_3d_native](https://github.com/odd-io/cesium_3d_native) provides a Dart wrapper around Cesium Native, allowing integration with Dart/Flutter applications.
 
 If you have a project that integrates with Cesium Native that isn't on this list yet, please let us know!
 
