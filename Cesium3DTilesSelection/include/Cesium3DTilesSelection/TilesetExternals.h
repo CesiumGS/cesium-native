@@ -1,10 +1,14 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <Cesium3DTilesSelection/spdlog-cesium.h>
 #include <CesiumAsync/AsyncSystem.h>
+
+#include <glm/fwd.hpp>
+#include <rapidjson/fwd.h>
 
 #include <memory>
 
@@ -76,6 +80,14 @@ public:
    */
   CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> pSharedAssetSystem =
       TilesetSharedAssetSystem::getDefault();
+
+  /**
+   * Optional user-controlled tile loading post-processing stage that can modify
+   * the glTF meshes (eg. split or merge them).
+   *
+   * @see Cesium3DTilesSelection::GltfModifier
+   */
+  std::shared_ptr<GltfModifier> gltfModifier = {};
 };
 
 } // namespace Cesium3DTilesSelection
