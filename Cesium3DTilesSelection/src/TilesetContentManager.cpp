@@ -2035,12 +2035,15 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
     }
 
     {
-      // Remove the If-None-Match header if exists to avoid adding it to other requests
+      // Remove the If-None-Match header if exists to avoid adding it to other
+      // requests
       CesiumAsync::CaseInsensitiveCompare cmp;
-      std::erase_if(result.requestHeaders,
-        [&](const CesiumAsync::IAssetAccessor::THeader& h) {
-          return !cmp(h.first, "If-None-Match") && !cmp("If-None-Match", h.first);
-        });
+      std::erase_if(
+          result.requestHeaders,
+          [&](const CesiumAsync::IAssetAccessor::THeader& h) {
+            return !cmp(h.first, "If-None-Match") &&
+                   !cmp("If-None-Match", h.first);
+          });
     }
 
     this->_requestHeaders = std::move(result.requestHeaders);
