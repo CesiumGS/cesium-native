@@ -18,6 +18,7 @@
 
 - Fixed crash when unloading tilesets with raster overlays when the `EllipsoidTilesetLoader` was used.
 - Fixed incorrect handling of legacy maximumLevel property when the `TilesetJsonLoader` was used.
+- Fixed `OrientedBoundingBox::computeDistanceSquaredToPosition()` calculation when `OrientedBoundingBox` has degenerate axes.
 
 ### v0.48.0 - 2025-06-02
 
