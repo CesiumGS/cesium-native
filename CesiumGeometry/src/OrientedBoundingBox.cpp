@@ -85,7 +85,7 @@ double OrientedBoundingBox::computeDistanceSquaredToPosition(
     wValid = false;
   }
 
-  int numberOfDegenerateAxes = !uValid + !vValid + !wValid;
+  const int numberOfDegenerateAxes = !uValid + !vValid + !wValid;
   glm::dvec3 validAxis1;
   glm::dvec3 validAxis2;
   glm::dvec3 validAxis3;
@@ -141,7 +141,7 @@ double OrientedBoundingBox::computeDistanceSquaredToPosition(
       u = validAxis2;
       v = validAxis3;
     }
-  } else {
+  } else if (numberOfDegenerateAxes == 3) {
     u = {1, 0, 0};
     v = {0, 1, 0};
     w = {0, 0, 1};
