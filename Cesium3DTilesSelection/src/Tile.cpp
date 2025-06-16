@@ -304,7 +304,7 @@ bool Tile::needsMainThreadLoading(
     std::optional<int> modelVersion) const noexcept {
   TileLoadState state = this->getState();
   // Test if main-thread phase of glTF modifier should be performed.
-  if (-1 != modelVersion && state == TileLoadState::Done) {
+  if (modelVersion && state == TileLoadState::Done) {
     const auto* renderContent = getContent().getRenderContent();
     if (renderContent && renderContent->getGltfModifierState() ==
                              GltfModifier::State::WorkerDone)
