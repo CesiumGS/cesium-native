@@ -1215,8 +1215,8 @@ void TilesetContentManager::loadTileContent(
         if (result.state == TileLoadResultState::Success) {
           if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
             auto asyncSystem = tileLoadInfo.asyncSystem;
-            if (isLoadingRootTile) // update root translation now it has been
-                                   // loaded
+            // update root translation now it has been loaded:
+            if (isLoadingRootTile)
               rootTranslation = glm::column(tileLoadInfo.tileTransform, 3);
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
