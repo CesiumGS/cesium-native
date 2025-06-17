@@ -63,26 +63,20 @@ double OrientedBoundingBox::computeDistanceSquaredToPosition(
   const double vHalf = glm::length(v);
   const double wHalf = glm::length(w);
 
-  bool uValid = true;
-  bool vValid = true;
-  bool wValid = true;
+  bool uValid = uHalf > 0;
+  bool vValid = vHalf > 0;
+  bool wValid = wHalf > 0;
 
-  if (uHalf > 0) {
+  if (uValid) {
     u /= uHalf;
-  } else {
-    uValid = false;
   }
-
-  if (vHalf > 0) {
+  
+  if (vValid) {
     v /= vHalf;
-  } else {
-    vValid = false;
   }
-
-  if (wHalf > 0) {
+  
+  if (wValid) {
     w /= wHalf;
-  } else {
-    wValid = false;
   }
 
   const int numberOfDegenerateAxes = !uValid + !vValid + !wValid;
