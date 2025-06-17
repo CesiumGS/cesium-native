@@ -326,10 +326,11 @@ TEST_CASE("OrientedBoundingBox::intersectPlane") {
       // arbitrary box
       TestCase{
           glm::dvec3(-5.1, 0.0, 0.1),
-          glm::dmat3(glm::rotate(
-              glm::scale(glm::dmat4(), glm::dvec3(1.5, 80.4, 2.6)),
-              1.2,
-              glm::dvec3(0.5, 1.5, -1.2)))}};
+          glm::dmat3(
+              glm::rotate(
+                  glm::scale(glm::dmat4(), glm::dvec3(1.5, 80.4, 2.6)),
+                  1.2,
+                  glm::dvec3(0.5, 1.5, -1.2)))}};
 
   for (auto& testCase : testCases) {
     testIntersectPlane(testCase);
@@ -373,18 +374,21 @@ TEST_CASE("OrientedBoundingBox::computeDistanceSquaredToPosition example") {
   CHECK(boxes[1].getCenter().x == 1.0);
 }
 
-TEST_CASE("OrientedBoundingBox::computeDistanceSquaredToPosition degenerate axes") {
+TEST_CASE(
+    "OrientedBoundingBox::computeDistanceSquaredToPosition degenerate axes") {
   struct TestCase {
     OrientedBoundingBox box;
     double distance;
   };
-  std::vector<TestCase> tests {
-    { {glm::dvec3(1.0, 0.0, 0.0), glm::dmat3(0.0) }, 1 },
-    { {glm::dvec3(1.0, 0.0, 0.0), glm::dmat3 {{1,0,0},{0,0,0},{0,0,0}}}, 0 },
-    { {glm::dvec3(1.0, 0.0, 0.0), glm::dmat3 {{1,0,0},{0,1,0},{0,0,0}}}, 0 },
-    { {glm::dvec3(1.0, 0.0, 0.0), glm::dmat3 {{0,0,0},{0,1,0},{0,0,1}}}, 1 }
-  };
-  glm::dvec3 cameraPosition {0,0,0};
+  std::vector<TestCase> tests{
+      {{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3(0.0)}, 1},
+      {{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3{{1, 0, 0}, {0, 0, 0}, {0, 0, 0}}},
+       0},
+      {{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3{{1, 0, 0}, {0, 1, 0}, {0, 0, 0}}},
+       0},
+      {{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3{{0, 0, 0}, {0, 1, 0}, {0, 0, 1}}},
+       1}};
+  glm::dvec3 cameraPosition{0, 0, 0};
 
   for (const auto& testCase : tests) {
     double d = testCase.box.computeDistanceSquaredToPosition(cameraPosition);
