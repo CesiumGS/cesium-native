@@ -125,6 +125,7 @@ double OrientedBoundingBox::computeDistanceSquaredToPosition(
 
     validAxis2 = glm::normalize(glm::cross(validAxis1, crossVector));
     validAxis3 = glm::normalize(glm::cross(validAxis1, validAxis2));
+    
     if (uValid) {
       v = validAxis2;
       w = validAxis3;
