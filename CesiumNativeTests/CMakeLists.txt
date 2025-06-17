@@ -11,6 +11,7 @@ set(cesium_native_targets
     Cesium3DTilesSelection
     Cesium3DTilesWriter
     CesiumAsync
+    CesiumCurl
     CesiumGeometry
     CesiumGeospatial
     CesiumGltf

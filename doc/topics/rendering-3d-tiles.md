@@ -12,7 +12,7 @@ In order to understand the pieces that you will need to implement in order to co
 
 * `Application` is the application you're developing.
 * `Tileset` is the Cesium Native [Tileset](@ref Cesium3DTilesSelection::Tileset) class.
-* `IAssetAccessor` is Cesium Native's interface to download assets, i.e., files on the file system or a web server. You must implement this interface.
+* `IAssetAccessor` is Cesium Native's interface to download assets, i.e., files on the file system or a web server. Cesium Native provides an implementation of this interface based on [libcurl](https://curl.se/libcurl/) in [CurlAssetAccessor](@ref CesiumCurl::CurlAssetAccessor). Or, if your application already has the ability to access network resources, you can implement the interface yourself.
 * `IPrepareRendererResources` is Cesium Native's interface to create "renderer" resources on-demand for the glTF models that it provides. For example, if you're integrating Cesium Native into a game engine, the renderer resource might be an instance of the game engine's static mesh class. You must implement this interface as well.
 
 @mermaid{tileset-sequence-diagram-frame1}
@@ -61,7 +61,7 @@ With that out of the way, `Tileset` returns the new set of `tilesToRenderThisFra
 As illustrated above, integrating 3D Tiles rendering in your application requires the following:
 
 1. Implement [ITaskProcessor](@ref CesiumAsync::ITaskProcessor) to run jobs in background threads, preferably using a thread pool or task graph.
-2. Implement [IAssetAccessor](@ref CesiumAsync::IAssetAccessor) to download resources from whatever sources your application needs to load 3D Tiles from. A possible approach is to use [libcurl](https://curl.se/libcurl/), but many applications already include file and HTTP support.
+2. Implement [IAssetAccessor](@ref CesiumAsync::IAssetAccessor) to download resources from whatever sources your application needs to load 3D Tiles from. A possible approach is to use [libcurl](https://curl.se/libcurl/) via the [CurlAssetAccessor](@ref CesiumCurl::CurlAssetAccessor) included with Cesium Native, but many applications already include file and HTTP support.
 3. Implement [IPrepareRendererResources](@ref Cesium3DTilesSelection::IPrepareRendererResources) to create meshes and textures for your application from the in-memory glTF representations provided by Cesium Native.
 4. When constructing a [Tileset](@ref Cesium3DTilesSelection::Tileset), pass in instances of the three implementations above as part of the [TilesetExternals](@ref Cesium3DTilesSelection::TilesetExternals).
 5. Call [updateView](@ref Cesium3DTilesSelection::Tileset::updateView) on each `Tileset` each frame. Show the already-created models identified in [tilesToRenderThisFrame](@ref Cesium3DTilesSelection::ViewUpdateResult::tilesToRenderThisFrame) and hide the ones in [tilesFadingOut](@ref Cesium3DTilesSelection::ViewUpdateResult::tilesFadingOut).
