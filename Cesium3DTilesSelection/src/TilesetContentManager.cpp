@@ -56,7 +56,6 @@
 #include <glm/gtc/matrix_access.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/spdlog.h>
-#include <glm/gtc/matrix_access.hpp>
 
 #include <algorithm>
 #include <any>
