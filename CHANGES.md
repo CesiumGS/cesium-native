@@ -16,6 +16,7 @@
 ##### Fixes :wrench:
 
 - Fixed crash when unloading tilesets with raster overlays when the `EllipsoidTilesetLoader` was used.
+- Fixed issue with Google 3D Photorealistic and status code 304, where the 'If-None-Match' was stored in TilesetContentManager
 
 ### v0.48.0 - 2025-06-02
 
