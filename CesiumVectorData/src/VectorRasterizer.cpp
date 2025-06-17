@@ -53,8 +53,9 @@ void setStrokeWidth(
   if (style.widthMode == LineWidthMode::Pixels) {
     context.setStrokeWidth(style.width);
   } else if (style.widthMode == LineWidthMode::Meters) {
-    const double radians = style.width / ellipsoid.getRadii().x;
-    context.setStrokeWidth(radians / bounds.computeWidth());
+    context.setStrokeWidth(
+        (context.targetWidth() * style.width) /
+        (bounds.computeWidth() * ellipsoid.getRadii().x));
   }
 }
 } // namespace

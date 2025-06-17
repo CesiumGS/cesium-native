@@ -55,6 +55,9 @@ enum class LineWidthMode : uint8_t {
    * @brief The line width will cover this number of meters of the ellipsoid
    * it's rendered on. This may cause the line to disappear as the user zooms
    * out.
+   *
+   * This value specifies a size in meters *at the equator* of the ellipsoid
+   * it's rendered on.
    */
   Meters = 1
 };

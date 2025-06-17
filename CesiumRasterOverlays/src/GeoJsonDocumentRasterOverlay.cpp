@@ -414,7 +414,7 @@ class CESIUMRASTEROVERLAYS_API GeoJsonDocumentRasterOverlayTileProvider final
     : public RasterOverlayTileProvider {
 
 private:
-  std::shared_ptr<GeoJsonDocument> _document;
+  std::shared_ptr<GeoJsonDocument> _pDocument;
   VectorStyle _defaultStyle;
   Quadtree _tree;
   Ellipsoid _ellipsoid;
@@ -441,12 +441,12 @@ public:
             projectRectangleSimple(
                 options.projection,
                 CesiumGeospatial::GlobeRectangle::MAXIMUM)),
-        _document(std::move(pDocument)),
+        _pDocument(std::move(pDocument)),
         _defaultStyle(options.defaultStyle),
         _tree(),
         _ellipsoid(options.ellipsoid),
         _mipLevels(options.mipLevels) {
-    this->_tree = buildQuadtree(this->_document, this->_defaultStyle);
+    this->_tree = buildQuadtree(this->_pDocument, this->_defaultStyle);
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
@@ -461,7 +461,7 @@ public:
         glm::ivec2(options.maximumTextureSize));
 
     return this->getAsyncSystem().runInWorkerThread(
-        [document = this->_document,
+        [document = this->_pDocument,
          &tree = this->_tree,
          _ellipsoid = this->_ellipsoid,
          projection = this->getProjection(),
