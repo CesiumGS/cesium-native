@@ -375,11 +375,11 @@ TEST_CASE("OrientedBoundingBox::computeDistanceSquaredToPosition example") {
 
 TEST_CASE(
     "OrientedBoundingBox::computeDistanceSquaredToPosition degenerate axes") {
-  struct TestCase {
+  struct DegenerateAxesTestCase {
     OrientedBoundingBox box;
     double distance;
   };
-  std::vector<TestCase> tests{
+  std::vector<DegenerateAxesTestCase> tests{
       {{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3(0.0)}, 1},
       {{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3{{1, 0, 0}, {0, 0, 0}, {0, 0, 0}}},
        0},
