@@ -89,7 +89,7 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
 set(PACKAGES_PRIVATE
-    abseil curl draco ktx modp-base64 meshoptimizer openssl s2geometry
+    abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
@@ -100,6 +100,10 @@ if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
 else()
     # Use [core] feature to disable default jit feature.
     list(APPEND PACKAGES_PRIVATE blend2d[core])
+endif()
+
+if(NOT CESIUM_DISABLE_CURL)
+    list(APPEND PACKAGES_PRIVATE curl)
 endif()
 
 # Packages only used for testing
@@ -300,7 +304,6 @@ find_package(modp_b64 REQUIRED)
 
 find_package(ada CONFIG REQUIRED)
 find_package(Async++ CONFIG REQUIRED)
-find_package(CURL REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
@@ -322,39 +325,40 @@ if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     find_package(asmjit CONFIG REQUIRED)
 endif()
 
+if(NOT CESIUM_DISABLE_CURL)
+    find_package(CURL REQUIRED)
+endif()
+
 
 # Private Library (s2geometry)
 add_subdirectory(extern EXCLUDE_FROM_ALL)
 
-function(cesium_add_subdirectory NAME)
-    if(NOT CESIUM_DISABLE_${NAME})
-        add_subdirectory(${NAME})
-    endif()
-endfunction()
-
 # Public Targets
-cesium_add_subdirectory(CesiumUtility)
-cesium_add_subdirectory(CesiumGltf)
-cesium_add_subdirectory(CesiumGeometry)
-cesium_add_subdirectory(CesiumGeospatial)
-cesium_add_subdirectory(CesiumJsonReader)
-cesium_add_subdirectory(CesiumJsonWriter)
-cesium_add_subdirectory(CesiumGltfContent)
-cesium_add_subdirectory(CesiumGltfReader)
-cesium_add_subdirectory(CesiumGltfWriter)
-cesium_add_subdirectory(CesiumAsync)
-cesium_add_subdirectory(Cesium3DTiles)
-cesium_add_subdirectory(Cesium3DTilesReader)
-cesium_add_subdirectory(Cesium3DTilesWriter)
-cesium_add_subdirectory(Cesium3DTilesContent)
-cesium_add_subdirectory(CesiumRasterOverlays)
-cesium_add_subdirectory(Cesium3DTilesSelection)
-cesium_add_subdirectory(CesiumClientCommon)
-cesium_add_subdirectory(CesiumIonClient)
-cesium_add_subdirectory(CesiumITwinClient)
-cesium_add_subdirectory(CesiumQuantizedMeshTerrain)
-cesium_add_subdirectory(CesiumVectorData)
-cesium_add_subdirectory(CesiumCurl)
+add_subdirectory(CesiumUtility)
+add_subdirectory(CesiumGltf)
+add_subdirectory(CesiumGeometry)
+add_subdirectory(CesiumGeospatial)
+add_subdirectory(CesiumJsonReader)
+add_subdirectory(CesiumJsonWriter)
+add_subdirectory(CesiumGltfContent)
+add_subdirectory(CesiumGltfReader)
+add_subdirectory(CesiumGltfWriter)
+add_subdirectory(CesiumAsync)
+add_subdirectory(Cesium3DTiles)
+add_subdirectory(Cesium3DTilesReader)
+add_subdirectory(Cesium3DTilesWriter)
+add_subdirectory(Cesium3DTilesContent)
+add_subdirectory(CesiumRasterOverlays)
+add_subdirectory(Cesium3DTilesSelection)
+add_subdirectory(CesiumClientCommon)
+add_subdirectory(CesiumIonClient)
+add_subdirectory(CesiumITwinClient)
+add_subdirectory(CesiumQuantizedMeshTerrain)
+add_subdirectory(CesiumVectorData)
+
+if(NOT CESIUM_DISABLE_CURL)
+    add_subdirectory(CesiumCurl)
+endif()
 
 # Private Targets
 if (CESIUM_TESTS_ENABLED)
