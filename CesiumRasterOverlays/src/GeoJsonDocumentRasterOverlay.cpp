@@ -44,29 +44,100 @@ using namespace CesiumVectorData;
 namespace CesiumRasterOverlays {
 
 namespace {
+/**
+ * @brief A single geometry object in a GeoJSON file, with all the information
+ * required for rendering.
+ */
 struct QuadtreeGeometryData {
+  /**
+   * @brief A pointer to the geometry object to render.
+   */
   const GeoJsonObject* pObject;
+  /**
+   * @brief A pointer to the `VectorStyle` to apply to this geometry object.
+   */
   const VectorStyle* pStyle;
+  /**
+   * @brief The bounding rectangle encompassing this geometry.
+   */
   GlobeRectangle rectangle;
 };
 
 struct QuadtreeNode {
+  /**
+   * @brief The `GlobeRectangle` defining the bounds of this node.
+   */
   GlobeRectangle rectangle;
+  /**
+   * @brief Indices representing the children of this quadtree node.
+   *
+   * `0` represents no child, as the 0 index will always be the root node and
+   * the root node cannot ever be a child of another node.
+   */
   uint32_t children[2][2] = {{0, 0}, {0, 0}};
 
   QuadtreeNode(const GlobeRectangle& rectangle_) : rectangle(rectangle_) {}
+
+  /**
+   * @brief Returns `true` if this node has any children.
+   */
   bool anyChildren() const {
     return children[0][0] != 0 && children[0][1] != 0 && children[1][0] != 0 &&
            children[1][1] != 0;
   }
 };
 
+/**
+ * @brief A quadtree used to speed up the selection of GeoJSON objects to
+ * rasterize.
+ *
+ * A GeoJSON document, unlike something like 3D Tiles or a Tile Map Service, is
+ * a format that is not designed around efficient real-time rendering. There is
+ * no way to tell from the structure of a GeoJSON document which objects will
+ * need to be considered when rendering any particular area. This becomes an
+ * issue when working with GeoJSON documents that have thousands, or tens of
+ * thousands, or hundreds of thousands of objects that each could be considered
+ * for rendering in any particular tile. Performing bounding box comparisons of
+ * hundreds of thousands of objects per tile is not conducive to good
+ * performance.
+ *
+ * To speed up these checks, we use a quadtree to speed up our queries against
+ * the document. The root level of the quadtree encompasses the entire bounding
+ * rectangle of the document. Each sub-level then represents one quarter of the
+ * parent level. The same object may appear in multiple levels at once; a line
+ * that crosses the north side of one level will appear in both its north east
+ * and north west sublevels, and every object that can be rendered will be
+ * included in the root level.
+ *
+ * The reason for including the same object across multiple levels is so that
+ * rendering can do a minimum amount of recursing through the tree. If we need
+ * to render the entire document at once, for example, the root level will
+ * provide the full list of objects to render without having to check any
+ * children.
+ */
 struct Quadtree {
   GlobeRectangle rectangle = GlobeRectangle::EMPTY;
   uint32_t rootId = 0;
   std::vector<QuadtreeNode> nodes;
   std::vector<QuadtreeGeometryData> data;
+  /**
+   * @brief A vector containing all the geometry of all the nodes.
+   *
+   * Each element in this vector is an index into `data`.
+   */
   std::vector<uint32_t> dataIndices;
+  /**
+   * @brief A vector containing the first index into `dataIndices` for every
+   * node.
+   *
+   * This vector contains `nodeCount + 1` items, with a synthetic final index
+   * added so that `nodeIndex + 1` will always represent the exclusive end of
+   * the node's geometry.
+   *
+   * For example, for the node at index `i`, the indices into `dataIndices`
+   * representing its geometry will be the range `[ dataNodeIndicesBegin[i],
+   * dataNodeIndicesBegin[i + 1] ]`.
+   */
   std::vector<uint32_t> dataNodeIndicesBegin;
 };
 
