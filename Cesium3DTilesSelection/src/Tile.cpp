@@ -291,7 +291,7 @@ bool Tile::needsWorkerThreadLoading(
               : std::nullopt;
       if (!latestVersion)
         latestVersion = renderContent->getModel().version;
-      if (!latestVersion || latestVersion < modelVersion)
+      if (!latestVersion || latestVersion != modelVersion)
         return true;
     }
   }
