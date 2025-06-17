@@ -102,7 +102,7 @@ public:
       const override;
 
 private:
-  CesiumAsync::SharedFuture<std::shared_ptr<CesiumVectorData::GeoJsonDocument>>
+  CesiumAsync::Future<std::shared_ptr<CesiumVectorData::GeoJsonDocument>>
       _documentFuture;
   GeoJsonDocumentRasterOverlayOptions _options;
 };

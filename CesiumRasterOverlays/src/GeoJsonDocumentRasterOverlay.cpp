@@ -429,7 +429,7 @@ public:
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const GeoJsonDocumentRasterOverlayOptions& options,
-      const std::shared_ptr<CesiumVectorData::GeoJsonDocument>& document)
+      std::shared_ptr<CesiumVectorData::GeoJsonDocument>&& pDocument)
       : RasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -441,7 +441,7 @@ public:
             projectRectangleSimple(
                 options.projection,
                 CesiumGeospatial::GlobeRectangle::MAXIMUM)),
-        _document(document),
+        _document(std::move(pDocument)),
         _defaultStyle(options.defaultStyle),
         _tree(),
         _ellipsoid(options.ellipsoid),
@@ -531,10 +531,8 @@ GeoJsonDocumentRasterOverlay::GeoJsonDocumentRasterOverlay(
     const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
-      _documentFuture(
-          asyncSystem
-              .createResolvedFuture(std::shared_ptr<GeoJsonDocument>(document))
-              .share()),
+      _documentFuture(asyncSystem.createResolvedFuture(
+          std::shared_ptr<GeoJsonDocument>(document))),
       _options(vectorOverlayOptions) {}
 
 GeoJsonDocumentRasterOverlay::GeoJsonDocumentRasterOverlay(
@@ -544,7 +542,7 @@ GeoJsonDocumentRasterOverlay::GeoJsonDocumentRasterOverlay(
     const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
-      _documentFuture(std::move(documentFuture).share()),
+      _documentFuture(std::move(documentFuture)),
       _options(vectorOverlayOptions) {}
 
 GeoJsonDocumentRasterOverlay::~GeoJsonDocumentRasterOverlay() = default;
@@ -561,15 +559,16 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  return const_cast<GeoJsonDocumentRasterOverlay*>(this)
-      ->_documentFuture.thenImmediately(
+  return std::move(
+             const_cast<GeoJsonDocumentRasterOverlay*>(this)->_documentFuture)
+      .thenImmediately(
           [pOwner,
            asyncSystem,
            pAssetAccessor,
            pPrepareRendererResources,
            pLogger,
            options =
-               this->_options](const std::shared_ptr<GeoJsonDocument>& result)
+               this->_options](std::shared_ptr<GeoJsonDocument>&& pDocument)
               -> CreateTileProviderResult {
             return IntrusivePointer<RasterOverlayTileProvider>(
                 new GeoJsonDocumentRasterOverlayTileProvider(
@@ -579,7 +578,7 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
                     pPrepareRendererResources,
                     pLogger,
                     options,
-                    result));
+                    std::move(pDocument)));
           });
 }
 
