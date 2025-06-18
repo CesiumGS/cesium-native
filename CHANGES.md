@@ -20,6 +20,8 @@
 
 - Fixed crash when unloading tilesets with raster overlays when the `EllipsoidTilesetLoader` was used.
 - Fixed incorrect handling of legacy maximumLevel property when the `TilesetJsonLoader` was used.
+- Fixed `OrientedBoundingBox::computeDistanceSquaredToPosition()` calculation when `OrientedBoundingBox` has degenerate axes.
+- Fixed sending empty authorization header `Authorization: Bearer` when no access token is provided while using `CesiumIonTilesetLoader`. Prevents potential future issues with some servers including GP3D Tiles.
 
 ### v0.48.0 - 2025-06-02
 
