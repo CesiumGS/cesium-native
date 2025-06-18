@@ -404,10 +404,13 @@ void parseImplicitTileset(
   auto subtreeLevelsIt = implicitTiling.FindMember("subtreeLevels");
   auto subtreesIt = implicitTiling.FindMember("subtrees");
   auto availableLevelsIt = implicitTiling.FindMember("availableLevels");
+  bool isMaximumLevel = false;
   if (availableLevelsIt == implicitTiling.MemberEnd()) {
     // old version of implicit uses maximumLevel instead of availableLevels.
-    // They have the same semantic
+    // They have similar semantics, except that "maximum" = index while
+    // "available" = count
     availableLevelsIt = implicitTiling.FindMember("maximumLevel");
+    isMaximumLevel = true;
   }
 
   // check that all the required properties above are available
@@ -434,7 +437,8 @@ void parseImplicitTileset(
 
   // create implicit loaders
   uint32_t subtreeLevels = subtreeLevelsIt->value.GetUint();
-  uint32_t availableLevels = availableLevelsIt->value.GetUint();
+  uint32_t availableLevels =
+      availableLevelsIt->value.GetUint() + uint32_t(isMaximumLevel);
   const char* subtreesUri = subtreesUriIt->value.GetString();
   const char* subdivisionScheme = tilingSchemeIt->value.GetString();
 
@@ -561,14 +565,14 @@ std::optional<Tile> parseTileJsonRecursively(
     maybeContent = std::move(contentResult.value);
   }
 
-  const char* contentUri = nullptr;
-  if (maybeContent && !maybeContent->uri.empty()) {
-    contentUri = maybeContent->uri.c_str();
-  } else if (maybeContent && maybeContent->unknownProperties.contains("url")) {
-    std::string url =
-        maybeContent->unknownProperties["url"].getStringOrDefault({});
-    contentUri = !url.empty() ? url.c_str() : nullptr;
+  if (maybeContent && maybeContent->uri.empty()) {
+    auto it = maybeContent->unknownProperties.find("url");
+    if (it != maybeContent->unknownProperties.end()) {
+      maybeContent->uri = it->second.getStringOrDefault({});
+    }
   }
+
+  const char* contentUri = maybeContent ? maybeContent->uri.c_str() : nullptr;
 
   // determine if tile has implicit tiling
   const rapidjson::Value* implicitTilingJson = nullptr;

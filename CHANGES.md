@@ -10,6 +10,7 @@
 ##### Additions :tada:
 
 - Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
+- Added `CesiumCurl` library containing `CurlAssetAccessor`, an implementation of `IAssetAccessor` based on libcurl.
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
@@ -18,6 +19,9 @@
 ##### Fixes :wrench:
 
 - Fixed crash when unloading tilesets with raster overlays when the `EllipsoidTilesetLoader` was used.
+- Fixed incorrect handling of legacy maximumLevel property when the `TilesetJsonLoader` was used.
+- Fixed `OrientedBoundingBox::computeDistanceSquaredToPosition()` calculation when `OrientedBoundingBox` has degenerate axes.
+- Fixed sending empty authorization header `Authorization: Bearer` when no access token is provided while using `CesiumIonTilesetLoader`. Prevents potential future issues with some servers including GP3D Tiles.
 
 ### v0.48.0 - 2025-06-02
 
