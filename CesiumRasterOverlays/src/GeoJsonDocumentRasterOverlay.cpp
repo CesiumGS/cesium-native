@@ -532,8 +532,7 @@ public:
         glm::ivec2(options.maximumTextureSize));
 
     return this->getAsyncSystem().runInWorkerThread(
-        [document = this->_pDocument,
-         &tree = this->_tree,
+        [&tree = this->_tree,
          _ellipsoid = this->_ellipsoid,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
@@ -632,7 +631,7 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
 
   return std::move(
              const_cast<GeoJsonDocumentRasterOverlay*>(this)->_documentFuture)
-      .thenImmediately(
+      .thenInMainThread(
           [pOwner,
            asyncSystem,
            pAssetAccessor,
