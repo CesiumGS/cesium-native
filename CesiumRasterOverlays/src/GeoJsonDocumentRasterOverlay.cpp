@@ -642,11 +642,10 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
                this->_options](std::shared_ptr<GeoJsonDocument>&& pDocument)
               -> CreateTileProviderResult {
             if (!pDocument) {
-              return nonstd::make_unexpected(
-                  RasterOverlayLoadFailureDetails{
-                      .type = RasterOverlayLoadType::Unknown,
-                      .pRequest = nullptr,
-                      .message = "GeoJSON document failed to load."});
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  .type = RasterOverlayLoadType::Unknown,
+                  .pRequest = nullptr,
+                  .message = "GeoJSON document failed to load."});
             }
 
             return IntrusivePointer<RasterOverlayTileProvider>(
