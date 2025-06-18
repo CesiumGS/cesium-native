@@ -517,6 +517,7 @@ public:
         _tree(),
         _ellipsoid(options.ellipsoid),
         _mipLevels(options.mipLevels) {
+    CESIUM_ASSERT(this->_pDocument);
     this->_tree = buildQuadtree(this->_pDocument, this->_defaultStyle);
   }
 
@@ -641,6 +642,14 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
            options =
                this->_options](std::shared_ptr<GeoJsonDocument>&& pDocument)
               -> CreateTileProviderResult {
+            if (!pDocument) {
+              return nonstd::make_unexpected(
+                  RasterOverlayLoadFailureDetails{
+                      .type = RasterOverlayLoadType::Unknown,
+                      .pRequest = nullptr,
+                      .message = "GeoJSON document failed to load."});
+            }
+
             return IntrusivePointer<RasterOverlayTileProvider>(
                 new GeoJsonDocumentRasterOverlayTileProvider(
                     pOwner,
