@@ -162,6 +162,7 @@ endmacro()
 
 macro(EZVCPKG_BUILD)
     set(INSTALL_COMMAND "${EZVCPKG_EXE}" --vcpkg-root "${EZVCPKG_DIR}" install --triplet ${VCPKG_TRIPLET})
+    set(REMOVE_OUTDATED_COMMAND "${EZVCPKG_EXE}" --vcpkg-root "${EZVCPKG_DIR}" remove --outdated --triplet ${VCPKG_TRIPLET})
 
     if (DEFINED VCPKG_OVERLAY_PORTS)
         if (CMAKE_HOST_WIN32)
@@ -181,6 +182,15 @@ macro(EZVCPKG_BUILD)
         endif()
     endif()
 
+	message(STATUS "EZVCPKG Removing outdated packages for triplet ${VCPKG_TRIPLET}")
+	execute_process(
+		COMMAND ${REMOVE_OUTDATED_COMMAND}
+		WORKING_DIRECTORY "${EZVCPKG_DIR}"
+		RESULTS_VARIABLE EZVCPKG_RESULT
+		OUTPUT_VARIABLE EZVCPKG_OUTPUT
+		ERROR_VARIABLE EZVCPKG_OUTPUT
+	)
+	EZVCPKG_CHECK_RESULTS()
     if (EZVCPKG_SERIALIZE)
         foreach(_PACKAGE ${EZVCPKG_PACKAGES})
             message(STATUS "EZVCPKG Building/Verifying package ${_PACKAGE} using triplet ${VCPKG_TRIPLET}")
