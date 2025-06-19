@@ -3,6 +3,7 @@
 ### ? - ?
 
 ##### Breaking Changes :mega:
+
 - Renamed `CesiumITwinClient::Connection::getAccessToken` to `CesiumITwinClient::Connection::getAuthenticationToken`.
 - Renamed `CesiumITwinClient::Connection::setAccessToken` to `CesiumITwinClient::Connection::setAuthenticationToken`.
 
@@ -13,11 +14,13 @@
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
+- `Cesium3DTilesSelection::TileExternalContent` now inherits from `CesiumUtility::ExtensibleObject` to store and manage extensions from its content, such as `Extension3dTilesContentVoxels`.
 
 ##### Fixes :wrench:
 
 - Fixed crash when unloading tilesets with raster overlays when the `EllipsoidTilesetLoader` was used.
 - Fixed incorrect handling of legacy maximumLevel property when the `TilesetJsonLoader` was used.
+- Fixed `OrientedBoundingBox::computeDistanceSquaredToPosition()` calculation when `OrientedBoundingBox` has degenerate axes.
 - Fixed sending empty authorization header `Authorization: Bearer` when no access token is provided while using `CesiumIonTilesetLoader`. Prevents potential future issues with some servers including GP3D Tiles.
 - Fixed issue with Google 3D Photorealistic and status code 304, where the `If-None-Match` header was stored in `TilesetContentManager`
 
