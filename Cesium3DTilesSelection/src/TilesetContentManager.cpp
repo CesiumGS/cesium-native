@@ -2023,24 +2023,23 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
           result.statusCode,
           CesiumUtility::joinToString(result.errors.errors, "\n- ")});
     }
+    return;
   }
 
-  if (!result.errors) {
-    this->_tilesetCredits.reserve(
-        this->_tilesetCredits.size() + result.credits.size());
-    for (const auto& creditResult : result.credits) {
-      this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
-          creditResult.creditText,
-          creditResult.showOnScreen));
-    }
-
-    this->_requestHeaders = std::move(result.requestHeaders);
-    this->_pLoader = std::move(result.pLoader);
-    this->_pRootTile = std::move(result.pRootTile);
-
-    this->_overlayCollection.setLoadedTileEnumerator(
-        LoadedTileEnumerator(this->_pRootTile.get()));
-    this->_pLoader->setOwner(*this);
+  this->_tilesetCredits.reserve(
+      this->_tilesetCredits.size() + result.credits.size());
+  for (const auto& creditResult : result.credits) {
+    this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
+        creditResult.creditText,
+        creditResult.showOnScreen));
   }
+
+  this->_requestHeaders = std::move(result.requestHeaders);
+  this->_pLoader = std::move(result.pLoader);
+  this->_pRootTile = std::move(result.pRootTile);
+
+  this->_overlayCollection.setLoadedTileEnumerator(
+      LoadedTileEnumerator(this->_pRootTile.get()));
+  this->_pLoader->setOwner(*this);
 }
 } // namespace Cesium3DTilesSelection
