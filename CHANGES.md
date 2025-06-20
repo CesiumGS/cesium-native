@@ -14,6 +14,7 @@
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
+- `Cesium3DTilesSelection::TileExternalContent` now inherits from `CesiumUtility::ExtensibleObject` to store and manage extensions from its content, such as `Extension3dTilesContentVoxels`.
 - Added `ImplicitTilingUtilities::getParentID` to derive the ID of the parent for a given tile ID.
 
 ##### Fixes :wrench:
