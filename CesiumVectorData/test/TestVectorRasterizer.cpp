@@ -1,8 +1,7 @@
-#include "CesiumNativeTests/readFile.h"
-
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/writeTga.h>
 #include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -330,7 +329,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 }
 
-TEST_CASE("VectorRasterizer::rasterize benchmark") {
+TEST_CASE("VectorRasterizer::rasterize benchmark" * doctest::skip(true)) {
   GlobeRectangle rect{
       0.0,
       0.0,

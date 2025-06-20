@@ -104,6 +104,11 @@ struct VectorStyle {
   PolygonStyle polygon;
 
   /**
+   * @brief Default constructor for VectorStyle.
+   */
+  VectorStyle() = default;
+
+  /**
    * @brief Initializes style information for all types.
    */
   VectorStyle(const LineStyle& lineStyle, const PolygonStyle& polygonStyle);
