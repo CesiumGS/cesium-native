@@ -162,7 +162,7 @@ endmacro()
 
 macro(EZVCPKG_BUILD)
     set(INSTALL_COMMAND "${EZVCPKG_EXE}" --vcpkg-root "${EZVCPKG_DIR}" install --triplet ${VCPKG_TRIPLET})
-    set(REMOVE_OUTDATED_COMMAND "${EZVCPKG_EXE}" --vcpkg-root "${EZVCPKG_DIR}" remove --outdated --triplet ${VCPKG_TRIPLET})
+    set(REMOVE_OUTDATED_COMMAND "${EZVCPKG_EXE}" --vcpkg-root "${EZVCPKG_DIR}" remove --outdated --recurse --triplet ${VCPKG_TRIPLET})
 
     if (DEFINED VCPKG_OVERLAY_PORTS)
         if (CMAKE_HOST_WIN32)
@@ -187,7 +187,7 @@ macro(EZVCPKG_BUILD)
 		COMMAND ${REMOVE_OUTDATED_COMMAND}
 		WORKING_DIRECTORY "${EZVCPKG_DIR}"
 		RESULTS_VARIABLE EZVCPKG_RESULT
-		OUTPUT_VARIABLE EZVCPKG_OUTPUT
+		#OUTPUT_VARIABLE EZVCPKG_OUTPUT <= useful to know if something and what has been removed
 		ERROR_VARIABLE EZVCPKG_OUTPUT
 	)
 	EZVCPKG_CHECK_RESULTS()
