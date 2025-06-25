@@ -2073,38 +2073,42 @@ struct BatchIdSemantic {
       return;
     }
     uint32_t byteOffset = byteOffsetIt->value.GetUint();
+    std::optional<MetadataProperty::ComponentType> componentType;
     const auto componentTypeIt = batchIdIt->value.FindMember("componentType");
-    if (componentTypeIt != batchIdIt->value.MemberEnd() &&
-        componentTypeIt->value.IsString()) {
-      const std::string& componentTypeString =
-          componentTypeIt->value.GetString();
-      if (MetadataProperty::stringToMetadataComponentType.count(
-              componentTypeString) == 0) {
+    if (componentTypeIt == batchIdIt->value.MemberEnd()) {
+      componentType = MetadataProperty::ComponentType::UNSIGNED_SHORT;
+    } else {
+      if (!componentTypeIt->value.IsString()) {
         return;
       }
-      MetadataProperty::ComponentType componentType =
-          MetadataProperty::stringToMetadataComponentType.at(
-              componentTypeString);
-      rawData = featureTableJsonData.data();
-      numElements = numInstances;
-      switch (componentType) {
-      case MetadataProperty::ComponentType::UNSIGNED_BYTE:
-        batchSpan = makeSpan<uint8_t>(rawData, byteOffset, numInstances);
-        byteSize = numElements * sizeof(uint8_t);
-        break;
-      case MetadataProperty::ComponentType::UNSIGNED_SHORT:
-        batchSpan = makeSpan<uint16_t>(rawData, byteOffset, numInstances);
-        byteSize = numElements * sizeof(uint16_t);
-        break;
-      case MetadataProperty::ComponentType::UNSIGNED_INT:
-        batchSpan = makeSpan<uint32_t>(rawData, byteOffset, numInstances);
-        byteSize = numElements * sizeof(uint32_t);
-        break;
-      default:
-        break;
-        // Shouldn't happen, but batchSpan and byteSize are already in an error
-        // state.
-      };
+      const std::string& componentTypeString =
+          componentTypeIt->value.GetString();
+      if (const auto metadataPropertyIt = MetadataProperty::stringToMetadataComponentType.find(componentTypeString);
+          metadataPropertyIt == MetadataProperty::stringToMetadataComponentType.end()) {
+        return;
+      } else {
+        componentType = metadataPropertyIt->second;
+      }
+    }
+    rawData = featureTableJsonData.data();
+    numElements = numInstances;
+    switch (*componentType) {
+    case MetadataProperty::ComponentType::UNSIGNED_BYTE:
+      batchSpan = makeSpan<uint8_t>(rawData, byteOffset, numInstances);
+      byteSize = numElements * sizeof(uint8_t);
+      break;
+    case MetadataProperty::ComponentType::UNSIGNED_SHORT:
+      batchSpan = makeSpan<uint16_t>(rawData, byteOffset, numInstances);
+      byteSize = numElements * sizeof(uint16_t);
+      break;
+    case MetadataProperty::ComponentType::UNSIGNED_INT:
+      batchSpan = makeSpan<uint32_t>(rawData, byteOffset, numInstances);
+      byteSize = numElements * sizeof(uint32_t);
+      break;
+    default:
+      break;
+      // Shouldn't happen, but batchSpan and byteSize are already in an error
+      // state.
     }
   }
 
