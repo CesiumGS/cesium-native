@@ -250,7 +250,6 @@ jobs:
             variant: sccache
         - name: Compile ${{matrix.build_type}} Configuration
           run: |
-            $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
             emcmake cmake -B build -S . -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
             cmake --build build --config debug --target cesium-native-tests -j22
 #        - name: Test ${{matrix.build_type}} Configuration
