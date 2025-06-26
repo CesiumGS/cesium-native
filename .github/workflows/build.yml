@@ -226,7 +226,7 @@ jobs:
       name: "${{matrix.platform}} / ${{matrix.build_type}}"
       env:
         CACHE_KEY: "${{ matrix.platform }}"
-      runs-on: ${{ matrix.platform }}
+      runs-on: ubuntu-24.04
       steps:
         - name: Install latest CMake 3 and Ninja
           uses: lukka/get-cmake@latest
