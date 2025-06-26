@@ -2083,8 +2083,11 @@ struct BatchIdSemantic {
       }
       const std::string& componentTypeString =
           componentTypeIt->value.GetString();
-      if (const auto metadataPropertyIt = MetadataProperty::stringToMetadataComponentType.find(componentTypeString);
-          metadataPropertyIt == MetadataProperty::stringToMetadataComponentType.end()) {
+      if (const auto metadataPropertyIt =
+              MetadataProperty::stringToMetadataComponentType.find(
+                  componentTypeString);
+          metadataPropertyIt ==
+          MetadataProperty::stringToMetadataComponentType.end()) {
         return;
       } else {
         componentType = metadataPropertyIt->second;
