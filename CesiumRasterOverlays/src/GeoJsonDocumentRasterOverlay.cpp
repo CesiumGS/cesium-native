@@ -14,6 +14,7 @@
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
@@ -24,6 +25,7 @@
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_int2.hpp>
+#include <nonstd/expected.hpp>
 #include <spdlog/logger.h>
 
 #include <algorithm>
