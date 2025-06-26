@@ -235,10 +235,17 @@ jobs:
         - name: Setup emsdk
           uses: mymindstorm/setup-emsdk@v14
           with:
-            version: 1.38.40
+            version: 4.0.10
             actions-cache-folder: "emsdk-cache"
-        - name: Install nasm
-          uses: ilammy/setup-nasm@v1
+        - name: Install latest clang
+          run: |
+            wget https://apt.llvm.org/llvm.sh
+            chmod +x llvm.sh
+            sudo ./llvm.sh 19
+        - name: Set CC and CXX
+          run: |
+            echo "CC=/usr/bin/clang-19" >> "$GITHUB_ENV"
+            echo "CXX=/usr/bin/clang++-19" >> "$GITHUB_ENV"
         - name: Check out repository code
           uses: actions/checkout@v4
           with:
