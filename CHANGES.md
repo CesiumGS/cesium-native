@@ -22,6 +22,7 @@
 - Fixed incorrect handling of legacy maximumLevel property when the `TilesetJsonLoader` was used.
 - Fixed `OrientedBoundingBox::computeDistanceSquaredToPosition()` calculation when `OrientedBoundingBox` has degenerate axes.
 - Fixed sending empty authorization header `Authorization: Bearer` when no access token is provided while using `CesiumIonTilesetLoader`. Prevents potential future issues with some servers including GP3D Tiles.
+- Fixed a bug in `SubtreeFileReader` where it did not include query parameters from the base URL when requesting an external subtree buffer.
 
 ### v0.48.0 - 2025-06-02
 
