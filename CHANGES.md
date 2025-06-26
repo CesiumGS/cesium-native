@@ -22,7 +22,7 @@
 - Fixed incorrect handling of legacy maximumLevel property when the `TilesetJsonLoader` was used.
 - Fixed `OrientedBoundingBox::computeDistanceSquaredToPosition()` calculation when `OrientedBoundingBox` has degenerate axes.
 - Fixed sending empty authorization header `Authorization: Bearer` when no access token is provided while using `CesiumIonTilesetLoader`. Prevents potential future issues with some servers including GP3D Tiles.
-- Fixed issue with Google 3D Photorealistic and status code 304, where the `If-None-Match` header was stored in `TilesetContentManager`
+- Fixed a bug where `CachingAssetAccessor` would include "revalidation" headers like `If-None-Match` in the returned `IAssetRequest` when the remote server returned new content rather than a 304 response. This could cause the header to be incorrectly included in later requests for different content.
 
 ### v0.48.0 - 2025-06-02
 
