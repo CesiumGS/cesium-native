@@ -242,6 +242,9 @@ jobs:
             wget https://apt.llvm.org/llvm.sh
             chmod +x llvm.sh
             sudo ./llvm.sh 19
+        - name: Install gcc-multilib for 32-bit support
+          run: |
+            sudo apt-get install gcc-multilib
         - name: Set CC and CXX
           run: |
             echo "CC=/usr/bin/clang-19" >> "$GITHUB_ENV"
