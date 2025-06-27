@@ -97,7 +97,7 @@ private:
 class WrappedValidationRequest : public IAssetRequest {
 public:
   WrappedValidationRequest(
-      const std::shared_ptr<IAssetRequest> pWrapped,
+      const std::shared_ptr<IAssetRequest>& pWrapped,
       const std::vector<IAssetAccessor::THeader>& headers)
       : _pWrapped(pWrapped), _headers(headers.begin(), headers.end()) {}
 
