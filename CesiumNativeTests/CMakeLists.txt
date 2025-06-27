@@ -25,7 +25,7 @@ set(cesium_native_targets
     CesiumUtility
 )
 
-if(NOT CESIUM_TARGET_WASM32)
+if(NOT CESIUM_TARGET_WASM)
     list(APPEND cesium_native_targets CesiumCurl)
 endif()
 

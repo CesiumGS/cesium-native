@@ -45,7 +45,7 @@ function(configure_cesium_library targetName)
         )
     endif()
 
-    if(CESIUM_TARGET_WASM32)
+    if(CESIUM_TARGET_WASM)
         # std::format is better behaved with wasm builds than fmt::format
         target_compile_definitions(
             ${targetName} 

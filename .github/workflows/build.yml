@@ -221,7 +221,7 @@ jobs:
       strategy:
         fail-fast: false
         matrix:
-          platform: [wasm32-emscripten]
+          platform: [wasm64-emscripten]
           build_type: [Debug, RelWithDebInfo]
       name: "${{matrix.platform}} / ${{matrix.build_type}}"
       env:

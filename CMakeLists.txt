@@ -6,7 +6,7 @@ endif()
     
 get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
 if(toolchainFile STREQUAL "Emscripten.cmake")
-    set(CESIUM_TARGET_WASM32 ON)
+    set(CESIUM_TARGET_WASM ON)
     # Include the toolchain directly as ezvcpkg will overwrite the 
     # toolchain before it's loaded
     include(${CMAKE_TOOLCHAIN_FILE})
@@ -85,6 +85,10 @@ if (NOT VCPKG_OVERLAY_TRIPLETS)
     endif()
 endif()
 
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
+    list(APPEND VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
+endif()
+
 message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
 
 # These packages are used in the public headers of Cesium libraries, so we need to distribute the headers and binaries
@@ -101,12 +105,21 @@ set(PACKAGES_PRIVATE
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
 
-if(NOT CESIUM_TARGET_WASM32) 
+if(NOT CESIUM_TARGET_WASM) 
     list(APPEND PACKAGES_PRIVATE curl)
 endif()
 
 # Packages only used for testing
 set(PACKAGES_TEST doctest)
+
+if(CESIUM_TARGET_WASM)
+    # vcpkg will attempt to second-guess our CMAKE_C_COMPILER setting, choosing to go with the value of CC instead.
+    # While normally this is the correct value to go with, for wasm we need to be using emcc and em++.
+    # So we set CC and CXX to emcc and em++ here so vcpkg will pick them up properly.
+    # Does this make sense? No. Does it work? Somehow. ¯\_(ツ)_/¯
+    set(ENV{CC} ${CMAKE_C_COMPILER})
+    set(ENV{CXX} ${CMAKE_CXX_COMPILER})
+endif()
 
 if(CESIUM_USE_EZVCPKG)
     set(PACKAGES_ALL ${PACKAGES_PUBLIC})
@@ -123,6 +136,11 @@ if(CESIUM_USE_EZVCPKG)
         # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
         SERIALIZE
     )
+
+    if(CESIUM_TARGET_WASM)
+        # vcpkg will attempt to make this wasm32-emscripten if we don't declare it
+        set(VCPKG_TARGET_TRIPLET wasm64-emscripten)
+    endif()
 endif()
 
 if (NOT CMAKE_TOOLCHAIN_FILE)
@@ -319,7 +337,7 @@ find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
 
-if(NOT CESIUM_TARGET_WASM32)
+if(NOT CESIUM_TARGET_WASM)
     find_package(CURL REQUIRED)
 endif()
 
@@ -349,7 +367,7 @@ add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
 add_subdirectory(CesiumVectorData)
 
-if(NOT CESIUM_TARGET_WASM32)
+if(NOT CESIUM_TARGET_WASM)
     add_subdirectory(CesiumCurl)
 endif()
 
