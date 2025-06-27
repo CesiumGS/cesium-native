@@ -1,14 +1,13 @@
 #pragma once
+
 #include <rapidjson/document.h>
-#include <spdlog/fmt/fmt.h>
+#include <fmt/format.h>
 
-/** @cond Doxygen_Exclude */
-template <>
-struct fmt::formatter<rapidjson::ParseErrorCode> : formatter<string_view> {
-  // parse is inherited from formatter<string_view>.
+#include <format>
 
-  auto format(rapidjson::ParseErrorCode code, format_context& ctx) const {
-    string_view name = "unknown";
+namespace {
+  std::string_view codeToString( rapidjson::ParseErrorCode code)  {
+    std::string_view name = "unknown";
     switch (code) {
     case rapidjson::ParseErrorCode::kParseErrorNone:
       name = "No error.";
@@ -67,7 +66,28 @@ struct fmt::formatter<rapidjson::ParseErrorCode> : formatter<string_view> {
     default:
       break;
     }
-    return formatter<string_view>::format(name, ctx);
+
+    return name;
+  }
+}
+
+/** @cond Doxygen_Exclude */
+template <>
+struct std::formatter<rapidjson::ParseErrorCode> : formatter<string_view> {
+  // parse is inherited from formatter<string_view>.
+
+  auto format(rapidjson::ParseErrorCode code, format_context& ctx) const {
+    return formatter<string_view>::format(codeToString(code), ctx);
+  }
+};
+
+/** @cond Doxygen_Exclude */
+template <>
+struct fmt::formatter<rapidjson::ParseErrorCode> : formatter<string_view> {
+  // parse is inherited from formatter<string_view>.
+
+  auto format(rapidjson::ParseErrorCode code, format_context& ctx) const {
+    return formatter<string_view>::format(codeToString(code), ctx);
   }
 };
 /** @endcond */

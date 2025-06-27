@@ -7,6 +7,8 @@ endif()
 get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
 if(toolchainFile STREQUAL "Emscripten.cmake")
     set(CESIUM_TARGET_WASM32 ON)
+    # Include the toolchain directly as ezvcpkg will overwrite the 
+    # toolchain before it's loaded
     include(${CMAKE_TOOLCHAIN_FILE})
 endif()
 
