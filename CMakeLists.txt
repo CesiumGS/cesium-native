@@ -7,6 +7,7 @@ endif()
 get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
 if(toolchainFile STREQUAL "Emscripten.cmake")
     set(CESIUM_TARGET_WASM32 ON)
+    include(${CMAKE_TOOLCHAIN_FILE})
 endif()
 
 # By default, Use ezvcpkg to install dependencies. But don't use
