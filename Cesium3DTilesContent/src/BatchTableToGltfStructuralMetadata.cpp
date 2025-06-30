@@ -2042,7 +2042,6 @@ struct BatchIdSemantic {
       std::span<const uint16_t>,
       std::span<const uint32_t>>
       batchSpan;
-  const std::byte* rawData;
   uint32_t numElements;
   uint32_t byteSize;
 
@@ -2059,7 +2058,6 @@ struct BatchIdSemantic {
       uint32_t numInstances,
       const std::span<const std::byte>& featureTableJsonData)
       : batchSpan(makeSpan<uint8_t>(nullptr, 0, 0)),
-        rawData(nullptr),
         numElements(0),
         byteSize(0) {
     const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
@@ -2093,19 +2091,19 @@ struct BatchIdSemantic {
         componentType = metadataPropertyIt->second;
       }
     }
-    rawData = featureTableJsonData.data();
+    const std::byte* batchIdData = featureTableJsonData.data();
     numElements = numInstances;
     switch (*componentType) {
     case MetadataProperty::ComponentType::UNSIGNED_BYTE:
-      batchSpan = makeSpan<uint8_t>(rawData, byteOffset, numInstances);
+      batchSpan = makeSpan<uint8_t>(batchIdData, byteOffset, numInstances);
       byteSize = numElements * sizeof(uint8_t);
       break;
     case MetadataProperty::ComponentType::UNSIGNED_SHORT:
-      batchSpan = makeSpan<uint16_t>(rawData, byteOffset, numInstances);
+      batchSpan = makeSpan<uint16_t>(batchIdData, byteOffset, numInstances);
       byteSize = numElements * sizeof(uint16_t);
       break;
     case MetadataProperty::ComponentType::UNSIGNED_INT:
-      batchSpan = makeSpan<uint32_t>(rawData, byteOffset, numInstances);
+      batchSpan = makeSpan<uint32_t>(batchIdData, byteOffset, numInstances);
       byteSize = numElements * sizeof(uint32_t);
       break;
     default:
@@ -2146,10 +2144,14 @@ addFeatureIdsToGltf(CesiumGltf::Model& gltf, const BatchIdSemantic& batchIds) {
   int32_t featuresBufferId = GltfConverterUtility::createBufferInGltf(gltf);
   auto& featuresBuffer = gltf.buffers[static_cast<uint32_t>(featuresBufferId)];
   featuresBuffer.cesium.data.resize(batchIds.byteSize);
-  std::memcpy(
-      &featuresBuffer.cesium.data[0],
-      batchIds.rawData,
-      batchIds.byteSize);
+  std::visit(
+      [&batchIds, &featuresBuffer](auto&& span) {
+        std::memcpy(
+            &featuresBuffer.cesium.data[0],
+            &span[0],
+            batchIds.byteSize);
+      },
+      batchIds.batchSpan);
   int32_t featuresBufferViewId = GltfConverterUtility::createBufferViewInGltf(
       gltf,
       featuresBufferId,
