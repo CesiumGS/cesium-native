@@ -2071,7 +2071,7 @@ struct BatchIdSemantic {
       return;
     }
     uint32_t byteOffset = byteOffsetIt->value.GetUint();
-    std::optional<MetadataProperty::ComponentType> componentType;
+    MetadataProperty::ComponentType componentType;
     const auto componentTypeIt = batchIdIt->value.FindMember("componentType");
     if (componentTypeIt == batchIdIt->value.MemberEnd()) {
       componentType = MetadataProperty::ComponentType::UNSIGNED_SHORT;
@@ -2093,7 +2093,7 @@ struct BatchIdSemantic {
     }
     const std::byte* batchIdData = featureTableJsonData.data();
     numElements = numInstances;
-    switch (*componentType) {
+    switch (componentType) {
     case MetadataProperty::ComponentType::UNSIGNED_BYTE:
       batchSpan = makeSpan<uint8_t>(batchIdData, byteOffset, numInstances);
       byteSize = numElements * sizeof(uint8_t);
