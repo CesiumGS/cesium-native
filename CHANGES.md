@@ -16,6 +16,7 @@
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
+- Added `CesiumITwinClient::ITwinGeospatialFeaturesRasterOverlay` for displaying Geospatial Features loaded from iTwin as a raster overlay.
 
 ##### Fixes :wrench:
 
