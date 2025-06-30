@@ -62,6 +62,7 @@ target_link_libraries(Cesium3DTilesContent
         CesiumGltfContent
         CesiumGltfReader
         CesiumUtility
+        spdlog::spdlog spdlog::spdlog_header_only
     PRIVATE
         libmorton::libmorton
 )

@@ -157,6 +157,11 @@ project(cesium-native
     LANGUAGES CXX C
 )
 
+if(CESIUM_TARGET_WASM)
+    # YES we have sixty four bits!
+    set(CMAKE_SIZEOF_VOID_P 8)
+endif()
+
 include(GNUInstallDirs)
 include(CMakeDependentOption)
 

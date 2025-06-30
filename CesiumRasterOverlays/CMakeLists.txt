@@ -48,6 +48,7 @@ target_link_libraries(CesiumRasterOverlays
         CesiumGltfReader
         CesiumUtility
         nonstd::expected-lite
+        spdlog::spdlog spdlog::spdlog_header_only
     PRIVATE
         tinyxml2::tinyxml2
 )
