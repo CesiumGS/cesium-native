@@ -373,6 +373,28 @@ TEST_CASE("OrientedBoundingBox::computeDistanceSquaredToPosition example") {
   CHECK(boxes[1].getCenter().x == 1.0);
 }
 
+TEST_CASE(
+    "OrientedBoundingBox::computeDistanceSquaredToPosition degenerate axes") {
+  struct DegenerateAxesTestCase {
+    OrientedBoundingBox box;
+    double distance;
+  };
+  std::vector<DegenerateAxesTestCase> tests{
+      {{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3(0.0)}, 1},
+      {{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3{{1, 0, 0}, {0, 0, 0}, {0, 0, 0}}},
+       0},
+      {{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3{{1, 0, 0}, {0, 1, 0}, {0, 0, 0}}},
+       0},
+      {{glm::dvec3(1.0, 0.0, 0.0), glm::dmat3{{0, 0, 0}, {0, 1, 0}, {0, 0, 1}}},
+       1}};
+  glm::dvec3 cameraPosition{0, 0, 0};
+
+  for (const auto& testCase : tests) {
+    double d = testCase.box.computeDistanceSquaredToPosition(cameraPosition);
+    CHECK(d == testCase.distance);
+  }
+}
+
 TEST_CASE("OrientedBoundingBox::toAxisAligned") {
   SUBCASE("simple box that is already axis-aligned") {
     OrientedBoundingBox obb(

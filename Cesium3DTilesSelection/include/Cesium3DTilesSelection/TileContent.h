@@ -6,6 +6,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/ExtensibleObject.h>
 
 #include <memory>
 #include <variant>
@@ -46,9 +47,10 @@ struct CESIUM3DTILESSELECTION_API TileEmptyContent {};
 /**
  * @brief A content tag that indicates a tile content points to an
  * external tileset. When this tile is loaded, all the tiles in the
- * external tileset will become children of this external content tile
+ * external tileset will become children of this external content tile.
  */
-struct CESIUM3DTILESSELECTION_API TileExternalContent {
+struct CESIUM3DTILESSELECTION_API TileExternalContent
+    : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The metadata associated with this tileset.
    */
