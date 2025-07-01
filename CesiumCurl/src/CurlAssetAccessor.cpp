@@ -419,6 +419,21 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::get(
       });
 }
 
+#if !defined(TARGET_OS_IOS) || __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+namespace {
+constexpr std::string_view fileScheme("file:");
+
+bool isFile(const std::string& url) {
+  return Uri(url).getScheme() == fileScheme;
+}
+
+std::string convertFileUriToFilename(const std::string& url) {
+  return Uri::uriPathToNativePath(std::string(Uri(url).getPath()));
+}
+} // namespace
+#endif
+
+
 Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
     const AsyncSystem& asyncSystem,
     const std::string& verb,
