@@ -23,6 +23,7 @@ elseif (CMAKE_TOOLCHAIN_FILE)
 endif()
 
 option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
+option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
 
 if(CESIUM_USE_EZVCPKG)
   # Keep vcpkg from running in manifset mode. It will try to because
