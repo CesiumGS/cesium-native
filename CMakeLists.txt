@@ -89,10 +89,14 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
 set(PACKAGES_PRIVATE
-    abseil curl draco ktx modp-base64 meshoptimizer openssl s2geometry
+    abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
+
+if(NOT CESIUM_DISABLE_CURL)
+    list(APPEND PACKAGES_PRIVATE curl)
+endif()
 
 # Packages only used for testing
 set(PACKAGES_TEST doctest)
@@ -292,7 +296,6 @@ find_package(modp_b64 REQUIRED)
 
 find_package(ada CONFIG REQUIRED)
 find_package(Async++ CONFIG REQUIRED)
-find_package(CURL REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
@@ -308,6 +311,10 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
+
+if(NOT CESIUM_DISABLE_CURL)
+    find_package(CURL REQUIRED)
+endif()
 
 # Private Library (s2geometry)
 add_subdirectory(extern EXCLUDE_FROM_ALL)
@@ -334,7 +341,10 @@ add_subdirectory(CesiumIonClient)
 add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
 add_subdirectory(CesiumVectorData)
-add_subdirectory(CesiumCurl)
+
+if(NOT CESIUM_DISABLE_CURL)
+    add_subdirectory(CesiumCurl)
+endif()
 
 # Private Targets
 if (CESIUM_TESTS_ENABLED)
