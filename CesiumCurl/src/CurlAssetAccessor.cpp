@@ -433,7 +433,6 @@ std::string convertFileUriToFilename(const std::string& url) {
 } // namespace
 #endif
 
-
 Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
     const AsyncSystem& asyncSystem,
     const std::string& verb,
