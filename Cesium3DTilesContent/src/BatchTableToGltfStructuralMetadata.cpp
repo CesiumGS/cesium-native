@@ -2071,11 +2071,9 @@ struct BatchIdSemantic {
       return;
     }
     uint32_t byteOffset = byteOffsetIt->value.GetUint();
-    MetadataProperty::ComponentType componentType;
+    MetadataProperty::ComponentType componentType = MetadataProperty::ComponentType::UNSIGNED_SHORT;
     const auto componentTypeIt = batchIdIt->value.FindMember("componentType");
-    if (componentTypeIt == batchIdIt->value.MemberEnd()) {
-      componentType = MetadataProperty::ComponentType::UNSIGNED_SHORT;
-    } else {
+    if (componentTypeIt != batchIdIt->value.MemberEnd()) {
       if (!componentTypeIt->value.IsString()) {
         return;
       }
