@@ -75,7 +75,7 @@ struct MaskedType {
   bool isFloat64;
   bool isBool;
 
-  MaskedType() : MaskedType(true){};
+  MaskedType() : MaskedType(true) {};
 
   MaskedType(bool defaultValue)
       : isInt8(defaultValue),
@@ -131,12 +131,12 @@ struct MaskedArrayType {
   uint32_t minArrayCount;
   uint32_t maxArrayCount;
 
-  MaskedArrayType() : MaskedArrayType(true){};
+  MaskedArrayType() : MaskedArrayType(true) {};
 
   MaskedArrayType(bool defaultValue)
       : elementType(defaultValue),
         minArrayCount(std::numeric_limits<uint32_t>::max()),
-        maxArrayCount(std::numeric_limits<uint32_t>::min()){};
+        maxArrayCount(std::numeric_limits<uint32_t>::min()) {};
 
   MaskedArrayType(
       MaskedType inElementType,
@@ -205,10 +205,10 @@ private:
   bool _canUseNullStringSentinel = true;
 
 public:
-  CompatibleTypes() : _type(){};
-  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType){};
+  CompatibleTypes() : _type() {};
+  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType) {};
   CompatibleTypes(const MaskedArrayType& maskedArrayType)
-      : _type(maskedArrayType){};
+      : _type(maskedArrayType) {};
 
   /**
    * Whether this is exclusively compatible with array types. This indicates an
@@ -2034,14 +2034,16 @@ template <> int32_t componentTypeFromCpp<uint32_t>() {
   return Accessor::ComponentType::UNSIGNED_INT;
 }
 
-// encapsulation of the binary batch id data in an I3dm. If byteSize is 0, then
+// Encapsulation of the binary batch id data in an I3dm. If byteSize is 0, then
 // the semantic is invalid for some reason.
 struct BatchIdSemantic {
-  std::variant<
+  typedef std::variant<
       std::span<const uint8_t>,
       std::span<const uint16_t>,
       std::span<const uint32_t>>
-      batchSpan;
+      BatchIdSpan;
+
+  BatchIdSpan batchSpan;
   uint32_t numElements;
   uint32_t byteSize;
 
@@ -2063,30 +2065,33 @@ struct BatchIdSemantic {
         !batchIdIt->value.IsObject()) {
       return;
     }
+
     const auto byteOffsetIt = batchIdIt->value.FindMember("byteOffset");
     if (byteOffsetIt == batchIdIt->value.MemberEnd() ||
         !byteOffsetIt->value.IsUint()) {
       return;
     }
     uint32_t byteOffset = byteOffsetIt->value.GetUint();
-    MetadataProperty::ComponentType componentType = MetadataProperty::ComponentType::UNSIGNED_SHORT;
+
+    MetadataProperty::ComponentType componentType =
+        MetadataProperty::ComponentType::UNSIGNED_SHORT;
+
     const auto componentTypeIt = batchIdIt->value.FindMember("componentType");
     if (componentTypeIt != batchIdIt->value.MemberEnd()) {
-      if (!componentTypeIt->value.IsString()) {
-        return;
-      }
       const std::string& componentTypeString =
-          componentTypeIt->value.GetString();
+          componentTypeIt->value.IsString() ? componentTypeIt->value.GetString()
+                                            : std::string();
       if (const auto metadataPropertyIt =
               MetadataProperty::stringToMetadataComponentType.find(
                   componentTypeString);
-          metadataPropertyIt ==
+          metadataPropertyIt !=
           MetadataProperty::stringToMetadataComponentType.end()) {
-        return;
-      } else {
         componentType = metadataPropertyIt->second;
+      } else {
+        return;
       }
     }
+
     const std::byte* batchIdData = featureTableJsonData.data();
     numElements = numInstances;
     switch (componentType) {
@@ -2132,6 +2137,10 @@ struct BatchIdSemantic {
         },
         batchSpan);
   }
+
+private:
+  BatchIdSemantic()
+      : batchSpan(std::span<uint8_t>()), numElements(0), byteSize(0) {}
 };
 
 // returns an accessor ID for the added feature IDs
@@ -2180,36 +2189,37 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromI3dm(
 
   ErrorList result;
 
+  std::optional<uint32_t> maybeInstancesLength =
+      GltfConverterUtility::getValue<uint32_t>(
+          featureTableJson,
+          "INSTANCES_LENGTH");
+  if (!maybeInstancesLength) {
+    result.emplaceError("Required INSTANCES_LENGTH semantic is missing");
+    return result;
+  }
+
   // Parse the batch table and convert it to the EXT_structural_metadata
   // extension.
 
   // Batch table length is either the max batch ID + 1 or, if there are no batch
   // IDs, the number of instances.
   int64_t featureCount = 0;
-  std::optional<BatchIdSemantic> optBatchIds = std::nullopt;
-  bool hasBatchIds = featureTableJson.HasMember("BATCH_ID");
-  std::optional<uint32_t> optInstancesLength =
-      GltfConverterUtility::getValue<uint32_t>(
-          featureTableJson,
-          "INSTANCES_LENGTH");
-  if (!optInstancesLength) {
-    result.emplaceError("Required INSTANCES_LENGTH semantic is missing");
-    return result;
-  }
-  featureCount = *optInstancesLength;
-  if (hasBatchIds) {
-    optBatchIds = BatchIdSemantic(
+  featureCount = *maybeInstancesLength;
+
+  std::optional<BatchIdSemantic> maybeBatchIds = std::nullopt;
+  if (featureTableJson.HasMember("BATCH_ID")) {
+    maybeBatchIds = BatchIdSemantic(
         featureTableJson,
-        *optInstancesLength,
+        *maybeInstancesLength,
         featureTableJsonData);
-    if (optBatchIds->byteSize == 0) {
-      result.emplaceError("Invalid Batch ID Semantic");
-      optBatchIds.reset();
+    if (maybeBatchIds->byteSize == 0) {
+      result.emplaceError("Invalid BATCH_ID Semantic");
+      maybeBatchIds.reset();
     } else {
-      featureCount = optBatchIds->maxBatchId() + 1;
+      featureCount = maybeBatchIds->maxBatchId() + 1;
     }
   } else {
-    featureCount = *optInstancesLength;
+    featureCount = *maybeInstancesLength;
   }
 
   convertBatchTableToGltfStructuralMetadataExtension(
@@ -2220,8 +2230,8 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromI3dm(
       result);
 
   int32_t featureIdAccessor = -1;
-  if (optBatchIds.has_value()) {
-    featureIdAccessor = addFeatureIdsToGltf(gltf, *optBatchIds);
+  if (maybeBatchIds) {
+    featureIdAccessor = addFeatureIdsToGltf(gltf, *maybeBatchIds);
   }
 
   // Create an EXT_instance_features extension for node that has an
