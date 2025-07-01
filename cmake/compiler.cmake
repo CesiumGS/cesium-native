@@ -5,6 +5,6 @@
 # endif()
 
 if(CESIUM_TARGET_WASM)
-  add_compile_options(-sMEMORY64=1)
-  add_link_options(-sMEMORY64=1 -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=8589934592)
+  add_compile_options(-sMEMORY64=1 -msimd128 -mnontrapping-fptoint -sSUPPORT_LONGJMP=emscripten)
+  add_link_options(-sMEMORY64=1 -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=8589934592 -sMIN_NODE_VERSION=200000 -sDISABLE_EXCEPTION_CATCHING=0 -mbulk-memory -mnontrapping-fptoint -msse4.2 -sWASM_BIGINT -sSUPPORT_LONGJMP=emscripten -sFORCE_FILESYSTEM)
 endif()
