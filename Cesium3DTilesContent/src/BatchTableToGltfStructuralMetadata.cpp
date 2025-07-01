@@ -2190,7 +2190,7 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromI3dm(
   // Batch table length is either the max batch ID + 1 or, if there are no batch
   // IDs, the number of instances.
   int64_t featureCount = 0;
-  std::optional<BatchIdSemantic> optBatchIds;
+  std::optional<BatchIdSemantic> optBatchIds = std::nullopt;
   bool hasBatchIds = featureTableJson.HasMember("BATCH_ID");
   std::optional<uint32_t> optInstancesLength =
       GltfConverterUtility::getValue<uint32_t>(
