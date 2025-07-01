@@ -24,6 +24,8 @@
 - Fixed sending empty authorization header `Authorization: Bearer` when no access token is provided while using `CesiumIonTilesetLoader`. Prevents potential future issues with some servers including GP3D Tiles.
 - Fixed a bug where `CachingAssetAccessor` would include "revalidation" headers like `If-None-Match` in the returned `IAssetRequest` when the remote server returned new content rather than a 304 response. This could cause the header to be incorrectly included in later requests for different content.
 - Fixed a bug in `SubtreeFileReader` where it did not include query parameters from the base URL when requesting an external subtree buffer.
+- Fixed a bug in the parsing of the i3dm `BATCH_ID` semantic.
+- Fixed a bug in the conversion of i3dm batch ids to `EXT_instance_features` feature ids.
 
 ### v0.48.0 - 2025-06-02
 
