@@ -75,7 +75,7 @@ struct MaskedType {
   bool isFloat64;
   bool isBool;
 
-  MaskedType() : MaskedType(true) {};
+  MaskedType() : MaskedType(true){};
 
   MaskedType(bool defaultValue)
       : isInt8(defaultValue),
@@ -131,12 +131,12 @@ struct MaskedArrayType {
   uint32_t minArrayCount;
   uint32_t maxArrayCount;
 
-  MaskedArrayType() : MaskedArrayType(true) {};
+  MaskedArrayType() : MaskedArrayType(true){};
 
   MaskedArrayType(bool defaultValue)
       : elementType(defaultValue),
         minArrayCount(std::numeric_limits<uint32_t>::max()),
-        maxArrayCount(std::numeric_limits<uint32_t>::min()) {};
+        maxArrayCount(std::numeric_limits<uint32_t>::min()){};
 
   MaskedArrayType(
       MaskedType inElementType,
@@ -205,10 +205,10 @@ private:
   bool _canUseNullStringSentinel = true;
 
 public:
-  CompatibleTypes() : _type() {};
-  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType) {};
+  CompatibleTypes() : _type(){};
+  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType){};
   CompatibleTypes(const MaskedArrayType& maskedArrayType)
-      : _type(maskedArrayType) {};
+      : _type(maskedArrayType){};
 
   /**
    * Whether this is exclusively compatible with array types. This indicates an
@@ -2055,6 +2055,9 @@ struct BatchIdSemantic {
         numElements);
   }
 
+  BatchIdSemantic()
+      : batchSpan(std::span<uint8_t>()), numElements(0), byteSize(0) {}
+
   BatchIdSemantic(
       const rapidjson::Document& featureTableJson,
       uint32_t numInstances,
@@ -2137,10 +2140,6 @@ struct BatchIdSemantic {
         },
         batchSpan);
   }
-
-private:
-  BatchIdSemantic()
-      : batchSpan(std::span<uint8_t>()), numElements(0), byteSize(0) {}
 };
 
 // returns an accessor ID for the added feature IDs
@@ -2206,17 +2205,16 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromI3dm(
   int64_t featureCount = 0;
   featureCount = *maybeInstancesLength;
 
-  std::optional<BatchIdSemantic> maybeBatchIds = std::nullopt;
+  BatchIdSemantic batchIdSemantic;
   if (featureTableJson.HasMember("BATCH_ID")) {
-    maybeBatchIds = BatchIdSemantic(
+    batchIdSemantic = BatchIdSemantic(
         featureTableJson,
         *maybeInstancesLength,
         featureTableJsonData);
-    if (maybeBatchIds->byteSize == 0) {
+    if (batchIdSemantic.byteSize == 0) {
       result.emplaceError("Invalid BATCH_ID Semantic");
-      maybeBatchIds.reset();
     } else {
-      featureCount = maybeBatchIds->maxBatchId() + 1;
+      featureCount = batchIdSemantic.maxBatchId() + 1;
     }
   } else {
     featureCount = *maybeInstancesLength;
@@ -2230,8 +2228,8 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromI3dm(
       result);
 
   int32_t featureIdAccessor = -1;
-  if (maybeBatchIds) {
-    featureIdAccessor = addFeatureIdsToGltf(gltf, *maybeBatchIds);
+  if (batchIdSemantic.byteSize > 0) {
+    featureIdAccessor = addFeatureIdsToGltf(gltf, batchIdSemantic);
   }
 
   // Create an EXT_instance_features extension for node that has an
