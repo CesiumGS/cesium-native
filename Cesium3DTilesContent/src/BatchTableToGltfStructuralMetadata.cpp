@@ -2057,9 +2057,7 @@ struct BatchIdSemantic {
       const rapidjson::Document& featureTableJson,
       uint32_t numInstances,
       const std::span<const std::byte>& featureTableJsonData)
-      : batchSpan(makeSpan<uint8_t>(nullptr, 0, 0)),
-        numElements(0),
-        byteSize(0) {
+      : batchSpan(std::span<uint8_t>()), numElements(0), byteSize(0) {
     const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
     if (batchIdIt == featureTableJson.MemberEnd() ||
         !batchIdIt->value.IsObject()) {
