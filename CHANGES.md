@@ -5,6 +5,8 @@
 ##### Additions :tada:
 
 - Added `ImplicitTilingUtilities::getParentID` to derive the ID of the parent for a given tile ID.
+- Added `GeoJsonDocumentRasterOverlay` for displaying VectorDocument objects loaded from GeoJSON as a raster overlay.
+- Improved performance of `RasterizedPolygonsOverlay`, especially when using lots of cartographic polygons at once.
 
 ### v0.49.0 - 2025-07-01
 
@@ -16,8 +18,6 @@
 ##### Additions :tada:
 
 - Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
-- Added `GeoJsonDocumentRasterOverlay` for displaying VectorDocument objects loaded from GeoJSON as a raster overlay.
-- Improved performance of `RasterizedPolygonsOverlay`, especially when using lots of cartographic polygons at once.
 - Added `CesiumCurl` library containing `CurlAssetAccessor`, an implementation of `IAssetAccessor` based on libcurl.
 - Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
