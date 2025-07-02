@@ -84,6 +84,9 @@ if(CESIUM_TARGET_WASM)
     endif()
   endforeach()
 
+  list(APPEND CESIUM_TEST_DATA_DIRS --embed)
+  list(APPEND CESIUM_TEST_DATA_DIRS "${CMAKE_SOURCE_DIR}/data")
+
   message("${CESIUM_TEST_DATA_DIRS}")
 
   set(CESIUM_NATIVE_TESTS_DATA_OBJ ${CMAKE_CURRENT_BINARY_DIR}/cesium-native-tests-data.o)
@@ -123,7 +126,7 @@ PRIVATE
 
 target_compile_definitions(cesium-native-tests
 PRIVATE
-  CESIUM_NATIVE_DATA_DIR=\"${CMAKE_CURRENT_LIST_DIR}/../data\"
+  CESIUM_NATIVE_DATA_DIR=\"${CMAKE_SOURCE_DIR}/data\"
 )
 
 include(CTest)
