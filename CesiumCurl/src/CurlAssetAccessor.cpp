@@ -469,6 +469,8 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
             pThis->_options.requestHeaders,
             std::move(payloadCopy));
 
+    // These APIs don't exist in iOS versions prior to 13.
+#if !defined(TARGET_OS_IOS) || __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
         // libcurl will not automatically create the target directory when
         // PUTting to a `file:///` URL. So we do that manually here.
         if (pThis->_options.allowDirectoryCreation && isFile(pRequest->url())) {
@@ -478,6 +480,7 @@ Future<std::shared_ptr<IAssetRequest>> CurlAssetAccessor::request(
             std::filesystem::create_directories(filePath.parent_path());
           }
         }
+#endif
 
         CurlHandle curl(pThis.get());
 

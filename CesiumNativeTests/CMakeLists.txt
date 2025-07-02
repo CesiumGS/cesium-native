@@ -11,7 +11,6 @@ set(cesium_native_targets
     Cesium3DTilesSelection
     Cesium3DTilesWriter
     CesiumAsync
-    CesiumCurl
     CesiumGeometry
     CesiumGeospatial
     CesiumGltf
@@ -25,6 +24,10 @@ set(cesium_native_targets
     CesiumRasterOverlays
     CesiumUtility
 )
+
+if(NOT CESIUM_DISABLE_CURL) 
+    list(APPEND cesium_native_targets CesiumCurl)
+endif()
 
 cesium_glob_files(test_sources
     ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
