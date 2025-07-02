@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `ImplicitTilingUtilities::getParentID` to derive the ID of the parent for a given tile ID.
+
 ### v0.49.0 - 2025-07-01
 
 ##### Breaking Changes :mega:
