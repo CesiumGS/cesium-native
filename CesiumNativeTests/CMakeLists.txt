@@ -89,14 +89,14 @@ if(CESIUM_TARGET_WASM)
   set(CESIUM_NATIVE_TESTS_DATA_OBJ ${CMAKE_CURRENT_BINARY_DIR}/cesium-native-tests-data.o)
   add_custom_target(
     cesium-native-tests-data
-    COMMAND ${EMSCRIPTEN_ROOT_PATH}/tools/file_packager none.js --wasm64 ${CESIUM_TEST_DATA_DIRS} --obj-output=${CESIUM_NATIVE_TESTS_DATA_OBJ})
+    COMMAND ${EMSCRIPTEN_ROOT_PATH}/tools/file_packager none.data --wasm64 ${CESIUM_TEST_DATA_DIRS} --obj-output=${CESIUM_NATIVE_TESTS_DATA_OBJ})
   
   add_library(cesium-native-tests-data-lib OBJECT IMPORTED)
   add_dependencies(cesium-native-tests-data-lib cesium-native-tests-data)
   set_property(TARGET cesium-native-tests-data-lib PROPERTY IMPORTED_OBJECTS
     "${CESIUM_NATIVE_TESTS_DATA_OBJ}")
 
-  # list(APPEND cesium_native_targets cesium-native-tests-data-lib)
+  list(APPEND cesium_native_targets cesium-native-tests-data-lib)
 endif()
 
 target_sources(
@@ -128,4 +128,8 @@ PRIVATE
 
 include(CTest)
 include(doctest)
-doctest_discover_tests(cesium-native-tests)
+
+if(NOT CESIUM_TARGET_WASM)
+    # doctest_discover_tests can't handle the target being an html file, so we just avoid it on a wasm build
+    doctest_discover_tests(cesium-native-tests)
+endif()

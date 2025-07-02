@@ -1525,6 +1525,7 @@ TEST_CASE("Future from loadSchema rejects if schemaUri can't be loaded") {
       .thenInMainThread(
           [&wasResolved](const TilesetMetadata*) { wasResolved = true; })
       .catchInMainThread([&wasRejected](const std::exception& exception) {
+        INFO(exception.what());
         CHECK(std::string(exception.what()).find("") != std::string::npos);
         wasRejected = true;
       });

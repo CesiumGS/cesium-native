@@ -5,6 +5,8 @@
 # endif()
 
 if(CESIUM_TARGET_WASM)
-  add_compile_options(-sMEMORY64=1 -msimd128 -mnontrapping-fptoint -sSUPPORT_LONGJMP=emscripten)
-  add_link_options(-sMEMORY64=1 -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=8589934592 -sMIN_NODE_VERSION=200000 -sDISABLE_EXCEPTION_CATCHING=0 -mbulk-memory -mnontrapping-fptoint -msse4.2 -sWASM_BIGINT -sSUPPORT_LONGJMP=emscripten -sFORCE_FILESYSTEM)
+  add_compile_options(-sMEMORY64=1 -pthread -msimd128 -mnontrapping-fptoint -sSUPPORT_LONGJMP=emscripten)
+  add_link_options(-sMEMORY64=1 -pthread -sALLOW_MEMORY_GROWTH=1 -sPTHREAD_POOL_SIZE=4 -sMAXIMUM_MEMORY=8589934592 -sMIN_NODE_VERSION=200000 -sINITIAL_MEMORY=268435456 -sSTACK_SIZE=1048576 -sDISABLE_EXCEPTION_CATCHING=0 -mbulk-memory -mnontrapping-fptoint -msse4.2 -sMALLOC=mimalloc -sWASM_BIGINT -sSUPPORT_LONGJMP=emscripten -sFORCE_FILESYSTEM -sPROXY_TO_PTHREAD)
+
+  add_link_options($<$<CONFIG:Debug>:-gsource-map>)
 endif()

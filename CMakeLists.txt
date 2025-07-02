@@ -160,6 +160,9 @@ project(cesium-native
 if(CESIUM_TARGET_WASM)
     # YES we have sixty four bits!
     set(CMAKE_SIZEOF_VOID_P 8)
+
+    # Tells emscripten to output an HTML harness for the generated WASM
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
 endif()
 
 include(GNUInstallDirs)
