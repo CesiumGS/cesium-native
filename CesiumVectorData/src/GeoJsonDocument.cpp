@@ -714,6 +714,31 @@ Future<Result<GeoJsonDocument>> GeoJsonDocument::fromCesiumIonAsset(
       });
 }
 
+Future<Result<GeoJsonDocument>> GeoJsonDocument::fromUrl(
+    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::string& url,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers) {
+  return pAssetAccessor->get(asyncSystem, url, headers)
+      .thenImmediately(
+          [](std::shared_ptr<IAssetRequest>&& pAssetRequest) mutable
+          -> Result<GeoJsonDocument> {
+            const IAssetResponse* pAssetResponse = pAssetRequest->response();
+
+            // Curl returns a status code of zero with a file URL, so we want to
+            // consider that a success too.
+            if (pAssetResponse->statusCode() != 0 &&
+                (pAssetResponse->statusCode() < 200 ||
+                 pAssetResponse->statusCode() >= 300)) {
+              return Result<GeoJsonDocument>(ErrorList::error(fmt::format(
+                  "Status code {} while requesting GeoJSON data from URL.",
+                  pAssetResponse->statusCode())));
+            }
+
+            return GeoJsonDocument::fromGeoJson(pAssetResponse->data(), {});
+          });
+}
+
 GeoJsonDocument::GeoJsonDocument(
     GeoJsonObject&& rootObject,
     std::vector<VectorDocumentAttribution>&& attributions)
