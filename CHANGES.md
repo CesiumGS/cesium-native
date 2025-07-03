@@ -5,6 +5,8 @@
 ##### Additions :tada:
 
 - Added `ImplicitTilingUtilities::getParentID` to derive the ID of the parent for a given tile ID.
+- Added `GeoJsonDocumentRasterOverlay` for displaying VectorDocument objects loaded from GeoJSON as a raster overlay.
+- Improved performance of `RasterizedPolygonsOverlay`, especially when using lots of cartographic polygons at once.
 
 ### v0.49.0 - 2025-07-01
 

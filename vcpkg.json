@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "dependencies": [
     "asyncplusplus",
     "curl",
@@ -25,7 +26,21 @@
     "earcut-hpp",
     "cpp-httplib",
     "libmorton",
-    "zstd"
+    "zstd",
+    {
+      "name": "blend2d",
+      "default-features": false,
+      "features": [
+        {
+          "name": "jit",
+          "platform": "!ios"
+        }
+      ]
+    },
+    {
+      "name": "asmjit",
+      "platform": "!ios"
+    }
   ]
 }
 
