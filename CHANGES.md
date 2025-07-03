@@ -21,6 +21,7 @@
   - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
   - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
 - `Cesium3DTilesSelection::TileExternalContent` now inherits from `CesiumUtility::ExtensibleObject` to store and manage extensions from its content, such as `Extension3dTilesContentVoxels`.
+- Added `accessorView` to `PropertyAttributePropertyView` to retrieve the underlying `AccessorView`.
 
 ##### Fixes :wrench:
 
