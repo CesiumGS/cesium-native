@@ -383,6 +383,22 @@ public:
       const CesiumGeometry::OctreeTileID& tileID) noexcept;
 
   /**
+   * @brief Gets the ID of the parent of the given tile. If the tile's level is
+   * 0, then it cannot have a parent and this function returns std::nullopt.
+   *
+   * @returns The ID of the parent tile, or std::nullopt if the input tile's
+   * level is 0.
+   */
+  static std::optional<CesiumGeometry::QuadtreeTileID>
+  getParentID(const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+
+  /**
+   * @copydoc getParentID
+   */
+  static std::optional<CesiumGeometry::OctreeTileID>
+  getParentID(const CesiumGeometry::OctreeTileID& tileID) noexcept;
+
+  /**
    * @brief Gets a lightweight virtual container for enumerating the quadtree
    * IDs of the children of a given quadtree tile.
    *

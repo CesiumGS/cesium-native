@@ -796,7 +796,8 @@ TEST_CASE("Test serving cache item") {
             HttpHeaders{
                 {"Content-Type", "app/json"},
                 {"Revalidation-Response-Header", "Revalidation-Response-Value"},
-                {"Cache-Control", "max-age=300, must-revalidate, private"}},
+                {"Cache-Control", "max-age=300, must-revalidate, private"},
+                {"ETag", "1"}},
             std::vector<std::byte>());
 
     std::shared_ptr<IAssetRequest> mockRequest =
@@ -819,7 +820,8 @@ TEST_CASE("Test serving cache item") {
         HttpHeaders{
             {"Content-Type", "app/json"},
             {"Cache-Response-Header", "Cache-Response-Value"},
-            {"Cache-Control", "max-age=100, private"}},
+            {"Cache-Control", "max-age=100, private"},
+            {"ETag", "1"}},
         std::vector<std::byte>());
     CacheItem cacheItem(
         currentTime - 100,
@@ -897,8 +899,8 @@ TEST_CASE("Test serving cache item") {
             "app/json",
             HttpHeaders{
                 {"Content-Type", "app/json"},
-                {"Revalidation-Response-Header",
-                 "Revalidation-Response-Value"}},
+                {"Revalidation-Response-Header", "Revalidation-Response-Value"},
+                {"ETag", "1"}},
             std::vector<std::byte>());
 
     std::shared_ptr<IAssetRequest> mockRequest =
@@ -921,7 +923,8 @@ TEST_CASE("Test serving cache item") {
         HttpHeaders{
             {"Content-Type", "app/json"},
             {"Cache-Response-Header", "Cache-Response-Value"},
-            {"Cache-Control", "max-age=100, private"}},
+            {"Cache-Control", "max-age=100, private"},
+            {"ETag", "1"}},
         std::vector<std::byte>());
     CacheItem cacheItem(
         currentTime - 100,
@@ -929,10 +932,22 @@ TEST_CASE("Test serving cache item") {
         std::move(cacheResponse));
     mockCacheDatabase->cacheItem = cacheItem;
 
+    std::unique_ptr<MockAssetAccessor> pAssetAccessor =
+        std::make_unique<MockAssetAccessor>(mockRequest);
+
+    pAssetAccessor->responsesByUrl["test.com"] = MockAssetResponse(
+        static_cast<uint16_t>(200),
+        "app/json",
+        HttpHeaders{
+            {"Content-Type", "app/json"},
+            {"Revalidation-Response-Header", "Revalidation-Response-Value"},
+            {"ETag", "1"}},
+        std::vector<std::byte>());
+
     std::shared_ptr<CachingAssetAccessor> cacheAssetAccessor =
         std::make_shared<CachingAssetAccessor>(
             spdlog::default_logger(),
-            std::make_unique<MockAssetAccessor>(mockRequest),
+            std::move(pAssetAccessor),
             std::move(mockCacheDatabase));
     std::shared_ptr<MockTaskProcessor> mockTaskProcessor =
         std::make_shared<MockTaskProcessor>();
@@ -940,13 +955,19 @@ TEST_CASE("Test serving cache item") {
     // test that the response is from the server directly
     AsyncSystem asyncSystem(mockTaskProcessor);
     cacheAssetAccessor
-        ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
+        ->get(
+            asyncSystem,
+            "test.com",
+            std::vector<IAssetAccessor::THeader>{
+                {"Some-Request-Header", "The Value"}})
         .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
               REQUIRE(completedRequest->url() == "test.com");
-              REQUIRE(completedRequest->headers().empty());
               REQUIRE(completedRequest->method() == "GET");
+              REQUIRE(
+                  completedRequest->headers() ==
+                  HttpHeaders{{"Some-Request-Header", "The Value"}});
 
               const IAssetResponse* response = completedRequest->response();
               REQUIRE(response != nullptr);

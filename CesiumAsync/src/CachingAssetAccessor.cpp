@@ -26,6 +26,9 @@
 #include <vector>
 
 namespace CesiumAsync {
+
+namespace {
+
 class CacheAssetResponse : public IAssetResponse {
 public:
   CacheAssetResponse(CacheResponse&& cacheResponse) noexcept
@@ -91,7 +94,33 @@ private:
   CacheAssetResponse _response;
 };
 
-namespace {
+class WrappedValidationRequest : public IAssetRequest {
+public:
+  WrappedValidationRequest(
+      const std::shared_ptr<IAssetRequest>& pWrapped,
+      const std::vector<IAssetAccessor::THeader>& headers)
+      : _pWrapped(pWrapped), _headers(headers.begin(), headers.end()) {}
+
+  virtual const std::string& method() const noexcept override {
+    return this->_pWrapped->method();
+  }
+
+  virtual const std::string& url() const noexcept override {
+    return this->_pWrapped->url();
+  }
+
+  virtual const HttpHeaders& headers() const noexcept override {
+    return this->_headers;
+  }
+
+  virtual const IAssetResponse* response() const noexcept override {
+    return this->_pWrapped->response();
+  }
+
+private:
+  std::shared_ptr<IAssetRequest> _pWrapped;
+  HttpHeaders _headers;
+};
 
 std::time_t convertHttpDateToTime(const std::string& httpDate);
 
@@ -243,7 +272,16 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                               std::move(cacheItem),
                               *pCompletedRequest);
                         } else {
-                          pRequestToStore = pCompletedRequest;
+                          // There are a number of places where requests inherit
+                          // headers from "parent" requests. When this happens,
+                          // we need to ensure that that extra cache-related
+                          // headers, such as `If-None-Match`, are not
+                          // inherited. So we wrap the revalidation request here
+                          // in order to manipulate the headers.
+                          pRequestToStore =
+                              std::make_shared<WrappedValidationRequest>(
+                                  pCompletedRequest,
+                                  std::move(headers));
                         }
 
                         const IAssetResponse* pResponseToStore =
@@ -255,7 +293,6 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                         if (shouldCacheRequest(
                                 *pRequestToStore,
                                 cacheControl)) {
-
                           pCacheDatabase->storeEntry(
                               calculateCacheKey(*pRequestToStore),
                               calculateExpiryTime(

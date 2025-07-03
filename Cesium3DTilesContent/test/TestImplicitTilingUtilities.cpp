@@ -147,6 +147,38 @@ TEST_CASE("ImplicitTilingUtilities::computeRelativeMortonIndex") {
   }
 }
 
+TEST_CASE("ImplicitTilingUtilities::getParentID") {
+  SUBCASE("quadtree") {
+    QuadtreeTileID tileID(2, 1, 2);
+    std::optional<QuadtreeTileID> maybeParent =
+        ImplicitTilingUtilities::getParentID(tileID);
+    REQUIRE_UNARY(maybeParent);
+    CHECK_EQ(maybeParent, QuadtreeTileID(1, 0, 1));
+
+    std::optional<QuadtreeTileID> maybeGrandparent =
+        ImplicitTilingUtilities::getParentID(*maybeParent);
+    REQUIRE_UNARY(maybeGrandparent);
+    CHECK_EQ(maybeGrandparent, QuadtreeTileID(0, 0, 0));
+
+    CHECK_UNARY_FALSE(ImplicitTilingUtilities::getParentID(*maybeGrandparent));
+  }
+
+  SUBCASE("octree") {
+    OctreeTileID tileID(2, 3, 1, 2);
+    std::optional<OctreeTileID> maybeParent =
+        ImplicitTilingUtilities::getParentID(tileID);
+    REQUIRE_UNARY(maybeParent);
+    CHECK_EQ(maybeParent, OctreeTileID(1, 1, 0, 1));
+
+    std::optional<OctreeTileID> maybeGrandparent =
+        ImplicitTilingUtilities::getParentID(*maybeParent);
+    REQUIRE_UNARY(maybeGrandparent);
+    CHECK_EQ(maybeGrandparent, OctreeTileID(0, 0, 0, 0));
+
+    CHECK_UNARY_FALSE(ImplicitTilingUtilities::getParentID(*maybeGrandparent));
+  }
+}
+
 TEST_CASE("ImplicitTilingUtilities::getSubtreeRootID") {
   SUBCASE("quadtree") {
     QuadtreeTileID tileID(10, 2, 3);

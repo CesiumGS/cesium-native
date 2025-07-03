@@ -57,6 +57,8 @@ struct CESIUMCURL_API CurlAssetAccessorOptions {
   /**
    * @brief Whether a PUT or POST to a `file:` URL is allowed to create file
    * system directories to hold the target file.
+   *
+   * This property has no effect when targetting a version of iOS prior to 13.
    */
   bool allowDirectoryCreation{false};
 
