@@ -1,3 +1,5 @@
+#include "CesiumGeospatial/GlobeRectangle.h"
+
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -118,6 +120,33 @@ bool BoundingRegionBuilder::expandToIncludePosition(
 
       modified = true;
     }
+  }
+
+  return modified;
+}
+
+bool BoundingRegionBuilder::expandToIncludeGlobeRectangle(
+    const GlobeRectangle& rectangle) {
+  bool modified = false;
+
+  if (rectangle.getSouth() < this->_rectangle.getSouth()) {
+    this->_rectangle.setSouth(rectangle.getSouth());
+    modified = true;
+  }
+
+  if (rectangle.getNorth() > this->_rectangle.getNorth()) {
+    this->_rectangle.setNorth(rectangle.getNorth());
+    modified = true;
+  }
+
+  if (rectangle.getEast() < this->_rectangle.getEast()) {
+    this->_rectangle.setEast(rectangle.getEast());
+    modified = true;
+  }
+
+  if (rectangle.getWest() > this->_rectangle.getWest()) {
+    this->_rectangle.setWest(rectangle.getWest());
+    modified = true;
   }
 
   return modified;

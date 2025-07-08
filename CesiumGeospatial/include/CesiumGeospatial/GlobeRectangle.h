@@ -62,6 +62,21 @@ public:
       : _west(west), _south(south), _east(east), _north(north) {}
 
   /**
+   * @brief Constructs a new `GlobeRectangle` from the provided `Rectangle`.
+   *
+   * The rectangle's minimum coordinates will be interpreted as the southwest
+   * position and the maximum coordinates as the northeast.
+   *
+   * @param rectangle The rectangle defining the bounds of the new
+   * `GlobeRectangle`.
+   */
+  constexpr GlobeRectangle(const CesiumGeometry::Rectangle& rectangle) noexcept
+      : _west(rectangle.minimumX),
+        _south(rectangle.minimumY),
+        _east(rectangle.maximumX),
+        _north(rectangle.maximumY) {}
+
+  /**
    * Creates a rectangle given the boundary longitude and latitude in degrees.
    * The angles are converted to radians.
    *

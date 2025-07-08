@@ -85,22 +85,22 @@ VectorRasterizer::VectorRasterizer(
           ? this->_imageAsset->pixelData.data()
           : this->_imageAsset->pixelData.data() +
                 this->_imageAsset->mipPositions[this->_mipLevel].byteOffset;
-  _image.createFromData(
+  this->_image.createFromData(
       imageWidth,
       imageHeight,
       BL_FORMAT_PRGB32,
       reinterpret_cast<void*>(pData),
       (int64_t)imageWidth * (int64_t)this->_imageAsset->channels);
 
-  _context.begin(this->_image);
+  this->_context.begin(this->_image);
   // Initialize the image as all transparent.
-  _context.clearAll();
+  this->_context.clearAll();
 }
 
 void VectorRasterizer::drawPolygon(
     const CesiumGeospatial::CartographicPolygon& polygon,
     const PolygonStyle& style) {
-  if (_finalized || (!style.fill && !style.outline)) {
+  if (this->_finalized || (!style.fill && !style.outline)) {
     return;
   }
 
@@ -135,7 +135,7 @@ void VectorRasterizer::drawPolygon(
 void VectorRasterizer::drawPolygon(
     const std::vector<std::vector<glm::dvec3>>& polygon,
     const PolygonStyle& style) {
-  if (_finalized || (!style.fill && !style.outline)) {
+  if (this->_finalized || (!style.fill && !style.outline)) {
     return;
   }
 
@@ -176,7 +176,7 @@ void VectorRasterizer::drawPolygon(
 void VectorRasterizer::drawPolyline(
     const std::span<const glm::dvec3>& points,
     const LineStyle& style) {
-  if (_finalized) {
+  if (this->_finalized) {
     return;
   }
 
@@ -236,7 +236,7 @@ void VectorRasterizer::drawGeoJsonObject(
 }
 
 void VectorRasterizer::clear(const CesiumUtility::Color& clearColor) {
-  if (_finalized) {
+  if (this->_finalized) {
     return;
   }
 
@@ -274,7 +274,7 @@ VectorRasterizer::finalize() {
     *pPixel = newPixel;
   }
 
-  _finalized = true;
+  this->_finalized = true;
   return this->_imageAsset;
 }
 

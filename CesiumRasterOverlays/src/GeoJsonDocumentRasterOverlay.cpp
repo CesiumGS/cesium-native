@@ -1,6 +1,10 @@
+#include "CesiumGeometry/Rectangle.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -194,7 +198,7 @@ struct GlobeRectangleFromObjectVisitor {
 };
 
 void addPrimitivesToData(
-    const GeoJsonObject* geoJsonObject,
+    const GeoJsonObject* pGeoJsonObject,
     std::vector<QuadtreeGeometryData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
     const VectorStyle& style);
@@ -262,8 +266,7 @@ void addPrimitivesToData(
       GlobeRectangleFromObjectVisitor{thisBuilder},
       geoJsonObject->value);
   GlobeRectangle rect = thisBuilder.toGlobeRectangle();
-  documentRegionBuilder.expandToIncludePosition(rect.getSouthwest());
-  documentRegionBuilder.expandToIncludePosition(rect.getNortheast());
+  documentRegionBuilder.expandToIncludeGlobeRectangle(rect);
   data.emplace_back(
       QuadtreeGeometryData{geoJsonObject, &style, std::move(rect)});
 
@@ -275,10 +278,11 @@ void addPrimitivesToData(
 const uint32_t DEPTH_LIMIT = 8;
 uint32_t buildQuadtreeNode(
     Quadtree& tree,
+    const QuadtreeTilingScheme& tilingScheme,
     const GlobeRectangle& rectangle,
     std::vector<uint32_t>::iterator begin,
     std::vector<uint32_t>::iterator end,
-    uint32_t depth) {
+    QuadtreeTileID tileId) {
   if (begin == end) {
     return 0;
   }
@@ -291,38 +295,33 @@ uint32_t buildQuadtreeNode(
 
   tree.dataNodeIndicesBegin.emplace_back(indicesBegin);
 
-  if (begin + 1 == end || depth >= DEPTH_LIMIT ||
+  if (begin + 1 == end || tileId.level >= DEPTH_LIMIT ||
       std::equal(begin + 1, end, begin)) {
     return resultId;
   }
 
-  Cartographic southWest = rectangle.getSouthwest();
-  Cartographic northEast = rectangle.getNortheast();
-  Cartographic center = rectangle.computeCenter();
+  const CesiumGeometry::QuadtreeTileID southWestTile(
+      tileId.level + 1,
+      tileId.x * 2,
+      tileId.y * 2);
+  const CesiumGeometry::QuadtreeTileID southEastTile(
+      southWestTile.level,
+      southWestTile.x + 1,
+      southWestTile.y);
+  const CesiumGeometry::QuadtreeTileID northWestTile(
+      southWestTile.level,
+      southWestTile.x,
+      southWestTile.y + 1);
+  const CesiumGeometry::QuadtreeTileID northEastTile(
+      southWestTile.level,
+      southWestTile.x + 1,
+      southWestTile.y + 1);
 
-  const GlobeRectangle southWestRect = GlobeRectangle(
-      southWest.longitude,
-      southWest.latitude,
-      center.longitude,
-      center.latitude);
-  const GlobeRectangle southEastRect = GlobeRectangle(
-      center.longitude,
-      southWest.latitude,
-      northEast.longitude,
-      center.latitude);
-  const GlobeRectangle northWestRect = GlobeRectangle(
-      southWest.longitude,
-      center.latitude,
-      center.longitude,
-      northEast.latitude);
-  const GlobeRectangle northEastRect = GlobeRectangle(
-      center.longitude,
-      center.latitude,
-      northEast.longitude,
-      northEast.latitude);
-
+  const GlobeRectangle southWestRect{
+      tilingScheme.tileToRectangle(southWestTile)};
   tree.nodes[resultId].children[0][0] = buildQuadtreeNode(
       tree,
+      tilingScheme,
       southWestRect,
       begin,
       std::partition(
@@ -333,9 +332,13 @@ uint32_t buildQuadtreeNode(
                 .rectangle.computeIntersection(southWestRect)
                 .has_value();
           }),
-      depth + 1);
+      southWestTile);
+
+  const GlobeRectangle southEastRect{
+      tilingScheme.tileToRectangle(southEastTile)};
   tree.nodes[resultId].children[0][1] = buildQuadtreeNode(
       tree,
+      tilingScheme,
       southEastRect,
       begin,
       std::partition(
@@ -346,9 +349,13 @@ uint32_t buildQuadtreeNode(
                 .rectangle.computeIntersection(southEastRect)
                 .has_value();
           }),
-      depth + 1);
+      southEastTile);
+
+  const GlobeRectangle northWestRect{
+      tilingScheme.tileToRectangle(northWestTile)};
   tree.nodes[resultId].children[1][0] = buildQuadtreeNode(
       tree,
+      tilingScheme,
       northWestRect,
       begin,
       std::partition(
@@ -359,9 +366,13 @@ uint32_t buildQuadtreeNode(
                 .rectangle.computeIntersection(northWestRect)
                 .has_value();
           }),
-      depth + 1);
+      northWestTile);
+
+  const GlobeRectangle northEastRect{
+      tilingScheme.tileToRectangle(northEastTile)};
   tree.nodes[resultId].children[1][1] = buildQuadtreeNode(
       tree,
+      tilingScheme,
       northEastRect,
       begin,
       std::partition(
@@ -372,7 +383,7 @@ uint32_t buildQuadtreeNode(
                 .rectangle.computeIntersection(northEastRect)
                 .has_value();
           }),
-      depth + 1);
+      northEastTile);
 
   return resultId;
 }
@@ -404,12 +415,18 @@ Quadtree buildQuadtree(
     dataIndices.emplace_back((uint32_t)i);
   }
 
+  const QuadtreeTilingScheme tilingScheme(
+      tree.rectangle.toSimpleRectangle(),
+      1,
+      1);
+
   tree.rootId = buildQuadtreeNode(
       tree,
+      tilingScheme,
       tree.rectangle,
       dataIndices.begin(),
       dataIndices.end(),
-      0);
+      QuadtreeTileID(0, 0, 0));
   // Add last entry so [i + 1] is always valid
   tree.dataNodeIndicesBegin.emplace_back((uint32_t)tree.dataIndices.size() - 1);
 
@@ -461,17 +478,19 @@ void rasterizeVectorData(
     const GlobeRectangle& rectangle,
     const Quadtree& tree,
     const Ellipsoid& ellipsoid) {
+  // Keeps track of primitives that have already been rendered to avoid
+  // re-drawing the same primitives that appear in multiple quadtree nodes.
+  std::vector<bool> primitivesRendered(tree.data.size(), false);
   for (size_t i = 0;
        i < std::max(result.pImage->mipPositions.size(), (size_t)1);
        i++) {
+    primitivesRendered.assign({false});
+
     VectorRasterizer rasterizer(
         rectangle,
         result.pImage,
         (uint32_t)i,
         ellipsoid);
-    // Keeps track of primitives that have already been rendered to avoid
-    // re-drawing the same primitives that appear in multiple quadtree nodes.
-    std::vector<bool> primitivesRendered(tree.data.size(), false);
     rasterizeQuadtreeNode(
         tree,
         tree.rootId,
