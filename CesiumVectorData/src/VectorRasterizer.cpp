@@ -253,7 +253,10 @@ VectorRasterizer::finalize() {
 
   // Blend2D writes in BGRA whereas ImageAsset is RGBA.
   // We need to swap the channels to fix the values.
-  // TODO: use BLPixelConverter which has SIMD support
+  // Blend2D provides BLPixelConverter for these sorts of operations, which
+  // should be faster because it has SIMD support. But the current
+  // implementation seems to perform well as-is, likely thanks to the compiler's
+  // vectorization.
   std::byte* pData =
       this->_mipLevel == 0
           ? this->_imageAsset->pixelData.data()
