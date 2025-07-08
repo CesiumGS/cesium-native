@@ -3,6 +3,7 @@
 #include <CesiumGeometry/AxisAlignedBox.h>
 #include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/Library.h>
+#include <CesiumVectorData/VectorStyle.h>
 
 #include <glm/vec3.hpp>
 
@@ -60,6 +61,12 @@ struct GeoJsonPoint {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style to apply to this object as well as any child object. If
+   * not set, the style of any parent object or the default style will be used.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -90,6 +97,12 @@ struct GeoJsonMultiPoint {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style to apply to this object as well as any child object. If
+   * not set, the style of any parent object or the default style will be used.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -121,6 +134,12 @@ struct GeoJsonLineString {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style to apply to this object as well as any child object. If
+   * not set, the style of any parent object or the default style will be used.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -153,6 +172,12 @@ struct GeoJsonMultiLineString {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style to apply to this object as well as any child object. If
+   * not set, the style of any parent object or the default style will be used.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -192,6 +217,12 @@ struct GeoJsonPolygon {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style to apply to this object as well as any child object. If
+   * not set, the style of any parent object or the default style will be used.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -224,6 +255,12 @@ struct GeoJsonMultiPolygon {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style to apply to this object as well as any child object. If
+   * not set, the style of any parent object or the default style will be used.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 struct GeoJsonObject;
@@ -258,6 +295,12 @@ struct GeoJsonGeometryCollection {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style to apply to this object as well as any child object. If
+   * not set, the style of any parent object or the default style will be used.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -328,6 +371,12 @@ struct GeoJsonFeature {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style to apply to this object as well as any child object. If
+   * not set, the style of any parent object or the default style will be used.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
@@ -359,6 +408,12 @@ struct GeoJsonFeatureCollection {
    */
   CesiumUtility::JsonValue::Object foreignMembers =
       CesiumUtility::JsonValue::Object();
+
+  /**
+   * @brief The style to apply to this object as well as any child object. If
+   * not set, the style of any parent object or the default style will be used.
+   */
+  std::optional<VectorStyle> style = std::nullopt;
 };
 
 /**
