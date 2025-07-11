@@ -34,6 +34,7 @@ struct ExtensionKhrImplicitShapes;
 struct ExtensionExtImplicitEllipsoidRegion;
 struct ExtensionExtImplicitCylinderRegion;
 struct ExtensionExtPrimitiveVoxels;
+struct ExtensionKhrGaussianSplatting;
 struct Padding;
 struct Shape;
 struct Cylinder;
@@ -398,6 +399,19 @@ struct ExtensionExtPrimitiveVoxelsJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionExtPrimitiveVoxels& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionKhrGaussianSplattingJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrGaussianSplatting;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "KHR_gaussian_splatting";
+
+  static void write(
+      const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
