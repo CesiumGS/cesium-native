@@ -35,6 +35,11 @@ namespace CesiumGltf {
         std::unordered_map<std::string, CesiumGltf::ClassProperty> properties;
 
         /**
+         * @brief Experimental. The parent class ID.
+         */
+        std::optional<std::string> parent;
+
+        /**
          * @brief Calculates the size in bytes of this object, including the contents of all collections, pointers, and strings.
          * This will NOT include the size of any extensions attached to the object.
          * Calling this method may be slow as it requires traversing the object's entire structure.
@@ -54,6 +59,9 @@ accum += int64_t(this->properties.bucket_count() * (sizeof(std::string) + sizeof
 accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
 accum += v.getSizeBytes() - int64_t(sizeof(CesiumGltf::ClassProperty));
       }
+if(this->parent) {
+    accum += int64_t(this->parent->capacity() * sizeof(char));
+  }
           return accum;
         }
 
