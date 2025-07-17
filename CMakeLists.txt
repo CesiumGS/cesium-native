@@ -23,6 +23,7 @@ elseif (CMAKE_TOOLCHAIN_FILE)
 endif()
 
 option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
+option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
 
 if(CESIUM_USE_EZVCPKG)
   # Keep vcpkg from running in manifset mode. It will try to because
@@ -93,6 +94,10 @@ set(PACKAGES_PRIVATE
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
+
+if(NOT CESIUM_DISABLE_CURL)
+    list(APPEND PACKAGES_PRIVATE curl)
+endif()
 
 # Packages only used for testing
 set(PACKAGES_TEST doctest)
@@ -290,24 +295,27 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 find_package(zlib-ng REQUIRED)
 find_package(modp_b64 REQUIRED)
 
+find_package(ada CONFIG REQUIRED)
 find_package(Async++ CONFIG REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(meshoptimizer CONFIG REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(libmorton CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
+find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
-find_package(ada CONFIG REQUIRED)
 
+if(NOT CESIUM_DISABLE_CURL)
+    find_package(CURL REQUIRED)
+endif()
 
 # Private Library (s2geometry)
 add_subdirectory(extern EXCLUDE_FROM_ALL)
@@ -333,6 +341,11 @@ add_subdirectory(CesiumClientCommon)
 add_subdirectory(CesiumIonClient)
 add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
+add_subdirectory(CesiumVectorData)
+
+if(NOT CESIUM_DISABLE_CURL)
+    add_subdirectory(CesiumCurl)
+endif()
 
 # Private Targets
 if (CESIUM_TESTS_ENABLED)

@@ -473,4 +473,30 @@ OrientedBoundingBox fromPlaneExtents(
       maxZ);
 }
 
+bool BoundingRegion::equals(
+    const BoundingRegion& left,
+    const BoundingRegion& right) noexcept {
+  return GlobeRectangle::equals(left.getRectangle(), right.getRectangle()) &&
+         left._minimumHeight == right._minimumHeight &&
+         left._maximumHeight == right._maximumHeight;
+}
+
+bool BoundingRegion::equalsEpsilon(
+    const BoundingRegion& left,
+    const BoundingRegion& right,
+    double relativeEpsilon) noexcept {
+  return GlobeRectangle::equalsEpsilon(
+             left.getRectangle(),
+             right.getRectangle(),
+             relativeEpsilon) &&
+         Math::equalsEpsilon(
+             left._minimumHeight,
+             right._minimumHeight,
+             relativeEpsilon) &&
+         Math::equalsEpsilon(
+             left._maximumHeight,
+             right._maximumHeight,
+             relativeEpsilon);
+}
+
 } // namespace CesiumGeospatial

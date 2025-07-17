@@ -19,10 +19,15 @@ set(cesium_native_targets
     CesiumGltfWriter
     CesiumIonClient
     CesiumITwinClient
+    CesiumVectorData
     CesiumQuantizedMeshTerrain
     CesiumRasterOverlays
     CesiumUtility
 )
+
+if(NOT CESIUM_DISABLE_CURL) 
+    list(APPEND cesium_native_targets CesiumCurl)
+endif()
 
 cesium_glob_files(test_sources
     ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp

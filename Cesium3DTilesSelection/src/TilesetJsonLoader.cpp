@@ -6,9 +6,12 @@
 
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
+#include <Cesium3DTilesReader/ContentReader.h>
+#include <Cesium3DTilesReader/ExtensionContent3dTilesContentVoxelsReader.h>
 #include <Cesium3DTilesReader/GroupMetadataReader.h>
 #include <Cesium3DTilesReader/MetadataEntityReader.h>
 #include <Cesium3DTilesReader/SchemaReader.h>
@@ -65,8 +68,10 @@
 #include <variant>
 #include <vector>
 
-using namespace CesiumUtility;
+using namespace Cesium3DTiles;
+using namespace Cesium3DTilesReader;
 using namespace Cesium3DTilesContent;
+using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
@@ -399,10 +404,13 @@ void parseImplicitTileset(
   auto subtreeLevelsIt = implicitTiling.FindMember("subtreeLevels");
   auto subtreesIt = implicitTiling.FindMember("subtrees");
   auto availableLevelsIt = implicitTiling.FindMember("availableLevels");
+  bool isMaximumLevel = false;
   if (availableLevelsIt == implicitTiling.MemberEnd()) {
     // old version of implicit uses maximumLevel instead of availableLevels.
-    // They have the same semantic
+    // They have similar semantics, except that "maximum" = index while
+    // "available" = count
     availableLevelsIt = implicitTiling.FindMember("maximumLevel");
+    isMaximumLevel = true;
   }
 
   // check that all the required properties above are available
@@ -429,7 +437,8 @@ void parseImplicitTileset(
 
   // create implicit loaders
   uint32_t subtreeLevels = subtreeLevelsIt->value.GetUint();
-  uint32_t availableLevels = availableLevelsIt->value.GetUint();
+  uint32_t availableLevels =
+      availableLevelsIt->value.GetUint() + uint32_t(isMaximumLevel);
   const char* subtreesUri = subtreesUriIt->value.GetString();
   const char* subdivisionScheme = tilingSchemeIt->value.GetString();
 
@@ -548,17 +557,22 @@ std::optional<Tile> parseTileJsonRecursively(
   const auto contentIt = tileJson.FindMember("content");
   bool hasContentMember =
       (contentIt != tileJson.MemberEnd()) && (contentIt->value.IsObject());
-  const char* contentUri = nullptr;
-  if (hasContentMember) {
-    auto uriIt = contentIt->value.FindMember("uri");
-    if (uriIt == contentIt->value.MemberEnd() || !uriIt->value.IsString()) {
-      uriIt = contentIt->value.FindMember("url");
-    }
 
-    if (uriIt != contentIt->value.MemberEnd() && uriIt->value.IsString()) {
-      contentUri = uriIt->value.GetString();
+  std::optional<Content> maybeContent;
+  if (hasContentMember) {
+    ContentReader contentReader;
+    auto contentResult = contentReader.readFromJson(contentIt->value);
+    maybeContent = std::move(contentResult.value);
+  }
+
+  if (maybeContent && maybeContent->uri.empty()) {
+    auto it = maybeContent->unknownProperties.find("url");
+    if (it != maybeContent->unknownProperties.end()) {
+      maybeContent->uri = it->second.getStringOrDefault({});
     }
   }
+
+  const char* contentUri = maybeContent ? maybeContent->uri.c_str() : nullptr;
 
   // determine if tile has implicit tiling
   const rapidjson::Value* implicitTilingJson = nullptr;
@@ -582,11 +596,20 @@ std::optional<Tile> parseTileJsonRecursively(
   }
 
   if (implicitTilingJson) {
-    // mark this tile as external
-    Tile tile{
-        &currentLoader,
-        TileID(),
-        std::make_unique<TileExternalContent>()};
+    // Mark this tile as external.
+    auto pExternalContent = std::make_unique<TileExternalContent>();
+
+    // Check for 3DTILES_content_voxels, which is currently only supported for
+    // implicitly tiled tilesets.
+    if (maybeContent &&
+        maybeContent->hasExtension<ExtensionContent3dTilesContentVoxels>()) {
+      pExternalContent->extensions.emplace(
+          ExtensionContent3dTilesContentVoxels::ExtensionName,
+          std::move(maybeContent->extensions
+                        [ExtensionContent3dTilesContentVoxels::ExtensionName]));
+    }
+
+    Tile tile{&currentLoader, TileID(), std::move(pExternalContent)};
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
     tile.setViewerRequestVolume(tileViewerRequestVolume);
@@ -660,6 +683,8 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
   auto pLoader =
       std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis, ellipsoid);
+  std::optional<ExtensionContent3dTilesContentVoxels> voxelExtension;
+
   const auto rootIt = tilesetJson.FindMember("root");
   if (rootIt != tilesetJson.MemberEnd()) {
     const rapidjson::Value& rootJson = rootIt->value;
@@ -876,7 +901,7 @@ TilesetJsonLoader::createLoader(
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
 TilesetJsonLoader::createLoader(
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& /*pAssetAccessor*/,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tilesetJsonUrl,
     const CesiumAsync::HttpHeaders& requestHeaders,
@@ -895,14 +920,37 @@ TilesetJsonLoader::createLoader(
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
-  // Create a root tile to represent the tileset.json itself.
+  // A new root tile will be created to represent the tileset.json itself.
+  // If the original root tile had 3DTILES_content_voxels, extract it here
+  // so it can be transferred to the new root tile.
+  std::optional<ExtensionContent3dTilesContentVoxels> maybeVoxelExtension;
+  if (result.pRootTile->isExternalContent()) {
+    Cesium3DTilesSelection::TileExternalContent* pExternalContent =
+        result.pRootTile->getContent().getExternalContent();
+    CESIUM_ASSERT(pExternalContent);
+
+    auto* pVoxelExtension =
+        pExternalContent->getExtension<ExtensionContent3dTilesContentVoxels>();
+    if (pVoxelExtension) {
+      maybeVoxelExtension = std::move(*pVoxelExtension);
+      pExternalContent->removeExtension<ExtensionContent3dTilesContentVoxels>();
+    }
+  }
+
   std::vector<Tile> children;
   children.emplace_back(std::move(*result.pRootTile));
+
+  auto pContent = std::make_unique<TileExternalContent>();
+  if (maybeVoxelExtension) {
+    pContent->extensions.emplace(
+        Cesium3DTiles::ExtensionContent3dTilesContentVoxels::ExtensionName,
+        std::move(*maybeVoxelExtension));
+  }
 
   result.pRootTile = std::make_unique<Tile>(
       children[0].getLoader(),
       TileID(),
-      std::make_unique<TileExternalContent>());
+      std::move(pContent));
 
   result.pRootTile->setTransform(children[0].getTransform());
   result.pRootTile->setBoundingVolume(children[0].getBoundingVolume());
@@ -918,7 +966,31 @@ TilesetJsonLoader::createLoader(
     parseTilesetMetadata(tilesetJsonUrl, tilesetJson, *pExternal);
   }
 
-  return asyncSystem.createResolvedFuture(std::move(result));
+  return asyncSystem.createResolvedFuture(std::move(result))
+      .thenInWorkerThread([asyncSystem, pAssetAccessor](
+                              TilesetContentLoaderResult<TilesetJsonLoader>&&
+                                  result) {
+        TileExternalContent* pExternal =
+            result.pRootTile->getContent().getExternalContent();
+        CESIUM_ASSERT(pExternal);
+
+        if (!pExternal->hasExtension<ExtensionContent3dTilesContentVoxels>()) {
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
+
+        // 3DTILES_content_voxels requires the tileset's schema to be loaded.
+        TilesetMetadata& metadata = pExternal->metadata;
+        if (!metadata.schemaUri) {
+          // No schema URI, so this is ready to go.
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
+
+        // Otherwise, prompt the schema to load from URI.
+        return metadata.loadSchemaUri(asyncSystem, pAssetAccessor)
+            .thenImmediately([result = std::move(result)]() mutable {
+              return std::move(result);
+            });
+      });
 }
 
 CesiumAsync::Future<TileLoadResult>
