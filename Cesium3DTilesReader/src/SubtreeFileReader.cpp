@@ -287,7 +287,8 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::postprocess(
   for (size_t i = 0; i < buffers.size(); ++i) {
     const Buffer& buffer = buffers[i];
     if (buffer.uri && !buffer.uri->empty()) {
-      std::string bufferUrl = CesiumUtility::Uri::resolve(url, *buffer.uri);
+      std::string bufferUrl =
+          CesiumUtility::Uri::resolve(url, *buffer.uri, true);
       bufferRequests.emplace_back(requestBuffer(
           pAssetAccessor,
           asyncSystem,

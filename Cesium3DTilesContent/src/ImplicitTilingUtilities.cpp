@@ -147,6 +147,33 @@ OctreeTileID ImplicitTilingUtilities::absoluteTileIDToRelative(
       tileID.z - (rootID.z << relativeTileLevel));
 }
 
+std::optional<CesiumGeometry::QuadtreeTileID>
+ImplicitTilingUtilities::getParentID(
+    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+  if (tileID.level == 0) {
+    return std::nullopt;
+  }
+
+  return CesiumGeometry::QuadtreeTileID(
+      tileID.level - 1,
+      tileID.x >> 1,
+      tileID.y >> 1);
+}
+
+std::optional<CesiumGeometry::OctreeTileID>
+ImplicitTilingUtilities::getParentID(
+    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+  if (tileID.level == 0) {
+    return std::nullopt;
+  }
+
+  return CesiumGeometry::OctreeTileID(
+      tileID.level - 1,
+      tileID.x >> 1,
+      tileID.y >> 1,
+      tileID.z >> 1);
+}
+
 namespace {
 template <typename T>
 Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
