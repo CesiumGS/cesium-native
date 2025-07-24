@@ -10,10 +10,12 @@ CesiumIonAssetAccessor::CesiumIonAssetAccessor(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<IAssetAccessor>& pAggregatedAccessor,
     const std::string& assetEndpointUrl,
+    const std::vector<IAssetAccessor::THeader>& assetEndpointHeaders,
     std::function<void(const UpdatedToken&)> updatedTokenCallback)
     : _pLogger(pLogger),
       _pAggregatedAccessor(pAggregatedAccessor),
       _assetEndpointUrl(assetEndpointUrl),
+      _assetEndpointHeaders(assetEndpointHeaders),
       _updatedTokenCallback(std::move(updatedTokenCallback)),
       _tokenRefreshInProgress() {}
 
@@ -162,7 +164,11 @@ CesiumIonAssetAccessor::refreshTokenInMainThread(
       this->_assetEndpointUrl);
 
   this->_tokenRefreshInProgress =
-      this->_pAggregatedAccessor->get(asyncSystem, this->_assetEndpointUrl)
+      this->_pAggregatedAccessor
+          ->get(
+              asyncSystem,
+              this->_assetEndpointUrl,
+              this->_assetEndpointHeaders)
           .thenInMainThread(
               [this](
                   std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest) {

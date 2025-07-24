@@ -32,6 +32,7 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::shared_ptr<IAssetAccessor>& pAggregatedAccessor,
       const std::string& assetEndpointUrl,
+      const std::vector<IAssetAccessor::THeader>& assetEndpointHeaders,
       std::function<void(const UpdatedToken&)> updatedTokenCallback);
 
   CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
@@ -58,6 +59,7 @@ private:
   std::shared_ptr<spdlog::logger> _pLogger;
   std::shared_ptr<IAssetAccessor> _pAggregatedAccessor;
   std::string _assetEndpointUrl;
+  std::vector<IAssetAccessor::THeader> _assetEndpointHeaders;
   std::optional<std::function<void(const UpdatedToken&)>> _updatedTokenCallback;
   std::optional<CesiumAsync::SharedFuture<std::string>> _tokenRefreshInProgress;
 };
