@@ -1315,6 +1315,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
           const CesiumAsync::AsyncSystem& asyncSystem,
           const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+          const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
           std::optional<CesiumUtility::Credit> credit,
           const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
               pPrepareRendererResources,
@@ -1325,6 +1326,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
                 pOwner,
                 asyncSystem,
                 pAssetAccessor,
+                pCreditSystem,
                 credit,
                 pPrepareRendererResources,
                 pLogger,
@@ -1371,6 +1373,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
                     pOwner ? pOwner : this,
                     asyncSystem,
                     pAssetAccessor,
+                    nullptr,
                     std::nullopt,
                     pPrepareRendererResources,
                     pLogger,

@@ -49,6 +49,7 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
       std::optional<Credit> credit,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
@@ -64,6 +65,7 @@ public:
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            pCreditSystem,
             credit,
             pPrepareRendererResources,
             pLogger,
@@ -128,6 +130,7 @@ public:
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            nullptr,
             std::nullopt,
             pPrepareRendererResources,
             pLogger,
