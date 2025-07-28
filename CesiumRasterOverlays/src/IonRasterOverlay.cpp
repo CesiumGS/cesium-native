@@ -160,17 +160,27 @@ IonRasterOverlay::createTileProvider(
             }
 
             if (pHolder->pProvider) {
+              // Use static_cast instead of dynamic_cast below to avoid the
+              // need for RTTI, and because we are certain of the type.
+              // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
               if (isBing) {
-                // Use static_cast instead of dynamic_cast here to avoid the
-                // need for RTTI, and because we are certain of the type.
-                // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
                 BingMapsRasterOverlay* pBing =
                     static_cast<BingMapsRasterOverlay*>(pOverlay.get());
-                // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
                 return pBing->refreshTileProviderWithNewKey(
                     pHolder->pProvider,
                     update.token);
+              } else {
+                TileMapServiceRasterOverlay* pTMS =
+                    static_cast<TileMapServiceRasterOverlay*>(pOverlay.get());
+                return pTMS->refreshTileProviderWithNewUrlAndHeaders(
+                    pHolder->pProvider,
+                    std::nullopt,
+                    std::vector<CesiumAsync::IAssetAccessor::THeader>{
+                        std::make_pair(
+                            "Authorization",
+                            update.authorizationHeader)});
               }
+              // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
             }
 
             return asyncSystem.createResolvedFuture();
