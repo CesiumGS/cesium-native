@@ -337,6 +337,8 @@ CesiumIonTilesetLoader::~CesiumIonTilesetLoader() noexcept {
 
 CesiumAsync::Future<TileLoadResult>
 CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
+  this->_pLogger = loadInput.pLogger;
+
   if (this->_pTilesetAccessor == nullptr) {
     this->_pTilesetAccessor = loadInput.pAssetAccessor;
     this->_pIonAccessor = std::make_shared<CesiumAsync::CesiumIonAssetAccessor>(
@@ -367,8 +369,6 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
     return loadInput.asyncSystem.createResolvedFuture(
         TileLoadResult::createFailedResult(loadInput.pAssetAccessor, nullptr));
   }
-
-  this->_pLogger = loadInput.pLogger;
 
   TileLoadInput aggregatedInput(
       loadInput.tile,
