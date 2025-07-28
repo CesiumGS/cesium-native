@@ -1,6 +1,7 @@
 #include <CesiumAsync/CesiumIonAssetAccessor.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Log.h>
+#include <CesiumUtility/Uri.h>
 
 #include <rapidjson/document.h>
 
@@ -11,7 +12,7 @@ CesiumIonAssetAccessor::CesiumIonAssetAccessor(
     const std::shared_ptr<IAssetAccessor>& pAggregatedAccessor,
     const std::string& assetEndpointUrl,
     const std::vector<IAssetAccessor::THeader>& assetEndpointHeaders,
-    std::function<void(const UpdatedToken&)> updatedTokenCallback)
+    std::function<Future<void>(const UpdatedToken&)> updatedTokenCallback)
     : _pLogger(pLogger),
       _pAggregatedAccessor(pAggregatedAccessor),
       _assetEndpointUrl(assetEndpointUrl),
@@ -26,27 +27,43 @@ CesiumIonAssetAccessor::get(
     const std::vector<THeader>& headers) {
   // If token refresh is needed, this lambda will be called in the main thread
   // so that it can safely use the tileset loader.
-  auto refreshToken = [pThis = this->shared_from_this()](
-                          const CesiumAsync::AsyncSystem& asyncSystem,
-                          std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                              pRequest) {
-    if (!pThis->_updatedTokenCallback) {
-      // The owner has been destroyed, so just return the
-      // original (failed) request.
-      return asyncSystem.createResolvedFuture(std::move(pRequest));
-    }
+  auto refreshToken =
+      [pThis = this->shared_from_this()](
+          const CesiumAsync::AsyncSystem& asyncSystem,
+          std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
+        if (!pThis->_updatedTokenCallback) {
+          // The owner has been destroyed, so just return the
+          // original (failed) request.
+          return asyncSystem.createResolvedFuture(std::move(pRequest));
+        }
 
-    const CesiumAsync::HttpHeaders& headers = pRequest->headers();
-    auto authIt = headers.find("authorization");
-    std::string currentAuthorizationHeaderValue =
-        authIt != headers.end() ? authIt->second : std::string();
+        const CesiumAsync::HttpHeaders& headers = pRequest->headers();
+        auto authIt = headers.find("authorization");
+        std::string currentAuthorizationHeaderValue =
+            authIt != headers.end() ? authIt->second : std::string();
 
-    return pThis
-        ->refreshTokenInMainThread(asyncSystem, currentAuthorizationHeaderValue)
-        .thenImmediately(
-            [pThis, asyncSystem, pRequest = std::move(pRequest)](
-                const std::string& newAuthorizationHeader) mutable {
-              if (newAuthorizationHeader.empty()) {
+        std::string currentAccessTokenQueryParameterValue;
+        if (pRequest->url().find("access_token") != std::string::npos) {
+          CesiumUtility::Uri uri(pRequest->url());
+          CesiumUtility::UriQuery query(uri);
+          std::optional<std::string_view> maybeToken =
+              query.getValue("access_token");
+          if (maybeToken) {
+            currentAccessTokenQueryParameterValue = *maybeToken;
+          }
+        }
+
+        return pThis
+            ->refreshTokenInMainThread(
+                asyncSystem,
+                currentAuthorizationHeaderValue,
+                currentAccessTokenQueryParameterValue)
+            .thenImmediately([pThis,
+                              asyncSystem,
+                              pRequest = std::move(pRequest)](
+                                 const UpdatedToken& updatedToken) mutable {
+              if (updatedToken.authorizationHeader.empty() &&
+                  updatedToken.token.empty()) {
                 // Could not refresh the token, so just return the
                 // original (failed) request.
                 return asyncSystem.createResolvedFuture(std::move(pRequest));
@@ -54,13 +71,29 @@ CesiumIonAssetAccessor::get(
 
               // Repeat the request using the new token.
               CesiumAsync::HttpHeaders headers = pRequest->headers();
-              headers["Authorization"] = newAuthorizationHeader;
+              if (!updatedToken.authorizationHeader.empty()) {
+                headers["Authorization"] = updatedToken.authorizationHeader;
+              }
+
+              std::string url = pRequest->url();
+              if (pRequest->url().find("access_token") != std::string::npos) {
+                CesiumUtility::Uri uri(pRequest->url());
+                CesiumUtility::UriQuery query(uri);
+                std::optional<std::string_view> maybeToken =
+                    query.getValue("access_token");
+                if (maybeToken) {
+                  query.setValue("access_token", updatedToken.token);
+                  uri.setQuery(query.toQueryString());
+                  url = uri.toString();
+                }
+              }
+
               std::vector<THeader> vecHeaders(
                   std::make_move_iterator(headers.begin()),
                   std::make_move_iterator(headers.end()));
-              return pThis->get(asyncSystem, pRequest->url(), vecHeaders);
+              return pThis->get(asyncSystem, url, vecHeaders);
             });
-  };
+      };
 
   return this->_pAggregatedAccessor->get(asyncSystem, url, headers)
       .thenImmediately(
@@ -133,6 +166,18 @@ std::optional<std::string> getNewAccessToken(
       "accessToken",
       "");
   if (accessToken.empty()) {
+    // Some assets, like Bing Maps, put the token in the "options" -> "key"
+    // field.
+    auto optionsIt = ionResponse.FindMember("options");
+    if (optionsIt != ionResponse.MemberEnd() && optionsIt->value.IsObject()) {
+      accessToken = CesiumUtility::JsonHelpers::getStringOrDefault(
+          optionsIt->value,
+          "key",
+          "");
+    }
+  }
+
+  if (accessToken.empty()) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Could not refresh Cesium ion token because the `accessToken` field in "
@@ -144,14 +189,21 @@ std::optional<std::string> getNewAccessToken(
 }
 } // namespace
 
-CesiumAsync::SharedFuture<std::string>
+CesiumAsync::SharedFuture<CesiumIonAssetAccessor::UpdatedToken>
 CesiumIonAssetAccessor::refreshTokenInMainThread(
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::string& currentAuthorizationHeaderValue) {
+    const std::string& currentAuthorizationHeaderValue,
+    const std::string& currentAccessTokenQueryParameterValue) {
   if (this->_tokenRefreshInProgress) {
-    if (!this->_tokenRefreshInProgress->isReady() ||
-        this->_tokenRefreshInProgress->wait() !=
-            currentAuthorizationHeaderValue) {
+    if (!this->_tokenRefreshInProgress->isReady()) {
+      // Only use this refreshed token if it's different from the one we're
+      // currently using. Otherwise, fall through and get a new token.
+      return *this->_tokenRefreshInProgress;
+    }
+
+    const UpdatedToken& refreshedToken = this->_tokenRefreshInProgress->wait();
+    if (refreshedToken.authorizationHeader != currentAuthorizationHeaderValue ||
+        refreshedToken.token != currentAccessTokenQueryParameterValue) {
       // Only use this refreshed token if it's different from the one we're
       // currently using. Otherwise, fall through and get a new token.
       return *this->_tokenRefreshInProgress;
@@ -169,55 +221,59 @@ CesiumIonAssetAccessor::refreshTokenInMainThread(
               asyncSystem,
               this->_assetEndpointUrl,
               this->_assetEndpointHeaders)
-          .thenInMainThread(
-              [this](
-                  std::shared_ptr<CesiumAsync::IAssetRequest>&& pIonRequest) {
-                if (!this->_updatedTokenCallback) {
-                  // Owner is already destroyed.
-                  return std::string();
-                }
+          .thenInMainThread([this, asyncSystem](
+                                std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                    pIonRequest) {
+            if (!this->_updatedTokenCallback) {
+              // Owner is already destroyed.
+              return asyncSystem.createResolvedFuture(UpdatedToken());
+            }
 
-                const CesiumAsync::IAssetResponse* pIonResponse =
-                    pIonRequest->response();
+            const CesiumAsync::IAssetResponse* pIonResponse =
+                pIonRequest->response();
 
-                if (!pIonResponse) {
-                  // Token refresh failed.
-                  SPDLOG_LOGGER_ERROR(
-                      this->_pLogger,
-                      "Request failed while attempting to refresh the Cesium "
-                      "ion token.");
-                  return std::string();
-                }
+            if (!pIonResponse) {
+              // Token refresh failed.
+              SPDLOG_LOGGER_ERROR(
+                  this->_pLogger,
+                  "Request failed while attempting to refresh the Cesium "
+                  "ion token.");
+              return asyncSystem.createResolvedFuture(UpdatedToken());
+            }
 
-                uint16_t statusCode = pIonResponse->statusCode();
-                if (statusCode >= 200 && statusCode < 300) {
-                  auto accessToken =
-                      getNewAccessToken(pIonResponse, this->_pLogger);
-                  if (accessToken) {
-                    std::string authorizationHeader = "Bearer " + *accessToken;
-                    this->_updatedTokenCallback.value()(
-                        UpdatedToken{*accessToken, authorizationHeader});
+            uint16_t statusCode = pIonResponse->statusCode();
+            if (statusCode >= 200 && statusCode < 300) {
+              auto accessToken =
+                  getNewAccessToken(pIonResponse, this->_pLogger);
+              if (accessToken) {
+                std::string authorizationHeader = "Bearer " + *accessToken;
+                UpdatedToken update{*accessToken, authorizationHeader};
+                return this->_updatedTokenCallback.value()(update)
+                    .thenImmediately([update,
+                                      pLogger = this->_pLogger,
+                                      url = this->_assetEndpointUrl]() {
+                      SPDLOG_LOGGER_INFO(
+                          pLogger,
+                          "Successfuly refreshed Cesium ion token for url {}.",
+                          url);
 
-                    SPDLOG_LOGGER_INFO(
-                        this->_pLogger,
-                        "Successfuly refreshed Cesium ion token for url {}.",
-                        this->_assetEndpointUrl);
+                      return update;
+                    });
 
-                    return authorizationHeader;
-                  } else {
-                    // This error is logged from within `getNewAccessToken`.
-                    return std::string();
-                  }
-                } else {
-                  // Token refresh failed.
-                  SPDLOG_LOGGER_ERROR(
-                      this->_pLogger,
-                      "Request failed with status code {} while attempting to "
-                      "refresh the Cesium ion token.",
-                      statusCode);
-                  return std::string();
-                }
-              })
+              } else {
+                // This error is logged from within `getNewAccessToken`.
+                return asyncSystem.createResolvedFuture(UpdatedToken());
+              }
+            } else {
+              // Token refresh failed.
+              SPDLOG_LOGGER_ERROR(
+                  this->_pLogger,
+                  "Request failed with status code {} while attempting to "
+                  "refresh the Cesium ion token.",
+                  statusCode);
+              return asyncSystem.createResolvedFuture(UpdatedToken());
+            }
+          })
           .share();
 
   return *this->_tokenRefreshInProgress;

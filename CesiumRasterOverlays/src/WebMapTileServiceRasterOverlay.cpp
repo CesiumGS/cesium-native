@@ -43,6 +43,7 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CreditSystem>& pCreditSystem,
       std::optional<Credit> credit,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
@@ -68,6 +69,7 @@ public:
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            pCreditSystem,
             credit,
             pPrepareRendererResources,
             pLogger,
@@ -276,6 +278,7 @@ WebMapTileServiceRasterOverlay::createTileProvider(
               pOwner,
               asyncSystem,
               pAssetAccessor,
+              pCreditSystem,
               credit,
               pPrepareRendererResources,
               pLogger,

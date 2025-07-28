@@ -44,10 +44,12 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
     : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
+      _pCreditSystem(pCreditSystem),
       _credit(std::nullopt),
       _pPrepareRendererResources(nullptr),
       _pLogger(nullptr),
@@ -63,6 +65,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
     std::optional<Credit> credit,
     const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
         pPrepareRendererResources,
@@ -72,6 +75,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
+      _pCreditSystem(pCreditSystem),
       _credit(credit),
       _pPrepareRendererResources(pPrepareRendererResources),
       _pLogger(pLogger),

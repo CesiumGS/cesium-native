@@ -33,15 +33,15 @@ public:
       const std::shared_ptr<IAssetAccessor>& pAggregatedAccessor,
       const std::string& assetEndpointUrl,
       const std::vector<IAssetAccessor::THeader>& assetEndpointHeaders,
-      std::function<void(const UpdatedToken&)> updatedTokenCallback);
+      std::function<Future<void>(const UpdatedToken&)> updatedTokenCallback);
 
-  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
-  get(const CesiumAsync::AsyncSystem& asyncSystem,
+  Future<std::shared_ptr<IAssetRequest>>
+  get(const AsyncSystem& asyncSystem,
       const std::string& url,
       const std::vector<THeader>& headers = {}) override;
 
-  CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>> request(
-      const CesiumAsync::AsyncSystem& asyncSystem,
+  Future<std::shared_ptr<IAssetRequest>> request(
+      const AsyncSystem& asyncSystem,
       const std::string& verb,
       const std::string& url,
       const std::vector<THeader>& headers = std::vector<THeader>(),
@@ -52,16 +52,18 @@ public:
   void notifyOwnerIsBeingDestroyed();
 
 private:
-  CesiumAsync::SharedFuture<std::string> refreshTokenInMainThread(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::string& currentAuthorizationHeader);
+  SharedFuture<UpdatedToken> refreshTokenInMainThread(
+      const AsyncSystem& asyncSystem,
+      const std::string& currentAuthorizationHeader,
+      const std::string& currentAccessTokenQueryParameterValue);
 
   std::shared_ptr<spdlog::logger> _pLogger;
   std::shared_ptr<IAssetAccessor> _pAggregatedAccessor;
   std::string _assetEndpointUrl;
   std::vector<IAssetAccessor::THeader> _assetEndpointHeaders;
-  std::optional<std::function<void(const UpdatedToken&)>> _updatedTokenCallback;
-  std::optional<CesiumAsync::SharedFuture<std::string>> _tokenRefreshInProgress;
+  std::optional<std::function<Future<void>(const UpdatedToken&)>>
+      _updatedTokenCallback;
+  std::optional<SharedFuture<UpdatedToken>> _tokenRefreshInProgress;
 };
 
 } // namespace CesiumAsync

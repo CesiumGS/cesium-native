@@ -343,7 +343,8 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
         this->_pLogger,
         this->_pTilesetAccessor,
         this->_url,
-        [this](
+        loadInput.requestHeaders,
+        [this, asyncSystem = loadInput.asyncSystem](
             const CesiumAsync::CesiumIonAssetAccessor::UpdatedToken& update) {
           this->_headerChangeListener(
               "Authorization",
@@ -354,6 +355,8 @@ CesiumIonTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
           if (cacheIt != endpointCache.end()) {
             cacheIt->second.accessToken = update.token;
           }
+
+          return asyncSystem.createResolvedFuture();
         });
   }
 
