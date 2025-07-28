@@ -14,10 +14,13 @@
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <utility>
