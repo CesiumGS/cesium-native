@@ -119,7 +119,7 @@ public:
   /**
    * @brief Refresh a previously-created tile provider using a new key.
    *
-   * Calling this method on a tile provider that was not created by this \link
+   * Calling this method on a tile provider that was not created by this \ref
    * BingMapsRasterOverlay will lead to undefined behavior.
    *
    * @param pProvider The previously-created tile provider.

@@ -237,6 +237,9 @@ public:
     return this->_pAssetAccessor;
   }
 
+  /**
+   * @brief Get the credit system that receives credits from this tile provider.
+   */
   const std::shared_ptr<CesiumUtility::CreditSystem>&
   getCreditSystem() const noexcept {
     return this->_pCreditSystem;
