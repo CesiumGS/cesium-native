@@ -22,6 +22,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
 #include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -536,10 +537,14 @@ Future<void> BingMapsRasterOverlay::refreshTileProviderWithNewKey(
           return;
         }
 
+        // Use static_cast instead of dynamic_cast here to avoid the need for
+        // RTTI, and because we are certain of the type.
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
         BingMapsTileProvider* pOldBing =
             static_cast<BingMapsTileProvider*>(pProvider.get());
         BingMapsTileProvider* pNewBing =
             static_cast<BingMapsTileProvider*>(result->get());
+        // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
         if (pOldBing->getCoverageRectangle().getLowerLeft() !=
                 pNewBing->getCoverageRectangle().getLowerLeft() ||
             pOldBing->getCoverageRectangle().getUpperRight() !=

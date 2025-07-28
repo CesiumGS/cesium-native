@@ -161,8 +161,12 @@ IonRasterOverlay::createTileProvider(
 
             if (pHolder->pProvider) {
               if (isBing) {
+                // Use static_cast instead of dynamic_cast here to avoid the
+                // need for RTTI, and because we are certain of the type.
+                // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
                 BingMapsRasterOverlay* pBing =
                     static_cast<BingMapsRasterOverlay*>(pOverlay.get());
+                // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
                 return pBing->refreshTileProviderWithNewKey(
                     pHolder->pProvider,
                     update.token);

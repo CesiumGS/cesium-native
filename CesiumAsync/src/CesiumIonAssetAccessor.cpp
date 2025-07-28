@@ -1,9 +1,27 @@
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/CesiumIonAssetAccessor.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/SharedFuture.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Log.h>
 #include <CesiumUtility/Uri.h>
 
 #include <rapidjson/document.h>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
+
+#include <cstdint>
+#include <functional>
+#include <iterator>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 namespace CesiumAsync {
 

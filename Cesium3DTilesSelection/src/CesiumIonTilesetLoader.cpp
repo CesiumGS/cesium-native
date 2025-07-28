@@ -11,7 +11,6 @@
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/CesiumIonAssetAccessor.h>
 #include <CesiumAsync/Future.h>
-#include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
@@ -23,14 +22,10 @@
 
 #include <fmt/format.h>
 #include <rapidjson/document.h>
-#include <spdlog/logger.h>
-#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
 #include <memory>
-#include <optional>
 #include <span>
 #include <string>
 #include <unordered_map>
