@@ -217,8 +217,7 @@ CesiumIonAssetAccessor::refreshTokenInMainThread(
     const std::string& currentAccessTokenQueryParameterValue) {
   if (this->_tokenRefreshInProgress) {
     if (!this->_tokenRefreshInProgress->isReady()) {
-      // Only use this refreshed token if it's different from the one we're
-      // currently using. Otherwise, fall through and get a new token.
+      // Still waiting for an in-progress token refresh.
       return *this->_tokenRefreshInProgress;
     }
 
