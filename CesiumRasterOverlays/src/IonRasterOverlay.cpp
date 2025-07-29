@@ -143,15 +143,19 @@ IonRasterOverlay::createTileProvider(
 
   std::shared_ptr<ProviderHolder> pHolder = std::make_shared<ProviderHolder>();
 
+  std::vector<IAssetAccessor::THeader> requestHeaders;
+  if (this->_needsAuthHeader) {
+    requestHeaders.emplace_back(IAssetAccessor::THeader{
+        "Authorization",
+        fmt::format("Bearer {}", this->_ionAccessToken)});
+  }
+
   std::shared_ptr<CesiumIonAssetAccessor> pIonAccessor =
       std::make_shared<CesiumIonAssetAccessor>(
           pLogger,
           pAssetAccessor,
           this->_overlayUrl,
-          // TODO: only add header if _needsAuthHeader.
-          std::vector<IAssetAccessor::THeader>{
-              {"Authorization",
-               fmt::format("Bearer {}", this->_ionAccessToken)}},
+          requestHeaders,
           [asyncSystem, url = this->_overlayUrl, pHolder, isBing, pOverlay](
               const CesiumIonAssetAccessor::UpdatedToken& update) {
             // update cache with new access token
@@ -179,6 +183,7 @@ IonRasterOverlay::createTileProvider(
                     std::vector<CesiumAsync::IAssetAccessor::THeader>{
                         std::make_pair(
                             "Authorization",
+
                             update.authorizationHeader)});
               }
               // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
