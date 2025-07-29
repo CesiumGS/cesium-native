@@ -64,38 +64,6 @@ IonRasterOverlay::~IonRasterOverlay() = default;
 std::unordered_map<std::string, IonRasterOverlay::ExternalAssetEndpoint>
     IonRasterOverlay::endpointCache;
 
-namespace {
-
-class IonRasterOverlayTileProvider : public RasterOverlayTileProvider {
-public:
-  IonRasterOverlayTileProvider(
-      const IntrusivePointer<RasterOverlayTileProvider>& pAggregate)
-      : RasterOverlayTileProvider(
-            &pAggregate->getOwner(),
-            pAggregate->getAsyncSystem(),
-            pAggregate->getAssetAccessor(),
-            pAggregate->getCreditSystem(),
-            pAggregate->getCredit(),
-            pAggregate->getPrepareRendererResources(),
-            pAggregate->getLogger(),
-            pAggregate->getProjection(),
-            pAggregate->getCoverageRectangle()),
-        _pAggregate(pAggregate) {}
-
-  void updateToken(const std::string& /* token */) {}
-
-protected:
-  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& /* overlayTile */) override {
-    throw 1;
-  }
-
-private:
-  IntrusivePointer<RasterOverlayTileProvider> _pAggregate;
-};
-
-} // namespace
-
 Future<RasterOverlay::CreateTileProviderResult>
 IonRasterOverlay::createTileProvider(
     const ExternalAssetEndpoint& endpoint,
