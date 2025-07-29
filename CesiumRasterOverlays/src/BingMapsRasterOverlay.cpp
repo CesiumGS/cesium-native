@@ -528,7 +528,7 @@ Future<void> BingMapsRasterOverlay::refreshTileProviderWithNewKey(
           pProvider->getPrepareRendererResources(),
           pProvider->getLogger(),
           &pProvider->getOwner())
-      .thenImmediately([pProvider](CreateTileProviderResult&& result) {
+      .thenInMainThread([pProvider](CreateTileProviderResult&& result) {
         if (!result) {
           SPDLOG_LOGGER_WARN(
               pProvider->getLogger(),
