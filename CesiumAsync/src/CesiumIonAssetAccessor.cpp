@@ -222,8 +222,14 @@ CesiumIonAssetAccessor::refreshTokenInMainThread(
     }
 
     const UpdatedToken& refreshedToken = this->_tokenRefreshInProgress->wait();
-    if (refreshedToken.authorizationHeader != currentAuthorizationHeaderValue ||
-        refreshedToken.token != currentAccessTokenQueryParameterValue) {
+    bool hasHeader = !currentAuthorizationHeaderValue.empty();
+    bool hasParameter = !currentAccessTokenQueryParameterValue.empty();
+    bool headerChanged = hasHeader && refreshedToken.authorizationHeader !=
+                                          currentAuthorizationHeaderValue;
+    bool parameterChanged =
+        hasParameter &&
+        refreshedToken.token != currentAccessTokenQueryParameterValue;
+    if (headerChanged || parameterChanged) {
       // Only use this refreshed token if it's different from the one we're
       // currently using. Otherwise, fall through and get a new token.
       return *this->_tokenRefreshInProgress;
