@@ -7,7 +7,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Log.h>
+#include <CesiumUtility/Log.h> // NOLINT
 #include <CesiumUtility/Uri.h>
 
 #include <rapidjson/document.h>
