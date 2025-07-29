@@ -138,7 +138,7 @@ IonRasterOverlay::createTileProvider(
   }
 
   struct ProviderHolder {
-    IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
+    RasterOverlayTileProvider* pProvider = nullptr;
   };
 
   std::shared_ptr<ProviderHolder> pHolder = std::make_shared<ProviderHolder>();
@@ -195,11 +195,20 @@ IonRasterOverlay::createTileProvider(
           pPrepareRendererResources,
           pLogger,
           std::move(pOwner))
-      .thenImmediately(
-          [pHolder](
+      .thenInMainThread(
+          [pHolder, pIonAccessor](
               CreateTileProviderResult&& result) -> CreateTileProviderResult {
             if (result) {
-              pHolder->pProvider = *result;
+              RasterOverlayTileProvider* pProvider = result->get();
+              pHolder->pProvider = pProvider;
+
+              // When the tile provider is destroyed, notify the
+              // CesiumIonAssetAccessor.
+              pProvider->getAsyncDestructionCompleteEvent().thenImmediately(
+                  [pHolder, pIonAccessor]() {
+                    pIonAccessor->notifyOwnerIsBeingDestroyed();
+                    pHolder->pProvider = nullptr;
+                  });
             }
             return result;
           });

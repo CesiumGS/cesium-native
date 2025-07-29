@@ -201,6 +201,13 @@ public:
   virtual ~RasterOverlayTileProvider() noexcept;
 
   /**
+   * @brief A future that resolves when this RasterOverlayTileProvider has been
+   * destroyed (i.e. its destructor has been called) and all async operations
+   * that it was executing have completed.
+   */
+  CesiumAsync::SharedFuture<void>& getAsyncDestructionCompleteEvent();
+
+  /**
    * @brief Returns whether this is a placeholder.
    *
    * For many types of {@link RasterOverlay}, we can't create a functioning
@@ -429,6 +436,11 @@ private:
   void finalizeTileLoad(bool isThrottledLoad) noexcept;
 
 private:
+  struct DestructionCompleteDetails {
+    CesiumAsync::Promise<void> promise;
+    CesiumAsync::SharedFuture<void> future;
+  };
+
   CesiumUtility::IntrusivePointer<RasterOverlay> _pOwner;
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
@@ -443,6 +455,7 @@ private:
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
+  std::optional<DestructionCompleteDetails> _destructionCompleteDetails;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
       "Raster Overlay Tile Loading Slot")
