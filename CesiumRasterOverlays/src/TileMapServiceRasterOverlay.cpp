@@ -23,7 +23,7 @@
 
 #include <glm/common.hpp>
 #include <nonstd/expected.hpp>
-#include <spdlog/fwd.h>
+#include <spdlog/spdlog.h>
 #include <tinyxml2.h>
 
 #include <cstddef>
