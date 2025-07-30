@@ -139,15 +139,17 @@ bool BoundingRegionBuilder::expandToIncludeGlobeRectangle(
     modified = true;
   }
 
-  if (rectangle.getEast() < this->_rectangle.getEast()) {
+  if (rectangle.getEast() > this->_rectangle.getEast()) {
     this->_rectangle.setEast(rectangle.getEast());
     modified = true;
   }
 
-  if (rectangle.getWest() > this->_rectangle.getWest()) {
+  if (rectangle.getWest() < this->_rectangle.getWest()) {
     this->_rectangle.setWest(rectangle.getWest());
     modified = true;
   }
+
+  this->_longitudeRangeIsEmpty = false;
 
   return modified;
 }
