@@ -484,7 +484,7 @@ void rasterizeVectorData(
   for (size_t i = 0;
        i < std::max(result.pImage->mipPositions.size(), (size_t)1);
        i++) {
-    primitivesRendered.assign({false});
+    primitivesRendered.assign(primitivesRendered.size(), false);
 
     VectorRasterizer rasterizer(
         rectangle,
