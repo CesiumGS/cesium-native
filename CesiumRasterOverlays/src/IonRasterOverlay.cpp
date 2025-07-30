@@ -105,6 +105,11 @@ IonRasterOverlay::createTileProvider(
     }
   }
 
+  //  CesiumIonAssetAccessor must be created first to be given to
+  //  createTileProvider. But the "new token" callback needs to modify the
+  //  created tile provider, which can't be known when that callback is created.
+  //  Thus, a "holder" is created ahead of time and filled with the provider
+  //  once it's created.
   struct ProviderHolder {
     RasterOverlayTileProvider* pProvider = nullptr;
   };
@@ -113,9 +118,9 @@ IonRasterOverlay::createTileProvider(
 
   std::vector<IAssetAccessor::THeader> requestHeaders;
   if (this->_needsAuthHeader) {
-    requestHeaders.emplace_back(IAssetAccessor::THeader{
+    requestHeaders.emplace_back(
         "Authorization",
-        fmt::format("Bearer {}", this->_ionAccessToken)});
+        fmt::format("Bearer {}", this->_ionAccessToken));
   }
 
   std::shared_ptr<CesiumIonAssetAccessor> pIonAccessor =
