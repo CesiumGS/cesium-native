@@ -317,8 +317,8 @@ uint32_t buildQuadtreeNode(
       southWestTile.x + 1,
       southWestTile.y + 1);
 
-  const GlobeRectangle southWestRect{
-      tilingScheme.tileToRectangle(southWestTile)};
+  const GlobeRectangle southWestRect = GlobeRectangle::fromRectangleRadians(
+      tilingScheme.tileToRectangle(southWestTile));
   tree.nodes[resultId].children[0][0] = buildQuadtreeNode(
       tree,
       tilingScheme,
@@ -334,8 +334,8 @@ uint32_t buildQuadtreeNode(
           }),
       southWestTile);
 
-  const GlobeRectangle southEastRect{
-      tilingScheme.tileToRectangle(southEastTile)};
+  const GlobeRectangle southEastRect = GlobeRectangle::fromRectangleRadians(
+      tilingScheme.tileToRectangle(southEastTile));
   tree.nodes[resultId].children[0][1] = buildQuadtreeNode(
       tree,
       tilingScheme,
@@ -351,8 +351,8 @@ uint32_t buildQuadtreeNode(
           }),
       southEastTile);
 
-  const GlobeRectangle northWestRect{
-      tilingScheme.tileToRectangle(northWestTile)};
+  const GlobeRectangle northWestRect = GlobeRectangle::fromRectangleRadians(
+      tilingScheme.tileToRectangle(northWestTile));
   tree.nodes[resultId].children[1][0] = buildQuadtreeNode(
       tree,
       tilingScheme,
@@ -368,8 +368,8 @@ uint32_t buildQuadtreeNode(
           }),
       northWestTile);
 
-  const GlobeRectangle northEastRect{
-      tilingScheme.tileToRectangle(northEastTile)};
+  const GlobeRectangle northEastRect = GlobeRectangle::fromRectangleRadians(
+      tilingScheme.tileToRectangle(northEastTile));
   tree.nodes[resultId].children[1][1] = buildQuadtreeNode(
       tree,
       tilingScheme,

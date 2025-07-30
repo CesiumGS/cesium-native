@@ -78,7 +78,7 @@ public:
    *
    * @param rectangle The rectangle to be included in the region.
    * @returns True if the region was modified, or false if the region already
-   * contained the position.
+   * contained the rectangle.
    */
   bool expandToIncludeGlobeRectangle(const GlobeRectangle& rectangle);
 
