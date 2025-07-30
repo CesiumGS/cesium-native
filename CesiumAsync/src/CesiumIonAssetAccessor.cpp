@@ -38,7 +38,7 @@ CesiumIonAssetAccessor::CesiumIonAssetAccessor(
       _pAggregatedAccessor(pAggregatedAccessor),
       _assetEndpointUrl(assetEndpointUrl),
       _assetEndpointHeaders(assetEndpointHeaders),
-      _updatedTokenCallback(std::move(updatedTokenCallback)),
+      _maybeUpdatedTokenCallback(std::move(updatedTokenCallback)),
       _tokenRefreshInProgress() {}
 
 CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
@@ -52,7 +52,7 @@ CesiumIonAssetAccessor::get(
       [pThis = this->shared_from_this()](
           const CesiumAsync::AsyncSystem& asyncSystem,
           std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
-        if (!pThis->_updatedTokenCallback) {
+        if (!pThis->_maybeUpdatedTokenCallback) {
           // The owner has been destroyed, so just return the
           // original (failed) request.
           return asyncSystem.createResolvedFuture(std::move(pRequest));
@@ -155,7 +155,7 @@ void CesiumIonAssetAccessor::tick() noexcept {
 }
 
 void CesiumIonAssetAccessor::notifyOwnerIsBeingDestroyed() {
-  this->_updatedTokenCallback.reset();
+  this->_maybeUpdatedTokenCallback.reset();
 }
 
 namespace {
@@ -250,7 +250,7 @@ CesiumIonAssetAccessor::refreshTokenInMainThread(
           .thenInMainThread([this, asyncSystem](
                                 std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                     pIonRequest) {
-            if (!this->_updatedTokenCallback) {
+            if (!this->_maybeUpdatedTokenCallback) {
               // Owner is already destroyed.
               return asyncSystem.createResolvedFuture(UpdatedToken());
             }
@@ -269,12 +269,12 @@ CesiumIonAssetAccessor::refreshTokenInMainThread(
 
             uint16_t statusCode = pIonResponse->statusCode();
             if (statusCode >= 200 && statusCode < 300) {
-              auto accessToken =
+              std::optional<std::string> maybeAccessToken =
                   getNewAccessToken(pIonResponse, this->_pLogger);
-              if (accessToken) {
-                std::string authorizationHeader = "Bearer " + *accessToken;
-                UpdatedToken update{*accessToken, authorizationHeader};
-                return this->_updatedTokenCallback.value()(update)
+              if (maybeAccessToken) {
+                std::string authorizationHeader = "Bearer " + *maybeAccessToken;
+                UpdatedToken update{*maybeAccessToken, authorizationHeader};
+                return (*this->_maybeUpdatedTokenCallback)(update)
                     .thenImmediately([update,
                                       pLogger = this->_pLogger,
                                       url = this->_assetEndpointUrl]() {
@@ -285,7 +285,6 @@ CesiumIonAssetAccessor::refreshTokenInMainThread(
 
                       return update;
                     });
-
               } else {
                 // This error is logged from within `getNewAccessToken`.
                 return asyncSystem.createResolvedFuture(UpdatedToken());

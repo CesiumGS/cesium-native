@@ -89,7 +89,7 @@ private:
   std::string _assetEndpointUrl;
   std::vector<IAssetAccessor::THeader> _assetEndpointHeaders;
   std::optional<std::function<Future<void>(const UpdatedToken&)>>
-      _updatedTokenCallback;
+      _maybeUpdatedTokenCallback;
   std::optional<SharedFuture<UpdatedToken>> _tokenRefreshInProgress;
 };
 

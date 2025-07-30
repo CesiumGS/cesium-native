@@ -2,9 +2,19 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- The `RasterOverlayTileProvider` and `QuadtreeRasterOverlayTileProvider` constructors now require a `CreditSystem` parameter.
+
 ##### Additions :tada:
 
 - Added `ImplicitTilingUtilities::getParentID` to derive the ID of the parent for a given tile ID.
+- `IonRasterOverlay` now automatically handles refreshing the Cesium ion asset token as needed.
+- Added `CesiumIonAssetAccessor`, which is useful for implementing token refresh for Cesium ion assets.
+- Added `refreshTileProviderWithNewKey` method to `BingMapsRasterOverlay`.
+- Added `refreshTileProviderWithNewUrlAndHeaders` method to `TileMapServiceRasterOverlay`.
+- Added `getAsyncDestructionCompleteEvent` method to `RasterOverlayTileProvider`.
+- Added `getCreditSystem` method to `RasterOverlayTileProvider`.
 
 ### v0.49.0 - 2025-07-01
 
