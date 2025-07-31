@@ -188,7 +188,7 @@ IonRasterOverlay::createTileProvider(
                     pHolder->pProvider = nullptr;
                   });
             }
-            return result;
+            return std::move(result);
           });
 }
 
