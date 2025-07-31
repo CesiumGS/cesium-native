@@ -56,7 +56,6 @@ TEST_CASE(
               2.0,
               LineWidthMode::Pixels},
           PolygonStyle{std::nullopt, std::nullopt}},
-      GeographicProjection{},
       Ellipsoid::WGS84,
       0};
 
