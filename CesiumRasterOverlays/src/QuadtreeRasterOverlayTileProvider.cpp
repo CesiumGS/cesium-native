@@ -54,6 +54,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     const IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
     std::optional<Credit> credit,
     const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
         pPrepareRendererResources,
@@ -69,6 +70,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
           pOwner,
           asyncSystem,
           pAssetAccessor,
+          pCreditSystem,
           credit,
           pPrepareRendererResources,
           pLogger,
@@ -141,9 +143,9 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
                         ResultPointer<LoadedQuadtreeImage>(pLoadedImage));
                   }
 
-                  // Tile failed to load, try loading the parent tile instead.
-                  // We can only initiate a new tile request from the main
-                  // thread, though.
+                  // Tile failed to load, try loading the parent tile
+                  // instead. We can only initiate a new tile request from
+                  // the main thread, though.
                   if (currentLevel > minimumLevel) {
                     return asyncSystem.runInMainThread([key, loadParentTile]() {
                       return loadParentTile(key);
