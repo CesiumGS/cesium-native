@@ -531,10 +531,10 @@ public:
             std::nullopt,
             pPrepareRendererResources,
             pLogger,
-            options.projection,
+            GeographicProjection(options.ellipsoid),
             projectRectangleSimple(
-                options.projection,
-                CesiumGeospatial::GlobeRectangle::MAXIMUM)),
+                GeographicProjection(options.ellipsoid),
+                GlobeRectangle::MAXIMUM)),
         _pDocument(std::move(pDocument)),
         _defaultStyle(options.defaultStyle),
         _tree(),

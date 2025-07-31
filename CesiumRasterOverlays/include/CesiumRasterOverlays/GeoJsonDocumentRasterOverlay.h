@@ -4,7 +4,6 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/Projection.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
@@ -30,11 +29,6 @@ struct GeoJsonDocumentRasterOverlayOptions {
    * \ref CesiumVectorData::GeoJsonObject.
    */
   CesiumVectorData::VectorStyle defaultStyle;
-
-  /**
-   * @brief The projection to use for this overlay.
-   */
-  CesiumGeospatial::Projection projection;
 
   /**
    * @brief The ellipsoid to use for this overlay.
