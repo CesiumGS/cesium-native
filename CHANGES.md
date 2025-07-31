@@ -8,7 +8,7 @@
 
 ##### Additions :tada:
 
-- Added `GeoJsonDocumentRasterOverlay` for displaying VectorDocument objects loaded from GeoJSON as a raster overlay.
+- Added `GeoJsonDocumentRasterOverlay` for displaying GeoJSON documents as a raster overlay.
 - Improved performance of `RasterizedPolygonsOverlay`, especially when using lots of cartographic polygons at once.
 - Added `ImplicitTilingUtilities::getParentID` to derive the ID of the parent for a given tile ID.
 - `IonRasterOverlay` now automatically handles refreshing the Cesium ion asset token as needed.
