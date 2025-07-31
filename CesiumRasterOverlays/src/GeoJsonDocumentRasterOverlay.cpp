@@ -517,6 +517,7 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
@@ -526,6 +527,7 @@ public:
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            pCreditSystem,
             std::nullopt,
             pPrepareRendererResources,
             pLogger,
@@ -643,7 +645,7 @@ CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 GeoJsonDocumentRasterOverlay::createTileProvider(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& /*pCreditSystem*/,
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
     const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
@@ -657,6 +659,7 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
           [pOwner,
            asyncSystem,
            pAssetAccessor,
+           pCreditSystem,
            pPrepareRendererResources,
            pLogger,
            options =
@@ -674,6 +677,7 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
                     pOwner,
                     asyncSystem,
                     pAssetAccessor,
+                    pCreditSystem,
                     pPrepareRendererResources,
                     pLogger,
                     options,
