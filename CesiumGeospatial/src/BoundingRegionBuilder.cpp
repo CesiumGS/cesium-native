@@ -129,27 +129,18 @@ bool BoundingRegionBuilder::expandToIncludeGlobeRectangle(
     const GlobeRectangle& rectangle) {
   bool modified = false;
 
-  if (rectangle.getSouth() < this->_rectangle.getSouth()) {
-    this->_rectangle.setSouth(rectangle.getSouth());
-    modified = true;
-  }
-
-  if (rectangle.getNorth() > this->_rectangle.getNorth()) {
-    this->_rectangle.setNorth(rectangle.getNorth());
-    modified = true;
-  }
-
-  if (rectangle.getEast() > this->_rectangle.getEast()) {
-    this->_rectangle.setEast(rectangle.getEast());
-    modified = true;
-  }
-
-  if (rectangle.getWest() < this->_rectangle.getWest()) {
+  if (this->_longitudeRangeIsEmpty) {
     this->_rectangle.setWest(rectangle.getWest());
+    this->_rectangle.setEast(rectangle.getEast());
+    this->_longitudeRangeIsEmpty = false;
     modified = true;
   }
 
-  this->_longitudeRangeIsEmpty = false;
+  GlobeRectangle u = this->_rectangle.computeUnion(rectangle);
+  if (!GlobeRectangle::equals(this->_rectangle, u)) {
+    this->_rectangle = u;
+    modified = true;
+  }
 
   return modified;
 }
