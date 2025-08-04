@@ -155,12 +155,15 @@ public:
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
+   * @param pCreditSystem The credit system that receives this tile provider's
+   * credits.
    * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   RasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
@@ -171,6 +174,8 @@ public:
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
    * this raster overlay.
+   * @param pCreditSystem The credit system that receives this tile provider's
+   * credits.
    * @param credit The {@link CesiumUtility::Credit} for this tile provider, if it exists.
    * @param pPrepareRendererResources The interface used to prepare raster
    * images for rendering.
@@ -184,6 +189,7 @@ public:
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
       std::optional<CesiumUtility::Credit> credit,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
@@ -193,6 +199,13 @@ public:
 
   /** @brief Default destructor. */
   virtual ~RasterOverlayTileProvider() noexcept;
+
+  /**
+   * @brief A future that resolves when this RasterOverlayTileProvider has been
+   * destroyed (i.e. its destructor has been called) and all async operations
+   * that it was executing have completed.
+   */
+  CesiumAsync::SharedFuture<void>& getAsyncDestructionCompleteEvent();
 
   /**
    * @brief Returns whether this is a placeholder.
@@ -229,6 +242,14 @@ public:
   const std::shared_ptr<CesiumAsync::IAssetAccessor>&
   getAssetAccessor() const noexcept {
     return this->_pAssetAccessor;
+  }
+
+  /**
+   * @brief Get the credit system that receives credits from this tile provider.
+   */
+  const std::shared_ptr<CesiumUtility::CreditSystem>&
+  getCreditSystem() const noexcept {
+    return this->_pCreditSystem;
   }
 
   /**
@@ -415,9 +436,15 @@ private:
   void finalizeTileLoad(bool isThrottledLoad) noexcept;
 
 private:
+  struct DestructionCompleteDetails {
+    CesiumAsync::Promise<void> promise;
+    CesiumAsync::SharedFuture<void> future;
+  };
+
   CesiumUtility::IntrusivePointer<RasterOverlay> _pOwner;
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
+  std::shared_ptr<CesiumUtility::CreditSystem> _pCreditSystem;
   std::optional<CesiumUtility::Credit> _credit;
   std::shared_ptr<IPrepareRasterOverlayRendererResources>
       _pPrepareRendererResources;
@@ -428,6 +455,7 @@ private:
   int64_t _tileDataBytes;
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
+  std::optional<DestructionCompleteDetails> _destructionCompleteDetails;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
       "Raster Overlay Tile Loading Slot")
