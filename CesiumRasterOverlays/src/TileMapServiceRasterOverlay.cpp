@@ -23,7 +23,8 @@
 
 #include <glm/common.hpp>
 #include <nonstd/expected.hpp>
-#include <spdlog/fwd.h>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 #include <tinyxml2.h>
 
 #include <cstddef>
@@ -90,6 +91,7 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CreditSystem>& pCreditSystem,
       std::optional<Credit> credit,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
@@ -109,6 +111,7 @@ public:
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            pCreditSystem,
             credit,
             pPrepareRendererResources,
             pLogger,
@@ -125,6 +128,13 @@ public:
         _tileSets(tileSets) {}
 
   virtual ~TileMapServiceTileProvider() = default;
+
+  void update(const TileMapServiceTileProvider& newProvider) {
+    this->_url = newProvider._url;
+    this->_headers = newProvider._headers;
+    this->_fileExtension = newProvider._fileExtension;
+    this->_tileSets = newProvider._tileSets;
+  }
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
@@ -314,6 +324,7 @@ TileMapServiceRasterOverlay::createTileProvider(
           [pOwner,
            asyncSystem,
            pAssetAccessor,
+           pCreditSystem,
            credit,
            pPrepareRendererResources,
            pLogger,
@@ -491,6 +502,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                 pOwner,
                 asyncSystem,
                 pAssetAccessor,
+                pCreditSystem,
                 credit,
                 pPrepareRendererResources,
                 pLogger,
@@ -506,6 +518,65 @@ TileMapServiceRasterOverlay::createTileProvider(
                 maximumLevel,
                 tileSets);
           });
+}
+
+Future<void>
+TileMapServiceRasterOverlay::refreshTileProviderWithNewUrlAndHeaders(
+    const IntrusivePointer<RasterOverlayTileProvider>& pProvider,
+    const std::optional<std::string>& newUrl,
+    const std::optional<std::vector<CesiumAsync::IAssetAccessor::THeader>>&
+        newHeaders) {
+  if (newUrl) {
+    this->_url = *newUrl;
+  }
+  if (newHeaders) {
+    this->_headers = *newHeaders;
+  }
+
+  return this
+      ->createTileProvider(
+          pProvider->getAsyncSystem(),
+          pProvider->getAssetAccessor(),
+          pProvider->getCreditSystem(),
+          pProvider->getPrepareRendererResources(),
+          pProvider->getLogger(),
+          &pProvider->getOwner())
+      .thenInMainThread([pProvider](CreateTileProviderResult&& result) {
+        if (!result) {
+          SPDLOG_LOGGER_WARN(
+              pProvider->getLogger(),
+              "Could not refresh Bing Maps raster overlay with a new key: {}.",
+              result.error().message);
+          return;
+        }
+
+        // Use static_cast instead of dynamic_cast here to avoid the need for
+        // RTTI, and because we are certain of the type.
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
+        TileMapServiceTileProvider* pOld =
+            static_cast<TileMapServiceTileProvider*>(pProvider.get());
+        TileMapServiceTileProvider* pNew =
+            static_cast<TileMapServiceTileProvider*>(result->get());
+        // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
+        if (pOld->getCoverageRectangle().getLowerLeft() !=
+                pNew->getCoverageRectangle().getLowerLeft() ||
+            pOld->getCoverageRectangle().getUpperRight() !=
+                pNew->getCoverageRectangle().getUpperRight() ||
+            pOld->getHeight() != pNew->getHeight() ||
+            pOld->getWidth() != pNew->getWidth() ||
+            pOld->getMinimumLevel() != pNew->getMinimumLevel() ||
+            pOld->getMaximumLevel() != pNew->getMaximumLevel() ||
+            pOld->getProjection() != pNew->getProjection()) {
+          SPDLOG_LOGGER_WARN(
+              pProvider->getLogger(),
+              "Could not refresh Tile Map Service raster overlay with a new "
+              "URL and request headers because some metadata properties "
+              "changed unexpectedly upon refresh.");
+          return;
+        }
+
+        pOld->update(*pNew);
+      });
 }
 
 } // namespace CesiumRasterOverlays

@@ -71,6 +71,17 @@ public:
    */
   bool expandToIncludePosition(const Cartographic& position);
 
+  /**
+   * @brief Expands the bounding region to include the given globe rectangle.
+   *
+   * The region will be kept as small as possible.
+   *
+   * @param rectangle The rectangle to be included in the region.
+   * @returns True if the region was modified, or false if the region already
+   * contained the rectangle.
+   */
+  bool expandToIncludeGlobeRectangle(const GlobeRectangle& rectangle);
+
 private:
   /**
    * @brief When a position's latitude is within this distance in radians from

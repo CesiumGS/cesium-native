@@ -22,6 +22,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
 #include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -99,6 +100,7 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CreditSystem>& pCreditSystem,
       Credit bingCredit,
       const std::vector<CreditAndCoverageAreas>& perTileCredits,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
@@ -117,6 +119,7 @@ public:
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            pCreditSystem,
             bingCredit,
             pPrepareRendererResources,
             pLogger,
@@ -138,6 +141,14 @@ public:
         _subdomains(subdomains) {}
 
   virtual ~BingMapsTileProvider() = default;
+
+  void update(const BingMapsTileProvider& newProvider) {
+    this->_credits = newProvider._credits;
+    this->_baseUrl = newProvider._baseUrl;
+    this->_urlTemplate = newProvider._urlTemplate;
+    this->_culture = newProvider._culture;
+    this->_subdomains = newProvider._subdomains;
+  }
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
@@ -409,7 +420,8 @@ BingMapsRasterOverlay::createTileProvider(
           RasterOverlayLoadType::TileProvider,
           pRequest,
           fmt::format(
-              "Received an error from the Bing Maps imagery metadata service: "
+              "Received an error from the Bing Maps imagery metadata "
+              "service: "
               "{}",
               pError->GetString())});
     }
@@ -452,6 +464,7 @@ BingMapsRasterOverlay::createTileProvider(
         pOwner,
         asyncSystem,
         pAssetAccessor,
+        pCreditSystem,
         bingCredit,
         credits,
         pPrepareRendererResources,
@@ -500,6 +513,57 @@ BingMapsRasterOverlay::createTileProvider(
 
             return handleResponseResult;
           });
+}
+
+Future<void> BingMapsRasterOverlay::refreshTileProviderWithNewKey(
+    const IntrusivePointer<RasterOverlayTileProvider>& pProvider,
+    const std::string& newKey) {
+  this->_key = newKey;
+
+  return this
+      ->createTileProvider(
+          pProvider->getAsyncSystem(),
+          pProvider->getAssetAccessor(),
+          pProvider->getCreditSystem(),
+          pProvider->getPrepareRendererResources(),
+          pProvider->getLogger(),
+          &pProvider->getOwner())
+      .thenInMainThread([pProvider](CreateTileProviderResult&& result) {
+        if (!result) {
+          SPDLOG_LOGGER_WARN(
+              pProvider->getLogger(),
+              "Could not refresh Bing Maps raster overlay with a new key: {}.",
+              result.error().message);
+          return;
+        }
+
+        // Use static_cast instead of dynamic_cast here to avoid the need for
+        // RTTI, and because we are certain of the type.
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
+        BingMapsTileProvider* pOldBing =
+            static_cast<BingMapsTileProvider*>(pProvider.get());
+        BingMapsTileProvider* pNewBing =
+            static_cast<BingMapsTileProvider*>(result->get());
+        // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
+        if (pOldBing->getCoverageRectangle().getLowerLeft() !=
+                pNewBing->getCoverageRectangle().getLowerLeft() ||
+            pOldBing->getCoverageRectangle().getUpperRight() !=
+                pNewBing->getCoverageRectangle().getUpperRight() ||
+            pOldBing->getHeight() != pNewBing->getHeight() ||
+            pOldBing->getWidth() != pNewBing->getWidth() ||
+            pOldBing->getMinimumLevel() != pNewBing->getMinimumLevel() ||
+            pOldBing->getMaximumLevel() != pNewBing->getMaximumLevel() ||
+            pOldBing->getProjection() != pNewBing->getProjection()) {
+          SPDLOG_LOGGER_WARN(
+              pProvider->getLogger(),
+              "Could not refresh Bing Maps raster overlay with a new key "
+              "because some metadata properties changed unexpectedly upon "
+              "refresh.");
+          return;
+        }
+
+        pOldBing->update(*pNewBing);
+      });
 }
 
 } // namespace CesiumRasterOverlays

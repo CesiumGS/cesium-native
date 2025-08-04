@@ -43,6 +43,7 @@ public:
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            nullptr,
             std::nullopt,
             pPrepareRendererResources,
             pLogger,

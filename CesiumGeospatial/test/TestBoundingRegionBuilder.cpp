@@ -73,3 +73,113 @@ TEST_CASE("BoundingRegionBuilder::expandToIncludePosition") {
   rectangle2 = wrappedBuilder.toGlobeRectangle();
   CHECK(GlobeRectangle::equals(wrapped, rectangle2));
 }
+
+TEST_CASE("BoundingRegionBuilder::expandToIncludeGlobeRectangle") {
+  SUBCASE("works with simple rectangle as first expand") {
+    BoundingRegionBuilder builder;
+    builder.expandToIncludeGlobeRectangle(GlobeRectangle(0.1, 0.2, 0.3, 0.4));
+    GlobeRectangle rectangle = builder.toGlobeRectangle();
+    CHECK(GlobeRectangle::equalsEpsilon(
+        rectangle,
+        GlobeRectangle(0.1, 0.2, 0.3, 0.4),
+        Math::Epsilon15));
+
+    SUBCASE("does nothing if the rectangle is already included") {
+      builder.expandToIncludeGlobeRectangle(
+          GlobeRectangle(0.15, 0.25, 0.25, 0.35));
+      rectangle = builder.toGlobeRectangle();
+      CHECK(GlobeRectangle::equalsEpsilon(
+          rectangle,
+          GlobeRectangle(0.1, 0.2, 0.3, 0.4),
+          Math::Epsilon15));
+    }
+  }
+
+  SUBCASE("works with anti-meridian crossing rectangle as first expand") {
+    BoundingRegionBuilder builder;
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(175.0, -10.0, 173.0, 20.0));
+    GlobeRectangle rectangle = builder.toGlobeRectangle();
+    CHECK(GlobeRectangle::equalsEpsilon(
+        rectangle,
+        GlobeRectangle::fromDegrees(175.0, -10.0, 173.0, 20.0),
+        Math::Epsilon15));
+
+    SUBCASE("does nothing if the rectangle is already included") {
+      builder.expandToIncludeGlobeRectangle(
+          GlobeRectangle::fromDegrees(176.0, -9.0, 172.0, 19.0));
+      rectangle = builder.toGlobeRectangle();
+      CHECK(GlobeRectangle::equalsEpsilon(
+          rectangle,
+          GlobeRectangle::fromDegrees(175.0, -10.0, 173.0, 20.0),
+          Math::Epsilon15));
+    }
+  }
+
+  SUBCASE("expands simple region across anti-meridian from the west") {
+    BoundingRegionBuilder builder;
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(170.0, -10.0, 175.0, 20.0));
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(176.0, -10.0, -175.0, 20.0));
+    GlobeRectangle rectangle = builder.toGlobeRectangle();
+    CHECK(GlobeRectangle::equalsEpsilon(
+        rectangle,
+        GlobeRectangle::fromDegrees(170.0, -10.0, -175.0, 20.0),
+        Math::Epsilon15));
+  }
+
+  SUBCASE("expands simple region across anti-meridian from the east") {
+    BoundingRegionBuilder builder;
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(-175.0, -10.0, -170.0, 20.0));
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(175.0, -10.0, -176.0, 20.0));
+    GlobeRectangle rectangle = builder.toGlobeRectangle();
+    CHECK(GlobeRectangle::equalsEpsilon(
+        rectangle,
+        GlobeRectangle::fromDegrees(175.0, -10.0, -170.0, 20.0),
+        Math::Epsilon15));
+  }
+
+  SUBCASE("expands anti-meridian cross region to the west with a simple "
+          "rectangle") {
+    BoundingRegionBuilder builder;
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(175.0, -10.0, -170.0, 20.0));
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(165.0, -20.0, 170.0, 30.0));
+    GlobeRectangle rectangle = builder.toGlobeRectangle();
+    CHECK(GlobeRectangle::equalsEpsilon(
+        rectangle,
+        GlobeRectangle::fromDegrees(165.0, -20.0, -170.0, 30.0),
+        Math::Epsilon15));
+  }
+
+  SUBCASE("expands anti-meridian cross region to the east with a simple "
+          "rectangle") {
+    BoundingRegionBuilder builder;
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(175.0, -10.0, -170.0, 20.0));
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(-165.0, -20.0, -160.0, 30.0));
+    GlobeRectangle rectangle = builder.toGlobeRectangle();
+    CHECK(GlobeRectangle::equalsEpsilon(
+        rectangle,
+        GlobeRectangle::fromDegrees(175.0, -20.0, -160.0, 30.0),
+        Math::Epsilon15));
+  }
+
+  SUBCASE("expands anti-meridian crossing rectangle with another one") {
+    BoundingRegionBuilder builder;
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(175.0, -10.0, -170.0, 20.0));
+    builder.expandToIncludeGlobeRectangle(
+        GlobeRectangle::fromDegrees(170.0, -20.0, -160.0, 30.0));
+    GlobeRectangle rectangle = builder.toGlobeRectangle();
+    CHECK(GlobeRectangle::equalsEpsilon(
+        rectangle,
+        GlobeRectangle::fromDegrees(170.0, -20.0, -160.0, 30.0),
+        Math::Epsilon15));
+  }
+}
