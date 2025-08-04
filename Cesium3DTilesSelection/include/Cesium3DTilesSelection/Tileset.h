@@ -517,10 +517,12 @@ private:
       const TilesetFrameState& frameState,
       Tile& tile,
       double tilePriority,
+      double tileSse,
       ViewUpdateResult& result);
   TraversalDetails _renderInnerTile(
       const TilesetFrameState& frameState,
       Tile& tile,
+      double tileSse,
       ViewUpdateResult& result);
   bool _kickDescendantsAndRenderTile(
       const TilesetFrameState& frameState,
@@ -530,7 +532,8 @@ private:
       size_t firstRenderedDescendantIndex,
       const TilesetViewGroup::LoadQueueCheckpoint& loadQueueBeforeChildren,
       bool queuedForLoad,
-      double tilePriority);
+      double tilePriority,
+      double tileSse);
   TileOcclusionState _checkOcclusion(const Tile& tile);
 
   TraversalDetails _visitTile(
@@ -540,6 +543,7 @@ private:
       bool ancestorMeetsSse,
       Tile& tile,
       double tilePriority,
+      double tileSse,
       ViewUpdateResult& result);
 
   struct CullResult {
@@ -559,11 +563,11 @@ private:
       const TilesetFrameState& frameState,
       const std::vector<double>& distances,
       CullResult& cullResult);
-  bool _meetsSse(
+  double _computeSse(
       const std::vector<ViewState>& frustums,
       const Tile& tile,
-      const std::vector<double>& distances,
-      bool culled) const noexcept;
+      const std::vector<double>& distances) const noexcept;
+  bool _meetsSseThreshold(double sse, bool culled) const noexcept;
 
   TraversalDetails _visitTileIfNeeded(
       const TilesetFrameState& frameState,
@@ -598,6 +602,7 @@ private:
       Tile& tile,
       ViewUpdateResult& result,
       double tilePriority,
+      double tileSse,
       bool queuedForLoad);
 
   void _unloadCachedTiles(double timeBudget) noexcept;
