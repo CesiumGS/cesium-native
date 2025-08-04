@@ -2,7 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "dependencies": [
     "asyncplusplus",
-    "curl",
+    {
+      "name": "curl",
+      "platform": "!wasm32"
+    },
     "doctest",
     "expected-lite",
     "glm",
@@ -33,13 +36,13 @@
       "features": [
         {
           "name": "jit",
-          "platform": "!ios"
+          "platform": "!wasm32"
         }
       ]
     },
     {
       "name": "asmjit",
-      "platform": "!ios"
+      "platform": "!wasm32"
     }
   ]
 }

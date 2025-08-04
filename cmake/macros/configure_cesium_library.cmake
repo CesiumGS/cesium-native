@@ -45,6 +45,14 @@ function(configure_cesium_library targetName)
         )
     endif()
 
+    if(CESIUM_TARGET_WASM)
+        # std::format is better behaved with wasm builds than fmt::format
+        target_compile_definitions(
+            ${targetName} 
+            PUBLIC 
+                SPDLOG_USE_STD_FORMAT)
+    endif()
+
     if (BUILD_SHARED_LIBS)
         target_compile_definitions(
             ${targetName}

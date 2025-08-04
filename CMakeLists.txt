@@ -4,6 +4,14 @@ if (NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
+get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
+if(toolchainFile STREQUAL "Emscripten.cmake")
+    set(CESIUM_TARGET_WASM ON)
+    # Include the toolchain directly as ezvcpkg will overwrite the 
+    # toolchain before it's loaded
+    include(${CMAKE_TOOLCHAIN_FILE})
+endif()
+
 # By default, Use ezvcpkg to install dependencies. But don't use
 # ezvcpkg if it appears that this configuration is using vcpkg
 # manifest mode already, either by building cesium-native directly,
@@ -16,7 +24,7 @@ set(CESIUM_USE_EZVCPKG_DEFAULT ON)
 if (VCPKG_MANIFEST_MODE)
     set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
 elseif (CMAKE_TOOLCHAIN_FILE)
-    get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
+    #get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
     if(toolchainFile STREQUAL "vcpkg.cmake")
         set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
     endif()
@@ -77,6 +85,10 @@ if (NOT VCPKG_OVERLAY_TRIPLETS)
     if (DEFINED ENV{VCPKG_OVERLAY_TRIPLETS})
         set(VCPKG_OVERLAY_TRIPLETS "$ENV{VCPKG_OVERLAY_TRIPLETS}")
     endif()
+endif()
+
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
+    list(APPEND VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
 endif()
 
 message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")

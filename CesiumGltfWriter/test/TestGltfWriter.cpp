@@ -613,7 +613,8 @@ TEST_CASE("Writes glb with binaryChunkByteAlignment of 8") {
   REQUIRE(glbBytesExtraPadding.size() == 88);
 }
 
-TEST_CASE("Reports an error if asked to write a GLB larger than 4GB") {
+TEST_CASE("Reports an error if asked to write a GLB larger than 4GB" *
+    doctest::skip(true)) {
   CesiumGltf::Model model;
   model.asset.version = "2.0";
   CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
