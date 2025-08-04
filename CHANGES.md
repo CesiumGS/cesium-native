@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `accessorView` to `PropertyAttributePropertyView` to retrieve the underlying `AccessorView`.
+
 ### v0.50.0 - 2025-08-01
 
 ##### Breaking Changes :mega:
