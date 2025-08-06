@@ -19,11 +19,14 @@ set(cesium_native_targets
     CesiumGltfWriter
     CesiumIonClient
     CesiumITwinClient
-    CesiumVectorData
     CesiumQuantizedMeshTerrain
     CesiumRasterOverlays
     CesiumUtility
 )
+
+if (NOT CESIUM_TARGET_WASM)
+    list(APPEND cesium_native_targets CesiumVectorData) # blend2d doesn't support wasm builds
+endif()
 
 if(NOT CESIUM_DISABLE_CURL AND NOT CESIUM_TARGET_WASM) 
     list(APPEND cesium_native_targets CesiumCurl)
