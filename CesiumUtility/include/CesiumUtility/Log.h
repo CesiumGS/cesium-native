@@ -1,7 +1,7 @@
 #pragma once
 
+#include <fmt/format.h>
 #include <rapidjson/document.h>
-#include <spdlog/fmt/fmt.h>
 
 #include <format>
 
