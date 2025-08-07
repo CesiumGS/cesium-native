@@ -32,7 +32,6 @@
     "zstd",
     {
       "name": "blend2d",
-      "platform": "!wasm32",
       "default-features": false,
       "features": [
         {

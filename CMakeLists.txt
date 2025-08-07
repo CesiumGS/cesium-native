@@ -113,13 +113,11 @@ set(PACKAGES_PRIVATE
 )
 
 # asmjit needed by blend2d on non-iOS platforms (iOS doesn't support JIT)
-if (NOT CESIUM_TARGET_WASM)
-    if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
-        list(APPEND PACKAGES_PRIVATE blend2d asmjit)
-    else()
-        # Use [core] feature to disable default jit feature.
-        list(APPEND PACKAGES_PRIVATE blend2d[core])
-    endif()
+if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
+    list(APPEND PACKAGES_PRIVATE blend2d asmjit)
+else()
+    # Use [core] feature to disable default jit feature.
+    list(APPEND PACKAGES_PRIVATE blend2d[core])
 endif()
 
 if(NOT CESIUM_DISABLE_CURL)
@@ -361,11 +359,11 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
-if (NOT CESIUM_TARGET_WASM)
+#if (NOT CESIUM_TARGET_WASM)
     find_package(blend2d CONFIG REQUIRED)
-endif()
+#endif()
 # asmjit should not be included with iOS builds as iOS doesn't support JIT compilation.
-if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS" AND NOT CESIUM_TARGET_WASM)
+if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     find_package(asmjit CONFIG REQUIRED)
 endif()
 
@@ -397,10 +395,7 @@ add_subdirectory(CesiumClientCommon)
 add_subdirectory(CesiumIonClient)
 add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
-
-if (NOT CESIUM_TARGET_WASM)
-    add_subdirectory(CesiumVectorData) # blend2d doesn't support wasm builds
-endif()
+add_subdirectory(CesiumVectorData)
 
 if(NOT CESIUM_DISABLE_CURL)
     add_subdirectory(CesiumCurl)
