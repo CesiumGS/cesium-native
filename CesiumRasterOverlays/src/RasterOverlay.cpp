@@ -24,11 +24,13 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CreditSystem>& pCreditSystem,
       const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
       : RasterOverlayTileProvider(
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            pCreditSystem,
             ellipsoid) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
@@ -79,5 +81,6 @@ RasterOverlay::createPlaceholder(
       this,
       asyncSystem,
       pAssetAccessor,
+      nullptr,
       ellipsoid);
 }

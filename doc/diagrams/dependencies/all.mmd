@@ -50,7 +50,7 @@ graph TD
   CesiumGltfReader[CesiumGltfReader] --> WebP_webp{{WebP::webp}}
   CesiumGltfReader[CesiumGltfReader] --> WebP_webpdecoder{{WebP::webpdecoder}}
   CesiumGltfReader[CesiumGltfReader] --> draco_draco{{draco::draco}}
-  CesiumGltfReader[CesiumGltfReader] --> libjpeg-turbo_turbojpeg-static{{libjpeg-turbo::turbojpeg-static}}
+  CesiumGltfReader[CesiumGltfReader] --> libjpeg-turbo_turbojpeg{{libjpeg-turbo::turbojpeg}}
   CesiumGltfReader[CesiumGltfReader] --> meshoptimizer_meshoptimizer{{meshoptimizer::meshoptimizer}}
   CesiumGltfReader[CesiumGltfReader] --> modp_b64_modp_b64{{modp_b64::modp_b64}}
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> Cesium3DTiles[Cesium3DTiles]
@@ -89,29 +89,42 @@ graph TD
   CesiumRasterOverlays[CesiumRasterOverlays] --> tinyxml2_tinyxml2{{tinyxml2::tinyxml2}}
   Cesium3DTilesWriter[Cesium3DTilesWriter] --> Cesium3DTiles[Cesium3DTiles]
   Cesium3DTilesWriter[Cesium3DTilesWriter] --> CesiumJsonWriter[CesiumJsonWriter]
+  CesiumClientCommon[CesiumClientCommon] --> CesiumAsync[CesiumAsync]
+  CesiumClientCommon[CesiumClientCommon] --> CesiumUtility[CesiumUtility]
+  CesiumClientCommon[CesiumClientCommon] --> OpenSSL_Crypto{{OpenSSL::Crypto}}
+  CesiumClientCommon[CesiumClientCommon] --> httplib_httplib{{httplib::httplib}}
+  CesiumClientCommon[CesiumClientCommon] --> modp_b64_modp_b64{{modp_b64::modp_b64}}
+  CesiumClientCommon[CesiumClientCommon] --> picosha2_picosha2{{picosha2::picosha2}}
+  CesiumCurl[CesiumCurl] --> CURL_libcurl{{CURL::libcurl}}
+  CesiumCurl[CesiumCurl] --> CesiumAsync[CesiumAsync]
   CesiumGltfWriter[CesiumGltfWriter] --> CesiumGltf[CesiumGltf]
   CesiumGltfWriter[CesiumGltfWriter] --> CesiumJsonWriter[CesiumJsonWriter]
   CesiumGltfWriter[CesiumGltfWriter] --> modp_b64_modp_b64{{modp_b64::modp_b64}}
+  CesiumITwinClient[CesiumITwinClient] --> CesiumAsync[CesiumAsync]
+  CesiumITwinClient[CesiumITwinClient] --> CesiumClientCommon[CesiumClientCommon]
+  CesiumITwinClient[CesiumITwinClient] --> CesiumGeospatial[CesiumGeospatial]
+  CesiumITwinClient[CesiumITwinClient] --> CesiumUtility[CesiumUtility]
+  CesiumITwinClient[CesiumITwinClient] --> modp_b64_modp_b64{{modp_b64::modp_b64}}
   CesiumIonClient[CesiumIonClient] --> CesiumAsync[CesiumAsync]
+  CesiumIonClient[CesiumIonClient] --> CesiumClientCommon[CesiumClientCommon]
   CesiumIonClient[CesiumIonClient] --> CesiumGeospatial[CesiumGeospatial]
   CesiumIonClient[CesiumIonClient] --> CesiumUtility[CesiumUtility]
-  CesiumIonClient[CesiumIonClient] --> OpenSSL_Crypto{{OpenSSL::Crypto}}
-  CesiumIonClient[CesiumIonClient] --> httplib_httplib{{httplib::httplib}}
-  CesiumIonClient[CesiumIonClient] --> modp_b64_modp_b64{{modp_b64::modp_b64}}
-  CesiumIonClient[CesiumIonClient] --> picosha2_picosha2{{picosha2::picosha2}}
-  class ada_ada,glm_glm,spdlog_spdlog,zlib-ng_zlib-ng,libmorton_libmorton,Async_,spdlog_spdlog_header_only,unofficial_sqlite3_sqlite3,earcut,s2_s2,KTX_ktx,WebP_webp,WebP_webpdecoder,draco_draco,libjpeg-turbo_turbojpeg-static,meshoptimizer_meshoptimizer,modp_b64_modp_b64,nonstd_expected-lite,tinyxml2_tinyxml2,OpenSSL_Crypto,httplib_httplib,picosha2_picosha2 dependencyNode
-  class CesiumUtility,Cesium3DTiles,Cesium3DTilesReader,CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,Cesium3DTilesContent,CesiumJsonReader,CesiumQuantizedMeshTerrain,CesiumRasterOverlays,Cesium3DTilesSelection,CesiumJsonWriter,Cesium3DTilesWriter,CesiumGltfWriter,CesiumIonClient libraryNode
+  CesiumVectorData[CesiumVectorData] --> CesiumAsync[CesiumAsync]
+  CesiumVectorData[CesiumVectorData] --> CesiumGeometry[CesiumGeometry]
+  CesiumVectorData[CesiumVectorData] --> CesiumUtility[CesiumUtility]
+  class ada_ada,glm_glm,spdlog_spdlog,zlib-ng_zlib-ng,libmorton_libmorton,Async_,spdlog_spdlog_header_only,unofficial_sqlite3_sqlite3,earcut,s2_s2,KTX_ktx,WebP_webp,WebP_webpdecoder,draco_draco,libjpeg-turbo_turbojpeg,meshoptimizer_meshoptimizer,modp_b64_modp_b64,nonstd_expected-lite,tinyxml2_tinyxml2,OpenSSL_Crypto,httplib_httplib,picosha2_picosha2,CURL_libcurl dependencyNode
+  class CesiumUtility,Cesium3DTiles,Cesium3DTilesReader,CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,Cesium3DTilesContent,CesiumJsonReader,CesiumQuantizedMeshTerrain,CesiumRasterOverlays,Cesium3DTilesSelection,CesiumJsonWriter,Cesium3DTilesWriter,CesiumClientCommon,CesiumCurl,CesiumGltfWriter,CesiumITwinClient,CesiumIonClient,CesiumVectorData libraryNode
   linkStyle 0 stroke:#ff0029,stroke-width:8px
   linkStyle 1 stroke:#377eb8,stroke-width:8px
   linkStyle 2,20,60 stroke:#66a61e,stroke-width:8px
   linkStyle 3 stroke:#984ea3,stroke-width:8px
-  linkStyle 4,13,19,23,24,26,29,35,56,69,70,77,87 stroke:#00d2d5,stroke-width:8px
+  linkStyle 4,13,19,23,24,26,29,35,56,69,70,77,83,96,101,104 stroke:#00d2d5,stroke-width:8px
   linkStyle 5,15,46,80 stroke:#ff7f00,stroke-width:8px
   linkStyle 6,48 stroke:#af8d00,stroke-width:8px
-  linkStyle 7,16,30,36,49,63,71,85 stroke:#7f80cd,stroke-width:8px
-  linkStyle 8,25,31,50,72 stroke:#b3e900,stroke-width:8px
-  linkStyle 9,32,51,64,73,86 stroke:#c42e60,stroke-width:8px
-  linkStyle 10,33,37,52,65,74,82 stroke:#a65628,stroke-width:8px
+  linkStyle 7,16,30,36,49,63,71,82,89,93,98,102 stroke:#7f80cd,stroke-width:8px
+  linkStyle 8,25,31,50,72,103 stroke:#b3e900,stroke-width:8px
+  linkStyle 9,32,51,64,73,95,100 stroke:#c42e60,stroke-width:8px
+  linkStyle 10,33,37,52,65,74,90 stroke:#a65628,stroke-width:8px
   linkStyle 11,66,75 stroke:#f781bf,stroke-width:8px
   linkStyle 12,34,53,76 stroke:#8dd3c7,stroke-width:8px
   linkStyle 14,58 stroke:#bebada,stroke-width:8px
@@ -127,13 +140,15 @@ graph TD
   linkStyle 42,57 stroke:#d95f02,stroke-width:8px
   linkStyle 43 stroke:#e7298a,stroke-width:8px
   linkStyle 44 stroke:#e6ab02,stroke-width:8px
-  linkStyle 45,84,90 stroke:#a6761d,stroke-width:8px
+  linkStyle 45,86,92,97 stroke:#a6761d,stroke-width:8px
   linkStyle 47 stroke:#0097ff,stroke-width:8px
   linkStyle 54 stroke:#00d067,stroke-width:8px
   linkStyle 55 stroke:#000000,stroke-width:8px
   linkStyle 59,78 stroke:#252525,stroke-width:8px
   linkStyle 62,79 stroke:#525252,stroke-width:8px
-  linkStyle 68,81,83 stroke:#737373,stroke-width:8px
-  linkStyle 88 stroke:#969696,stroke-width:8px
-  linkStyle 89 stroke:#bdbdbd,stroke-width:8px
-  linkStyle 91 stroke:#f43600,stroke-width:8px
+  linkStyle 68,81,91 stroke:#737373,stroke-width:8px
+  linkStyle 84 stroke:#969696,stroke-width:8px
+  linkStyle 85 stroke:#bdbdbd,stroke-width:8px
+  linkStyle 87 stroke:#f43600,stroke-width:8px
+  linkStyle 88 stroke:#4ba93b,stroke-width:8px
+  linkStyle 94,99 stroke:#5779bb,stroke-width:8px

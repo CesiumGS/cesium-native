@@ -147,6 +147,33 @@ OctreeTileID ImplicitTilingUtilities::absoluteTileIDToRelative(
       tileID.z - (rootID.z << relativeTileLevel));
 }
 
+std::optional<CesiumGeometry::QuadtreeTileID>
+ImplicitTilingUtilities::getParentID(
+    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+  if (tileID.level == 0) {
+    return std::nullopt;
+  }
+
+  return CesiumGeometry::QuadtreeTileID(
+      tileID.level - 1,
+      tileID.x >> 1,
+      tileID.y >> 1);
+}
+
+std::optional<CesiumGeometry::OctreeTileID>
+ImplicitTilingUtilities::getParentID(
+    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+  if (tileID.level == 0) {
+    return std::nullopt;
+  }
+
+  return CesiumGeometry::OctreeTileID(
+      tileID.level - 1,
+      tileID.x >> 1,
+      tileID.y >> 1,
+      tileID.z >> 1);
+}
+
 namespace {
 template <typename T>
 Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
@@ -368,8 +395,18 @@ ImplicitTilingUtilities::computeBoundingVolume(
   const glm::dvec2& rootRadialBounds = rootBoundingVolume.getRadialBounds();
   const glm::dvec2& rootAngularBounds = rootBoundingVolume.getAngularBounds();
 
+  // The angle range is "reversed" when the region sweeps over the -pi / pi
+  // discontinuity line.
+  bool angleReversed = rootAngularBounds.x > rootAngularBounds.y;
+
   double rootRadiusRange = rootRadialBounds.y - rootRadialBounds.x;
   double rootAngularRange = glm::abs(rootAngularBounds.y - rootAngularBounds.x);
+
+  if (angleReversed) {
+    // When the angle range is "reversed", the difference must be subtracted
+    // from the full circle.
+    rootAngularRange = CesiumUtility::Math::TwoPi - rootAngularRange;
+  }
 
   double radiusDim = rootRadiusRange / denominator;
   double angleDim = rootAngularRange / denominator;
@@ -402,30 +439,13 @@ ImplicitTilingUtilities::computeBoundingVolume(
     const CesiumGeometry::OctreeTileID& tileID) noexcept {
   double denominator = computeLevelDenominator(tileID.level);
 
-  const glm::dvec2& rootRadialBounds = rootBoundingVolume.getRadialBounds();
-  const glm::dvec2& rootAngularBounds = rootBoundingVolume.getAngularBounds();
+  CesiumGeometry::BoundingCylinderRegion quadtreeRegion =
+      ImplicitTilingUtilities::computeBoundingVolume(
+          rootBoundingVolume,
+          CesiumGeometry::QuadtreeTileID(tileID.level, tileID.x, tileID.y));
 
-  double rootRadiusRange = rootRadialBounds.y - rootRadialBounds.x;
-  double rootAngularRange = glm::abs(rootAngularBounds.y - rootAngularBounds.x);
   double rootHeight = rootBoundingVolume.getHeight();
-
-  double radiusDim = rootRadiusRange / denominator;
-  double angleDim = rootAngularRange / denominator;
   double heightDim = rootHeight / denominator;
-
-  double minRadius = rootRadialBounds.x + double(tileID.x) * radiusDim;
-  double minAngle = rootAngularBounds.x + double(tileID.y) * angleDim;
-  double maxAngle = minAngle + angleDim;
-
-  // Ensure that the angular bounds stay within the [-pi, pi] range, but don't
-  // accidentally wrap pi to -pi.
-  if (minAngle >= CesiumUtility::Math::OnePi) {
-    minAngle = CesiumUtility::Math::convertLongitudeRange(minAngle);
-  }
-
-  if (maxAngle > CesiumUtility::Math::OnePi) {
-    maxAngle = CesiumUtility::Math::convertLongitudeRange(maxAngle);
-  }
 
   // Due to the smaller height, the region has to be translated along its local
   // height axis.
@@ -456,8 +476,8 @@ ImplicitTilingUtilities::computeBoundingVolume(
       translation,
       rotation,
       heightDim,
-      glm::dvec2(minRadius, minRadius + radiusDim),
-      glm::dvec2(minAngle, maxAngle));
+      quadtreeRegion.getRadialBounds(),
+      quadtreeRegion.getAngularBounds());
 }
 
 double

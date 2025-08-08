@@ -11,6 +11,7 @@ if(DOXYGEN_FOUND)
         ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
         ../CesiumAsync/include
+        ../CesiumCurl/include
         ../CesiumGeometry/include
         ../CesiumGeospatial/include
         ../CesiumGltf/include
@@ -19,7 +20,10 @@ if(DOXYGEN_FOUND)
         ../CesiumGltfReader/include
         ../CesiumGltfReader/generated/include
         ../CesiumGltfWriter/include
+        ../CesiumClientCommon/include
         ../CesiumIonClient/include
+        ../CesiumITwinClient/include
+        ../CesiumVectorData/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
         ../CesiumQuantizedMeshTerrain/include
@@ -51,12 +55,15 @@ if(DOXYGEN_FOUND)
         "CESIUM3DTILESSELECTION_API"
         "CESIUM3DTILESWRITER_API"
         "CESIUMASYNC_API"
+        "CESIUMCURL_API"
+        "CESIUMCLIENTCOMMON_API"
         "CESIUMGEOMETRY_API"
         "CESIUMGEOSPATIAL_API"
         "CESIUMGLTF_API"
         "CESIUMGLTFCONTENT_API"
         "CESIUMGLTFREADER_API"
         "CESIUMGLTFWRITER_API"
+        "CESIUMIWINCLIENT_API"
         "CESIUMIONCLIENT_API"
         "CESIUMJSONREADER_API"
         "CESIUMJSONWRITER_API"
@@ -73,6 +80,7 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_SOURCE_BROWSER YES)
     set(DOXYGEN_BUILTIN_STL_SUPPORT YES)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
+    set(DOXYGEN_USE_MATHJAX YES)
 
     set(DOXYGEN_DOT_GRAPH_MAX_NODES 100)
     set(DOXYGEN_WARN_AS_ERROR FAIL_ON_WARNINGS_PRINT)

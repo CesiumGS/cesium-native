@@ -256,7 +256,7 @@ void validateI3dmDataSections(
     return;
   }
   dataSectionOffset += header.batchTableJsonByteLength;
-  if (dataSectionOffset + header.batchTableJsonByteLength >
+  if (dataSectionOffset + header.batchTableBinaryByteLength >
       instancesBinary.size()) {
     errors.emplaceError(fmt::format(
         "Invalid I3dm batch table binary offset {} length {} "
@@ -440,8 +440,13 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
     return assetFetcher.asyncSystem.createResolvedFuture(
         std::move(convertedI3dm));
   };
-  if (header.featureTableJsonByteLength == 0 ||
-      header.featureTableBinaryByteLength == 0) {
+  if (header.featureTableJsonByteLength == 0) {
+    convertedI3dm.gltfResult.errors.emplaceError("I3dm feature table is empty");
+    return finishEarly();
+  }
+  if (header.featureTableBinaryByteLength == 0) {
+    convertedI3dm.gltfResult.errors.emplaceError(
+        "I3dm binary feature table is empty");
     return finishEarly();
   }
   const uint32_t gltfStart = headerLength + header.featureTableJsonByteLength +

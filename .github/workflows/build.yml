@@ -1,5 +1,10 @@
 name: cesium-native
 on: [push, pull_request]
+env:
+  VCPKG_BINARY_SOURCES: 'clear;x-aws,s3://cesium-builds/vcpkg/cesium-native-cache/,readwrite'
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_INTERNAL_SERVICES_VCPKG_SECRET_KEY }}
+  AWS_REGION: us-east-1
 jobs:
   QuickChecks:
     name: "Quick Checks"
@@ -17,8 +22,10 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
-      - name: Install latest ninja and cmake
+      - name: Install latest CMake 3 and Ninja
         uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
@@ -29,18 +36,11 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh 19
           sudo apt-get install clang-tidy-19
-      - name: Cache vcpkg artifacts
-        uses: actions/cache@v4
-        with:
-          path: ~/.ezvcpkg
-          key:  vcpkg-ubuntu-24.04-clang-${{ hashFiles('CMakeLists.txt') }}
-          restore-keys: |
-            vcpkg-ubuntu-24.04-clang-${{ hashFiles('CMakeLists.txt') }}
-            vcpkg-ubuntu-24.04-clang
       - name: Set CC and CXX
         run: |
           echo "CC=/usr/bin/clang-19" >> "$GITHUB_ENV"
           echo "CXX=/usr/bin/clang++-19" >> "$GITHUB_ENV"
+          echo "VCPKG_ROOT=${VCPKG_INSTALLATION_ROOT}" >> "$GITHUB_ENV"
       - name: Make more swap space available
         run: |
           sudo swapoff -a
@@ -52,8 +52,14 @@ jobs:
       - name: Run clang-tidy
         run: |
           echo `$CC --version | head -n 1`, `cmake --version | head -n 1`
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug -DCESIUM_CLANG_TIDY_USE_THREADS=4
+          cp doc/cmake-presets/CMakeUserPresets.json .
+          cmake --preset=vcpkg-linux -DCMAKE_BUILD_TYPE=Debug -DCESIUM_CLANG_TIDY_USE_THREADS=4
           cmake --build build --target clang-tidy > output.log
+      - name: Print vcpkg problems
+        if: ${{ failure() }}
+        run: |
+          cat "/usr/local/share/vcpkg/buildtrees/doctest/config-x64-linux-dbg-out.log"
+          cat "/usr/local/share/vcpkg/buildtrees/doctest/config-x64-linux-dbg-err.log"
       - name: List clang-tidy warnings & errors
         if: ${{ !cancelled() }}
         run: |
@@ -64,7 +70,7 @@ jobs:
           #   sed -n '/warning:/,/^$/p' output.log
 
   Documentation:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Install Doxygen
         run: |
@@ -73,7 +79,12 @@ jobs:
           tar xzf doxygen-1.13.2.linux.bin.tar.gz
           export PATH=$PWD/doxygen-1.13.2/bin:$PATH
           echo "PATH=$PATH" >> "$GITHUB_ENV"
+          echo "VCPKG_ROOT=${VCPKG_INSTALLATION_ROOT}" >> "$GITHUB_ENV"
           doxygen --version
+      - name: Install latest CMake 3 and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
       - name: Check out repository code
         uses: actions/checkout@v4
         with:
@@ -81,19 +92,12 @@ jobs:
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
-          key: ccache-ubuntu-22.04-doxygen
-      - name: Cache vcpkg artifacts
-        uses: actions/cache@v4
-        with:
-          path: ~/.ezvcpkg
-          key:  vcpkg-ubuntu-22.04-doxygen-${{ hashFiles('CMakeLists.txt') }}
-          restore-keys: |
-            vcpkg-ubuntu-22.04-doxygen-${{ hashFiles('CMakeLists.txt') }}
-            vcpkg-ubuntu-22.04-doxygen
+          key: ccache-ubuntu-24.04-doxygen
       - name: Generate Documentation
         run: |
           npm install
-          cmake -B build -S .
+          cp doc/cmake-presets/CMakeUserPresets.json .
+          cmake --preset=vcpkg-linux
           cmake --build build --target cesium-native-docs
       - name: Publish Documentation Artifact
         if: ${{ success() }}
@@ -112,8 +116,10 @@ jobs:
       CACHE_KEY: "${{ matrix.platform }}"
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Install ninja
-        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Install latest CMake 3 and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
       - name: Install nasm
         uses: ilammy/setup-nasm@v1
       - name: Check out repository code
@@ -127,14 +133,11 @@ jobs:
         with:
           key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}-1
           variant: sccache
-      - name: Cache vcpkg artifacts
-        uses: actions/cache@v4
-        with:
-          path: /.ezvcpkg
-          key: vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}-1
       - name: Compile ${{matrix.build_type}} Configuration
         run: |
-          cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
+          Copy .\doc\cmake-presets\CMakeUserPresets.json .\
+          cmake --preset=vcpkg-windows -G Ninja -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
           cmake --build build
       - name: Test ${{matrix.build_type}} Configuration
         run: |
@@ -145,22 +148,24 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [ gcc, clang ]
-        platform: [ ubuntu-22.04, ubuntu-20.04, macos-13 ]
+        platform: [ ubuntu-24.04, ubuntu-22.04, macos-13 ]
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
-            platform: ubuntu-22.04
+            platform: ubuntu-24.04
           - compiler: gcc
             platform: macos-13
           - compiler: gcc
-            platform: ubuntu-20.04
+            platform: ubuntu-22.04
     name: "${{matrix.platform}} / ${{matrix.compiler}} / ${{matrix.build_type}}"
     env:
       CACHE_KEY: "${{ matrix.platform }}-${{matrix.compiler}}"
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Install ninja
-        uses: seanmiddleditch/gha-setup-ninja@master
+      - name: Install latest CMake 3 and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
       - name: Install nasm
         uses: ilammy/setup-nasm@v1
       - name: Check out repository code
@@ -171,19 +176,14 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
-      - name: Cache vcpkg artifacts
-        uses: actions/cache@v4
-        with:
-          path: ~/.ezvcpkg
-          key:  vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
-          restore-keys: |
-            vcpkg-${{ env.CACHE_KEY }}-${{ hashFiles('CMakeLists.txt') }}
-            vcpkg-${{ env.CACHE_KEY }}
       - name: Set CC and CXX
         if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-13'}}
         run: |
-          echo "CC=clang-12" >> "$GITHUB_ENV"
-          echo "CXX=clang++-12" >> "$GITHUB_ENV"
+          echo "CC=clang" >> "$GITHUB_ENV"
+          echo "CXX=clang++" >> "$GITHUB_ENV"
+      - name: add VCPKG_ROOT
+        run: |
+          echo "VCPKG_ROOT=${VCPKG_INSTALLATION_ROOT}" >> "$GITHUB_ENV"
       - name: Make more swap space available
         if: ${{ matrix.platform != 'macos-13'}}
         run: |
@@ -207,10 +207,11 @@ jobs:
             set(VCPKG_OSX_ARCHITECTURES x86_64)
           " > vcpkg/triplets/x64-macos-10-15.cmake
           # Specify the overlay triplet, and also tell cesium-native to build with the same settings.
-          echo "EXTRA_CMAKE_OPTIONS=-DVCPKG_OVERLAY_TRIPLETS=$PWD/vcpkg/triplets -DVCPKG_TRIPLET=x64-macos-10-15 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR=x86_64" >> "$GITHUB_ENV"
+          echo "EXTRA_CMAKE_OPTIONS=-DVCPKG_OVERLAY_TRIPLETS=$PWD/vcpkg/triplets -DVCPKG_TRIPLET=x64-macos-10-15 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_SYSTEM_NAME=Darwin -DCMAKE_SYSTEM_PROCESSOR=x86_64 -DVCPKG_TARGET_TRIPLET=x64-macos-10-15" >> "$GITHUB_ENV"
       - name: Compile ${{matrix.build_type}} Configuration
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} $EXTRA_CMAKE_OPTIONS
+          cp doc/cmake-presets/CMakeUserPresets.json .
+          cmake --preset=vcpkg -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} $EXTRA_CMAKE_OPTIONS
           cmake --build build --parallel
       - name: Test ${{matrix.build_type}} Configuration
         run: |

@@ -85,6 +85,36 @@ public:
   std::string_view getPath() const;
 
   /**
+   * @brief Returns the filename portion of the URI.
+   *
+   * For example, for the URI `http://example.com/file.txt`, this will return
+   * `file.txt`.
+   *
+   * @return The filename, or empty string if the URI could not be parsed.
+   */
+  std::string_view getFileName() const;
+
+  /**
+   * @brief Returns the filename portion of the URI without any extension.
+   *
+   * For example, for the URI `http://example.com/file.txt`, this will return
+   * `file`.
+   *
+   * @return The stem, or empty string if the URI could not be parsed.
+   */
+  std::string_view getStem() const;
+
+  /**
+   * @brief Returns the extension portion of the URI, if present.
+   *
+   * For example, for the URI `http://example.com/file.txt`, this will return
+   * `.txt`.
+   *
+   * @return The extension, or empty string if the URI could not be parsed.
+   */
+  std::string_view getExtension() const;
+
+  /**
    * @brief Gets the query portion of the URI.
    *
    * @return The path, or empty string if the URI could not be parsed.
@@ -354,6 +384,10 @@ public:
    * @param uri The URI instance to obtain the query params from.
    */
   UriQuery(const Uri& uri) : _params(uri.getQuery()) {}
+  /**
+   * @brief Creates an empty \ref UriQuery object.
+   */
+  UriQuery() = default;
 
   /**
    * @brief Obtains the value of the given key from the query parameters,

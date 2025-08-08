@@ -12,12 +12,15 @@ In order to understand the pieces that you will need to implement in order to co
 
 * `Application` is the application you're developing.
 * `Tileset` is the Cesium Native [Tileset](@ref Cesium3DTilesSelection::Tileset) class.
-* `IAssetAccessor` is Cesium Native's interface to download assets, i.e., files on the file system or a web server. You must implement this interface.
+* `IAssetAccessor` is Cesium Native's interface to download assets, i.e., files on the file system or a web server. Cesium Native provides an implementation of this interface based on [libcurl](https://curl.se/libcurl/) in [CurlAssetAccessor](@ref CesiumCurl::CurlAssetAccessor). Or, if your application already has the ability to access network resources, you can implement the interface yourself.
 * `IPrepareRendererResources` is Cesium Native's interface to create "renderer" resources on-demand for the glTF models that it provides. For example, if you're integrating Cesium Native into a game engine, the renderer resource might be an instance of the game engine's static mesh class. You must implement this interface as well.
 
 @mermaid{tileset-sequence-diagram-frame1}
 
 In Frame 1, your application calls [updateView](@ref Cesium3DTilesSelection::Tileset::updateView) on the `Tileset`. It passes in all of the [ViewStates](@ref Cesium3DTilesSelection::ViewState) from which the tileset is currently being viewed. A `ViewState` includes a position, a look direction, a camera "up" direction, a viewport width and height in pixels, and horizontal and vertical field-of-view angles. This is all the information that Cesium Native needs in order to decide which subset of the model is visible, and what level-of-detail is needed for each part. You'll likely create a `ViewState` from each camera in your scene.
+
+> [!note]
+> All of the `ViewState` instances together represent one view, and one set of tiles will be selected that satisfies all of them. It is also possible to select a different set of tiles in each view by using the [updateViewGroup](@ref Cesium3DTilesSelection::Tileset::updateViewGroup) method instead of `updateView`. `updateView` simply calls `updateViewGroup` with the [default view group](@ref Cesium3DTilesSelection::Tileset::getDefaultViewGroup). It also calls [loadTiles](@ref Cesium3DTilesSelection::Tileset::loadTiles) in order to save the user the trouble of doing this themselves when only using a single view group.
 
 In our example, based on the `ViewStates`, Cesium Native selects tiles A and B as being needed for rendering. The details of this process are described in the [3D Tiles Selection Algorithm](@ref selection-algorithm-details), but aren't important for now. In Frame 1, no tiles are loaded yet, so `Tileset` calls [IAssetAccessor::get](@ref CesiumAsync::IAssetAccessor::get) to initiate the download of these two tiles. These downloads happen asynchronously via the [AsyncSystem](#async-system); Cesium Native doesn't wait for them to complete before continuing.
 
@@ -58,7 +61,7 @@ With that out of the way, `Tileset` returns the new set of `tilesToRenderThisFra
 As illustrated above, integrating 3D Tiles rendering in your application requires the following:
 
 1. Implement [ITaskProcessor](@ref CesiumAsync::ITaskProcessor) to run jobs in background threads, preferably using a thread pool or task graph.
-2. Implement [IAssetAccessor](@ref CesiumAsync::IAssetAccessor) to download resources from whatever sources your application needs to load 3D Tiles from. A possible approach is to use [libcurl](https://curl.se/libcurl/), but many applications already include file and HTTP support.
+2. Implement [IAssetAccessor](@ref CesiumAsync::IAssetAccessor) to download resources from whatever sources your application needs to load 3D Tiles from. A possible approach is to use [libcurl](https://curl.se/libcurl/) via the [CurlAssetAccessor](@ref CesiumCurl::CurlAssetAccessor) included with Cesium Native, but many applications already include file and HTTP support.
 3. Implement [IPrepareRendererResources](@ref Cesium3DTilesSelection::IPrepareRendererResources) to create meshes and textures for your application from the in-memory glTF representations provided by Cesium Native.
 4. When constructing a [Tileset](@ref Cesium3DTilesSelection::Tileset), pass in instances of the three implementations above as part of the [TilesetExternals](@ref Cesium3DTilesSelection::TilesetExternals).
 5. Call [updateView](@ref Cesium3DTilesSelection::Tileset::updateView) on each `Tileset` each frame. Show the already-created models identified in [tilesToRenderThisFrame](@ref Cesium3DTilesSelection::ViewUpdateResult::tilesToRenderThisFrame) and hide the ones in [tilesFadingOut](@ref Cesium3DTilesSelection::ViewUpdateResult::tilesFadingOut).

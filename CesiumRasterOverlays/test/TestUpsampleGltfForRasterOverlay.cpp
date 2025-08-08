@@ -23,8 +23,10 @@
 #include <glm/gtc/epsilon.hpp>
 #include <glm/trigonometric.hpp>
 
+#include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <random>
 #include <vector>
 
 using namespace CesiumAsync;
@@ -1069,6 +1071,77 @@ TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_SHORT indices") {
           skirtHeight * 0.5);
     }
   }
+
+  SUBCASE("Check water mask properties come through on their own") {
+    primitive.extras["OnlyWater"] = false;
+    primitive.extras["OnlyLand"] = false;
+    primitive.extras["WaterMaskTex"] = 1;
+    primitive.extras["WaterMaskTranslationX"] = 0.0;
+    primitive.extras["WaterMaskTranslationY"] = 0.0;
+    primitive.extras["WaterMaskScale"] = 1.0;
+
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            lowerLeft,
+            false);
+
+    REQUIRE(upsampledModel.meshes.size() == 1);
+    const Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+    REQUIRE(upsampledMesh.primitives.size() == 1);
+    const MeshPrimitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+    auto it = upsampledPrimitive.extras.find("OnlyWater");
+    REQUIRE(it != upsampledPrimitive.extras.end());
+    REQUIRE(it->second.isBool());
+    CHECK(it->second.getBool() == false);
+
+    it = upsampledPrimitive.extras.find("WaterMaskScale");
+    REQUIRE(it != upsampledPrimitive.extras.end());
+    REQUIRE(it->second.isDouble());
+    CHECK(it->second.getDouble() == 0.5);
+  }
+
+  SUBCASE("Check water mask properties come through when there is also skirt "
+          "metadata") {
+    double skirtHeight = 12.0;
+    SkirtMeshMetadata skirtMeshMetadata;
+    skirtMeshMetadata.noSkirtIndicesBegin = 0;
+    skirtMeshMetadata.noSkirtIndicesCount =
+        static_cast<uint32_t>(indices.size());
+    skirtMeshMetadata.meshCenter = center;
+    skirtMeshMetadata.skirtWestHeight = skirtHeight;
+    skirtMeshMetadata.skirtSouthHeight = skirtHeight;
+    skirtMeshMetadata.skirtEastHeight = skirtHeight;
+    skirtMeshMetadata.skirtNorthHeight = skirtHeight;
+
+    primitive.extras = SkirtMeshMetadata::createGltfExtras(skirtMeshMetadata);
+
+    primitive.extras["OnlyWater"] = true;
+    primitive.extras["OnlyLand"] = false;
+
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            lowerLeft,
+            false);
+
+    REQUIRE(upsampledModel.meshes.size() == 1);
+    const Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+    REQUIRE(upsampledMesh.primitives.size() == 1);
+    const MeshPrimitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+    auto it = upsampledPrimitive.extras.find("OnlyWater");
+    REQUIRE(it != upsampledPrimitive.extras.end());
+    REQUIRE(it->second.isBool());
+    CHECK(it->second.getBool() == true);
+
+    it = upsampledPrimitive.extras.find("skirtMeshMetadata");
+    REQUIRE(it != upsampledPrimitive.extras.end());
+    CHECK(it->second.isObject());
+  }
 }
 
 TEST_CASE("upsampleGltfForRasterOverlay with UNSIGNED_BYTE indices") {
@@ -1934,4 +2007,386 @@ TEST_CASE("upsampleGltfForRasterOverlay with a triangle fan primitive") {
           p6,
           (positions[0] + positions[2]) * 0.5f,
           glm::vec3(static_cast<float>(Math::Epsilon7))) == glm::bvec3(true));
+}
+
+TEST_CASE("upsampleGltfForRasterOverlay with a point primitive") {
+  const Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
+  Cartographic bottomLeftCart{glm::radians(110.0), glm::radians(32.0), 0.0};
+  Cartographic topLeftCart{
+      bottomLeftCart.longitude,
+      bottomLeftCart.latitude + glm::radians(1.0),
+      0.0};
+  Cartographic topRightCart{
+      bottomLeftCart.longitude + glm::radians(1.0),
+      bottomLeftCart.latitude + glm::radians(1.0),
+      0.0};
+  Cartographic bottomRightCart{
+      bottomLeftCart.longitude + glm::radians(1.0),
+      bottomLeftCart.latitude,
+      0.0};
+  Cartographic centerCart{
+      (bottomLeftCart.longitude + topRightCart.longitude) / 2.0,
+      (bottomLeftCart.latitude + topRightCart.latitude) / 2.0,
+      0.0};
+  glm::dvec3 center = ellipsoid.cartographicToCartesian(centerCart);
+  std::vector<glm::vec3> positions{
+      static_cast<glm::vec3>(
+          ellipsoid.cartographicToCartesian(bottomLeftCart) - center),
+      static_cast<glm::vec3>(
+          ellipsoid.cartographicToCartesian(topLeftCart) - center),
+      static_cast<glm::vec3>(
+          ellipsoid.cartographicToCartesian(topRightCart) - center),
+      static_cast<glm::vec3>(
+          ellipsoid.cartographicToCartesian(bottomRightCart) - center),
+  };
+  std::vector<glm::vec2> uvs{
+      glm::vec2{0.0, 0.0},
+      glm::vec2{0.0, 1.0},
+      glm::vec2{1.0, 0.0},
+      glm::vec2{1.0, 1.0}};
+  std::vector<glm::vec4> miscData{
+      glm::vec4(0.5, 0.1, 0.283, 0.12),
+      glm::vec4(0.1, 0.12, 3.41, 0.31),
+      glm::vec4(-10.4, 1.20, 0.3, 0.12),
+      glm::vec4(1.02, 10.2, 0.5, 0.43)};
+  uint32_t positionsBufferSize =
+      static_cast<uint32_t>(positions.size() * sizeof(glm::vec3));
+  uint32_t uvsBufferSize =
+      static_cast<uint32_t>(uvs.size() * sizeof(glm::vec2));
+  uint32_t miscBufferSize =
+      static_cast<uint32_t>(miscData.size() * sizeof(glm::vec4));
+
+  Model model;
+
+  // create buffer
+  model.buffers.emplace_back();
+  Buffer& buffer = model.buffers.back();
+  buffer.cesium.data.resize(
+      positionsBufferSize + uvsBufferSize + miscBufferSize);
+  std::memcpy(buffer.cesium.data.data(), positions.data(), positionsBufferSize);
+  std::memcpy(
+      buffer.cesium.data.data() + positionsBufferSize,
+      uvs.data(),
+      uvsBufferSize);
+  std::memcpy(
+      buffer.cesium.data.data() + positionsBufferSize + uvsBufferSize,
+      miscData.data(),
+      miscBufferSize);
+
+  // create position
+  model.bufferViews.emplace_back();
+  BufferView& positionBufferView = model.bufferViews.emplace_back();
+  positionBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
+  positionBufferView.byteOffset = 0;
+  positionBufferView.byteLength = positionsBufferSize;
+
+  model.accessors.emplace_back();
+  Accessor& positionAccessor = model.accessors.back();
+  positionAccessor.bufferView =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+  positionAccessor.byteOffset = 0;
+  positionAccessor.count = static_cast<int64_t>(positions.size());
+  positionAccessor.componentType = Accessor::ComponentType::FLOAT;
+  positionAccessor.type = Accessor::Type::VEC3;
+
+  int32_t positionAccessorIdx =
+      static_cast<int32_t>(model.accessors.size() - 1);
+
+  // create uv
+  model.bufferViews.emplace_back();
+  BufferView& uvBufferView = model.bufferViews.emplace_back();
+  uvBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  uvBufferView.byteOffset = positionsBufferSize;
+  uvBufferView.byteLength = uvsBufferSize;
+
+  model.accessors.emplace_back();
+  Accessor& uvAccessor = model.accessors.back();
+  uvAccessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
+  uvAccessor.byteOffset = 0;
+  uvAccessor.count = static_cast<int64_t>(uvs.size());
+  uvAccessor.componentType = Accessor::ComponentType::FLOAT;
+  uvAccessor.type = Accessor::Type::VEC2;
+
+  int32_t uvAccessorIdx = static_cast<int32_t>(model.accessors.size() - 1);
+
+  // create indices
+  model.bufferViews.emplace_back();
+  BufferView& miscBufferView = model.bufferViews.emplace_back();
+  miscBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
+  miscBufferView.byteOffset = positionsBufferSize + uvsBufferSize;
+  miscBufferView.byteLength = miscBufferSize;
+
+  model.accessors.emplace_back();
+  Accessor& miscAccessor = model.accessors.back();
+  miscAccessor.bufferView = static_cast<int>(model.bufferViews.size() - 1);
+  miscAccessor.byteOffset = 0;
+  miscAccessor.count = static_cast<int64_t>(miscData.size());
+  miscAccessor.componentType = Accessor::ComponentType::FLOAT;
+  miscAccessor.type = Accessor::Type::VEC4;
+
+  int miscAccessorIdx = static_cast<int>(model.accessors.size() - 1);
+
+  model.meshes.emplace_back();
+  Mesh& mesh = model.meshes.back();
+  mesh.primitives.emplace_back();
+
+  MeshPrimitive& primitive = mesh.primitives.back();
+  primitive.mode = MeshPrimitive::Mode::POINTS;
+  primitive.attributes["_CESIUMOVERLAY_0"] = uvAccessorIdx;
+  primitive.attributes["POSITION"] = positionAccessorIdx;
+  primitive.attributes["MISC_DATA"] = miscAccessorIdx;
+
+  // create node and update bounding volume
+  model.nodes.emplace_back();
+  Node& node = model.nodes[0];
+  node.mesh = static_cast<int>(model.meshes.size() - 1);
+  node.matrix = {
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      center.x,
+      center.z,
+      -center.y,
+      1.0};
+
+  CesiumGeometry::UpsampledQuadtreeNode lowerLeft{
+      CesiumGeometry::QuadtreeTileID(1, 0, 0)};
+
+  Model upsampledModel = *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+      model,
+      lowerLeft,
+      false);
+
+  REQUIRE(upsampledModel.meshes.size() == 1);
+  const Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+  REQUIRE(upsampledMesh.primitives.size() == 1);
+  const MeshPrimitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+  REQUIRE(
+      upsampledPrimitive.attributes.find("POSITION") !=
+      upsampledPrimitive.attributes.end());
+  AccessorView<glm::vec3> upsampledPosition(
+      upsampledModel,
+      upsampledPrimitive.attributes.at("POSITION"));
+  AccessorView<glm::vec4> upsampledMiscData(
+      upsampledModel,
+      upsampledPrimitive.attributes.at("MISC_DATA"));
+
+  REQUIRE(upsampledPosition.size() == 1);
+  REQUIRE(upsampledPosition[0] == positions[0]);
+  REQUIRE(upsampledMiscData[0] == miscData[0]);
+}
+
+constexpr size_t POINT_COUNT = 1000;
+
+TEST_CASE("upsampleGltfForRasterOverlay with random points") {
+  const Ellipsoid& ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
+  Cartographic bottomLeftCart{glm::radians(110.0), glm::radians(32.0), 0.0};
+  Cartographic topLeftCart{
+      bottomLeftCart.longitude,
+      bottomLeftCart.latitude + glm::radians(1.0),
+      0.0};
+  Cartographic topRightCart{
+      bottomLeftCart.longitude + glm::radians(1.0),
+      bottomLeftCart.latitude + glm::radians(1.0),
+      0.0};
+  Cartographic bottomRightCart{
+      bottomLeftCart.longitude + glm::radians(1.0),
+      bottomLeftCart.latitude,
+      0.0};
+  Cartographic centerCart{
+      (bottomLeftCart.longitude + topRightCart.longitude) / 2.0,
+      (bottomLeftCart.latitude + topRightCart.latitude) / 2.0,
+      0.0};
+  glm::dvec3 center = ellipsoid.cartographicToCartesian(centerCart);
+  std::vector<glm::vec3> positions;
+  positions.reserve(POINT_COUNT);
+  std::vector<glm::vec2> uvs;
+  uvs.reserve(POINT_COUNT);
+  std::vector<glm::vec4> miscData;
+  miscData.reserve(POINT_COUNT);
+
+  std::random_device rd;
+  std::mt19937 mt(rd());
+  std::uniform_real_distribution<float> dist(0.0, 0.5);
+  std::vector<std::vector<size_t>> pointsPerQuadrant;
+  for (size_t i = 0; i < 4; i++) {
+    const float x = (float)(i % 2) / 2.0f;
+    const float y = std::floor((float)i / 2) / 2.0f;
+    std::vector<size_t> pointIndices;
+    pointIndices.reserve(POINT_COUNT / 4);
+    for (size_t j = 0; j < POINT_COUNT / 4; j++) {
+      const glm::vec2 uv(x + dist(mt), y + dist(mt));
+      const Cartographic posCart(
+          bottomLeftCart.longitude +
+              (bottomRightCart.longitude - bottomLeftCart.longitude) * uv.x,
+          bottomLeftCart.latitude +
+              (topLeftCart.latitude - bottomLeftCart.latitude) * uv.y,
+          0.0);
+      const glm::vec3 pos =
+          glm::vec3(ellipsoid.cartographicToCartesian(posCart) - center);
+      pointIndices.emplace_back(positions.size());
+      positions.emplace_back(pos);
+      uvs.emplace_back(uv);
+      miscData.emplace_back(
+          dist(mt) * 2.0f,
+          dist(mt) * 2.0f,
+          dist(mt) * 2.0f,
+          dist(mt) * 2.0f);
+    }
+    pointsPerQuadrant.emplace_back(pointIndices);
+  }
+
+  uint32_t positionsBufferSize =
+      static_cast<uint32_t>(positions.size() * sizeof(glm::vec3));
+  uint32_t uvsBufferSize =
+      static_cast<uint32_t>(uvs.size() * sizeof(glm::vec2));
+  uint32_t miscBufferSize =
+      static_cast<uint32_t>(miscData.size() * sizeof(glm::vec4));
+
+  Model model;
+
+  // create buffer
+  model.buffers.emplace_back();
+  Buffer& buffer = model.buffers.back();
+  buffer.cesium.data.resize(
+      positionsBufferSize + uvsBufferSize + miscBufferSize);
+  std::memcpy(buffer.cesium.data.data(), positions.data(), positionsBufferSize);
+  std::memcpy(
+      buffer.cesium.data.data() + positionsBufferSize,
+      uvs.data(),
+      uvsBufferSize);
+  std::memcpy(
+      buffer.cesium.data.data() + positionsBufferSize + uvsBufferSize,
+      miscData.data(),
+      miscBufferSize);
+
+  // create position
+  model.bufferViews.emplace_back();
+  BufferView& positionBufferView = model.bufferViews.emplace_back();
+  positionBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
+  positionBufferView.byteOffset = 0;
+  positionBufferView.byteLength = positionsBufferSize;
+
+  model.accessors.emplace_back();
+  Accessor& positionAccessor = model.accessors.back();
+  positionAccessor.bufferView =
+      static_cast<int32_t>(model.bufferViews.size() - 1);
+  positionAccessor.byteOffset = 0;
+  positionAccessor.count = static_cast<int64_t>(positions.size());
+  positionAccessor.componentType = Accessor::ComponentType::FLOAT;
+  positionAccessor.type = Accessor::Type::VEC3;
+
+  int32_t positionAccessorIdx =
+      static_cast<int32_t>(model.accessors.size() - 1);
+
+  // create uv
+  model.bufferViews.emplace_back();
+  BufferView& uvBufferView = model.bufferViews.emplace_back();
+  uvBufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  uvBufferView.byteOffset = positionsBufferSize;
+  uvBufferView.byteLength = uvsBufferSize;
+
+  model.accessors.emplace_back();
+  Accessor& uvAccessor = model.accessors.back();
+  uvAccessor.bufferView = static_cast<int32_t>(model.bufferViews.size() - 1);
+  uvAccessor.byteOffset = 0;
+  uvAccessor.count = static_cast<int64_t>(uvs.size());
+  uvAccessor.componentType = Accessor::ComponentType::FLOAT;
+  uvAccessor.type = Accessor::Type::VEC2;
+
+  int32_t uvAccessorIdx = static_cast<int32_t>(model.accessors.size() - 1);
+
+  // create indices
+  model.bufferViews.emplace_back();
+  BufferView& miscBufferView = model.bufferViews.emplace_back();
+  miscBufferView.buffer = static_cast<int>(model.buffers.size() - 1);
+  miscBufferView.byteOffset = positionsBufferSize + uvsBufferSize;
+  miscBufferView.byteLength = miscBufferSize;
+
+  model.accessors.emplace_back();
+  Accessor& miscAccessor = model.accessors.back();
+  miscAccessor.bufferView = static_cast<int>(model.bufferViews.size() - 1);
+  miscAccessor.byteOffset = 0;
+  miscAccessor.count = static_cast<int64_t>(miscData.size());
+  miscAccessor.componentType = Accessor::ComponentType::FLOAT;
+  miscAccessor.type = Accessor::Type::VEC4;
+
+  int miscAccessorIdx = static_cast<int>(model.accessors.size() - 1);
+
+  model.meshes.emplace_back();
+  Mesh& mesh = model.meshes.back();
+  mesh.primitives.emplace_back();
+
+  MeshPrimitive& primitive = mesh.primitives.back();
+  primitive.mode = MeshPrimitive::Mode::POINTS;
+  primitive.attributes["_CESIUMOVERLAY_0"] = uvAccessorIdx;
+  primitive.attributes["POSITION"] = positionAccessorIdx;
+  primitive.attributes["MISC_DATA"] = miscAccessorIdx;
+
+  // create node and update bounding volume
+  model.nodes.emplace_back();
+  Node& node = model.nodes[0];
+  node.mesh = static_cast<int>(model.meshes.size() - 1);
+  node.matrix = {
+      1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      center.x,
+      center.z,
+      -center.y,
+      1.0};
+
+  for (uint32_t i = 0; i < 4; i++) {
+    CesiumGeometry::UpsampledQuadtreeNode quadrant{
+        CesiumGeometry::QuadtreeTileID(1, i % 2, (uint32_t)std::floor(i / 2))};
+
+    Model upsampledModel =
+        *RasterOverlayUtilities::upsampleGltfForRasterOverlays(
+            model,
+            quadrant,
+            false);
+
+    REQUIRE(upsampledModel.meshes.size() == 1);
+    const Mesh& upsampledMesh = upsampledModel.meshes.back();
+
+    REQUIRE(upsampledMesh.primitives.size() == 1);
+    const MeshPrimitive& upsampledPrimitive = upsampledMesh.primitives.back();
+
+    REQUIRE(
+        upsampledPrimitive.attributes.find("POSITION") !=
+        upsampledPrimitive.attributes.end());
+    AccessorView<glm::vec3> upsampledPosition(
+        upsampledModel,
+        upsampledPrimitive.attributes.at("POSITION"));
+    AccessorView<glm::vec4> upsampledMiscData(
+        upsampledModel,
+        upsampledPrimitive.attributes.at("MISC_DATA"));
+
+    const std::vector<size_t>& quadrantIndices = pointsPerQuadrant[i];
+    REQUIRE(upsampledPosition.size() == quadrantIndices.size());
+    for (int64_t j = 0; j < upsampledPosition.size(); j++) {
+      CHECK(upsampledPosition[j] == positions[quadrantIndices[(size_t)j]]);
+      CHECK(upsampledMiscData[j] == miscData[quadrantIndices[(size_t)j]]);
+    }
+  }
 }

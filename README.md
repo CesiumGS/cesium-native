@@ -24,40 +24,38 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 ## 📷Screenshots
 
 <table>
-  <tbody>
-    <tr>
-      <td>
-        <!--! \if DOXYGEN_EXCLUDE -->
-        <img src="doc/img/screenshot-googleplex.jpg" alt="Googleplex" />
-        <!--! \endif -->
-        <!--! \image html screenshot-googleplex.jpg -->
-        <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Google Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
-      </td>
-      <td>
-        <!--! \if DOXYGEN_EXCLUDE -->
-        <img src="doc/img/screenshot-ny-metadata.jpg" alt="New York" />
-        <!--! \endif -->
-        <!--! \image html screenshot-ny-metadata.jpg -->
-        <p align="center"><sub>Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</sub></p>
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <!--! \if DOXYGEN_EXCLUDE -->
-        <img src="doc/img/screenshot-copernicus-crater.jpg" alt="Copernicus Crater" />
-        <!--! \endif -->
-        <!--! \image html screenshot-copernicus-crater.jpg -->
-        <p align="center"><sub>The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.<br/>&nbsp;<!-- fake third line to align the two images and captions --></sub></p>
-      </td>
-      <td>
-        <!--! \if DOXYGEN_EXCLUDE -->
-        <img src="doc/img/screenshot-san-francisco.jpg" alt="San Francisco" />
-        <!--! \endif -->
-        <!--! \image html screenshot-san-francisco.jpg -->
-        <p align="center"><sub>Cesium for Omniverse scene set in San Francisco, California, USA. Data courtesy Aerometrex.</sub></p>
-      </td>
-    </tr>
-  </tbody>
+  <tr>
+    <td>
+      <!--! \if DOXYGEN_EXCLUDE -->
+      <img src="doc/img/screenshot-googleplex.jpg" alt="Googleplex" />
+      <!--! \endif -->
+      <!--! \image html screenshot-googleplex.jpg -->
+      <p align="center"><sub>The Googleplex in Mountain View, California, USA, visualized with Google Photorealistic 3D Tiles in Cesium for Unity.</sub></p>
+    </td>
+    <td>
+      <!--! \if DOXYGEN_EXCLUDE -->
+      <img src="doc/img/screenshot-ny-metadata.jpg" alt="New York" />
+      <!--! \endif -->
+      <!--! \image html screenshot-ny-metadata.jpg -->
+      <p align="center"><sub>Cesium OSM Buildings in Cesium for Unreal with shading from metadata on building height and age.</sub></p>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <!--! \if DOXYGEN_EXCLUDE -->
+      <img src="doc/img/screenshot-copernicus-crater.jpg" alt="Copernicus Crater" />
+      <!--! \endif -->
+      <!--! \image html screenshot-copernicus-crater.jpg -->
+      <p align="center"><sub>The Copernicus Crater, visualized with Cesium Moon Terrain in Cesium for Unreal.<br/>&nbsp;<!-- fake third line to align the two images and captions --></sub></p>
+    </td>
+    <td>
+      <!--! \if DOXYGEN_EXCLUDE -->
+      <img src="doc/img/screenshot-san-francisco.jpg" alt="San Francisco" />
+      <!--! \endif -->
+      <!--! \image html screenshot-san-francisco.jpg -->
+      <p align="center"><sub>Cesium for Omniverse scene set in San Francisco, California, USA. Data courtesy Aerometrex.</sub></p>
+    </td>
+  </tr>
 </table>
 
 ## 🗃️Libraries Overview
@@ -70,6 +68,8 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | **Cesium3DTilesWriter**        | 3D Tiles serialization, including 3D Tiles extension support.                                                   |
 | **Cesium3DTilesSelection**     | Runtime streaming, level of detail selection, culling, cache management, and decoding of 3D Tiles.              |
 | **CesiumAsync**                | Classes for multi-threaded asynchronous tasks.                                                                  |
+| **CesiumClientCommon**         | Functionality shared between ion and iTwin client implementations, primarily shared authentication code.        |
+| **CesiumCurl**                 | Provides the ability to access HTTP and other network resources using libcurl.                                  |
 | **CesiumGeometry**             | Common 3D geometry classes; and bounds testing, intersection testing, and spatial indexing algorithms.          |
 | **CesiumGeospatial**           | 3D geospatial math types and functions for ellipsoids, transforms, projections.                                 |
 | **CesiumGltf**                 | Lightweight glTF processing and optimization functions.                                                         |
@@ -77,11 +77,13 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | **CesiumGltfReader**           | glTF deserialization / decoding, including glTF extension support (`KHR_draco_mesh_compression` etc).           |
 | **CesiumGltfWriter**           | glTF serialization / encoding, including glTF extension support.                                                |
 | **CesiumIonClient**            | Functions to access [Cesium ion](https://cesium.com/cesium-ion/) accounts and 3D tilesets using ion's REST API. |
+| **CesiumITwinClient**          | Functions to access the [Bentley iTwin](https://www.bentley.com/software/itwin-platform/) platform.             |
 | **CesiumJsonReader**           | Reads JSON from a buffer into statically-typed classes.                                                         |
 | **CesiumJsonWriter**           | Writes JSON from statically-typed classes into a buffer.                                                        |
 | **CesiumQuantizedMeshTerrain** | Classes for accessing terrain in the [quantized-mesh-1.0](https://github.com/CesiumGS/quantized-mesh) format.   |
 | **CesiumRasterOverlays**       | Classes for raster overlays, which allow draping massive 2D textures over a model.                              |
 | **CesiumUtility**              | Utility functions for JSON parsing, URI processing, credits, etc.                                               |
+| **CesiumVectorData**           | Classes for loading vector data such as GeoJSON.                                                                |
 
 ## 📗License
 
@@ -99,6 +101,8 @@ The following official Cesium integrations are built on top of Cesium Native:
 In addition, Cesium Native has been used by the community to build projects including:
 - [vsgCs](https://github.com/timoore/vsgCs) integrates Cesium Native with VulkanSceneGraph.
 - [osgEarth](https://github.com/gwaldron/osgearth) uses Cesium Native to load 3D Tiles in OpenSceneGraph.
+- [3D Tiles for Godot](https://github.com/Battle-Road-Labs/3D-Tiles-For-Godot) integrates Cesium Native with the Godot game engine.
+- [cesium_3d_native](https://github.com/odd-io/cesium_3d_native) provides a Dart wrapper around Cesium Native, allowing integration with Dart/Flutter applications.
 
 If you have a project that integrates with Cesium Native that isn't on this list yet, please let us know!
 

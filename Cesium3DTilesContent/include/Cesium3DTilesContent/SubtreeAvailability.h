@@ -54,18 +54,20 @@ public:
       Cesium3DTiles::Subtree&& subtree) noexcept;
 
   /**
-   * @brief Creates an empty instance with all tiles initially available, while
-   * all content and subtrees are initially unavailable.
+   * @brief Creates an empty instance with the specified tile availability. All
+   * content and subtrees are initially unavailable regardless of this value.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
    * octree).
    * @param levelsInSubtree The number of levels in this subtree.
+   * @param setTilesAvailable Whether to make all tiles initially available.
    * @return The subtree availability, or std::nullopt if the subtree definition
    * is invalid.
    */
   static std::optional<SubtreeAvailability> createEmpty(
       ImplicitTileSubdivisionScheme subdivisionScheme,
-      uint32_t levelsInSubtree) noexcept;
+      uint32_t levelsInSubtree,
+      bool setTilesAvailable) noexcept;
 
   /**
    * @brief Asynchronously loads a subtree from a URL. The resource downloaded
@@ -419,6 +421,7 @@ private:
       uint32_t relativeTileLevel,
       uint64_t relativeTileMortonId,
       AvailabilityView& availabilityView,
+      Cesium3DTiles::Availability& availability,
       bool isAvailable) noexcept;
 
   bool isAvailableUsingBufferView(
@@ -430,6 +433,14 @@ private:
       uint64_t relativeTileMortonId,
       AvailabilityView& availabilityView,
       bool isAvailable) noexcept;
+
+  void updateAvailabilityViews();
+
+  void convertConstantAvailabilityToBitstream(
+      Cesium3DTiles::Subtree& subtree,
+      uint64_t numberOfTiles,
+      SubtreeAvailability::AvailabilityView& availabilityView,
+      Cesium3DTiles::Availability& availability);
 
   uint32_t _powerOf2;
   uint32_t _levelsInSubtree;

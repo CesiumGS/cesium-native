@@ -4,11 +4,43 @@ if (NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
-if(NOT VCPKG_MANIFEST_MODE)
+# By default, Use ezvcpkg to install dependencies. But don't use
+# ezvcpkg if it appears that this configuration is using vcpkg
+# manifest mode already, either by building cesium-native directly,
+# or via a higher level project that has added cesium-native as a
+# subdirectory and is using vcpkg to statisfy its dependencies.
+
+#In a fresh build, before CMakeCache.txt exists, determine whether to
+#use ezvcpkg. After this, CESIUM_USE_EZVCPG will be in the cache.
+set(CESIUM_USE_EZVCPKG_DEFAULT ON)
+if (VCPKG_MANIFEST_MODE)
+    set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
+elseif (CMAKE_TOOLCHAIN_FILE)
+    get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
+    if(toolchainFile STREQUAL "vcpkg.cmake")
+        set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
+    endif()
+endif()
+
+option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
+option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
+
+if(CESIUM_USE_EZVCPKG)
+  # Keep vcpkg from running in manifset mode. It will try to because
+  # this directory contains a vcpkg.json manifest.
+  set(VCPKG_MANIFEST_MODE OFF CACHE BOOL "vcpkg manifest mode should not be enabled with ezvcpg!")
   include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect-vcpkg-triplet.cmake)
+
+# Note: VCPKG_TRIPLET is not used by vcpkg! The relevant variables are
+# VCPKG_TARGET_TRIPLET and VCPKG_HOST_TRIPLET. ezvcpkg and our custom
+# installation code use VCPKG_TRIPLET, so initialize it here.
+
+if (VCPKG_TARGET_TRIPLET)
+    set(VCPKG_TRIPLET "${VCPKG_TARGET_TRIPLET}")
+endif()
 
 if (NOT VCPKG_TRIPLET)
     if (DEFINED ENV{VCPKG_TRIPLET})
@@ -21,9 +53,13 @@ if (NOT VCPKG_TRIPLET)
     else()
         set(VCPKG_TRIPLET "${DETECTED_VCPKG_TRIPLET}")
     endif()
+    if (NOT CESIUM_USE_EZVCPKG)
+        set(VCPKG_TARGET_TRIPLET "${VCPKG_TRIPLET}")
+    endif()
 endif()
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
+message(STATUS "VCPKG_TARGET_TRIPLET ${VCPKG_TARGET_TRIPLET}")
 
 if (NOT VCPKG_OVERLAY_PORTS)
     if (DEFINED ENV{VCPKG_OVERLAY_PORTS})
@@ -31,7 +67,9 @@ if (NOT VCPKG_OVERLAY_PORTS)
     endif()
 endif()
 
-list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+    list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+endif()
 
 message(STATUS "VCPKG_OVERLAY_PORTS ${VCPKG_OVERLAY_PORTS}")
 
@@ -57,16 +95,28 @@ set(PACKAGES_PRIVATE
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
 
+# asmjit needed by blend2d on non-iOS platforms (iOS doesn't support JIT)
+if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
+    list(APPEND PACKAGES_PRIVATE blend2d asmjit)
+else()
+    # Use [core] feature to disable default jit feature.
+    list(APPEND PACKAGES_PRIVATE blend2d[core])
+endif()
+
+if(NOT CESIUM_DISABLE_CURL)
+    list(APPEND PACKAGES_PRIVATE curl)
+endif()
+
 # Packages only used for testing
 set(PACKAGES_TEST doctest)
 
-if(NOT VCPKG_MANIFEST_MODE)
+if(CESIUM_USE_EZVCPKG)
     set(PACKAGES_ALL ${PACKAGES_PUBLIC})
     list(APPEND PACKAGES_ALL ${PACKAGES_PRIVATE})
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
     ezvcpkg_fetch(
-        COMMIT 2024.11.16
+        COMMIT dbe35ceb30c688bf72e952ab23778e009a578f18
         PACKAGES ${PACKAGES_ALL}
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
@@ -87,7 +137,7 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.45.0
+    VERSION 0.50.0
     LANGUAGES CXX C
 )
 
@@ -97,7 +147,7 @@ include(CMakeDependentOption)
 set(PACKAGE_BASE_DIR "${EZVCPKG_PACKAGES_DIR}")
 set(PACKAGE_BUILD_DIR "${EZVCPKG_DIR}")
 
-if(VCPKG_MANIFEST_MODE)
+if(NOT EZVCPKG_PACKAGES_DIR)
     set(PACKAGE_BUILD_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TRIPLET}/")
     set(PACKAGE_BASE_DIR "$ENV{VCPKG_ROOT}/packages")
 endif()
@@ -120,7 +170,7 @@ cmake_dependent_option(
 
 set(CESIUM_CLANG_TIDY_USE_THREADS 14 CACHE STRING "Sets the number of threads for run-clang-tidy to use.")
 
-if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
+if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS AND EZVCPKG_PACKAGES_DIR)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
         string(REGEX REPLACE "\[.*\]" "" PACKAGE ${PACKAGE})
         set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
@@ -142,7 +192,7 @@ if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS)
     endforeach()
 endif()
 
-if(CESIUM_INSTALL_STATIC_LIBS)
+if(CESIUM_INSTALL_STATIC_LIBS AND NOT VCPKG_MANIFEST_MODE)
     foreach(PACKAGE ${PACKAGES_PRIVATE})
         set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
@@ -186,6 +236,7 @@ option(CESIUM_GLM_STRICT_ENABLED "Whether to force strict GLM compile definition
 option(CESIUM_DISABLE_DEFAULT_ELLIPSOID "Whether to disable the WGS84 default value for ellipsoid parameters across cesium-native." OFF)
 option(CESIUM_MSVC_STATIC_RUNTIME_ENABLED "Whether to enable static linking for MSVC runtimes" OFF)
 option(CESIUM_DEBUG_TILE_UNLOADING "Whether to enable tracking of tile _doNotUnloadSubtreeCount modifications for tile unloading debugging." OFF)
+option(CESIUM_CLANG_TIME_TRACE "Whether to enable the -ftime-trace compilation option when building with Clang." OFF)
 
 if (CESIUM_MSVC_STATIC_RUNTIME_ENABLED)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -210,6 +261,7 @@ if(CESIUM_ENABLE_CLANG_TIDY)
 endif()
 
 # Add Modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
 if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     include(CodeCoverage)
@@ -243,24 +295,45 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 # However, for some of the vcpkg built libraries where they don't provide a prope cmake config file, we have to declare
 # and imporeted library target ourselves. This is the case for modp_b64::modp_b64, picosha2::picosha2 and earcut. In
 # these cases, we *do* have the somewhat ugly and verbose details in the extern/CMakeLists.txt file.
+#
+# XXX Above comment should be obsoleted by these first calls to
+# find_package, which resolve to our own modules that provide
+# targets. If needed, they can be installed with CMake config files
+# etc.
+find_package(zlib-ng REQUIRED)
+find_package(modp_b64 REQUIRED)
+
+find_package(ada CONFIG REQUIRED)
 find_package(Async++ CONFIG REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(meshoptimizer CONFIG REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(libmorton CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
+find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
-find_package(ada CONFIG REQUIRED)
+find_package(blend2d CONFIG REQUIRED)
+# asmjit should not be included with iOS builds as iOS doesn't support JIT compilation.
+if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
+    find_package(asmjit CONFIG REQUIRED)
+endif()
 
+if(NOT CESIUM_DISABLE_CURL)
+    find_package(CURL REQUIRED)
+endif()
+
+
+if(NOT CESIUM_DISABLE_CURL)
+    find_package(CURL REQUIRED)
+endif()
 
 # Private Library (s2geometry)
 add_subdirectory(extern EXCLUDE_FROM_ALL)
@@ -282,8 +355,15 @@ add_subdirectory(Cesium3DTilesWriter)
 add_subdirectory(Cesium3DTilesContent)
 add_subdirectory(CesiumRasterOverlays)
 add_subdirectory(Cesium3DTilesSelection)
+add_subdirectory(CesiumClientCommon)
 add_subdirectory(CesiumIonClient)
+add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
+add_subdirectory(CesiumVectorData)
+
+if(NOT CESIUM_DISABLE_CURL)
+    add_subdirectory(CesiumCurl)
+endif()
 
 # Private Targets
 if (CESIUM_TESTS_ENABLED)
@@ -295,3 +375,23 @@ endif()
 
 
 add_subdirectory(doc)
+
+include(CMakePackageConfigHelpers)
+
+if(CESIUM_INSTALL_STATIC_LIBS AND CESIUM_INSTALL_HEADERS)
+  install(EXPORT CesiumExports
+    FILE cesium-nativeTargets.cmake
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+
+  install(FILES
+    "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findzlib-ng.cmake"
+    "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findmodp_b64.cmake"
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+
+  configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config/Config.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/cesium-nativeConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cesium-nativeConfig.cmake
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+endif()

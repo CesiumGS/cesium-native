@@ -5,7 +5,6 @@
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 
-#include <functional>
 #include <memory>
 
 namespace CesiumRasterOverlays {
@@ -13,7 +12,7 @@ namespace CesiumRasterOverlays {
 /**
  * @brief A {@link RasterOverlay} that obtains imagery data from Cesium ion.
  */
-class CESIUMRASTEROVERLAYS_API IonRasterOverlay final : public RasterOverlay {
+class CESIUMRASTEROVERLAYS_API IonRasterOverlay : public RasterOverlay {
 public:
   /**
    * @brief Creates a new instance.
@@ -47,10 +46,33 @@ public:
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
       const override;
 
+protected:
+  /**
+   * @brief Creates a new instance.
+   *
+   * The tiles that are provided by this instance will contain
+   * imagery data that was obtained from the Cesium ion asset
+   * with the given ID, accessed with the given access token.
+   *
+   * @param name The user-given name of this overlay layer.
+   * @param overlayUrl The URL that the raster overlay requests will be made to.
+   * @param ionAccessToken The access token.
+   * @param needsAuthHeader If true, the access token will be passed through the
+   * Authorization header. If false, it will be assumed to be in the provided
+   * `overlayUrl`.
+   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   */
+  IonRasterOverlay(
+      const std::string& name,
+      const std::string& overlayUrl,
+      const std::string& ionAccessToken,
+      bool needsAuthHeader,
+      const RasterOverlayOptions& overlayOptions = {});
+
 private:
-  int64_t _ionAssetID;
+  std::string _overlayUrl;
   std::string _ionAccessToken;
-  std::string _ionAssetEndpointUrl;
+  bool _needsAuthHeader = false;
 
   struct AssetEndpointAttribution {
     std::string html;

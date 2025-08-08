@@ -2,9 +2,9 @@
 
 #include "ImplicitQuadtreeLoader.h"
 #include "SimplePrepareRendererResource.h"
-#include "TilesetContentLoaderResult.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTiles/Schema.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -12,6 +12,7 @@
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/Axis.h>
@@ -483,6 +484,26 @@ TEST_CASE("Test creating tileset json loader") {
     const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
     REQUIRE(schema);
     CHECK(schema->id == "foo");
+  }
+
+  SUBCASE("Tileset with 3DTILES_content_voxels") {
+    auto loaderResult =
+        createTilesetJsonLoader(testDataPath / "Voxels" / "tileset.json");
+
+    CHECK(!loaderResult.errors.hasErrors());
+    REQUIRE(loaderResult.pLoader);
+    REQUIRE(loaderResult.pRootTile);
+
+    TileExternalContent* pExternal =
+        loaderResult.pRootTile->getContent().getExternalContent();
+    REQUIRE(pExternal);
+    CHECK(pExternal->hasExtension<
+          Cesium3DTiles::ExtensionContent3dTilesContentVoxels>());
+
+    const TilesetMetadata& metadata = pExternal->metadata;
+    const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
+    REQUIRE(schema);
+    CHECK(schema->id == "voxel");
   }
 }
 

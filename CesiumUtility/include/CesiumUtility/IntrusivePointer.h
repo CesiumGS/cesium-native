@@ -1,4 +1,6 @@
 #pragma once
+
+#include <functional>
 #include <type_traits>
 #include <utility>
 
@@ -71,7 +73,7 @@ public:
   /**
    * @brief Constructs a new instance and assigns it to this IntrusivePointer.
    * If this IntrusivePointer already points to another instance,
-   * {@link releaseReference} is called on it.
+   * `releaseReference` is called on it.
    *
    * @param constructorArguments The arguments to the constructor to create the
    * new instance.
@@ -248,3 +250,14 @@ const_intrusive_cast(const IntrusivePointer<U>& p) noexcept {
 }
 
 } // namespace CesiumUtility
+
+/** @brief Hash implementation for \ref CesiumUtility::IntrusivePointer. */
+template <typename T> struct std::hash<CesiumUtility::IntrusivePointer<T>> {
+  /** @brief Returns a `size_t` hash of the provided \ref
+   * CesiumUtility::IntrusivePointer<T>. */
+  std::size_t
+  operator()(const CesiumUtility::IntrusivePointer<T>& key) const noexcept {
+    std::hash<T*> hasher{};
+    return hasher(key.get());
+  }
+};

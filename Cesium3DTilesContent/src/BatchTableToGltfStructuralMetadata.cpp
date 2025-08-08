@@ -2034,14 +2034,16 @@ template <> int32_t componentTypeFromCpp<uint32_t>() {
   return Accessor::ComponentType::UNSIGNED_INT;
 }
 
-// encapsulation of the binary batch id data in an I3dm
+// Encapsulation of the binary batch id data in an I3dm. If byteSize is 0, then
+// the semantic is invalid for some reason.
 struct BatchIdSemantic {
-  std::variant<
+  typedef std::variant<
       std::span<const uint8_t>,
       std::span<const uint16_t>,
       std::span<const uint32_t>>
-      batchSpan;
-  const std::byte* rawData;
+      BatchIdSpan;
+
+  BatchIdSpan batchSpan;
   uint32_t numElements;
   uint32_t byteSize;
 
@@ -2053,65 +2055,79 @@ struct BatchIdSemantic {
         numElements);
   }
 
+  BatchIdSemantic()
+      : batchSpan(std::span<uint8_t>()), numElements(0), byteSize(0) {}
+
   BatchIdSemantic(
       const rapidjson::Document& featureTableJson,
       uint32_t numInstances,
       const std::span<const std::byte>& featureTableJsonData)
-      : rawData(nullptr), numElements(0), byteSize(0) {
+      : batchSpan(std::span<uint8_t>()), numElements(0), byteSize(0) {
     const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
     if (batchIdIt == featureTableJson.MemberEnd() ||
         !batchIdIt->value.IsObject()) {
       return;
     }
+
     const auto byteOffsetIt = batchIdIt->value.FindMember("byteOffset");
     if (byteOffsetIt == batchIdIt->value.MemberEnd() ||
         !byteOffsetIt->value.IsUint()) {
-      // Warning
+      return;
     }
     uint32_t byteOffset = byteOffsetIt->value.GetUint();
+
+    MetadataProperty::ComponentType componentType =
+        MetadataProperty::ComponentType::UNSIGNED_SHORT;
+
     const auto componentTypeIt = batchIdIt->value.FindMember("componentType");
-    if (componentTypeIt != featureTableJson.MemberEnd() &&
-        componentTypeIt->value.IsString()) {
+    if (componentTypeIt != batchIdIt->value.MemberEnd()) {
       const std::string& componentTypeString =
-          componentTypeIt->value.GetString();
-      if (MetadataProperty::stringToMetadataComponentType.find(
-              componentTypeString) ==
+          componentTypeIt->value.IsString() ? componentTypeIt->value.GetString()
+                                            : std::string();
+      if (const auto metadataPropertyIt =
+              MetadataProperty::stringToMetadataComponentType.find(
+                  componentTypeString);
+          metadataPropertyIt !=
           MetadataProperty::stringToMetadataComponentType.end()) {
-        // Warning
+        componentType = metadataPropertyIt->second;
+      } else {
+        return;
       }
-      MetadataProperty::ComponentType componentType =
-          MetadataProperty::stringToMetadataComponentType.at(
-              componentTypeString);
-      rawData = featureTableJsonData.data();
-      if (componentType == MetadataProperty::ComponentType::UNSIGNED_BYTE) {
-        batchSpan = makeSpan<uint8_t>(rawData, byteOffset, numInstances);
-        numElements = numInstances;
-        byteSize = numElements * sizeof(uint8_t);
-      } else if (
-          componentType == MetadataProperty::ComponentType::UNSIGNED_SHORT) {
-        batchSpan = makeSpan<uint8_t>(rawData, byteOffset, numInstances);
-        numElements = numInstances;
-        byteSize = numElements * sizeof(uint16_t);
-      } else if (
-          componentType == MetadataProperty::ComponentType::UNSIGNED_INT) {
-        batchSpan = makeSpan<uint32_t>(rawData, byteOffset, numInstances);
-        numElements = numInstances;
-        byteSize = numElements * sizeof(uint32_t);
-      }
+    }
+
+    const std::byte* batchIdData = featureTableJsonData.data();
+    numElements = numInstances;
+    switch (componentType) {
+    case MetadataProperty::ComponentType::UNSIGNED_BYTE:
+      batchSpan = makeSpan<uint8_t>(batchIdData, byteOffset, numInstances);
+      byteSize = numElements * sizeof(uint8_t);
+      break;
+    case MetadataProperty::ComponentType::UNSIGNED_SHORT:
+      batchSpan = makeSpan<uint16_t>(batchIdData, byteOffset, numInstances);
+      byteSize = numElements * sizeof(uint16_t);
+      break;
+    case MetadataProperty::ComponentType::UNSIGNED_INT:
+      batchSpan = makeSpan<uint32_t>(batchIdData, byteOffset, numInstances);
+      byteSize = numElements * sizeof(uint32_t);
+      break;
+    default:
+      break;
+      // Shouldn't happen, but batchSpan and byteSize are already in an error
+      // state.
     }
   }
 
   size_t idSize() const {
     return std::visit(
-        [](auto&& batchIds) { return sizeof(batchIds[0]); },
+        [](auto&& batchIds) -> size_t { return sizeof(batchIds[0]); },
         batchSpan);
   }
 
   uint32_t maxBatchId() const {
     return std::visit(
-        [](auto&& batchIds) {
+        [](auto&& batchIds) -> uint32_t {
           auto itr = std::max_element(batchIds.begin(), batchIds.end());
-          return static_cast<uint32_t>(*itr);
+          return *itr;
         },
         batchSpan);
   }
@@ -2132,10 +2148,14 @@ addFeatureIdsToGltf(CesiumGltf::Model& gltf, const BatchIdSemantic& batchIds) {
   int32_t featuresBufferId = GltfConverterUtility::createBufferInGltf(gltf);
   auto& featuresBuffer = gltf.buffers[static_cast<uint32_t>(featuresBufferId)];
   featuresBuffer.cesium.data.resize(batchIds.byteSize);
-  std::memcpy(
-      &featuresBuffer.cesium.data[0],
-      batchIds.rawData,
-      batchIds.byteSize);
+  std::visit(
+      [&batchIds, &featuresBuffer](auto&& span) {
+        std::memcpy(
+            &featuresBuffer.cesium.data[0],
+            &span[0],
+            batchIds.byteSize);
+      },
+      batchIds.batchSpan);
   int32_t featuresBufferViewId = GltfConverterUtility::createBufferViewInGltf(
       gltf,
       featuresBufferId,
@@ -2168,31 +2188,36 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromI3dm(
 
   ErrorList result;
 
+  std::optional<uint32_t> maybeInstancesLength =
+      GltfConverterUtility::getValue<uint32_t>(
+          featureTableJson,
+          "INSTANCES_LENGTH");
+  if (!maybeInstancesLength) {
+    result.emplaceError("Required INSTANCES_LENGTH semantic is missing");
+    return result;
+  }
+
   // Parse the batch table and convert it to the EXT_structural_metadata
   // extension.
 
   // Batch table length is either the max batch ID + 1 or, if there are no batch
   // IDs, the number of instances.
   int64_t featureCount = 0;
-  std::optional<BatchIdSemantic> optBatchIds;
-  const auto batchIdIt = featureTableJson.FindMember("BATCH_ID");
-  std::optional<uint32_t> optInstancesLength =
-      GltfConverterUtility::getValue<uint32_t>(
-          featureTableJson,
-          "INSTANCES_LENGTH");
-  if (!optInstancesLength) {
-    result.emplaceError("Required INSTANCES_LENGTH semantic is missing");
-    return result;
-  }
-  if (batchIdIt == featureTableJson.MemberEnd()) {
-    featureCount = *optInstancesLength;
-  } else {
-    optBatchIds = BatchIdSemantic(
+  featureCount = *maybeInstancesLength;
+
+  BatchIdSemantic batchIdSemantic;
+  if (featureTableJson.HasMember("BATCH_ID")) {
+    batchIdSemantic = BatchIdSemantic(
         featureTableJson,
-        *optInstancesLength,
+        *maybeInstancesLength,
         featureTableJsonData);
-    uint32_t maxBatchId = optBatchIds->maxBatchId();
-    featureCount = maxBatchId + 1;
+    if (batchIdSemantic.byteSize == 0) {
+      result.emplaceError("Invalid BATCH_ID Semantic");
+    } else {
+      featureCount = batchIdSemantic.maxBatchId() + 1;
+    }
+  } else {
+    featureCount = *maybeInstancesLength;
   }
 
   convertBatchTableToGltfStructuralMetadataExtension(
@@ -2203,8 +2228,8 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromI3dm(
       result);
 
   int32_t featureIdAccessor = -1;
-  if (optBatchIds.has_value()) {
-    featureIdAccessor = addFeatureIdsToGltf(gltf, *optBatchIds);
+  if (batchIdSemantic.byteSize > 0) {
+    featureIdAccessor = addFeatureIdsToGltf(gltf, batchIdSemantic);
   }
 
   // Create an EXT_instance_features extension for node that has an

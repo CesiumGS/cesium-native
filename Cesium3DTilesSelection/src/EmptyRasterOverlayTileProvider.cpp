@@ -18,6 +18,7 @@ EmptyRasterOverlayTileProvider::EmptyRasterOverlayTileProvider(
           pOwner,
           asyncSystem,
           nullptr,
+          nullptr,
           std::nullopt,
           nullptr,
           nullptr,
