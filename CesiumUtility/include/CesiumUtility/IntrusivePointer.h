@@ -191,6 +191,12 @@ public:
   explicit operator bool() const noexcept { return this->_p != nullptr; }
 
   /**
+   * @brief Implicit conversion to `bool`, being `true` iff this is not the
+   * `nullptr`.
+   */
+  explicit operator bool() noexcept { return this->_p != nullptr; }
+
+  /**
    * @brief Returns the internal pointer.
    */
   T* get() const noexcept { return this->_p; }
