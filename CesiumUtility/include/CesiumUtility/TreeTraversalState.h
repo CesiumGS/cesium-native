@@ -3,10 +3,14 @@
 #include <CesiumUtility/Assert.h>
 
 #include <cstddef>
+#include <memory>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
 namespace CesiumUtility {
+
+template <typename T> class IntrusivePointer;
 
 /**
  * @brief Associates state (arbitrary data) with each node during partial,
@@ -34,6 +38,22 @@ namespace CesiumUtility {
  */
 template <typename TNodePointer, typename TState> class TreeTraversalState {
 public:
+  /**
+   * @brief The instance type of the node.
+   */
+  using TNodeInstance = std::remove_cvref_t<
+      typename std::pointer_traits<TNodePointer>::element_type>;
+
+  /**
+   * @brief A raw pointer to a node.
+   */
+  using TRawNodePointer = TNodeInstance*;
+
+  /**
+   * @brief A raw pointer to a const node.
+   */
+  using TRawConstNodePointer = const TNodeInstance*;
+
   /**
    * @brief Gets the total number of nodes that were visited in the previous
    * traversal.
@@ -297,7 +317,8 @@ public:
    *
    * @return The mapping of nodes to current traversal states.
    */
-  std::unordered_map<TNodePointer, TState> slowlyGetCurrentStates() const {
+  std::unordered_map<TRawConstNodePointer, TState>
+  slowlyGetCurrentStates() const {
     return this->slowlyGetStates(this->_currentTraversal);
   }
 
@@ -309,7 +330,8 @@ public:
    *
    * @return The mapping of nodes to previous traversal states.
    */
-  std::unordered_map<TNodePointer, TState> slowlyGetPreviousStates() const {
+  std::unordered_map<TRawConstNodePointer, TState>
+  slowlyGetPreviousStates() const {
     return this->slowlyGetStates(this->_previousTraversal);
   }
 
@@ -374,9 +396,9 @@ private:
     return this->_currentTraversal[size_t(currentIndex)];
   }
 
-  std::unordered_map<TNodePointer, TState>
+  std::unordered_map<TRawConstNodePointer, TState>
   slowlyGetStates(const std::vector<TraversalData>& traversalData) const {
-    std::unordered_map<TNodePointer, TState> result;
+    std::unordered_map<TRawConstNodePointer, TState> result;
 
     for (const TraversalData& data : traversalData) {
       result[data.pNode] = data.state;
