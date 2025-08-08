@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - `Tileset::getRootTile` now only provides a const pointer to the root `Tile`, even when called on a non-const `Tileset`. Most modifications tile tile instances owned by the tileset would be unsafe.
+- `ViewUpdateResult` now holds pointers to const `Tile` instances.
 - The `slowlyGetCurrentStates` and `slowlyGetPreviousStates` methods of `TreeTraversalState` now return the state map with a raw pointer to a constant node as the key, even if the node pointer type is a smart pointer.
 - `DebugTileStateDatabase::recordTileState` now expects the states to be provided as `std::unordered_map<const Tile*, TileSelectionState>` instead of `std::unordered_map<IntrusivePointer<Tile>, TileSelectionState>`.
 
