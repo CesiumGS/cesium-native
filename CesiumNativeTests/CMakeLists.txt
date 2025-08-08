@@ -78,32 +78,33 @@ foreach(target ${cesium_native_targets})
     endif()
 endforeach()
 
-#if(CESIUM_TARGET_WASM)
-  #file(GLOB directories_list LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/Cesium*")
-  #foreach(dir ${directories_list})
-    #if(IS_DIRECTORY ${dir}/test/data)
-      #list(APPEND CESIUM_TEST_DATA_DIRS --embed)
-      #list(APPEND CESIUM_TEST_DATA_DIRS "${dir}/test/data")
-    #endif()
-  #endforeach()
+if(CESIUM_TARGET_WASM)
+  file(GLOB directories_list LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/Cesium*")
+  foreach(dir ${directories_list})
+    if(IS_DIRECTORY ${dir}/test/data)
+      list(APPEND CESIUM_TEST_DATA_DIRS --embed)
+      list(APPEND CESIUM_TEST_DATA_DIRS "${dir}/test/data")
+    endif()
+  endforeach()
 
-  #list(APPEND CESIUM_TEST_DATA_DIRS --embed)
-  #list(APPEND CESIUM_TEST_DATA_DIRS "${CMAKE_SOURCE_DIR}/data")
+  list(APPEND CESIUM_TEST_DATA_DIRS --embed)
+  list(APPEND CESIUM_TEST_DATA_DIRS "${CMAKE_SOURCE_DIR}/data")
 
-  #message("${CESIUM_TEST_DATA_DIRS}")
+  message("${CESIUM_TEST_DATA_DIRS}")
 
-  #set(CESIUM_NATIVE_TESTS_DATA_OBJ ${CMAKE_CURRENT_BINARY_DIR}/cesium-native-tests-data.o)
-  #add_custom_target(
-    #cesium-native-tests-data
-    #COMMAND ${EMSCRIPTEN_ROOT_PATH}/tools/file_packager none.data ${CESIUM_TEST_DATA_DIRS} --obj-output=${CESIUM_NATIVE_TESTS_DATA_OBJ})
+  message("!!!!!!!! ${CMAKE_CURRENT_BINARY_DIR}")
+  set(CESIUM_NATIVE_TESTS_DATA_OBJ ${CMAKE_CURRENT_BINARY_DIR}/cesium-native-tests-data.o)
+  add_custom_target(
+    cesium-native-tests-data
+    COMMAND ${EMSCRIPTEN_ROOT_PATH}/tools/file_packager none.data ${CESIUM_TEST_DATA_DIRS} --obj-output=${CESIUM_NATIVE_TESTS_DATA_OBJ})
+  
+  add_library(cesium-native-tests-data-lib OBJECT IMPORTED)
+  add_dependencies(cesium-native-tests-data-lib cesium-native-tests-data)
+  set_property(TARGET cesium-native-tests-data-lib PROPERTY IMPORTED_OBJECTS
+    "${CESIUM_NATIVE_TESTS_DATA_OBJ}")
 
-  #add_library(cesium-native-tests-data-lib OBJECT IMPORTED)
-  #add_dependencies(cesium-native-tests-data-lib cesium-native-tests-data)
-  #set_property(TARGET cesium-native-tests-data-lib PROPERTY IMPORTED_OBJECTS
-    #"${CESIUM_NATIVE_TESTS_DATA_OBJ}")
-
-  #list(APPEND cesium_native_targets cesium-native-tests-data-lib)
-#endif()
+  list(APPEND cesium_native_targets cesium-native-tests-data-lib)
+endif()
 
 target_sources(
     cesium-native-tests
@@ -129,7 +130,7 @@ PRIVATE
 
 target_compile_definitions(cesium-native-tests
 PRIVATE
-  CESIUM_NATIVE_DATA_DIR=\"${CMAKE_SOURCE_DIR}/../data\"
+  CESIUM_NATIVE_DATA_DIR=\"${CMAKE_SOURCE_DIR}/data\"
 )
 
 include(CTest)
