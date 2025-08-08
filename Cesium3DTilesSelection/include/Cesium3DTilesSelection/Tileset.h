@@ -188,13 +188,6 @@ public:
     return this->_options.ellipsoid;
   }
 
-  /**
-   * @brief Gets the root tile of this tileset.
-   *
-   * This may be `nullptr` if there is currently no root tile.
-   */
-  Tile* getRootTile() noexcept;
-
   /** @copydoc Tileset::getRootTile() */
   const Tile* getRootTile() const noexcept;
 
@@ -515,16 +508,16 @@ private:
 
   TraversalDetails _renderLeaf(
       const TilesetFrameState& frameState,
-      Tile& tile,
+      const Tile& tile,
       double tilePriority,
       ViewUpdateResult& result);
   TraversalDetails _renderInnerTile(
       const TilesetFrameState& frameState,
-      Tile& tile,
+      const Tile& tile,
       ViewUpdateResult& result);
   bool _kickDescendantsAndRenderTile(
       const TilesetFrameState& frameState,
-      Tile& tile,
+      const Tile& tile,
       ViewUpdateResult& result,
       TraversalDetails& traversalDetails,
       size_t firstRenderedDescendantIndex,
@@ -538,7 +531,7 @@ private:
       uint32_t depth,
       bool meetsSse,
       bool ancestorMeetsSse,
-      Tile& tile,
+      const Tile& tile,
       double tilePriority,
       ViewUpdateResult& result);
 
@@ -569,13 +562,13 @@ private:
       const TilesetFrameState& frameState,
       uint32_t depth,
       bool ancestorMeetsSse,
-      Tile& tile,
+      const Tile& tile,
       ViewUpdateResult& result);
   TraversalDetails _visitVisibleChildrenNearToFar(
       const TilesetFrameState& frameState,
       uint32_t depth,
       bool ancestorMeetsSse,
-      Tile& tile,
+      const Tile& tile,
       ViewUpdateResult& result);
 
   /**
@@ -595,7 +588,7 @@ private:
    */
   bool _loadAndRenderAdditiveRefinedTile(
       const TilesetFrameState& frameState,
-      Tile& tile,
+      const Tile& tile,
       ViewUpdateResult& result,
       double tilePriority,
       bool queuedForLoad);
@@ -631,7 +624,7 @@ private:
 
   void addTileToLoadQueue(
       const TilesetFrameState& frameState,
-      Tile& tile,
+      const Tile& tile,
       TileLoadPriorityGroup priorityGroup,
       double priority);
 

@@ -87,7 +87,9 @@ public:
    * @param outWarnings On return, reports any warnings that occurred while
    * attempting to intersect the ray with the tile.
    */
-  void intersectVisibleTile(Tile* pTile, std::vector<std::string>& outWarnings);
+  void intersectVisibleTile(
+      const Tile* pTile,
+      std::vector<std::string>& outWarnings);
 
   /**
    * @brief Find candidate tiles for the height query by traversing the tile
@@ -102,7 +104,8 @@ public:
    * @param outWarnings On return, reports any warnings that occurred during
    * candidate search.
    */
-  void findCandidateTiles(Tile* pTile, std::vector<std::string>& outWarnings);
+  void
+  findCandidateTiles(const Tile* pTile, std::vector<std::string>& outWarnings);
 };
 
 /**
@@ -131,7 +134,7 @@ struct TilesetHeightRequest : public TileLoadRequester {
    * @brief The set of tiles that need to be loaded in order for this height
    * request to be completed.
    */
-  std::set<Tile*> tilesToLoad;
+  std::set<const Tile*> tilesToLoad;
 
   /**
    * @brief Process a given list of height requests. This is called by the {@link Tileset}
@@ -154,12 +157,12 @@ struct TilesetHeightRequest : public TileLoadRequester {
   /** @inheritdoc */
   bool hasMoreTilesToLoadInWorkerThread() const override;
   /** @inheritdoc */
-  Tile* getNextTileToLoadInWorkerThread() override;
+  const Tile* getNextTileToLoadInWorkerThread() override;
 
   /** @inheritdoc */
   bool hasMoreTilesToLoadInMainThread() const override;
   /** @inheritdoc */
-  Tile* getNextTileToLoadInMainThread() override;
+  const Tile* getNextTileToLoadInMainThread() override;
 
   /**
    * @brief Cancels all outstanding height requests and rejects the associated

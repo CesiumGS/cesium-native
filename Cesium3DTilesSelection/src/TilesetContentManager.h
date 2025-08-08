@@ -153,8 +153,8 @@ public:
   // Transition the tile from the ContentLoaded to the Done state.
   void finishLoading(Tile& tile, const TilesetOptions& tilesetOptions);
 
-  void markTileIneligibleForContentUnloading(Tile& tile);
-  void markTileEligibleForContentUnloading(Tile& tile);
+  void markTileIneligibleForContentUnloading(const Tile& tile);
+  void markTileEligibleForContentUnloading(const Tile& tile);
 
   /**
    * @brief Unloads unused tiles until the total memory usage by all loaded
@@ -236,7 +236,7 @@ private:
   // These tiles are not currently used, so their content may be unloaded. The
   // tiles at the head of the list are the least recently used, and the ones at
   // the tail are the most recently used.
-  Tile::UnusedLinkedList _tilesEligibleForContentUnloading;
+  mutable Tile::UnusedLinkedList _tilesEligibleForContentUnloading;
 
   std::vector<TileLoadRequester*> _requesters;
   double _roundRobinValueWorker;

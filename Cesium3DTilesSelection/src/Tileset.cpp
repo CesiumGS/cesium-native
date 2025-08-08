@@ -170,10 +170,6 @@ void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
   }
 }
 
-Tile* Tileset::getRootTile() noexcept {
-  return this->_pTilesetContentManager->getRootTile();
-}
-
 const Tile* Tileset::getRootTile() const noexcept {
   return this->_pTilesetContentManager->getRootTile();
 }
@@ -263,7 +259,7 @@ void Tileset::_updateLodTransitions(
     // Update fade out
     for (auto tileIt = result.tilesFadingOut.begin();
          tileIt != result.tilesFadingOut.end();) {
-      TileRenderContent* pRenderContent =
+      const TileRenderContent* pRenderContent =
           (*tileIt)->getContent().getRenderContent();
 
       if (!pRenderContent) {
@@ -279,43 +275,48 @@ void Tileset::_updateLodTransitions(
         // Remove this tile from the fading out list if it is already done.
         // The client will already have had a chance to stop rendering the tile
         // last frame.
-        pRenderContent->setLodTransitionFadePercentage(0.0f);
+        const_cast<TileRenderContent*>(pRenderContent)
+            ->setLodTransitionFadePercentage(0.0f);
         tileIt = result.tilesFadingOut.erase(tileIt);
         continue;
       }
 
       float newPercentage =
           glm::min(currentPercentage + deltaTransitionPercentage, 1.0f);
-      pRenderContent->setLodTransitionFadePercentage(newPercentage);
+      const_cast<TileRenderContent*>(pRenderContent)
+          ->setLodTransitionFadePercentage(newPercentage);
       ++tileIt;
     }
 
     // Update fade in
     for (const Tile::Pointer& pTile : result.tilesToRenderThisFrame) {
-      TileRenderContent* pRenderContent =
+      const TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
       if (pRenderContent) {
         float transitionPercentage =
             pRenderContent->getLodTransitionFadePercentage();
         float newTransitionPercentage =
             glm::min(transitionPercentage + deltaTransitionPercentage, 1.0f);
-        pRenderContent->setLodTransitionFadePercentage(newTransitionPercentage);
+        const_cast<TileRenderContent*>(pRenderContent)
+            ->setLodTransitionFadePercentage(newTransitionPercentage);
       }
 
       // Remove a tile from fade-out list if it is back on the render list.
       if (result.tilesFadingOut.erase(pTile) > 0) {
         if (pRenderContent)
-          pRenderContent->setLodTransitionFadePercentage(0.0f);
+          const_cast<TileRenderContent*>(pRenderContent)
+              ->setLodTransitionFadePercentage(0.0f);
       }
     }
   } else {
     // If there are any tiles still fading in, set them to fully visible right
     // away.
     for (const Tile::Pointer& pTile : result.tilesToRenderThisFrame) {
-      TileRenderContent* pRenderContent =
+      const TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
       if (pRenderContent) {
-        pRenderContent->setLodTransitionFadePercentage(1.0f);
+        const_cast<TileRenderContent*>(pRenderContent)
+            ->setLodTransitionFadePercentage(1.0f);
       }
     }
   }
@@ -339,7 +340,7 @@ const ViewUpdateResult& Tileset::updateViewGroupOffline(
 
   updateResult.tilesFadingOut.clear();
 
-  std::unordered_set<Tile*> uniqueTilesToRenderThisFrame;
+  std::unordered_set<const Tile*> uniqueTilesToRenderThisFrame;
   uniqueTilesToRenderThisFrame.reserve(
       updateResult.tilesToRenderThisFrame.size());
   for (const Tile::Pointer& pTile : updateResult.tilesToRenderThisFrame) {
@@ -349,10 +350,11 @@ const ViewUpdateResult& Tileset::updateViewGroupOffline(
   for (const Tile::Pointer& pTile : tilesSelectedPrevFrame) {
     if (uniqueTilesToRenderThisFrame.find(pTile.get()) ==
         uniqueTilesToRenderThisFrame.end()) {
-      TileRenderContent* pRenderContent =
+      const TileRenderContent* pRenderContent =
           pTile->getContent().getRenderContent();
       if (pRenderContent) {
-        pRenderContent->setLodTransitionFadePercentage(1.0f);
+        const_cast<TileRenderContent*>(pRenderContent)
+            ->setLodTransitionFadePercentage(1.0f);
         updateResult.tilesFadingOut.insert(pTile);
       }
     }
@@ -392,7 +394,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   ViewUpdateResult& result = viewGroup.getViewUpdateResult();
 
-  Tile* pRootTile = this->getRootTile();
+  const Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
     return result;
   }
@@ -438,7 +440,7 @@ void Tileset::loadTiles() {
 
   this->_asyncSystem.dispatchMainThreadTasks();
 
-  Tile* pRootTile = this->getRootTile();
+  const Tile* pRootTile = this->getRootTile();
   if (!pRootTile) {
     // If the root tile is marked as ready, but doesn't actually exist, then
     // the tileset couldn't load. Fail any outstanding height requests.
@@ -618,22 +620,24 @@ TileSelectionState getPreviousState(
 
 void addToTilesFadingOutIfPreviouslyRendered(
     TileSelectionState::Result lastResult,
-    Tile& tile,
+    const Tile& tile,
     ViewUpdateResult& result) {
   if (lastResult == TileSelectionState::Result::Rendered ||
       (lastResult == TileSelectionState::Result::Refined &&
        tile.getRefine() == TileRefine::Add)) {
     result.tilesFadingOut.insert(&tile);
-    TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
+    const TileRenderContent* pRenderContent =
+        tile.getContent().getRenderContent();
     if (pRenderContent) {
-      pRenderContent->setLodTransitionFadePercentage(0.0f);
+      const_cast<TileRenderContent*>(pRenderContent)
+          ->setLodTransitionFadePercentage(0.0f);
     }
   }
 }
 
 void addCurrentTileToTilesFadingOutIfPreviouslyRendered(
     TilesetViewGroup& viewGroup,
-    Tile& tile,
+    const Tile& tile,
     ViewUpdateResult& result) {
   TileSelectionState::Result lastResult =
       getPreviousState(viewGroup, tile).getResult();
@@ -642,7 +646,7 @@ void addCurrentTileToTilesFadingOutIfPreviouslyRendered(
 
 void addCurrentTileDescendantsToTilesFadingOutIfPreviouslyRendered(
     TilesetViewGroup& viewGroup,
-    [[maybe_unused]] Tile& tile,
+    [[maybe_unused]] const Tile& tile,
     ViewUpdateResult& result) {
   if (getPreviousState(viewGroup, tile).getResult() ==
       TileSelectionState::Result::Refined) {
@@ -658,7 +662,7 @@ void addCurrentTileDescendantsToTilesFadingOutIfPreviouslyRendered(
 
 void addCurrentTileAndDescendantsToTilesFadingOutIfPreviouslyRendered(
     TilesetViewGroup& viewGroup,
-    Tile& tile,
+    const Tile& tile,
     ViewUpdateResult& result) {
   addCurrentTileToTilesFadingOutIfPreviouslyRendered(viewGroup, tile, result);
   addCurrentTileDescendantsToTilesFadingOutIfPreviouslyRendered(
@@ -908,7 +912,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
     const TilesetFrameState& frameState,
     uint32_t depth,
     bool ancestorMeetsSse,
-    Tile& tile,
+    const Tile& tile,
     ViewUpdateResult& result) {
   TilesetViewGroup::TraversalState& traversalState =
       frameState.viewGroup.getTraversalState();
@@ -920,7 +924,9 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   double tilePriority =
       computeTilePriority(tile, frameState.frustums, distances);
 
-  this->_pTilesetContentManager->updateTileContent(tile, _options);
+  this->_pTilesetContentManager->updateTileContent(
+      const_cast<Tile&>(tile),
+      _options);
 
   CullResult cullResult{};
 
@@ -928,7 +934,7 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
   // refinement, but is a useful optimization for Replace refinement.
   bool cullWithChildrenBounds =
       tile.getRefine() == TileRefine::Replace && !tile.getChildren().empty();
-  for (Tile& child : tile.getChildren()) {
+  for (const Tile& child : tile.getChildren()) {
     if (child.getUnconditionallyRefine()) {
       cullWithChildrenBounds = false;
       break;
@@ -1029,7 +1035,7 @@ bool isLeaf(const Tile& tile) noexcept { return tile.getChildren().empty(); }
 
 Tileset::TraversalDetails Tileset::_renderLeaf(
     const TilesetFrameState& frameState,
-    Tile& tile,
+    const Tile& tile,
     double tilePriority,
     ViewUpdateResult& result) {
   frameState.viewGroup.getTraversalState().currentState() =
@@ -1081,7 +1087,7 @@ bool mustContinueRefiningToDeeperTiles(
 
 Tileset::TraversalDetails Tileset::_renderInnerTile(
     const TilesetFrameState& frameState,
-    Tile& tile,
+    const Tile& tile,
     ViewUpdateResult& result) {
   addCurrentTileDescendantsToTilesFadingOutIfPreviouslyRendered(
       frameState.viewGroup,
@@ -1106,7 +1112,7 @@ std::optional<int> Tileset::getGltfModifierVersion() const {
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
     const TilesetFrameState& frameState,
-    Tile& tile,
+    const Tile& tile,
     ViewUpdateResult& result,
     double tilePriority,
     bool queuedForLoad) {
@@ -1128,7 +1134,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
 
 bool Tileset::_kickDescendantsAndRenderTile(
     const TilesetFrameState& frameState,
-    Tile& tile,
+    const Tile& tile,
     ViewUpdateResult& result,
     TraversalDetails& traversalDetails,
     size_t firstRenderedDescendantIndex,
@@ -1308,7 +1314,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
     bool meetsSse,
     bool ancestorMeetsSse, // Careful: May be modified before being passed to
                            // children!
-    Tile& tile,
+    const Tile& tile,
     double tilePriority,
     ViewUpdateResult& result) {
   TilesetViewGroup::TraversalState& traversalState =
@@ -1517,13 +1523,13 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
     const TilesetFrameState& frameState,
     uint32_t depth,
     bool ancestorMeetsSse,
-    Tile& tile,
+    const Tile& tile,
     ViewUpdateResult& result) {
   TraversalDetails traversalDetails;
 
   // TODO: actually visit near-to-far, rather than in order of occurrence.
-  std::span<Tile> children = tile.getChildren();
-  for (Tile& child : children) {
+  std::span<const Tile> children = tile.getChildren();
+  for (const Tile& child : children) {
     const TraversalDetails childTraversal = this->_visitTileIfNeeded(
         frameState,
         depth + 1,
@@ -1543,11 +1549,11 @@ Tileset::TraversalDetails Tileset::_visitVisibleChildrenNearToFar(
 
 void Tileset::addTileToLoadQueue(
     const TilesetFrameState& frameState,
-    Tile& tile,
+    const Tile& tile,
     TileLoadPriorityGroup priorityGroup,
     double priority) {
   frameState.viewGroup.addToLoadQueue(
-      TileLoadTask{&tile, priorityGroup, priority},
+      TileLoadTask{const_cast<Tile*>(&tile), priorityGroup, priority},
       _externals.gltfModifier ? _externals.gltfModifier->getCurrentVersion()
                               : std::nullopt);
 }

@@ -121,9 +121,10 @@ TilesetHeightQuery::TilesetHeightQuery(
 Cesium3DTilesSelection::TilesetHeightQuery::~TilesetHeightQuery() = default;
 
 void TilesetHeightQuery::intersectVisibleTile(
-    Tile* pTile,
+    const Tile* pTile,
     std::vector<std::string>& outWarnings) {
-  TileRenderContent* pRenderContent = pTile->getContent().getRenderContent();
+  const TileRenderContent* pRenderContent =
+      pTile->getContent().getRenderContent();
   if (!pRenderContent)
     return;
 
@@ -153,7 +154,7 @@ void TilesetHeightQuery::intersectVisibleTile(
 }
 
 void TilesetHeightQuery::findCandidateTiles(
-    Tile* pTile,
+    const Tile* pTile,
     std::vector<std::string>& warnings) {
   // If tile failed to load, this means we can't complete the intersection
   if (pTile->getState() == TileLoadState::Failed) {
@@ -199,7 +200,7 @@ void TilesetHeightQuery::findCandidateTiles(
     }
 
     // Traverse children
-    for (Tile& child : pTile->getChildren()) {
+    for (const Tile& child : pTile->getChildren()) {
       // if bounding volume doesn't intersect this ray, we can skip it
       if (!boundingVolumeContainsCoordinate(
               child.getBoundingVolume(),
@@ -253,8 +254,8 @@ bool TilesetHeightRequest::hasMoreTilesToLoadInWorkerThread() const {
   return !this->tilesToLoad.empty();
 }
 
-Tile* TilesetHeightRequest::getNextTileToLoadInWorkerThread() {
-  Tile* pResult = nullptr;
+const Tile* TilesetHeightRequest::getNextTileToLoadInWorkerThread() {
+  const Tile* pResult = nullptr;
 
   auto it = this->tilesToLoad.begin();
   if (it != this->tilesToLoad.end()) {
@@ -270,7 +271,9 @@ bool TilesetHeightRequest::hasMoreTilesToLoadInMainThread() const {
   return false;
 }
 
-Tile* TilesetHeightRequest::getNextTileToLoadInMainThread() { return nullptr; }
+const Tile* TilesetHeightRequest::getNextTileToLoadInMainThread() {
+  return nullptr;
+}
 
 void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
     std::list<TilesetHeightRequest>& heightRequests,
@@ -348,21 +351,23 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
       }
     }
 
-    auto checkTile =
-        [this, &contentManager, &options, &tileStillNeedsLoading](Tile* pTile) {
-          contentManager.createLatentChildrenIfNecessary(*pTile, options);
+    auto checkTile = [this, &contentManager, &options, &tileStillNeedsLoading](
+                         const Tile* pTile) {
+      contentManager.createLatentChildrenIfNecessary(
+          const_cast<Tile&>(*pTile),
+          options);
 
-          TileLoadState state = pTile->getState();
-          if (state == TileLoadState::Unloading) {
-            // This tile is in the process of unloading, which must complete
-            // before we can load it again.
-            contentManager.unloadTileContent(*pTile);
-            tileStillNeedsLoading = true;
-          } else if (state <= TileLoadState::ContentLoading) {
-            this->tilesToLoad.insert(pTile);
-            tileStillNeedsLoading = true;
-          }
-        };
+      TileLoadState state = pTile->getState();
+      if (state == TileLoadState::Unloading) {
+        // This tile is in the process of unloading, which must complete
+        // before we can load it again.
+        contentManager.unloadTileContent(const_cast<Tile&>(*pTile));
+        tileStillNeedsLoading = true;
+      } else if (state <= TileLoadState::ContentLoading) {
+        this->tilesToLoad.insert(pTile);
+        tileStillNeedsLoading = true;
+      }
+    };
 
     // If any candidates need loading, add to return set
     for (const Tile::Pointer& pTile : query.additiveCandidateTiles) {

@@ -1254,13 +1254,16 @@ void TilesetContentManager::loadTileContent(
                 {std::move(result), nullptr});
       })
       .thenInMainThread([pTile, thiz](TileLoadResultAndRenderResources&& pair) {
-        setTileContent(*pTile, std::move(pair.result), pair.pRenderResources);
+        setTileContent(
+            const_cast<Tile&>(*pTile),
+            std::move(pair.result),
+            pair.pRenderResources);
         thiz->notifyTileDoneLoading(pTile.get());
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, pTile, thiz](
                              std::exception&& e) {
-        pTile->getMappedRasterTiles().clear();
-        pTile->setState(TileLoadState::Failed);
+        const_cast<Tile*>(pTile.get())->getMappedRasterTiles().clear();
+        const_cast<Tile*>(pTile.get())->setState(TileLoadState::Failed);
         thiz->notifyTileDoneLoading(pTile.get());
         SPDLOG_LOGGER_ERROR(
             pLogger,
@@ -1625,21 +1628,24 @@ void TilesetContentManager::finishLoading(
   updateTileContent(tile, tilesetOptions);
 }
 
-void TilesetContentManager::markTileIneligibleForContentUnloading(Tile& tile) {
-  this->_tilesEligibleForContentUnloading.remove(tile);
+void TilesetContentManager::markTileIneligibleForContentUnloading(
+    const Tile& tile) {
+  this->_tilesEligibleForContentUnloading.remove(const_cast<Tile&>(tile));
 }
 
-void TilesetContentManager::markTileEligibleForContentUnloading(Tile& tile) {
+void TilesetContentManager::markTileEligibleForContentUnloading(
+    const Tile& tile) {
   // If the tile is not yet in the list, add it to the end (most recently used).
   if (!this->_tilesEligibleForContentUnloading.contains(tile)) {
-    this->_tilesEligibleForContentUnloading.insertAtTail(tile);
+    this->_tilesEligibleForContentUnloading.insertAtTail(
+        const_cast<Tile&>(tile));
   }
 
   // If the Tileset has already been destroyed, unload this unused Tile
   // immediately to allow the TilesetContentManager destruction process to
   // proceed.
   if (this->_tilesetDestroyed) {
-    this->unloadTileContent(tile);
+    this->unloadTileContent(const_cast<Tile&>(tile));
   }
 }
 
@@ -1737,7 +1743,7 @@ namespace {
 class WeightedRoundRobin {
 public:
   typedef bool (TileLoadRequester::*HasMoreTilesToLoad)() const;
-  typedef Tile* (TileLoadRequester::*GetNextTileToLoad)();
+  typedef const Tile* (TileLoadRequester::*GetNextTileToLoad)();
 
   WeightedRoundRobin(
       double& roundRobinValue,
@@ -1755,7 +1761,7 @@ public:
     this->recomputeRequesterFractions();
   }
 
-  Tile* getNextTileToLoad() {
+  const Tile* getNextTileToLoad() {
     if (this->_requestersWithRequests.empty())
       return nullptr;
 
@@ -1777,7 +1783,7 @@ public:
 
     TileLoadRequester& requester = *this->_requestersWithRequests[index];
 
-    Tile* pToLoad = std::invoke(this->_getNextTileToLoad, requester);
+    const Tile* pToLoad = std::invoke(this->_getNextTileToLoad, requester);
     CESIUM_ASSERT(pToLoad);
 
     if (!pToLoad || !std::invoke(this->_hasMoreTilesToLoad, requester)) {
@@ -1858,7 +1864,7 @@ void TilesetContentManager::processWorkerThreadLoadRequests(
 
   while (this->getNumberOfTilesLoading() <
          int32_t(options.maximumSimultaneousTileLoads)) {
-    Tile* pToLoad = wrr.getNextTileToLoad();
+    const Tile* pToLoad = wrr.getNextTileToLoad();
     if (pToLoad == nullptr)
       break;
 
@@ -1868,7 +1874,7 @@ void TilesetContentManager::processWorkerThreadLoadRequests(
     if (pToLoad->_referenceCount == 0)
       continue;
 
-    this->loadTileContent(*pToLoad, options);
+    this->loadTileContent(const_cast<Tile&>(*pToLoad), options);
   }
 }
 
@@ -1889,7 +1895,7 @@ void TilesetContentManager::processMainThreadLoadRequests(
                          static_cast<int64_t>(1000.0 * timeBudget));
 
   while (true) {
-    Tile* pToLoad = wrr.getNextTileToLoad();
+    const Tile* pToLoad = wrr.getNextTileToLoad();
     if (pToLoad == nullptr)
       break;
 
@@ -1905,13 +1911,13 @@ void TilesetContentManager::processMainThreadLoadRequests(
     // case, calling finishLoading here would assert or crash.
     if (pToLoad->getState() == TileLoadState::ContentLoaded &&
         pToLoad->isRenderContent()) {
-      this->finishLoading(*pToLoad, options);
+      this->finishLoading(const_cast<Tile&>(*pToLoad), options);
     } else {
       // Test if main-thread phase of glTF modifier should be performed.
       const auto* renderContent = pToLoad->getContent().getRenderContent();
       if (renderContent && renderContent->getGltfModifierState() ==
                                GltfModifier::State::WorkerDone)
-        this->finishLoading(*pToLoad, options);
+        this->finishLoading(const_cast<Tile&>(*pToLoad), options);
     }
 
     auto time = std::chrono::system_clock::now();
