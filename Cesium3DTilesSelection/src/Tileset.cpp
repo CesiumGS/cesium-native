@@ -170,10 +170,6 @@ void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
   }
 }
 
-Tile* Tileset::getRootTile() noexcept {
-  return this->_pTilesetContentManager->getRootTile();
-}
-
 const Tile* Tileset::getRootTile() const noexcept {
   return this->_pTilesetContentManager->getRootTile();
 }
@@ -392,7 +388,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   ViewUpdateResult& result = viewGroup.getViewUpdateResult();
 
-  Tile* pRootTile = this->getRootTile();
+  Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   if (!pRootTile) {
     return result;
   }
@@ -438,7 +434,7 @@ void Tileset::loadTiles() {
 
   this->_asyncSystem.dispatchMainThreadTasks();
 
-  Tile* pRootTile = this->getRootTile();
+  Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   if (!pRootTile) {
     // If the root tile is marked as ready, but doesn't actually exist, then
     // the tileset couldn't load. Fail any outstanding height requests.

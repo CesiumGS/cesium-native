@@ -193,9 +193,6 @@ public:
    *
    * This may be `nullptr` if there is currently no root tile.
    */
-  Tile* getRootTile() noexcept;
-
-  /** @copydoc Tileset::getRootTile() */
   const Tile* getRootTile() const noexcept;
 
   /**

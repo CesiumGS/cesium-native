@@ -72,7 +72,7 @@ public:
   void recordTileState(
       int32_t frameNumber,
       const Tile& tile,
-      const std::unordered_map<Tile::Pointer, TileSelectionState>& states);
+      const std::unordered_map<const Tile*, TileSelectionState>& states);
 
 private:
   struct Impl;
