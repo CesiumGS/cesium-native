@@ -259,8 +259,8 @@ void Tileset::_updateLodTransitions(
     // Update fade out
     for (auto tileIt = result.tilesFadingOut.begin();
          tileIt != result.tilesFadingOut.end();) {
-      TileRenderContent* pRenderContent =
-          (*tileIt)->getContent().getRenderContent();
+      TileRenderContent* pRenderContent = const_cast<TileRenderContent*>(
+          (*tileIt)->getContent().getRenderContent());
 
       if (!pRenderContent) {
         // This tile is done fading out and was immediately kicked from the
@@ -287,9 +287,9 @@ void Tileset::_updateLodTransitions(
     }
 
     // Update fade in
-    for (const Tile::Pointer& pTile : result.tilesToRenderThisFrame) {
-      TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
+    for (const Tile::ConstPointer& pTile : result.tilesToRenderThisFrame) {
+      TileRenderContent* pRenderContent = const_cast<TileRenderContent*>(
+          pTile->getContent().getRenderContent());
       if (pRenderContent) {
         float transitionPercentage =
             pRenderContent->getLodTransitionFadePercentage();
@@ -307,9 +307,9 @@ void Tileset::_updateLodTransitions(
   } else {
     // If there are any tiles still fading in, set them to fully visible right
     // away.
-    for (const Tile::Pointer& pTile : result.tilesToRenderThisFrame) {
-      TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
+    for (const Tile::ConstPointer& pTile : result.tilesToRenderThisFrame) {
+      TileRenderContent* pRenderContent = const_cast<TileRenderContent*>(
+          pTile->getContent().getRenderContent());
       if (pRenderContent) {
         pRenderContent->setLodTransitionFadePercentage(1.0f);
       }
@@ -321,7 +321,7 @@ const ViewUpdateResult& Tileset::updateViewGroupOffline(
     TilesetViewGroup& viewGroup,
     const std::vector<ViewState>& frustums) {
   ViewUpdateResult& updateResult = viewGroup.getViewUpdateResult();
-  std::vector<Tile::Pointer> tilesSelectedPrevFrame =
+  std::vector<Tile::ConstPointer> tilesSelectedPrevFrame =
       updateResult.tilesToRenderThisFrame;
 
   // TODO: fix the fading for offline case
@@ -335,18 +335,18 @@ const ViewUpdateResult& Tileset::updateViewGroupOffline(
 
   updateResult.tilesFadingOut.clear();
 
-  std::unordered_set<Tile*> uniqueTilesToRenderThisFrame;
+  std::unordered_set<const Tile*> uniqueTilesToRenderThisFrame;
   uniqueTilesToRenderThisFrame.reserve(
       updateResult.tilesToRenderThisFrame.size());
-  for (const Tile::Pointer& pTile : updateResult.tilesToRenderThisFrame) {
+  for (const Tile::ConstPointer& pTile : updateResult.tilesToRenderThisFrame) {
     uniqueTilesToRenderThisFrame.insert(pTile.get());
   }
 
-  for (const Tile::Pointer& pTile : tilesSelectedPrevFrame) {
+  for (const Tile::ConstPointer& pTile : tilesSelectedPrevFrame) {
     if (uniqueTilesToRenderThisFrame.find(pTile.get()) ==
         uniqueTilesToRenderThisFrame.end()) {
-      TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
+      TileRenderContent* pRenderContent = const_cast<TileRenderContent*>(
+          pTile->getContent().getRenderContent());
       if (pRenderContent) {
         pRenderContent->setLodTransitionFadePercentage(1.0f);
         updateResult.tilesFadingOut.insert(pTile);
@@ -1124,7 +1124,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
       });
 
   // Remove all descendants from the render list and add this tile.
-  std::vector<Tile::Pointer>& renderList = result.tilesToRenderThisFrame;
+  std::vector<Tile::ConstPointer>& renderList = result.tilesToRenderThisFrame;
   renderList.erase(
       renderList.begin() +
           static_cast<std::vector<Tile*>::iterator::difference_type>(

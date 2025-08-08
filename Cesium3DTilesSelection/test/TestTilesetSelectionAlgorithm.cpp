@@ -617,7 +617,8 @@ TEST_CASE("Test additive refinement") {
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
 
-      const std::vector<Tile::Pointer>& ttr = result.tilesToRenderThisFrame;
+      const std::vector<Tile::ConstPointer>& ttr =
+          result.tilesToRenderThisFrame;
       REQUIRE(ttr.size() == 7);
 
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -652,7 +653,8 @@ TEST_CASE("Test additive refinement") {
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
 
-      const std::vector<Tile::Pointer>& ttr = result.tilesToRenderThisFrame;
+      const std::vector<Tile::ConstPointer>& ttr =
+          result.tilesToRenderThisFrame;
       REQUIRE(ttr.size() == 8);
 
       // root is done loading and rendered.

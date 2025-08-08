@@ -188,7 +188,8 @@ void TilesetViewGroup::finishFrame(
     }
 
     // Add per-tile credits for tiles selected this frame.
-    for (const Tile::Pointer& pTile : updateResult.tilesToRenderThisFrame) {
+    for (const Tile::ConstPointer& pTile :
+         updateResult.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           pTile->getMappedRasterTiles();
       // raster overlay tile credits
