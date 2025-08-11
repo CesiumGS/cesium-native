@@ -49,7 +49,7 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& tilesetJsonUrl,
       const CesiumAsync::HttpHeaders& requestHeaders,
-      const rapidjson::Document& tilesetJson,
+      rapidjson::Document&& tilesetJson,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
 protected:

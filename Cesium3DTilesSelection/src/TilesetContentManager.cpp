@@ -855,7 +855,7 @@ TilesetContentManager::TilesetContentManager(
                            pLogger,
                            url,
                            pCompletedRequest->headers(),
-                           tilesetJson,
+                           std::move(tilesetJson),
                            ellipsoid)
                     .thenImmediately(
                         [](TilesetContentLoaderResult<TilesetContentLoader>&&
