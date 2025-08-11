@@ -7,6 +7,7 @@
 
 class MockAssetResponse : public CesiumAsync::IAssetResponse {
 public:
+  MockAssetResponse() = default;
   MockAssetResponse(
       uint16_t statusCode,
       const std::string& contentType,
@@ -16,6 +17,10 @@ public:
         _contentType{contentType},
         _headers{headers},
         _data{data} {}
+  MockAssetResponse(MockAssetResponse&&) = default;
+  MockAssetResponse(const MockAssetResponse& rhs) = default;
+  MockAssetResponse& operator=(MockAssetResponse&&) = default;
+  MockAssetResponse& operator=(const MockAssetResponse&) = default;
 
   virtual uint16_t statusCode() const override { return this->_statusCode; }
 

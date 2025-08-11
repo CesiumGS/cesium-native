@@ -392,7 +392,7 @@ bool isContentReferenced(const Tile& tile) {
 
 } // namespace
 
-void Tile::addReference([[maybe_unused]] const char* reason) noexcept {
+void Tile::addReference([[maybe_unused]] const char* reason) const noexcept {
   ++this->_referenceCount;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
@@ -426,11 +426,13 @@ void Tile::addReference([[maybe_unused]] const char* reason) noexcept {
   // "ineligible for content unloading" with the TilesetContentManager.
   if (isContentReferenced(*this) && this->_pLoader &&
       this->_pLoader->getOwner()) {
-    this->_pLoader->getOwner()->markTileIneligibleForContentUnloading(*this);
+    this->_pLoader->getOwner()->markTileIneligibleForContentUnloading(
+        const_cast<Tile&>(*this));
   }
 }
 
-void Tile::releaseReference([[maybe_unused]] const char* reason) noexcept {
+void Tile::releaseReference(
+    [[maybe_unused]] const char* reason) const noexcept {
   CESIUM_ASSERT(this->_referenceCount > 0);
   --this->_referenceCount;
 
@@ -454,7 +456,8 @@ void Tile::releaseReference([[maybe_unused]] const char* reason) noexcept {
   // content will be unloaded immediately.
   if (!isContentReferenced(*this) && this->_pLoader &&
       this->_pLoader->getOwner()) {
-    this->_pLoader->getOwner()->markTileEligibleForContentUnloading(*this);
+    this->_pLoader->getOwner()->markTileEligibleForContentUnloading(
+        const_cast<Tile&>(*this));
   }
 
   // When the reference count goes from 1 to 0, this Tile is once again

@@ -1,5 +1,64 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- The `getRootTile`, `loadedTiles`, and `forEachLoadedTile` methods on `Tileset` now only provide a const pointer to `Tile` instances, even when called on a non-const `Tileset`. Most modifications to tile instances owned by the tileset would be unsafe.
+- `ViewUpdateResult` now holds pointers to const `Tile` instances.
+- The `slowlyGetCurrentStates` and `slowlyGetPreviousStates` methods of `TreeTraversalState` now return the state map with a raw pointer to a constant node as the key, even if the node pointer type is a smart pointer.
+- `DebugTileStateDatabase::recordTileState` now expects the states to be provided as `std::unordered_map<const Tile*, TileSelectionState>` instead of `std::unordered_map<IntrusivePointer<Tile>, TileSelectionState>`.
+
+##### Additions :tada:
+
+- Added `element_type` to `IntrusivePointer`, allowing it to be used with `std::pointer_types`.
+- Added implicit conversion of `IntrusivePointer<T>` to `T*`.
+
+### v0.50.0 - 2025-08-01
+
+##### Breaking Changes :mega:
+
+- The `RasterOverlayTileProvider` and `QuadtreeRasterOverlayTileProvider` constructors now require a `CreditSystem` parameter.
+
+##### Additions :tada:
+
+- Added `GeoJsonDocumentRasterOverlay` for displaying GeoJSON documents as a raster overlay.
+- Improved performance of `RasterizedPolygonsOverlay`, especially when using lots of cartographic polygons at once.
+- Added `ImplicitTilingUtilities::getParentID` to derive the ID of the parent for a given tile ID.
+- `IonRasterOverlay` now automatically handles refreshing the Cesium ion asset token as needed.
+- Added `CesiumIonAssetAccessor`, which is useful for implementing token refresh for Cesium ion assets.
+- Added `refreshTileProviderWithNewKey` method to `BingMapsRasterOverlay`.
+- Added `refreshTileProviderWithNewUrlAndHeaders` method to `TileMapServiceRasterOverlay`.
+- Added `getAsyncDestructionCompleteEvent` method to `RasterOverlayTileProvider`.
+- Added `getCreditSystem` method to `RasterOverlayTileProvider`.
+
+### v0.49.0 - 2025-07-01
+
+##### Breaking Changes :mega:
+
+- Renamed `CesiumITwinClient::Connection::getAccessToken` to `CesiumITwinClient::Connection::getAuthenticationToken`.
+- Renamed `CesiumITwinClient::Connection::setAccessToken` to `CesiumITwinClient::Connection::setAuthenticationToken`.
+
+##### Additions :tada:
+
+- Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
+- Added `CesiumCurl` library containing `CurlAssetAccessor`, an implementation of `IAssetAccessor` based on libcurl.
+- Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
+  - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
+  - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
+- `Cesium3DTilesSelection::TileExternalContent` now inherits from `CesiumUtility::ExtensibleObject` to store and manage extensions from its content, such as `Extension3dTilesContentVoxels`.
+
+##### Fixes :wrench:
+
+- Fixed crash when unloading tilesets with raster overlays when the `EllipsoidTilesetLoader` was used.
+- Fixed incorrect handling of legacy maximumLevel property when the `TilesetJsonLoader` was used.
+- Fixed `OrientedBoundingBox::computeDistanceSquaredToPosition()` calculation when `OrientedBoundingBox` has degenerate axes.
+- Fixed sending empty authorization header `Authorization: Bearer` when no access token is provided while using `CesiumIonTilesetLoader`. Prevents potential future issues with some servers including GP3D Tiles.
+- Fixed a bug where `CachingAssetAccessor` would include "revalidation" headers like `If-None-Match` in the returned `IAssetRequest` when the remote server returned new content rather than a 304 response. This could cause the header to be incorrectly included in later requests for different content.
+- Fixed a bug in `SubtreeFileReader` where it did not include query parameters from the base URL when requesting an external subtree buffer.
+- Fixed a bug in the parsing of the i3dm `BATCH_ID` semantic.
+- Fixed a bug in the conversion of i3dm batch ids to `EXT_instance_features` feature ids.
+
 ### v0.48.0 - 2025-06-02
 
 ##### Breaking Changes :mega:
@@ -10,12 +69,15 @@
 
 ##### Additions :tada:
 
+- Switched to vcpkg registry version `dbe35ceb30c688bf72e952ab23778e009a578f18`, from `2024.11.16`. We expect to upgrade again to an official tagged version in the next release.
 - Added `SubtreeWriter::writeSubtreeBinary`.
 
 ##### Fixes :wrench:
 
 - Fixed a bug where `SubtreeAvailability` wasn't updating the `constant` and `bitstream` properties of the availability object when converting constant availability to a bitstream.
 - Fixed a bug where `SubtreeAvailability` attempted to update buffer data that was no longer valid.
+- Fixed a bug where `TilesetContentLoaderResult` would drop its `statusCode` between `std::move`s due to its omission in the move constructor.
+- Fixed a bug introduced in v0.47.0 that caused tiles upsampled for raster overlays to lose their water mask.
 
 ### v0.47.0 - 2025-05-01
 

@@ -23,6 +23,7 @@ elseif (CMAKE_TOOLCHAIN_FILE)
 endif()
 
 option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
+option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
 
 if(CESIUM_USE_EZVCPKG)
   # Keep vcpkg from running in manifset mode. It will try to because
@@ -94,6 +95,18 @@ set(PACKAGES_PRIVATE
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
 
+# asmjit needed by blend2d on non-iOS platforms (iOS doesn't support JIT)
+if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
+    list(APPEND PACKAGES_PRIVATE blend2d asmjit)
+else()
+    # Use [core] feature to disable default jit feature.
+    list(APPEND PACKAGES_PRIVATE blend2d[core])
+endif()
+
+if(NOT CESIUM_DISABLE_CURL)
+    list(APPEND PACKAGES_PRIVATE curl)
+endif()
+
 # Packages only used for testing
 set(PACKAGES_TEST doctest)
 
@@ -124,7 +137,7 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.47.0
+    VERSION 0.50.0
     LANGUAGES CXX C
 )
 
@@ -290,24 +303,37 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 find_package(zlib-ng REQUIRED)
 find_package(modp_b64 REQUIRED)
 
+find_package(ada CONFIG REQUIRED)
 find_package(Async++ CONFIG REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(meshoptimizer CONFIG REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(libmorton CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
+find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
-find_package(ada CONFIG REQUIRED)
+find_package(blend2d CONFIG REQUIRED)
+# asmjit should not be included with iOS builds as iOS doesn't support JIT compilation.
+if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
+    find_package(asmjit CONFIG REQUIRED)
+endif()
 
+if(NOT CESIUM_DISABLE_CURL)
+    find_package(CURL REQUIRED)
+endif()
+
+
+if(NOT CESIUM_DISABLE_CURL)
+    find_package(CURL REQUIRED)
+endif()
 
 # Private Library (s2geometry)
 add_subdirectory(extern EXCLUDE_FROM_ALL)
@@ -333,6 +359,11 @@ add_subdirectory(CesiumClientCommon)
 add_subdirectory(CesiumIonClient)
 add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
+add_subdirectory(CesiumVectorData)
+
+if(NOT CESIUM_DISABLE_CURL)
+    add_subdirectory(CesiumCurl)
+endif()
 
 # Private Targets
 if (CESIUM_TESTS_ENABLED)

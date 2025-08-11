@@ -739,6 +739,8 @@ TilesetContentManager::TilesetContentManager(
   this->_upsampler.setOwner(*this);
 
   CESIUM_ASSERT(this->_pLoader != nullptr);
+  this->_overlayCollection.setLoadedTileEnumerator(
+      LoadedTileEnumerator(this->_pRootTile.get()));
   this->_pLoader->setOwner(*this);
   this->_rootTileAvailablePromise.resolve();
 }
@@ -1737,7 +1739,7 @@ namespace {
 class WeightedRoundRobin {
 public:
   typedef bool (TileLoadRequester::*HasMoreTilesToLoad)() const;
-  typedef Tile* (TileLoadRequester::*GetNextTileToLoad)();
+  typedef const Tile* (TileLoadRequester::*GetNextTileToLoad)();
 
   WeightedRoundRobin(
       double& roundRobinValue,
@@ -1777,7 +1779,7 @@ public:
 
     TileLoadRequester& requester = *this->_requestersWithRequests[index];
 
-    Tile* pToLoad = std::invoke(this->_getNextTileToLoad, requester);
+    const Tile* pToLoad = std::invoke(this->_getNextTileToLoad, requester);
     CESIUM_ASSERT(pToLoad);
 
     if (!pToLoad || !std::invoke(this->_hasMoreTilesToLoad, requester)) {
@@ -1786,7 +1788,9 @@ public:
       this->recomputeRequesterFractions();
     }
 
-    return pToLoad;
+    // The Tile is const from the perspective of the TileLoadRequester. But the
+    // TilesetContentManager is going to load it, so cast away the const.
+    return const_cast<Tile*>(pToLoad);
   }
 
 private:
@@ -2222,24 +2226,23 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
           result.statusCode,
           CesiumUtility::joinToString(result.errors.errors, "\n- ")});
     }
+    return;
   }
 
-  if (!result.errors) {
-    this->_tilesetCredits.reserve(
-        this->_tilesetCredits.size() + result.credits.size());
-    for (const auto& creditResult : result.credits) {
-      this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
-          creditResult.creditText,
-          creditResult.showOnScreen));
-    }
-
-    this->_requestHeaders = std::move(result.requestHeaders);
-    this->_pLoader = std::move(result.pLoader);
-    this->_pRootTile = std::move(result.pRootTile);
-
-    this->_overlayCollection.setLoadedTileEnumerator(
-        LoadedTileEnumerator(this->_pRootTile.get()));
-    this->_pLoader->setOwner(*this);
+  this->_tilesetCredits.reserve(
+      this->_tilesetCredits.size() + result.credits.size());
+  for (const auto& creditResult : result.credits) {
+    this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
+        creditResult.creditText,
+        creditResult.showOnScreen));
   }
+
+  this->_requestHeaders = std::move(result.requestHeaders);
+  this->_pLoader = std::move(result.pLoader);
+  this->_pRootTile = std::move(result.pRootTile);
+
+  this->_overlayCollection.setLoadedTileEnumerator(
+      LoadedTileEnumerator(this->_pRootTile.get()));
+  this->_pLoader->setOwner(*this);
 }
 } // namespace Cesium3DTilesSelection
