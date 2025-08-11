@@ -737,7 +737,8 @@ void removeRootPropertyAndParseTilesetMetadata(
     std::copy(
         std::make_move_iterator(tilesetResult.warnings.begin()),
         std::make_move_iterator(tilesetResult.warnings.end()),
-        el.warnings.begin() + tilesetResult.errors.size());
+        el.warnings.begin() + std::vector<std::string>::difference_type(
+                                  tilesetResult.errors.size()));
     el.logWarning(pLogger, "Could not parse metadata from tileset.json");
   }
 
