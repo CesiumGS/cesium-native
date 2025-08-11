@@ -1865,7 +1865,13 @@ TEST_CASE("Test GLTF modifier state machine") {
       out_model.version = getCurrentVersion();
       return true;
     }
-    void parseTilesetJson(const rapidjson::Document&) override {}
+    CesiumAsync::Future<void> onRegister(
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>&,
+        const std::shared_ptr<spdlog::logger>&,
+        const TilesetMetadata&) override {
+      return asyncSystem.createResolvedFuture();
+    }
   };
   auto pGltfModifier = std::make_shared<SimpleGltfModifier>();
   externals.pGltfModifier = pGltfModifier;

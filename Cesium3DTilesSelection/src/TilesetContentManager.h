@@ -180,6 +180,9 @@ public:
   void markTilesetDestroyed() noexcept;
   void releaseReference() const;
 
+  TilesetExternals& getExternals() { return this->_externals; }
+  const TilesetExternals& getExternals() const { return this->_externals; }
+
 private:
   static void setTileContent(
       Tile& tile,

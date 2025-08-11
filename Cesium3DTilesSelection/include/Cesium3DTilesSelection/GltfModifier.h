@@ -1,11 +1,23 @@
 #pragma once
 
+#include <CesiumAsync/Future.h>
 #include <CesiumGltf/Model.h>
+
+#include <spdlog/fwd.h>
 
 #include <atomic>
 #include <memory>
 
+namespace CesiumAsync {
+
+class AsyncSystem;
+class IAssetAccessor;
+
+} // namespace CesiumAsync
+
 namespace Cesium3DTilesSelection {
+
+class TilesetMetadata;
 
 /** Abstract class that allows modifying a glTF model after it has been loaded.
  * Modifications can include reorganizing the primitives, eg. merging or
@@ -55,6 +67,30 @@ public:
    */
   void trigger() { ++currentVersion; }
 
+  /**
+   * @brief Notifies this instance that is has been registered with a
+   * {@link Tileset}.
+   *
+   * This method is called after the tileset's
+   * {@link Tileset::getRootTileAvailableEvent} has been raised.
+   *
+   * @param asyncSystem The async system with which to do background work.
+   * @param pAssetAccessor The asset accessor to use to retrieve any additional
+   * assets.
+   * @param pLogger The logger to which to log errors and warnings that occur
+   * during preparation of the `GltfModifier`.
+   * @param tilesetMetadata The metadata associated with the tileset.
+   * @returns A future that resolves when the `GltfModifier` is ready to modify
+   * glTF instances for this tileset. Tileset loading will not proceed until
+   * this future resolves. If the future rejects, the `GltfModifier` will not be
+   * used.
+   */
+  virtual CesiumAsync::Future<void> onRegister(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const TilesetMetadata& tilesetMetadata) = 0;
+
   /** When this modifier has been triggered at least once, this is the method
    * called after a new tile has been loaded, and everytime the
    * modifier's version is incremented with {@link trigger}.
@@ -73,11 +109,6 @@ public:
       const glm::dmat4& tileTransform,
       const glm::dvec4& rootTranslation,
       CesiumGltf::Model& modifiedModel) = 0;
-
-  /** Called during a tileset's initialization process to let the modifier get
-   * extra information from the tileset metadata before any tile has been
-   * loaded. */
-  virtual void parseTilesetJson(const rapidjson::Document& tilesetJson) = 0;
 };
 
 } // namespace Cesium3DTilesSelection

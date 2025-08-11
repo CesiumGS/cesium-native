@@ -697,6 +697,32 @@ postProcessContentInWorkerThread(
         }
       });
 }
+
+CesiumAsync::Future<void>
+registerGltfModifier(TilesetContentManager& contentManager) {
+  std::shared_ptr<GltfModifier> pGltfModifier =
+      contentManager.getExternals().pGltfModifier;
+
+  if (pGltfModifier && contentManager.getRootTile() != nullptr) {
+    const TileExternalContent* pExternal =
+        contentManager.getRootTile()->getContent().getExternalContent();
+    if (pExternal) {
+      return pGltfModifier
+          ->onRegister(
+              contentManager.getExternals().asyncSystem,
+              contentManager.getExternals().pAssetAccessor,
+              contentManager.getExternals().pLogger,
+              pExternal->metadata)
+          .catchInMainThread([&contentManager](std::exception&&) {
+            // Disable the failed glTF modifier.
+            contentManager.getExternals().pGltfModifier.reset();
+          });
+    }
+  }
+
+  return contentManager.getExternals().asyncSystem.createResolvedFuture();
+}
+
 } // namespace
 
 TilesetContentManager::TilesetContentManager(
@@ -707,7 +733,7 @@ TilesetContentManager::TilesetContentManager(
     : _externals{externals},
       _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{std::move(pLoader)},
-      _pRootTile{std::move(pRootTile)},
+      _pRootTile{nullptr},
       _userCredit(
           (tilesetOptions.credit && externals.pCreditSystem)
               ? std::optional<Credit>(externals.pCreditSystem->createCredit(
@@ -736,13 +762,24 @@ TilesetContentManager::TilesetContentManager(
       _roundRobinValueMain(0.0),
       _requesterFractions(),
       _requestersWithRequests() {
+  CESIUM_ASSERT(this->_pLoader != nullptr);
   this->_upsampler.setOwner(*this);
 
-  CESIUM_ASSERT(this->_pLoader != nullptr);
-  this->_overlayCollection.setLoadedTileEnumerator(
-      LoadedTileEnumerator(this->_pRootTile.get()));
-  this->_pLoader->setOwner(*this);
-  this->_rootTileAvailablePromise.resolve();
+  this->notifyTileStartLoading(nullptr);
+
+  registerGltfModifier(*this)
+      .catchInMainThread([this](std::exception&&) {
+        // Disable the failed GltfModifier.
+        this->_externals.pGltfModifier.reset();
+      })
+      .thenInMainThread([this, pRootTile = std::move(pRootTile)]() mutable {
+        this->_pRootTile = std::move(pRootTile);
+        this->_overlayCollection.setLoadedTileEnumerator(
+            LoadedTileEnumerator(this->_pRootTile.get()));
+        this->_pLoader->setOwner(*this);
+        this->_rootTileAvailablePromise.resolve();
+        this->notifyTileDoneLoading(this->_pRootTile.get());
+      });
 }
 
 TilesetContentManager::TilesetContentManager(
@@ -797,7 +834,6 @@ TilesetContentManager::TilesetContentManager(
              pLogger = externals.pLogger,
              asyncSystem = externals.asyncSystem,
              pAssetAccessor = externals.pAssetAccessor,
-             pGltfModifier = externals.pGltfModifier,
              contentOptions = tilesetOptions.contentOptions](
                 const std::shared_ptr<CesiumAsync::IAssetRequest>&
                     pCompletedRequest) {
@@ -837,12 +873,6 @@ TilesetContentManager::TilesetContentManager(
                     tilesetJson.GetParseError(),
                     tilesetJson.GetErrorOffset()));
                 return asyncSystem.createResolvedFuture(std::move(result));
-              }
-
-              // Let the optional glTF modifier parse any extra information from
-              // tileset.json
-              if (pGltfModifier) {
-                pGltfModifier->parseTilesetJson(tilesetJson);
               }
 
               // Check if the json is a tileset.json format or layer.json format
@@ -892,7 +922,17 @@ TilesetContentManager::TilesetContentManager(
               }
             })
         .thenInMainThread(
-            [thiz, errorCallback = tilesetOptions.loadErrorCallback](
+            [thiz](TilesetContentLoaderResult<TilesetContentLoader>&& result) {
+              return registerGltfModifier(*thiz).thenImmediately(
+                  [result = std::move(result)]() mutable {
+                    return std::move(result);
+                  });
+            })
+        .thenInMainThread(
+            [thiz,
+             asyncSystem = externals.asyncSystem,
+             errorCallback = tilesetOptions.loadErrorCallback,
+             pGltfModifier = externals.pGltfModifier](
                 TilesetContentLoaderResult<TilesetContentLoader>&& result) {
               thiz->notifyTileDoneLoading(result.pRootTile.get());
               thiz->propagateTilesetContentLoaderResult(
@@ -973,6 +1013,13 @@ TilesetContentManager::TilesetContentManager(
 
     loaderFactory
         .createLoader(externals, tilesetOptions, authorizationChangeListener)
+        .thenInMainThread(
+            [thiz](TilesetContentLoaderResult<TilesetContentLoader>&& result) {
+              return registerGltfModifier(*thiz).thenImmediately(
+                  [result = std::move(result)]() mutable {
+                    return std::move(result);
+                  });
+            })
         .thenInMainThread(
             [thiz, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<TilesetContentLoader>&& result) {
