@@ -9,12 +9,15 @@
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
+#include <Cesium3DTilesReader/AssetReader.h>
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
 #include <Cesium3DTilesReader/ContentReader.h>
 #include <Cesium3DTilesReader/ExtensionContent3dTilesContentVoxelsReader.h>
 #include <Cesium3DTilesReader/GroupMetadataReader.h>
 #include <Cesium3DTilesReader/MetadataEntityReader.h>
+#include <Cesium3DTilesReader/PropertiesReader.h>
 #include <Cesium3DTilesReader/SchemaReader.h>
+#include <Cesium3DTilesReader/StatisticsReader.h>
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -714,7 +717,35 @@ void parseTilesetMetadata(
     const std::string& baseUrl,
     const rapidjson::Document& tilesetJson,
     TileExternalContent& externalContent) {
-  auto schemaIt = tilesetJson.FindMember("schema");
+  const auto assetIt = tilesetJson.FindMember("asset");
+  if (assetIt != tilesetJson.MemberEnd()) {
+    Cesium3DTilesReader::AssetReader assetReader;
+    auto assetResult = assetReader.readFromJson(assetIt->value);
+    if (assetResult.value) {
+      externalContent.metadata.asset = std::move(*assetResult.value);
+    }
+  }
+
+  const auto propertiesMapIt = tilesetJson.FindMember("properties");
+  if (propertiesMapIt != tilesetJson.MemberEnd() &&
+      propertiesMapIt->value.IsObject()) {
+    Cesium3DTilesReader::PropertiesReader propertiesReader;
+    for (auto propertiesIt = propertiesMapIt->value.MemberBegin();
+         propertiesIt != propertiesMapIt->value.MemberEnd();
+         ++propertiesIt) {
+      auto propertiesResult =
+          propertiesReader.readFromJson(propertiesIt->value);
+      if (propertiesResult.value) {
+        externalContent.metadata.properties.emplace(
+            std::string(
+                propertiesIt->name.GetString(),
+                propertiesIt->name.GetStringLength()),
+            std::move(*propertiesResult.value));
+      }
+    }
+  }
+
+  const auto schemaIt = tilesetJson.FindMember("schema");
   if (schemaIt != tilesetJson.MemberEnd()) {
     Cesium3DTilesReader::SchemaReader schemaReader;
     auto schemaResult = schemaReader.readFromJson(schemaIt->value);
@@ -723,18 +754,18 @@ void parseTilesetMetadata(
     }
   }
 
-  auto schemaUriIt = tilesetJson.FindMember("schemaUri");
+  const auto schemaUriIt = tilesetJson.FindMember("schemaUri");
   if (schemaUriIt != tilesetJson.MemberEnd() && schemaUriIt->value.IsString()) {
     externalContent.metadata.schemaUri =
         CesiumUtility::Uri::resolve(baseUrl, schemaUriIt->value.GetString());
   }
 
-  const auto metadataIt = tilesetJson.FindMember("metadata");
-  if (metadataIt != tilesetJson.MemberEnd()) {
-    Cesium3DTilesReader::MetadataEntityReader metadataReader;
-    auto metadataResult = metadataReader.readFromJson(metadataIt->value);
-    if (metadataResult.value) {
-      externalContent.metadata.metadata = std::move(*metadataResult.value);
+  const auto statisticsIt = tilesetJson.FindMember("statistics");
+  if (statisticsIt != tilesetJson.MemberEnd()) {
+    Cesium3DTilesReader::StatisticsReader statisticsReader;
+    auto statisticsResult = statisticsReader.readFromJson(statisticsIt->value);
+    if (statisticsResult.value) {
+      externalContent.metadata.statistics = std::move(*statisticsResult.value);
     }
   }
 
@@ -746,6 +777,22 @@ void parseTilesetMetadata(
       externalContent.metadata.groups = std::move(*groupsResult.value);
     }
   }
+
+  const auto metadataIt = tilesetJson.FindMember("metadata");
+  if (metadataIt != tilesetJson.MemberEnd()) {
+    Cesium3DTilesReader::MetadataEntityReader metadataReader;
+    auto metadataResult = metadataReader.readFromJson(metadataIt->value);
+    if (metadataResult.value) {
+      externalContent.metadata.metadata = std::move(*metadataResult.value);
+    }
+  }
+
+  externalContent.metadata.geometricError =
+      JsonHelpers::getScalarProperty(tilesetJson, "geometricError");
+  externalContent.metadata.extensionsUsed =
+      JsonHelpers::getStrings(tilesetJson, "extensionsUsed");
+  externalContent.metadata.extensionsRequired =
+      JsonHelpers::getStrings(tilesetJson, "extensionsRequired");
 }
 
 TileLoadResult parseExternalTilesetInWorkerThread(
