@@ -13,11 +13,6 @@
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
 #include <Cesium3DTilesReader/ContentReader.h>
 #include <Cesium3DTilesReader/ExtensionContent3dTilesContentVoxelsReader.h>
-#include <Cesium3DTilesReader/GroupMetadataReader.h>
-#include <Cesium3DTilesReader/MetadataEntityReader.h>
-#include <Cesium3DTilesReader/PropertiesReader.h>
-#include <Cesium3DTilesReader/SchemaReader.h>
-#include <Cesium3DTilesReader/StatisticsReader.h>
 #include <Cesium3DTilesReader/TilesetReader.h>
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -28,6 +23,7 @@
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -64,6 +60,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <span>
