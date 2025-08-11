@@ -1544,7 +1544,7 @@ namespace {
 class WeightedRoundRobin {
 public:
   typedef bool (TileLoadRequester::*HasMoreTilesToLoad)() const;
-  typedef Tile* (TileLoadRequester::*GetNextTileToLoad)();
+  typedef const Tile* (TileLoadRequester::*GetNextTileToLoad)();
 
   WeightedRoundRobin(
       double& roundRobinValue,
@@ -1584,7 +1584,7 @@ public:
 
     TileLoadRequester& requester = *this->_requestersWithRequests[index];
 
-    Tile* pToLoad = std::invoke(this->_getNextTileToLoad, requester);
+    const Tile* pToLoad = std::invoke(this->_getNextTileToLoad, requester);
     CESIUM_ASSERT(pToLoad);
 
     if (!pToLoad || !std::invoke(this->_hasMoreTilesToLoad, requester)) {
@@ -1593,7 +1593,9 @@ public:
       this->recomputeRequesterFractions();
     }
 
-    return pToLoad;
+    // The Tile is const from the perspective of the TileLoadRequester. But the
+    // TilesetContentManager is going to load it, so cast away the const.
+    return const_cast<Tile*>(pToLoad);
   }
 
 private:

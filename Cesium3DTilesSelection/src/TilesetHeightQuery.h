@@ -154,12 +154,12 @@ struct TilesetHeightRequest : public TileLoadRequester {
   /** @inheritdoc */
   bool hasMoreTilesToLoadInWorkerThread() const override;
   /** @inheritdoc */
-  Tile* getNextTileToLoadInWorkerThread() override;
+  const Tile* getNextTileToLoadInWorkerThread() override;
 
   /** @inheritdoc */
   bool hasMoreTilesToLoadInMainThread() const override;
   /** @inheritdoc */
-  Tile* getNextTileToLoadInMainThread() override;
+  const Tile* getNextTileToLoadInMainThread() override;
 
   /**
    * @brief Cancels all outstanding height requests and rejects the associated

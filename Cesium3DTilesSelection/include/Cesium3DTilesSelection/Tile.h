@@ -131,6 +131,15 @@ public:
   using Pointer = CesiumUtility::IntrusivePointer<Tile>;
 
   /**
+   * @brief A reference counting pointer to a const `Tile`.
+   *
+   * An instance of this pointer type will keep the `Tile` from being destroyed,
+   * and it may also keep its content from unloading. See {@link addReference}
+   * for details.
+   */
+  using ConstPointer = CesiumUtility::IntrusivePointer<const Tile>;
+
+  /**
    * @brief Construct a tile with unknown content and a loader that is used to
    * load the content of this tile. Tile has Unloaded status when initializing
    * with this constructor.
@@ -576,7 +585,7 @@ public:
    * added. This can help debug reference counts when compiled with
    * `CESIUM_DEBUG_TILE_UNLOADING`.
    */
-  void addReference(const char* reason = nullptr) noexcept;
+  void addReference(const char* reason = nullptr) const noexcept;
 
   /**
    * @brief Removes a reference from this tile. A live reference will keep this
@@ -600,7 +609,7 @@ public:
    * removed. This can help debug reference counts when compiled with
    * `CESIUM_DEBUG_TILE_UNLOADING`.
    */
-  void releaseReference(const char* reason = nullptr) noexcept;
+  void releaseReference(const char* reason = nullptr) const noexcept;
 
   /**
    * @brief Gets the current number of references to this tile.
@@ -691,7 +700,7 @@ private:
   // mapped raster overlay
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
-  int32_t _referenceCount;
+  mutable int32_t _referenceCount;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;

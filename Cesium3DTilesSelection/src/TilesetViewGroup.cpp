@@ -188,7 +188,8 @@ void TilesetViewGroup::finishFrame(
     }
 
     // Add per-tile credits for tiles selected this frame.
-    for (const Tile::Pointer& pTile : updateResult.tilesToRenderThisFrame) {
+    for (const Tile::ConstPointer& pTile :
+         updateResult.tilesToRenderThisFrame) {
       const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
           pTile->getMappedRasterTiles();
       // raster overlay tile credits
@@ -231,7 +232,7 @@ bool TilesetViewGroup::hasMoreTilesToLoadInWorkerThread() const {
   return !this->_workerThreadLoadQueue.empty();
 }
 
-Tile* TilesetViewGroup::getNextTileToLoadInWorkerThread() {
+const Tile* TilesetViewGroup::getNextTileToLoadInWorkerThread() {
   CESIUM_ASSERT(!this->_workerThreadLoadQueue.empty());
   if (this->_workerThreadLoadQueue.empty())
     return nullptr;
@@ -245,7 +246,7 @@ bool TilesetViewGroup::hasMoreTilesToLoadInMainThread() const {
   return !this->_mainThreadLoadQueue.empty();
 }
 
-Tile* TilesetViewGroup::getNextTileToLoadInMainThread() {
+const Tile* TilesetViewGroup::getNextTileToLoadInMainThread() {
   CESIUM_ASSERT(!this->_mainThreadLoadQueue.empty());
   if (this->_mainThreadLoadQueue.empty())
     return nullptr;

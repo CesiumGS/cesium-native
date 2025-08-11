@@ -220,7 +220,7 @@ void DebugTileStateDatabase::recordTileState(
 void DebugTileStateDatabase::recordTileState(
     int32_t frameNumber,
     const Tile& tile,
-    const std::unordered_map<Tile::Pointer, TileSelectionState>& states) {
+    const std::unordered_map<const Tile*, TileSelectionState>& states) {
   int status = CESIUM_SQLITE(sqlite3_reset)(this->_pImpl->writeTileState.get());
   if (status != SQLITE_OK) {
     return;
