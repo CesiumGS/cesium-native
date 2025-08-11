@@ -87,7 +87,7 @@ public:
    *
    * @see Cesium3DTilesSelection::GltfModifier
    */
-  std::shared_ptr<GltfModifier> gltfModifier = {};
+  std::shared_ptr<GltfModifier> pGltfModifier = {};
 };
 
 } // namespace Cesium3DTilesSelection

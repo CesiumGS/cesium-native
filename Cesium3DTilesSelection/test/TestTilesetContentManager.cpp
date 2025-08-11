@@ -1867,8 +1867,8 @@ TEST_CASE("Test GLTF modifier state machine") {
     }
     void parseTilesetJson(const rapidjson::Document&) override {}
   };
-  auto gltfModifier = std::make_shared<SimpleGltfModifier>();
-  externals.gltfModifier = gltfModifier;
+  auto pGltfModifier = std::make_shared<SimpleGltfModifier>();
+  externals.pGltfModifier = pGltfModifier;
 
   auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
   pMockedLoader->mockLoadTileContent = {
@@ -1906,31 +1906,31 @@ TEST_CASE("Test GLTF modifier state machine") {
   CHECK(tile.getState() == TileLoadState::Done);
   CHECK(tile.getContent().isRenderContent());
   // Constructed modifier is nilpotent until the first call to trigger(), so:
-  CHECK(gltfModifier->callCount == 0);
+  CHECK(pGltfModifier->callCount == 0);
   CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
 
   int expectedCallCount = 1;
   auto const& applyModifier = [&]() {
-    gltfModifier->trigger();
-    CHECK(tile.needsWorkerThreadLoading(gltfModifier->getCurrentVersion()));
+    pGltfModifier->trigger();
+    CHECK(tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
     // Start worker-thread phase of glTF modifier.
     pManager->loadTileContent(tile, options);
     // Unloading should be refused while worker-thread is running.
     CHECK(pManager->unloadTileContent(tile) == UnloadTileContentResult::Keep);
     // Wait completion of worker-thread phase.
     pManager->waitUntilIdle();
-    CHECK(!tile.needsWorkerThreadLoading(gltfModifier->getCurrentVersion()));
-    CHECK(tile.needsMainThreadLoading(gltfModifier->getCurrentVersion()));
-    CHECK(gltfModifier->callCount == expectedCallCount);
+    CHECK(!tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
+    CHECK(tile.needsMainThreadLoading(pGltfModifier->getCurrentVersion()));
+    CHECK(pGltfModifier->callCount == expectedCallCount);
     // The temporary renderer resource should have been created.
     CHECK(pMockedPrepareRendererResources->totalAllocation == 2);
 
     SUBCASE("Perform main-thread phase of glTF modifier") {
       pManager->finishLoading(tile, options);
-      CHECK(!tile.needsWorkerThreadLoading(gltfModifier->getCurrentVersion()));
-      CHECK(!tile.needsMainThreadLoading(gltfModifier->getCurrentVersion()));
+      CHECK(!tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
+      CHECK(!tile.needsMainThreadLoading(pGltfModifier->getCurrentVersion()));
       // The temporary renderer resource should have been freed.
-      CHECK(gltfModifier->callCount == expectedCallCount);
+      CHECK(pGltfModifier->callCount == expectedCallCount);
       CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
     }
   };
@@ -1953,9 +1953,9 @@ TEST_CASE("Test GLTF modifier state machine") {
   CHECK(tile.getContent().isRenderContent());
   // After the tile is loaded, glTF modifier should not be needed,
   // as it has already been done as part of the loading.
-  CHECK(!tile.needsWorkerThreadLoading(gltfModifier->getCurrentVersion()));
-  CHECK(!tile.needsMainThreadLoading(gltfModifier->getCurrentVersion()));
-  CHECK(gltfModifier->callCount == expectedCallCount);
+  CHECK(!tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
+  CHECK(!tile.needsMainThreadLoading(pGltfModifier->getCurrentVersion()));
+  CHECK(pGltfModifier->callCount == expectedCallCount);
   CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
 
   ++expectedCallCount;

@@ -541,7 +541,7 @@ public:
    * @brief Determines if this tile requires worker-thread loading.
    *
    * @param modelVersion Optional version of the glTF model that this tile
-   * should check to determine whether it is up to date. See {@link TilesetExternals::gltfModifier}.
+   * should check to determine whether it is up to date. See {@link TilesetExternals::pGltfModifier}.
    * @return true if this Tile needs further work done in a worker thread to
    * load it; otherwise, false.
    */
@@ -551,7 +551,7 @@ public:
    * @brief Determines if this tile requires main-thread loading.
    *
    * @param modelVersion Optional version of the glTF model that this tile
-   * should check to determine whether it is up to date. See {@link TilesetExternals::gltfModifier}.
+   * should check to determine whether it is up to date. See {@link TilesetExternals::pGltfModifier}.
    * @return true if this Tile needs further work done in the main thread to
    * load it; otherwise, false.
    */

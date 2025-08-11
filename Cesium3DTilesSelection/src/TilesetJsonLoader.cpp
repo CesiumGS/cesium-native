@@ -847,7 +847,7 @@ TilesetJsonLoader::createLoader(
                            asyncSystem = externals.asyncSystem,
                            pAssetAccessor = externals.pAssetAccessor,
                            pLogger = externals.pLogger,
-                           gltfModifier = externals.gltfModifier](
+                           pGltfModifier = externals.pGltfModifier](
                               const std::shared_ptr<CesiumAsync::IAssetRequest>&
                                   pCompletedRequest) {
         const CesiumAsync::IAssetResponse* pResponse =
@@ -890,8 +890,8 @@ TilesetJsonLoader::createLoader(
 
         // Let the optional modifier parse any extra information from
         // tileset.json
-        if (gltfModifier) {
-          gltfModifier->parseTilesetJson(tilesetJson);
+        if (pGltfModifier) {
+          pGltfModifier->parseTilesetJson(tilesetJson);
         }
 
         return TilesetJsonLoader::createLoader(

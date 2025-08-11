@@ -1080,8 +1080,8 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
 }
 
 std::optional<int> Tileset::getGltfModifierVersion() const {
-  if (_externals.gltfModifier)
-    return _externals.gltfModifier->getCurrentVersion();
+  if (_externals.pGltfModifier)
+    return _externals.pGltfModifier->getCurrentVersion();
   else
     return std::nullopt;
 }
@@ -1530,8 +1530,8 @@ void Tileset::addTileToLoadQueue(
     double priority) {
   frameState.viewGroup.addToLoadQueue(
       TileLoadTask{&tile, priorityGroup, priority},
-      _externals.gltfModifier ? _externals.gltfModifier->getCurrentVersion()
-                              : std::nullopt);
+      _externals.pGltfModifier ? _externals.pGltfModifier->getCurrentVersion()
+                               : std::nullopt);
 }
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
