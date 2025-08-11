@@ -761,6 +761,7 @@ void removeRootPropertyAndParseTilesetMetadata(
           CesiumUtility::Uri::resolve(baseUrl, *tileset.schemaUri);
     }
     metadata.statistics = std::move(tileset.statistics);
+    metadata.unknownProperties = std::move(tileset.unknownProperties);
   }
 }
 
