@@ -23,7 +23,7 @@ public:
     return !this->_workerThread.empty();
   }
 
-  Tile* getNextTileToLoadInWorkerThread() override {
+  const Tile* getNextTileToLoadInWorkerThread() override {
     CESIUM_ASSERT(!this->_workerThread.empty());
     const Tile* pResult = this->_workerThread.back();
     this->_workerThread.pop_back();
@@ -34,7 +34,7 @@ public:
     return !this->_mainThread.empty();
   }
 
-  Tile* getNextTileToLoadInMainThread() override {
+  const Tile* getNextTileToLoadInMainThread() override {
     CESIUM_ASSERT(!this->_mainThread.empty());
     const Tile* pResult = this->_mainThread.back();
     this->_mainThread.pop_back();
