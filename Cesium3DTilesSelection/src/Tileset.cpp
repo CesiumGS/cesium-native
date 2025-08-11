@@ -491,20 +491,6 @@ LoadedConstTileEnumerator Tileset::loadedTiles() const {
           : nullptr);
 }
 
-LoadedTileEnumerator Tileset::loadedTiles() {
-  return LoadedTileEnumerator(
-      this->_pTilesetContentManager
-          ? this->_pTilesetContentManager->getRootTile()
-          : nullptr);
-}
-
-void Tileset::forEachLoadedTile(
-    const std::function<void(Tile& tile)>& callback) {
-  for (Tile& tile : this->loadedTiles()) {
-    callback(tile);
-  }
-}
-
 void Tileset::forEachLoadedTile(
     const std::function<void(const Tile& tile)>& callback) const {
   for (const Tile& tile : this->loadedTiles()) {
