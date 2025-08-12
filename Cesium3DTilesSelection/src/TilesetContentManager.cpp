@@ -1279,54 +1279,52 @@ void TilesetContentManager::loadTileContent(
             // update root translation now it has been loaded:
             if (isLoadingRootTile)
               rootTranslation = glm::column(tileLoadInfo.tileTransform, 3);
-            return asyncSystem.runInWorkerThread(
-                [result = std::move(result),
-                 projections = std::move(projections),
-                 tileLoadInfo = std::move(tileLoadInfo),
-                 rendererOptions,
-                 pGltfModifier,
-                 rootTranslation = std::move(rootTranslation)]() mutable {
-                  if (pGltfModifier &&
-                      pGltfModifier->getCurrentVersion().has_value()) {
-                    // Apply the glTF modifier right away, otherwise it will be
-                    // triggered immediately after the renderer-side resources
-                    // have been created, which is both inefficient and a cause
-                    // of visual glitches (the model will appear briefly in its
-                    // unmodified state before stabilizing)
-                    const CesiumGltf::Model& model =
-                        std::get<CesiumGltf::Model>(result.contentKind);
-                    return pGltfModifier
-                        ->apply(GltfModifierInput{
-                            .asyncSystem = tileLoadInfo.asyncSystem,
-                            .pAssetAccessor = tileLoadInfo.pAssetAccessor,
-                            .pLogger = tileLoadInfo.pLogger,
-                            .previousModel = model,
-                            .tileTransform = tileLoadInfo.tileTransform})
-                        .thenInWorkerThread(
-                            [result = std::move(result),
-                             projections = std::move(projections),
-                             tileLoadInfo = std::move(tileLoadInfo),
-                             rendererOptions](
-                                std::optional<GltfModifierOutput>&&
-                                    modified) mutable {
-                              if (modified) {
-                                result.contentKind =
-                                    std::move(modified->modifiedModel);
-                              }
-                              return postProcessContentInWorkerThread(
-                                  std::move(result),
-                                  std::move(projections),
-                                  std::move(tileLoadInfo),
-                                  rendererOptions);
-                            });
-                  } else {
-                    return postProcessContentInWorkerThread(
-                        std::move(result),
-                        std::move(projections),
-                        std::move(tileLoadInfo),
-                        rendererOptions);
-                  }
-                });
+            return asyncSystem.runInWorkerThread([result = std::move(result),
+                                                  projections =
+                                                      std::move(projections),
+                                                  tileLoadInfo =
+                                                      std::move(tileLoadInfo),
+                                                  rendererOptions,
+                                                  pGltfModifier]() mutable {
+              if (pGltfModifier &&
+                  pGltfModifier->getCurrentVersion().has_value()) {
+                // Apply the glTF modifier right away, otherwise it will be
+                // triggered immediately after the renderer-side resources
+                // have been created, which is both inefficient and a cause
+                // of visual glitches (the model will appear briefly in its
+                // unmodified state before stabilizing)
+                const CesiumGltf::Model& model =
+                    std::get<CesiumGltf::Model>(result.contentKind);
+                return pGltfModifier
+                    ->apply(GltfModifierInput{
+                        .asyncSystem = tileLoadInfo.asyncSystem,
+                        .pAssetAccessor = tileLoadInfo.pAssetAccessor,
+                        .pLogger = tileLoadInfo.pLogger,
+                        .previousModel = model,
+                        .tileTransform = tileLoadInfo.tileTransform})
+                    .thenInWorkerThread([result = std::move(result),
+                                         projections = std::move(projections),
+                                         tileLoadInfo = std::move(tileLoadInfo),
+                                         rendererOptions](
+                                            std::optional<GltfModifierOutput>&&
+                                                modified) mutable {
+                      if (modified) {
+                        result.contentKind = std::move(modified->modifiedModel);
+                      }
+                      return postProcessContentInWorkerThread(
+                          std::move(result),
+                          std::move(projections),
+                          std::move(tileLoadInfo),
+                          rendererOptions);
+                    });
+              } else {
+                return postProcessContentInWorkerThread(
+                    std::move(result),
+                    std::move(projections),
+                    std::move(tileLoadInfo),
+                    rendererOptions);
+              }
+            });
           }
         }
 
