@@ -966,8 +966,10 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
           TileLoadPriorityGroup::Normal,
           tilePriority);
 
-      traversalDetails =
-          Tileset::createTraversalDetailsForSingleTile(frameState, tile);
+      traversalDetails = Tileset::createTraversalDetailsForSingleTile(
+          frameState,
+          tile,
+          getGltfModifierVersion());
     } else if (this->_options.preloadSiblings) {
       // Preload this culled sibling as requested.
       addTileToLoadQueue(
@@ -1022,7 +1024,10 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       TileLoadPriorityGroup::Normal,
       tilePriority);
 
-  return Tileset::createTraversalDetailsForSingleTile(frameState, tile);
+  return Tileset::createTraversalDetailsForSingleTile(
+      frameState,
+      tile,
+      getGltfModifierVersion());
 }
 
 namespace {
@@ -1045,12 +1050,13 @@ namespace {
  */
 bool mustContinueRefiningToDeeperTiles(
     const Tile& tile,
-    const TileSelectionState& lastFrameSelectionState) noexcept {
+    const TileSelectionState& lastFrameSelectionState,
+    std::optional<int> modelVersion) noexcept {
   const TileSelectionState::Result originalResult =
       lastFrameSelectionState.getOriginalResult();
 
   return originalResult == TileSelectionState::Result::Refined &&
-         !tile.isRenderable();
+         !tile.isRenderable(modelVersion);
 }
 
 } // namespace
@@ -1067,7 +1073,17 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
       TileSelectionState(TileSelectionState::Result::Rendered);
   result.tilesToRenderThisFrame.emplace_back(&tile);
 
-  return Tileset::createTraversalDetailsForSingleTile(frameState, tile);
+  return Tileset::createTraversalDetailsForSingleTile(
+      frameState,
+      tile,
+      getGltfModifierVersion());
+}
+
+std::optional<int> Tileset::getGltfModifierVersion() const {
+  if (_externals.pGltfModifier)
+    return _externals.pGltfModifier->getCurrentVersion();
+  else
+    return std::nullopt;
 }
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
@@ -1134,8 +1150,9 @@ bool Tileset::_kickDescendantsAndRenderTile(
       getPreviousState(frameState.viewGroup, tile).getResult();
   const bool wasRenderedLastFrame =
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
+  auto const modifierVersion = getGltfModifierVersion();
   const bool wasReallyRenderedLastFrame =
-      wasRenderedLastFrame && tile.isRenderable();
+      wasRenderedLastFrame && tile.isRenderable(modifierVersion);
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1155,11 +1172,12 @@ bool Tileset::_kickDescendantsAndRenderTile(
           tilePriority);
     }
 
-    traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
+    traversalDetails.notYetRenderableCount =
+        tile.isRenderable(modifierVersion) ? 0 : 1;
     queuedForLoad = true;
   }
 
-  bool isRenderable = tile.isRenderable();
+  bool isRenderable = tile.isRenderable(modifierVersion);
   traversalDetails.allAreRenderable = isRenderable;
   traversalDetails.anyWereRenderedLastFrame =
       isRenderable && wasRenderedLastFrame;
@@ -1351,8 +1369,10 @@ Tileset::TraversalDetails Tileset::_visitTile(
   if (action == VisitTileAction::Render) {
     // This tile meets the screen-space error requirement, so we'd like to
     // render it, if we can.
-    bool mustRefine =
-        mustContinueRefiningToDeeperTiles(tile, lastFrameSelectionState);
+    bool mustRefine = mustContinueRefiningToDeeperTiles(
+        tile,
+        lastFrameSelectionState,
+        getGltfModifierVersion());
     if (mustRefine) {
       // // We must refine even though this tile meets the SSE.
       action = VisitTileAction::Refine;
@@ -1438,7 +1458,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   bool wantToKick = kickDueToNonReadyDescendant || kickDueToTileFadingIn;
   bool willKick = wantToKick && (traversalDetails.notYetRenderableCount >
                                      this->_options.loadingDescendantLimit ||
-                                 tile.isRenderable());
+                                 tile.isRenderable(getGltfModifierVersion()));
 
   if (willKick) {
     // Kick all descendants out of the render list and render this tile instead
@@ -1509,16 +1529,19 @@ void Tileset::addTileToLoadQueue(
     TileLoadPriorityGroup priorityGroup,
     double priority) {
   frameState.viewGroup.addToLoadQueue(
-      TileLoadTask{&tile, priorityGroup, priority});
+      TileLoadTask{&tile, priorityGroup, priority},
+      _externals.pGltfModifier ? _externals.pGltfModifier->getCurrentVersion()
+                               : std::nullopt);
 }
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
     const TilesetFrameState& frameState,
-    const Tile& tile) {
+    const Tile& tile,
+    std::optional<int> modelVersion) {
   TileSelectionState::Result lastFrameResult =
       getPreviousState(frameState.viewGroup, tile).getResult();
 
-  bool isRenderable = tile.isRenderable();
+  bool isRenderable = tile.isRenderable(modelVersion);
 
   bool wasRenderedLastFrame =
       lastFrameResult == TileSelectionState::Result::Rendered;
