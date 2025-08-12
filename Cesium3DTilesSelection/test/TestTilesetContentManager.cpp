@@ -1875,15 +1875,13 @@ TEST_CASE("Test glTF modifier state machine") {
     SimpleGltfModifier() {}
 
     int applyCallCount = 0;
-    bool apply(
-        const CesiumGltf::Model& model,
-        const glm::dmat4& /*tileTransform*/,
-        const glm::dvec4& /*rootTranslation*/,
-        CesiumGltf::Model& out_model) override {
+    CesiumAsync::Future<std::optional<GltfModifierOutput>>
+    apply(GltfModifierInput&& input) override {
       ++applyCallCount;
-      out_model = model;
-      out_model.version = getCurrentVersion();
-      return true;
+      GltfModifierOutput output{.modifiedModel = input.previousModel};
+      output.modifiedModel.version = getCurrentVersion();
+      return input.asyncSystem.createResolvedFuture(
+          std::make_optional(std::move(output)));
     }
 
     int onRegisterCallCount = 0;
@@ -1891,7 +1889,8 @@ TEST_CASE("Test glTF modifier state machine") {
         const CesiumAsync::AsyncSystem& asyncSystem,
         const std::shared_ptr<CesiumAsync::IAssetAccessor>&,
         const std::shared_ptr<spdlog::logger>&,
-        const TilesetMetadata&) override {
+        const TilesetMetadata&,
+        const Tile&) override {
       ++onRegisterCallCount;
       return asyncSystem.createResolvedFuture();
     }

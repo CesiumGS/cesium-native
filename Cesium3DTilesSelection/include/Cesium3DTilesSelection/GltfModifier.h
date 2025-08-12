@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumGltf/Model.h>
 
@@ -10,14 +11,46 @@
 
 namespace CesiumAsync {
 
-class AsyncSystem;
 class IAssetAccessor;
 
 } // namespace CesiumAsync
 
 namespace Cesium3DTilesSelection {
 
+class Tile;
 class TilesetMetadata;
+
+/**
+ * @brief The input to the {@link GltfModifier::apply} function.
+ */
+struct GltfModifierInput {
+  CesiumAsync::AsyncSystem asyncSystem;
+
+  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+
+  std::shared_ptr<spdlog::logger> pLogger;
+
+  /**
+   * @brief The model to be modified.
+   */
+  const CesiumGltf::Model& previousModel;
+
+  /**
+   * @brief The transformation of the model's coordinates to the tileset's
+   * coordinate system.
+   */
+  glm::dmat4 tileTransform;
+};
+
+/**
+ * @brief The output of the {@link GltfModifier::apply} function.
+ */
+struct GltfModifierOutput {
+  /**
+   * @brief The new, modified model.
+   */
+  CesiumGltf::Model modifiedModel;
+};
 
 /** Abstract class that allows modifying a glTF model after it has been loaded.
  * Modifications can include reorganizing the primitives, eg. merging or
@@ -74,6 +107,7 @@ public:
    * @param pLogger The logger to which to log errors and warnings that occur
    * during preparation of the `GltfModifier`.
    * @param tilesetMetadata The metadata associated with the tileset.
+   * @param rootTile The root tile of the tileset.
    * @returns A future that resolves when the `GltfModifier` is ready to modify
    * glTF instances for this tileset. Tileset loading will not proceed until
    * this future resolves. If the future rejects, tileset load will proceed but
@@ -83,7 +117,8 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const TilesetMetadata& tilesetMetadata) = 0;
+      const TilesetMetadata& tilesetMetadata,
+      const Tile& rootTile) = 0;
 
   /**
    * @brief When this modifier has been triggered at least once, this is the
@@ -93,18 +128,14 @@ public:
    * @param model Input model that may have to be processed
    * @param tileTransform Transformation of the model's tile.
    *     See {@link Cesium3DTilesSelection::Tile::getTransform}.
-   * @param rootTranslation Translation of the root tile of the tileset
    * @param modifiedModel Target of the transformation process. May be equal to
    * the input model.
    * @return True if any processing was done and the result placed in the
    * modifiedModel parameter, false when no processing was needed, in which case
    * the modifiedModel parameter was ignored.
    */
-  virtual bool apply(
-      const CesiumGltf::Model& model,
-      const glm::dmat4& tileTransform,
-      const glm::dvec4& rootTranslation,
-      CesiumGltf::Model& modifiedModel) = 0;
+  virtual CesiumAsync::Future<std::optional<GltfModifierOutput>>
+  apply(GltfModifierInput&& input) = 0;
 
 private:
   /** The current version of the modifier, if it has ever been triggered.
