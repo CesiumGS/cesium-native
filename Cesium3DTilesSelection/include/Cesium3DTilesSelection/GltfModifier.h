@@ -31,12 +31,6 @@ class TilesetMetadata;
  * trigger() has been called at least once
  */
 class GltfModifier {
-  /** The current version of the modifier, if it has ever been triggered.
-   * Incremented every time trigger() is called by client code to signal that
-   * models needs to be reprocessed.
-   */
-  std::atomic_int currentVersion = -1;
-
 public:
   /** The state of the glTF modifier process for a given tile content's model.
    */
@@ -49,7 +43,6 @@ public:
     WorkerDone,
   };
 
-public:
   virtual ~GltfModifier() = default;
 
   /** @return The current modifier version, to identify oudated tile models. */
@@ -58,7 +51,8 @@ public:
                                   : std::optional<int>(currentVersion);
   }
 
-  /** Activates this modifier after it has been constructed in its default
+  /**
+   * @brief Activates this modifier after it has been constructed in its default
    * nilpotent state. Calling it again will apply the modifier again on the
    * already loaded glTF models, by incrementing the version. Tiles already
    * loaded will be re-processed without being unloaded, the new model replacing
@@ -71,8 +65,8 @@ public:
    * @brief Notifies this instance that is has been registered with a
    * {@link Tileset}.
    *
-   * This method is called after the tileset's
-   * {@link Tileset::getRootTileAvailableEvent} has been raised.
+   * This method is called after the tileset's root tile is known but
+   * before {@link Tileset::getRootTileAvailableEvent} has been raised.
    *
    * @param asyncSystem The async system with which to do background work.
    * @param pAssetAccessor The asset accessor to use to retrieve any additional
@@ -82,8 +76,8 @@ public:
    * @param tilesetMetadata The metadata associated with the tileset.
    * @returns A future that resolves when the `GltfModifier` is ready to modify
    * glTF instances for this tileset. Tileset loading will not proceed until
-   * this future resolves. If the future rejects, the `GltfModifier` will not be
-   * used.
+   * this future resolves. If the future rejects, tileset load will proceed but
+   * the `GltfModifier` will not be used.
    */
   virtual CesiumAsync::Future<void> onRegister(
       const CesiumAsync::AsyncSystem& asyncSystem,
@@ -91,9 +85,11 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       const TilesetMetadata& tilesetMetadata) = 0;
 
-  /** When this modifier has been triggered at least once, this is the method
-   * called after a new tile has been loaded, and everytime the
+  /**
+   * @brief When this modifier has been triggered at least once, this is the
+   * method called after a new tile has been loaded, and everytime the
    * modifier's version is incremented with {@link trigger}.
+   *
    * @param model Input model that may have to be processed
    * @param tileTransform Transformation of the model's tile.
    *     See {@link Cesium3DTilesSelection::Tile::getTransform}.
@@ -109,6 +105,13 @@ public:
       const glm::dmat4& tileTransform,
       const glm::dvec4& rootTranslation,
       CesiumGltf::Model& modifiedModel) = 0;
+
+private:
+  /** The current version of the modifier, if it has ever been triggered.
+   * Incremented every time trigger() is called by client code to signal that
+   * models needs to be reprocessed.
+   */
+  std::atomic_int currentVersion = -1;
 };
 
 } // namespace Cesium3DTilesSelection
