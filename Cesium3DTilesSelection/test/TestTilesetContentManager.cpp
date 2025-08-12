@@ -496,6 +496,8 @@ TEST_CASE("Test tile state machine") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
+    pManager->waitUntilIdle();
+
     // test manager loading
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, options);
@@ -603,6 +605,8 @@ TEST_CASE("Test tile state machine") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
+    pManager->waitUntilIdle();
+
     // test manager loading
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, options);
@@ -680,6 +684,8 @@ TEST_CASE("Test tile state machine") {
             options,
             std::move(pMockedLoader),
             std::move(pRootTile)};
+
+    pManager->waitUntilIdle();
 
     // test manager loading
     Tile& tile = *pManager->getRootTile();
@@ -780,6 +786,8 @@ TEST_CASE("Test tile state machine") {
             options,
             std::move(pMockedLoader),
             std::move(pRootTile)};
+
+    pManager->waitUntilIdle();
 
     Tile& tile = *pManager->getRootTile();
     Tile& upsampledTile = tile.getChildren().back();
@@ -938,6 +946,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
+    pManager->waitUntilIdle();
+
     // test the gltf model
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, {});
@@ -1008,6 +1018,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
+    pManager->waitUntilIdle();
+
     // test the gltf model
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, options);
@@ -1074,6 +1086,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
+    pManager->waitUntilIdle();
+
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, {});
     pManager->waitUntilIdle();
@@ -1122,7 +1136,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // add raster overlay
     pManager->getRasterOverlayCollection().add(
         new DebugColorizeTilesRasterOverlay("DebugOverlay"));
-    asyncSystem.dispatchMainThreadTasks();
+
+    pManager->waitUntilIdle();
 
     SUBCASE(
         "Generate raster overlay details when tile doesn't have loose region") {
@@ -1417,7 +1432,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     pManager->getRasterOverlayCollection().add(
         new AlwaysMoreDetailRasterOverlay());
-    asyncSystem.dispatchMainThreadTasks();
+
+    pManager->waitUntilIdle();
 
     SUBCASE(
         "Generate raster overlay details when tile doesn't have loose region") {
@@ -1639,7 +1655,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // add raster overlay
     pManager->getRasterOverlayCollection().add(
         new DebugColorizeTilesRasterOverlay("DebugOverlay"));
-    asyncSystem.dispatchMainThreadTasks();
+
+    pManager->waitUntilIdle();
 
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, {});
@@ -1827,6 +1844,8 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
+    pManager->waitUntilIdle();
+
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, options);
     pManager->waitUntilIdle();
@@ -1903,6 +1922,8 @@ TEST_CASE("Test GLTF modifier state machine") {
       options,
       std::move(pMockedLoader),
       std::move(pRootTile)};
+
+  pManager->waitUntilIdle();
 
   // test manager loading
   Tile& tile = *pManager->getRootTile();
