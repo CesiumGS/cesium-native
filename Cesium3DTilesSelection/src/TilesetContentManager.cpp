@@ -698,26 +698,25 @@ postProcessContentInWorkerThread(
       });
 }
 
-CesiumAsync::Future<void>
-registerGltfModifier(TilesetContentManager& contentManager) {
+CesiumAsync::Future<void> registerGltfModifier(
+    TilesetContentManager& contentManager,
+    const Tile* pRootTile) {
   std::shared_ptr<GltfModifier> pGltfModifier =
       contentManager.getExternals().pGltfModifier;
 
-  if (pGltfModifier && contentManager.getRootTile() != nullptr) {
+  if (pGltfModifier && pRootTile) {
     const TileExternalContent* pExternal =
-        contentManager.getRootTile()->getContent().getExternalContent();
-    if (pExternal) {
-      return pGltfModifier
-          ->onRegister(
-              contentManager.getExternals().asyncSystem,
-              contentManager.getExternals().pAssetAccessor,
-              contentManager.getExternals().pLogger,
-              pExternal->metadata)
-          .catchInMainThread([&contentManager](std::exception&&) {
-            // Disable the failed glTF modifier.
-            contentManager.getExternals().pGltfModifier.reset();
-          });
-    }
+        pRootTile->getContent().getExternalContent();
+    return pGltfModifier
+        ->onRegister(
+            contentManager.getExternals().asyncSystem,
+            contentManager.getExternals().pAssetAccessor,
+            contentManager.getExternals().pLogger,
+            pExternal ? pExternal->metadata : TilesetMetadata())
+        .catchInMainThread([&contentManager](std::exception&&) {
+          // Disable the failed glTF modifier.
+          contentManager.getExternals().pGltfModifier.reset();
+        });
   }
 
   return contentManager.getExternals().asyncSystem.createResolvedFuture();
@@ -767,11 +766,7 @@ TilesetContentManager::TilesetContentManager(
 
   this->notifyTileStartLoading(nullptr);
 
-  registerGltfModifier(*this)
-      .catchInMainThread([this](std::exception&&) {
-        // Disable the failed GltfModifier.
-        this->_externals.pGltfModifier.reset();
-      })
+  registerGltfModifier(*this, pRootTile.get())
       .thenInMainThread([this, pRootTile = std::move(pRootTile)]() mutable {
         this->_pRootTile = std::move(pRootTile);
         this->_overlayCollection.setLoadedTileEnumerator(
@@ -923,8 +918,8 @@ TilesetContentManager::TilesetContentManager(
             })
         .thenInMainThread(
             [thiz](TilesetContentLoaderResult<TilesetContentLoader>&& result) {
-              return registerGltfModifier(*thiz).thenImmediately(
-                  [result = std::move(result)]() mutable {
+              return registerGltfModifier(*thiz, result.pRootTile.get())
+                  .thenImmediately([result = std::move(result)]() mutable {
                     return std::move(result);
                   });
             })
@@ -1015,8 +1010,8 @@ TilesetContentManager::TilesetContentManager(
         .createLoader(externals, tilesetOptions, authorizationChangeListener)
         .thenInMainThread(
             [thiz](TilesetContentLoaderResult<TilesetContentLoader>&& result) {
-              return registerGltfModifier(*thiz).thenImmediately(
-                  [result = std::move(result)]() mutable {
+              return registerGltfModifier(*thiz, result.pRootTile.get())
+                  .thenImmediately([result = std::move(result)]() mutable {
                     return std::move(result);
                   });
             })

@@ -1853,7 +1853,7 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
   }
 }
 
-TEST_CASE("Test GLTF modifier state machine") {
+TEST_CASE("Test glTF modifier state machine") {
   Cesium3DTilesContent::registerAllTileContentTypes();
 
   // create mock tileset externals
@@ -1872,26 +1872,31 @@ TEST_CASE("Test GLTF modifier state machine") {
 
   class SimpleGltfModifier : public GltfModifier {
   public:
-    int callCount = 0;
     SimpleGltfModifier() {}
+
+    int applyCallCount = 0;
     bool apply(
         const CesiumGltf::Model& model,
         const glm::dmat4& /*tileTransform*/,
         const glm::dvec4& /*rootTranslation*/,
         CesiumGltf::Model& out_model) override {
-      ++callCount;
+      ++applyCallCount;
       out_model = model;
       out_model.version = getCurrentVersion();
       return true;
     }
+
+    int onRegisterCallCount = 0;
     CesiumAsync::Future<void> onRegister(
         const CesiumAsync::AsyncSystem& asyncSystem,
         const std::shared_ptr<CesiumAsync::IAssetAccessor>&,
         const std::shared_ptr<spdlog::logger>&,
         const TilesetMetadata&) override {
+      ++onRegisterCallCount;
       return asyncSystem.createResolvedFuture();
     }
   };
+
   auto pGltfModifier = std::make_shared<SimpleGltfModifier>();
   externals.pGltfModifier = pGltfModifier;
 
@@ -1925,6 +1930,8 @@ TEST_CASE("Test GLTF modifier state machine") {
 
   pManager->waitUntilIdle();
 
+  CHECK(pGltfModifier->onRegisterCallCount == 1);
+
   // test manager loading
   Tile& tile = *pManager->getRootTile();
   pManager->loadTileContent(tile, options);
@@ -1933,7 +1940,7 @@ TEST_CASE("Test GLTF modifier state machine") {
   CHECK(tile.getState() == TileLoadState::Done);
   CHECK(tile.getContent().isRenderContent());
   // Constructed modifier is nilpotent until the first call to trigger(), so:
-  CHECK(pGltfModifier->callCount == 0);
+  CHECK(pGltfModifier->applyCallCount == 0);
   CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
 
   int expectedCallCount = 1;
@@ -1948,7 +1955,7 @@ TEST_CASE("Test GLTF modifier state machine") {
     pManager->waitUntilIdle();
     CHECK(!tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
     CHECK(tile.needsMainThreadLoading(pGltfModifier->getCurrentVersion()));
-    CHECK(pGltfModifier->callCount == expectedCallCount);
+    CHECK(pGltfModifier->applyCallCount == expectedCallCount);
     // The temporary renderer resource should have been created.
     CHECK(pMockedPrepareRendererResources->totalAllocation == 2);
 
@@ -1957,7 +1964,7 @@ TEST_CASE("Test GLTF modifier state machine") {
       CHECK(!tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
       CHECK(!tile.needsMainThreadLoading(pGltfModifier->getCurrentVersion()));
       // The temporary renderer resource should have been freed.
-      CHECK(pGltfModifier->callCount == expectedCallCount);
+      CHECK(pGltfModifier->applyCallCount == expectedCallCount);
       CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
     }
   };
@@ -1982,7 +1989,7 @@ TEST_CASE("Test GLTF modifier state machine") {
   // as it has already been done as part of the loading.
   CHECK(!tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
   CHECK(!tile.needsMainThreadLoading(pGltfModifier->getCurrentVersion()));
-  CHECK(pGltfModifier->callCount == expectedCallCount);
+  CHECK(pGltfModifier->applyCallCount == expectedCallCount);
   CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
 
   ++expectedCallCount;
