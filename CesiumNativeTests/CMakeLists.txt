@@ -92,7 +92,6 @@ if(CESIUM_TARGET_WASM)
 
   message("${CESIUM_TEST_DATA_DIRS}")
 
-  message("!!!!!!!! ${CMAKE_CURRENT_BINARY_DIR}")
   set(CESIUM_NATIVE_TESTS_DATA_OBJ ${CMAKE_CURRENT_BINARY_DIR}/cesium-native-tests-data.o)
   add_custom_target(
     cesium-native-tests-data
