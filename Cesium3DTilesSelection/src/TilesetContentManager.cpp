@@ -6,6 +6,7 @@
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
@@ -53,7 +54,6 @@
 #include <fmt/format.h>
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
-#include <glm/gtc/matrix_access.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/spdlog.h>
 
@@ -71,6 +71,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -1621,17 +1622,17 @@ bool TilesetContentManager::discardOutdatedRenderResources(
     TileRenderContent& renderContent) {
   if (!_externals.pGltfModifier)
     return false;
-  bool bModifiedModel = renderContent.getModifiedModel().has_value();
-  const CesiumGltf::Model& model = bModifiedModel
-                                       ? (*renderContent.getModifiedModel())
-                                       : renderContent.getModel();
+  const std::optional<CesiumGltf::Model>& maybeModifiedModel =
+      renderContent.getModifiedModel();
+  const CesiumGltf::Model& model =
+      maybeModifiedModel ? *maybeModifiedModel : renderContent.getModel();
   if (model.version != _externals.pGltfModifier->getCurrentVersion()) {
     _externals.pPrepareRendererResources->free(
         tile,
-        bModifiedModel ? renderContent.getModifiedRenderResources()
-                       : renderContent.getRenderResources(),
+        maybeModifiedModel ? renderContent.getModifiedRenderResources()
+                           : renderContent.getRenderResources(),
         nullptr);
-    if (bModifiedModel)
+    if (maybeModifiedModel)
       renderContent.resetModifiedRenderResources();
     else
       renderContent.setRenderResources(nullptr);

@@ -1,5 +1,6 @@
 #include "TilesetContentManager.h"
 
+#include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -18,6 +19,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -285,10 +287,10 @@ bool Tile::needsWorkerThreadLoading(
         renderContent->getGltfModifierState() == GltfModifier::State::Idle) {
       // Need to account for the modified model's version too in case
       // finishLoading hasn't yet been called
+      const std::optional<CesiumGltf::Model>& maybeModifiedModel =
+          renderContent->getModifiedModel();
       std::optional<int> latestVersion =
-          renderContent->getModifiedModel()
-              ? renderContent->getModifiedModel()->version
-              : std::nullopt;
+          maybeModifiedModel ? maybeModifiedModel->version : std::nullopt;
       if (!latestVersion)
         latestVersion = renderContent->getModel().version;
       if (!latestVersion || latestVersion != modelVersion)

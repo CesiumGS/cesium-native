@@ -1,8 +1,10 @@
+#include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/CreditSystem.h>
 
 #include <memory>
+#include <optional>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -62,11 +64,14 @@ void TileRenderContent::resetModifiedRenderResources() noexcept {
 }
 
 void TileRenderContent::replaceWithModifiedModel() noexcept {
-  _model = std::move(*_modifiedModel);
-  // reset after move because tested in Tile::needsWorkerThreadLoading:
-  _modifiedModel.reset();
-  _pRenderResources = _pModifiedRenderResources;
-  _pModifiedRenderResources = nullptr;
+  CESIUM_ASSERT(this->_modifiedModel);
+  if (this->_modifiedModel) {
+    this->_model = std::move(*this->_modifiedModel);
+    // reset after move because tested in Tile::needsWorkerThreadLoading:
+    this->_modifiedModel.reset();
+    this->_pRenderResources = this->_pModifiedRenderResources;
+    this->_pModifiedRenderResources = nullptr;
+  }
 }
 
 const RasterOverlayDetails&
