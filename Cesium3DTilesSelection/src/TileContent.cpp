@@ -1,6 +1,7 @@
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
 
 #include <memory>
