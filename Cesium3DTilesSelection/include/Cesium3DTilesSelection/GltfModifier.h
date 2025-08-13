@@ -24,10 +24,19 @@ class TilesetMetadata;
  * @brief The input to the {@link GltfModifier::apply} function.
  */
 struct GltfModifierInput {
+  /**
+   * @brief The async system that can be used to do work in threads.
+   */
   CesiumAsync::AsyncSystem asyncSystem;
 
+  /**
+   * @brief An asset accessor that can be used to obtain additional assets.
+   */
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
 
+  /**
+   * @brief The logger.
+   */
   std::shared_ptr<spdlog::logger> pLogger;
 
   /**
@@ -125,14 +134,9 @@ public:
    * method called after a new tile has been loaded, and everytime the
    * modifier's version is incremented with {@link trigger}.
    *
-   * @param model Input model that may have to be processed
-   * @param tileTransform Transformation of the model's tile.
-   *     See {@link Cesium3DTilesSelection::Tile::getTransform}.
-   * @param modifiedModel Target of the transformation process. May be equal to
-   * the input model.
-   * @return True if any processing was done and the result placed in the
-   * modifiedModel parameter, false when no processing was needed, in which case
-   * the modifiedModel parameter was ignored.
+   * @param input The input to the glTF modification.
+   * @return A future that resolves to a {@link GltfModifierOutput} with the
+   * new model, or to `std::nullopt` if the model is not modified.
    */
   virtual CesiumAsync::Future<std::optional<GltfModifierOutput>>
   apply(GltfModifierInput&& input) = 0;
