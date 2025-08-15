@@ -164,8 +164,11 @@
     "EXT_primitive_voxels glTF Mesh Primitive extension": {
       "overrideName": "ExtensionExtPrimitiveVoxels"
     },
-    "KHR_gaussian_splatting glTF primitive extension": {
+    "KHR_gaussian_splatting glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionKhrGaussianSplatting"
+    },
+    "KHR_gaussian_splatting_compression_spz glTF Mesh Primitive Extension": {
+      "overrideName": "ExtensionKhrGaussianSplattingCompressionSpz"
     }
   },
   "extensions": [
@@ -293,7 +296,14 @@
     },
     {
       "extensionName": "KHR_gaussian_splatting",
-      "schema": "Khronos/KHR_gaussian_splatting/schema/primitive.KHR_gaussian_splatting.schema.json",
+      "schema": "Khronos/KHR_gaussian_splatting/schema/mesh.primitive.KHR_gaussian_splatting.schema.json",
+      "attachTo": [
+        "mesh.primitive"
+      ]
+    },
+    {
+      "extensionName": "KHR_gaussian_splatting_compression_spz",
+      "schema": "Khronos/KHR_gaussian_splatting_compression_spz/schema/mesh.primitive.KHR_gaussian_splatting_compression_spz.schema.json",
       "attachTo": [
         "mesh.primitive"
       ]

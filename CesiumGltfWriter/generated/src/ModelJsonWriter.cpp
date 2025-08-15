@@ -39,6 +39,7 @@
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz.h>
 #include <CesiumGltf/ExtensionKhrImplicitShapes.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
@@ -221,6 +222,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1186,9 +1192,20 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  if (obj.quantizedPositionScale != 1) {
-    jsonWriter.Key("quantizedPositionScale");
-    writeJson(obj.quantizedPositionScale, jsonWriter, context);
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.bufferView > -1) {
+    jsonWriter.Key("bufferView");
+    writeJson(obj.bufferView, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2916,6 +2933,13 @@ void ExtensionExtPrimitiveVoxelsJsonWriter::write(
 
 void ExtensionKhrGaussianSplattingJsonWriter::write(
     const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionKhrGaussianSplattingCompressionSpzJsonWriter::write(
+    const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

@@ -7,7 +7,7 @@
 
 namespace CesiumGltf {
 /**
- * @brief glTF extension for rendering Gaussian splats.
+ * @brief Data for a 3D Gaussian Splat primitive.
  */
 struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
     : public CesiumUtility::ExtensibleObject {
@@ -18,11 +18,6 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   /** @brief The official name of the extension. This should be the same as its
    * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "KHR_gaussian_splatting";
-
-  /**
-   * @brief Scale used when dequantizing position attribute values
-   */
-  double quantizedPositionScale = 1;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents

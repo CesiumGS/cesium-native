@@ -20,3 +20,5 @@ add_library(picosha2::picosha2 IMPORTED INTERFACE GLOBAL)
 set_target_properties(picosha2::picosha2 PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${PACKAGE_BUILD_DIR}/include"
 )
+
+add_subdirectory(spz)

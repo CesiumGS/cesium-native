@@ -9,22 +9,24 @@
 
 namespace CesiumGltf {
 /**
- * @brief glTF extension to specify textures using the WebP image format.
+ * @brief Compressed data for SPZ primitive.
  */
-struct CESIUMGLTF_API ExtensionTextureWebp final
+struct CESIUMGLTF_API ExtensionKhrGaussianSplattingCompressionSpz final
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
-  static constexpr const char* TypeName = "ExtensionTextureWebp";
+  static constexpr const char* TypeName =
+      "ExtensionKhrGaussianSplattingCompressionSpz";
   /** @brief The official name of the extension. This should be the same as its
    * key in the `extensions` object. */
-  static constexpr const char* ExtensionName = "EXT_texture_webp";
+  static constexpr const char* ExtensionName =
+      "KHR_gaussian_splatting_compression_spz";
 
   /**
-   * @brief The index of the WebP image.
+   * @brief The index of the bufferView.
    */
-  int32_t source = -1;
+  int32_t bufferView = -1;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -34,7 +36,7 @@ struct CESIUMGLTF_API ExtensionTextureWebp final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionTextureWebp));
+    accum += int64_t(sizeof(ExtensionKhrGaussianSplattingCompressionSpz));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
