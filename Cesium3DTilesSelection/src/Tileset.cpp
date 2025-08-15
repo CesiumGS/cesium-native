@@ -1016,7 +1016,12 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
     ViewUpdateResult& result) {
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  result.tilesToRenderThisFrame.emplace_back(&tile);
+  if (tile.isRenderable(
+          this->_externals.pGltfModifier
+              ? this->_externals.pGltfModifier->getCurrentVersion()
+              : std::nullopt)) {
+    result.tilesToRenderThisFrame.emplace_back(&tile);
+  }
 
   addTileToLoadQueue(
       frameState,
@@ -1071,7 +1076,12 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
       result);
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  result.tilesToRenderThisFrame.emplace_back(&tile);
+  if (tile.isRenderable(
+          this->_externals.pGltfModifier
+              ? this->_externals.pGltfModifier->getCurrentVersion()
+              : std::nullopt)) {
+    result.tilesToRenderThisFrame.emplace_back(&tile);
+  }
 
   return Tileset::createTraversalDetailsForSingleTile(
       frameState,
@@ -1095,7 +1105,12 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
-    result.tilesToRenderThisFrame.emplace_back(&tile);
+    if (tile.isRenderable(
+            this->_externals.pGltfModifier
+                ? this->_externals.pGltfModifier->getCurrentVersion()
+                : std::nullopt)) {
+      result.tilesToRenderThisFrame.emplace_back(&tile);
+    }
     if (!queuedForLoad)
       addTileToLoadQueue(
           frameState,
@@ -1125,6 +1140,26 @@ bool Tileset::_kickDescendantsAndRenderTile(
         selectionState.kick();
       });
 
+  // If any kicked tiles were rendered last frame, add them to the
+  // tilesFadingOut. This is unlikely! It would imply that a tile rendered last
+  // frame has suddenly become unrenderable, and therefore eligible for kicking.
+  // However, it can happen when a GltfModifier version increment makes
+  // previously-renderably tiles unrenderable.
+  //
+  // In general, it's possible that a Tile previously traversed has been deleted
+  // completely, so we have to be careful about dereferencing the Tile pointers
+  // given to the callback below. However, we can be certain that a Tile that
+  // was rendered last frame has _not_ been deleted yet.
+  traversalState.forEachPreviousDescendant(
+      [&result](
+          const Tile::Pointer& pTile,
+          const TileSelectionState& previousState) {
+        addToTilesFadingOutIfPreviouslyRendered(
+            previousState.getResult(),
+            *pTile,
+            result);
+      });
+
   // Remove all descendants from the render list and add this tile.
   std::vector<Tile::ConstPointer>& renderList = result.tilesToRenderThisFrame;
   renderList.erase(
@@ -1152,7 +1187,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
   auto const modifierVersion = getGltfModifierVersion();
   const bool wasReallyRenderedLastFrame =
-      wasRenderedLastFrame && tile.isRenderable(modifierVersion);
+      wasRenderedLastFrame && tile.isRenderable(std::nullopt);
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1179,8 +1214,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
 
   bool isRenderable = tile.isRenderable(modifierVersion);
   traversalDetails.allAreRenderable = isRenderable;
-  traversalDetails.anyWereRenderedLastFrame =
-      isRenderable && wasRenderedLastFrame;
+  traversalDetails.anyWereRenderedLastFrame = wasReallyRenderedLastFrame;
 
   return queuedForLoad;
 }
@@ -1541,7 +1575,8 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   TileSelectionState::Result lastFrameResult =
       getPreviousState(frameState.viewGroup, tile).getResult();
 
-  bool isRenderable = tile.isRenderable(modelVersion);
+  bool isRenderableByVersion = tile.isRenderable(modelVersion);
+  bool isRenderableAtAll = tile.isRenderable(std::nullopt);
 
   bool wasRenderedLastFrame =
       lastFrameResult == TileSelectionState::Result::Rendered;
@@ -1568,10 +1603,10 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   }
 
   TraversalDetails traversalDetails;
-  traversalDetails.allAreRenderable = isRenderable;
+  traversalDetails.allAreRenderable = isRenderableByVersion;
   traversalDetails.anyWereRenderedLastFrame =
-      isRenderable && wasRenderedLastFrame;
-  traversalDetails.notYetRenderableCount = isRenderable ? 0 : 1;
+      isRenderableAtAll && wasRenderedLastFrame;
+  traversalDetails.notYetRenderableCount = isRenderableByVersion ? 0 : 1;
 
   return traversalDetails;
 }
