@@ -206,9 +206,8 @@ private:
   // that create tile providers from overlays need to have somewhere to write
   // the result. And we can't extend the lifetime of the entire
   // RasterOverlayCollection until the async operations complete because the
-  // RasterOverlayCollection has a pointer to the tile LoadedLinkedList, which
-  // is owned externally and may become invalid before the async operations
-  // complete.
+  // RasterOverlayCollection has a LoadedTileEnumerator, which is owned
+  // externally and may become invalid before the async operations complete.
   struct OverlayList
       : public CesiumUtility::ReferenceCountedNonThreadSafe<OverlayList> {
     std::vector<

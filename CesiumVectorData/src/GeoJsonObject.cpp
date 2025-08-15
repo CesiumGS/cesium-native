@@ -2,6 +2,7 @@
 #include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
+#include <CesiumVectorData/VectorStyle.h>
 
 #include <optional>
 #include <variant>
@@ -55,6 +56,18 @@ std::optional<CesiumGeometry::AxisAlignedBox>& GeoJsonObject::getBoundingBox() {
       [](auto& v) -> std::optional<CesiumGeometry::AxisAlignedBox>& {
         return v.boundingBox;
       },
+      this->value);
+}
+
+const std::optional<VectorStyle>& GeoJsonObject::getStyle() const {
+  return std::visit(
+      [](auto& v) -> const std::optional<VectorStyle>& { return v.style; },
+      this->value);
+}
+
+std::optional<VectorStyle>& GeoJsonObject::getStyle() {
+  return std::visit(
+      [](auto& v) -> std::optional<VectorStyle>& { return v.style; },
       this->value);
 }
 

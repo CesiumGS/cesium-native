@@ -116,6 +116,20 @@ public:
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
       const override;
 
+  /**
+   * @brief Refresh a previously-created tile provider using a new key.
+   *
+   * Calling this method on a tile provider that was not created by this \ref
+   * BingMapsRasterOverlay will lead to undefined behavior.
+   *
+   * @param pProvider The previously-created tile provider.
+   * @param newKey The new key to use.
+   */
+  CesiumAsync::Future<void> refreshTileProviderWithNewKey(
+      const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
+          pProvider,
+      const std::string& newKey);
+
 private:
   static const std::string BING_LOGO_HTML;
 

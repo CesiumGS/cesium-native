@@ -115,6 +115,27 @@ public:
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
       const override;
 
+  /**
+   * @brief Refresh a previously-created tile provider using a new URL and
+   * request headers. This is primarily useful to refresh an access token after
+   * it expires.
+   *
+   * Calling this method on a tile provider that was not created by this \ref
+   * TileMapServiceRasterOverlay will lead to undefined behavior.
+   *
+   * @param pProvider The previously-created tile provider.
+   * @param newUrl The new URL to use. If `std::nullopt`, the existing URL is
+   * unchanged.
+   * @param newHeaders The new request headers to use. If `std::nullopt`, the
+   * existing headers are unchanged.
+   */
+  CesiumAsync::Future<void> refreshTileProviderWithNewUrlAndHeaders(
+      const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
+          pProvider,
+      const std::optional<std::string>& newUrl,
+      const std::optional<std::vector<CesiumAsync::IAssetAccessor::THeader>>&
+          newHeaders);
+
 private:
   std::string _url;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _headers;
