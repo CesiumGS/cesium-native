@@ -334,6 +334,12 @@ const ViewUpdateResult& Tileset::updateViewGroupOffline(
   while (viewGroup.getPreviousLoadProgressPercentage() < 100.0f) {
     this->_externals.pAssetAccessor->tick();
     this->loadTiles();
+
+    // If there are no frustums, we'll never make any progress. So break here to
+    // avoid getting stuck in an endless loop.
+    if (frustums.empty())
+      break;
+
     this->updateViewGroup(viewGroup, frustums, 0.0f);
   }
 
