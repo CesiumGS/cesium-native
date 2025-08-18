@@ -4,7 +4,7 @@
 
 ##### Fixes :wrench:
 
-- Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop if invoked with no frustums.
+- Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
 
 ### v0.50.0 - 2025-08-01
 
