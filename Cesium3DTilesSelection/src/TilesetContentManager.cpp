@@ -745,9 +745,7 @@ CesiumAsync::Future<void> registerGltfModifier(
         pRootTile->getContent().getExternalContent();
     return pGltfModifier
         ->onRegister(
-            contentManager.getExternals().asyncSystem,
-            contentManager.getExternals().pAssetAccessor,
-            contentManager.getExternals().pLogger,
+            contentManager,
             pExternal ? pExternal->metadata : TilesetMetadata(),
             *pRootTile)
         .catchInMainThread([&contentManager](std::exception&&) {

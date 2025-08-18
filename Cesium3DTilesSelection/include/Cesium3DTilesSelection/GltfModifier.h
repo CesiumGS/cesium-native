@@ -19,6 +19,7 @@ namespace Cesium3DTilesSelection {
 
 class Tile;
 class TilesetMetadata;
+class TilesetContentManager;
 
 /**
  * @brief The input to the {@link GltfModifier::apply} function.
@@ -85,13 +86,8 @@ public:
     WorkerDone,
   };
 
-  virtual ~GltfModifier() = default;
-
   /** @return The current modifier version, to identify oudated tile models. */
-  std::optional<int> getCurrentVersion() const {
-    return (-1 == currentVersion) ? std::nullopt
-                                  : std::optional<int>(currentVersion);
-  }
+  std::optional<int> getCurrentVersion() const;
 
   /**
    * @brief Activates this modifier after it has been constructed in its default
@@ -101,7 +97,36 @@ public:
    * the old one without transition.
    * See {@link getCurrentVersion}.
    */
-  void trigger() { ++currentVersion; }
+  void trigger();
+
+  /**
+   * @brief When this modifier has been triggered at least once, this is the
+   * method called after a new tile has been loaded, and everytime the
+   * modifier's version is incremented with {@link trigger}.
+   *
+   * This method is called from a worker thread.
+   *
+   * @param input The input to the glTF modification.
+   * @return A future that resolves to a {@link GltfModifierOutput} with the
+   * new model, or to `std::nullopt` if the model is not modified.
+   */
+  virtual CesiumAsync::Future<std::optional<GltfModifierOutput>>
+  apply(GltfModifierInput&& input) = 0;
+
+  /**
+   * @brief Called by {@link Tileset} when this instance has been registered
+   * with it. To add custom behavior on registration, override the other
+   * overload of this method.
+   * @private
+   */
+  CesiumAsync::Future<void> onRegister(
+      TilesetContentManager& contentManager,
+      const TilesetMetadata& tilesetMetadata,
+      const Tile& rootTile);
+
+protected:
+  GltfModifier();
+  virtual ~GltfModifier();
 
   /**
    * @brief Notifies this instance that is has been registered with a
@@ -109,6 +134,8 @@ public:
    *
    * This method is called after the tileset's root tile is known but
    * before {@link Tileset::getRootTileAvailableEvent} has been raised.
+   *
+   * This method is called from the main thread.
    *
    * @param asyncSystem The async system with which to do background work.
    * @param pAssetAccessor The asset accessor to use to retrieve any additional
@@ -127,26 +154,17 @@ public:
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const TilesetMetadata& tilesetMetadata,
-      const Tile& rootTile) = 0;
-
-  /**
-   * @brief When this modifier has been triggered at least once, this is the
-   * method called after a new tile has been loaded, and everytime the
-   * modifier's version is incremented with {@link trigger}.
-   *
-   * @param input The input to the glTF modification.
-   * @return A future that resolves to a {@link GltfModifierOutput} with the
-   * new model, or to `std::nullopt` if the model is not modified.
-   */
-  virtual CesiumAsync::Future<std::optional<GltfModifierOutput>>
-  apply(GltfModifierInput&& input) = 0;
+      const Tile& rootTile);
 
 private:
   /** The current version of the modifier, if it has ever been triggered.
    * Incremented every time trigger() is called by client code to signal that
    * models needs to be reprocessed.
    */
-  std::atomic_int currentVersion = -1;
+  std::atomic_int _currentVersion = -1;
+
+  class NewVersionLoadRequester;
+  std::unique_ptr<NewVersionLoadRequester> _pNewVersionLoadRequester;
 };
 
 } // namespace Cesium3DTilesSelection
