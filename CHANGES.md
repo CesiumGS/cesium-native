@@ -15,6 +15,10 @@
 - Added implicit conversion of `IntrusivePointer<T>` to `T*`.
 - All properties and extensions from `tileset.json`, except `"root"`, are now parsed into `TilesetMetadata` when a tileset is loaded by `Cesium3DTilesSelection::Tileset`.
 
+##### Fixes :wrench:
+
+- Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
+
 ### v0.50.0 - 2025-08-01
 
 ##### Breaking Changes :mega:

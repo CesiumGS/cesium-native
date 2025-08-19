@@ -550,6 +550,13 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.culledTilesVisited == 0);
     }
   }
+
+  SUBCASE(
+      "updateViewGroupOffline does not get stuck in an endless loop when no "
+      "frustums are given") {
+    std::vector<ViewState> empty;
+    tileset.updateViewGroupOffline(tileset.getDefaultViewGroup(), empty);
+  }
 }
 
 TEST_CASE("Test additive refinement") {
