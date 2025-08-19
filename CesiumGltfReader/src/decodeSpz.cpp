@@ -55,17 +55,11 @@ std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
     return nullptr;
   }
 
-  // TODO: we should be able to avoid a copy by just adding an overload of
-  // `spz::loadSpz`
-  std::vector<uint8_t> data(
+  spz::GaussianCloud gaussians = spz::loadSpz(
       reinterpret_cast<uint8_t*>(
           buffer.cesium.data.data() + bufferView.byteOffset),
-      reinterpret_cast<uint8_t*>(
-          buffer.cesium.data.data() + bufferView.byteOffset +
-          static_cast<size_t>(bufferView.byteLength)));
-
-  spz::GaussianCloud gaussians =
-      spz::loadSpz(data, spz::UnpackOptions{spz::CoordinateSystem::LUF});
+      static_cast<int32_t>(bufferView.byteLength),
+      spz::UnpackOptions{spz::CoordinateSystem::LUF});
 
   return std::make_unique<spz::GaussianCloud>(std::move(gaussians));
 }

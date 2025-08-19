@@ -1,6 +1,3 @@
 [submodule "extern/cmake-modules"]
 	path = extern/cmake-modules
 	url = https://github.com/bilke/cmake-modules.git
-[submodule "extern/spz"]
-	path = extern/spz
-	url = https://github.com/nianticlabs/spz.git
