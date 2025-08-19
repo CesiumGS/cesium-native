@@ -1016,12 +1016,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
     ViewUpdateResult& result) {
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  if (tile.isRenderable(
-          this->_externals.pGltfModifier
-              ? this->_externals.pGltfModifier->getCurrentVersion()
-              : std::nullopt)) {
-    result.tilesToRenderThisFrame.emplace_back(&tile);
-  }
+  result.tilesToRenderThisFrame.emplace_back(&tile);
 
   addTileToLoadQueue(
       frameState,
@@ -1076,12 +1071,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
       result);
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  if (tile.isRenderable(
-          this->_externals.pGltfModifier
-              ? this->_externals.pGltfModifier->getCurrentVersion()
-              : std::nullopt)) {
-    result.tilesToRenderThisFrame.emplace_back(&tile);
-  }
+  result.tilesToRenderThisFrame.emplace_back(&tile);
 
   return Tileset::createTraversalDetailsForSingleTile(
       frameState,
@@ -1105,12 +1095,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
-    if (tile.isRenderable(
-            this->_externals.pGltfModifier
-                ? this->_externals.pGltfModifier->getCurrentVersion()
-                : std::nullopt)) {
-      result.tilesToRenderThisFrame.emplace_back(&tile);
-    }
+    result.tilesToRenderThisFrame.emplace_back(&tile);
     if (!queuedForLoad)
       addTileToLoadQueue(
           frameState,
