@@ -72,14 +72,14 @@ std::string_view codeToString(rapidjson::ParseErrorCode code) {
 } // namespace
 
 /** @cond Doxygen_Exclude */
-template <>
+/*template <>
 struct std::formatter<rapidjson::ParseErrorCode> : formatter<string_view> {
   // parse is inherited from formatter<string_view>.
 
   auto format(rapidjson::ParseErrorCode code, format_context& ctx) const {
     return formatter<string_view>::format(codeToString(code), ctx);
   }
-};
+};*/
 
 /** @cond Doxygen_Exclude */
 template <>
