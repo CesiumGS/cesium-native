@@ -14,6 +14,10 @@
 - Added `element_type` to `IntrusivePointer`, allowing it to be used with `std::pointer_types`.
 - Added implicit conversion of `IntrusivePointer<T>` to `T*`.
 
+##### Fixes :wrench:
+
+- Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
+
 ### v0.50.0 - 2025-08-01
 
 ##### Breaking Changes :mega:
