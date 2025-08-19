@@ -3,6 +3,7 @@
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
+#include "decodeSpz.h"
 #include "dequantizeMeshData.h"
 #include "registerReaderExtensions.h"
 
@@ -356,6 +357,14 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
           model.extensionsUsed.end(),
           "EXT_meshopt_compression") != model.extensionsUsed.end()) {
     decodeMeshOpt(model, readGltf);
+  }
+
+  if (options.decodeSpz && std::find(
+                               model.extensionsUsed.begin(),
+                               model.extensionsUsed.end(),
+                               "KHR_gaussian_splatting_compression_spz") !=
+                               model.extensionsUsed.end()) {
+    decodeSpz(readGltf);
   }
 
   if (options.dequantizeMeshData &&
