@@ -214,7 +214,7 @@ int64_t Tile::computeByteSize() const noexcept {
   return bytes;
 }
 
-bool Tile::isRenderable(std::optional<int> modelVersion) const noexcept {
+bool Tile::isRenderable(std::optional<int> /* modelVersion */) const noexcept {
   if (getState() == TileLoadState::Failed) {
     // Explicitly treat failed tiles as "renderable" - we just treat them like
     // empty tiles.
@@ -222,12 +222,12 @@ bool Tile::isRenderable(std::optional<int> modelVersion) const noexcept {
   }
 
   if (getState() == TileLoadState::Done) {
-    auto* renderContent = getContent().getRenderContent();
-    if (renderContent && modelVersion &&
-        // compares optional values if both have one:
-        modelVersion != renderContent->getModel().version) {
-      return false;
-    }
+    // auto* renderContent = getContent().getRenderContent();
+    // if (renderContent && modelVersion &&
+    //     // compares optional values if both have one:
+    //     modelVersion != renderContent->getModel().version) {
+    //   return false;
+    // }
     // An unconditionally-refined tile is never renderable... UNLESS it has no
     // children, in which case waiting longer will be futile.
     if (!getUnconditionallyRefine() || this->_children.empty()) {

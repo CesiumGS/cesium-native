@@ -204,6 +204,11 @@ private:
 
   void notifyTileUnloading(const Tile* pTile) noexcept;
 
+  void reapplyGltfModifier(
+      Tile& tile,
+      const TilesetOptions& tilesetOptions,
+      TileRenderContent* pRenderContent) noexcept;
+
   template <class TilesetContentLoaderType>
   void propagateTilesetContentLoaderResult(
       TilesetLoadType type,

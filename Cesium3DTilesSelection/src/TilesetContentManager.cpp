@@ -1103,18 +1103,16 @@ TilesetContentManager::~TilesetContentManager() noexcept {
   this->_destructionCompletePromise.resolve();
 }
 
-namespace {
-
-void reapplyGltfModifier(
-    TilesetContentManager& contentManager,
+void TilesetContentManager::reapplyGltfModifier(
     Tile& tile,
     const TilesetOptions& tilesetOptions,
-    TileRenderContent* pRenderContent) {
+    TileRenderContent* pRenderContent) noexcept {
+  this->notifyTileStartLoading(&tile);
   pRenderContent->setGltfModifierState(GltfModifier::State::WorkerRunning);
 
   const CesiumGltf::Model& previousModel = pRenderContent->getModel();
 
-  const TilesetExternals& externals = contentManager.getExternals();
+  const TilesetExternals& externals = this->getExternals();
 
   // It is safe to capture the TilesetExternals and Model by reference because
   // the TilesetContentManager guarantees both will continue to exist and are
@@ -1178,28 +1176,29 @@ void reapplyGltfModifier(
             tileTransform,
             rendererOptions);
       })
-      .thenInMainThread([pTile = Tile::Pointer(&tile)](
+      .thenInMainThread([this, pTile = Tile::Pointer(&tile)](
                             TileLoadResultAndRenderResources&& pair) {
         pTile->getContent().getRenderContent()->setGltfModifierState(
             GltfModifier::State::WorkerDone);
+        this->notifyTileDoneLoading(pTile.get());
         pTile->getContent()
             .getRenderContent()
             ->setModifiedModelAndRenderResources(
                 std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)),
                 pair.pRenderResources);
+        this->_externals.pGltfModifier->onWorkerThreadApplyComplete(*pTile);
       })
       .catchInMainThread(
-          [pTile = Tile::Pointer(&tile), &externals](std::exception&& e) {
+          [this, pTile = Tile::Pointer(&tile), &externals](std::exception&& e) {
             pTile->getContent().getRenderContent()->setGltfModifierState(
                 GltfModifier::State::WorkerDone);
+            this->notifyTileDoneLoading(pTile.get());
             SPDLOG_LOGGER_ERROR(
                 externals.pLogger,
                 "An unexpected error occurred when reapplying GltfModifier: {}",
                 e.what());
           });
 }
-
-} // namespace
 
 void TilesetContentManager::loadTileContent(
     Tile& tile,
@@ -1217,7 +1216,7 @@ void TilesetContentManager::loadTileContent(
         pRenderContent->getGltfModifierState() == GltfModifier::State::Idle &&
         pRenderContent->getModel().version !=
             _externals.pGltfModifier->getCurrentVersion()) {
-      reapplyGltfModifier(*this, tile, tilesetOptions, pRenderContent);
+      this->reapplyGltfModifier(tile, tilesetOptions, pRenderContent);
       return;
     }
     // else: we may be in the case related to raster tiles, see just below
@@ -1357,6 +1356,18 @@ void TilesetContentManager::loadTileContent(
       .thenInMainThread([pTile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(*pTile, std::move(pair.result), pair.pRenderResources);
         thiz->notifyTileDoneLoading(pTile.get());
+
+        if (thiz->_externals.pGltfModifier) {
+          const TileRenderContent* pRenderContent =
+              pTile->getContent().getRenderContent();
+          CESIUM_ASSERT(!pRenderContent || !pRenderContent->getModifiedModel());
+          if (pRenderContent &&
+              pRenderContent->getModel().version !=
+                  thiz->_externals.pGltfModifier->getCurrentVersion()) {
+            thiz->_externals.pGltfModifier->onOldVersionContentLoadingComplete(
+                *pTile);
+          }
+        }
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, pTile, thiz](
                              std::exception&& e) {

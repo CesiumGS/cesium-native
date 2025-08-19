@@ -124,6 +124,35 @@ public:
       const TilesetMetadata& tilesetMetadata,
       const Tile& rootTile);
 
+  /**
+   * @brief Called by {@link Tileset} when the given tile leaves the
+   * {@link TileLoadState::ContentLoading} state but it was loaded with an
+   * older {@link GltfModifier} version. The tile will be queued for a call
+   * to {@link GltfModifier::apply} in a worker thread.
+   *
+   * This method is called from the main thread.
+   *
+   * @private
+   *
+   * @param tile The tile that has just left the
+   * {@link TileLoadState::ContentLoading} state.
+   */
+  void onOldVersionContentLoadingComplete(const Tile& tile);
+
+  /**
+   * @brief Called by {@link Tileset} when the {@link GltfModifier::apply}
+   * method has finished running on a previously-loaded tile. The tile will be
+   * queued to finish its loading in the main thread.
+   *
+   * This method is called from the main thread.
+   *
+   * @private
+   *
+   * @param tile The tile that has just been processed by the
+   * {@link GltfModifier::apply} method.
+   */
+  void onWorkerThreadApplyComplete(const Tile& tile);
+
 protected:
   GltfModifier();
   virtual ~GltfModifier();
