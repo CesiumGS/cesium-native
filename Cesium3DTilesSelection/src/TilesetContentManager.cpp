@@ -2037,6 +2037,13 @@ void TilesetContentManager::processMainThreadLoadRequests(
 
 void TilesetContentManager::markTilesetDestroyed() noexcept {
   this->_tilesetDestroyed = true;
+
+  // Unregister the GltfModifier. This will not destroy it, but it will ensure
+  // it releases any references it holds to this TilesetContentManager so that
+  // the TilesetContentManager can be destroyed.
+  if (this->_externals.pGltfModifier) {
+    this->_externals.pGltfModifier->onUnregister(*this);
+  }
 }
 
 void TilesetContentManager::releaseReference() const {

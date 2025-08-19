@@ -125,6 +125,13 @@ public:
       const Tile& rootTile);
 
   /**
+   * @brief Called by {@link Tileset} when this instance has been unregistered
+   * from it.
+   * @private
+   */
+  void onUnregister(TilesetContentManager& contentManager);
+
+  /**
    * @brief Called by {@link Tileset} when the given tile leaves the
    * {@link TileLoadState::ContentLoading} state but it was loaded with an
    * older {@link GltfModifier} version. The tile will be queued for a call

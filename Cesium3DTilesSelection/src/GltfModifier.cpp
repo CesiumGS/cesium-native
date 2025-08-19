@@ -19,6 +19,9 @@ public:
 
   GltfModifier* pModifier;
   const Tile* pRootTile;
+
+  // Ideally these would be weak pointers, but we don't currently have a good
+  // way to do that.
   std::vector<Tile::ConstPointer> workerThreadQueue;
   std::vector<Tile::ConstPointer> mainThreadQueue;
 };
@@ -56,6 +59,12 @@ CesiumAsync::Future<void> GltfModifier::onRegister(
       rootTile);
 }
 
+void GltfModifier::onUnregister(TilesetContentManager& /* contentManager */) {
+  this->_pNewVersionLoadRequester->unregister();
+  this->_pNewVersionLoadRequester->mainThreadQueue.clear();
+  this->_pNewVersionLoadRequester->workerThreadQueue.clear();
+}
+
 CesiumAsync::Future<void> GltfModifier::onRegister(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& /* pAssetAccessor */,
@@ -74,14 +83,18 @@ void GltfModifier::onOldVersionContentLoadingComplete(const Tile& tile) {
     // Tile just transitioned from ContentLoading -> ContentLoaded, but it did
     // so based on the load version. Add it to the worker thread queue in order
     // to re-run the GltfModifier on it.
-    this->_pNewVersionLoadRequester->workerThreadQueue.emplace_back(&tile);
+    if (this->_pNewVersionLoadRequester->isRegistered()) {
+      this->_pNewVersionLoadRequester->workerThreadQueue.emplace_back(&tile);
+    }
   }
 }
 
 void GltfModifier::onWorkerThreadApplyComplete(const Tile& tile) {
   // GltfModifier::apply just finished, so now we need to do the main-thread
   // processing of the new version.
-  this->_pNewVersionLoadRequester->mainThreadQueue.emplace_back(&tile);
+  if (this->_pNewVersionLoadRequester->isRegistered()) {
+    this->_pNewVersionLoadRequester->mainThreadQueue.emplace_back(&tile);
+  }
 }
 
 GltfModifier::NewVersionLoadRequester::NewVersionLoadRequester(
@@ -92,6 +105,10 @@ GltfModifier::NewVersionLoadRequester::NewVersionLoadRequester(
       mainThreadQueue() {}
 
 void GltfModifier::NewVersionLoadRequester::notifyOfTrigger() {
+  if (!this->isRegistered()) {
+    return;
+  }
+
   // Add all already-loaded tiles to this requester worker thread load queue.
   // Tiles that are in ContentLoading will be added to this queue when they
   // finish.
