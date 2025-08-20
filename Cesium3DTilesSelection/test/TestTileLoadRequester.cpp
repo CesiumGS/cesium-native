@@ -27,7 +27,7 @@ public:
     CESIUM_ASSERT(!this->_workerThread.empty());
     const Tile* pResult = this->_workerThread.back();
     this->_workerThread.pop_back();
-    return const_cast<Tile*>(pResult);
+    return pResult;
   }
 
   bool hasMoreTilesToLoadInMainThread() const override {
@@ -38,7 +38,7 @@ public:
     CESIUM_ASSERT(!this->_mainThread.empty());
     const Tile* pResult = this->_mainThread.back();
     this->_mainThread.pop_back();
-    return const_cast<Tile*>(pResult);
+    return pResult;
   }
 
   // Extra methods for testing

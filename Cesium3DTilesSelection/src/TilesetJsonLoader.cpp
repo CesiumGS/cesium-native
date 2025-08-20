@@ -9,7 +9,6 @@
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
-#include <Cesium3DTilesReader/AssetReader.h>
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
 #include <Cesium3DTilesReader/ContentReader.h>
 #include <Cesium3DTilesReader/ExtensionContent3dTilesContentVoxelsReader.h>
@@ -724,19 +723,19 @@ void removeRootPropertyAndParseTilesetMetadata(
   auto tilesetResult = tilesetReader.readFromJson(tilesetJson);
 
   if (!tilesetResult.errors.empty() || !tilesetResult.warnings.empty()) {
-    ErrorList el;
-    el.warnings.resize(
+    ErrorList errorList;
+    errorList.warnings.resize(
         tilesetResult.errors.size() + tilesetResult.warnings.size());
     std::copy(
         std::make_move_iterator(tilesetResult.errors.begin()),
         std::make_move_iterator(tilesetResult.errors.end()),
-        el.warnings.begin());
+        errorList.warnings.begin());
     std::copy(
         std::make_move_iterator(tilesetResult.warnings.begin()),
         std::make_move_iterator(tilesetResult.warnings.end()),
-        el.warnings.begin() + std::vector<std::string>::difference_type(
-                                  tilesetResult.errors.size()));
-    el.logWarning(pLogger, "Could not parse metadata from tileset.json");
+        errorList.warnings.begin() + std::vector<std::string>::difference_type(
+                                         tilesetResult.errors.size()));
+    errorList.logWarning(pLogger, "Could not parse metadata from tileset.json");
   }
 
   if (tilesetResult.value) {
