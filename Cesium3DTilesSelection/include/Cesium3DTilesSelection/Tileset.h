@@ -193,9 +193,6 @@ public:
    *
    * This may be `nullptr` if there is currently no root tile.
    */
-  Tile* getRootTile() noexcept;
-
-  /** @copydoc Tileset::getRootTile() */
   const Tile* getRootTile() const noexcept;
 
   /**
@@ -280,16 +277,6 @@ public:
    * modifies the {@link Tile} hierarchy.
    */
   LoadedConstTileEnumerator loadedTiles() const;
-
-  /** @copydoc loadedTiles */
-  LoadedTileEnumerator loadedTiles();
-
-  /**
-   * @brief Invokes a function for each tile that is currently loaded.
-   *
-   * @param callback The function to invoke.
-   */
-  void forEachLoadedTile(const std::function<void(Tile& tile)>& callback);
 
   /**
    * @brief Invokes a function for each tile that is currently loaded.

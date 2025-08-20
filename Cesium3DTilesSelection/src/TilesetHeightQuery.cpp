@@ -253,7 +253,7 @@ bool TilesetHeightRequest::hasMoreTilesToLoadInWorkerThread() const {
   return !this->tilesToLoad.empty();
 }
 
-Tile* TilesetHeightRequest::getNextTileToLoadInWorkerThread() {
+const Tile* TilesetHeightRequest::getNextTileToLoadInWorkerThread() {
   Tile* pResult = nullptr;
 
   auto it = this->tilesToLoad.begin();
@@ -270,7 +270,9 @@ bool TilesetHeightRequest::hasMoreTilesToLoadInMainThread() const {
   return false;
 }
 
-Tile* TilesetHeightRequest::getNextTileToLoadInMainThread() { return nullptr; }
+const Tile* TilesetHeightRequest::getNextTileToLoadInMainThread() {
+  return nullptr;
+}
 
 void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
     std::list<TilesetHeightRequest>& heightRequests,

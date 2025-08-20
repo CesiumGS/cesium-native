@@ -23,9 +23,9 @@ public:
     return !this->_workerThread.empty();
   }
 
-  Tile* getNextTileToLoadInWorkerThread() override {
+  const Tile* getNextTileToLoadInWorkerThread() override {
     CESIUM_ASSERT(!this->_workerThread.empty());
-    Tile* pResult = this->_workerThread.back();
+    const Tile* pResult = this->_workerThread.back();
     this->_workerThread.pop_back();
     return pResult;
   }
@@ -34,34 +34,40 @@ public:
     return !this->_mainThread.empty();
   }
 
-  Tile* getNextTileToLoadInMainThread() override {
+  const Tile* getNextTileToLoadInMainThread() override {
     CESIUM_ASSERT(!this->_mainThread.empty());
-    Tile* pResult = this->_mainThread.back();
+    const Tile* pResult = this->_mainThread.back();
     this->_mainThread.pop_back();
     return pResult;
   }
 
   // Extra methods for testing
   void setWeight(double weight) { this->_weight = weight; }
-  void setWorkerThreadQueue(const std::vector<Tile*>& newQueue) {
+  void setWorkerThreadQueue(const std::vector<const Tile*>& newQueue) {
+    std::span<Tile*> newQueueCast(
+        const_cast<Tile**>(newQueue.data()),
+        newQueue.size());
     this->_keepAlive.insert(
         this->_keepAlive.end(),
-        newQueue.begin(),
-        newQueue.end());
+        newQueueCast.begin(),
+        newQueueCast.end());
     this->_workerThread = newQueue;
   }
-  void setMainThreadQueue(const std::vector<Tile*>& newQueue) {
+  void setMainThreadQueue(const std::vector<const Tile*>& newQueue) {
+    std::span<Tile*> newQueueCast(
+        const_cast<Tile**>(newQueue.data()),
+        newQueue.size());
     this->_keepAlive.insert(
         this->_keepAlive.end(),
-        newQueue.begin(),
-        newQueue.end());
+        newQueueCast.begin(),
+        newQueueCast.end());
     this->_mainThread = newQueue;
   }
 
 private:
   double _weight = 1.0;
-  std::vector<Tile*> _workerThread;
-  std::vector<Tile*> _mainThread;
+  std::vector<const Tile*> _workerThread;
+  std::vector<const Tile*> _mainThread;
   std::vector<Tile::Pointer> _keepAlive;
 };
 
@@ -104,7 +110,7 @@ TEST_CASE("TileLoadRequester") {
 
     auto pTileset = EllipsoidTilesetLoader::createTileset(externals);
 
-    Tile* pRoot = pTileset->getRootTile();
+    const Tile* pRoot = pTileset->getRootTile();
     REQUIRE(pRoot != nullptr);
     REQUIRE(pRoot->getChildren().size() == 2);
     REQUIRE(pRoot->getState() == TileLoadState::ContentLoaded);
@@ -113,7 +119,7 @@ TEST_CASE("TileLoadRequester") {
       TestTileLoadRequester requester;
       pTileset->registerLoadRequester(requester);
 
-      Tile* pToLoad = &pRoot->getChildren()[1];
+      const Tile* pToLoad = &pRoot->getChildren()[1];
       CHECK(pToLoad->getState() == TileLoadState::Unloaded);
 
       // loadTiles won't load the tile because nothing has requested it yet.
@@ -171,7 +177,7 @@ TEST_CASE("TileLoadRequester") {
         std::move(pRootTile),
         options);
 
-    Tile* pRoot = pTileset->getRootTile();
+    const Tile* pRoot = pTileset->getRootTile();
     REQUIRE(pRoot != nullptr);
     REQUIRE(pRoot->getChildren().size() == 100);
 
@@ -187,21 +193,23 @@ TEST_CASE("TileLoadRequester") {
       pTileset->registerLoadRequester(reqVeryLow);
       pTileset->registerLoadRequester(reqVeryHigh);
 
-      std::vector<Tile*> pointers(pRoot->getChildren().size());
+      std::vector<const Tile*> pointers(pRoot->getChildren().size());
       std::transform(
           pRoot->getChildren().begin(),
           pRoot->getChildren().end(),
           pointers.begin(),
-          [](Tile& tile) { return &tile; });
+          [](const Tile& tile) { return &tile; });
 
       reqNormal.setWorkerThreadQueue(
-          std::vector<Tile*>(pointers.begin(), pointers.begin() + 20));
-      reqExtra.setWorkerThreadQueue(
-          std::vector<Tile*>(pointers.begin() + 20, pointers.begin() + 40));
-      reqVeryLow.setWorkerThreadQueue(
-          std::vector<Tile*>(pointers.begin() + 40, pointers.begin() + 60));
+          std::vector<const Tile*>(pointers.begin(), pointers.begin() + 20));
+      reqExtra.setWorkerThreadQueue(std::vector<const Tile*>(
+          pointers.begin() + 20,
+          pointers.begin() + 40));
+      reqVeryLow.setWorkerThreadQueue(std::vector<const Tile*>(
+          pointers.begin() + 40,
+          pointers.begin() + 60));
       reqVeryHigh.setWorkerThreadQueue(
-          std::vector<Tile*>(pointers.begin() + 80, pointers.end()));
+          std::vector<const Tile*>(pointers.begin() + 80, pointers.end()));
 
       std::vector<const TestTileLoadRequester*> requestersOutOfTiles;
 
