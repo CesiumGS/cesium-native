@@ -1,14 +1,10 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <Cesium3DTilesSelection/spdlog-cesium.h>
 #include <CesiumAsync/AsyncSystem.h>
-
-#include <glm/fwd.hpp>
-#include <rapidjson/fwd.h>
 
 #include <memory>
 
@@ -22,7 +18,9 @@ class CreditSystem;
 }
 
 namespace Cesium3DTilesSelection {
+
 class IPrepareRendererResources;
+class GltfModifier;
 
 /**
  * @brief External interfaces used by a {@link Tileset}.
