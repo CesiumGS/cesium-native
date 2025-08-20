@@ -222,12 +222,6 @@ bool Tile::isRenderable() const noexcept {
   }
 
   if (getState() == TileLoadState::Done) {
-    // auto* renderContent = getContent().getRenderContent();
-    // if (renderContent && modelVersion &&
-    //     // compares optional values if both have one:
-    //     modelVersion != renderContent->getModel().version) {
-    //   return false;
-    // }
     // An unconditionally-refined tile is never renderable... UNLESS it has no
     // children, in which case waiting longer will be futile.
     if (!getUnconditionallyRefine() || this->_children.empty()) {
@@ -239,6 +233,7 @@ bool Tile::isRenderable() const noexcept {
           });
     }
   }
+
   return false;
 }
 
