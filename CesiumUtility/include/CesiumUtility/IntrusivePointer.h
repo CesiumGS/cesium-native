@@ -18,8 +18,13 @@ namespace CesiumUtility {
  *
  * @tparam T The type of object controlled.
  */
-template <class T> class IntrusivePointer final {
+template <typename T> class IntrusivePointer final {
 public:
+  /**
+   * @brief The type pointed to by this pointer.
+   */
+  using element_type = T;
+
   /**
    * @brief Default constructor.
    */
@@ -69,6 +74,16 @@ public:
    * @brief Default destructor.
    */
   ~IntrusivePointer() noexcept { this->releaseReference(); }
+
+  /**
+   * @brief Implicitly converts this implicit pointer to a raw pointer.
+   */
+  operator T*() noexcept { return this->_p; }
+
+  /**
+   * @brief Implicitly converts this implicit pointer to a raw pointer.
+   */
+  operator const T*() const noexcept { return this->_p; }
 
   /**
    * @brief Constructs a new instance and assigns it to this IntrusivePointer.
@@ -174,6 +189,12 @@ public:
    * `nullptr`.
    */
   explicit operator bool() const noexcept { return this->_p != nullptr; }
+
+  /**
+   * @brief Implicit conversion to `bool`, being `true` iff this is not the
+   * `nullptr`.
+   */
+  explicit operator bool() noexcept { return this->_p != nullptr; }
 
   /**
    * @brief Returns the internal pointer.

@@ -27,7 +27,7 @@ public:
    * Tiles in this list may be fading in if
    * {@link TilesetOptions::enableLodTransitionPeriod} is true.
    */
-  std::vector<Tile::Pointer> tilesToRenderThisFrame;
+  std::vector<Tile::ConstPointer> tilesToRenderThisFrame;
 
   /**
    * @brief Tiles on this list are no longer selected for rendering.
@@ -36,7 +36,7 @@ public:
    * fading out. If a tile's {TileRenderContent::lodTransitionPercentage} is 0
    * or lod transitions are disabled, the tile should be hidden right away.
    */
-  std::unordered_set<Tile::Pointer> tilesFadingOut;
+  std::unordered_set<Tile::ConstPointer> tilesFadingOut;
 
   /**
    * @brief The number of tiles in the worker thread load queue.

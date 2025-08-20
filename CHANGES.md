@@ -1,5 +1,24 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- The `getRootTile`, `loadedTiles`, and `forEachLoadedTile` methods on `Tileset` now only provide a const pointer to `Tile` instances, even when called on a non-const `Tileset`. Most modifications to tile instances owned by the tileset would be unsafe.
+- `ViewUpdateResult` now holds pointers to const `Tile` instances.
+- The `slowlyGetCurrentStates` and `slowlyGetPreviousStates` methods of `TreeTraversalState` now return the state map with a raw pointer to a constant node as the key, even if the node pointer type is a smart pointer.
+- `DebugTileStateDatabase::recordTileState` now expects the states to be provided as `std::unordered_map<const Tile*, TileSelectionState>` instead of `std::unordered_map<IntrusivePointer<Tile>, TileSelectionState>`.
+
+##### Additions :tada:
+
+- Added `element_type` to `IntrusivePointer`, allowing it to be used with `std::pointer_types`.
+- Added implicit conversion of `IntrusivePointer<T>` to `T*`.
+- All properties and extensions from `tileset.json`, except `"root"`, are now parsed into `TilesetMetadata` when a tileset is loaded by `Cesium3DTilesSelection::Tileset`.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
+
 ### v0.50.0 - 2025-08-01
 
 ##### Breaking Changes :mega:
