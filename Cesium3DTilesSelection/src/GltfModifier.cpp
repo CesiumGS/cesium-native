@@ -9,7 +9,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumUtility/Assert.h>
 
-#include <spdlog/spdlog.h>
+#include <spdlog/logger.h>
 
 #include <memory>
 #include <optional>
