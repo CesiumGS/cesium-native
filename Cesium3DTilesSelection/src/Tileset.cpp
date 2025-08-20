@@ -972,10 +972,8 @@ Tileset::TraversalDetails Tileset::_visitTileIfNeeded(
           TileLoadPriorityGroup::Normal,
           tilePriority);
 
-      traversalDetails = Tileset::createTraversalDetailsForSingleTile(
-          frameState,
-          tile,
-          getGltfModifierVersion());
+      traversalDetails =
+          Tileset::createTraversalDetailsForSingleTile(frameState, tile);
     } else if (this->_options.preloadSiblings) {
       // Preload this culled sibling as requested.
       addTileToLoadQueue(
@@ -1030,10 +1028,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
       TileLoadPriorityGroup::Normal,
       tilePriority);
 
-  return Tileset::createTraversalDetailsForSingleTile(
-      frameState,
-      tile,
-      getGltfModifierVersion());
+  return Tileset::createTraversalDetailsForSingleTile(frameState, tile);
 }
 
 namespace {
@@ -1078,17 +1073,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
       TileSelectionState(TileSelectionState::Result::Rendered);
   result.tilesToRenderThisFrame.emplace_back(&tile);
 
-  return Tileset::createTraversalDetailsForSingleTile(
-      frameState,
-      tile,
-      getGltfModifierVersion());
-}
-
-std::optional<int> Tileset::getGltfModifierVersion() const {
-  if (_externals.pGltfModifier)
-    return _externals.pGltfModifier->getCurrentVersion();
-  else
-    return std::nullopt;
+  return Tileset::createTraversalDetailsForSingleTile(frameState, tile);
 }
 
 bool Tileset::_loadAndRenderAdditiveRefinedTile(
@@ -1175,7 +1160,6 @@ bool Tileset::_kickDescendantsAndRenderTile(
       getPreviousState(frameState.viewGroup, tile).getResult();
   const bool wasRenderedLastFrame =
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
-  auto const modifierVersion = getGltfModifierVersion();
   const bool wasReallyRenderedLastFrame =
       wasRenderedLastFrame && tile.isRenderable();
 
@@ -1557,8 +1541,7 @@ void Tileset::addTileToLoadQueue(
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
     const TilesetFrameState& frameState,
-    const Tile& tile,
-    std::optional<int> /* modelVersion */) {
+    const Tile& tile) {
   TileSelectionState::Result lastFrameResult =
       getPreviousState(frameState.viewGroup, tile).getResult();
 

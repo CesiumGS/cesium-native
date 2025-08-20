@@ -594,8 +594,6 @@ private:
       float deltaTime,
       ViewUpdateResult& result) const noexcept;
 
-  std::optional<int> getGltfModifierVersion() const;
-
   TilesetExternals _externals;
   CesiumAsync::AsyncSystem _asyncSystem;
 
@@ -624,8 +622,7 @@ private:
 
   static TraversalDetails createTraversalDetailsForSingleTile(
       const TilesetFrameState& frameState,
-      const Tile& tile,
-      std::optional<int> modelVersion);
+      const Tile& tile);
 };
 
 } // namespace Cesium3DTilesSelection
