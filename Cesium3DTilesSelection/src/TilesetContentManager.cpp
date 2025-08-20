@@ -7,6 +7,7 @@
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
+#include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
@@ -1214,7 +1215,7 @@ void TilesetContentManager::loadTileContent(
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent &&
         pRenderContent->getGltfModifierState() == GltfModifier::State::Idle &&
-        pRenderContent->getModel().version !=
+        GltfModifierVersionExtension::getVersion(pRenderContent->getModel()) !=
             _externals.pGltfModifier->getCurrentVersion()) {
       this->reapplyGltfModifier(tile, tilesetOptions, pRenderContent);
       return;
@@ -1361,7 +1362,8 @@ void TilesetContentManager::loadTileContent(
               pTile->getContent().getRenderContent();
           CESIUM_ASSERT(!pRenderContent || !pRenderContent->getModifiedModel());
           if (pRenderContent &&
-              pRenderContent->getModel().version !=
+              GltfModifierVersionExtension::getVersion(
+                  pRenderContent->getModel()) !=
                   thiz->_externals.pGltfModifier->getCurrentVersion()) {
             thiz->_externals.pGltfModifier->onOldVersionContentLoadingComplete(
                 *pTile);
@@ -1634,7 +1636,8 @@ bool TilesetContentManager::discardOutdatedRenderResources(
       renderContent.getModifiedModel();
   const CesiumGltf::Model& model =
       maybeModifiedModel ? *maybeModifiedModel : renderContent.getModel();
-  if (model.version != _externals.pGltfModifier->getCurrentVersion()) {
+  if (GltfModifierVersionExtension::getVersion(model) !=
+      _externals.pGltfModifier->getCurrentVersion()) {
     _externals.pPrepareRendererResources->free(
         tile,
         maybeModifiedModel ? renderContent.getModifiedRenderResources()

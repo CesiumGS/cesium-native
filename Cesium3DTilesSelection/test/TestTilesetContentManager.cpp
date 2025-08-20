@@ -4,6 +4,7 @@
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -1879,7 +1880,9 @@ TEST_CASE("Test glTF modifier state machine") {
     apply(GltfModifierInput&& input) override {
       ++applyCallCount;
       GltfModifierOutput output{.modifiedModel = input.previousModel};
-      output.modifiedModel.version = getCurrentVersion();
+      GltfModifierVersionExtension::setVersion(
+          output.modifiedModel,
+          *getCurrentVersion());
       return input.asyncSystem.createResolvedFuture(
           std::make_optional(std::move(output)));
     }

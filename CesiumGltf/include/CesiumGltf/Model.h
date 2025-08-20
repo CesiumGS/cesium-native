@@ -12,11 +12,6 @@ namespace CesiumGltf {
 
 /** @copydoc ModelSpec */
 struct CESIUMGLTF_API Model : public ModelSpec {
-
-  /** An optional version number for the model. This can be used by clients to
-   * indicate state about the model.*/
-  std::optional<int> version = std::nullopt;
-
   Model() = default;
 
   /**
