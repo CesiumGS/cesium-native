@@ -6,6 +6,7 @@ vcpkg_from_github(
     HEAD_REF main
     PATCHES
       loadSpz.patch
+      useZlibng.patch
 )
 
 vcpkg_cmake_configure(
