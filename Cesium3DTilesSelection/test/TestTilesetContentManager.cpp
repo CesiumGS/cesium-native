@@ -1833,3 +1833,137 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
     pManager->unloadTileContent(tile);
   }
 }
+
+TEST_CASE("Test GLTF modifier state machine") {
+  Cesium3DTilesContent::registerAllTileContentTypes();
+
+  // create mock tileset externals
+  auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
+  auto pMockedPrepareRendererResources =
+      std::make_shared<SimplePrepareRendererResource>();
+  CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+  auto pMockedCreditSystem = std::make_shared<CreditSystem>();
+
+  TilesetExternals externals{
+      pMockedAssetAccessor,
+      pMockedPrepareRendererResources,
+      asyncSystem,
+      pMockedCreditSystem};
+
+  class SimpleGltfModifier : public GltfModifier {
+  public:
+    int callCount = 0;
+    SimpleGltfModifier() {}
+    bool apply(
+        const CesiumGltf::Model& model,
+        const glm::dmat4& /*tileTransform*/,
+        const glm::dvec4& /*rootTranslation*/,
+        CesiumGltf::Model& out_model) override {
+      ++callCount;
+      out_model = model;
+      out_model.version = getCurrentVersion();
+      return true;
+    }
+    void parseTilesetJson(const rapidjson::Document&) override {}
+  };
+  auto pGltfModifier = std::make_shared<SimpleGltfModifier>();
+  externals.pGltfModifier = pGltfModifier;
+
+  auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+  pMockedLoader->mockLoadTileContent = {
+      CesiumGltf::Model(),
+      CesiumGeometry::Axis::Y,
+      std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      nullptr,
+      nullptr,
+      {},
+      TileLoadResultState::Success};
+
+  // create tile
+  auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
+
+  // Give the tile an ID so it is eligible for unloading.
+  pRootTile->setTileID("foo");
+
+  // create manager
+  TilesetOptions options{};
+  options.contentOptions.generateMissingNormalsSmooth = true;
+
+  IntrusivePointer<TilesetContentManager> pManager = new TilesetContentManager{
+      externals,
+      options,
+      std::move(pMockedLoader),
+      std::move(pRootTile)};
+
+  // test manager loading
+  Tile& tile = *pManager->getRootTile();
+  pManager->loadTileContent(tile, options);
+  pManager->waitUntilIdle();
+  pManager->updateTileContent(tile, options);
+  CHECK(tile.getState() == TileLoadState::Done);
+  CHECK(tile.getContent().isRenderContent());
+  // Constructed modifier is nilpotent until the first call to trigger(), so:
+  CHECK(pGltfModifier->callCount == 0);
+  CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
+
+  int expectedCallCount = 1;
+  auto const& applyModifier = [&]() {
+    pGltfModifier->trigger();
+    CHECK(tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
+    // Start worker-thread phase of glTF modifier.
+    pManager->loadTileContent(tile, options);
+    // Unloading should be refused while worker-thread is running.
+    CHECK(pManager->unloadTileContent(tile) == UnloadTileContentResult::Keep);
+    // Wait completion of worker-thread phase.
+    pManager->waitUntilIdle();
+    CHECK(!tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
+    CHECK(tile.needsMainThreadLoading(pGltfModifier->getCurrentVersion()));
+    CHECK(pGltfModifier->callCount == expectedCallCount);
+    // The temporary renderer resource should have been created.
+    CHECK(pMockedPrepareRendererResources->totalAllocation == 2);
+
+    SUBCASE("Perform main-thread phase of glTF modifier") {
+      pManager->finishLoading(tile, options);
+      CHECK(!tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
+      CHECK(!tile.needsMainThreadLoading(pGltfModifier->getCurrentVersion()));
+      // The temporary renderer resource should have been freed.
+      CHECK(pGltfModifier->callCount == expectedCallCount);
+      CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
+    }
+  };
+
+  // Increment modifier version, thus requiring a first glTF modifier of the
+  // already loaded tile
+  applyModifier();
+
+  // Unload tile so that we can now test loading the tile with an _active_
+  // modifier
+  CHECK(pManager->unloadTileContent(tile));
+  CHECK(pMockedPrepareRendererResources->totalAllocation == 0);
+
+  ++expectedCallCount;
+  // loaded tile below will be already processed by the glTF modifier
+  pManager->loadTileContent(tile, options);
+  pManager->waitUntilIdle();
+  pManager->updateTileContent(tile, options);
+  CHECK(tile.getState() == TileLoadState::Done);
+  CHECK(tile.getContent().isRenderContent());
+  // After the tile is loaded, glTF modifier should not be needed,
+  // as it has already been done as part of the loading.
+  CHECK(!tile.needsWorkerThreadLoading(pGltfModifier->getCurrentVersion()));
+  CHECK(!tile.needsMainThreadLoading(pGltfModifier->getCurrentVersion()));
+  CHECK(pGltfModifier->callCount == expectedCallCount);
+  CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
+
+  ++expectedCallCount;
+  // Increment modifier version, thus requiring a new glTF modifier.
+  applyModifier();
+
+  SUBCASE("Unload tile after main-thread phase of glTF modifier") {
+    CHECK(pManager->unloadTileContent(tile));
+    CHECK(pMockedPrepareRendererResources->totalAllocation == 0);
+  }
+}
