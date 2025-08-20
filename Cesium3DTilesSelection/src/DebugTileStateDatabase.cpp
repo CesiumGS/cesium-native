@@ -275,7 +275,7 @@ void DebugTileStateDatabase::recordTileState(
   status = CESIUM_SQLITE(sqlite3_bind_int)(
       this->_pImpl->writeTileState.get(),
       5, // IsRenderable
-      static_cast<int>(tile.isRenderable(-1)));
+      static_cast<int>(tile.isRenderable()));
   if (status != SQLITE_OK) {
     return;
   }

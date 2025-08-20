@@ -507,10 +507,8 @@ public:
 
   /**
    * @brief Determines if this tile is currently renderable.
-   * @param modelVersion Optionally, a model version required to allow this
-   * tile to render. See CesiumGltf::Model::version.
    */
-  bool isRenderable(std::optional<int> modelVersion) const noexcept;
+  bool isRenderable() const noexcept;
 
   /**
    * @brief Determines if this tile has mesh content.

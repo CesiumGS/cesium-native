@@ -1056,13 +1056,12 @@ namespace {
  */
 bool mustContinueRefiningToDeeperTiles(
     const Tile& tile,
-    const TileSelectionState& lastFrameSelectionState,
-    std::optional<int> modelVersion) noexcept {
+    const TileSelectionState& lastFrameSelectionState) noexcept {
   const TileSelectionState::Result originalResult =
       lastFrameSelectionState.getOriginalResult();
 
   return originalResult == TileSelectionState::Result::Refined &&
-         !tile.isRenderable(modelVersion);
+         !tile.isRenderable();
 }
 
 } // namespace
@@ -1178,7 +1177,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
   auto const modifierVersion = getGltfModifierVersion();
   const bool wasReallyRenderedLastFrame =
-      wasRenderedLastFrame && tile.isRenderable(std::nullopt);
+      wasRenderedLastFrame && tile.isRenderable();
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1198,12 +1197,11 @@ bool Tileset::_kickDescendantsAndRenderTile(
           tilePriority);
     }
 
-    traversalDetails.notYetRenderableCount =
-        tile.isRenderable(modifierVersion) ? 0 : 1;
+    traversalDetails.notYetRenderableCount = tile.isRenderable() ? 0 : 1;
     queuedForLoad = true;
   }
 
-  bool isRenderable = tile.isRenderable(modifierVersion);
+  bool isRenderable = tile.isRenderable();
   traversalDetails.allAreRenderable = isRenderable;
   traversalDetails.anyWereRenderedLastFrame = wasReallyRenderedLastFrame;
 
@@ -1394,10 +1392,8 @@ Tileset::TraversalDetails Tileset::_visitTile(
   if (action == VisitTileAction::Render) {
     // This tile meets the screen-space error requirement, so we'd like to
     // render it, if we can.
-    bool mustRefine = mustContinueRefiningToDeeperTiles(
-        tile,
-        lastFrameSelectionState,
-        getGltfModifierVersion());
+    bool mustRefine =
+        mustContinueRefiningToDeeperTiles(tile, lastFrameSelectionState);
     if (mustRefine) {
       // // We must refine even though this tile meets the SSE.
       action = VisitTileAction::Refine;
@@ -1483,7 +1479,7 @@ Tileset::TraversalDetails Tileset::_visitTile(
   bool wantToKick = kickDueToNonReadyDescendant || kickDueToTileFadingIn;
   bool willKick = wantToKick && (traversalDetails.notYetRenderableCount >
                                      this->_options.loadingDescendantLimit ||
-                                 tile.isRenderable(getGltfModifierVersion()));
+                                 tile.isRenderable());
 
   if (willKick) {
     // Kick all descendants out of the render list and render this tile instead
@@ -1562,12 +1558,11 @@ void Tileset::addTileToLoadQueue(
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
     const TilesetFrameState& frameState,
     const Tile& tile,
-    std::optional<int> modelVersion) {
+    std::optional<int> /* modelVersion */) {
   TileSelectionState::Result lastFrameResult =
       getPreviousState(frameState.viewGroup, tile).getResult();
 
-  bool isRenderableByVersion = tile.isRenderable(modelVersion);
-  bool isRenderableAtAll = tile.isRenderable(std::nullopt);
+  bool isRenderable = tile.isRenderable();
 
   bool wasRenderedLastFrame =
       lastFrameResult == TileSelectionState::Result::Rendered;
@@ -1594,10 +1589,10 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   }
 
   TraversalDetails traversalDetails;
-  traversalDetails.allAreRenderable = isRenderableByVersion;
+  traversalDetails.allAreRenderable = isRenderable;
   traversalDetails.anyWereRenderedLastFrame =
-      isRenderableAtAll && wasRenderedLastFrame;
-  traversalDetails.notYetRenderableCount = isRenderableByVersion ? 0 : 1;
+      isRenderable && wasRenderedLastFrame;
+  traversalDetails.notYetRenderableCount = isRenderable ? 0 : 1;
 
   return traversalDetails;
 }
