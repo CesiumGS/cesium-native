@@ -1332,7 +1332,6 @@ void TilesetContentManager::loadTileContent(
         // worker thread if the content is a render content
         if (result.state == TileLoadResultState::Success) {
           if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
-            // update root translation now it has been loaded:
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
                  projections = std::move(projections),
