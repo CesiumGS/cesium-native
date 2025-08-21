@@ -622,6 +622,10 @@ postProcessContentInWorkerThread(
     gltfOptions.pSharedAssetSystem = tileLoadInfo.pSharedAssetSystem;
   }
 
+  int32_t version = pGltfModifier && pGltfModifier->getCurrentVersion()
+                        ? pGltfModifier->getCurrentVersion().value_or(0)
+                        : 0;
+
   auto asyncSystem = tileLoadInfo.asyncSystem;
   auto pAssetAccessor = result.pAssetAccessor;
   return CesiumGltfReader::GltfReader::resolveExternalData(
@@ -634,8 +638,9 @@ postProcessContentInWorkerThread(
       .thenInWorkerThread([result = std::move(result),
                            projections = std::move(projections),
                            tileLoadInfo = std::move(tileLoadInfo),
-                           pGltfModifier](CesiumGltfReader::GltfReaderResult&&
-                                              gltfResult) mutable {
+                           pGltfModifier,
+                           version](CesiumGltfReader::GltfReaderResult&&
+                                        gltfResult) mutable {
         if (!gltfResult.errors.empty()) {
           if (result.pCompletedRequest) {
             SPDLOG_LOGGER_ERROR(
@@ -695,17 +700,27 @@ postProcessContentInWorkerThread(
               std::get<CesiumGltf::Model>(result.contentKind);
           return pGltfModifier
               ->apply(GltfModifierInput{
+                  .version = version,
                   .asyncSystem = tileLoadInfo.asyncSystem,
                   .pAssetAccessor = tileLoadInfo.pAssetAccessor,
                   .pLogger = tileLoadInfo.pLogger,
                   .previousModel = model,
                   .tileTransform = tileLoadInfo.tileTransform})
               .thenInWorkerThread(
-                  [result = std::move(result)](
+                  [result = std::move(result), version](
                       std::optional<GltfModifierOutput>&& modified) mutable {
                     if (modified) {
                       result.contentKind = std::move(modified->modifiedModel);
                     }
+
+                    CesiumGltf::Model* pModel =
+                        std::get_if<CesiumGltf::Model>(&result.contentKind);
+                    if (pModel) {
+                      GltfModifierVersionExtension::setVersion(
+                          *pModel,
+                          version);
+                    }
+
                     return result;
                   })
               .thenPassThrough(std::move(tileLoadInfo));
@@ -1115,6 +1130,10 @@ void TilesetContentManager::reapplyGltfModifier(
 
   const TilesetExternals& externals = this->getExternals();
 
+  // Get the version here, in the main thread, because it may change while the
+  // worker is running.
+  int32_t version = externals.pGltfModifier->getCurrentVersion().value_or(0);
+
   // It is safe to capture the TilesetExternals and Model by reference because
   // the TilesetContentManager guarantees both will continue to exist and are
   // immutable while modification is in progress.
@@ -1127,70 +1146,82 @@ void TilesetContentManager::reapplyGltfModifier(
   // at the end in order to keep the Tile, its content, and the
   // TilesetContentManager alive during the entire process.
   externals.asyncSystem
-      .runInWorkerThread(
-          [&externals, &previousModel, tileTransform = tile.getTransform()] {
-            return externals.pGltfModifier->apply(GltfModifierInput{
-                .asyncSystem = externals.asyncSystem,
-                .pAssetAccessor = externals.pAssetAccessor,
-                .pLogger = externals.pLogger,
-                .previousModel = previousModel,
-                .tileTransform = tileTransform});
-          })
-      .thenInWorkerThread([&externals,
-                           &previousModel,
-                           pRenderContent,
-                           tileTransform = tile.getTransform(),
-                           tileBoundingVolume = tile.getBoundingVolume(),
-                           tileContentBoundingVolume =
-                               tile.getContentBoundingVolume(),
-                           rendererOptions = tilesetOptions.rendererOptions](
-                              std::optional<GltfModifierOutput>&& modified) {
-        const CesiumGltf::Model& model =
-            modified ? modified->modifiedModel : previousModel;
-
-        TileLoadResult tileLoadResult;
-        tileLoadResult.state = TileLoadResultState::Success;
-        tileLoadResult.pAssetAccessor = externals.pAssetAccessor;
-        tileLoadResult.rasterOverlayDetails =
-            pRenderContent->getRasterOverlayDetails();
-        tileLoadResult.initialBoundingVolume = tileBoundingVolume;
-        tileLoadResult.initialContentBoundingVolume = tileContentBoundingVolume;
-
-        const auto it = model.extras.find("gltfUpAxis");
-        if (it == model.extras.end()) {
-          CESIUM_ASSERT(false);
-          tileLoadResult.glTFUpAxis = CesiumGeometry::Axis::Y;
-        } else {
-          tileLoadResult.glTFUpAxis = static_cast<CesiumGeometry::Axis>(
-              it->second.getSafeNumberOrDefault(1));
-        }
-
-        if (modified) {
-          tileLoadResult.contentKind = std::move(modified->modifiedModel);
-        } else {
-          tileLoadResult.contentKind = previousModel;
-        }
-
-        return externals.pPrepareRendererResources->prepareInLoadThread(
-            externals.asyncSystem,
-            std::move(tileLoadResult),
-            tileTransform,
-            rendererOptions);
+      .runInWorkerThread([&externals,
+                          &previousModel,
+                          version,
+                          tileTransform = tile.getTransform()] {
+        return externals.pGltfModifier->apply(GltfModifierInput{
+            .version = version,
+            .asyncSystem = externals.asyncSystem,
+            .pAssetAccessor = externals.pAssetAccessor,
+            .pLogger = externals.pLogger,
+            .previousModel = previousModel,
+            .tileTransform = tileTransform});
       })
+      .thenInWorkerThread(
+          [&externals,
+           &previousModel,
+           pRenderContent,
+           tileTransform = tile.getTransform(),
+           tileBoundingVolume = tile.getBoundingVolume(),
+           tileContentBoundingVolume = tile.getContentBoundingVolume(),
+           rendererOptions = tilesetOptions.rendererOptions,
+           version](std::optional<GltfModifierOutput>&& modified) {
+            TileLoadResult tileLoadResult;
+            tileLoadResult.state = TileLoadResultState::Success;
+            tileLoadResult.pAssetAccessor = externals.pAssetAccessor;
+            tileLoadResult.rasterOverlayDetails =
+                pRenderContent->getRasterOverlayDetails();
+            tileLoadResult.initialBoundingVolume = tileBoundingVolume;
+            tileLoadResult.initialContentBoundingVolume =
+                tileContentBoundingVolume;
+
+            const CesiumGltf::Model& model =
+                modified ? modified->modifiedModel : previousModel;
+            const auto it = model.extras.find("gltfUpAxis");
+            if (it == model.extras.end()) {
+              CESIUM_ASSERT(false);
+              tileLoadResult.glTFUpAxis = CesiumGeometry::Axis::Y;
+            } else {
+              tileLoadResult.glTFUpAxis = static_cast<CesiumGeometry::Axis>(
+                  it->second.getSafeNumberOrDefault(1));
+            }
+
+            if (modified) {
+              tileLoadResult.contentKind = std::move(modified->modifiedModel);
+            } else {
+              tileLoadResult.contentKind = previousModel;
+            }
+
+            // Whether the GltfModifier modified anything or not, the model is
+            // now up-to-date with the version that triggered this run.
+            GltfModifierVersionExtension::setVersion(
+                std::get<CesiumGltf::Model>(tileLoadResult.contentKind),
+                version);
+
+            return externals.pPrepareRendererResources->prepareInLoadThread(
+                externals.asyncSystem,
+                std::move(tileLoadResult),
+                tileTransform,
+                rendererOptions);
+          })
       .thenInMainThread([this, pTile = Tile::Pointer(&tile)](
                             TileLoadResultAndRenderResources&& pair) {
-        pTile->getContent().getRenderContent()->setGltfModifierState(
-            GltfModifier::State::WorkerDone);
+        TileRenderContent* pRenderContent =
+            pTile->getContent().getRenderContent();
+        CESIUM_ASSERT(pRenderContent != nullptr);
+
+        pRenderContent->setGltfModifierState(GltfModifier::State::WorkerDone);
         this->notifyTileDoneLoading(pTile.get());
-        pTile->getContent()
-            .getRenderContent()
-            ->setModifiedModelAndRenderResources(
-                std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)),
-                pair.pRenderResources);
+        pRenderContent->setModifiedModelAndRenderResources(
+            std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)),
+            pair.pRenderResources);
+
         this->_externals.pGltfModifier->onWorkerThreadApplyComplete(*pTile);
       })
       .catchInMainThread(
-          [this, pTile = Tile::Pointer(&tile), &externals](std::exception&& e) {
+          [this, pTile = Tile::Pointer(&tile), &externals, version](
+              std::exception&& e) {
             pTile->getContent().getRenderContent()->setGltfModifierState(
                 GltfModifier::State::WorkerDone);
             this->notifyTileDoneLoading(pTile.get());
@@ -1198,6 +1229,16 @@ void TilesetContentManager::reapplyGltfModifier(
                 externals.pLogger,
                 "An unexpected error occurred when reapplying GltfModifier: {}",
                 e.what());
+
+            // Even though the GltfModifier failed, we mark the model up-to-date
+            // with the version that triggered this run so that we won't try to
+            // run again for this version.
+            TileRenderContent* pRenderContent =
+                pTile->getContent().getRenderContent();
+            CESIUM_ASSERT(pRenderContent != nullptr);
+            GltfModifierVersionExtension::setVersion(
+                pRenderContent->getModel(),
+                version);
           });
 }
 
@@ -1824,6 +1865,16 @@ void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
 
 void TilesetContentManager::registerTileRequester(
     TileLoadRequester& requester) {
+  if (requester._pTilesetContentManager.get() == this) {
+    return;
+  }
+
+  if (requester._pTilesetContentManager != nullptr) {
+    requester._pTilesetContentManager->unregisterTileRequester(requester);
+  }
+
+  requester._pTilesetContentManager = this;
+
   CESIUM_ASSERT(
       std::find(
           this->_requesters.begin(),
@@ -1840,6 +1891,8 @@ void TilesetContentManager::unregisterTileRequester(
   if (it != this->_requesters.end()) {
     this->_requesters.erase(it);
   }
+
+  requester._pTilesetContentManager = nullptr;
 }
 
 namespace {

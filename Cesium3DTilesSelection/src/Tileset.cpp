@@ -468,18 +468,7 @@ void Tileset::loadTiles() {
 }
 
 void Tileset::registerLoadRequester(TileLoadRequester& requester) {
-  if (requester._pTilesetContentManager == this->_pTilesetContentManager) {
-    return;
-  }
-
-  if (requester._pTilesetContentManager != nullptr) {
-    requester._pTilesetContentManager->unregisterTileRequester(requester);
-  }
-
-  requester._pTilesetContentManager = this->_pTilesetContentManager;
-  if (requester._pTilesetContentManager != nullptr) {
-    requester._pTilesetContentManager->registerTileRequester(requester);
-  }
+  this->_pTilesetContentManager->registerTileRequester(requester);
 }
 
 int32_t Tileset::getNumberOfTilesLoaded() const {

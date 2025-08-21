@@ -148,7 +148,7 @@ private:
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
-  friend class Tileset;
+  friend class TilesetContentManager;
 };
 
 } // namespace Cesium3DTilesSelection

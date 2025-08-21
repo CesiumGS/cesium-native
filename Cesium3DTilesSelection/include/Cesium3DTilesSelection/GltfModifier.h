@@ -26,6 +26,16 @@ class TilesetContentManager;
  */
 struct GltfModifierInput {
   /**
+   * @brief The {@link GltfModifier}'s version, as returned by
+   * {@link GltfModifier::getCurrentVersion} at the start of the modification.
+   *
+   * This is provided because calling {@link GltfModifier::getCurrentVersion}
+   * may return a newer version if {@link GltfModifier::trigger} is called
+   * again while {@link GltfModifier::apply} is running in a worker thread.
+   */
+  int32_t version;
+
+  /**
    * @brief The async system that can be used to do work in threads.
    */
   CesiumAsync::AsyncSystem asyncSystem;
