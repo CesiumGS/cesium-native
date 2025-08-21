@@ -831,6 +831,7 @@ CesiumAsync::Future<GltfConverterResult> I3dmToGltfConverter::convert(
              convertedI3dm)
       .thenImmediately([](ConvertedI3dm&& convertedI3dm) {
         if (convertedI3dm.gltfResult.model) {
+          convertedI3dm.gltfResult.model->extras["i3dm"] = static_cast<int>(1);
           instantiateGltfInstances(
               convertedI3dm.gltfResult,
               convertedI3dm.decodedInstances);
