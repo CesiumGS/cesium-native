@@ -8,13 +8,13 @@
 using namespace CesiumUtility;
 
 namespace CesiumVectorData {
-Color ColorStyle::getColor() const {
+Color ColorStyle::getColor(uint32_t seed) const {
   if (this->colorMode == ColorMode::Normal) {
     return this->color;
   }
 
   std::random_device r;
-  std::mt19937 mt(r());
+  std::mt19937 mt(seed);
   std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
   return Color{
