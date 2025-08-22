@@ -1755,279 +1755,6 @@ void processPoints(
   model.scene = 0;
 }
 
-/*
-void addPositionsToGltf(PntsContent& parsedContent, Model& gltf) {
-  const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
-  const int64_t byteStride = static_cast<int64_t>(sizeof(glm ::vec3));
-  const int64_t byteLength = static_cast<int64_t>(byteStride * count);
-  int32_t bufferId =
-      createBufferInGltf(gltf, std::move(parsedContent.position.data));
-  int32_t bufferViewId =
-      createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
-  int32_t accessorId = createAccessorInGltf(
-      gltf,
-      bufferViewId,
-      Accessor::ComponentType::FLOAT,
-      count,
-      Accessor::Type::VEC3);
-
-  Accessor& accessor = gltf.accessors[static_cast<uint32_t>(accessorId)];
-  accessor.min = {
-      parsedContent.positionMin.x,
-      parsedContent.positionMin.y,
-      parsedContent.positionMin.z,
-  };
-  accessor.max = {
-      parsedContent.positionMax.x,
-      parsedContent.positionMax.y,
-      parsedContent.positionMax.z,
-  };
-
-  MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-  primitive.attributes.emplace("POSITION", accessorId);
-}
-
-void addColorsToGltf(PntsContent& parsedContent, Model& gltf) {
-  PntsSemantic& color = parsedContent.color.value();
-
-  const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
-  int64_t byteStride = 0;
-  const int32_t componentType = Accessor::ComponentType::FLOAT;
-  std::string type;
-  bool isTranslucent = false;
-
-  if (parsedContent.colorType == PntsColorType::RGBA) {
-    byteStride = static_cast<int64_t>(sizeof(glm::vec4));
-    type = Accessor::Type::VEC4;
-    isTranslucent = true;
-  } else {
-    byteStride = static_cast<int64_t>(sizeof(glm::vec3));
-    type = Accessor::Type::VEC3;
-  }
-
-  const int64_t byteLength = static_cast<int64_t>(byteStride * count);
-  int32_t bufferId = createBufferInGltf(gltf, std::move(color.data));
-  int32_t bufferViewId =
-      createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
-  int32_t accessorId =
-      createAccessorInGltf(gltf, bufferViewId, componentType, count, type);
-
-  MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-  primitive.attributes.emplace("COLOR_0", accessorId);
-
-  if (isTranslucent) {
-    Material& material =
-        gltf.materials[static_cast<uint32_t>(primitive.material)];
-    material.alphaMode = Material::AlphaMode::BLEND;
-  }
-}
-
-void addNormalsToGltf(PntsContent& parsedContent, Model& gltf) {
-  PntsSemantic& normal = parsedContent.normal.value();
-
-  const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
-  const int64_t byteStride = static_cast<int64_t>(sizeof(glm ::vec3));
-  const int64_t byteLength = static_cast<int64_t>(byteStride * count);
-
-  int32_t bufferId = createBufferInGltf(gltf, std::move(normal.data));
-  int32_t bufferViewId =
-      createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
-  int32_t accessorId = createAccessorInGltf(
-      gltf,
-      bufferViewId,
-      Accessor::ComponentType::FLOAT,
-      count,
-      Accessor::Type::VEC3);
-
-  MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-  primitive.attributes.emplace("NORMAL", accessorId);
-}
-void addBatchIdsToGltf(PntsContent& parsedContent, CesiumGltf::Model& gltf) {
-  PntsSemantic& batchId = parsedContent.batchId.value();
-
-  const int64_t count = static_cast<int64_t>(parsedContent.pointsLength);
-  int32_t componentType = Accessor::ComponentType::UNSIGNED_SHORT;
-  if (parsedContent.batchIdComponentType) {
-    switch (parsedContent.batchIdComponentType.value()) {
-    case MetadataProperty::ComponentType::UNSIGNED_BYTE:
-      componentType = Accessor::ComponentType::UNSIGNED_BYTE;
-      break;
-    case MetadataProperty::ComponentType::UNSIGNED_INT:
-      componentType = Accessor::ComponentType::UNSIGNED_INT;
-      break;
-    case MetadataProperty::ComponentType::UNSIGNED_SHORT:
-    default:
-      componentType = Accessor::ComponentType::UNSIGNED_SHORT;
-      break;
-    }
-    const int64_t byteStride =
-        Accessor::computeByteSizeOfComponent(componentType);
-    const int64_t byteLength = static_cast<int64_t>(byteStride * count);
-
-    int32_t bufferId = createBufferInGltf(gltf, std::move(batchId.data));
-    int32_t bufferViewId =
-        createBufferViewInGltf(gltf, bufferId, byteLength, byteStride);
-    int32_t accessorId = createAccessorInGltf(
-        gltf,
-        bufferViewId,
-        componentType,
-        count,
-        Accessor::Type::SCALAR);
-
-    MeshPrimitive& primitive = gltf.meshes[0].primitives[0];
-    // This will be renamed by BatchTableToGltfStructuralMetadata.
-    primitive.attributes.emplace("_BATCHID", accessorId);
-  }
-}
-void processDummy(
-    const rapidjson::Document& featureTableJson,
-    GltfConverterResult& result) {
-
-  if (!result.model) {
-    result.model.emplace();
-  }
-
-  std::array<double, 6> region =
-      {0, 0, 0, 0, 0, 0}; // [west, south, east, north, min_height, max_height]
-
-  // extract REGION
-  const auto regionIt = featureTableJson.FindMember("REGION");
-  if (regionIt != featureTableJson.MemberEnd() && regionIt->value.IsArray() &&
-      regionIt->value.Size() == 6) {
-    for (rapidjson::SizeType i = 0; i < 6; i++) {
-      region[i] = regionIt->value[i].GetDouble();
-    }
-  } else {
-    result.errors.emplaceWarning("VCTR tile is missing REGION property");
-    return;
-  }
-
-  std::vector<glm::vec3> decodedPositions;
-
-  glm::dvec3 positionMin;
-  glm::dvec3 positionMax;
-
-  glm::dvec3 position;
-
-  // A vector to store the colors of the points, if needed
-  std::vector<glm::vec4> pointColors;
-
-  decodedPositions.resize(1);
-  
-  if (region[0] == 0.0 && region[1] == 0.0 && region[2] == 0.0 
-    &&
-      region[3] == 0.0 && region[4] == 0.0 && region[5] == 0.0) {
-    position = glm::dvec3(0.0, 0.0, 0.0);
-  } else {
-    position = computeRegionCenter(region);
-
-    CesiumGeospatial::Ellipsoid ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
-
-    position = ellipsoid.cartographicToCartesian(
-        CesiumGeospatial::Cartographic(position.x, position.y, position.z));
-
-  }
-  decodedPositions[0] = position;
-
-  // Update min/max values
-  positionMin = glm::min(positionMin, position);
-  positionMax = glm::max(positionMax, position);
-  
-  
-  auto& cesiumRTC =
-      result.model->addExtension<CesiumGltf::ExtensionCesiumRTC>();
-  result.model->addExtensionRequired(
-      CesiumGltf::ExtensionCesiumRTC::ExtensionName);
-  cesiumRTC.center = {position.x, position.y, position.z};
-
-  PntsContent parsedContent;
-
-  parsedContent.pointsLength = 1;
-  parsedContent.rtcCenter = glm::dvec3(position.x, position.y, position.z);
-
-  parsedContent.position.byteOffset = 0;
-  parsedContent.position.data = std::vector<std::byte>(12);
-
-  parsedContent.position.data[0] = std::byte{0};
-  parsedContent.position.data[1] = std::byte{0};
-  parsedContent.position.data[2] = std::byte{0};
-  parsedContent.position.data[3] = std::byte{0};
-  parsedContent.position.data[4] = std::byte{0};
-  parsedContent.position.data[5] = std::byte{0};
-  parsedContent.position.data[6] = std::byte{0};
-  parsedContent.position.data[7] = std::byte{0};
-  parsedContent.position.data[8] = std::byte{0};
-  parsedContent.position.data[9] = std::byte{0};
-  parsedContent.position.data[10] = std::byte{0};
-  parsedContent.position.data[11] = std::byte{0};
-
-  parsedContent.positionMin = positionMin;
-  parsedContent.positionMax = positionMax; 
-  parsedContent.colorType = PntsColorType::CONSTANT;
-  parsedContent.normalOctEncoded = false;
-  parsedContent.dracoMetadataHasErrors = false;
-
-  CesiumGltf::Model& gltf = *result.model;
-
-  gltf.asset.version = "2.0";
-
-  // Create a single node with a single mesh, with a single primitive.
-  CesiumGltf::Node& node = gltf.nodes.emplace_back();
-  std::memcpy(
-      node.matrix.data(),
-      &CesiumGeometry::Transforms::Z_UP_TO_Y_UP,
-      sizeof(glm::dmat4));
-
-  // Create a scene containing the node, and make it the default scene.
-  CesiumGltf::Scene& scene = gltf.scenes.emplace_back();
-  scene.nodes = {0};
-  gltf.scene = 0;
-
-  size_t meshId = gltf.meshes.size();
-  CesiumGltf::Mesh& mesh = gltf.meshes.emplace_back();
-  node.mesh = static_cast<int32_t>(meshId);
-
-  CesiumGltf::MeshPrimitive& primitive = mesh.primitives.emplace_back();
-  primitive.mode = CesiumGltf::MeshPrimitive::Mode::POINTS;
-
-  size_t materialId = gltf.materials.size();
-  CesiumGltf::Material& material = gltf.materials.emplace_back();
-  material.pbrMetallicRoughness =
-      std::make_optional<CesiumGltf::MaterialPBRMetallicRoughness>();
-  // These values are borrowed from CesiumJS.
-  material.pbrMetallicRoughness.value().metallicFactor = 0;
-  material.pbrMetallicRoughness.value().roughnessFactor = 0.9;
-
-  primitive.material = static_cast<int32_t>(materialId);
-
-  addPositionsToGltf(parsedContent, gltf);
-
-  if (parsedContent.color) {
-    addColorsToGltf(parsedContent, gltf);
-  } else if (parsedContent.constantRgba) {
-    glm::vec4 materialColor(parsedContent.constantRgba.value());
-    materialColor = srgbToLinear(materialColor / 255.0f);
-
-    material.pbrMetallicRoughness.value().baseColorFactor =
-        {materialColor.x, materialColor.y, materialColor.z, materialColor.w};
-    material.alphaMode = CesiumGltf::Material::AlphaMode::BLEND;
-  }
-
-  if (parsedContent.normal) {
-    addNormalsToGltf(parsedContent, gltf);
-  } else {
-    // Points without normals should be rendered without lighting, which we
-    // can indicate with the KHR_materials_unlit extension.
-    material.addExtension<CesiumGltf::ExtensionKhrMaterialsUnlit>();
-    gltf.addExtensionUsed(
-        CesiumGltf::ExtensionKhrMaterialsUnlit::ExtensionName);
-  }
-
-  if (parsedContent.batchId) {
-    addBatchIdsToGltf(parsedContent, gltf);
-  }
-}
-*/
 void convertVctrMetadataToGltfStructuralMetadata(
     const std::span<const std::byte>& vctrBinary,
     const VctrHeader& header,
@@ -2134,83 +1861,63 @@ void convertVctrToGltf(
     hasPoints = true;
   }
 
-  if (hasPolygons ||hasPolylines ||hasPoints) {// Process each geometry type as needed
-    if (hasPolygons) {
-      processPolygons(vctrBinary, header, headerSize, featureTableJson, result);
-    }
+  if (hasPolygons) {
+    processPolygons(vctrBinary, header, headerSize, featureTableJson, result);
+  }
 
-    if (hasPolylines) {
-      processPolylines(
-          vctrBinary,
-          header,
-          headerSize,
-          featureTableJson,
-          result);
-    }
-
-    if (hasPoints) {
-      processPoints(vctrBinary, header, headerSize, featureTableJson, result);
-    }
-
-    // Convert metadata
-    convertVctrMetadataToGltfStructuralMetadata(
+  if (hasPolylines) {
+    processPolylines(
         vctrBinary,
         header,
         headerSize,
+        featureTableJson,
         result);
+  }
 
-    // Setup scene graph if any meshes were created
-    if (result.model && !result.model->meshes.empty()) {
-      CesiumGltf::Model& model = result.model.value();
+  if (hasPoints) {
+    processPoints(vctrBinary, header, headerSize, featureTableJson, result);
+  }
 
-      // Add a simple scene and node structure
-      model.scenes.emplace_back();
-      model.scenes[0].nodes.push_back(0);
+  // Convert metadata
+  convertVctrMetadataToGltfStructuralMetadata(
+      vctrBinary,
+      header,
+      headerSize,
+      result);
 
-      model.nodes.emplace_back();
-      auto& node = model.nodes[0];
+  // Setup scene graph if any meshes were created
+  if (result.model && !result.model->meshes.empty()) {
+    CesiumGltf::Model& model = result.model.value();
 
-      // Set coordinate system information
-      model.extras["gltfUpAxis"] = static_cast<int>(CesiumGeometry::Axis::Y);
+    // Add a simple scene and node structure
+    model.scenes.emplace_back();
+    model.scenes[0].nodes.push_back(0);
 
-      model.extras["vctr"] = static_cast<int>(1);
+    model.nodes.emplace_back();
+    auto& node = model.nodes[0];
 
-      // Set to TRS mode
-      node.translation = {0, 0, 0};
-      node.rotation = {0, 0, 0, 1};
-      node.scale = {1, 1, 1};
+    // Set coordinate system information
+    model.extras["gltfUpAxis"] = static_cast<int>(CesiumGeometry::Axis::Y);
 
-      // Or set it in matrix format
-      // If it's already in the Z-up coordinate system, set it as is without any
-      // additional transformations.
-      node.matrix = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+    model.extras["vctr"] = static_cast<int>(1);
 
-      // Set node's mesh to the first mesh
-      if (!model.meshes.empty()) {
-        node.mesh = 0;
-      }
+    // Set to TRS mode
+    node.translation = {0, 0, 0};
+    node.rotation = {0, 0, 0, 1};
+    node.scale = {1, 1, 1};
 
-      // Set default scene
-      model.scene = 0;
+    // Or set it in matrix format
+    // If it's already in the Z-up coordinate system, set it as is without any
+    // additional transformations.
+    node.matrix = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+
+    // Set node's mesh to the first mesh
+    if (!model.meshes.empty()) {
+      node.mesh = 0;
     }
-  } else {
-    /*
-    processDummy(featureTableJson, result);
 
-    // Convert metadata
-    convertVctrMetadataToGltfStructuralMetadata(
-        vctrBinary,
-        header,
-        headerSize,
-        result);
-
-    // Setup scene graph if any meshes were created
-    if (result.model && !result.model->meshes.empty()) {
-      CesiumGltf::Model& model = result.model.value();
-
-      model.extras["vctr"] = static_cast<int>(1);
-    }
-    */
+    // Set default scene
+    model.scene = 0;
   }
 }
 } // namespace
