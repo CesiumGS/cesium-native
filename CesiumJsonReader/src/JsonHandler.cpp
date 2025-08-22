@@ -1,7 +1,13 @@
-#include "CesiumJsonReader/JsonHandler.h"
+#include <CesiumJsonReader/IJsonHandler.h>
+#include <CesiumJsonReader/JsonHandler.h>
+
+#include <cstdint>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 namespace CesiumJsonReader {
-JsonHandler::JsonHandler() noexcept {}
+JsonHandler::JsonHandler() noexcept = default;
 
 IJsonHandler* JsonHandler::readNull() {
   this->reportWarning("A null value is not allowed and has been ignored.");

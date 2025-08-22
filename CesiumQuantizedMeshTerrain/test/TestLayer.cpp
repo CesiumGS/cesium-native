@@ -1,8 +1,16 @@
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumQuantizedMeshTerrain/Layer.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+
+#include <optional>
+#include <variant>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -10,7 +18,7 @@ using namespace CesiumQuantizedMeshTerrain;
 using namespace CesiumUtility;
 
 TEST_CASE("LayerJsonUtilities") {
-  SECTION("getProjection") {
+  SUBCASE("getProjection") {
     Layer layer;
     std::optional<Projection> maybeProjection;
 
@@ -29,7 +37,7 @@ TEST_CASE("LayerJsonUtilities") {
     CHECK(!maybeProjection);
   }
 
-  SECTION("getTilingScheme") {
+  SUBCASE("getTilingScheme") {
     Layer layer;
     std::optional<QuadtreeTilingScheme> maybeTilingScheme;
 
@@ -70,7 +78,7 @@ TEST_CASE("LayerJsonUtilities") {
     CHECK(!maybeTilingScheme);
   }
 
-  SECTION("getRootBoundingRegion") {
+  SUBCASE("getRootBoundingRegion") {
     Layer layer;
     std::optional<BoundingRegion> maybeBoundingRegion;
 

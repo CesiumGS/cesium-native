@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Library.h"
+#include <CesiumUtility/Library.h>
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -26,9 +27,26 @@ public:
 private:
   size_t id;
 
-  Credit(size_t id_) noexcept { id = id_; }
+  Credit(size_t id_) noexcept : id(id_) {}
 
   friend class CreditSystem;
+  friend class CreditReferencer;
+};
+
+/**
+ * @brief A snapshot of the credits currently active in a {@link CreditSystem}.
+ */
+struct CreditsSnapshot {
+  /**
+   * @brief The credits that are currently active.
+   */
+  std::vector<Credit> currentCredits;
+
+  /**
+   * @brief The credits that were removed since the last call to
+   * {@link CreditSystem::getSnapshot}.
+   */
+  std::vector<Credit> removedCredits;
 };
 
 /**
@@ -70,45 +88,50 @@ public:
   const std::string& getHtml(Credit credit) const noexcept;
 
   /**
-   * @brief Adds the Credit to the set of credits to show this frame
+   * @brief Adds a reference to a credit, incrementing its reference count. The
+   * referenced credit will be shown until its reference count goes back down to
+   * zero.
+   *
+   * @param credit The credit to reference.
    */
-  void addCreditToFrame(Credit credit);
+  void addCreditReference(Credit credit);
 
   /**
-   * @brief Notifies this CreditSystem to start tracking the credits to show for
-   * the next frame.
+   * @brief Removes a reference from a credit, decrementing its reference count.
+   * When the reference count goes to zero, this credit will no longer be shown.
+   *
+   * @param credit The credit from which to remove a reference.
    */
-  void startNextFrame() noexcept;
+  void removeCreditReference(Credit credit);
 
   /**
-   * @brief Get the credits to show this frame.
+   * @brief Gets a snapshot of the credits. The returned instance is only valid
+   * until the next call to this method.
+   *
+   * The snapshot will include a sorted list of credits that are currently
+   * active, as well as a list of credits that have been removed since the last
+   * snapshot.
    */
-  const std::vector<Credit>& getCreditsToShowThisFrame() noexcept;
-
-  /**
-   * @brief Get the credits that were shown last frame but should no longer be
-   * shown.
-   */
-  const std::vector<Credit>&
-  getCreditsToNoLongerShowThisFrame() const noexcept {
-    return _creditsToNoLongerShowThisFrame;
-  }
+  const CreditsSnapshot& getSnapshot() noexcept;
 
 private:
+  void addBulkReferences(const std::vector<int32_t>& references) noexcept;
+  void releaseBulkReferences(const std::vector<int32_t>& references) noexcept;
+
   const std::string INVALID_CREDIT_MESSAGE =
       "Error: Invalid Credit, cannot get HTML string.";
 
-  struct HtmlAndLastFrameNumber {
+  struct CreditRecord {
     std::string html;
     bool showOnScreen;
-    int32_t lastFrameNumber;
-    int count;
+    int32_t referenceCount;
+    bool shownLastSnapshot;
   };
 
-  std::vector<HtmlAndLastFrameNumber> _credits;
+  std::vector<CreditRecord> _credits;
+  std::vector<Credit> _creditsToNoLongerShowThisSnapshot;
+  CreditsSnapshot _snapshot;
 
-  int32_t _currentFrameNumber = 0;
-  std::vector<Credit> _creditsToShowThisFrame;
-  std::vector<Credit> _creditsToNoLongerShowThisFrame;
+  friend class CreditReferencer;
 };
 } // namespace CesiumUtility

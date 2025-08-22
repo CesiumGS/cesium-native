@@ -1,16 +1,56 @@
 #include "LayerJsonTerrainLoader.h"
 
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/QuadtreeTileRectangularRange.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumGeospatial/calcQuadtreeMaxGeometricError.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
+#include <CesiumUtility/Assert.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Log.h>
 #include <CesiumUtility/Uri.h>
 
+#include <fmt/format.h>
+#include <glm/ext/matrix_double4x4.hpp>
 #include <libmorton/morton.h>
 #include <rapidjson/document.h>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
+
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
@@ -97,7 +137,7 @@ convertToTilesetContentLoaderResult(
       std::move(loadLayersResult.layers));
 
   std::unique_ptr<Tile> pRootTile =
-      std::make_unique<Tile>(pLoader.get(), TileEmptyContent());
+      std::make_unique<Tile>(pLoader.get(), TileID(), TileEmptyContent());
   pRootTile->setUnconditionallyRefine();
   pRootTile->setBoundingVolume(*loadLayersResult.boundingVolume);
 
@@ -299,13 +339,6 @@ Future<LoadLayersResult> loadLayersRecursive(
   std::string extensionsToRequest =
       createExtensionsQueryParameter(knownExtensions, extensions);
 
-  if (!extensionsToRequest.empty()) {
-    for (std::string& url : urls) {
-      url =
-          CesiumUtility::Uri::addQuery(url, "extensions", extensionsToRequest);
-    }
-  }
-
   const auto availabilityLevelsIt =
       layerJson.FindMember("metadataAvailability");
 
@@ -334,13 +367,14 @@ Future<LoadLayersResult> loadLayersRecursive(
     creditString = attributionIt->value.GetString();
   }
 
-  loadLayersResult.layers.emplace_back(LayerJsonTerrainLoader::Layer{
+  loadLayersResult.layers.emplace_back(
       baseUrl,
       std::move(version),
       std::move(urls),
+      std::move(extensionsToRequest),
       std::move(availability),
       static_cast<uint32_t>(maxZoom),
-      availabilityLevels});
+      availabilityLevels);
 
   loadLayersResult.layerCredits.emplace_back(std::move(creditString));
 
@@ -607,12 +641,14 @@ LayerJsonTerrainLoader::Layer::Layer(
     const std::string& baseUrl_,
     std::string&& version_,
     std::vector<std::string>&& tileTemplateUrls_,
+    std::string&& extensionsToRequest_,
     CesiumGeometry::QuadtreeRectangleAvailability&& contentAvailability_,
     uint32_t maxZooms_,
     int32_t availabilityLevels_)
     : baseUrl{baseUrl_},
       version{std::move(version_)},
       tileTemplateUrls{std::move(tileTemplateUrls_)},
+      extensionsToRequest{std::move(extensionsToRequest_)},
       contentAvailability{std::move(contentAvailability_)},
       loadedSubtrees(maxSubtreeInLayer(maxZooms_, availabilityLevels_)),
       availabilityLevels{availabilityLevels_} {}
@@ -634,9 +670,9 @@ std::string resolveTileUrl(
     return std::string();
   }
 
-  return CesiumUtility::Uri::resolve(
+  Uri uri(
       layer.baseUrl,
-      CesiumUtility::Uri::substituteTemplateParameters(
+      Uri::substituteTemplateParameters(
           layer.tileTemplateUrls[0],
           [&tileID, &layer](const std::string& placeholder) -> std::string {
             if (placeholder == "level" || placeholder == "z") {
@@ -653,7 +689,16 @@ std::string resolveTileUrl(
             }
 
             return placeholder;
-          }));
+          }),
+      true);
+
+  if (!layer.extensionsToRequest.empty()) {
+    UriQuery params(uri);
+    params.setValue("extensions", layer.extensionsToRequest);
+    uri.setQuery(params.toQueryString());
+  }
+
+  return std::string(uri.toString());
 }
 
 Future<QuantizedMeshLoadResult> requestTileContent(
@@ -689,7 +734,7 @@ Future<QuantizedMeshLoadResult> requestTileContent(
             (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
           QuantizedMeshLoadResult result;
           result.errors.emplaceError(fmt::format(
-              "Receive status code {} for tile content {}",
+              "Received status code {} for tile content {}",
               pResponse->statusCode(),
               pRequest->url()));
           result.pRequest = std::move(pRequest);
@@ -859,11 +904,19 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
         .thenInMainThread([this,
                            asyncSystem,
                            pAssetAccessor,
+                           pLogger,
                            ellipsoid,
                            &currentLayer,
                            &tile,
                            shouldCurrLayerLoadAvailability](
                               QuantizedMeshLoadResult&& loadResult) mutable {
+          loadResult.errors.logWarning(
+              pLogger,
+              "Warnings loading quantized mesh terrain");
+          loadResult.errors.logError(
+              pLogger,
+              "Errors loading quantized mesh terrain");
+
           if (shouldCurrLayerLoadAvailability) {
             const QuadtreeTileID& tileID =
                 std::get<QuadtreeTileID>(tile.getTileID());
@@ -878,7 +931,7 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
           // thread based on the projection of the loader since the upsampler
           // needs this UV to do the upsampling
           auto finalResult = convertToTileLoadResult(
-              std::move(pAssetAccessor),
+              pAssetAccessor,
               std::move(loadResult),
               ellipsoid);
           bool doesTileHaveUpsampledChild = tileHasUpsampledChild(tile);
@@ -906,17 +959,25 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
   return std::move(futureQuantizedMesh)
       .thenImmediately(
           [pAssetAccessor,
+           pLogger,
            doesTileHaveUpsampledChild,
            projection = this->_projection,
            tileTransform = tile.getTransform(),
            tileBoundingVolume = tile.getBoundingVolume(),
            ellipsoid](QuantizedMeshLoadResult&& loadResult) mutable {
+            loadResult.errors.logWarning(
+                pLogger,
+                "Warnings loading quantized mesh terrain");
+            loadResult.errors.logError(
+                pLogger,
+                "Errors loading quantized mesh terrain");
+
             // if this tile has one of the children needs to be upsampled, we
             // will need to generate its raster overlay UVs in the worker thread
             // based on the projection of the loader since the upsampler needs
             // this UV to do the upsampling
             auto result = convertToTileLoadResult(
-                std::move(pAssetAccessor),
+                pAssetAccessor,
                 std::move(loadResult),
                 ellipsoid);
             if (doesTileHaveUpsampledChild &&

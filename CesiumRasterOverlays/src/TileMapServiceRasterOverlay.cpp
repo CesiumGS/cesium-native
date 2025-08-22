@@ -1,18 +1,41 @@
+#include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Uri.h>
 
-#include <spdlog/fwd.h>
+#include <glm/common.hpp>
+#include <nonstd/expected.hpp>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 #include <tinyxml2.h>
 
 #include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
@@ -24,6 +47,41 @@ struct TileMapServiceTileset {
   std::string url;
   uint32_t level;
 };
+
+std::optional<std::string> getAttributeString(
+    const tinyxml2::XMLElement* pElement,
+    const char* attributeName) {
+  if (!pElement) {
+    return std::nullopt;
+  }
+
+  const char* pAttrValue = pElement->Attribute(attributeName);
+  if (!pAttrValue) {
+    return std::nullopt;
+  }
+
+  return std::string(pAttrValue);
+}
+
+std::optional<uint32_t> getAttributeUint32(
+    const tinyxml2::XMLElement* pElement,
+    const char* attributeName) {
+  std::optional<std::string> s = getAttributeString(pElement, attributeName);
+  if (s) {
+    return std::stoul(s.value());
+  }
+  return std::nullopt;
+}
+
+std::optional<double> getAttributeDouble(
+    const tinyxml2::XMLElement* pElement,
+    const char* attributeName) {
+  std::optional<std::string> s = getAttributeString(pElement, attributeName);
+  if (s) {
+    return std::stod(s.value());
+  }
+  return std::nullopt;
+}
 } // namespace
 
 class TileMapServiceTileProvider final
@@ -33,6 +91,7 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CreditSystem>& pCreditSystem,
       std::optional<Credit> credit,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
@@ -52,6 +111,7 @@ public:
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            pCreditSystem,
             credit,
             pPrepareRendererResources,
             pLogger,
@@ -67,7 +127,14 @@ public:
         _fileExtension(fileExtension),
         _tileSets(tileSets) {}
 
-  virtual ~TileMapServiceTileProvider() {}
+  virtual ~TileMapServiceTileProvider() = default;
+
+  void update(const TileMapServiceTileProvider& newProvider) {
+    this->_url = newProvider._url;
+    this->_headers = newProvider._headers;
+    this->_fileExtension = newProvider._fileExtension;
+    this->_tileSets = newProvider._tileSets;
+  }
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
@@ -121,42 +188,7 @@ TileMapServiceRasterOverlay::TileMapServiceRasterOverlay(
       _headers(headers),
       _options(tmsOptions) {}
 
-TileMapServiceRasterOverlay::~TileMapServiceRasterOverlay() {}
-
-static std::optional<std::string> getAttributeString(
-    const tinyxml2::XMLElement* pElement,
-    const char* attributeName) {
-  if (!pElement) {
-    return std::nullopt;
-  }
-
-  const char* pAttrValue = pElement->Attribute(attributeName);
-  if (!pAttrValue) {
-    return std::nullopt;
-  }
-
-  return std::string(pAttrValue);
-}
-
-static std::optional<uint32_t> getAttributeUint32(
-    const tinyxml2::XMLElement* pElement,
-    const char* attributeName) {
-  std::optional<std::string> s = getAttributeString(pElement, attributeName);
-  if (s) {
-    return std::stoul(s.value());
-  }
-  return std::nullopt;
-}
-
-static std::optional<double> getAttributeDouble(
-    const tinyxml2::XMLElement* pElement,
-    const char* attributeName) {
-  std::optional<std::string> s = getAttributeString(pElement, attributeName);
-  if (s) {
-    return std::stod(s.value());
-  }
-  return std::nullopt;
-}
+TileMapServiceRasterOverlay::~TileMapServiceRasterOverlay() = default;
 
 namespace {
 
@@ -292,6 +324,7 @@ TileMapServiceRasterOverlay::createTileProvider(
           [pOwner,
            asyncSystem,
            pAssetAccessor,
+           pCreditSystem,
            credit,
            pPrepareRendererResources,
            pLogger,
@@ -371,7 +404,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                 // standard, which is 'global-mercator' and 'global-geodetic'
                 // profiles. In the gdal2Tiles case, X and Y are always in
                 // geodetic degrees.
-                isRectangleInDegrees = projectionName.find("global-") != 0;
+                isRectangleInDegrees = !projectionName.starts_with("global-");
               } else if (
                   projectionName == "geodetic" ||
                   projectionName == "global-geodetic") {
@@ -469,6 +502,7 @@ TileMapServiceRasterOverlay::createTileProvider(
                 pOwner,
                 asyncSystem,
                 pAssetAccessor,
+                pCreditSystem,
                 credit,
                 pPrepareRendererResources,
                 pLogger,
@@ -484,6 +518,65 @@ TileMapServiceRasterOverlay::createTileProvider(
                 maximumLevel,
                 tileSets);
           });
+}
+
+Future<void>
+TileMapServiceRasterOverlay::refreshTileProviderWithNewUrlAndHeaders(
+    const IntrusivePointer<RasterOverlayTileProvider>& pProvider,
+    const std::optional<std::string>& newUrl,
+    const std::optional<std::vector<CesiumAsync::IAssetAccessor::THeader>>&
+        newHeaders) {
+  if (newUrl) {
+    this->_url = *newUrl;
+  }
+  if (newHeaders) {
+    this->_headers = *newHeaders;
+  }
+
+  return this
+      ->createTileProvider(
+          pProvider->getAsyncSystem(),
+          pProvider->getAssetAccessor(),
+          pProvider->getCreditSystem(),
+          pProvider->getPrepareRendererResources(),
+          pProvider->getLogger(),
+          &pProvider->getOwner())
+      .thenInMainThread([pProvider](CreateTileProviderResult&& result) {
+        if (!result) {
+          SPDLOG_LOGGER_WARN(
+              pProvider->getLogger(),
+              "Could not refresh Bing Maps raster overlay with a new key: {}.",
+              result.error().message);
+          return;
+        }
+
+        // Use static_cast instead of dynamic_cast here to avoid the need for
+        // RTTI, and because we are certain of the type.
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
+        TileMapServiceTileProvider* pOld =
+            static_cast<TileMapServiceTileProvider*>(pProvider.get());
+        TileMapServiceTileProvider* pNew =
+            static_cast<TileMapServiceTileProvider*>(result->get());
+        // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
+        if (pOld->getCoverageRectangle().getLowerLeft() !=
+                pNew->getCoverageRectangle().getLowerLeft() ||
+            pOld->getCoverageRectangle().getUpperRight() !=
+                pNew->getCoverageRectangle().getUpperRight() ||
+            pOld->getHeight() != pNew->getHeight() ||
+            pOld->getWidth() != pNew->getWidth() ||
+            pOld->getMinimumLevel() != pNew->getMinimumLevel() ||
+            pOld->getMaximumLevel() != pNew->getMaximumLevel() ||
+            pOld->getProjection() != pNew->getProjection()) {
+          SPDLOG_LOGGER_WARN(
+              pProvider->getLogger(),
+              "Could not refresh Tile Map Service raster overlay with a new "
+              "URL and request headers because some metadata properties "
+              "changed unexpectedly upon refresh.");
+          return;
+        }
+
+        pOld->update(*pNew);
+      });
 }
 
 } // namespace CesiumRasterOverlays

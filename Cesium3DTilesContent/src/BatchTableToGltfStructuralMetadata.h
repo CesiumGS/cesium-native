@@ -22,7 +22,14 @@ struct BatchTableToGltfStructuralMetadata {
       const std::span<const std::byte>& batchTableBinaryData,
       CesiumGltf::Model& gltf);
 
-    static CesiumUtility::ErrorList convertFromVctr(
+  static CesiumUtility::ErrorList convertFromI3dm(
+      const rapidjson::Document& featureTableJson,
+      const rapidjson::Document& batchTableJson,
+      const std::span<const std::byte>& featureTableJsonData,
+      const std::span<const std::byte>& batchTableBinaryData,
+      CesiumGltf::Model& gltf);
+  
+  static CesiumUtility::ErrorList convertFromVctr(
       const rapidjson::Document& featureTableJson,
       const rapidjson::Document& batchTableJson,
       const std::span<const std::byte>& batchTableBinaryData,

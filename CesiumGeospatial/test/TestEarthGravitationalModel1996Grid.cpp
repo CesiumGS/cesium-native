@@ -1,13 +1,14 @@
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/EarthGravitationalModel1996Grid.h>
-#include <CesiumNativeTests/OwnedTempFile.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
+#include <cstddef>
 #include <filesystem>
+#include <optional>
+#include <vector>
 
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
@@ -195,19 +196,19 @@ const Egm96TestCase boundsCases[] = {
 const std::byte zeroByte{0};
 
 TEST_CASE("EarthGravitationalModel1996Grid::fromBuffer") {
-  SECTION("Loads a valid WW15MGH.DAC from buffer") {
+  SUBCASE("Loads a valid WW15MGH.DAC from buffer") {
     auto grid =
         EarthGravitationalModel1996Grid::fromBuffer(readFile(testFilePath));
     CHECK(grid.has_value());
   }
 
-  SECTION("Fails on too-short buffer") {
+  SUBCASE("Fails on too-short buffer") {
     std::vector<std::byte> buffer(4, zeroByte);
     auto grid = EarthGravitationalModel1996Grid::fromBuffer(buffer);
     CHECK(!grid.has_value());
   }
 
-  SECTION("Loads an arbitrary correctly-formed buffer") {
+  SUBCASE("Loads an arbitrary correctly-formed buffer") {
     std::vector<std::byte> buffer(3000000, zeroByte);
     auto grid = EarthGravitationalModel1996Grid::fromBuffer(buffer);
     CHECK(grid.has_value());
@@ -218,7 +219,7 @@ TEST_CASE("EarthGravitationalModel1996Grid::sampleHeight") {
   std::optional<EarthGravitationalModel1996Grid> grid =
       EarthGravitationalModel1996Grid::fromBuffer(readFile(testFilePath));
 
-  SECTION("Correct values at bounds") {
+  SUBCASE("Correct values at bounds") {
     REQUIRE(grid.has_value());
 
     for (const Egm96TestCase& testCase : boundsCases) {
@@ -232,7 +233,7 @@ TEST_CASE("EarthGravitationalModel1996Grid::sampleHeight") {
     }
   }
 
-  SECTION("Calculates correct height values") {
+  SUBCASE("Calculates correct height values") {
     REQUIRE(grid.has_value());
 
     for (const Egm96TestCase& testCase : testCases) {

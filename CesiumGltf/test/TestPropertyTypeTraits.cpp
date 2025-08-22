@@ -1,7 +1,38 @@
-#include "CesiumGltf/PropertyTypeTraits.h"
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/matrix_double2x2.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/matrix_float2x2.hpp>
+#include <glm/ext/matrix_float3x3.hpp>
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_double4.hpp>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_float4.hpp>
+#include <glm/ext/vector_int2.hpp>
+#include <glm/ext/vector_int2_sized.hpp>
+#include <glm/ext/vector_int3.hpp>
+#include <glm/ext/vector_int3_sized.hpp>
+#include <glm/ext/vector_int4.hpp>
+#include <glm/ext/vector_int4_sized.hpp>
+#include <glm/ext/vector_uint2.hpp>
+#include <glm/ext/vector_uint2_sized.hpp>
+#include <glm/ext/vector_uint3.hpp>
+#include <glm/ext/vector_uint3_sized.hpp>
+#include <glm/ext/vector_uint4.hpp>
+#include <glm/ext/vector_uint4_sized.hpp>
+#include <glm/fwd.hpp>
+
+#include <cstdint>
+#include <string>
+#include <string_view>
+#include <type_traits>
 
 using namespace CesiumGltf;
 
@@ -163,7 +194,7 @@ TEST_CASE("Test MetadataArrayType") {
 }
 
 TEST_CASE("TypeToPropertyType") {
-  SECTION("Works for scalar types") {
+  SUBCASE("Works for scalar types") {
     REQUIRE(TypeToPropertyType<uint8_t>::value == PropertyType::Scalar);
     REQUIRE(
         TypeToPropertyType<uint8_t>::component == PropertyComponentType::Uint8);
@@ -200,7 +231,7 @@ TEST_CASE("TypeToPropertyType") {
         TypeToPropertyType<int64_t>::component == PropertyComponentType::Int64);
   }
 
-  SECTION("Works for vecN types") {
+  SUBCASE("Works for vecN types") {
     // Vec2
     REQUIRE(TypeToPropertyType<glm::u8vec2>::value == PropertyType::Vec2);
     REQUIRE(
@@ -355,7 +386,7 @@ TEST_CASE("TypeToPropertyType") {
         PropertyComponentType::Float64);
   }
 
-  SECTION("Works for matN types") {
+  SUBCASE("Works for matN types") {
     // Mat2
     REQUIRE(TypeToPropertyType<glm::u8mat2x2>::value == PropertyType::Mat2);
     REQUIRE(
@@ -510,12 +541,12 @@ TEST_CASE("TypeToPropertyType") {
         PropertyComponentType::Float64);
   }
 
-  SECTION("Works for boolean") {
+  SUBCASE("Works for boolean") {
     REQUIRE(TypeToPropertyType<bool>::value == PropertyType::Boolean);
     REQUIRE(TypeToPropertyType<bool>::component == PropertyComponentType::None);
   }
 
-  SECTION("Works for string") {
+  SUBCASE("Works for string") {
     REQUIRE(
         TypeToPropertyType<std::string_view>::value == PropertyType::String);
     REQUIRE(
@@ -525,7 +556,7 @@ TEST_CASE("TypeToPropertyType") {
 }
 
 TEST_CASE("CanBeNormalized") {
-  SECTION("Works for scalars") {
+  SUBCASE("Works for scalars") {
     REQUIRE(CanBeNormalized<uint8_t>::value);
     REQUIRE(CanBeNormalized<int8_t>::value);
     REQUIRE(CanBeNormalized<uint16_t>::value);
@@ -541,7 +572,7 @@ TEST_CASE("CanBeNormalized") {
     REQUIRE(!CanBeNormalized<std::string_view>::value);
   }
 
-  SECTION("Works for vecNs") {
+  SUBCASE("Works for vecNs") {
     REQUIRE(CanBeNormalized<glm::u8vec2>::value);
     REQUIRE(CanBeNormalized<glm::u8vec3>::value);
     REQUIRE(CanBeNormalized<glm::u8vec4>::value);
@@ -583,7 +614,7 @@ TEST_CASE("CanBeNormalized") {
     REQUIRE(!CanBeNormalized<glm::dvec4>::value);
   }
 
-  SECTION("Works for matN") {
+  SUBCASE("Works for matN") {
     REQUIRE(CanBeNormalized<glm::u8mat2x2>::value);
     REQUIRE(CanBeNormalized<glm::u8mat3x3>::value);
     REQUIRE(CanBeNormalized<glm::u8mat4x4>::value);
@@ -625,15 +656,77 @@ TEST_CASE("CanBeNormalized") {
     REQUIRE(!CanBeNormalized<glm::dmat4>::value);
   }
 
-  SECTION("Works for arrays") {
+  SUBCASE("Works for arrays") {
     REQUIRE(CanBeNormalized<PropertyArrayView<int32_t>>::value);
     REQUIRE(CanBeNormalized<PropertyArrayView<glm::uvec2>>::value);
     REQUIRE(CanBeNormalized<PropertyArrayView<glm::i64mat2x2>>::value);
   }
 }
 
+TEST_CASE("Test canRepresentPropertyType") {
+  SUBCASE("Works for scalars") {
+    REQUIRE(canRepresentPropertyType<int8_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint8_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int16_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint16_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int32_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint32_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<int64_t>(PropertyType::Scalar));
+    REQUIRE(canRepresentPropertyType<uint64_t>(PropertyType::Scalar));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Scalar));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Scalar));
+  }
+
+  SUBCASE("Works for enums") {
+    REQUIRE(canRepresentPropertyType<int8_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint8_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int16_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint16_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int32_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint32_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<int64_t>(PropertyType::Enum));
+    REQUIRE(canRepresentPropertyType<uint64_t>(PropertyType::Enum));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Enum));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Enum));
+  }
+
+  SUBCASE("Works for vecNs") {
+    REQUIRE(canRepresentPropertyType<glm::vec2>(PropertyType::Vec2));
+    REQUIRE(canRepresentPropertyType<glm::dvec2>(PropertyType::Vec2));
+    REQUIRE(canRepresentPropertyType<glm::vec3>(PropertyType::Vec3));
+    REQUIRE(canRepresentPropertyType<glm::dvec3>(PropertyType::Vec3));
+    REQUIRE(canRepresentPropertyType<glm::vec4>(PropertyType::Vec4));
+    REQUIRE(canRepresentPropertyType<glm::dvec4>(PropertyType::Vec4));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Vec4));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Vec4));
+  }
+
+  SUBCASE("Works for matNs") {
+    REQUIRE(canRepresentPropertyType<glm::mat2>(PropertyType::Mat2));
+    REQUIRE(canRepresentPropertyType<glm::dmat2>(PropertyType::Mat2));
+    REQUIRE(canRepresentPropertyType<glm::mat3>(PropertyType::Mat3));
+    REQUIRE(canRepresentPropertyType<glm::dmat3>(PropertyType::Mat3));
+    REQUIRE(canRepresentPropertyType<glm::mat4>(PropertyType::Mat4));
+    REQUIRE(canRepresentPropertyType<glm::dmat4>(PropertyType::Mat4));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Mat4));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::Mat4));
+  }
+
+  SUBCASE("Works for strings") {
+    REQUIRE(canRepresentPropertyType<std::string_view>(PropertyType::String));
+    REQUIRE(!canRepresentPropertyType<glm::dmat2>(PropertyType::String));
+    REQUIRE(!canRepresentPropertyType<bool>(PropertyType::String));
+  }
+
+  SUBCASE("Works for booleans") {
+    REQUIRE(canRepresentPropertyType<bool>(PropertyType::Boolean));
+    REQUIRE(!canRepresentPropertyType<glm::dmat2>(PropertyType::Boolean));
+    REQUIRE(!canRepresentPropertyType<std::string_view>(PropertyType::Boolean));
+  }
+}
+
 TEST_CASE("TypeToNormalizedType") {
-  SECTION("Works for scalars") {
+  SUBCASE("Works for scalars") {
     REQUIRE(std::is_same_v<TypeToNormalizedType<uint8_t>::type, double>);
     REQUIRE(std::is_same_v<TypeToNormalizedType<int8_t>::type, double>);
     REQUIRE(std::is_same_v<TypeToNormalizedType<uint16_t>::type, double>);
@@ -645,7 +738,7 @@ TEST_CASE("TypeToNormalizedType") {
     REQUIRE(std::is_same_v<TypeToNormalizedType<uint64_t>::type, double>);
   }
 
-  SECTION("Works for vecNs") {
+  SUBCASE("Works for vecNs") {
     using ExpectedVec2Type = glm::dvec2;
     using ExpectedVec3Type = glm::dvec3;
     using ExpectedVec4Type = glm::dvec4;
@@ -731,7 +824,7 @@ TEST_CASE("TypeToNormalizedType") {
             ExpectedVec4Type>);
   }
 
-  SECTION("Works for matNs") {
+  SUBCASE("Works for matNs") {
     using ExpectedMat2Type = glm::dmat2;
     using ExpectedMat3Type = glm::dmat3;
     using ExpectedMat4Type = glm::dmat4;
@@ -817,7 +910,7 @@ TEST_CASE("TypeToNormalizedType") {
             ExpectedMat4Type>);
   }
 
-  SECTION("Works for arrays") {
+  SUBCASE("Works for arrays") {
     REQUIRE(std::is_same_v<
             TypeToNormalizedType<PropertyArrayView<int64_t>>::type,
             PropertyArrayView<double>>);

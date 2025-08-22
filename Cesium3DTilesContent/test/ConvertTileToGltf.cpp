@@ -1,12 +1,24 @@
 ﻿#include "ConvertTileToGltf.h"
 
 #include <Cesium3DTilesContent/B3dmToGltfConverter.h>
-#include <Cesium3DTilesContent/VctrToGltfConverter.h>
+#include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/I3dmToGltfConverter.h>
 #include <Cesium3DTilesContent/PntsToGltfConverter.h>
+#include <Cesium3DTilesContent/VctrToGltfConverter.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumNativeTests/FileAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+
+#include <glm/ext/matrix_double4x4.hpp>
+
+#include <filesystem>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace Cesium3DTilesContent {
 

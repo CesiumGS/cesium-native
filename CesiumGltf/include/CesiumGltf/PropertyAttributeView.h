@@ -1,11 +1,11 @@
 #pragma once
 
-#include "CesiumGltf/Class.h"
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/ExtensionModelExtStructuralMetadata.h"
-#include "CesiumGltf/PropertyAttribute.h"
-#include "CesiumGltf/PropertyAttributePropertyView.h"
-#include "Model.h"
+#include <CesiumGltf/Class.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyAttribute.h>
+#include <CesiumGltf/PropertyAttributePropertyView.h>
 
 namespace CesiumGltf {
 /**
@@ -655,7 +655,7 @@ private:
       const ClassProperty& classProperty,
       const PropertyAttributeProperty& propertyAttributeProperty) const {
     const PropertyType type = convertStringToPropertyType(classProperty.type);
-    if (TypeToPropertyType<T>::value != type) {
+    if (!canRepresentPropertyType<T>(type)) {
       return PropertyAttributePropertyView<T, Normalized>(
           PropertyAttributePropertyViewStatus::ErrorTypeMismatch);
     }

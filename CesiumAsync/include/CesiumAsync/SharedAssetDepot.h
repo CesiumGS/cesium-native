@@ -47,7 +47,7 @@ public:
    *
    * Default is 16MiB.
    */
-  int64_t inactiveAssetSizeLimitBytes = 16 * 1024 * 1024;
+  int64_t inactiveAssetSizeLimitBytes = static_cast<int64_t>(16 * 1024 * 1024);
 
   /**
    * @brief Signature for the callback function that will be called to fetch and
@@ -119,11 +119,11 @@ public:
    */
   int64_t getInactiveAssetTotalSizeBytes() const;
 
-private:
-  struct LockHolder;
-
   // Disable copy
   void operator=(const SharedAssetDepot<TAssetType, TAssetKey>& other) = delete;
+
+private:
+  struct LockHolder;
 
   /**
    * @brief Locks the shared asset depot for thread-safe access. It will remain
@@ -448,6 +448,12 @@ void SharedAssetDepot<TAssetType, TAssetKey>::markDeletionCandidate(
 template <typename TAssetType, typename TAssetKey>
 void SharedAssetDepot<TAssetType, TAssetKey>::markDeletionCandidateUnderLock(
     const TAssetType& asset) {
+  // Verify that the reference count is still zero.
+  // See: https://github.com/CesiumGS/cesium-native/issues/1073
+  if (asset._referenceCount != 0) {
+    return;
+  }
+
   auto it = this->_assetsByPointer.find(const_cast<TAssetType*>(&asset));
   CESIUM_ASSERT(it != this->_assetsByPointer.end());
   if (it == this->_assetsByPointer.end()) {
@@ -519,8 +525,8 @@ void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidateUnderLock(
   AssetEntry& entry = *it->second;
   bool isFound = this->_deletionCandidates.contains(entry);
 
-  CESIUM_ASSERT(isFound);
-
+  // The asset won't necessarily be found in the deletionCandidates set.
+  // See: https://github.com/CesiumGS/cesium-native/issues/1073
   if (isFound) {
     this->_totalDeletionCandidateMemoryUsage -= entry.sizeInDeletionList;
     this->_deletionCandidates.remove(entry);

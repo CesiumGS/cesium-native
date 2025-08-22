@@ -25,7 +25,6 @@ target_sources(
     PRIVATE
         ${CESIUM_GEOSPATIAL_SOURCES}
         ${CESIUM_GEOSPATIAL_HEADERS}
-    PUBLIC
         ${CESIUM_GEOSPATIAL_PUBLIC_HEADERS}
 )
 
@@ -33,19 +32,18 @@ cesium_target_include_directories(
     TARGET
         CesiumGeospatial
     PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<INSTALL_INTERFACE:include>
 )
 
 target_link_libraries(CesiumGeospatial
 PUBLIC
     CesiumGeometry
     CesiumUtility
-    earcut
 PRIVATE
+    $<BUILD_INTERFACE:earcut>
     s2::s2
 )
-
-target_compile_definitions(CesiumGeospatial PRIVATE GLM_ENABLE_EXPERIMENTAL)
 
 if(CESIUM_DISABLE_DEFAULT_ELLIPSOID)
   target_compile_definitions(CesiumGeospatial PUBLIC CESIUM_DISABLE_DEFAULT_ELLIPSOID=1)

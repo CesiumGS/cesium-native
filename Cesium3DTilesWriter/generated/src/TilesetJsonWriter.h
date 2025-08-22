@@ -11,6 +11,10 @@ class ExtensionWriterContext;
 // forward declarations
 namespace Cesium3DTiles {
 struct Extension3dTilesBoundingVolumeS2;
+struct Extension3dTilesEllipsoid;
+struct Extension3dTilesBoundingVolumeCylinder;
+struct ExtensionContent3dTilesContentVoxels;
+struct Padding;
 struct Statistics;
 struct ClassStatistics;
 struct PropertyStatistics;
@@ -48,6 +52,55 @@ struct Extension3dTilesBoundingVolumeS2JsonWriter {
 
   static void write(
       const Cesium3DTiles::Extension3dTilesBoundingVolumeS2& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct Extension3dTilesEllipsoidJsonWriter {
+  using ValueType = Cesium3DTiles::Extension3dTilesEllipsoid;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "3DTILES_ellipsoid";
+
+  static void write(
+      const Cesium3DTiles::Extension3dTilesEllipsoid& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct Extension3dTilesBoundingVolumeCylinderJsonWriter {
+  using ValueType = Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName =
+      "3DTILES_bounding_volume_cylinder";
+
+  static void write(
+      const Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionContent3dTilesContentVoxelsJsonWriter {
+  using ValueType = Cesium3DTiles::ExtensionContent3dTilesContentVoxels;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "3DTILES_content_voxels";
+
+  static void write(
+      const Cesium3DTiles::ExtensionContent3dTilesContentVoxels& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct PaddingJsonWriter {
+  using ValueType = Cesium3DTiles::Padding;
+
+  static void write(
+      const Cesium3DTiles::Padding& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

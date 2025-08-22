@@ -1,15 +1,23 @@
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/TileBoundingVolumes.h>
+#include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/matrix_double3x3.hpp>
 #include <libmorton/morton.h>
 
 #include <algorithm>
+#include <optional>
+#include <string>
+#include <vector>
 
 using namespace Cesium3DTiles;
 using namespace Cesium3DTilesContent;
@@ -17,7 +25,7 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 TEST_CASE("ImplicitTilingUtilities child tile iteration") {
-  SECTION("QuadtreeTileID") {
+  SUBCASE("QuadtreeTileID") {
     QuadtreeTileID parent(11, 2, 3);
 
     QuadtreeChildren children = ImplicitTilingUtilities::getChildren(parent);
@@ -48,7 +56,7 @@ TEST_CASE("ImplicitTilingUtilities child tile iteration") {
     CHECK(mismatch.second == expected.end());
   }
 
-  SECTION("OctreeTileID") {
+  SUBCASE("OctreeTileID") {
     OctreeTileID parent(11, 2, 3, 4);
 
     OctreeChildren children = ImplicitTilingUtilities::getChildren(parent);
@@ -86,7 +94,7 @@ TEST_CASE("ImplicitTilingUtilities child tile iteration") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::resolveUrl") {
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     QuadtreeTileID tileID(11, 2, 3);
     std::string url = ImplicitTilingUtilities::resolveUrl(
         "https://example.com",
@@ -95,7 +103,7 @@ TEST_CASE("ImplicitTilingUtilities::resolveUrl") {
     CHECK(url == "https://example.com/tiles/11/2/3");
   }
 
-  SECTION("octree") {
+  SUBCASE("octree") {
     OctreeTileID tileID(11, 2, 3, 4);
     std::string url = ImplicitTilingUtilities::resolveUrl(
         "https://example.com",
@@ -106,14 +114,14 @@ TEST_CASE("ImplicitTilingUtilities::resolveUrl") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::computeMortonIndex") {
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     QuadtreeTileID tileID(11, 2, 3);
     CHECK(
         ImplicitTilingUtilities::computeMortonIndex(tileID) ==
         libmorton::morton2D_64_encode(2, 3));
   }
 
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     OctreeTileID tileID(11, 2, 3, 4);
     CHECK(
         ImplicitTilingUtilities::computeMortonIndex(tileID) ==
@@ -122,7 +130,7 @@ TEST_CASE("ImplicitTilingUtilities::computeMortonIndex") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::computeRelativeMortonIndex") {
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     QuadtreeTileID rootID(11, 2, 3);
     QuadtreeTileID tileID(12, 5, 6);
     CHECK(
@@ -130,7 +138,7 @@ TEST_CASE("ImplicitTilingUtilities::computeRelativeMortonIndex") {
         1);
   }
 
-  SECTION("octree") {
+  SUBCASE("octree") {
     OctreeTileID rootID(11, 2, 3, 4);
     OctreeTileID tileID(12, 5, 6, 8);
     CHECK(
@@ -139,8 +147,40 @@ TEST_CASE("ImplicitTilingUtilities::computeRelativeMortonIndex") {
   }
 }
 
+TEST_CASE("ImplicitTilingUtilities::getParentID") {
+  SUBCASE("quadtree") {
+    QuadtreeTileID tileID(2, 1, 2);
+    std::optional<QuadtreeTileID> maybeParent =
+        ImplicitTilingUtilities::getParentID(tileID);
+    REQUIRE_UNARY(maybeParent);
+    CHECK_EQ(maybeParent, QuadtreeTileID(1, 0, 1));
+
+    std::optional<QuadtreeTileID> maybeGrandparent =
+        ImplicitTilingUtilities::getParentID(*maybeParent);
+    REQUIRE_UNARY(maybeGrandparent);
+    CHECK_EQ(maybeGrandparent, QuadtreeTileID(0, 0, 0));
+
+    CHECK_UNARY_FALSE(ImplicitTilingUtilities::getParentID(*maybeGrandparent));
+  }
+
+  SUBCASE("octree") {
+    OctreeTileID tileID(2, 3, 1, 2);
+    std::optional<OctreeTileID> maybeParent =
+        ImplicitTilingUtilities::getParentID(tileID);
+    REQUIRE_UNARY(maybeParent);
+    CHECK_EQ(maybeParent, OctreeTileID(1, 1, 0, 1));
+
+    std::optional<OctreeTileID> maybeGrandparent =
+        ImplicitTilingUtilities::getParentID(*maybeParent);
+    REQUIRE_UNARY(maybeGrandparent);
+    CHECK_EQ(maybeGrandparent, OctreeTileID(0, 0, 0, 0));
+
+    CHECK_UNARY_FALSE(ImplicitTilingUtilities::getParentID(*maybeGrandparent));
+  }
+}
+
 TEST_CASE("ImplicitTilingUtilities::getSubtreeRootID") {
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     QuadtreeTileID tileID(10, 2, 3);
     CHECK(
         ImplicitTilingUtilities::getSubtreeRootID(5, tileID) ==
@@ -150,7 +190,7 @@ TEST_CASE("ImplicitTilingUtilities::getSubtreeRootID") {
         QuadtreeTileID(8, 0, 0));
   }
 
-  SECTION("octree") {
+  SUBCASE("octree") {
     OctreeTileID tileID(10, 2, 3, 4);
     CHECK(
         ImplicitTilingUtilities::getSubtreeRootID(5, tileID) ==
@@ -162,7 +202,7 @@ TEST_CASE("ImplicitTilingUtilities::getSubtreeRootID") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::absoluteTileIDToRelative") {
-  SECTION("quadtree") {
+  SUBCASE("quadtree") {
     CHECK(
         ImplicitTilingUtilities::absoluteTileIDToRelative(
             QuadtreeTileID(0, 0, 0),
@@ -177,7 +217,7 @@ TEST_CASE("ImplicitTilingUtilities::absoluteTileIDToRelative") {
             QuadtreeTileID(12, 5, 7)) == QuadtreeTileID(1, 1, 1));
   }
 
-  SECTION("octree") {
+  SUBCASE("octree") {
     CHECK(
         ImplicitTilingUtilities::absoluteTileIDToRelative(
             OctreeTileID(0, 0, 0, 0),
@@ -200,8 +240,8 @@ TEST_CASE("ImplicitTilingUtilities::computeLevelDenominator") {
 }
 
 TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
-  SECTION("OrientedBoundingBox") {
-    SECTION("quadtree") {
+  SUBCASE("OrientedBoundingBox") {
+    SUBCASE("quadtree") {
       OrientedBoundingBox root(glm::dvec3(1.0, 2.0, 3.0), glm::dmat3(10.0));
 
       OrientedBoundingBox l1x0y0 =
@@ -226,7 +266,7 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       CHECK(l1x0y1.getLengths() == glm::dvec3(10.0, 10.0, 20.0));
     }
 
-    SECTION("octree") {
+    SUBCASE("octree") {
       OrientedBoundingBox root(glm::dvec3(1.0, 2.0, 3.0), glm::dmat3(10.0));
 
       OrientedBoundingBox l1x0y0z0 =
@@ -259,8 +299,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
     }
   }
 
-  SECTION("BoundingRegion") {
-    SECTION("quadtree") {
+  SUBCASE("BoundingRegion") {
+    SUBCASE("quadtree") {
       BoundingRegion root(
           GlobeRectangle(1.0, 2.0, 3.0, 4.0),
           10.0,
@@ -301,7 +341,7 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       CHECK(l1x0y1.getMaximumHeight() == 20.0);
     }
 
-    SECTION("octree") {
+    SUBCASE("octree") {
       BoundingRegion root(
           GlobeRectangle(1.0, 2.0, 3.0, 4.0),
           10.0,
@@ -354,8 +394,8 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
     }
   }
 
-  SECTION("S2") {
-    SECTION("quadtree") {
+  SUBCASE("S2") {
+    SUBCASE("quadtree") {
       S2CellBoundingVolume root(
           S2CellID::fromQuadtreeTileID(1, QuadtreeTileID(0, 0, 0)),
           10.0,
@@ -399,7 +439,7 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       CHECK(l1x0y1.getMaximumHeight() == 20.0);
     }
 
-    SECTION("octree") {
+    SUBCASE("octree") {
       S2CellBoundingVolume root(
           S2CellID::fromQuadtreeTileID(1, QuadtreeTileID(0, 0, 0)),
           10.0,
@@ -456,8 +496,405 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
     }
   }
 
-  SECTION("BoundingVolume") {
-    SECTION("quadtree") {
+  SUBCASE("BoundingCylinderRegion (whole)") {
+    BoundingCylinderRegion root(
+        glm::dvec3(1.0, 2.0, 3.0),
+        glm::dquat(CesiumGeometry::Transforms::Z_UP_TO_Y_UP),
+        2.0,
+        glm::dvec2(0.0, 1.0));
+
+    SUBCASE("quadtree") {
+      BoundingCylinderRegion l1x0y0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 0, 0));
+
+      CHECK(l1x0y0.getHeight() == root.getHeight());
+      CHECK(l1x0y0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+      CHECK(
+          l1x0y0.getAngularBounds() ==
+          glm::dvec2(-CesiumUtility::Math::OnePi, 0.0));
+      CHECK(l1x0y0.getRotation() == root.getRotation());
+      CHECK(l1x0y0.getTranslation() == root.getTranslation());
+
+      BoundingCylinderRegion l1x1y0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 1, 0));
+
+      CHECK(l1x1y0.getHeight() == root.getHeight());
+      CHECK(l1x1y0.getRadialBounds() == glm::dvec2(0.5, 1.0));
+      CHECK(
+          l1x1y0.getAngularBounds() ==
+          glm::dvec2(-CesiumUtility::Math::OnePi, 0.0));
+      CHECK(l1x1y0.getRotation() == root.getRotation());
+      CHECK(l1x1y0.getTranslation() == root.getTranslation());
+
+      BoundingCylinderRegion l1x0y1 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 0, 1));
+      CHECK(l1x0y1.getHeight() == root.getHeight());
+      CHECK(l1x0y1.getRadialBounds() == glm::dvec2(0.0, 0.5));
+      CHECK(
+          l1x0y1.getAngularBounds() ==
+          glm::dvec2(0.0, CesiumUtility::Math::OnePi));
+      CHECK(l1x0y1.getRotation() == root.getRotation());
+      CHECK(l1x0y1.getTranslation() == root.getTranslation());
+    }
+
+    SUBCASE("octree") {
+      double expectedHeight = 0.5 * root.getHeight();
+
+      BoundingCylinderRegion l1x0y0z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 0, 0));
+      {
+        CHECK(l1x0y0z0.getHeight() == expectedHeight);
+        CHECK(l1x0y0z0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(
+            l1x0y0z0.getAngularBounds() ==
+            glm::dvec2(-CesiumUtility::Math::OnePi, 0.0));
+        CHECK(l1x0y0z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, -0.5 * expectedHeight, 0.0);
+        CHECK(l1x0y0z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x1y0z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 1, 0, 0));
+      {
+        CHECK(l1x1y0z0.getHeight() == expectedHeight);
+        CHECK(l1x1y0z0.getRadialBounds() == glm::dvec2(0.5, 1.0));
+        CHECK(
+            l1x1y0z0.getAngularBounds() ==
+            glm::dvec2(-CesiumUtility::Math::OnePi, 0.0));
+        CHECK(l1x1y0z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, -0.5 * expectedHeight, 0.0);
+        CHECK(l1x1y0z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x0y1z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 1, 0));
+      {
+        CHECK(l1x0y1z0.getHeight() == expectedHeight);
+        CHECK(l1x0y1z0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(
+            l1x0y1z0.getAngularBounds() ==
+            glm::dvec2(0.0, CesiumUtility::Math::OnePi));
+        CHECK(l1x0y1z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, -0.5 * expectedHeight, 0.0);
+        CHECK(l1x0y1z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x0y0z1 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 0, 1));
+      {
+        CHECK(l1x0y0z1.getHeight() == expectedHeight);
+        CHECK(l1x0y0z1.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(
+            l1x0y0z1.getAngularBounds() ==
+            glm::dvec2(-CesiumUtility::Math::OnePi, 0.0));
+        CHECK(l1x0y0z1.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.5 * expectedHeight, 0.0);
+        CHECK(l1x0y0z1.getTranslation() == expectedTranslation);
+      }
+    }
+  }
+
+  SUBCASE("BoundingCylinderRegion (partial)") {
+    BoundingCylinderRegion root(
+        glm::dvec3(-1.0, 1.0, 2.0),
+        glm::dquat(1.0, 0.0, 0.0, 0.0),
+        2.0,
+        glm::dvec2(0.0, 1.0),
+        glm::dvec2(
+            -CesiumUtility::Math::PiOverTwo,
+            CesiumUtility::Math::PiOverTwo));
+
+    SUBCASE("quadtree") {
+      BoundingCylinderRegion l1x0y0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 0, 0));
+
+      CHECK(l1x0y0.getHeight() == root.getHeight());
+      CHECK(l1x0y0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          l1x0y0.getAngularBounds(),
+          glm::dvec2(-CesiumUtility::Math::PiOverTwo, 0.0),
+          CesiumUtility::Math::Epsilon6));
+      CHECK(l1x0y0.getRotation() == root.getRotation());
+      CHECK(l1x0y0.getTranslation() == root.getTranslation());
+
+      BoundingCylinderRegion l1x1y0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 1, 0));
+
+      CHECK(l1x1y0.getHeight() == root.getHeight());
+      CHECK(l1x1y0.getRadialBounds() == glm::dvec2(0.5, 1.0));
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          l1x0y0.getAngularBounds(),
+          glm::dvec2(-CesiumUtility::Math::PiOverTwo, 0.0),
+          CesiumUtility::Math::Epsilon6));
+      CHECK(l1x1y0.getRotation() == root.getRotation());
+      CHECK(l1x1y0.getTranslation() == root.getTranslation());
+
+      BoundingCylinderRegion l1x0y1 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 0, 1));
+      CHECK(l1x0y1.getHeight() == root.getHeight());
+      CHECK(l1x0y1.getRadialBounds() == glm::dvec2(0.0, 0.5));
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          l1x0y1.getAngularBounds(),
+          glm::dvec2(0.0, CesiumUtility::Math::PiOverTwo),
+          CesiumUtility::Math::Epsilon6));
+      CHECK(l1x0y1.getRotation() == root.getRotation());
+      CHECK(l1x0y1.getTranslation() == root.getTranslation());
+    }
+
+    SUBCASE("octree") {
+      double expectedHeight = 0.5 * root.getHeight();
+
+      BoundingCylinderRegion l1x0y0z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 0, 0));
+      {
+        CHECK(l1x0y0z0.getHeight() == expectedHeight);
+        CHECK(l1x0y0z0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x0y0z0.getAngularBounds(),
+            glm::dvec2(-CesiumUtility::Math::PiOverTwo, 0.0),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x0y0z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, -0.5 * expectedHeight);
+        CHECK(l1x0y0z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x1y0z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 1, 0, 0));
+      {
+        CHECK(l1x1y0z0.getHeight() == expectedHeight);
+        CHECK(l1x1y0z0.getRadialBounds() == glm::dvec2(0.5, 1.0));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x1y0z0.getAngularBounds(),
+            glm::dvec2(-CesiumUtility::Math::PiOverTwo, 0.0),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x1y0z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, -0.5 * expectedHeight);
+        CHECK(l1x1y0z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x0y1z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 1, 0));
+      {
+        CHECK(l1x0y1z0.getHeight() == expectedHeight);
+        CHECK(l1x0y1z0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x0y1z0.getAngularBounds(),
+            glm::dvec2(0.0, CesiumUtility::Math::PiOverTwo),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x0y1z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, -0.5 * expectedHeight);
+        CHECK(l1x0y1z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x0y0z1 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 0, 1));
+      {
+        CHECK(l1x0y0z1.getHeight() == expectedHeight);
+        CHECK(l1x0y0z1.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x0y0z1.getAngularBounds(),
+            glm::dvec2(-CesiumUtility::Math::PiOverTwo, 0.0),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x0y0z1.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, 0.5 * expectedHeight);
+        CHECK(l1x0y0z1.getTranslation() == expectedTranslation);
+      }
+    }
+  }
+
+  SUBCASE("BoundingCylinderRegion (partial with discontinuity)") {
+    BoundingCylinderRegion root(
+        glm::dvec3(-1.0, 1.0, 2.0),
+        glm::dquat(1.0, 0.0, 0.0, 0.0),
+        2.0,
+        glm::dvec2(0.0, 1.0),
+        glm::dvec2(
+            CesiumUtility::Math::PiOverFour,
+            -CesiumUtility::Math::PiOverFour));
+
+    // The full angle range is 3pi / 2, and the implicit subdivision splits
+    // this range in half at the -pi / pi discontinuity line.
+
+    SUBCASE("quadtree") {
+      BoundingCylinderRegion l1x0y0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 0, 0));
+
+      CHECK(l1x0y0.getHeight() == root.getHeight());
+      CHECK(l1x0y0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          l1x0y0.getAngularBounds(),
+          glm::dvec2(
+              CesiumUtility::Math::PiOverFour,
+              CesiumUtility::Math::OnePi),
+          CesiumUtility::Math::Epsilon6));
+      CHECK(l1x0y0.getRotation() == root.getRotation());
+      CHECK(l1x0y0.getTranslation() == root.getTranslation());
+
+      BoundingCylinderRegion l1x1y0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 1, 0));
+
+      CHECK(l1x1y0.getHeight() == root.getHeight());
+      CHECK(l1x1y0.getRadialBounds() == glm::dvec2(0.5, 1.0));
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          l1x1y0.getAngularBounds(),
+          glm::dvec2(
+              CesiumUtility::Math::PiOverFour,
+              CesiumUtility::Math::OnePi),
+          CesiumUtility::Math::Epsilon6));
+      CHECK(l1x1y0.getRotation() == root.getRotation());
+      CHECK(l1x1y0.getTranslation() == root.getTranslation());
+
+      BoundingCylinderRegion l1x0y1 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              QuadtreeTileID(1, 0, 1));
+      CHECK(l1x0y1.getHeight() == root.getHeight());
+      CHECK(l1x0y1.getRadialBounds() == glm::dvec2(0.0, 0.5));
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          l1x0y1.getAngularBounds(),
+          glm::dvec2(
+              -CesiumUtility::Math::OnePi,
+              -CesiumUtility::Math::PiOverFour),
+          CesiumUtility::Math::Epsilon6));
+      CHECK(l1x0y1.getRotation() == root.getRotation());
+      CHECK(l1x0y1.getTranslation() == root.getTranslation());
+    }
+
+    SUBCASE("octree") {
+      double expectedHeight = 0.5 * root.getHeight();
+
+      BoundingCylinderRegion l1x0y0z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 0, 0));
+      {
+        CHECK(l1x0y0z0.getHeight() == expectedHeight);
+        CHECK(l1x0y0z0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x0y0z0.getAngularBounds(),
+            glm::dvec2(
+                CesiumUtility::Math::PiOverFour,
+                CesiumUtility::Math::OnePi),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x0y0z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, -0.5 * expectedHeight);
+        CHECK(l1x0y0z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x1y0z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 1, 0, 0));
+      {
+        CHECK(l1x1y0z0.getHeight() == expectedHeight);
+        CHECK(l1x1y0z0.getRadialBounds() == glm::dvec2(0.5, 1.0));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x1y0z0.getAngularBounds(),
+            glm::dvec2(
+                CesiumUtility::Math::PiOverFour,
+                CesiumUtility::Math::OnePi),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x1y0z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, -0.5 * expectedHeight);
+        CHECK(l1x1y0z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x0y1z0 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 1, 0));
+      {
+        CHECK(l1x0y1z0.getHeight() == expectedHeight);
+        CHECK(l1x0y1z0.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x0y1z0.getAngularBounds(),
+            glm::dvec2(
+                -CesiumUtility::Math::OnePi,
+                -CesiumUtility::Math::PiOverFour),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x0y1z0.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, -0.5 * expectedHeight);
+        CHECK(l1x0y1z0.getTranslation() == expectedTranslation);
+      }
+
+      BoundingCylinderRegion l1x0y0z1 =
+          ImplicitTilingUtilities::computeBoundingVolume(
+              root,
+              OctreeTileID(1, 0, 0, 1));
+      {
+        CHECK(l1x0y0z1.getHeight() == expectedHeight);
+        CHECK(l1x0y0z1.getRadialBounds() == glm::dvec2(0.0, 0.5));
+        CHECK(CesiumUtility::Math::equalsEpsilon(
+            l1x0y0z1.getAngularBounds(),
+            glm::dvec2(
+                CesiumUtility::Math::PiOverFour,
+                CesiumUtility::Math::OnePi),
+            CesiumUtility::Math::Epsilon6));
+        CHECK(l1x0y0z1.getRotation() == root.getRotation());
+
+        glm::dvec3 expectedTranslation =
+            root.getTranslation() + glm::dvec3(0.0, 0.0, 0.5 * expectedHeight);
+        CHECK(l1x0y0z1.getTranslation() == expectedTranslation);
+      }
+    }
+  }
+
+  SUBCASE("BoundingVolume") {
+    SUBCASE("quadtree") {
       BoundingVolume root{};
 
       TileBoundingVolumes::setOrientedBoundingBox(
@@ -519,7 +956,7 @@ TEST_CASE("ImplicitTilingUtilities::computeBoundingVolume") {
       CHECK(maybeS2->getMaximumHeight() == 20.0);
     }
 
-    SECTION("octree") {
+    SUBCASE("octree") {
       BoundingVolume root{};
 
       TileBoundingVolumes::setOrientedBoundingBox(

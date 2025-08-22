@@ -1,11 +1,11 @@
 #pragma once
 
-#include "CesiumUtility/Assert.h"
-#include "DoubleJsonHandler.h"
-#include "IntegerJsonHandler.h"
-#include "JsonHandler.h"
-#include "Library.h"
-#include "StringJsonHandler.h"
+#include <CesiumJsonReader/DoubleJsonHandler.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
+#include <CesiumJsonReader/JsonHandler.h>
+#include <CesiumJsonReader/Library.h>
+#include <CesiumJsonReader/StringJsonHandler.h>
+#include <CesiumUtility/Assert.h>
 
 #include <functional>
 #include <memory>
@@ -91,8 +91,8 @@ public:
     return this->_objectHandler->readObjectStart();
   }
 
-  virtual IJsonHandler*
-  readObjectKey(const std::string_view& /*str*/) noexcept override {
+  virtual IJsonHandler* readObjectKey(
+      [[maybe_unused]] const std::string_view& str) noexcept override {
     return nullptr;
   }
 

@@ -1,15 +1,24 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/Transforms.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
+#include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 TEST_CASE("getOrientedBoundingBoxFromBoundingVolume") {
-  SECTION("for OrientedBoundingBox, the box is returned directly") {
+  SUBCASE("for OrientedBoundingBox, the box is returned directly") {
     OrientedBoundingBox obb(
         glm::dvec3(1.0, 2.0, 3.0),
         glm::dmat3(
@@ -22,7 +31,7 @@ TEST_CASE("getOrientedBoundingBoxFromBoundingVolume") {
     CHECK(obb.getHalfAxes() == newObb.getHalfAxes());
   }
 
-  SECTION("for BoundingSphere, a circumscribed box is returned") {
+  SUBCASE("for BoundingSphere, a circumscribed box is returned") {
     BoundingSphere bs(glm::dvec3(1.0, 2.0, 3.0), 10.0);
     BoundingVolume bv = bs;
     OrientedBoundingBox newObb = getOrientedBoundingBoxFromBoundingVolume(bv);
@@ -30,7 +39,38 @@ TEST_CASE("getOrientedBoundingBoxFromBoundingVolume") {
     CHECK(newObb.getLengths() == glm::dvec3(20.0));
   }
 
-  SECTION("for others, their aggregated oriented bounding box is returned") {
+  SUBCASE("for BoundingCylinderRegion, a tightly-fitted box is returned") {
+    glm::dquat rotation(CesiumGeometry::Transforms::X_UP_TO_Y_UP);
+    glm::dvec3 translation(1.0, 2.0, 3.0);
+
+    BoundingCylinderRegion region(
+        translation,
+        rotation,
+        3.0,
+        glm::dvec2(1.0, 2.0),
+        glm::dvec2(0.0, CesiumUtility::Math::PiOverTwo));
+
+    BoundingVolume bv = region;
+    OrientedBoundingBox newObb = getOrientedBoundingBoxFromBoundingVolume(bv);
+
+    glm::dvec3 expectedCenter(0.0, 3.0, 3.0);
+    glm::dmat3 expectedHalfAxes(0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.5);
+
+    CHECK(CesiumUtility::Math::equalsEpsilon(
+        newObb.getCenter(),
+        expectedCenter,
+        CesiumUtility::Math::Epsilon6));
+
+    const glm::dmat3& halfAxes = newObb.getHalfAxes();
+    for (glm::length_t i = 0; i < 3; i++) {
+      CHECK(CesiumUtility::Math::equalsEpsilon(
+          halfAxes[i],
+          expectedHalfAxes[i],
+          CesiumUtility::Math::Epsilon6));
+    }
+  }
+
+  SUBCASE("for others, their aggregated oriented bounding box is returned") {
     BoundingRegion region(
         GlobeRectangle(0.5, 1.0, 1.5, 2.0),
         100.0,

@@ -1,6 +1,8 @@
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumGltf/Model.h"
-
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Class.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
@@ -10,18 +12,29 @@
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/Node.h>
+#include <CesiumGltf/PropertyAttribute.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyTexture.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/Scene.h>
+#include <CesiumGltf/Texture.h>
+#include <CesiumUtility/ErrorList.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
-#include <glm/common.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/geometric.hpp>
 #include <glm/gtc/epsilon.hpp>
-#include <glm/mat4x4.hpp>
-#include <glm/vec3.hpp>
+#include <glm/vector_relational.hpp>
 
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
-#include <iostream>
 #include <utility>
 #include <vector>
 
@@ -107,7 +120,7 @@ TEST_CASE("Test forEachPrimitive") {
 
   MeshPrimitive& primitive3 = mesh2.primitives.emplace_back();
 
-  SECTION("Check that the correct primitives are iterated over.") {
+  SUBCASE("Check that the correct primitives are iterated over.") {
     std::vector<MeshPrimitive*> iteratedPrimitives;
 
     model.forEachPrimitiveInScene(
@@ -185,7 +198,7 @@ TEST_CASE("Test forEachPrimitive") {
     REQUIRE(iteratedPrimitives[0] == &primitive3);
   }
 
-  SECTION("Check the node transform") {
+  SUBCASE("Check the node transform") {
     std::vector<glm::dmat4> nodeTransforms;
 
     model.forEachPrimitiveInScene(
@@ -386,7 +399,7 @@ static Model createTriangleFan() {
 }
 
 TEST_CASE("Test smooth normal generation") {
-  SECTION("Test normal generation TRIANGLES") {
+  SUBCASE("Test normal generation TRIANGLES") {
     Model model = createCubeGltf();
 
     model.generateMissingNormalsSmooth();
@@ -423,7 +436,7 @@ TEST_CASE("Test smooth normal generation") {
         glm::epsilonEqual(vertex6Normal, expectedNormal, DEFAULT_EPSILON)));
   }
 
-  SECTION("Test normal generation for TRIANGLE_STRIP") {
+  SUBCASE("Test normal generation for TRIANGLE_STRIP") {
     Model model = createTriangleStrip();
 
     model.generateMissingNormalsSmooth();
@@ -457,7 +470,7 @@ TEST_CASE("Test smooth normal generation") {
         glm::epsilonEqual(vertex2Normal, expectedNormal, DEFAULT_EPSILON)));
   }
 
-  SECTION("Test normal generation for TRIANGLE_STRIP") {
+  SUBCASE("Test normal generation for TRIANGLE_STRIP") {
     Model model = createTriangleFan();
 
     model.generateMissingNormalsSmooth();
@@ -490,7 +503,7 @@ TEST_CASE("Test smooth normal generation") {
 }
 
 TEST_CASE("Model::addExtensionUsed") {
-  SECTION("adds a new extension") {
+  SUBCASE("adds a new extension") {
     Model m;
 
     m.addExtensionUsed("Foo");
@@ -505,7 +518,7 @@ TEST_CASE("Model::addExtensionUsed") {
         m.extensionsUsed.end());
   }
 
-  SECTION("does not add a duplicate extension") {
+  SUBCASE("does not add a duplicate extension") {
     Model m;
 
     m.addExtensionUsed("Foo");
@@ -521,7 +534,7 @@ TEST_CASE("Model::addExtensionUsed") {
         m.extensionsUsed.end());
   }
 
-  SECTION("does not also add the extension to extensionsRequired") {
+  SUBCASE("does not also add the extension to extensionsRequired") {
     Model m;
     m.addExtensionUsed("Foo");
     CHECK(m.extensionsRequired.empty());
@@ -529,7 +542,7 @@ TEST_CASE("Model::addExtensionUsed") {
 }
 
 TEST_CASE("Model::addExtensionRequired") {
-  SECTION("adds a new extension") {
+  SUBCASE("adds a new extension") {
     Model m;
 
     m.addExtensionRequired("Foo");
@@ -548,7 +561,7 @@ TEST_CASE("Model::addExtensionRequired") {
             "Bar") != m.extensionsRequired.end());
   }
 
-  SECTION("does not add a duplicate extension") {
+  SUBCASE("does not add a duplicate extension") {
     Model m;
 
     m.addExtensionRequired("Foo");
@@ -568,7 +581,7 @@ TEST_CASE("Model::addExtensionRequired") {
             "Bar") != m.extensionsRequired.end());
   }
 
-  SECTION("also adds the extension to extensionsUsed if not already present") {
+  SUBCASE("also adds the extension to extensionsUsed if not already present") {
     Model m;
 
     m.addExtensionUsed("Bar");
@@ -586,7 +599,7 @@ TEST_CASE("Model::addExtensionRequired") {
 }
 
 TEST_CASE("Model::removeExtensionUsed") {
-  SECTION("removes an extension") {
+  SUBCASE("removes an extension") {
     Model m;
     m.extensionsUsed = {"Foo", "Bar"};
 
@@ -603,7 +616,7 @@ TEST_CASE("Model::removeExtensionUsed") {
     CHECK(m.extensionsUsed.empty());
   }
 
-  SECTION("does not also remove the extension from extensionsRequired") {
+  SUBCASE("does not also remove the extension from extensionsRequired") {
     Model m;
     m.extensionsUsed = {"Foo"};
     m.extensionsRequired = {"Foo"};
@@ -616,7 +629,7 @@ TEST_CASE("Model::removeExtensionUsed") {
 }
 
 TEST_CASE("Model::removeExtensionRequired") {
-  SECTION("removes an extension") {
+  SUBCASE("removes an extension") {
     Model m;
     m.extensionsRequired = {"Foo", "Bar"};
 
@@ -633,7 +646,7 @@ TEST_CASE("Model::removeExtensionRequired") {
     CHECK(m.extensionsRequired.empty());
   }
 
-  SECTION("also removes the extension from extensionsUsed if present") {
+  SUBCASE("also removes the extension from extensionsUsed if present") {
     Model m;
     m.extensionsUsed = {"Foo"};
     m.extensionsRequired = {"Foo"};
@@ -645,8 +658,26 @@ TEST_CASE("Model::removeExtensionRequired") {
   }
 }
 
+TEST_CASE("Model::isExtensionUsed") {
+  Model m;
+  m.extensionsUsed = {"Foo", "Bar"};
+
+  CHECK(m.isExtensionUsed("Foo"));
+  CHECK(m.isExtensionUsed("Bar"));
+  CHECK_FALSE(m.isExtensionUsed("Baz"));
+}
+
+TEST_CASE("Model::isExtensionRequired") {
+  Model m;
+  m.extensionsRequired = {"Foo", "Bar"};
+
+  CHECK(m.isExtensionRequired("Foo"));
+  CHECK(m.isExtensionRequired("Bar"));
+  CHECK_FALSE(m.isExtensionRequired("Baz"));
+}
+
 TEST_CASE("Model::merge") {
-  SECTION("performs a simple merge") {
+  SUBCASE("performs a simple merge") {
     Model m1;
     m1.accessors.emplace_back().name = "m1";
     m1.animations.emplace_back().name = "m1";
@@ -722,7 +753,7 @@ TEST_CASE("Model::merge") {
     CHECK(m1.textures[1].name == "m2");
   }
 
-  SECTION("merges default scenes") {
+  SUBCASE("merges default scenes") {
     Model m1;
     m1.nodes.emplace_back().name = "node1";
     m1.nodes.emplace_back().name = "node2";
@@ -762,11 +793,11 @@ TEST_CASE("Model::merge") {
     CHECK(m1.nodes[size_t(defaultScene.nodes[3])].name == "node3");
   }
 
-  SECTION("merges metadata") {
+  SUBCASE("merges metadata") {
     Model m1;
     Model m2;
 
-    SECTION("when only this has the extension") {
+    SUBCASE("when only this has the extension") {
       ExtensionModelExtStructuralMetadata& metadata1 =
           m1.addExtension<ExtensionModelExtStructuralMetadata>();
       metadata1.schema.emplace().name = "test";
@@ -782,7 +813,7 @@ TEST_CASE("Model::merge") {
       CHECK(pExtension->schema->name == "test");
     }
 
-    SECTION("when only rhs has the extension") {
+    SUBCASE("when only rhs has the extension") {
       ExtensionModelExtStructuralMetadata& metadata2 =
           m2.addExtension<ExtensionModelExtStructuralMetadata>();
       metadata2.schema.emplace().name = "test";
@@ -798,14 +829,14 @@ TEST_CASE("Model::merge") {
       CHECK(pExtension->schema->name == "test");
     }
 
-    SECTION("when both have the extension") {
+    SUBCASE("when both have the extension") {
       ExtensionModelExtStructuralMetadata& metadata1 =
           m1.addExtension<ExtensionModelExtStructuralMetadata>();
 
       ExtensionModelExtStructuralMetadata& metadata2 =
           m2.addExtension<ExtensionModelExtStructuralMetadata>();
 
-      SECTION("and only this has a schema") {
+      SUBCASE("and only this has a schema") {
         metadata1.schema.emplace().name = "test";
 
         ErrorList errors = m1.merge(std::move(m2));
@@ -819,7 +850,7 @@ TEST_CASE("Model::merge") {
         CHECK(pExtension->schema->name == "test");
       }
 
-      SECTION("and only rhs has a schema") {
+      SUBCASE("and only rhs has a schema") {
         metadata2.schema.emplace().name = "test";
 
         ErrorList errors = m1.merge(std::move(m2));
@@ -833,7 +864,7 @@ TEST_CASE("Model::merge") {
         CHECK(pExtension->schema->name == "test");
       }
 
-      SECTION("and both have a schema with different classes") {
+      SUBCASE("and both have a schema with different classes") {
         Schema& schema1 = metadata1.schema.emplace();
         Class& class1 = schema1.classes["foo"];
         class1.name = "foo";
@@ -860,7 +891,7 @@ TEST_CASE("Model::merge") {
         REQUIRE(it2 != pExtension->schema->classes.end());
       }
 
-      SECTION("and both have a schema with a class with the same name") {
+      SUBCASE("and both have a schema with a class with the same name") {
         Schema& schema1 = metadata1.schema.emplace();
         Class& class1 = schema1.classes["foo"];
         class1.name = "foo";
@@ -869,7 +900,7 @@ TEST_CASE("Model::merge") {
         Class& class2 = schema2.classes["foo"];
         class2.name = "foo";
 
-        SECTION("it renames the duplicate class") {
+        SUBCASE("it renames the duplicate class") {
           ErrorList errors = m1.merge(std::move(m2));
           CHECK(errors.errors.empty());
           CHECK(errors.warnings.empty());
@@ -889,7 +920,7 @@ TEST_CASE("Model::merge") {
           CHECK(it2->second.name == "foo");
         }
 
-        SECTION("it updates PropertyTables to reference the renamed class") {
+        SUBCASE("it updates PropertyTables to reference the renamed class") {
           PropertyTable& propertyTable1 =
               metadata1.propertyTables.emplace_back();
           propertyTable1.classProperty = "foo";
@@ -912,7 +943,7 @@ TEST_CASE("Model::merge") {
           CHECK(pExtension->propertyTables[1].classProperty == "foo_1");
         }
 
-        SECTION(
+        SUBCASE(
             "it updates PropertyAttributes to reference the renamed class") {
           PropertyAttribute& propertyAttribute1 =
               metadata1.propertyAttributes.emplace_back();
@@ -936,7 +967,7 @@ TEST_CASE("Model::merge") {
           CHECK(pExtension->propertyAttributes[1].classProperty == "foo_1");
         }
 
-        SECTION("it updates PropertyTextures to reference the renamed class") {
+        SUBCASE("it updates PropertyTextures to reference the renamed class") {
           PropertyTexture& propertyTexture1 =
               metadata1.propertyTextures.emplace_back();
           propertyTexture1.classProperty = "foo";
@@ -960,7 +991,7 @@ TEST_CASE("Model::merge") {
         }
       }
 
-      SECTION("it updates BufferView indices in PropertyTableProperties") {
+      SUBCASE("it updates BufferView indices in PropertyTableProperties") {
         m1.bufferViews.emplace_back().name = "bufferView1";
         m2.bufferViews.emplace_back().name = "bufferView2";
 
@@ -1003,7 +1034,7 @@ TEST_CASE("Model::merge") {
         CHECK(it2->second.stringOffsets == 1);
       }
 
-      SECTION("it updates Texture indices in PropertyTextureProperties") {
+      SUBCASE("it updates Texture indices in PropertyTextureProperties") {
         m1.textures.emplace_back().name = "texture1";
         m2.textures.emplace_back().name = "texture2";
 
@@ -1040,7 +1071,7 @@ TEST_CASE("Model::merge") {
         CHECK(it2->second.index == 1);
       }
 
-      SECTION("it updates PropertyTexture indices in primitives") {
+      SUBCASE("it updates PropertyTexture indices in primitives") {
         metadata1.propertyTextures.emplace_back().name = "propertyTexture1";
         metadata2.propertyTextures.emplace_back().name = "propertyTexture2";
 
@@ -1083,7 +1114,7 @@ TEST_CASE("Model::merge") {
         CHECK(pPrimitiveMetadata2->propertyTextures[0] == 1);
       }
 
-      SECTION("it updates PropertyAttribute indices in primitives") {
+      SUBCASE("it updates PropertyAttribute indices in primitives") {
         metadata1.propertyAttributes.emplace_back().name = "propertyAttribute1";
         metadata2.propertyAttributes.emplace_back().name = "propertyAttribute2";
 
@@ -1126,7 +1157,7 @@ TEST_CASE("Model::merge") {
         CHECK(pPrimitiveMetadata2->propertyAttributes[0] == 1);
       }
 
-      SECTION("it updates PropertyTable indices in EXT_mesh_features attached "
+      SUBCASE("it updates PropertyTable indices in EXT_mesh_features attached "
               "to a primitive") {
         metadata1.propertyTables.emplace_back().name = "propertyTables1";
         metadata2.propertyTables.emplace_back().name = "propertyTables2";
@@ -1164,7 +1195,7 @@ TEST_CASE("Model::merge") {
         CHECK(pMeshFeatures2->featureIds[0].propertyTable == 1);
       }
 
-      SECTION("it updates Textures indices in EXT_mesh_features attached to a "
+      SUBCASE("it updates Textures indices in EXT_mesh_features attached to a "
               "primitive") {
         m1.textures.emplace_back().name = "texture1";
         m2.textures.emplace_back().name = "texture2";
@@ -1206,7 +1237,7 @@ TEST_CASE("Model::merge") {
     }
   }
 
-  SECTION("updates image index in KHR_texture_basisu") {
+  SUBCASE("updates image index in KHR_texture_basisu") {
     Model m1;
     m1.images.emplace_back();
 
@@ -1228,7 +1259,7 @@ TEST_CASE("Model::merge") {
     CHECK(pMerged->source == 1);
   }
 
-  SECTION("updates image index in EXT_texture_webp") {
+  SUBCASE("updates image index in EXT_texture_webp") {
     Model m1;
     m1.images.emplace_back();
 
@@ -1250,7 +1281,7 @@ TEST_CASE("Model::merge") {
     CHECK(pMerged->source == 1);
   }
 
-  SECTION("updates accessor index in CESIUM_primitive_outline") {
+  SUBCASE("updates accessor index in CESIUM_primitive_outline") {
     Model m1;
     m1.accessors.emplace_back();
 
@@ -1276,7 +1307,7 @@ TEST_CASE("Model::merge") {
     CHECK(pMerged->indices == 1);
   }
 
-  SECTION("updates accessor indices in CESIUM_tile_edges") {
+  SUBCASE("updates accessor indices in CESIUM_tile_edges") {
     Model m1;
     m1.accessors.emplace_back();
 
@@ -1306,7 +1337,7 @@ TEST_CASE("Model::merge") {
     CHECK(pMerged->top == 1);
   }
 
-  SECTION("updates accessor indices in EXT_mesh_gpu_instancing") {
+  SUBCASE("updates accessor indices in EXT_mesh_gpu_instancing") {
     Model m1;
     m1.accessors.emplace_back();
 
@@ -1332,7 +1363,7 @@ TEST_CASE("Model::merge") {
     CHECK(it->second == 1);
   }
 
-  SECTION("updates buffer indices in EXT_meshopt_compression") {
+  SUBCASE("updates buffer indices in EXT_meshopt_compression") {
     Model m1;
     m1.buffers.emplace_back();
 
@@ -1361,7 +1392,7 @@ TEST_CASE("Model::merge") {
 TEST_CASE("Model::forEachRootNodeInScene") {
   Model m;
 
-  SECTION("with scenes and nodes") {
+  SUBCASE("with scenes and nodes") {
     m.scenes.emplace_back();
     m.scenes.emplace_back();
     m.nodes.emplace_back();
@@ -1375,7 +1406,7 @@ TEST_CASE("Model::forEachRootNodeInScene") {
 
     m.scene = 0;
 
-    SECTION("it enumerates a specified scene") {
+    SUBCASE("it enumerates a specified scene") {
       std::vector<Node*> visited;
       m.forEachRootNodeInScene(1, [&visited, &m](Model& model, Node& node) {
         CHECK(&m == &model);
@@ -1387,7 +1418,7 @@ TEST_CASE("Model::forEachRootNodeInScene") {
       CHECK(visited[1] == &m.nodes[2]);
     }
 
-    SECTION("it enumerates the default scene") {
+    SUBCASE("it enumerates the default scene") {
       std::vector<Node*> visited;
       m.forEachRootNodeInScene(-1, [&visited, &m](Model& model, Node& node) {
         CHECK(&m == &model);
@@ -1399,7 +1430,7 @@ TEST_CASE("Model::forEachRootNodeInScene") {
       CHECK(visited[1] == &m.nodes[2]);
     }
 
-    SECTION("it enumerates the first scene if there is no default") {
+    SUBCASE("it enumerates the first scene if there is no default") {
       m.scene = -1;
 
       std::vector<Node*> visited;
@@ -1414,7 +1445,7 @@ TEST_CASE("Model::forEachRootNodeInScene") {
     }
   }
 
-  SECTION("with nodes only") {
+  SUBCASE("with nodes only") {
     m.nodes.emplace_back();
     m.nodes.emplace_back();
     m.nodes.emplace_back();
@@ -1430,7 +1461,7 @@ TEST_CASE("Model::forEachRootNodeInScene") {
     CHECK(visited[0] == &m.nodes[0]);
   }
 
-  SECTION("with no scenes or nodes") {
+  SUBCASE("with no scenes or nodes") {
     // Check that it enumerates nothing.
     m.forEachRootNodeInScene(-1, [](Model& /* model */, Node& /* node */) {
       // This should not be called.
@@ -1442,7 +1473,7 @@ TEST_CASE("Model::forEachRootNodeInScene") {
 TEST_CASE("Model::forEachNodeInScene") {
   Model m;
 
-  SECTION("with scenes and nodes") {
+  SUBCASE("with scenes and nodes") {
     m.scenes.emplace_back();
     m.scenes.emplace_back();
     m.nodes.emplace_back();
@@ -1502,7 +1533,7 @@ TEST_CASE("Model::forEachNodeInScene") {
         sizeof(glm::dmat4));
     std::memcpy(m.nodes[3].matrix.data(), &childNodeMatrix, sizeof(glm::dmat4));
 
-    SECTION("it enumerates a specified scene") {
+    SUBCASE("it enumerates a specified scene") {
       std::vector<Node*> visited;
       m.forEachNodeInScene(
           1,
@@ -1517,7 +1548,7 @@ TEST_CASE("Model::forEachNodeInScene") {
       CHECK(visited[1] == &m.nodes[3]);
     }
 
-    SECTION("it enumerates the default scene") {
+    SUBCASE("it enumerates the default scene") {
       std::vector<Node*> visited;
       m.forEachNodeInScene(
           -1,
@@ -1532,7 +1563,7 @@ TEST_CASE("Model::forEachNodeInScene") {
       CHECK(visited[1] == &m.nodes[1]);
     }
 
-    SECTION("it enumerates the first scene if there is no default") {
+    SUBCASE("it enumerates the first scene if there is no default") {
       m.scene = -1;
 
       std::vector<Node*> visited;
@@ -1549,7 +1580,7 @@ TEST_CASE("Model::forEachNodeInScene") {
       CHECK(visited[1] == &m.nodes[1]);
     }
 
-    SECTION("check the node transforms") {
+    SUBCASE("check the node transforms") {
       std::vector<glm::dmat4> transforms;
       m.forEachNodeInScene(
           1,
@@ -1566,7 +1597,7 @@ TEST_CASE("Model::forEachNodeInScene") {
     }
   }
 
-  SECTION("with nodes only") {
+  SUBCASE("with nodes only") {
     m.nodes.emplace_back();
     m.nodes.emplace_back();
     m.nodes.emplace_back();
@@ -1585,7 +1616,7 @@ TEST_CASE("Model::forEachNodeInScene") {
     CHECK(visited[0] == &m.nodes[0]);
   }
 
-  SECTION("with no scenes or nodes") {
+  SUBCASE("with no scenes or nodes") {
     // Check that it enumerates nothing.
     m.forEachNodeInScene(
         -1,

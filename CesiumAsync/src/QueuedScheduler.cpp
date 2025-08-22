@@ -1,7 +1,12 @@
 #include "CesiumAsync/Impl/QueuedScheduler.h"
 
+#include <async++.h>
+
 #include <condition_variable>
+#include <cstddef>
+#include <memory>
 #include <mutex>
+#include <utility>
 
 namespace {
 

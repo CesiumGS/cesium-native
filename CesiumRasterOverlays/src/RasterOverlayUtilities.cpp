@@ -1,17 +1,48 @@
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeometry/clipTriangleAtAxisAlignedThreshold.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Image.h>
+#include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 
+#include <glm/common.hpp>
+#include <glm/detail/setup.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <limits>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace CesiumGltf;
 using namespace CesiumGltfContent;
@@ -403,6 +434,87 @@ bool isSouthChild(CesiumGeometry::UpsampledQuadtreeNode childID) noexcept {
 
 void copyImages(const Model& parentModel, Model& result);
 void copyMetadataTables(const Model& parentModel, Model& result);
+
+/**
+ * @brief Helper struct for working with non-indexed triangles. Returns either
+ * the indices from an index accessor view, or generates new indices.
+ */
+template <typename TIndex> struct IndicesViewRemapper {
+  IndicesViewRemapper(
+      const Model& model,
+      const MeshPrimitive& primitive,
+      int32_t primitiveIndices,
+      int64_t numVertices)
+      : accessorView(std::nullopt),
+        indicesCount(0),
+        primitiveMode(primitive.mode) {
+    AccessorView<TIndex> view(model, primitiveIndices);
+    viewStatus = view.status();
+    if (viewStatus == AccessorViewStatus::Valid) {
+      accessorView = std::move(view);
+      if (primitiveMode == MeshPrimitive::Mode::TRIANGLES) {
+        indicesCount = accessorView->size();
+      } else if (
+          primitiveMode == MeshPrimitive::Mode::TRIANGLE_STRIP ||
+          primitiveMode == MeshPrimitive::Mode::TRIANGLE_FAN) {
+        // With a triangle strip or fan, each additional vertex past the first
+        // three adds an additional triangle
+        indicesCount = (accessorView->size() - 2) * 3;
+      }
+    } else if (primitiveIndices < 0) {
+      // Non-indexed triangles
+      indicesCount = numVertices;
+      viewStatus = AccessorViewStatus::Valid;
+    }
+  }
+
+  int64_t size() const { return indicesCount; }
+
+  AccessorViewStatus status() const { return viewStatus; }
+
+  const TIndex operator[](int64_t i) const {
+    if (i < 0 || i >= indicesCount) {
+      throw std::range_error("index out of range");
+    }
+
+    if (accessorView && primitiveMode == MeshPrimitive::Mode::TRIANGLES) {
+      return (*accessorView)[i];
+    } else if (
+        accessorView && primitiveMode == MeshPrimitive::Mode::TRIANGLE_STRIP) {
+      // Indices 0, 1, 2 map normally, indices 3, 4, 5 map to 2, 1, 3,
+      // indices 6, 7, 8 map to 2, 3, 4, etc.
+      const int64_t startIndex = i / 3;
+      const int64_t triIndex = i % 3;
+      // For every other triangle we need to reverse the order of the first two
+      // indices to maintain proper winding.
+      if (startIndex % 2 == 1 && triIndex < 2) {
+        return triIndex == 0 ? (*accessorView)[startIndex + 1]
+                             : (*accessorView)[startIndex];
+      }
+      return (*accessorView)[startIndex + triIndex];
+    } else if (
+        accessorView && primitiveMode == MeshPrimitive::Mode::TRIANGLE_FAN) {
+      // Indices 0, 1, 2 map normally, indices 3, 4, 5 map to 0, 2, 3,
+      // indices 6, 7, 8 map to 0, 3, 4, etc.
+      const int64_t startIndex = i / 3;
+      const int64_t triIndex = i % 3;
+      if (triIndex == 0) {
+        return (*accessorView)[0];
+      }
+      return (*accessorView)[startIndex + triIndex];
+    }
+
+    // The indices of a non-indexed primitive are simply 0, 1, 2, 3, 4...
+    return static_cast<TIndex>(i);
+  }
+
+private:
+  std::optional<AccessorView<TIndex>> accessorView;
+  int64_t indicesCount;
+  int32_t primitiveMode;
+  AccessorViewStatus viewStatus;
+};
+
 } // namespace
 
 /*static*/ std::optional<Model>
@@ -763,18 +875,78 @@ T getVertexValue(
   return std::visit(Operation{accessor, complements}, vertex);
 }
 
-template <class TIndex>
-bool upsamplePrimitiveForRasterOverlays(
+void scaleWaterMask(
+    MeshPrimitive& primitive,
+    CesiumGeometry::UpsampledQuadtreeNode childID) {
+  bool onlyWater = false;
+  bool onlyLand = true;
+  int64_t waterMaskTextureId = -1;
+
+  auto onlyWaterIt = primitive.extras.find("OnlyWater");
+  auto onlyLandIt = primitive.extras.find("OnlyLand");
+
+  if (onlyWaterIt != primitive.extras.end() && onlyWaterIt->second.isBool() &&
+      onlyLandIt != primitive.extras.end() && onlyLandIt->second.isBool()) {
+
+    onlyWater = onlyWaterIt->second.getBoolOrDefault(false);
+    onlyLand = onlyLandIt->second.getBoolOrDefault(true);
+
+    if (!onlyWater && !onlyLand) {
+      // We have to use the parent's water mask
+      auto waterMaskTextureIdIt = primitive.extras.find("WaterMaskTex");
+      if (waterMaskTextureIdIt != primitive.extras.end() &&
+          waterMaskTextureIdIt->second.isInt64()) {
+        waterMaskTextureId = waterMaskTextureIdIt->second.getInt64OrDefault(-1);
+      }
+    }
+  }
+
+  double waterMaskTranslationX = 0.0;
+  double waterMaskTranslationY = 0.0;
+  double waterMaskScale = 0.0;
+
+  auto waterMaskTranslationXIt = primitive.extras.find("WaterMaskTranslationX");
+  auto waterMaskTranslationYIt = primitive.extras.find("WaterMaskTranslationY");
+  auto waterMaskScaleIt = primitive.extras.find("WaterMaskScale");
+
+  if (waterMaskTranslationXIt != primitive.extras.end() &&
+      waterMaskTranslationXIt->second.isDouble() &&
+      waterMaskTranslationYIt != primitive.extras.end() &&
+      waterMaskTranslationYIt->second.isDouble() &&
+      waterMaskScaleIt != primitive.extras.end() &&
+      waterMaskScaleIt->second.isDouble()) {
+    waterMaskScale = 0.5 * waterMaskScaleIt->second.getDoubleOrDefault(0.0);
+    waterMaskTranslationX =
+        waterMaskTranslationXIt->second.getDoubleOrDefault(0.0) +
+        waterMaskScale * (childID.tileID.x % 2);
+    waterMaskTranslationY =
+        waterMaskTranslationYIt->second.getDoubleOrDefault(0.0) +
+        waterMaskScale * (childID.tileID.y % 2);
+  }
+
+  primitive.extras.insert_or_assign("OnlyWater", onlyWater);
+  primitive.extras.insert_or_assign("OnlyLand", onlyLand);
+
+  primitive.extras.insert_or_assign("WaterMaskTex", waterMaskTextureId);
+
+  primitive.extras.insert_or_assign(
+      "WaterMaskTranslationX",
+      waterMaskTranslationX);
+  primitive.extras.insert_or_assign(
+      "WaterMaskTranslationY",
+      waterMaskTranslationY);
+  primitive.extras.insert_or_assign("WaterMaskScale", waterMaskScale);
+}
+
+bool upsamplePointsPrimitiveForRasterOverlays(
     const Model& parentModel,
     Model& model,
-    Mesh& /*mesh*/,
     MeshPrimitive& primitive,
     CesiumGeometry::UpsampledQuadtreeNode childID,
     bool hasInvertedVCoordinate,
     const std::string_view& textureCoordinateAttributeBaseName,
-    int32_t textureCoordinateIndex,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  CESIUM_TRACE("upsamplePrimitiveForRasterOverlays");
+    int32_t textureCoordinateIndex) {
+  CESIUM_TRACE("upsamplePointsPrimitiveForRasterOverlays");
 
   // Add up the per-vertex size of all attributes and create buffers,
   // bufferViews, and accessors
@@ -784,11 +956,189 @@ bool upsamplePrimitiveForRasterOverlays(
   const size_t vertexBufferIndex = model.buffers.size();
   model.buffers.emplace_back();
 
-  const size_t indexBufferIndex = model.buffers.size();
+  const size_t vertexBufferViewIndex = model.bufferViews.size();
+  model.bufferViews.emplace_back();
+
+  BufferView& vertexBufferView = model.bufferViews[vertexBufferViewIndex];
+  vertexBufferView.buffer = static_cast<int>(vertexBufferIndex);
+  vertexBufferView.target = BufferView::Target::ARRAY_BUFFER;
+
+  int64_t vertexSizeFloats = 0;
+  int32_t uvAccessorIndex = -1;
+
+  std::vector<std::string> toRemove;
+
+  std::string textureCoordinateName =
+      std::string(textureCoordinateAttributeBaseName) +
+      std::to_string(textureCoordinateIndex);
+
+  for (std::pair<const std::string, int>& attribute : primitive.attributes) {
+    if (attribute.first.starts_with(textureCoordinateAttributeBaseName)) {
+      if (uvAccessorIndex == -1) {
+        if (attribute.first == textureCoordinateName) {
+          uvAccessorIndex = attribute.second;
+        }
+      }
+      // Do not include textureCoordinateName (e.g., TEXCOORD_* or
+      // _CESIUMOVERLAY_*), it will be generated later.
+      toRemove.push_back(attribute.first);
+      continue;
+    }
+
+    if (attribute.second < 0 ||
+        attribute.second >= static_cast<int>(parentModel.accessors.size())) {
+      toRemove.push_back(attribute.first);
+      continue;
+    }
+
+    const Accessor& accessor =
+        parentModel.accessors[static_cast<size_t>(attribute.second)];
+    if (accessor.bufferView < 0 ||
+        accessor.bufferView >=
+            static_cast<int>(parentModel.bufferViews.size())) {
+      toRemove.push_back(attribute.first);
+      continue;
+    }
+
+    const BufferView& bufferView =
+        parentModel.bufferViews[static_cast<size_t>(accessor.bufferView)];
+    if (bufferView.buffer < 0 ||
+        bufferView.buffer >= static_cast<int>(parentModel.buffers.size())) {
+      toRemove.push_back(attribute.first);
+      continue;
+    }
+
+    const Buffer& buffer =
+        parentModel.buffers[static_cast<size_t>(bufferView.buffer)];
+
+    const int64_t accessorByteStride = accessor.computeByteStride(parentModel);
+    const int64_t accessorComponentElements =
+        accessor.computeNumberOfComponents();
+    if (accessor.componentType != Accessor::ComponentType::FLOAT) {
+      // Can only interpolate floating point vertex attributes
+      toRemove.push_back(attribute.first);
+      continue;
+    }
+
+    attribute.second = static_cast<int>(model.accessors.size());
+    model.accessors.emplace_back();
+    Accessor& newAccessor = model.accessors.back();
+    newAccessor.bufferView = static_cast<int>(vertexBufferViewIndex);
+    newAccessor.byteOffset = vertexSizeFloats * int64_t(sizeof(float));
+    newAccessor.componentType = Accessor::ComponentType::FLOAT;
+    newAccessor.type = accessor.type;
+
+    vertexSizeFloats += accessorComponentElements;
+
+    attributes.push_back(FloatVertexAttribute{
+        buffer.cesium.data,
+        bufferView.byteOffset + accessor.byteOffset,
+        accessorByteStride,
+        accessorComponentElements,
+        attribute.second,
+        std::vector<double>(
+            static_cast<size_t>(accessorComponentElements),
+            std::numeric_limits<double>::max()),
+        std::vector<double>(
+            static_cast<size_t>(accessorComponentElements),
+            std::numeric_limits<double>::lowest()),
+    });
+  }
+
+  if (uvAccessorIndex == -1) {
+    // We don't know how to divide this primitive, so just remove it.
+    return false;
+  }
+
+  for (const std::string& attribute : toRemove) {
+    primitive.attributes.erase(attribute);
+  }
+
+  const bool keepAboveU = !isWestChild(childID);
+  const bool keepAboveV =
+      hasInvertedVCoordinate ? isSouthChild(childID) : !isSouthChild(childID);
+
+  const AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
+  if (uvView.status() != AccessorViewStatus::Valid) {
+    return false;
+  }
+
+  std::vector<float> newVertexFloats;
+
+  for (int64_t i = 0; i < uvView.size(); i++) {
+    const glm::vec2 uv = uvView[i];
+
+    const bool isU = keepAboveU ? uv.x > 0.5 : uv.x < 0.5;
+    const bool isV = keepAboveV ? uv.y > 0.5 : uv.y < 0.5;
+
+    if (isU && isV) {
+      for (const FloatVertexAttribute& attribute : attributes) {
+        newVertexFloats.reserve((size_t)attribute.numberOfFloatsPerVertex);
+        const float* pFloats = reinterpret_cast<const float*>(
+            attribute.buffer.data() + attribute.offset + i * attribute.stride);
+        newVertexFloats.insert(
+            newVertexFloats.end(),
+            pFloats,
+            pFloats + attribute.numberOfFloatsPerVertex);
+      }
+    }
+  }
+
+  if (newVertexFloats.empty()) {
+    return false;
+  }
+
+  // Update the accessor vertex counts and min/max values
+  const int64_t numberOfVertices =
+      int64_t(newVertexFloats.size()) / vertexSizeFloats;
+  for (const FloatVertexAttribute& attribute : attributes) {
+    Accessor& accessor =
+        model.accessors[static_cast<size_t>(attribute.accessorIndex)];
+    accessor.count = numberOfVertices;
+    accessor.min = attribute.minimums;
+    accessor.max = attribute.maximums;
+  }
+
+  // Populate the buffers
+  Buffer& vertexBuffer = model.buffers[vertexBufferIndex];
+  vertexBuffer.cesium.data.resize(newVertexFloats.size() * sizeof(float));
+  float* pAsFloats = reinterpret_cast<float*>(vertexBuffer.cesium.data.data());
+  std::copy(newVertexFloats.begin(), newVertexFloats.end(), pAsFloats);
+  vertexBuffer.byteLength = vertexBufferView.byteLength =
+      int64_t(vertexBuffer.cesium.data.size());
+  vertexBufferView.byteStride = vertexSizeFloats * int64_t(sizeof(float));
+
+  scaleWaterMask(primitive, childID);
+
+  return true;
+}
+
+template <class TIndex>
+bool upsampleTrianglesPrimitiveForRasterOverlays(
+    const Model& parentModel,
+    Model& model,
+    Mesh& /*mesh*/,
+    MeshPrimitive& primitive,
+    CesiumGeometry::UpsampledQuadtreeNode childID,
+    bool hasInvertedVCoordinate,
+    const std::string_view& textureCoordinateAttributeBaseName,
+    int32_t textureCoordinateIndex,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  CESIUM_TRACE("upsampleTrianglesPrimitiveForRasterOverlays");
+
+  // Add up the per-vertex size of all attributes and create buffers,
+  // bufferViews, and accessors
+  std::vector<FloatVertexAttribute> attributes;
+  attributes.reserve(primitive.attributes.size());
+
+  const size_t vertexBufferIndex = model.buffers.size();
   model.buffers.emplace_back();
 
   const size_t vertexBufferViewIndex = model.bufferViews.size();
   model.bufferViews.emplace_back();
+
+  const size_t indexBufferIndex = model.buffers.size();
+  model.buffers.emplace_back();
 
   const size_t indexBufferViewIndex = model.bufferViews.size();
   model.bufferViews.emplace_back();
@@ -802,6 +1152,7 @@ bool upsamplePrimitiveForRasterOverlays(
   indexBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
 
   int64_t vertexSizeFloats = 0;
+  int64_t positionAttributeCount = 0;
   int32_t uvAccessorIndex = -1;
   int32_t positionAttributeIndex = -1;
 
@@ -812,7 +1163,7 @@ bool upsamplePrimitiveForRasterOverlays(
       std::to_string(textureCoordinateIndex);
 
   for (std::pair<const std::string, int>& attribute : primitive.attributes) {
-    if (attribute.first.find(textureCoordinateAttributeBaseName) == 0) {
+    if (attribute.first.starts_with(textureCoordinateAttributeBaseName)) {
       if (uvAccessorIndex == -1) {
         if (attribute.first == textureCoordinateName) {
           uvAccessorIndex = attribute.second;
@@ -886,6 +1237,7 @@ bool upsamplePrimitiveForRasterOverlays(
     // get position to be used to create skirts later
     if (attribute.first == "POSITION") {
       positionAttributeIndex = int32_t(attributes.size() - 1);
+      positionAttributeCount = accessor.count;
     }
   }
 
@@ -902,7 +1254,11 @@ bool upsamplePrimitiveForRasterOverlays(
   const bool keepAboveV = !isSouthChild(childID);
 
   const AccessorView<glm::vec2> uvView(parentModel, uvAccessorIndex);
-  const AccessorView<TIndex> indicesView(parentModel, primitive.indices);
+  const IndicesViewRemapper<TIndex> indicesView(
+      parentModel,
+      primitive,
+      primitive.indices,
+      positionAttributeCount);
 
   if (uvView.status() != AccessorViewStatus::Valid ||
       indicesView.status() != AccessorViewStatus::Valid) {
@@ -1079,8 +1435,8 @@ bool upsamplePrimitiveForRasterOverlays(
     Accessor& accessor =
         model.accessors[static_cast<size_t>(attribute.accessorIndex)];
     accessor.count = numberOfVertices;
-    accessor.min = std::move(attribute.minimums);
-    accessor.max = std::move(attribute.maximums);
+    accessor.min = attribute.minimums;
+    accessor.max = attribute.maximums;
   }
 
   // Add an accessor for the indices
@@ -1110,65 +1466,15 @@ bool upsamplePrimitiveForRasterOverlays(
   indexBuffer.byteLength = indexBufferView.byteLength =
       int64_t(indexBuffer.cesium.data.size());
 
-  bool onlyWater = false;
-  bool onlyLand = true;
-  int64_t waterMaskTextureId = -1;
-
-  auto onlyWaterIt = primitive.extras.find("OnlyWater");
-  auto onlyLandIt = primitive.extras.find("OnlyLand");
-
-  if (onlyWaterIt != primitive.extras.end() && onlyWaterIt->second.isBool() &&
-      onlyLandIt != primitive.extras.end() && onlyLandIt->second.isBool()) {
-
-    onlyWater = onlyWaterIt->second.getBoolOrDefault(false);
-    onlyLand = onlyLandIt->second.getBoolOrDefault(true);
-
-    if (!onlyWater && !onlyLand) {
-      // We have to use the parent's water mask
-      auto waterMaskTextureIdIt = primitive.extras.find("WaterMaskTex");
-      if (waterMaskTextureIdIt != primitive.extras.end() &&
-          waterMaskTextureIdIt->second.isInt64()) {
-        waterMaskTextureId = waterMaskTextureIdIt->second.getInt64OrDefault(-1);
-      }
-    }
-  }
-
-  double waterMaskTranslationX = 0.0;
-  double waterMaskTranslationY = 0.0;
-  double waterMaskScale = 0.0;
-
-  auto waterMaskTranslationXIt = primitive.extras.find("WaterMaskTranslationX");
-  auto waterMaskTranslationYIt = primitive.extras.find("WaterMaskTranslationY");
-  auto waterMaskScaleIt = primitive.extras.find("WaterMaskScale");
-
-  if (waterMaskTranslationXIt != primitive.extras.end() &&
-      waterMaskTranslationXIt->second.isDouble() &&
-      waterMaskTranslationYIt != primitive.extras.end() &&
-      waterMaskTranslationYIt->second.isDouble() &&
-      waterMaskScaleIt != primitive.extras.end() &&
-      waterMaskScaleIt->second.isDouble()) {
-    waterMaskScale = 0.5 * waterMaskScaleIt->second.getDoubleOrDefault(0.0);
-    waterMaskTranslationX =
-        waterMaskTranslationXIt->second.getDoubleOrDefault(0.0) +
-        waterMaskScale * (childID.tileID.x % 2);
-    waterMaskTranslationY =
-        waterMaskTranslationYIt->second.getDoubleOrDefault(0.0) +
-        waterMaskScale * (childID.tileID.y % 2);
-  }
+  scaleWaterMask(primitive, childID);
 
   // add skirts to extras to be upsampled later if needed
   if (hasSkirt) {
-    primitive.extras = SkirtMeshMetadata::createGltfExtras(*skirtMeshMetadata);
+    CesiumUtility::JsonValue::Object extras =
+        SkirtMeshMetadata::createGltfExtras(*skirtMeshMetadata);
+    extras.merge(std::move(primitive.extras));
+    primitive.extras = std::move(extras);
   }
-
-  primitive.extras.emplace("OnlyWater", onlyWater);
-  primitive.extras.emplace("OnlyLand", onlyLand);
-
-  primitive.extras.emplace("WaterMaskTex", waterMaskTextureId);
-
-  primitive.extras.emplace("WaterMaskTranslationX", waterMaskTranslationX);
-  primitive.extras.emplace("WaterMaskTranslationY", waterMaskTranslationY);
-  primitive.extras.emplace("WaterMaskScale", waterMaskScale);
 
   primitive.indices = static_cast<int>(indexAccessorIndex);
 
@@ -1360,9 +1666,11 @@ void addSkirt(
         position -= center;
 
         for (uint32_t c = 0; c < 3; ++c) {
-          output.push_back(static_cast<float>(position[c]));
-          attribute.minimums[c] = glm::min(attribute.minimums[c], position[c]);
-          attribute.maximums[c] = glm::max(attribute.maximums[c], position[c]);
+          output.push_back(static_cast<float>(position[glm::length_t(c)]));
+          attribute.minimums[c] =
+              glm::min(attribute.minimums[c], position[glm::length_t(c)]);
+          attribute.maximums[c] =
+              glm::max(attribute.maximums[c], position[glm::length_t(c)]);
         }
       } else {
         for (uint32_t c = 0;
@@ -1567,19 +1875,80 @@ bool upsamplePrimitiveForRasterOverlays(
     const std::string_view& textureCoordinateAttributeBaseName,
     int32_t textureCoordinateIndex,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  if (primitive.mode != MeshPrimitive::Mode::TRIANGLES ||
-      primitive.indices < 0 ||
-      primitive.indices >= static_cast<int>(parentModel.accessors.size())) {
-    // Not indexed triangles, so we don't know how to divide this primitive
+  if (primitive.mode == MeshPrimitive::Mode::POINTS) {
+    return upsamplePointsPrimitiveForRasterOverlays(
+        parentModel,
+        model,
+        primitive,
+        childID,
+        hasInvertedVCoordinate,
+        textureCoordinateAttributeBaseName,
+        textureCoordinateIndex);
+  } else if (
+      primitive.mode != MeshPrimitive::Mode::TRIANGLES &&
+      primitive.mode != MeshPrimitive::Mode::TRIANGLE_FAN &&
+      primitive.mode != MeshPrimitive::Mode::TRIANGLE_STRIP) {
+    // Not triangles, so we don't know how to divide this primitive
     // (yet). So remove it.
     return false;
+  }
+
+  if (primitive.indices < 0 ||
+      primitive.indices > static_cast<int64_t>(parentModel.accessors.size())) {
+    const auto& positionIt = primitive.attributes.find("POSITION");
+    if (positionIt == primitive.attributes.end()) {
+      // No position buffer - nothing we can do here
+      return false;
+    }
+
+    // No indices buffer - pick the smallest indices type that will fit all
+    // vertices
+    const Accessor& accessor =
+        parentModel.getSafe(parentModel.accessors, positionIt->second);
+    if (accessor.count < 1) {
+      // Invalid accessor
+      return false;
+    } else if (accessor.count < 0xff) {
+      return upsampleTrianglesPrimitiveForRasterOverlays<uint8_t>(
+          parentModel,
+          model,
+          mesh,
+          primitive,
+          childID,
+          hasInvertedVCoordinate,
+          textureCoordinateAttributeBaseName,
+          textureCoordinateIndex,
+          ellipsoid);
+    } else if (accessor.count < 0xffff) {
+      return upsampleTrianglesPrimitiveForRasterOverlays<uint16_t>(
+          parentModel,
+          model,
+          mesh,
+          primitive,
+          childID,
+          hasInvertedVCoordinate,
+          textureCoordinateAttributeBaseName,
+          textureCoordinateIndex,
+          ellipsoid);
+    } else {
+      return upsampleTrianglesPrimitiveForRasterOverlays<uint32_t>(
+          parentModel,
+          model,
+          mesh,
+          primitive,
+          childID,
+          hasInvertedVCoordinate,
+          textureCoordinateAttributeBaseName,
+          textureCoordinateIndex,
+          ellipsoid);
+    }
   }
 
   const Accessor& indicesAccessorGltf =
       parentModel.accessors[static_cast<size_t>(primitive.indices)];
   if (indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_BYTE) {
-    return upsamplePrimitiveForRasterOverlays<uint8_t>(
+    return upsampleTrianglesPrimitiveForRasterOverlays<uint8_t>(
         parentModel,
         model,
         mesh,
@@ -1592,7 +1961,7 @@ bool upsamplePrimitiveForRasterOverlays(
   } else if (
       indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_SHORT) {
-    return upsamplePrimitiveForRasterOverlays<uint16_t>(
+    return upsampleTrianglesPrimitiveForRasterOverlays<uint16_t>(
         parentModel,
         model,
         mesh,
@@ -1605,7 +1974,7 @@ bool upsamplePrimitiveForRasterOverlays(
   } else if (
       indicesAccessorGltf.componentType ==
       Accessor::ComponentType::UNSIGNED_INT) {
-    return upsamplePrimitiveForRasterOverlays<uint32_t>(
+    return upsampleTrianglesPrimitiveForRasterOverlays<uint32_t>(
         parentModel,
         model,
         mesh,

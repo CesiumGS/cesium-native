@@ -3,18 +3,32 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
+#include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/ThreadTaskProcessor.h>
 #include <CesiumNativeTests/waitForFuture.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <libmorton/morton.h>
 #include <rapidjson/document.h>
+#include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <spdlog/spdlog.h>
 
+#include <cassert>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <map>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
 #include <vector>
 
 using namespace Cesium3DTiles;
@@ -379,7 +393,7 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
 } // namespace
 
 TEST_CASE("Test SubtreeAvailability methods") {
-  SECTION("Availability stored in constant") {
+  SUBCASE("Availability stored in constant") {
     SubtreeAvailability subtreeAvailability{
         ImplicitTileSubdivisionScheme::Quadtree,
         5,
@@ -388,14 +402,14 @@ TEST_CASE("Test SubtreeAvailability methods") {
         {SubtreeAvailability::SubtreeConstantAvailability{false}},
         {}};
 
-    SECTION("isTileAvailable()") {
+    SUBCASE("isTileAvailable()") {
       CesiumGeometry::QuadtreeTileID tileID{4, 3, 1};
       CHECK(subtreeAvailability.isTileAvailable(
           tileID.level,
           libmorton::morton2D_64_encode(tileID.x, tileID.y)));
     }
 
-    SECTION("isContentAvailable()") {
+    SUBCASE("isContentAvailable()") {
       CesiumGeometry::QuadtreeTileID tileID{5, 3, 1};
       CHECK(!subtreeAvailability.isContentAvailable(
           tileID.level,
@@ -403,14 +417,14 @@ TEST_CASE("Test SubtreeAvailability methods") {
           0));
     }
 
-    SECTION("isSubtreeAvailable()") {
+    SUBCASE("isSubtreeAvailable()") {
       CesiumGeometry::QuadtreeTileID tileID{6, 3, 1};
       CHECK(!subtreeAvailability.isSubtreeAvailable(
           libmorton::morton2D_64_encode(tileID.x, tileID.y)));
     }
   }
 
-  SECTION("Availability stored in buffer view") {
+  SUBCASE("Availability stored in buffer view") {
     // create expected available tiles
     std::vector<CesiumGeometry::QuadtreeTileID> availableTileIDs{
         CesiumGeometry::QuadtreeTileID{0, 0, 0},
@@ -508,7 +522,7 @@ TEST_CASE("Test SubtreeAvailability methods") {
         std::move(contentAvailability),
         std::move(subtree));
 
-    SECTION("isTileAvailable()") {
+    SUBCASE("isTileAvailable()") {
       for (const auto& tileID : availableTileIDs) {
         CHECK(quadtreeAvailability.isTileAvailable(
             tileID.level,
@@ -522,7 +536,7 @@ TEST_CASE("Test SubtreeAvailability methods") {
       }
     }
 
-    SECTION("isContentAvailable()") {
+    SUBCASE("isContentAvailable()") {
       for (const auto& tileID : availableTileIDs) {
         CHECK(quadtreeAvailability.isContentAvailable(
             tileID.level,
@@ -538,7 +552,7 @@ TEST_CASE("Test SubtreeAvailability methods") {
       }
     }
 
-    SECTION("isSubtreeAvailable()") {
+    SUBCASE("isSubtreeAvailable()") {
       for (const auto& subtreeID : availableSubtreeIDs) {
         CHECK(quadtreeAvailability.isSubtreeAvailable(
             libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
@@ -586,7 +600,7 @@ TEST_CASE("Test parsing subtree format") {
       CesiumGeometry::QuadtreeTileID{5, 21, 11},
       CesiumGeometry::QuadtreeTileID{5, 11, 12}};
 
-  SECTION("Parse binary subtree") {
+  SUBCASE("Parse binary subtree") {
     // create subtree json
     auto subtreeBuffers = createSubtreeContent(
         maxSubtreeLevels,
@@ -677,7 +691,7 @@ TEST_CASE("Test parsing subtree format") {
     }
   }
 
-  SECTION("Parse binary subtree with mixed availability types") {
+  SUBCASE("Parse binary subtree with mixed availability types") {
     // create subtree json
     auto subtreeContent =
         createSubtreeContent(maxSubtreeLevels, true, availableSubtreeIDs);
@@ -766,7 +780,7 @@ TEST_CASE("Test parsing subtree format") {
     }
   }
 
-  SECTION("Parse binary subtree with constant availability only") {
+  SUBCASE("Parse binary subtree with constant availability only") {
     // create subtree json
     auto subtreeContent = createSubtreeContent(maxSubtreeLevels, true, false);
     auto subtreeJson = createSubtreeJson(subtreeContent, "");
@@ -850,7 +864,7 @@ TEST_CASE("Test parsing subtree format") {
     }
   }
 
-  SECTION("Parse json subtree") {
+  SUBCASE("Parse json subtree") {
     auto subtreeBuffers = createSubtreeContent(
         maxSubtreeLevels,
         availableTileIDs,
@@ -887,7 +901,7 @@ TEST_CASE("Test parsing subtree format") {
     }
   }
 
-  SECTION("Parse json subtree with mixed availability types") {
+  SUBCASE("Parse json subtree with mixed availability types") {
     auto subtreeBuffers =
         createSubtreeContent(maxSubtreeLevels, availableTileIDs, false);
     auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
@@ -922,14 +936,14 @@ TEST_CASE("Test parsing subtree format") {
     }
   }
 
-  SECTION("Subtree json has ill form format") {
+  SUBCASE("Subtree json has ill form format") {
     auto subtreeBuffers = createSubtreeContent(
         maxSubtreeLevels,
         availableTileIDs,
         availableSubtreeIDs);
     auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
 
-    SECTION("Subtree json has no tileAvailability field") {
+    SUBCASE("Subtree json has no tileAvailability field") {
       subtreeJson.RemoveMember("tileAvailability");
       CHECK(
           mockLoadSubtreeJson(
@@ -938,7 +952,7 @@ TEST_CASE("Test parsing subtree format") {
               std::move(subtreeJson)) == std::nullopt);
     }
 
-    SECTION("Subtree json has no contentAvailability field") {
+    SUBCASE("Subtree json has no contentAvailability field") {
       subtreeJson.RemoveMember("contentAvailability");
       CHECK(
           mockLoadSubtreeJson(
@@ -947,7 +961,7 @@ TEST_CASE("Test parsing subtree format") {
               std::move(subtreeJson)) == std::nullopt);
     }
 
-    SECTION("Subtree json has no childSubtreeAvailability field") {
+    SUBCASE("Subtree json has no childSubtreeAvailability field") {
       subtreeJson.RemoveMember("childSubtreeAvailability");
       CHECK(
           mockLoadSubtreeJson(
@@ -956,7 +970,7 @@ TEST_CASE("Test parsing subtree format") {
               std::move(subtreeJson)) == std::nullopt);
     }
 
-    SECTION("Subtree json has no buffers though availability points to buffer "
+    SUBCASE("Subtree json has no buffers though availability points to buffer "
             "view") {
       subtreeJson.RemoveMember("buffers");
       CHECK(
@@ -966,7 +980,7 @@ TEST_CASE("Test parsing subtree format") {
               std::move(subtreeJson)) == std::nullopt);
     }
 
-    SECTION("Buffer does not have byteLength field") {
+    SUBCASE("Buffer does not have byteLength field") {
       auto bufferIt = subtreeJson.FindMember("buffers");
       auto bufferObj = bufferIt->value.GetArray().Begin();
       bufferObj->RemoveMember("byteLength");
@@ -977,7 +991,7 @@ TEST_CASE("Test parsing subtree format") {
               std::move(subtreeJson)) == std::nullopt);
     }
 
-    SECTION("Buffer does not have string uri field") {
+    SUBCASE("Buffer does not have string uri field") {
       auto bufferIt = subtreeJson.FindMember("buffers");
       auto bufferObj = bufferIt->value.GetArray().Begin();
       bufferObj->RemoveMember("uri");
@@ -989,7 +1003,7 @@ TEST_CASE("Test parsing subtree format") {
               std::move(subtreeJson)) == std::nullopt);
     }
 
-    SECTION("Subtree json has no buffer views though availability points to "
+    SUBCASE("Subtree json has no buffer views though availability points to "
             "buffer view") {
       subtreeJson.RemoveMember("bufferViews");
       CHECK(
@@ -1001,16 +1015,56 @@ TEST_CASE("Test parsing subtree format") {
   }
 }
 
+TEST_CASE("Test SubtreeAvailability::createEmpty") {
+  SUBCASE("With no tiles available") {
+    std::optional<SubtreeAvailability> maybeAvailability =
+        SubtreeAvailability::createEmpty(
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            false);
+    REQUIRE(maybeAvailability);
+
+    SubtreeAvailability& availability = *maybeAvailability;
+
+    CHECK_FALSE(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(0, 0, 0)));
+    CHECK_FALSE(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(4, 15, 15)));
+  }
+
+  SUBCASE("With all tiles available") {
+    std::optional<SubtreeAvailability> maybeAvailability =
+        SubtreeAvailability::createEmpty(
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            true);
+    REQUIRE(maybeAvailability);
+
+    SubtreeAvailability& availability = *maybeAvailability;
+
+    CHECK(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(0, 0, 0)));
+    CHECK(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(4, 15, 15)));
+  }
+}
+
 TEST_CASE("SubtreeAvailability modifications") {
   std::optional<SubtreeAvailability> maybeAvailability =
       SubtreeAvailability::createEmpty(
           ImplicitTileSubdivisionScheme::Quadtree,
-          5);
+          5,
+          true);
   REQUIRE(maybeAvailability);
 
   SubtreeAvailability& availability = *maybeAvailability;
+  const Subtree& subtree = availability.getSubtree();
 
-  SECTION("initially has all tiles available, and no content or subtrees "
+  SUBCASE("initially has all tiles available, and no content or subtrees "
           "available") {
     CHECK(availability.isTileAvailable(
         QuadtreeTileID(0, 0, 0),
@@ -1036,7 +1090,7 @@ TEST_CASE("SubtreeAvailability modifications") {
         QuadtreeTileID(5, 31, 31)));
   }
 
-  SECTION("can set a single tile's state") {
+  SUBCASE("can set a single tile's state") {
     availability.setTileAvailable(
         QuadtreeTileID(0, 0, 0),
         QuadtreeTileID(4, 15, 15),
@@ -1048,6 +1102,9 @@ TEST_CASE("SubtreeAvailability modifications") {
     CHECK(!availability.isTileAvailable(
         QuadtreeTileID(0, 0, 0),
         QuadtreeTileID(4, 15, 15)));
+
+    CHECK_UNARY(subtree.tileAvailability.bitstream);
+    CHECK_UNARY_FALSE(subtree.tileAvailability.constant);
 
     availability.setContentAvailable(
         QuadtreeTileID(0, 0, 0),
@@ -1064,6 +1121,9 @@ TEST_CASE("SubtreeAvailability modifications") {
         QuadtreeTileID(4, 15, 15),
         0));
 
+    CHECK_UNARY(subtree.contentAvailability[0].bitstream);
+    CHECK_UNARY_FALSE(subtree.contentAvailability[0].constant);
+
     availability.setSubtreeAvailable(
         QuadtreeTileID(0, 0, 0),
         QuadtreeTileID(5, 31, 31),
@@ -1075,5 +1135,17 @@ TEST_CASE("SubtreeAvailability modifications") {
     CHECK(availability.isSubtreeAvailable(
         QuadtreeTileID(0, 0, 0),
         QuadtreeTileID(5, 31, 31)));
+
+    CHECK_UNARY(subtree.childSubtreeAvailability.bitstream);
+    CHECK_UNARY_FALSE(subtree.childSubtreeAvailability.constant);
+
+    // Check that tile availability is still correct - e.g. spans are updated
+    // after the buffer grows
+    CHECK(availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(0, 0, 0)));
+    CHECK(!availability.isTileAvailable(
+        QuadtreeTileID(0, 0, 0),
+        QuadtreeTileID(4, 15, 15)));
   }
 }

@@ -1,8 +1,13 @@
-#include "CesiumGltf/PropertyType.h"
+#include <CesiumGltf/AccessorSpec.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyType.h>
 
-#include "CesiumGltf/AccessorSpec.h"
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/PropertyTable.h"
+#include <glm/detail/qualifier.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
 
 namespace CesiumGltf {
 std::string convertPropertyTypeToString(PropertyType type) {
@@ -74,6 +79,59 @@ PropertyType convertStringToPropertyType(const std::string& str) {
   }
 
   return PropertyType::Invalid;
+}
+
+PropertyType convertAccessorTypeToPropertyType(const std::string& type) {
+  if (type == AccessorSpec::Type::SCALAR) {
+    return PropertyType::Scalar;
+  }
+
+  if (type == AccessorSpec::Type::VEC2) {
+    return PropertyType::Vec2;
+  }
+
+  if (type == AccessorSpec::Type::VEC3) {
+    return PropertyType::Vec3;
+  }
+
+  if (type == AccessorSpec::Type::VEC4) {
+    return PropertyType::Vec4;
+  }
+
+  if (type == AccessorSpec::Type::MAT2) {
+    return PropertyType::Mat2;
+  }
+
+  if (type == AccessorSpec::Type::MAT3) {
+    return PropertyType::Mat3;
+  }
+
+  if (type == AccessorSpec::Type::MAT4) {
+    return PropertyType::Mat4;
+  }
+
+  return PropertyType::Invalid;
+}
+
+std::string convertPropertyTypeToAccessorType(PropertyType type) {
+  switch (type) {
+  case PropertyType::Scalar:
+    return AccessorSpec::Type::SCALAR;
+  case PropertyType::Vec2:
+    return AccessorSpec::Type::VEC2;
+  case PropertyType::Vec3:
+    return AccessorSpec::Type::VEC3;
+  case PropertyType::Vec4:
+    return AccessorSpec::Type::VEC4;
+  case PropertyType::Mat2:
+    return AccessorSpec::Type::MAT2;
+  case PropertyType::Mat3:
+    return AccessorSpec::Type::MAT3;
+  case PropertyType::Mat4:
+    return AccessorSpec::Type::MAT4;
+  default:
+    return "INVALID";
+  }
 }
 
 std::string convertPropertyComponentTypeToString(PropertyComponentType type) {
@@ -203,12 +261,48 @@ convertAccessorComponentTypeToPropertyComponentType(int componentType) {
     return PropertyComponentType::Int16;
   case AccessorSpec::ComponentType::UNSIGNED_SHORT:
     return PropertyComponentType::Uint16;
+  case AccessorSpec::ComponentType::INT:
+    return PropertyComponentType::Int32;
   case AccessorSpec::ComponentType::UNSIGNED_INT:
     return PropertyComponentType::Uint32;
+  case AccessorSpec::ComponentType::INT64:
+    return PropertyComponentType::Int64;
+  case AccessorSpec::ComponentType::UNSIGNED_INT64:
+    return PropertyComponentType::Uint64;
   case AccessorSpec::ComponentType::FLOAT:
     return PropertyComponentType::Float32;
+  case AccessorSpec::ComponentType::DOUBLE:
+    return PropertyComponentType::Float64;
   default:
     return PropertyComponentType::None;
+  }
+}
+
+int32_t convertPropertyComponentTypeToAccessorComponentType(
+    PropertyComponentType componentType) {
+  switch (componentType) {
+  case PropertyComponentType::Int8:
+    return AccessorSpec::ComponentType::BYTE;
+  case PropertyComponentType::Uint8:
+    return AccessorSpec::ComponentType::UNSIGNED_BYTE;
+  case PropertyComponentType::Int16:
+    return AccessorSpec::ComponentType::SHORT;
+  case PropertyComponentType::Uint16:
+    return AccessorSpec::ComponentType::UNSIGNED_SHORT;
+  case PropertyComponentType::Int32:
+    return AccessorSpec::ComponentType::INT;
+  case PropertyComponentType::Uint32:
+    return AccessorSpec::ComponentType::UNSIGNED_INT;
+  case PropertyComponentType::Int64:
+    return AccessorSpec::ComponentType::INT64;
+  case PropertyComponentType::Uint64:
+    return AccessorSpec::ComponentType::UNSIGNED_INT64;
+  case PropertyComponentType::Float32:
+    return AccessorSpec::ComponentType::FLOAT;
+  case PropertyComponentType::Float64:
+    return AccessorSpec::ComponentType::DOUBLE;
+  default:
+    return -1;
   }
 }
 

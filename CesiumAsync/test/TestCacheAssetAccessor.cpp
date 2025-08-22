@@ -1,19 +1,30 @@
-#include "CesiumAsync/AsyncSystem.h"
-#include "CesiumAsync/CachingAssetAccessor.h"
-#include "CesiumAsync/ICacheDatabase.h"
-#include "CesiumAsync/ITaskProcessor.h"
 #include "MockAssetAccessor.h"
 #include "MockAssetRequest.h"
 #include "MockAssetResponse.h"
 #include "MockTaskProcessor.h"
 #include "ResponseCacheControl.h"
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/CacheItem.h>
+#include <CesiumAsync/CachingAssetAccessor.h>
+#include <CesiumAsync/HttpHeaders.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/ICacheDatabase.h>
+
+#include <doctest/doctest.h>
 #include <spdlog/spdlog.h>
 
 #include <cstddef>
+#include <cstdint>
+#include <ctime>
+#include <memory>
 #include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 
@@ -127,155 +138,191 @@ bool runResponseCacheTest(
 }
 
 TEST_CASE("Test the condition of caching the request") {
-  SECTION("Cache request") {
-    SECTION("GET request, has max-age, cacheable status code") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+  SUBCASE("Cache request") {
+    SUBCASE("GET request, has max-age, cacheable status code") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "app/json"},
-          {"Cache-Control", "must-revalidate, max-age=100"}};
+      for (auto& statusCode : statusCodes) {
+        HttpHeaders headers = {
+            {"Content-Type", "app/json"},
+            {"Cache-Control", "must-revalidate, max-age=100"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION("GET Request, has Expires header, cacheable status code") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+    SUBCASE("GET Request, has Expires header, cacheable status code") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "app/json"},
-          {"Expires", "Wed, 21 Oct 5020 07:28:00 GMT"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        HttpHeaders headers = {
+            {"Content-Type", "app/json"},
+            {"Expires", "Wed, 21 Oct 5020 07:28:00 GMT"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION("GET Request, max-age 0, old Expires header") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+    SUBCASE("GET Request, max-age 0, old Expires header") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      // Similar to Google Photorealistic 3D Tiles, root request
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Cache-Control", "private, max-age=0, must-revalidate"},
-          {"ETag", "deadbeef"},
-          {"Expires", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        // Similar to Google Photorealistic 3D Tiles, root request
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Cache-Control", "private, max-age=0, must-revalidate"},
+            {"ETag", "deadbeef"},
+            {"Expires", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION("GET Request, max-age 0, stale-while-revalidate") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+    SUBCASE("GET Request, max-age 0, stale-while-revalidate") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      // Similar to Google Photorealistic 3D Tiles, tile request
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Cache-Control", "private, max-age=0, stale-while-revalidate=86400"},
-          {"ETag", "deadbeef"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        // Similar to Google Photorealistic 3D Tiles, tile request
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Cache-Control",
+             "private, max-age=0, stale-while-revalidate=86400"},
+            {"ETag", "deadbeef"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION("GET Request, no-cache with Etag") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+    SUBCASE("GET Request, no-cache with Etag") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Cache-Control", "no-cache"},
-          {"ETag", "deadbeef"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Cache-Control", "no-cache"},
+            {"ETag", "deadbeef"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION("GET Request, no-cache with Last-Modified") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+    SUBCASE("GET Request, no-cache with Last-Modified") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Cache-Control", "no-cache"},
-          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Cache-Control", "no-cache"},
+            {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION("GET Request, just Last-Modified") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+    SUBCASE("GET Request, just Last-Modified") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION("GET Request, just Etag") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+    SUBCASE("GET Request, just Etag") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"ETag", "deadbeef"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"ETag", "deadbeef"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION(
+    SUBCASE(
         "GET Request, Expires header is less than current, but has an ETag") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"ETag", "deadbeef"},
-          {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"ETag", "deadbeef"},
+            {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION("GET Request, Expires header is less than current, but has a "
+    SUBCASE("GET Request, Expires header is less than current, but has a "
             "Last-Modified") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"},
-          {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"},
+            {"Expires", "Wed, 21 Oct 2010 07:28:00 GMT"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION("GET Request, max-age is zero, but has an ETag") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+    SUBCASE("GET Request, max-age is zero, but has an ETag") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"ETag", "deadbeef"},
-          {"Cache-Control", "max-age=0"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"ETag", "deadbeef"},
+            {"Cache-Control", "max-age=0"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
 
-    SECTION("GET Request, max-age is zero, but has a Last-Modified") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+    SUBCASE("GET Request, max-age is zero, but has a Last-Modified") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"},
-          {"Cache-Control", "max-age=0"}};
+      for (auto& statusCode : statusCodes) {
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == true);
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Last-Modified", "Mon, 01 Jan 1990 00:00:00 GMT"},
+            {"Cache-Control", "max-age=0"}};
+
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == true);
+      }
     }
   }
 
-  SECTION("No cache condition") {
-    SECTION("No store for response that doesn't have GET method") {
+  SUBCASE("No cache condition") {
+    SUBCASE("No store for response that doesn't have GET method") {
       std::unique_ptr<IAssetResponse> mockResponse =
           std::make_unique<MockAssetResponse>(
               static_cast<uint16_t>(200),
@@ -311,7 +358,7 @@ TEST_CASE("Test the condition of caching the request") {
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
-    SECTION("No store for response that has no cacheable status code") {
+    SUBCASE("No store for response that has no cacheable status code") {
       std::unique_ptr<IAssetResponse> mockResponse =
           std::make_unique<MockAssetResponse>(
               static_cast<uint16_t>(404),
@@ -347,7 +394,7 @@ TEST_CASE("Test the condition of caching the request") {
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
-    SECTION(
+    SUBCASE(
         "No store for response that has No-Store in the cache-control header") {
       std::unique_ptr<IAssetResponse> mockResponse =
           std::make_unique<MockAssetResponse>(
@@ -383,7 +430,7 @@ TEST_CASE("Test the condition of caching the request") {
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
-    SECTION(
+    SUBCASE(
         "No store for response that has No-Cache in the cache-control header") {
       std::unique_ptr<IAssetResponse> mockResponse =
           std::make_unique<MockAssetResponse>(
@@ -428,7 +475,7 @@ TEST_CASE("Test the condition of caching the request") {
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
-    SECTION(
+    SUBCASE(
         "No store for response that has no Cache-Control and Expires header") {
       std::unique_ptr<IAssetResponse> mockResponse =
           std::make_unique<MockAssetResponse>(
@@ -462,7 +509,7 @@ TEST_CASE("Test the condition of caching the request") {
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
-    SECTION("No store if Expires header is less than the current") {
+    SUBCASE("No store if Expires header is less than the current") {
       std::unique_ptr<IAssetResponse> mockResponse =
           std::make_unique<MockAssetResponse>(
               static_cast<uint16_t>(200),
@@ -497,21 +544,23 @@ TEST_CASE("Test the condition of caching the request") {
       REQUIRE(mockCacheDatabase->storeResponseCall == false);
     }
 
-    SECTION("No store if max-age=0 and response has no ETag or Last-Modified") {
-      int statusCode = GENERATE(200, 202, 203, 204, 205, 304);
+    SUBCASE("No store if max-age=0 and response has no ETag or Last-Modified") {
+      std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
-      HttpHeaders headers = {
-          {"Content-Type", "application/json"},
-          {"Cache-Control", "max-age=0"}};
+      for (auto& statusCode : statusCodes) {
+        HttpHeaders headers = {
+            {"Content-Type", "application/json"},
+            {"Cache-Control", "max-age=0"}};
 
-      bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
-      REQUIRE(responseCached == false);
+        bool responseCached = runResponseCacheTest(statusCode, "GET", headers);
+        CHECK(responseCached == false);
+      }
     }
   }
 }
 
 TEST_CASE("Test calculation of expiry time for the cached response") {
-  SECTION("Response has max-age cache control") {
+  SUBCASE("Response has max-age cache control") {
     std::unique_ptr<IAssetResponse> mockResponse =
         std::make_unique<MockAssetResponse>(
             static_cast<uint16_t>(200),
@@ -549,7 +598,7 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
         400);
   }
 
-  SECTION("Response has Expires header") {
+  SUBCASE("Response has Expires header") {
     std::unique_ptr<IAssetResponse> mockResponse =
         std::make_unique<MockAssetResponse>(
             static_cast<uint16_t>(200),
@@ -587,7 +636,7 @@ TEST_CASE("Test calculation of expiry time for the cached response") {
 }
 
 TEST_CASE("Test serving cache item") {
-  SECTION("Cache item doesn't exist") {
+  SUBCASE("Cache item doesn't exist") {
     std::unique_ptr<IAssetResponse> mockResponse =
         std::make_unique<MockAssetResponse>(
             static_cast<uint16_t>(200),
@@ -640,7 +689,7 @@ TEST_CASE("Test serving cache item") {
         .wait();
   }
 
-  SECTION("Successfully retrieve cache item") {
+  SUBCASE("Successfully retrieve cache item") {
     // create mock request and mock response. They are intended to be different
     // from the cache content so that we can verify the response in the callback
     // comes from the cache
@@ -737,7 +786,7 @@ TEST_CASE("Test serving cache item") {
         .wait();
   }
 
-  SECTION("Retrieve outdated cache item and cache control mandates "
+  SUBCASE("Retrieve outdated cache item and cache control mandates "
           "revalidation before using it") {
     // Mock 304 response
     std::unique_ptr<IAssetResponse> mockResponse =
@@ -747,7 +796,8 @@ TEST_CASE("Test serving cache item") {
             HttpHeaders{
                 {"Content-Type", "app/json"},
                 {"Revalidation-Response-Header", "Revalidation-Response-Value"},
-                {"Cache-Control", "max-age=300, must-revalidate, private"}},
+                {"Cache-Control", "max-age=300, must-revalidate, private"},
+                {"ETag", "1"}},
             std::vector<std::byte>());
 
     std::shared_ptr<IAssetRequest> mockRequest =
@@ -770,7 +820,8 @@ TEST_CASE("Test serving cache item") {
         HttpHeaders{
             {"Content-Type", "app/json"},
             {"Cache-Response-Header", "Cache-Response-Value"},
-            {"Cache-Control", "max-age=100, private"}},
+            {"Cache-Control", "max-age=100, private"},
+            {"ETag", "1"}},
         std::vector<std::byte>());
     CacheItem cacheItem(
         currentTime - 100,
@@ -839,7 +890,7 @@ TEST_CASE("Test serving cache item") {
         .wait();
   }
 
-  SECTION("Cache should serve validation response from the server directly if "
+  SUBCASE("Cache should serve validation response from the server directly if "
           "it is not 304") {
     // Mock 200 response
     std::unique_ptr<IAssetResponse> mockResponse =
@@ -848,8 +899,8 @@ TEST_CASE("Test serving cache item") {
             "app/json",
             HttpHeaders{
                 {"Content-Type", "app/json"},
-                {"Revalidation-Response-Header",
-                 "Revalidation-Response-Value"}},
+                {"Revalidation-Response-Header", "Revalidation-Response-Value"},
+                {"ETag", "1"}},
             std::vector<std::byte>());
 
     std::shared_ptr<IAssetRequest> mockRequest =
@@ -872,7 +923,8 @@ TEST_CASE("Test serving cache item") {
         HttpHeaders{
             {"Content-Type", "app/json"},
             {"Cache-Response-Header", "Cache-Response-Value"},
-            {"Cache-Control", "max-age=100, private"}},
+            {"Cache-Control", "max-age=100, private"},
+            {"ETag", "1"}},
         std::vector<std::byte>());
     CacheItem cacheItem(
         currentTime - 100,
@@ -880,10 +932,22 @@ TEST_CASE("Test serving cache item") {
         std::move(cacheResponse));
     mockCacheDatabase->cacheItem = cacheItem;
 
+    std::unique_ptr<MockAssetAccessor> pAssetAccessor =
+        std::make_unique<MockAssetAccessor>(mockRequest);
+
+    pAssetAccessor->responsesByUrl["test.com"] = MockAssetResponse(
+        static_cast<uint16_t>(200),
+        "app/json",
+        HttpHeaders{
+            {"Content-Type", "app/json"},
+            {"Revalidation-Response-Header", "Revalidation-Response-Value"},
+            {"ETag", "1"}},
+        std::vector<std::byte>());
+
     std::shared_ptr<CachingAssetAccessor> cacheAssetAccessor =
         std::make_shared<CachingAssetAccessor>(
             spdlog::default_logger(),
-            std::make_unique<MockAssetAccessor>(mockRequest),
+            std::move(pAssetAccessor),
             std::move(mockCacheDatabase));
     std::shared_ptr<MockTaskProcessor> mockTaskProcessor =
         std::make_shared<MockTaskProcessor>();
@@ -891,13 +955,19 @@ TEST_CASE("Test serving cache item") {
     // test that the response is from the server directly
     AsyncSystem asyncSystem(mockTaskProcessor);
     cacheAssetAccessor
-        ->get(asyncSystem, "test.com", std::vector<IAssetAccessor::THeader>{})
+        ->get(
+            asyncSystem,
+            "test.com",
+            std::vector<IAssetAccessor::THeader>{
+                {"Some-Request-Header", "The Value"}})
         .thenImmediately(
             [](const std::shared_ptr<IAssetRequest>& completedRequest) {
               REQUIRE(completedRequest != nullptr);
               REQUIRE(completedRequest->url() == "test.com");
-              REQUIRE(completedRequest->headers().empty());
               REQUIRE(completedRequest->method() == "GET");
+              REQUIRE(
+                  completedRequest->headers() ==
+                  HttpHeaders{{"Some-Request-Header", "The Value"}});
 
               const IAssetResponse* response = completedRequest->response();
               REQUIRE(response != nullptr);

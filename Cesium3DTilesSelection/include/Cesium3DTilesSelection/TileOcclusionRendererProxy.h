@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Library.h"
-#include "Tile.h"
+#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/Tile.h>
 
 #include <cstdint>
 #include <unordered_map>
@@ -104,12 +104,11 @@ public:
    * assigning a proxy from the free list.
    *
    * @param tile The tile.
-   * @param currentFrame The current frame number.
    * @return The occlusion proxy mapped to this tile, or nullptr if one can't
    * be made.
    */
   const TileOcclusionRendererProxy*
-  fetchOcclusionProxyForTile(const Tile& tile, int32_t currentFrame);
+  fetchOcclusionProxyForTile(const Tile& tile);
 
   /**
    * @brief Prunes the occlusion proxy mappings and removes any mappings that

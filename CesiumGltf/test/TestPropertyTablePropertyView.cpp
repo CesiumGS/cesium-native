@@ -1,20 +1,49 @@
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumUtility/JsonValue.h>
+
+#include <glm/ext/matrix_double2x2.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/matrix_float2x2.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_float4.hpp>
+#include <glm/ext/vector_int2.hpp>
+#include <glm/ext/vector_int2_sized.hpp>
+#include <glm/ext/vector_int3.hpp>
+#include <glm/ext/vector_int3_sized.hpp>
+#include <glm/ext/vector_uint2_sized.hpp>
+#include <glm/ext/vector_uint4_sized.hpp>
+#include <glm/fwd.hpp>
+
+#include <cstdint>
+#include <optional>
+#include <string_view>
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
-#include "CesiumGltf/PropertyTablePropertyView.h"
+#include <CesiumGltf/PropertyTablePropertyView.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <bitset>
 #include <climits>
 #include <cstddef>
 #include <cstring>
+#include <ostream>
 #include <span>
+#include <string>
 #include <vector>
 
+using namespace doctest;
 using namespace CesiumGltf;
 using namespace CesiumUtility;
 
@@ -571,22 +600,22 @@ static void checkNormalizedFixedLengthArray(
 } // namespace
 
 TEST_CASE("Check scalar PropertyTablePropertyView") {
-  SECTION("Uint8") {
+  SUBCASE("Uint8") {
     std::vector<uint8_t> data{12, 33, 56, 67};
     checkNumeric(data);
   }
 
-  SECTION("Int32") {
+  SUBCASE("Int32") {
     std::vector<int32_t> data{111222, -11133, -56000, 670000};
     checkNumeric(data);
   }
 
-  SECTION("Float") {
+  SUBCASE("Float") {
     std::vector<float> data{12.3333f, -12.44555f, -5.6111f, 6.7421f};
     checkNumeric(data);
   }
 
-  SECTION("Double") {
+  SUBCASE("Double") {
     std::vector<double> data{
         12222.3302121,
         -12000.44555,
@@ -595,7 +624,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
     checkNumeric(data);
   }
 
-  SECTION("Float with Offset / Scale") {
+  SUBCASE("Float with Offset / Scale") {
     std::vector<float> values{12.5f, -12.5f, -5.0f, 6.75f};
     const float offset = 1.0f;
     const float scale = 2.0f;
@@ -603,7 +632,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
     checkNumeric(values, expected, offset, scale);
   }
 
-  SECTION("Int16 with NoData") {
+  SUBCASE("Int16 with NoData") {
     std::vector<int16_t> values{-1, 3, 7, -1};
     const int16_t noData = -1;
     std::vector<std::optional<int16_t>> expected{
@@ -620,7 +649,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
         std::nullopt);
   };
 
-  SECTION("Int16 with NoData and Default") {
+  SUBCASE("Int16 with NoData and Default") {
     std::vector<int16_t> values{-1, 3, 7, -1};
     const int16_t noData = -1;
     const int16_t defaultValue = 0;
@@ -638,7 +667,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
         defaultValue);
   }
 
-  SECTION("Overrides class property values") {
+  SUBCASE("Overrides class property values") {
     std::vector<float> values{1.0f, 3.0f, 2.0f, 4.0f};
     std::vector<std::byte> data;
     data.resize(values.size() * sizeof(float));
@@ -678,7 +707,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView") {
 }
 
 TEST_CASE("Check scalar PropertyTablePropertyView (normalized)") {
-  SECTION("Uint8") {
+  SUBCASE("Uint8") {
     std::vector<uint8_t> values{0, 64, 128, 255};
     std::vector<std::optional<double>> expected{
         0.0,
@@ -688,7 +717,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView (normalized)") {
     checkNormalizedNumeric(values, expected);
   }
 
-  SECTION("Int16") {
+  SUBCASE("Int16") {
     std::vector<int16_t> values{-32768, 0, 16384, 32767};
     std::vector<std::optional<double>> expected{
         -1.0,
@@ -698,7 +727,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView (normalized)") {
     checkNormalizedNumeric(values, expected);
   }
 
-  SECTION("Uint8 with Offset and Scale") {
+  SUBCASE("Uint8 with Offset and Scale") {
     std::vector<uint8_t> values{0, 64, 128, 255};
     const double offset = 1.0;
     const double scale = 2.0;
@@ -710,7 +739,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView (normalized)") {
     checkNormalizedNumeric(values, expected, offset, scale);
   }
 
-  SECTION("Uint8 with all properties") {
+  SUBCASE("Uint8 with all properties") {
     std::vector<uint8_t> values{0, 64, 128, 255};
     const double offset = 1.0;
     const double scale = 2.0;
@@ -732,7 +761,7 @@ TEST_CASE("Check scalar PropertyTablePropertyView (normalized)") {
 }
 
 TEST_CASE("Check vecN PropertyTablePropertyView") {
-  SECTION("Float Vec2") {
+  SUBCASE("Float Vec2") {
     std::vector<glm::vec2> data{
         glm::vec2(10.001f, 0.005f),
         glm::vec2(-20.8f, 50.0f),
@@ -741,7 +770,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
     checkNumeric(data);
   }
 
-  SECTION("Int32 Vec3") {
+  SUBCASE("Int32 Vec3") {
     std::vector<glm::ivec3> data{
         glm::ivec3(10, 0, -3),
         glm::ivec3(-20, 10, 52),
@@ -750,7 +779,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
     checkNumeric(data);
   }
 
-  SECTION("Uint8 Vec4") {
+  SUBCASE("Uint8 Vec4") {
     std::vector<glm::u8vec4> data{
         glm::u8vec4(1, 2, 3, 0),
         glm::u8vec4(4, 5, 6, 1),
@@ -759,7 +788,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
     checkNumeric(data);
   }
 
-  SECTION("Float Vec3 with Offset / Scale") {
+  SUBCASE("Float Vec3 with Offset / Scale") {
     std::vector<glm::vec3> values{
         glm::vec3(0.0f, -1.5f, -5.0f),
         glm::vec3(6.5f, 2.0f, 4.0f),
@@ -775,7 +804,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
     checkNumeric(values, expected, offset, scale);
   }
 
-  SECTION("Int16 Vec2 with NoData") {
+  SUBCASE("Int16 Vec2 with NoData") {
     std::vector<glm::i16vec2> values{
         glm::i16vec2(-1, 3),
         glm::i16vec2(-1, -1),
@@ -794,7 +823,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         std::nullopt);
   };
 
-  SECTION("Int16 Vec2 with NoData and Default") {
+  SUBCASE("Int16 Vec2 with NoData and Default") {
     std::vector<glm::i16vec2> values{
         glm::i16vec2(-1, 3),
         glm::i16vec2(-1, -1),
@@ -814,7 +843,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
         defaultValue);
   };
 
-  SECTION("Overrides class property values") {
+  SUBCASE("Overrides class property values") {
     std::vector<glm::vec2> values{
         glm::vec2(1.0f, 3.0f),
         glm::vec2(2.5f, 2.5f),
@@ -860,7 +889,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView") {
 }
 
 TEST_CASE("Check vecN PropertyTablePropertyView (normalized)") {
-  SECTION("Uint8 Vec2") {
+  SUBCASE("Uint8 Vec2") {
     std::vector<glm::u8vec2> values{
         glm::u8vec2(0, 64),
         glm::u8vec2(128, 255),
@@ -872,7 +901,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView (normalized)") {
     checkNormalizedNumeric(values, expected);
   }
 
-  SECTION("Int16 Vec2") {
+  SUBCASE("Int16 Vec2") {
     std::vector<glm::i16vec2> values{
         glm::i16vec2(-32768, 0),
         glm::i16vec2(16384, 32767),
@@ -885,7 +914,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView (normalized)") {
     checkNormalizedNumeric(values, expected);
   }
 
-  SECTION("Uint8 Vec2 with Offset and Scale") {
+  SUBCASE("Uint8 Vec2 with Offset and Scale") {
     std::vector<glm::u8vec2> values{
         glm::u8vec2(0, 64),
         glm::u8vec2(128, 255),
@@ -899,7 +928,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView (normalized)") {
     checkNormalizedNumeric(values, expected, offset, scale);
   }
 
-  SECTION("Uint8 Vec2 with all properties") {
+  SUBCASE("Uint8 Vec2 with all properties") {
     std::vector<glm::u8vec2> values{
         glm::u8vec2(0, 64),
         glm::u8vec2(128, 255),
@@ -925,7 +954,7 @@ TEST_CASE("Check vecN PropertyTablePropertyView (normalized)") {
 }
 
 TEST_CASE("Check matN PropertyTablePropertyView") {
-  SECTION("Float Mat2") {
+  SUBCASE("Float Mat2") {
     // clang-format off
     std::vector<glm::mat2> data{
         glm::mat2(
@@ -942,7 +971,7 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     checkNumeric(data);
   }
 
-  SECTION("Int16 Mat3") {
+  SUBCASE("Int16 Mat3") {
     // clang-format off
     std::vector<glm::i16mat3x3> data{
         glm::i16mat3x3(
@@ -962,7 +991,7 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     checkNumeric(data);
   }
 
-  SECTION("Double Mat4") {
+  SUBCASE("Double Mat4") {
     // clang-format off
     std::vector<glm::dmat4> data{
         glm::dmat4(
@@ -985,7 +1014,7 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     checkNumeric(data);
   }
 
-  SECTION("Float Mat2 with Offset / Scale") {
+  SUBCASE("Float Mat2 with Offset / Scale") {
     // clang-format off
     std::vector<glm::mat2> values{
         glm::mat2(
@@ -1019,7 +1048,7 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
     checkNumeric(values, expected, offset, scale);
   }
 
-  SECTION("Int16 Mat3 with NoData") {
+  SUBCASE("Int16 Mat3 with NoData") {
     // clang-format off
     std::vector<glm::i16mat3x3> values{
         glm::i16mat3x3(
@@ -1052,7 +1081,7 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
         std::nullopt);
   };
 
-  SECTION("Int16 Mat3 with NoData and DefaultValue") {
+  SUBCASE("Int16 Mat3 with NoData and DefaultValue") {
     // clang-format off
     std::vector<glm::i16mat3x3> values{
         glm::i16mat3x3(
@@ -1089,7 +1118,7 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
         defaultValue);
   };
 
-  SECTION("Overrides class property values") {
+  SUBCASE("Overrides class property values") {
     // clang-fomrat off
     std::vector<glm::mat2> values{
         glm::mat2(1.0f),
@@ -1173,7 +1202,7 @@ TEST_CASE("Check matN PropertyTablePropertyView") {
 }
 
 TEST_CASE("Check matN PropertyTablePropertyView (normalized)") {
-  SECTION("Uint8 Mat2") {
+  SUBCASE("Uint8 Mat2") {
     // clang-format off
     std::vector<glm::u8mat2x2> values{
         glm::u8mat2x2(
@@ -1193,7 +1222,7 @@ TEST_CASE("Check matN PropertyTablePropertyView (normalized)") {
     checkNormalizedNumeric(values, expected);
   }
 
-  SECTION("Int16 Mat2") {
+  SUBCASE("Int16 Mat2") {
     // clang-format off
     std::vector<glm::i16mat2x2> values{
         glm::i16mat2x2(
@@ -1214,7 +1243,7 @@ TEST_CASE("Check matN PropertyTablePropertyView (normalized)") {
     checkNormalizedNumeric(values, expected);
   }
 
-  SECTION("Uint8 Mat2 with Offset and Scale") {
+  SUBCASE("Uint8 Mat2 with Offset and Scale") {
     // clang-format off
     std::vector<glm::u8mat2x2> values{
         glm::u8mat2x2(
@@ -1240,7 +1269,7 @@ TEST_CASE("Check matN PropertyTablePropertyView (normalized)") {
     checkNormalizedNumeric(values, expected, offset, scale);
   }
 
-  SECTION("Normalized Uint8 Mat2 with all properties") {
+  SUBCASE("Normalized Uint8 Mat2 with all properties") {
     // clang-format off
     std::vector<glm::u8mat2x2> values{
         glm::u8mat2x2(
@@ -1342,7 +1371,7 @@ TEST_CASE("Check string PropertyTablePropertyView") {
       &currentOffset,
       sizeof(uint32_t));
 
-  SECTION("Returns correct values") {
+  SUBCASE("Returns correct values") {
     PropertyTableProperty propertyTableProperty;
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
@@ -1363,7 +1392,7 @@ TEST_CASE("Check string PropertyTablePropertyView") {
     }
   }
 
-  SECTION("Uses NoData value") {
+  SUBCASE("Uses NoData value") {
     PropertyTableProperty propertyTableProperty;
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
@@ -1390,7 +1419,7 @@ TEST_CASE("Check string PropertyTablePropertyView") {
     }
   }
 
-  SECTION("Uses NoData and Default value") {
+  SUBCASE("Uses NoData and Default value") {
     PropertyTableProperty propertyTableProperty;
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
@@ -1420,7 +1449,7 @@ TEST_CASE("Check string PropertyTablePropertyView") {
 }
 
 TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
-  SECTION("Array of 4 uint8_ts") {
+  SUBCASE("Array of 4 uint8_ts") {
     // clang-format off
     std::vector<uint8_t> data{
         210, 211, 3, 42,
@@ -1429,7 +1458,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Array of 3 int8_ts") {
+  SUBCASE("Array of 3 int8_ts") {
     // clang-format off
     std::vector<int8_t> data{
         122, -12, 3,
@@ -1440,7 +1469,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 3);
   }
 
-  SECTION("Array of 4 int16_ts") {
+  SUBCASE("Array of 4 int16_ts") {
     // clang-format off
     std::vector<int16_t> data{
         -122, 12, 3, 44,
@@ -1451,7 +1480,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Array of 6 uint32_ts") {
+  SUBCASE("Array of 6 uint32_ts") {
     // clang-format off
     std::vector<uint32_t> data{
         122, 12, 3, 44, 34444, 2222,
@@ -1462,7 +1491,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 6);
   }
 
-  SECTION("Array of 2 int32_ts") {
+  SUBCASE("Array of 2 int32_ts") {
     // clang-format off
     std::vector<int32_t> data{
         122, 12,
@@ -1471,7 +1500,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 2);
   }
 
-  SECTION("Array of 4 uint64_ts") {
+  SUBCASE("Array of 4 uint64_ts") {
     // clang-format off
     std::vector<uint64_t> data{
         10022, 120000, 2422, 1111,
@@ -1480,7 +1509,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Array of 4 int64_ts") {
+  SUBCASE("Array of 4 int64_ts") {
     // clang-format off
     std::vector<int64_t> data{
         10022, -120000, 2422, 1111,
@@ -1489,7 +1518,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Array of 4 floats") {
+  SUBCASE("Array of 4 floats") {
     // clang-format off
     std::vector<float> data{
         10.022f, -12.43f, 242.2f, 1.111f,
@@ -1498,7 +1527,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Array of 4 double") {
+  SUBCASE("Array of 4 double") {
     // clang-format off
     std::vector<double> data{
         10.022, -12.43, 242.2, 1.111,
@@ -1507,7 +1536,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Array of 4 uint8_ts") {
+  SUBCASE("Array of 4 uint8_ts") {
     // clang-format off
     std::vector<uint8_t> data{
         210, 211, 3, 42,
@@ -1516,7 +1545,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Array of 4 floats with offset / scale") {
+  SUBCASE("Array of 4 floats with offset / scale") {
     // clang-format off
     std::vector<float> data{
       1.0f, 2.0f, 3.0f, 4.0f,
@@ -1533,7 +1562,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4, expected, offset, scale);
   }
 
-  SECTION("Array of 2 int32_ts with noData value") {
+  SUBCASE("Array of 2 int32_ts with noData value") {
     // clang-format off
     std::vector<int32_t> data{
         122, 12,
@@ -1555,7 +1584,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
         std::nullopt);
   }
 
-  SECTION("Array of 2 int32_ts with noData and default value") {
+  SUBCASE("Array of 2 int32_ts with noData and default value") {
     // clang-format off
     std::vector<int32_t> data{
         122, 12,
@@ -1578,7 +1607,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
         defaultValue);
   }
 
-  SECTION("Overrides class property values") {
+  SUBCASE("Overrides class property values") {
     // clang-format off
     std::vector<float> data{
         1.0f, 2.0f, 3.0f, 4.0f,
@@ -1654,7 +1683,7 @@ TEST_CASE("Check fixed-length scalar array PropertyTablePropertyView") {
 
 TEST_CASE(
     "Check fixed-length scalar array PropertyTablePropertyView (normalized)") {
-  SECTION("Array of 4 uint8_ts") {
+  SUBCASE("Array of 4 uint8_ts") {
     // clang-format off
     std::vector<uint8_t> data{
         255, 64, 0, 255,
@@ -1666,7 +1695,7 @@ TEST_CASE(
     checkNormalizedFixedLengthArray(data, 4, expected);
   }
 
-  SECTION("Array of 3 normalized int8_ts with all properties") {
+  SUBCASE("Array of 3 normalized int8_ts with all properties") {
     // clang-format off
     std::vector<int8_t> data{
         -128, 0, 64,
@@ -1695,7 +1724,7 @@ TEST_CASE(
 }
 
 TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
-  SECTION("Array of 4 u8vec2s") {
+  SUBCASE("Array of 4 u8vec2s") {
     std::vector<glm::u8vec2> data{
         glm::u8vec2(10, 21),
         glm::u8vec2(3, 42),
@@ -1708,7 +1737,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Array of 2 i8vec3s") {
+  SUBCASE("Array of 2 i8vec3s") {
     std::vector<glm::i8vec3> data{
         glm::i8vec3(122, -12, 3),
         glm::i8vec3(44, 11, -2),
@@ -1719,7 +1748,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 2);
   }
 
-  SECTION("Array of 3 vec4s") {
+  SUBCASE("Array of 3 vec4s") {
     std::vector<glm::vec4> data{
         glm::vec4(40.2f, -1.2f, 8.8f, 1.0f),
         glm::vec4(1.4f, 0.11, 34.0f, 0.0f),
@@ -1730,7 +1759,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 3);
   }
 
-  SECTION("Array of 2 vec2s with offset / scale") {
+  SUBCASE("Array of 2 vec2s with offset / scale") {
     // clang-format off
     std::vector<glm::vec2> data{
       glm::vec2(1.0f, 2.0f), glm::vec2(3.0f, 4.0f),
@@ -1747,7 +1776,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 2, expected, offset, scale);
   }
 
-  SECTION("Array of 2 ivec2 with noData value") {
+  SUBCASE("Array of 2 ivec2 with noData value") {
     // clang-format off
     std::vector<glm::ivec2> data{
         glm::ivec2(122, 12), glm::ivec2(-1, -1),
@@ -1769,7 +1798,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         std::nullopt);
   }
 
-  SECTION("Array of 2 ivec2 with noData and default value") {
+  SUBCASE("Array of 2 ivec2 with noData and default value") {
     // clang-format off
     std::vector<glm::ivec2> data{
         glm::ivec2(122, 12), glm::ivec2(-1, -1),
@@ -1792,7 +1821,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
         defaultValue);
   }
 
-  SECTION("Overrides class property values") {
+  SUBCASE("Overrides class property values") {
     // clang-format off
     std::vector<glm::vec2> data{
         glm::vec2(1.0f, 2.0f), glm::vec2(3.0f, 4.0f),
@@ -1872,7 +1901,7 @@ TEST_CASE("Check fixed-length vecN array PropertyTablePropertyView") {
 
 TEST_CASE(
     "Check fixed-length vecN array PropertyTablePropertyView (normalized)") {
-  SECTION("Array of 2 u8vec2s") {
+  SUBCASE("Array of 2 u8vec2s") {
     std::vector<glm::u8vec2> data{
         glm::u8vec2(255, 64),
         glm::u8vec2(0, 255),
@@ -1888,7 +1917,7 @@ TEST_CASE(
     checkNormalizedFixedLengthArray(data, 2, expected);
   }
 
-  SECTION("Array of 2 i8vec2 with all properties") {
+  SUBCASE("Array of 2 i8vec2 with all properties") {
     // clang-format off
     std::vector<glm::i8vec2> data{
       glm::i8vec2(-128, 0), glm::i8vec2(64, -64),
@@ -1917,7 +1946,7 @@ TEST_CASE(
         defaultValue);
   }
 
-  SECTION("Overrides class property values") {
+  SUBCASE("Overrides class property values") {
     // clang-format off
     std::vector<glm::vec2> data{
         glm::vec2(1.0f, 2.0f), glm::vec2(3.0f, 4.0f),
@@ -1996,7 +2025,7 @@ TEST_CASE(
 }
 
 TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
-  SECTION("Array of 4 i8mat2x2") {
+  SUBCASE("Array of 4 i8mat2x2") {
     // clang-format off
     std::vector<glm::i8mat2x2> data{
         glm::i8mat2x2(
@@ -2027,7 +2056,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 4);
   }
 
-  SECTION("Array of 2 dmat3s") {
+  SUBCASE("Array of 2 dmat3s") {
     // clang-format off
     std::vector<glm::dmat3> data{
         glm::dmat3(
@@ -2058,7 +2087,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 2);
   }
 
-  SECTION("Array of 3 u8mat4x4") {
+  SUBCASE("Array of 3 u8mat4x4") {
     // clang-format off
     std::vector<glm::u8mat4x4> data{
         glm::u8mat4x4(
@@ -2095,7 +2124,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 3);
   }
 
-  SECTION("Array of 2 mat2s with offset / scale") {
+  SUBCASE("Array of 2 mat2s with offset / scale") {
     // clang-format off
     std::vector<glm::mat2> data{
       glm::mat2(
@@ -2141,7 +2170,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
     checkFixedLengthArray(data, 2, expected, offset, scale);
   }
 
-  SECTION("Array of 2 imat2x2 with noData value") {
+  SUBCASE("Array of 2 imat2x2 with noData value") {
     // clang-format off
     std::vector<glm::imat2x2> data{
         glm::imat2x2(
@@ -2186,7 +2215,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
         std::nullopt);
   }
 
-  SECTION("Array of 2 imat2x2 with noData and default value") {
+  SUBCASE("Array of 2 imat2x2 with noData and default value") {
     // clang-format off
     std::vector<glm::imat2x2> data{
         glm::imat2x2(
@@ -2240,7 +2269,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
         defaultValue);
   }
 
-  SECTION("Overrides class property values") {
+  SUBCASE("Overrides class property values") {
     // clang-format off
     std::vector<glm::mat2> data{
         glm::mat2(1.0f),
@@ -2390,7 +2419,7 @@ TEST_CASE("Check fixed-length matN array PropertyTablePropertyView") {
 
 TEST_CASE(
     "Check fixed-length matN array PropertyTablePropertyView (normalized)") {
-  SECTION("Array of 2 u8mat2x2s") {
+  SUBCASE("Array of 2 u8mat2x2s") {
     // clang-format off
     std::vector<glm::u8mat2x2> data{
         glm::u8mat2x2(
@@ -2428,7 +2457,7 @@ TEST_CASE(
     checkNormalizedFixedLengthArray(data, 2, expected);
   }
 
-  SECTION("Array of 2 i8mat2x2 with all properties") {
+  SUBCASE("Array of 2 i8mat2x2 with all properties") {
     // clang-format off
     std::vector<glm::i8mat2x2> data{
       glm::i8mat2x2(-128),
@@ -2496,7 +2525,7 @@ TEST_CASE(
 }
 
 TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
-  SECTION("Array of uint8_t") {
+  SUBCASE("Array of uint8_t") {
     // clang-format off
     std::vector<uint8_t> data{
         3, 2,
@@ -2509,7 +2538,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
-  SECTION("Array of int32_t") {
+  SUBCASE("Array of int32_t") {
     // clang-format off
     std::vector<int32_t> data{
         3, 200,
@@ -2522,7 +2551,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
-  SECTION("Array of double") {
+  SUBCASE("Array of double") {
     // clang-format off
     std::vector<double> data{
         3.333, 200.2,
@@ -2535,7 +2564,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
-  SECTION("Array of normalized uint8_t") {
+  SUBCASE("Array of normalized uint8_t") {
     // clang-format off
     std::vector<uint8_t> data{
         255, 0,
@@ -2558,7 +2587,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         expected);
   }
 
-  SECTION("Array of int32_t with NoData") {
+  SUBCASE("Array of int32_t with NoData") {
     // clang-format off
     std::vector<int32_t> data{
         3, 200,
@@ -2587,7 +2616,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         noData);
   }
 
-  SECTION("Array of int32_t with NoData and DefaultValue") {
+  SUBCASE("Array of int32_t with NoData and DefaultValue") {
     // clang-format off
     std::vector<int32_t> data{
         3, 200,
@@ -2618,7 +2647,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
         defaultValue);
   }
 
-  SECTION("Array of normalized uint8_t with NoData and DefaultValue") {
+  SUBCASE("Array of normalized uint8_t with NoData and DefaultValue") {
     // clang-format off
     std::vector<uint8_t> data{
         255, 0,
@@ -2652,7 +2681,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView") {
 
 TEST_CASE("Check variable-length scalar array PropertyTablePropertyView "
           "(normalized)") {
-  SECTION("Array of uint8_t") {
+  SUBCASE("Array of uint8_t") {
     // clang-format off
     std::vector<uint8_t> data{
         255, 0,
@@ -2675,7 +2704,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView "
         expected);
   }
 
-  SECTION("Array of uint8_t with NoData and DefaultValue") {
+  SUBCASE("Array of uint8_t with NoData and DefaultValue") {
     // clang-format off
     std::vector<uint8_t> data{
         255, 0,
@@ -2708,7 +2737,7 @@ TEST_CASE("Check variable-length scalar array PropertyTablePropertyView "
 }
 
 TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
-  SECTION("Array of ivec2") {
+  SUBCASE("Array of ivec2") {
     // clang-format off
     std::vector<glm::ivec2> data{
         glm::ivec2(3, -2), glm::ivec2(20, 3),
@@ -2721,7 +2750,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 4);
   }
 
-  SECTION("Array of dvec3") {
+  SUBCASE("Array of dvec3") {
     // clang-format off
     std::vector<glm::dvec3> data{
         glm::dvec3(-0.02, 2.0, 1.0), glm::dvec3(9.92, 9.0, -8.0),
@@ -2735,7 +2764,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 5);
   }
 
-  SECTION("Array of u8vec4") {
+  SUBCASE("Array of u8vec4") {
     // clang-format off
      std::vector<glm::u8vec4> data{
          glm::u8vec4(1, 2, 3, 4), glm::u8vec4(5, 6, 7, 8),
@@ -2749,7 +2778,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 5);
   }
 
-  SECTION("Array of ivec3 with NoData") {
+  SUBCASE("Array of ivec3 with NoData") {
     // clang-format off
     std::vector<glm::ivec3> data{
         glm::ivec3(3, 200, 1), glm::ivec3(2, 4, 6),
@@ -2782,7 +2811,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
         noData);
   }
 
-  SECTION("Array of ivec3 with NoData and DefaultValue") {
+  SUBCASE("Array of ivec3 with NoData and DefaultValue") {
     // clang-format off
     std::vector<glm::ivec3> data{
         glm::ivec3(3, 200, 1), glm::ivec3(2, 4, 6),
@@ -2821,7 +2850,7 @@ TEST_CASE("Check variable-length vecN array PropertyTablePropertyView") {
 
 TEST_CASE(
     "Check variable-length vecN array PropertyTablePropertyView (normalized)") {
-  SECTION("Array of u8vec2") {
+  SUBCASE("Array of u8vec2") {
     // clang-format off
     std::vector<glm::u8vec2> data{
         glm::u8vec2(255, 0), glm::u8vec2(0, 64),
@@ -2849,7 +2878,7 @@ TEST_CASE(
         expected);
   }
 
-  SECTION("Array of normalized u8vec2 with NoData and DefaultValue") {
+  SUBCASE("Array of normalized u8vec2 with NoData and DefaultValue") {
     // clang-format off
     std::vector<glm::u8vec2> data{
         glm::u8vec2(255, 0), glm::u8vec2(0, 64),
@@ -2886,7 +2915,7 @@ TEST_CASE(
 }
 
 TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
-  SECTION("Array of dmat2") {
+  SUBCASE("Array of dmat2") {
     // clang-format off
     std::vector<glm::dmat2> data0{
         glm::dmat2(
@@ -2925,7 +2954,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 3);
   }
 
-  SECTION("Array of i16mat3x3") {
+  SUBCASE("Array of i16mat3x3") {
     // clang-format off
     std::vector<glm::i16mat3x3> data0{
         glm::i16mat3x3(
@@ -2970,7 +2999,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 3);
   }
 
-  SECTION("Array of u8mat4x4") {
+  SUBCASE("Array of u8mat4x4") {
     // clang-format off
     std::vector<glm::u8mat4x4> data0{
         glm::u8mat4x4(
@@ -3021,7 +3050,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
     checkVariableLengthArray(data, offsets, PropertyComponentType::Uint32, 3);
   }
 
-  SECTION("Array of imat3x3 with NoData") {
+  SUBCASE("Array of imat3x3 with NoData") {
     // clang-format off
     std::vector<glm::imat3x3> data{
         glm::imat3x3(3), glm::imat3x3(2),
@@ -3059,7 +3088,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
         noData);
   }
 
-  SECTION("Array of imat3x3 with NoData and DefaultValue") {
+  SUBCASE("Array of imat3x3 with NoData and DefaultValue") {
     // clang-format off
     std::vector<glm::imat3x3> data{
         glm::imat3x3(3), glm::imat3x3(2),
@@ -3106,7 +3135,7 @@ TEST_CASE("Check variable-length matN array PropertyTablePropertyView") {
 
 TEST_CASE(
     "Check variable-length matN array PropertyTablePropertyView (normalized)") {
-  SECTION("Array of u8mat2x2") {
+  SUBCASE("Array of u8mat2x2") {
     // clang-format off
     std::vector<glm::u8mat2x2> data{
         glm::u8mat2x2(255), glm::u8mat2x2(64),
@@ -3132,7 +3161,7 @@ TEST_CASE(
         expected);
   }
 
-  SECTION("Array of u8mat2x2 with NoData and DefaultValue") {
+  SUBCASE("Array of u8mat2x2 with NoData and DefaultValue") {
     // clang-format off
     std::vector<glm::u8mat2x2> data{
         glm::u8mat2x2(255), glm::u8mat2x2(64),
@@ -3216,7 +3245,7 @@ TEST_CASE("Check fixed-length array of string") {
       &currentStringOffset,
       sizeof(uint32_t));
 
-  SECTION("Returns correct values") {
+  SUBCASE("Returns correct values") {
     PropertyTableProperty propertyTableProperty;
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
@@ -3251,7 +3280,7 @@ TEST_CASE("Check fixed-length array of string") {
     REQUIRE(expectedIdx == stringCount);
   }
 
-  SECTION("Uses NoData value") {
+  SUBCASE("Uses NoData value") {
     PropertyTableProperty propertyTableProperty;
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
@@ -3308,7 +3337,7 @@ TEST_CASE("Check fixed-length array of string") {
     }
   }
 
-  SECTION("Uses NoData and DefaultValue") {
+  SUBCASE("Uses NoData and DefaultValue") {
     PropertyTableProperty propertyTableProperty;
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
@@ -3371,10 +3400,10 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
   // clang-format off
   std::vector<uint32_t> arrayOffsets{
     0,
-    4 * sizeof(uint32_t),
-    7 * sizeof(uint32_t),
-    8 * sizeof(uint32_t),
-    12 * sizeof(uint32_t)
+    4,
+    7,
+    8,
+    12
   };
 
   std::vector<std::string> strings{
@@ -3417,7 +3446,7 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
       &currentOffset,
       sizeof(uint32_t));
 
-  SECTION("Returns correct values") {
+  SUBCASE("Returns correct values") {
     PropertyTableProperty propertyTableProperty;
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
@@ -3453,7 +3482,7 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
     REQUIRE(expectedIdx == stringCount);
   }
 
-  SECTION("Uses NoData Value") {
+  SUBCASE("Uses NoData Value") {
     PropertyTableProperty propertyTableProperty;
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;
@@ -3513,7 +3542,7 @@ TEST_CASE("Check variable-length string array PropertyTablePropertyView") {
     }
   }
 
-  SECTION("Uses NoData and DefaultValue") {
+  SUBCASE("Uses NoData and DefaultValue") {
     PropertyTableProperty propertyTableProperty;
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::STRING;

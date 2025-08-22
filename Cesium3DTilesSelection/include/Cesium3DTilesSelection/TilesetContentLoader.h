@@ -1,12 +1,11 @@
 #pragma once
 
-#include "BoundingVolume.h"
-#include "Library.h"
-#include "TileContent.h"
-#include "TileLoadResult.h"
-#include "TilesetOptions.h"
-
+#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -25,6 +24,7 @@
 namespace Cesium3DTilesSelection {
 class Tile;
 class ITilesetHeightSampler;
+class TilesetContentManager;
 
 /**
  * @brief Store the parameters that are needed to load a tile
@@ -168,5 +168,30 @@ public:
    * loader itself.
    */
   virtual ITilesetHeightSampler* getHeightSampler() { return nullptr; }
+
+  /**
+   * @brief Gets the `TilesetContentManager` that owns this loader.
+   */
+  const TilesetContentManager* getOwner() const noexcept;
+
+  /**
+   * @brief Gets the `TilesetContentManager` that owns this loader.
+   */
+  TilesetContentManager* getOwner() noexcept;
+
+  /**
+   * @brief Sets the `TilesetContentManager` that owns this loader.
+   */
+  void setOwner(TilesetContentManager& owner) noexcept;
+
+protected:
+  /**
+   * @brief Called by {@link setOwner} to allow the loader to apply the new
+   * owner to any loaders that are aggregated by this one.
+   */
+  virtual void setOwnerOfNestedLoaders(TilesetContentManager& owner) noexcept;
+
+private:
+  TilesetContentManager* _pOwner = nullptr;
 };
 } // namespace Cesium3DTilesSelection

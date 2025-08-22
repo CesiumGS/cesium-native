@@ -1,12 +1,15 @@
 #include "ResponseCacheControl.h"
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <CesiumAsync/HttpHeaders.h>
+
+#include <doctest/doctest.h>
+
+#include <optional>
 
 using namespace CesiumAsync;
 
 TEST_CASE("Test parsing cache-control header") {
-  SECTION("Header has no cache-control header") {
+  SUBCASE("Header has no cache-control header") {
     HttpHeaders responseHeader{
         {"Response-Header-1", "Response-Value-1"},
         {"Response-Header-2", "Response-Value-2"},
@@ -16,7 +19,7 @@ TEST_CASE("Test parsing cache-control header") {
     REQUIRE(cacheControl == std::nullopt);
   }
 
-  SECTION("Header has cache-control header") {
+  SUBCASE("Header has cache-control header") {
     HttpHeaders responseHeader{
         {"Cache-Control",
          "Must-Revalidate, No-Cache, No-Store, No-Transform, Public, Private, "
@@ -39,7 +42,7 @@ TEST_CASE("Test parsing cache-control header") {
     REQUIRE(cacheControl->sharedMaxAgeValue() == 10);
   }
 
-  SECTION("Header has cache-control header with only some directive") {
+  SUBCASE("Header has cache-control header with only some directive") {
     HttpHeaders responseHeader{
         {"Cache-Control",
          "Must-Revalidate, No-Cache, No-Store, Public, Private, Max-Age = "

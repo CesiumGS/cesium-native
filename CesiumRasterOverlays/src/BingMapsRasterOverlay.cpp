@@ -1,23 +1,35 @@
+#include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
-#include <CesiumUtility/Log.h>
-#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
+#include <fmt/format.h>
+#include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <optional>
+#include <span>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -88,6 +100,7 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CreditSystem>& pCreditSystem,
       Credit bingCredit,
       const std::vector<CreditAndCoverageAreas>& perTileCredits,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
@@ -106,6 +119,7 @@ public:
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            pCreditSystem,
             bingCredit,
             pPrepareRendererResources,
             pLogger,
@@ -121,49 +135,54 @@ public:
             width,
             height),
         _credits(perTileCredits),
+        _baseUrl(baseUrl),
         _urlTemplate(urlTemplate),
-        _subdomains(subdomains) {
-    if (this->_urlTemplate.find("n=z") == std::string::npos) {
-      this->_urlTemplate =
-          CesiumUtility::Uri::addQuery(this->_urlTemplate, "n", "z");
-    }
+        _culture(culture),
+        _subdomains(subdomains) {}
 
-    std::string resolvedUrl =
-        CesiumUtility::Uri::resolve(baseUrl, this->_urlTemplate);
+  virtual ~BingMapsTileProvider() = default;
 
-    resolvedUrl = CesiumUtility::Uri::substituteTemplateParameters(
-        resolvedUrl,
-        [&culture](const std::string& templateKey) {
-          if (templateKey == "culture") {
-            return culture;
-          }
-
-          // Keep other placeholders
-          return "{" + templateKey + "}";
-        });
+  void update(const BingMapsTileProvider& newProvider) {
+    this->_credits = newProvider._credits;
+    this->_baseUrl = newProvider._baseUrl;
+    this->_urlTemplate = newProvider._urlTemplate;
+    this->_culture = newProvider._culture;
+    this->_subdomains = newProvider._subdomains;
   }
-
-  virtual ~BingMapsTileProvider() {}
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID) const override {
-    std::string url = CesiumUtility::Uri::substituteTemplateParameters(
-        this->_urlTemplate,
-        [this, &tileID](const std::string& key) {
-          if (key == "quadkey") {
-            return BingMapsTileProvider::tileXYToQuadKey(
-                tileID.level,
-                tileID.x,
-                tileID.computeInvertedY(this->getTilingScheme()));
-          }
-          if (key == "subdomain") {
-            const size_t subdomainIndex =
-                (tileID.level + tileID.x + tileID.y) % this->_subdomains.size();
-            return this->_subdomains[subdomainIndex];
-          }
-          return key;
-        });
+    Uri uri(
+        this->_baseUrl,
+        CesiumUtility::Uri::substituteTemplateParameters(
+            this->_urlTemplate,
+            [this, &tileID](const std::string& key) {
+              if (key == "quadkey") {
+                return BingMapsTileProvider::tileXYToQuadKey(
+                    tileID.level,
+                    tileID.x,
+                    tileID.computeInvertedY(this->getTilingScheme()));
+              }
+              if (key == "subdomain") {
+                const size_t subdomainIndex =
+                    (tileID.level + tileID.x + tileID.y) %
+                    this->_subdomains.size();
+                return this->_subdomains[subdomainIndex];
+              }
+              if (key == "culture") {
+                return this->_culture;
+              }
+              return key;
+            }));
+
+    UriQuery query(uri);
+    if (!query.hasValue("n")) {
+      query.setValue("n", "z");
+      uri.setQuery(query.toQueryString());
+    }
+
+    std::string url = std::string(uri.toString());
 
     LoadTileImageFromUrlOptions options;
     options.allowEmptyImages = true;
@@ -171,7 +190,10 @@ protected:
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
     std::vector<Credit>& tileCredits = options.credits =
         this->getOwner().getCredits();
-    tileCredits.push_back(*this->getCredit());
+    const std::optional<Credit>& thisCredit = this->getCredit();
+    if (thisCredit.has_value()) {
+      tileCredits.push_back(*thisCredit);
+    }
 
     const CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
@@ -219,7 +241,9 @@ private:
   }
 
   std::vector<CreditAndCoverageAreas> _credits;
+  std::string _baseUrl;
   std::string _urlTemplate;
+  std::string _culture;
   std::vector<std::string> _subdomains;
 };
 
@@ -236,7 +260,7 @@ BingMapsRasterOverlay::BingMapsRasterOverlay(
       _mapStyle(mapStyle),
       _culture(culture) {}
 
-BingMapsRasterOverlay::~BingMapsRasterOverlay() {}
+BingMapsRasterOverlay::~BingMapsRasterOverlay() = default;
 
 namespace {
 
@@ -343,14 +367,21 @@ BingMapsRasterOverlay::createTileProvider(
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     IntrusivePointer<const RasterOverlay> pOwner) const {
-  std::string metadataUrl = CesiumUtility::Uri::resolve(
+  Uri metadataUri(
       this->_url,
       "REST/v1/Imagery/Metadata/" + this->_mapStyle,
       true);
-  metadataUrl =
-      CesiumUtility::Uri::addQuery(metadataUrl, "incl", "ImageryProviders");
-  metadataUrl = CesiumUtility::Uri::addQuery(metadataUrl, "key", this->_key);
-  metadataUrl = CesiumUtility::Uri::addQuery(metadataUrl, "uriScheme", "https");
+
+  UriQuery metadataQuery(metadataUri);
+  metadataQuery.setValue("incl", "ImageryProviders");
+  metadataQuery.setValue("key", this->_key);
+  metadataQuery.setValue("uriScheme", "https");
+  if (!this->_culture.empty()) {
+    metadataQuery.setValue("culture", this->_culture);
+  }
+  metadataUri.setQuery(metadataQuery.toQueryString());
+
+  std::string metadataUrl = std::string(metadataUri.toString());
 
   pOwner = pOwner ? pOwner : this;
 
@@ -389,7 +420,8 @@ BingMapsRasterOverlay::createTileProvider(
           RasterOverlayLoadType::TileProvider,
           pRequest,
           fmt::format(
-              "Received an error from the Bing Maps imagery metadata service: "
+              "Received an error from the Bing Maps imagery metadata "
+              "service: "
               "{}",
               pError->GetString())});
     }
@@ -432,6 +464,7 @@ BingMapsRasterOverlay::createTileProvider(
         pOwner,
         asyncSystem,
         pAssetAccessor,
+        pCreditSystem,
         bingCredit,
         credits,
         pPrepareRendererResources,
@@ -480,6 +513,57 @@ BingMapsRasterOverlay::createTileProvider(
 
             return handleResponseResult;
           });
+}
+
+Future<void> BingMapsRasterOverlay::refreshTileProviderWithNewKey(
+    const IntrusivePointer<RasterOverlayTileProvider>& pProvider,
+    const std::string& newKey) {
+  this->_key = newKey;
+
+  return this
+      ->createTileProvider(
+          pProvider->getAsyncSystem(),
+          pProvider->getAssetAccessor(),
+          pProvider->getCreditSystem(),
+          pProvider->getPrepareRendererResources(),
+          pProvider->getLogger(),
+          &pProvider->getOwner())
+      .thenInMainThread([pProvider](CreateTileProviderResult&& result) {
+        if (!result) {
+          SPDLOG_LOGGER_WARN(
+              pProvider->getLogger(),
+              "Could not refresh Bing Maps raster overlay with a new key: {}.",
+              result.error().message);
+          return;
+        }
+
+        // Use static_cast instead of dynamic_cast here to avoid the need for
+        // RTTI, and because we are certain of the type.
+        // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
+        BingMapsTileProvider* pOldBing =
+            static_cast<BingMapsTileProvider*>(pProvider.get());
+        BingMapsTileProvider* pNewBing =
+            static_cast<BingMapsTileProvider*>(result->get());
+        // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
+        if (pOldBing->getCoverageRectangle().getLowerLeft() !=
+                pNewBing->getCoverageRectangle().getLowerLeft() ||
+            pOldBing->getCoverageRectangle().getUpperRight() !=
+                pNewBing->getCoverageRectangle().getUpperRight() ||
+            pOldBing->getHeight() != pNewBing->getHeight() ||
+            pOldBing->getWidth() != pNewBing->getWidth() ||
+            pOldBing->getMinimumLevel() != pNewBing->getMinimumLevel() ||
+            pOldBing->getMaximumLevel() != pNewBing->getMaximumLevel() ||
+            pOldBing->getProjection() != pNewBing->getProjection()) {
+          SPDLOG_LOGGER_WARN(
+              pProvider->getLogger(),
+              "Could not refresh Bing Maps raster overlay with a new key "
+              "because some metadata properties changed unexpectedly upon "
+              "refresh.");
+          return;
+        }
+
+        pOldBing->update(*pNewBing);
+      });
 }
 
 } // namespace CesiumRasterOverlays

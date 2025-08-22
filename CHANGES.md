@@ -1,5 +1,234 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- The `getRootTile`, `loadedTiles`, and `forEachLoadedTile` methods on `Tileset` now only provide a const pointer to `Tile` instances, even when called on a non-const `Tileset`. Most modifications to tile instances owned by the tileset would be unsafe.
+- `ViewUpdateResult` now holds pointers to const `Tile` instances.
+- The `slowlyGetCurrentStates` and `slowlyGetPreviousStates` methods of `TreeTraversalState` now return the state map with a raw pointer to a constant node as the key, even if the node pointer type is a smart pointer.
+- `DebugTileStateDatabase::recordTileState` now expects the states to be provided as `std::unordered_map<const Tile*, TileSelectionState>` instead of `std::unordered_map<IntrusivePointer<Tile>, TileSelectionState>`.
+
+##### Additions :tada:
+
+- Added `element_type` to `IntrusivePointer`, allowing it to be used with `std::pointer_types`.
+- Added implicit conversion of `IntrusivePointer<T>` to `T*`.
+- All properties and extensions from `tileset.json`, except `"root"`, are now parsed into `TilesetMetadata` when a tileset is loaded by `Cesium3DTilesSelection::Tileset`.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
+
+### v0.50.0 - 2025-08-01
+
+##### Breaking Changes :mega:
+
+- The `RasterOverlayTileProvider` and `QuadtreeRasterOverlayTileProvider` constructors now require a `CreditSystem` parameter.
+
+##### Additions :tada:
+
+- Added `GeoJsonDocumentRasterOverlay` for displaying GeoJSON documents as a raster overlay.
+- Improved performance of `RasterizedPolygonsOverlay`, especially when using lots of cartographic polygons at once.
+- Added `ImplicitTilingUtilities::getParentID` to derive the ID of the parent for a given tile ID.
+- `IonRasterOverlay` now automatically handles refreshing the Cesium ion asset token as needed.
+- Added `CesiumIonAssetAccessor`, which is useful for implementing token refresh for Cesium ion assets.
+- Added `refreshTileProviderWithNewKey` method to `BingMapsRasterOverlay`.
+- Added `refreshTileProviderWithNewUrlAndHeaders` method to `TileMapServiceRasterOverlay`.
+- Added `getAsyncDestructionCompleteEvent` method to `RasterOverlayTileProvider`.
+- Added `getCreditSystem` method to `RasterOverlayTileProvider`.
+
+### v0.49.0 - 2025-07-01
+
+##### Breaking Changes :mega:
+
+- Renamed `CesiumITwinClient::Connection::getAccessToken` to `CesiumITwinClient::Connection::getAuthenticationToken`.
+- Renamed `CesiumITwinClient::Connection::setAccessToken` to `CesiumITwinClient::Connection::setAuthenticationToken`.
+
+##### Additions :tada:
+
+- Added `CesiumVectorData` library for loading data from vector formats. Currently only GeoJSON is supported.
+- Added `CesiumCurl` library containing `CurlAssetAccessor`, an implementation of `IAssetAccessor` based on libcurl.
+- Added support for the [iTwin Geospatial Features API](https://developer.bentley.com/apis/geospatial-features/overview/).
+  - Added `CesiumITwinClient::Connection::geospatialFeatureCollections` to query for all feature collections within an iTwin.
+  - Added `CesiumITwinClient::Connection::geospatialFeatures` to query features within a feature collection.
+- `Cesium3DTilesSelection::TileExternalContent` now inherits from `CesiumUtility::ExtensibleObject` to store and manage extensions from its content, such as `Extension3dTilesContentVoxels`.
+
+##### Fixes :wrench:
+
+- Fixed crash when unloading tilesets with raster overlays when the `EllipsoidTilesetLoader` was used.
+- Fixed incorrect handling of legacy maximumLevel property when the `TilesetJsonLoader` was used.
+- Fixed `OrientedBoundingBox::computeDistanceSquaredToPosition()` calculation when `OrientedBoundingBox` has degenerate axes.
+- Fixed sending empty authorization header `Authorization: Bearer` when no access token is provided while using `CesiumIonTilesetLoader`. Prevents potential future issues with some servers including GP3D Tiles.
+- Fixed a bug where `CachingAssetAccessor` would include "revalidation" headers like `If-None-Match` in the returned `IAssetRequest` when the remote server returned new content rather than a 304 response. This could cause the header to be incorrectly included in later requests for different content.
+- Fixed a bug in `SubtreeFileReader` where it did not include query parameters from the base URL when requesting an external subtree buffer.
+- Fixed a bug in the parsing of the i3dm `BATCH_ID` semantic.
+- Fixed a bug in the conversion of i3dm batch ids to `EXT_instance_features` feature ids.
+
+### v0.48.0 - 2025-06-02
+
+##### Breaking Changes :mega:
+
+- Renamed `SubtreeWriter::writeSubtree` to `SubtreeWriter::writeSubtreeJson`.
+- `SubtreeAvailability::createEmpty` now requires a boolean parameter to set initial tile availability.
+- `Cesium3DTilesSelection::Tile` constructors that take initially empty or external content now also require a `TileID` to be supplied.
+
+##### Additions :tada:
+
+- Switched to vcpkg registry version `dbe35ceb30c688bf72e952ab23778e009a578f18`, from `2024.11.16`. We expect to upgrade again to an official tagged version in the next release.
+- Added `SubtreeWriter::writeSubtreeBinary`.
+
+##### Fixes :wrench:
+
+- Fixed a bug where `SubtreeAvailability` wasn't updating the `constant` and `bitstream` properties of the availability object when converting constant availability to a bitstream.
+- Fixed a bug where `SubtreeAvailability` attempted to update buffer data that was no longer valid.
+- Fixed a bug where `TilesetContentLoaderResult` would drop its `statusCode` between `std::move`s due to its omission in the move constructor.
+- Fixed a bug introduced in v0.47.0 that caused tiles upsampled for raster overlays to lose their water mask.
+
+### v0.47.0 - 2025-05-01
+
+##### Breaking Changes :mega:
+
+- Deprecated the `ViewState::create` methods. Use a constructor overload instead.
+- Removed `addCreditToFrame`, `startNextFrame`, `getCreditsToShowThisFrame`, and `getCreditsToNoLongerShowThisFrame` from `CreditSystem`. `CreditSystem` no longer has a notion of a "frame". Instead, credits are included and excluded by calling `addCreditReference` and `removeCreditReference`. A snaphot of the current state can be obtained by calling `getSnapshot`, and it includes both the current set of active credits as well as the credits that were removed since the last snapshot.
+- Removed the following from `Cesium3DTilesSelection::Tile`:
+  - `getLastSelectionState` and `setLastSelectionState`. Use `TilesetViewGroup::getTraversalState` instead.
+  - `Tile::LoadedLinkedList`. Use `LoadedTileEnumerator` instead.
+  - `getDoNotUnloadSubtreeCount`, `incrementDoNotUnloadSubtreeCount`, `decrementDoNotUnloadSubtreeCount`, `incrementDoNotUnloadSubtreeCountOnParent`, and `decrementDoNotUnloadSubtreeCountOnParent`. Use `addReference`, `releaseReference`, and `getReferenceCount` instead.
+- The `RasterOverlayCollection` constructor now takes a `LoadedTileEnumerator` instead of a `Tile::LoadedLinkedList`.
+- `TileSelectionState` no longer uses or requires a frame number. This parameter has been removed from its various methods.
+- Derived `TilesetContentLoader` classes that aggregate other loaders must now implement `setOwnerOfNestedLoaders` to pass the owner through.
+- `DebugTileStateDatabase::recordAllTileStates` and `recordTileState` now must be given a `TilesetViewGroup` indicating which view group to record states for.
+- `ViewUpdateResult` now holds `IntrusivePointer`s to `Tile` instances rather than raw pointers.
+- Deprecated `Tileset::updateView` and `updateViewOffline`. Use `updateViewGroup` and `updateViewGroupOffline` instead.
+
+##### Additions :tada:
+
+- Added support for building in `vcpkg` manifest mode.
+- Added `TilesetViewGroup`. View groups select tiles independently from other any other view group. This is useful for applications with multiple viewports to allow them to show different levels-of-detail for the same area.
+- Added `CreditReferencer` which makes it easy to track credits in a frame-oriented fashion similar to how `CreditSystem::addCreditToFrame` worked in previous releases.
+- Added a `std::hash` implementation for `IntrusivePointer` that simply hashes the underlying pointer.
+- Added `Math::GoldenRatio`.
+- Added `TreeTraversalState` to `CesiumUtility`. It can be used to associate arbitrary data with individual nodes during a depth-first tree traversal and access that data in a later traversal.
+- Added `LoadedTileEnumerator` to enumerate the loaded tiles in a `Tile` subtree.
+- Added `RasterOverlayCollection::setLoadedTileEnumerator`.
+- Added `TileLoadRequester`, which allows influence over which tiles in a `Cesium3DTilesSelection::Tileset` are loaded. This is the base class for `TilesetViewGroup` and `TilesetHeightRequest`.
+- Added `TileLoadTask`, `TileLoadPriorityGroup`, and `TilesetFrameState`. Previously these types were private.
+- Added the following to `Cesium3DTilesSelection::Tileset`:
+  - `getUserCredit` - Reflects the `Credit` passed as a string into `TilesetOptions::credit`.
+  - `loadedTiles`- Allows enumeration of the tileset's loaded tiles.
+  - `getDefaultViewGroup` - Gets the default view group that is used when `updateView` is called.
+  - `updateViewGroup` - Updates the set of tiles to render for a `TilesetViewGroup`, as well as the set of tiles that the view group would like to load.
+  - `updateViewGroupOffline` - Similar to `updateViewGroup`, except that it waits until all of the view group's tiles are fully loaded.
+  - `loadTiles` - Loads tiles that have been identified as required across all `TilesetViewGroup` and `TilesetHeightRequest` instances, up to limits specified in `TilesetOptions`.
+- `TilesetContentLoader` instances now know the `TilesetContentManager` that owns them. This is managed with new `getOwner` and `setOwner` methods.
+- Added support for orthographic and skewed perspective views.
+- Added an overload of `Math::equalsEpsilon` for glm matrices.
+- A tile's bounding volume and content bounding volume are now included in `TileLoadResult` for use in `prepareInLoadThread`.
+- Added `convertAccessorTypeToPropertyType` and `convertPropertyTypeToAccessorType` to `CesiumGltf::PropertyType`.
+
+##### Fixes :wrench:
+
+- Point cloud tiles will now be upsampled for raster overlays, fixing an issue where applying a raster overlay to a point cloud tileset would cause holes to appear.
+- Fixed a crash caused by invalid I3dm headers.
+- Fixed a bug that could cause an assertion failure or crash when unloading a tileset with raster overlays and external tilesets.
+
+### v0.46.0 - 2025-04-01
+
+##### Additions :tada:
+
+- Added new TilesetContentLoaders constructible using the new `TilesetContentLoaderFactory` constructor on `Cesium3DTilesSelection::Tileset`.
+  - `ITwinCesiumCuratedContentLoader` can load tilesets from the [iTwin Cesium Curated Content API](https://developer.bentley.com/apis/cesium-curated-content/).
+  - `IModelMeshExportContentLoader` can load [iModels](https://www.itwinjs.org/learning/imodels/) exported to the 3D Tiles format through the [Mesh Export API](https://developer.bentley.com/apis/mesh-export/).
+  - `ITwinRealityDataContentLoader` can load 3D Tiles iTwin Reality Data through the [Reality Management API](https://developer.bentley.com/apis/reality-management/overview/).
+- `ITwinCesiumCuratedContentRasterOverlay` can load imagery from the iTwin Cesium Curated Content API.
+- Added `CesiumITwinClient` library for authorizing with and making requests to the iTwin API.
+- Added `CesiumClientCommon` to hold shared code between `CesiumIonClient` and `CesiumITwinClient`.
+
+##### Fixes :wrench:
+
+- `GltfReader::resolveExternalData` now includes query parameters from the parent URL when resolving relative URLs for external buffers and textures.
+- Fixed bugs that could prevent valid metadata in Instanced 3D Model (i3dm) files from being parsed correctly.
+- Fixed a memory leak in `CesiumGltfReader`.
+- Fixed a bug in `ImplicitTilingUtilities::computeBoundingVolume` that incorrectly subdivided a `BoundingCylinderRegion` across the discontinuity line.
+- Fixed a broken link in the `ktx` vcpkg portfile that would cause this library to fail to build.
+
+### v0.45.0 - 2025-03-03
+
+##### Breaking Changes :mega:
+
+- Removed `TilesetOptions::maximumSimultaneousSubtreeLoads` because it was unused.
+
+##### Additions :tada:
+
+- Added `convertPropertyComponentTypeToAccessorComponentType` to `PropertyType`.
+- Added support for the following 3D Tiles extensions to `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`:
+  - `3DTILES_ellipsoid`
+  - `3DTILES_content_voxels`
+  - `3DTILES_bounding_volume_cylinder`
+- Added `BoundingCylinderRegion` to represent `3DTILES_bounding_volume_cylinder` in the `BoundingVolume` variant.
+- Added generated classes for `EXT_primitive_voxels` and its dependencies in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added `AxisAlignedBox::fromPositions`, which creates an `AxisAlignedBox` from an input vector of positions.
+- `PropertyView`, `PropertyTableView`, `PropertyTablePropertyView`, `PropertyTextureView`, and `PropertyTexturePropertyView` now support the enum metadata type in `EXT_structural_metadata`.
+- Added `TypeToDimensions` class in `PropertyTypeTraits` to obtain the dimension count of a glm vector or matrix.
+- Added `canRepresentPropertyType<T>` to `PropertyTypeTraits` to check if a C++ type can represent the given `PropertyType`.
+- Added `getName` method to `CesiumGltf::Enum`, allowing a scalar enum value to be resolved into its corresponding name in the enum.
+
+##### Fixes :wrench:
+
+- `Tile` children of external tilesets will now be cleared when the external tileset is unloaded, fixing a memory leak that happened as a result of these `Tile` skeletons accumulating over time.
+- Fixed parsing URIs that have a scheme followed by `:` instead of `://`.
+- Fixed decoding of `KHR_mesh_quantization` normalized values.
+- Requests headers specified in `TilesetOptions` are now included in tile content requests. Previously they were only included in the root tileset.json / layer.json request.
+- Fixed a crash when loading a `tileset.json` without a valid root tile.
+- Fixed a bug that could cause variable length string arrays in `EXT_structural_metadata` to be interpreted incorrectly.
+
+### v0.44.3 - 2025-02-12
+
+##### Fixes :wrench:
+
+- Fixed another bug in `GltfUtilities::parseGltfCopyright` that could cause it to crash or produce incorrect results.
+
+### v0.44.2 - 2025-02-10
+
+##### Fixes :wrench:
+
+- Fixed a bug in `GltfUtilities::parseGltfCopyright` that could cause a crash when the copyright ends with a semicolon.
+
+### v0.44.1 - 2025-02-03
+
+##### Fixes :wrench:
+
+- Fixed a bug in `CesiumIonClient::Connection` that caused the `authorize` method to use an incorrect URL.
+
+### v0.44.0 - 2025-02-03
+
+##### Breaking Changes :mega:
+
+- Removed `Math::rotation`. Use `glm::rotation` from `<glm/gtx/quaternion.hpp>` instead.
+- Removed `Math::perpVector`. Use `glm::perp` from `<glm/gtx/perpendicular.hpp>` instead.
+- Using Cesium Native in non-cmake projects now requires manually defining `GLM_ENABLE_EXPERIMENTAL`.
+- cesium-native no longer uses the `GLM_FORCE_SIZE_T_LENGTH` option with the `glm` library
+- `CullingVolume` has been moved from the `Cesium3DTilesSelection` namespace to the `CesiumGeometry` namespace.
+
+##### Additions :tada:
+
+- Added `forEachTile`, `forEachContent`, `addExtensionUsed`, `addExtensionRequired`, `removeExtensionUsed`, `removeExtensionRequired`, `isExtensionUsed`, and `isExtensionRequired` to `Cesium3DTiles::Tileset`.
+- Added conversion of I3dm batch table metadata to `EXT_structural_metadata` and `EXT_instance_features` extensions.
+- Added `CesiumIonClient::Connection::geocode` method for making geocoding queries against the Cesium ion geocoder API.
+- Added `UrlTemplateRasterOverlay` for requesting raster tiles from services using a templated URL.
+- `upsampleGltfForRasterOverlays` is now compatible with meshes using TRIANGLE_STRIP, TRIANGLE_FAN, or non-indexed TRIANGLES primitives.
+- Added `requestHeaders` field to `TilesetOptions` to allow per-tileset request headers to be specified.
+
+##### Fixes :wrench:
+
+- Fixed a crash in `GltfWriter` that would happen when the `EXT_structural_metadata` `schema` property was null.
+- Fixed a bug in `SharedAssetDepot` that could cause assertion failures in debug builds, and could rarely cause premature deletion of shared assets even in release builds.
+- Fixed a bug that could cause `Tileset::sampleHeightMostDetailed` to return a height that is not the highest one when the sampled tileset contained multiple heights at the given location.
+- `LayerJsonTerrainLoader` will now log errors and warnings when failing to load a `.terrain` file referenced in the layer.json, instead of silently ignoring them.
+- URIs containing unicode characters are now supported.
+- Fixed a crash in `CullingVolume` when the camera was very far away from the globe.
+- Fixed a bug that prevented the `culture` parameter of the `BingMapsRasterOverlay` from having an effect.
+
 ### v0.43.0 - 2025-01-02
 
 ##### Breaking Changes :mega:

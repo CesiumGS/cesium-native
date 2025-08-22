@@ -1,13 +1,35 @@
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/Assert.h>
+#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Tracing.h>
-#include <CesiumUtility/joinToString.h>
 
+#include <fmt/format.h>
+#include <glm/ext/vector_double2.hpp>
 #include <spdlog/fwd.h>
+
+#include <any>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <memory>
+#include <optional>
+#include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -22,27 +44,29 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
     : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
+      _pCreditSystem(pCreditSystem),
       _credit(std::nullopt),
       _pPrepareRendererResources(nullptr),
       _pLogger(nullptr),
       _projection(CesiumGeospatial::GeographicProjection(ellipsoid)),
       _coverageRectangle(CesiumGeospatial::GeographicProjection::
                              computeMaximumProjectedRectangle(ellipsoid)),
-      _pPlaceholder(),
+      _pPlaceholder(new RasterOverlayTile(*this)),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0) {
-  this->_pPlaceholder = new RasterOverlayTile(*this);
-}
+      _throttledTilesCurrentlyLoading(0),
+      _destructionCompleteDetails() {}
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
     std::optional<Credit> credit,
     const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
         pPrepareRendererResources,
@@ -52,6 +76,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
       _asyncSystem(asyncSystem),
       _pAssetAccessor(pAssetAccessor),
+      _pCreditSystem(pCreditSystem),
       _credit(credit),
       _pPrepareRendererResources(pPrepareRendererResources),
       _pLogger(pLogger),
@@ -60,7 +85,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _pPlaceholder(nullptr),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0) {}
+      _throttledTilesCurrentlyLoading(0),
+      _destructionCompleteDetails() {}
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
@@ -69,6 +95,23 @@ RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
     CESIUM_ASSERT(this->_pPlaceholder->getReferenceCount() == 1);
     this->_pPlaceholder = nullptr;
   }
+
+  if (this->_destructionCompleteDetails) {
+    this->_destructionCompleteDetails->promise.resolve();
+  }
+}
+
+CesiumAsync::SharedFuture<void>&
+RasterOverlayTileProvider::getAsyncDestructionCompleteEvent() {
+  if (!this->_destructionCompleteDetails) {
+    auto promise = this->_asyncSystem.createPromise<void>();
+    auto sharedFuture = promise.getFuture().share();
+    this->_destructionCompleteDetails.emplace(DestructionCompleteDetails{
+        std::move(promise),
+        std::move(sharedFuture)});
+  }
+
+  return this->_destructionCompleteDetails->future;
 }
 
 CesiumUtility::IntrusivePointer<RasterOverlayTile>

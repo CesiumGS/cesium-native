@@ -1,10 +1,18 @@
 #include "ImplicitQuadtreeLoader.h"
 
+#include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltf/Model.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -12,11 +20,24 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <spdlog/spdlog.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <map>
+#include <memory>
+#include <span>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
+using namespace doctest;
 using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
@@ -44,7 +65,7 @@ TEST_CASE("Test implicit quadtree loader") {
       5,
       OrientedBoundingBox(glm::dvec3(0.0), glm::dmat3(20.0))};
 
-  SECTION("Load tile that does not have quadtree ID") {
+  SUBCASE("Load tile that does not have quadtree ID") {
     Tile tile(&loader);
     tile.setTileID("This is a test tile");
 
@@ -64,7 +85,7 @@ TEST_CASE("Test implicit quadtree loader") {
     CHECK(tileLoadResult.state == TileLoadResultState::Failed);
   }
 
-  SECTION("Load empty tile") {
+  SUBCASE("Load empty tile") {
     // add subtree with all empty tiles
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
@@ -100,7 +121,7 @@ TEST_CASE("Test implicit quadtree loader") {
     CHECK(tileLoadResult.state == TileLoadResultState::Success);
   }
 
-  SECTION("Load tile with render content") {
+  SUBCASE("Load tile with render content") {
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
@@ -153,7 +174,7 @@ TEST_CASE("Test implicit quadtree loader") {
     CHECK(tileLoadResult.state == TileLoadResultState::Success);
   }
 
-  SECTION("load unknown content") {
+  SUBCASE("load unknown content") {
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
@@ -235,7 +256,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
 
   CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
 
-  SECTION("Subdivide bounding box tile") {
+  SUBCASE("Subdivide bounding box tile") {
     OrientedBoundingBox loaderBoundingVolume{glm::dvec3(0.0), glm::dmat3(20.0)};
     ImplicitQuadtreeLoader loader{
         "tileset.json",
@@ -346,7 +367,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
     }
   }
 
-  SECTION("Subdivide bounding region tile") {
+  SUBCASE("Subdivide bounding region tile") {
     BoundingRegion loaderBoundingVolume{
         GlobeRectangle{
             -Math::OnePi,
@@ -485,7 +506,7 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
     }
   }
 
-  SECTION("Subdivide S2 volume tile") {
+  SUBCASE("Subdivide S2 volume tile") {
     S2CellID rootID = S2CellID::fromToken("1");
     CHECK(rootID.getFace() == 0);
 
@@ -544,5 +565,69 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
     const auto& box_1_1_1 =
         std::get<S2CellBoundingVolume>(tile_1_1_1.getBoundingVolume());
     CHECK(box_1_1_1.getCellID().toToken() == "14");
+  }
+
+  SUBCASE("Child tiles without content initially have empty content") {
+    OrientedBoundingBox loaderBoundingVolume{glm::dvec3(0.0), glm::dmat3(20.0)};
+    ImplicitQuadtreeLoader loader{
+        "tileset.json",
+        "content/{level}.{x}.{y}.b3dm",
+        "subtrees/{level}.{x}.{y}.json",
+        5,
+        5,
+        loaderBoundingVolume};
+
+    // add subtree with all tiles, but no content available.
+    std::optional<SubtreeAvailability> maybeAvailability =
+        SubtreeAvailability::createEmpty(
+            ImplicitTileSubdivisionScheme::Quadtree,
+            5,
+            true);
+    REQUIRE(maybeAvailability);
+    SubtreeAvailability availability = std::move(*maybeAvailability);
+
+    // Mark content for a tile available
+    availability.setContentAvailable(
+        QuadtreeTileID{0, 0, 0},
+        QuadtreeTileID{1, 1, 1},
+        0,
+        true);
+    loader.addSubtreeAvailability(
+        QuadtreeTileID{0, 0, 0},
+        std::move(availability));
+
+    // check subdivide root tile first
+    Tile tile(&loader);
+    tile.setTileID(QuadtreeTileID(0, 0, 0));
+    tile.setBoundingVolume(loaderBoundingVolume);
+
+    auto tileChildrenResult = loader.createTileChildren(tile);
+    CHECK(tileChildrenResult.state == TileLoadResultState::Success);
+
+    REQUIRE(tileChildrenResult.children.size() == 4);
+
+    size_t childrenWithReferencingContent = 0;
+
+    for (Tile& child : tileChildrenResult.children) {
+      if (child.hasReferencingContent()) {
+        ++childrenWithReferencingContent;
+
+        REQUIRE(child.getReferenceCount() == 1);
+        child.getContent().setContentKind(TileUnknownContent());
+
+        // In a perfect world the above might release the reference, but it
+        // won't. Release it manually so we won't assert when the Tile goes out
+        // of scope.
+        REQUIRE(child.getReferenceCount() == 1);
+        child.releaseReference();
+      } else {
+        REQUIRE(child.getReferenceCount() == 0);
+      }
+    }
+
+    // The three tiles without content should have referencing EmptyContent.
+    // The fourth should not yet have any referencing content because it has not
+    // been loaded.
+    CHECK(childrenWithReferencingContent == 3);
   }
 }

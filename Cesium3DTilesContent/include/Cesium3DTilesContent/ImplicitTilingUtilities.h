@@ -15,7 +15,8 @@ class S2CellBoundingVolume;
 
 namespace CesiumGeometry {
 class OrientedBoundingBox;
-}
+class BoundingCylinderRegion;
+} // namespace CesiumGeometry
 
 namespace Cesium3DTiles {
 struct BoundingVolume;
@@ -114,7 +115,7 @@ public:
 
   /** @brief Returns an iterator starting at the first child. */
   iterator begin() const noexcept;
-  /** @brief Returns an iterator starting at the last child. */
+  /** @brief Returns an iterator starting after the last child. */
   iterator end() const noexcept;
   /**
    * @brief Returns the total number of \ref CesiumGeometry::QuadtreeTileID
@@ -216,7 +217,7 @@ public:
       : _tileID(tileID) {}
   /** @brief Returns an iterator starting at the first child. */
   iterator begin() const noexcept;
-  /** @brief Returns an iterator starting at the last child. */
+  /** @brief Returns an iterator starting after the last child. */
   iterator end() const noexcept;
   /**
    * @brief Returns the total number of \ref CesiumGeometry::OctreeTileID
@@ -382,6 +383,22 @@ public:
       const CesiumGeometry::OctreeTileID& tileID) noexcept;
 
   /**
+   * @brief Gets the ID of the parent of the given tile. If the tile's level is
+   * 0, then it cannot have a parent and this function returns std::nullopt.
+   *
+   * @returns The ID of the parent tile, or std::nullopt if the input tile's
+   * level is 0.
+   */
+  static std::optional<CesiumGeometry::QuadtreeTileID>
+  getParentID(const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+
+  /**
+   * @copydoc getParentID
+   */
+  static std::optional<CesiumGeometry::OctreeTileID>
+  getParentID(const CesiumGeometry::OctreeTileID& tileID) noexcept;
+
+  /**
    * @brief Gets a lightweight virtual container for enumerating the quadtree
    * IDs of the children of a given quadtree tile.
    *
@@ -518,6 +535,30 @@ public:
       const CesiumGeometry::OctreeTileID& tileID,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit quadtree tile
+   * with the given ID as a bounding cylinder.
+   *
+   * @param rootBoundingVolume The oriented bounding box of the root tile.
+   * @param tileID The tile ID for which to compute the oriented bounding box.
+   * @return The oriented bounding box for the given implicit tile.
+   */
+  static CesiumGeometry::BoundingCylinderRegion computeBoundingVolume(
+      const CesiumGeometry::BoundingCylinderRegion& rootBoundingVolume,
+      const CesiumGeometry::QuadtreeTileID& tileID) noexcept;
+
+  /**
+   * @brief Computes the bounding volume for an implicit octree tile with
+   * the given ID as a bounding cylinder.
+   *
+   * @param rootBoundingVolume The bounding cylinder of the root tile.
+   * @param tileID The tile ID for which to compute the bounding cylinder.
+   * @return The bounding cylinder for the given implicit tile.
+   */
+  static CesiumGeometry::BoundingCylinderRegion computeBoundingVolume(
+      const CesiumGeometry::BoundingCylinderRegion& rootBoundingVolume,
+      const CesiumGeometry::OctreeTileID& tileID) noexcept;
 };
 
 } // namespace Cesium3DTilesContent

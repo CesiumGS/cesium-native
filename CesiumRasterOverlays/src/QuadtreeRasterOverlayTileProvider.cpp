@@ -1,10 +1,36 @@
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfContent/ImageManipulation.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/Assert.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
-#include <CesiumUtility/SpanHelper.h>
+#include <CesiumUtility/Result.h>
+
+#include <glm/common.hpp>
+#include <glm/exponential.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <spdlog/logger.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -28,6 +54,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     const IntrusivePointer<const RasterOverlay>& pOwner,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
     std::optional<Credit> credit,
     const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
         pPrepareRendererResources,
@@ -43,6 +70,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
           pOwner,
           asyncSystem,
           pAssetAccessor,
+          pCreditSystem,
           credit,
           pPrepareRendererResources,
           pLogger,
@@ -105,6 +133,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
                       }
                     }
 #endif
+
                     IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
                     pLoadedImage.emplace(
                         std::make_shared<LoadedRasterOverlayImage>(
@@ -114,9 +143,9 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
                         ResultPointer<LoadedQuadtreeImage>(pLoadedImage));
                   }
 
-                  // Tile failed to load, try loading the parent tile instead.
-                  // We can only initiate a new tile request from the main
-                  // thread, though.
+                  // Tile failed to load, try loading the parent tile
+                  // instead. We can only initiate a new tile request from
+                  // the main thread, though.
                   if (currentLevel > minimumLevel) {
                     return asyncSystem.runInMainThread([key, loadParentTile]() {
                       return loadParentTile(key);
@@ -654,18 +683,18 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   target.pixelData.resize(size_t(
       target.width * target.height * target.channels * target.bytesPerChannel));
 
-  for (auto it = images.begin(); it != images.end(); ++it) {
-    if (!it->pValue) {
+  for (const auto& image : images) {
+    if (!image.pValue) {
       continue;
     }
-    const LoadedRasterOverlayImage& loaded = *it->pValue->pLoaded;
+    const LoadedRasterOverlayImage& loaded = *image.pValue->pLoaded;
     if (!loaded.pImage) {
       continue;
     }
 
     // Tiles with a subset inherently have no more detail available (otherwise
     // we wouldn't need the subset).
-    if (!it->pValue->subset) {
+    if (!image.pValue->subset) {
       result.moreDetailAvailable |= loaded.moreDetailAvailable;
     }
 
@@ -674,15 +703,15 @@ QuadtreeRasterOverlayTileProvider::combineImages(
         result.rectangle,
         *loaded.pImage,
         loaded.rectangle,
-        it->pValue->subset);
+        image.pValue->subset);
   }
 
   size_t combinedCreditsCount = 0;
-  for (auto it = images.begin(); it != images.end(); ++it) {
-    if (!it->pValue) {
+  for (const auto& image : images) {
+    if (!image.pValue) {
       continue;
     }
-    const LoadedRasterOverlayImage& loaded = *it->pValue->pLoaded;
+    const LoadedRasterOverlayImage& loaded = *image.pValue->pLoaded;
     if (!loaded.pImage) {
       continue;
     }
@@ -691,11 +720,11 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   }
 
   result.credits.reserve(combinedCreditsCount);
-  for (auto it = images.begin(); it != images.end(); ++it) {
-    if (!it->pValue) {
+  for (const auto& image : images) {
+    if (!image.pValue) {
       continue;
     }
-    const LoadedRasterOverlayImage& loaded = *it->pValue->pLoaded;
+    const LoadedRasterOverlayImage& loaded = *image.pValue->pLoaded;
     if (!loaded.pImage) {
       continue;
     }

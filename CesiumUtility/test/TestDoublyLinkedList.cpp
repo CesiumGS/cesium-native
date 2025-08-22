@@ -1,7 +1,10 @@
-#include "CesiumUtility/DoublyLinkedList.h"
+#include <CesiumUtility/DoublyLinkedList.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 
 using namespace CesiumUtility;
 
@@ -79,65 +82,65 @@ TEST_CASE("DoublyLinkedList") {
 
   assertOrder(linkedList, {1, 2, 3, 4});
 
-  SECTION("insertAtHead") {
+  SUBCASE("insertAtHead") {
     TestNode newNode(5);
     linkedList.insertAtHead(newNode);
     assertOrder(linkedList, {5, 1, 2, 3, 4});
   }
 
-  SECTION("insertBefore at head") {
+  SUBCASE("insertBefore at head") {
     TestNode newNode(5);
     linkedList.insertBefore(one, newNode);
     assertOrder(linkedList, {5, 1, 2, 3, 4});
   }
 
-  SECTION("insertAfter at head") {
+  SUBCASE("insertAfter at head") {
     TestNode newNode(5);
     linkedList.insertAfter(one, newNode);
     assertOrder(linkedList, {1, 5, 2, 3, 4});
   }
 
-  SECTION("insertAtTail") {
+  SUBCASE("insertAtTail") {
     TestNode newNode(5);
     linkedList.insertAtTail(newNode);
     assertOrder(linkedList, {1, 2, 3, 4, 5});
   }
 
-  SECTION("insertAfter at tail") {
+  SUBCASE("insertAfter at tail") {
     TestNode newNode(5);
     linkedList.insertAfter(four, newNode);
     assertOrder(linkedList, {1, 2, 3, 4, 5});
   }
 
-  SECTION("insertBefore at tail") {
+  SUBCASE("insertBefore at tail") {
     TestNode newNode(5);
     linkedList.insertBefore(four, newNode);
     assertOrder(linkedList, {1, 2, 3, 5, 4});
   }
 
-  SECTION("insertBefore in middle") {
+  SUBCASE("insertBefore in middle") {
     TestNode newNode(5);
     linkedList.insertBefore(three, newNode);
     assertOrder(linkedList, {1, 2, 5, 3, 4});
   }
 
-  SECTION("insertAfter in middle") {
+  SUBCASE("insertAfter in middle") {
     TestNode newNode(5);
     linkedList.insertAfter(three, newNode);
     assertOrder(linkedList, {1, 2, 3, 5, 4});
   }
 
-  SECTION("insertAtTail when already there") {
+  SUBCASE("insertAtTail when already there") {
     linkedList.insertAtTail(four);
     assertOrder(linkedList, {1, 2, 3, 4});
   }
 
-  SECTION("insertAtHead when already there") {
+  SUBCASE("insertAtHead when already there") {
     linkedList.insertAtHead(one);
     assertOrder(linkedList, {1, 2, 3, 4});
   }
 
-  SECTION("insertBefore when already there") {
+  SUBCASE("insertBefore when already there") {
     linkedList.insertBefore(two, one);
     assertOrder(linkedList, {1, 2, 3, 4});
 
@@ -148,7 +151,7 @@ TEST_CASE("DoublyLinkedList") {
     assertOrder(linkedList, {1, 2, 3, 4});
   }
 
-  SECTION("insertAfter when already there") {
+  SUBCASE("insertAfter when already there") {
     linkedList.insertAfter(one, two);
     assertOrder(linkedList, {1, 2, 3, 4});
 
