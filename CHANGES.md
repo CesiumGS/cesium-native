@@ -37,6 +37,10 @@
 - Added `getAsyncDestructionCompleteEvent` method to `RasterOverlayTileProvider`.
 - Added `getCreditSystem` method to `RasterOverlayTileProvider`.
 
+##### Fixes :wrench:
+
+- Fixed ezvcpkg silently ignoring outdated ports.
+
 ### v0.49.0 - 2025-07-01
 
 ##### Breaking Changes :mega:
