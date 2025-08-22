@@ -5,26 +5,26 @@
 #include <CesiumGltfReader/Library.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
-#include <CesiumGltf/ExtensionKhrSpzGaussianSplatsCompression.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
 #include <span>
 #include <rapidjson/fwd.h>
 #include <vector>
 
 namespace CesiumGltf {
-  struct ExtensionKhrSpzGaussianSplatsCompression;
+  struct ExtensionKhrGaussianSplattingCompressionSpz2;
 } // namespace CesiumGltf
 
 namespace CesiumGltfReader {
 
 /**
- * @brief Reads \ref CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression "ExtensionKhrSpzGaussianSplatsCompression" instances from JSON.
+ * @brief Reads \ref CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2 "ExtensionKhrGaussianSplattingCompressionSpz2" instances from JSON.
  */
-class CESIUMGLTFREADER_API ExtensionKhrSpzGaussianSplatsCompressionReader {
+class CESIUMGLTFREADER_API ExtensionKhrGaussianSplattingCompressionSpz2Reader {
 public:
   /**
    * @brief Constructs a new instance.
    */
-  ExtensionKhrSpzGaussianSplatsCompressionReader();
+  ExtensionKhrGaussianSplattingCompressionSpz2Reader();
 
   /**
    * @brief Gets the options controlling how the JSON is read.
@@ -37,28 +37,28 @@ public:
   const CesiumJsonReader::JsonReaderOptions& getOptions() const;
 
   /**
-   * @brief Reads an instance of ExtensionKhrSpzGaussianSplatsCompression from a byte buffer.
+   * @brief Reads an instance of ExtensionKhrGaussianSplattingCompressionSpz2 from a byte buffer.
    *
    * @param data The buffer from which to read the instance.
    * @return The result of reading the instance.
    */
-  CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression> readFromJson(const std::span<const std::byte>& data) const;
+  CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2> readFromJson(const std::span<const std::byte>& data) const;
 
   /**
-   * @brief Reads an instance of ExtensionKhrSpzGaussianSplatsCompression from a rapidJson::Value.
+   * @brief Reads an instance of ExtensionKhrGaussianSplattingCompressionSpz2 from a rapidJson::Value.
    *
    * @param value The value from which to read the instance.
    * @return The result of reading the instance.
    */
-  CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression> readFromJson(const rapidjson::Value& value) const;
+  CesiumJsonReader::ReadJsonResult<CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2> readFromJson(const rapidjson::Value& value) const;
 
   /**
-   * @brief Reads an array of instances of ExtensionKhrSpzGaussianSplatsCompression from a rapidJson::Value.
+   * @brief Reads an array of instances of ExtensionKhrGaussianSplattingCompressionSpz2 from a rapidJson::Value.
    *
    * @param value The value from which to read the array of instances.
    * @return The result of reading the array of instances.
    */
-  CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression>> readArrayFromJson(const rapidjson::Value& value) const;
+  CesiumJsonReader::ReadJsonResult<std::vector<CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2>> readArrayFromJson(const rapidjson::Value& value) const;
 
 private:
   CesiumJsonReader::JsonReaderOptions _options;
