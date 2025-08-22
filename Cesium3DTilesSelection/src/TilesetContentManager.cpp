@@ -1128,6 +1128,11 @@ void TilesetContentManager::reapplyGltfModifier(
 
   const CesiumGltf::Model& previousModel = pRenderContent->getModel();
 
+  // We will never be here after a partial reapply (worker thread
+  // applied, main thread work not done yet) because that would require the
+  // modifier state to transition through WorkerDone and back to Idle. However,
+  // that's wasteful, so maybe we should fix that.
+
   const TilesetExternals& externals = this->getExternals();
 
   // Get the version here, in the main thread, because it may change while the
@@ -1211,13 +1216,33 @@ void TilesetContentManager::reapplyGltfModifier(
             pTile->getContent().getRenderContent();
         CESIUM_ASSERT(pRenderContent != nullptr);
 
-        pRenderContent->setGltfModifierState(GltfModifier::State::WorkerDone);
         this->notifyTileDoneLoading(pTile.get());
-        pRenderContent->setModifiedModelAndRenderResources(
-            std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)),
-            pair.pRenderResources);
 
-        this->_externals.pGltfModifier->onWorkerThreadApplyComplete(*pTile);
+        if (pTile->getState() == TileLoadState::ContentLoaded) {
+          // This Tile is in the ContentLoaded state, which means that it was
+          // (partially) loaded before the GltfModifier triggered to the current
+          // version. In that case, we need to free the previous renderer
+          // resources but can then send the tile through the rest of the normal
+          // pipeline. We know a Tile in the ContentLoaded state isn't already
+          // being rendered.
+          this->_externals.pPrepareRendererResources->free(
+              *pTile,
+              pRenderContent->getRenderResources(),
+              nullptr);
+          pRenderContent->setModel(
+              std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)));
+          pRenderContent->setRenderResources(pair.pRenderResources);
+          pRenderContent->setGltfModifierState(GltfModifier::State::Idle);
+        } else {
+          // This is a reapply of the GltfModifier to an already loaded and
+          // potentially rendered tile.
+          CESIUM_ASSERT(pTile->getState() == TileLoadState::Done);
+          pRenderContent->setGltfModifierState(GltfModifier::State::WorkerDone);
+          pRenderContent->setModifiedModelAndRenderResources(
+              std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)),
+              pair.pRenderResources);
+          this->_externals.pGltfModifier->onWorkerThreadApplyComplete(*pTile);
+        }
       })
       .catchInMainThread(
           [this, pTile = Tile::Pointer(&tile), &externals, version](
@@ -1252,7 +1277,8 @@ void TilesetContentManager::loadTileContent(
   // => worker-thread phase of glTF modifier should be started.
   if (this->_externals.pGltfModifier &&
       this->_externals.pGltfModifier->getCurrentVersion().has_value() &&
-      tile.getState() == TileLoadState::Done) {
+      (tile.getState() == TileLoadState::Done ||
+       tile.getState() == TileLoadState::ContentLoaded)) {
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent &&
         pRenderContent->getGltfModifierState() == GltfModifier::State::Idle &&
