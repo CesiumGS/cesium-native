@@ -96,9 +96,9 @@ public:
    * undefined behavior in release builds.
    *
    * @param task The tile load task to add to the queue.
-   * @param modelVersion When the {@link Tileset} uses a {@link GltfModifier}, this
-   *    is the model version to compare to that of already loaded tiles
-   *    to determine whether they are up to date.
+   * @param modelVersion When the {@link Tileset} uses a {@link GltfModifier},
+   * this is the model version to compare to that of already loaded tiles to
+   * determine whether they are up to date.
    */
   void
   addToLoadQueue(const TileLoadTask& task, std::optional<int64_t> modelVersion);
