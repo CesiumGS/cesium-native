@@ -17,6 +17,9 @@ namespace Cesium3DTilesSelection {
 TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
     : _model{std::move(model)},
       _pRenderResources{nullptr},
+      _modifierState{GltfModifier::State::Idle},
+      _modifiedModel{},
+      _pModifiedRenderResources(nullptr),
       _rasterOverlayDetails{},
       _credits{},
       _lodTransitionFadePercentage{0.0f} {}

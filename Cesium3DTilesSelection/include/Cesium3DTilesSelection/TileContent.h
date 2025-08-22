@@ -162,17 +162,19 @@ public:
   void setCredits(const std::vector<CesiumUtility::Credit>& credits);
 
   /**
-   * @brief Get the render resources created for the glTF model of the content
+   * @brief Get the renderer resources created for the glTF model of the
+   * content.
    *
-   * @return The render resources that is created for the glTF model
+   * @return The renderer resources that are created for the glTF model
    */
   void* getRenderResources() const noexcept;
 
   /**
-   * @brief Set the render resources created for the glTF model of the content
+   * @brief Set the renderer resources created for the glTF model of the
+   * content.
    *
-   * @param pRenderResources The render resources that is created for the glTF
-   * model
+   * @param pRenderResources The renderer resources that are created for the
+   * glTF model.
    */
   void setRenderResources(void* pRenderResources) noexcept;
 
@@ -196,48 +198,66 @@ public:
    */
   void setLodTransitionFadePercentage(float percentage) noexcept;
 
-  /** Modifier process state of the glTF model of this tile content. */
+  /**
+   * @brief Gets the state of the {@link GltfModifier} processing of this
+   * tile's content.
+   * */
   GltfModifier::State getGltfModifierState() const noexcept;
 
-  /** Update the modifier process state of the glTF model of this tile content.
+  /**
+   * @brief Sets the state of the {@link GltfModifier} processing of this
+   * tile's content.
    */
   void setGltfModifierState(GltfModifier::State modifierState) noexcept;
 
-  /** Get the optional temporary modified model of this tile content. */
+  /**
+   * @brief Gets the modified model produced by the {@link GltfModifier} but
+   * not yet available for rendering.
+   * */
   const std::optional<CesiumGltf::Model>& getModifiedModel() const noexcept;
 
-  /** Get the temporary modified model's render resources of this tile content,
-   * if any, or nullptr. */
+  /**
+   * @brief Gets the renderer resources for the modified model produced by the
+   * {@link GltfModifier} but not yet available for rendering. These resources
+   * are created by {@link IPrepareRendererResources::prepareInWorkerThread}.
+   */
   void* getModifiedRenderResources() const noexcept;
 
-  /** Store temporary model and render resources computed in a worker thread,
-   * until they can be used instead of the current outdated versions */
+  /**
+   * @brief Stores the modified model and associated renderer resources produced
+   * by the {@link GltfModifier} but not yet available for rendering. The
+   * renderer resources are created by
+   * {@link IPrepareRendererResources::prepareInWorkerThread}.
+   */
   void setModifiedModelAndRenderResources(
       CesiumGltf::Model&& modifiedModel,
       void* pModifiedRenderResources) noexcept;
 
-  /** Reset the temporary modified model's render resources of this tile content
-   * to nullptr after it has been freed with
-   * Cesium3DTilesSelection::IPrepareRendererResources::free. */
+  /**
+   * @brief Resets the modified model and renderer resources after they have
+   * been determined to be outdated and have been freed with
+   * {@link IPrepareRendererResources::free}.
+   */
   void resetModifiedRenderResources() noexcept;
 
-  /** Overwrite this instance's model and render resources with the modifier
-   * stage's temporary variables, which are reset to their initial state. */
+  /**
+   * @brief Overwrites this instance's model and renderer resources with the
+   * modified ones produced by {@link GltfModifier}. The new model and
+   * resources become eligible for rendering.
+   *
+   * After this method returns, {@link getModifiedModel} will return
+   * `std::nullopt` and {@link getModifiedRendererResources} will return
+   * `nullptr`.
+   */
   void replaceWithModifiedModel() noexcept;
 
 private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
 
-  /** Current state of the glTF modifier for this tile content */
-  GltfModifier::State _modifierState = GltfModifier::State::Idle;
-  /** Temporary model used during the modifier process when the tile content
-   * already has a model. */
-  std::optional<CesiumGltf::Model> _modifiedModel = {};
-  /** Temporary render resources used during the modifier process when the tile
-   * content already has render resources. When modifier is done, it will
-   * replace _pRenderResources and be reset to nullptr. */
-  void* _pModifiedRenderResources = nullptr;
+  GltfModifier::State _modifierState;
+  std::optional<CesiumGltf::Model> _modifiedModel;
+  void* _pModifiedRenderResources;
 
   CesiumRasterOverlays::RasterOverlayDetails _rasterOverlayDetails;
   std::vector<CesiumUtility::Credit> _credits;
