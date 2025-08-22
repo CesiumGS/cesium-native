@@ -101,7 +101,7 @@ public:
    *    to determine whether they are up to date.
    */
   void
-  addToLoadQueue(const TileLoadTask& task, std::optional<int> modelVersion);
+  addToLoadQueue(const TileLoadTask& task, std::optional<int64_t> modelVersion);
 
   /**
    * @brief A checkpoint within this view group's load queue.

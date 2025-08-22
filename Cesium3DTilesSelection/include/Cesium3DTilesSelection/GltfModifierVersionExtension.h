@@ -16,10 +16,22 @@ namespace Cesium3DTilesSelection {
  */
 struct CESIUM3DTILESSELECTION_API GltfModifierVersionExtension
     : public CesiumUtility::ExtensibleObject {
-  static std::optional<int32_t>
+  /**
+   * @brief Gets the version number of the given model, or `std::nullopt` if
+   * the model does not have the `GltfModifierVersionExtension` attached to it
+   * yet.
+   */
+  static std::optional<int64_t>
   getVersion(const CesiumGltf::Model& model) noexcept;
 
-  static void setVersion(CesiumGltf::Model& model, int32_t version) noexcept;
+  /**
+   * @brief Sets the version number of the given model to the given value.
+   *
+   * This method creates the `GltfModifierVersionExtension` and attaches it to
+   * the `Model` if it does not already exist. If it does exist, the
+   * version number is updated.
+   */
+  static void setVersion(CesiumGltf::Model& model, int64_t version) noexcept;
 
   /**
    * @brief The original name of this type.
@@ -35,7 +47,7 @@ struct CESIUM3DTILESSELECTION_API GltfModifierVersionExtension
   /**
    * @brief The current {@link GltfModifier} version number of the model.
    */
-  int32_t version = 0;
+  int64_t version = 0;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents

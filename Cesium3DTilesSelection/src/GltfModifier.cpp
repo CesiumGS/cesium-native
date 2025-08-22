@@ -39,19 +39,27 @@ public:
 };
 
 GltfModifier::GltfModifier()
-    : _pNewVersionLoadRequester(
+    : _currentVersion(),
+      _pNewVersionLoadRequester(
           std::make_unique<NewVersionLoadRequester>(this)){};
 
 GltfModifier::~GltfModifier() = default;
 
-std::optional<int> GltfModifier::getCurrentVersion() const {
-  return (-1 == this->_currentVersion)
-             ? std::nullopt
-             : std::optional<int>(this->_currentVersion);
+std::optional<int64_t> GltfModifier::getCurrentVersion() const {
+  return this->_currentVersion;
+}
+
+bool GltfModifier::isActive() const {
+  return this->getCurrentVersion().has_value();
 }
 
 void GltfModifier::trigger() {
-  ++this->_currentVersion;
+  if (!this->_currentVersion) {
+    this->_currentVersion = 0;
+  } else {
+    ++*this->_currentVersion;
+  }
+
   this->_pNewVersionLoadRequester->notifyOfTrigger();
 }
 

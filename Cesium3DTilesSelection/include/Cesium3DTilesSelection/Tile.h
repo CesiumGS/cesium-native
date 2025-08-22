@@ -543,7 +543,8 @@ public:
    * @return true if this Tile needs further work done in a worker thread to
    * load it; otherwise, false.
    */
-  bool needsWorkerThreadLoading(std::optional<int> modelVersion) const noexcept;
+  bool
+  needsWorkerThreadLoading(std::optional<int64_t> modelVersion) const noexcept;
 
   /**
    * @brief Determines if this tile requires main-thread loading.
@@ -553,7 +554,8 @@ public:
    * @return true if this Tile needs further work done in the main thread to
    * load it; otherwise, false.
    */
-  bool needsMainThreadLoading(std::optional<int> modelVersion) const noexcept;
+  bool
+  needsMainThreadLoading(std::optional<int64_t> modelVersion) const noexcept;
 
   /**
    * @brief Adds a reference to this tile. A live reference will keep this tile

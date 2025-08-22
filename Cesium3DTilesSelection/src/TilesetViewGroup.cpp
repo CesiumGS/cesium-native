@@ -44,7 +44,7 @@ ViewUpdateResult& TilesetViewGroup::getViewUpdateResult() {
 
 void TilesetViewGroup::addToLoadQueue(
     const TileLoadTask& task,
-    std::optional<int> modelVersion) {
+    std::optional<int64_t> modelVersion) {
   Tile* pTile = task.pTile;
   CESIUM_ASSERT(pTile != nullptr);
 

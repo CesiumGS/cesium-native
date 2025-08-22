@@ -219,6 +219,8 @@ private:
   bool
   discardOutdatedRenderResources(Tile& tile, TileRenderContent& renderContent);
 
+  CesiumAsync::Future<void> registerGltfModifier(const Tile* pRootTile);
+
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
   std::unique_ptr<TilesetContentLoader> _pLoader;

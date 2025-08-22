@@ -275,7 +275,7 @@ bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
 } // namespace
 
 bool Tile::needsWorkerThreadLoading(
-    std::optional<int> modelVersion) const noexcept {
+    std::optional<int64_t> modelVersion) const noexcept {
   TileLoadState state = this->getState();
   // Test if worker-thread phase of glTF modifier should be started.
   if (modelVersion &&
@@ -287,7 +287,7 @@ bool Tile::needsWorkerThreadLoading(
       // finishLoading hasn't yet been called
       const std::optional<CesiumGltf::Model>& maybeModifiedModel =
           renderContent->getModifiedModel();
-      std::optional<int32_t> latestVersion =
+      std::optional<int64_t> latestVersion =
           maybeModifiedModel
               ? GltfModifierVersionExtension::getVersion(*maybeModifiedModel)
               : std::nullopt;
@@ -304,7 +304,7 @@ bool Tile::needsWorkerThreadLoading(
 }
 
 bool Tile::needsMainThreadLoading(
-    std::optional<int> modelVersion) const noexcept {
+    std::optional<int64_t> modelVersion) const noexcept {
   TileLoadState state = this->getState();
   // Test if main-thread phase of glTF modifier should be performed.
   if (modelVersion && state == TileLoadState::Done) {

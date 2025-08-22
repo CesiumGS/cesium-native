@@ -1880,9 +1880,6 @@ TEST_CASE("Test glTF modifier state machine") {
     apply(GltfModifierInput&& input) override {
       ++applyCallCount;
       GltfModifierOutput output{.modifiedModel = input.previousModel};
-      GltfModifierVersionExtension::setVersion(
-          output.modifiedModel,
-          *getCurrentVersion());
       return input.asyncSystem.createResolvedFuture(
           std::make_optional(std::move(output)));
     }
