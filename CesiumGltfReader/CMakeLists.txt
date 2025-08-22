@@ -63,6 +63,7 @@ target_link_libraries(CesiumGltfReader
         modp_b64::modp_b64
         KTX::ktx
         spz::spz
+        ZLIB::ZLIB
         WebP::webp WebP::webpdecoder
         $<IF:$<TARGET_EXISTS:libjpeg-turbo::turbojpeg>,libjpeg-turbo::turbojpeg,libjpeg-turbo::turbojpeg-static>
 )
