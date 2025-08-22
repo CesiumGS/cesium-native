@@ -219,7 +219,7 @@ public:
   /**
    * @brief Gets the renderer resources for the modified model produced by the
    * {@link GltfModifier} but not yet available for rendering. These resources
-   * are created by {@link IPrepareRendererResources::prepareInWorkerThread}.
+   * are created by {@link IPrepareRendererResources::prepareInLoadThread}.
    */
   void* getModifiedRenderResources() const noexcept;
 
@@ -227,7 +227,7 @@ public:
    * @brief Stores the modified model and associated renderer resources produced
    * by the {@link GltfModifier} but not yet available for rendering. The
    * renderer resources are created by
-   * {@link IPrepareRendererResources::prepareInWorkerThread}.
+   * {@link IPrepareRendererResources::prepareInLoadThread}.
    */
   void setModifiedModelAndRenderResources(
       CesiumGltf::Model&& modifiedModel,
@@ -246,7 +246,7 @@ public:
    * resources become eligible for rendering.
    *
    * After this method returns, {@link getModifiedModel} will return
-   * `std::nullopt` and {@link getModifiedRendererResources} will return
+   * `std::nullopt` and {@link getModifiedRenderResources} will return
    * `nullptr`.
    */
   void replaceWithModifiedModel() noexcept;
