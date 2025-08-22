@@ -58,6 +58,10 @@ void setStrokeWidth(
         (bounds.computeWidth() * ellipsoid.getRadii().x));
   }
 }
+
+template <typename T> uint32_t seedForObject(const T& object, uint32_t base) {
+  return base ^ static_cast<uint32_t>(reinterpret_cast<uint64_t>(&object));
+}
 } // namespace
 
 VectorRasterizer::VectorRasterizer(
@@ -116,7 +120,7 @@ void VectorRasterizer::drawPolygon(
     this->_context.fillPolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.fill->getColor().toRgba32()));
+        BLRgba32(style.fill->getColor(seedForObject(polygon, 13)).toRgba32()));
   }
 
   if (style.outline) {
@@ -128,7 +132,8 @@ void VectorRasterizer::drawPolygon(
     this->_context.strokePolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.outline->getColor().toRgba32()));
+        BLRgba32(
+            style.outline->getColor(seedForObject(polygon, 31)).toRgba32()));
   }
 }
 
@@ -157,7 +162,7 @@ void VectorRasterizer::drawPolygon(
     this->_context.fillPolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.fill->getColor().toRgba32()));
+        BLRgba32(style.fill->getColor(seedForObject(polygon, 13)).toRgba32()));
   }
 
   if (style.outline) {
@@ -169,7 +174,8 @@ void VectorRasterizer::drawPolygon(
     this->_context.strokePolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.outline->getColor().toRgba32()));
+        BLRgba32(
+            style.outline->getColor(seedForObject(polygon, 31)).toRgba32()));
   }
 }
 
@@ -197,7 +203,7 @@ void VectorRasterizer::drawPolyline(
   this->_context.strokePolyline(
       vertices.data(),
       vertices.size(),
-      BLRgba32(style.getColor().toRgba32()));
+      BLRgba32(style.getColor(seedForObject(points, 31)).toRgba32()));
 }
 
 void VectorRasterizer::drawGeoJsonObject(

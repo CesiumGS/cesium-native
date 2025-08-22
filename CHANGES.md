@@ -18,6 +18,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
+- Fixed `ColorMode::Random` in `VectorStyle` producing different results each time a raster overlay tile was rendered.
 
 ### v0.50.0 - 2025-08-01
 
