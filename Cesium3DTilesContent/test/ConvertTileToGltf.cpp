@@ -1,6 +1,7 @@
-#include "ConvertTileToGltf.h"
+﻿#include "ConvertTileToGltf.h"
 
 #include <Cesium3DTilesContent/B3dmToGltfConverter.h>
+#include <Cesium3DTilesContent/VctrToGltfConverter.h>
 #include <Cesium3DTilesContent/I3dmToGltfConverter.h>
 #include <Cesium3DTilesContent/PntsToGltfConverter.h>
 #include <CesiumNativeTests/FileAccessor.h>
@@ -48,6 +49,15 @@ GltfConverterResult ConvertTileToGltf::fromI3dm(
   AssetFetcher assetFetcher = makeAssetFetcher("");
   auto bytes = readFile(filePath);
   auto future = I3dmToGltfConverter::convert(bytes, options, assetFetcher);
+  return future.wait();
+}
+
+GltfConverterResult ConvertTileToGltf::fromVctr(
+    const std::filesystem::path& filePath,
+    const CesiumGltfReader::GltfReaderOptions& options) {
+  AssetFetcher assetFetcher = makeAssetFetcher("");
+  auto bytes = readFile(filePath);
+  auto future = VctrToGltfConverter::convert(bytes, options, assetFetcher);
   return future.wait();
 }
 

@@ -1,4 +1,4 @@
-#include "BatchTableToGltfStructuralMetadata.h"
+﻿#include "BatchTableToGltfStructuralMetadata.h"
 
 #include "BatchTableHierarchyPropertyValues.h"
 
@@ -1972,6 +1972,105 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
 
     featureID.attribute = 0;
     featureID.label = "_FEATURE_ID_0";
+  }
+
+  return result;
+}
+// Add this at the end of the file after the convertFromPnts function
+
+ErrorList BatchTableToGltfStructuralMetadata::convertFromVctr(
+    const rapidjson::Document& featureTableJson,
+    const rapidjson::Document& batchTableJson,
+    const std::span<const std::byte>& batchTableBinaryData,
+    CesiumGltf::Model& gltf) {
+
+  // Check to make sure a char of rapidjson is 1 byte
+  static_assert(
+      sizeof(rapidjson::Value::Ch) == 1,
+      "RapidJson::Value::Ch is not 1 byte");
+
+  ErrorList result;
+
+  // for calcuate total feature count
+  int64_t totalFeatureCount = 0;
+
+  // Check for POINTS_LENGTH
+  const auto pointsLengthIt = featureTableJson.FindMember("POINTS_LENGTH");
+  if (pointsLengthIt != featureTableJson.MemberEnd() &&
+      pointsLengthIt->value.IsInt64() && pointsLengthIt->value.GetInt64() > 0) {
+    totalFeatureCount += pointsLengthIt->value.GetInt64();
+  }
+
+  // Check for POLYLINES_LENGTH
+  const auto polylinesLengthIt =
+      featureTableJson.FindMember("POLYLINES_LENGTH");
+  if (polylinesLengthIt != featureTableJson.MemberEnd() &&
+      polylinesLengthIt->value.IsInt64() &&
+      polylinesLengthIt->value.GetInt64() > 0) {
+    totalFeatureCount += polylinesLengthIt->value.GetInt64();
+  }
+
+  // Check for POLYGONS_LENGTH
+  const auto polygonsLengthIt = featureTableJson.FindMember("POLYGONS_LENGTH");
+  if (polygonsLengthIt != featureTableJson.MemberEnd() &&
+      polygonsLengthIt->value.IsInt64() &&
+      polygonsLengthIt->value.GetInt64() > 0) {
+    totalFeatureCount += polygonsLengthIt->value.GetInt64();
+  }
+
+  // if there is no valid feature, then output a warning and return.
+  if (totalFeatureCount == 0) {
+    result.emplaceWarning(
+        "The VCTR has a batch table, but it is being ignored because there "
+        "are no valid geometry features in the feature table.");
+    return result;
+  }
+
+  // convert batch table
+  convertBatchTableToGltfStructuralMetadataExtension(
+      batchTableJson,
+      batchTableBinaryData,
+      gltf,
+      totalFeatureCount,
+      result);
+
+  // Create an EXT_mesh_features extension for each primitive with a _BATCHID
+  // attribute.
+  for (Mesh& mesh : gltf.meshes) {
+    for (MeshPrimitive& primitive : mesh.primitives) {
+      auto batchIDIt = primitive.attributes.find("_BATCHID");
+      if (batchIDIt == primitive.attributes.end()) {
+        // This primitive has no batch ID, ignore it.
+        continue;
+      }
+
+      // Rename the _BATCHID attribute to _FEATURE_ID_0
+      primitive.attributes["_FEATURE_ID_0"] = batchIDIt->second;
+      primitive.attributes.erase("_BATCHID");
+
+      // Also rename the attribute in the Draco extension, if it exists.
+      ExtensionKhrDracoMeshCompression* pDraco =
+          primitive.getExtension<ExtensionKhrDracoMeshCompression>();
+      if (pDraco) {
+        auto dracoIt = pDraco->attributes.find("_BATCHID");
+        if (dracoIt != pDraco->attributes.end()) {
+          pDraco->attributes["_FEATURE_ID_0"] = dracoIt->second;
+          pDraco->attributes.erase("_BATCHID");
+        }
+      }
+
+      ExtensionExtMeshFeatures& extension =
+          primitive.addExtension<ExtensionExtMeshFeatures>();
+      gltf.addExtensionUsed(ExtensionExtMeshFeatures::ExtensionName);
+
+      FeatureId& featureID = extension.featureIds.emplace_back();
+
+      // Use the total feature count for VCTR
+      featureID.featureCount = totalFeatureCount;
+      featureID.attribute = 0;
+      featureID.label = "_FEATURE_ID_0";
+      featureID.propertyTable = 0;
+    }
   }
 
   return result;
