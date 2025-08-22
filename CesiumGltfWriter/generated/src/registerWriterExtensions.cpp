@@ -19,6 +19,7 @@
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumGltf/FeatureIdTexture.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 
 // NOLINTBEGIN(misc-include-cleaner)
 #include <CesiumGltf/ExtensionCesiumRTC.h>
@@ -32,7 +33,6 @@
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
-#include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
@@ -48,6 +48,7 @@
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
 // NOLINTEND(misc-include-cleaner)
 
 namespace CesiumGltfWriter {
@@ -65,7 +66,6 @@ context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrDracoMeshCompre
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveKhrMaterialsVariantsJsonWriter>();
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionCesiumPrimitiveOutlineJsonWriter>();
 context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrGaussianSplattingJsonWriter>();
-context.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrGaussianSplattingCompressionSpz2JsonWriter>();
 context.registerExtension<CesiumGltf::Node, ExtensionExtInstanceFeaturesJsonWriter>();
 context.registerExtension<CesiumGltf::Node, ExtensionExtMeshGpuInstancingJsonWriter>();
 context.registerExtension<CesiumGltf::Node, ExtensionExtStructuralMetadataJsonWriter>();
@@ -81,5 +81,6 @@ context.registerExtension<CesiumGltf::MaterialOcclusionTextureInfo, ExtensionKhr
 context.registerExtension<CesiumGltf::MaterialNormalTextureInfo, ExtensionKhrTextureTransformJsonWriter>();
 context.registerExtension<CesiumGltf::PropertyTextureProperty, ExtensionKhrTextureTransformJsonWriter>();
 context.registerExtension<CesiumGltf::FeatureIdTexture, ExtensionKhrTextureTransformJsonWriter>();
+context.registerExtension<CesiumGltf::ExtensionKhrGaussianSplatting, ExtensionKhrGaussianSplattingCompressionSpz2JsonWriter>();
 }
 } // namespace CesiumGltfWriter

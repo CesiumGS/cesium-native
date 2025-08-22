@@ -17,6 +17,7 @@
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumGltf/FeatureIdTexture.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 
 #include "ExtensionCesiumRTCJsonHandler.h"
 #include "ExtensionModelExtStructuralMetadataJsonHandler.h"
@@ -29,7 +30,6 @@
 #include "ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionCesiumPrimitiveOutlineJsonHandler.h"
 #include "ExtensionKhrGaussianSplattingJsonHandler.h"
-#include "ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler.h"
 #include "ExtensionExtInstanceFeaturesJsonHandler.h"
 #include "ExtensionExtMeshGpuInstancingJsonHandler.h"
 #include "ExtensionExtStructuralMetadataJsonHandler.h"
@@ -45,6 +45,7 @@
 #include "ExtensionKhrTextureTransformJsonHandler.h"
 #include "ExtensionKhrTextureTransformJsonHandler.h"
 #include "ExtensionKhrTextureTransformJsonHandler.h"
+#include "ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler.h"
 
 namespace CesiumGltfReader {
 
@@ -61,7 +62,6 @@ options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrDracoMeshCompre
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionCesiumPrimitiveOutlineJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrGaussianSplattingJsonHandler>();
-options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionExtInstanceFeaturesJsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionExtMeshGpuInstancingJsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionExtStructuralMetadataJsonHandler>();
@@ -77,5 +77,6 @@ options.registerExtension<CesiumGltf::MaterialOcclusionTextureInfo, ExtensionKhr
 options.registerExtension<CesiumGltf::MaterialNormalTextureInfo, ExtensionKhrTextureTransformJsonHandler>();
 options.registerExtension<CesiumGltf::PropertyTextureProperty, ExtensionKhrTextureTransformJsonHandler>();
 options.registerExtension<CesiumGltf::FeatureIdTexture, ExtensionKhrTextureTransformJsonHandler>();
+options.registerExtension<CesiumGltf::ExtensionKhrGaussianSplatting, ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler>();
 }
 } // namespace CesiumGltfReader
