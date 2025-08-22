@@ -328,7 +328,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     checkFilesEqual(dir / "styling.tga", thisDir / "styling.tga");
   }
 
-  /*SUBCASE("Random color uses the same color across calls") {
+  SUBCASE("Random color uses the same color across calls") {
     CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
     asset.emplace();
     asset->width = 1;
@@ -338,31 +338,29 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->pixelData.resize(4, std::byte{255});
 
     CartographicPolygon square(std::vector<glm::dvec2>{
-      glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(0.0)},
-      glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(1.0)},
-      glm::dvec2{Math::degreesToRadians(1.0), Math::degreesToRadians(1.0)},
-      glm::dvec2{Math::degreesToRadians(1.0), Math::degreesToRadians(0.0)},
-      glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(0.0)}
-    });
+        glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(0.0)},
+        glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(1.0)},
+        glm::dvec2{Math::degreesToRadians(1.0), Math::degreesToRadians(1.0)},
+        glm::dvec2{Math::degreesToRadians(1.0), Math::degreesToRadians(0.0)},
+        glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(0.0)}});
 
     VectorStyle style;
-    style.polygon.fill = ColorStyle {
-      Color { 0xff, 0x00, 0xaa, 0xff },
-      ColorMode::Random
-    };
+    style.polygon.fill =
+        ColorStyle{Color{0xff, 0x00, 0xaa, 0xff}, ColorMode::Random};
 
     VectorRasterizer rasterizer(rect, asset);
     rasterizer.drawPolygon(square, style.polygon);
     rasterizer.finalize();
 
     const uint32_t writtenColor =
-  *reinterpret_cast<uint32_t*>(asset->pixelData.data()); VectorRasterizer
-  rasterizer2(rect, asset); rasterizer2.drawPolygon(square, style.polygon);
+        *reinterpret_cast<uint32_t*>(asset->pixelData.data());
+    VectorRasterizer rasterizer2(rect, asset);
+    rasterizer2.drawPolygon(square, style.polygon);
     rasterizer2.finalize();
 
-    CHECK(*reinterpret_cast<uint32_t*>(asset->pixelData.data()) ==
-  writtenColor);
-  }*/
+    CHECK(
+        *reinterpret_cast<uint32_t*>(asset->pixelData.data()) == writtenColor);
+  }
 }
 
 TEST_CASE("VectorRasterizer::rasterize benchmark" * doctest::skip(true)) {
