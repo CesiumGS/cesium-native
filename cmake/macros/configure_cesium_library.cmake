@@ -52,10 +52,17 @@ function(configure_cesium_library targetName)
 
     if(CESIUM_TARGET_WASM)
         # std::format is better behaved with wasm builds than fmt::format
+        # Emscripten 3.1.39 doesn't like std::format
+        #target_compile_definitions(
+            #${targetName} 
+            #PUBLIC 
+                #SPDLOG_USE_STD_FORMAT)
+        
+        # Emscripten 3.1.39 doesn't like <sys/utime.h> from tidyhtml
         target_compile_definitions(
             ${targetName} 
             PUBLIC 
-                SPDLOG_USE_STD_FORMAT)
+                HAS_FUTIME=0)
     endif()
 
     if (BUILD_SHARED_LIBS)
