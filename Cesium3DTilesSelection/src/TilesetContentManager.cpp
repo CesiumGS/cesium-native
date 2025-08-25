@@ -123,6 +123,11 @@ struct ContentKindSetter {
     tileContent.setContentKind(std::move(pRenderContent));
   }
 
+  void operator()(CesiumVectorData::GeoJsonDocument&& content) {
+    tileContent.setContentKind(
+        std::make_unique<TileFeatureContent>(std::move(content)));
+  }
+
   TileContent& tileContent;
   std::optional<RasterOverlayDetails> rasterOverlayDetails;
   void* pRenderResources;

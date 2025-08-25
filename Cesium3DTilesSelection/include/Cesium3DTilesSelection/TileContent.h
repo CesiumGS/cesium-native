@@ -7,6 +7,7 @@
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/ExtensibleObject.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
 
 #include <memory>
 #include <variant>
@@ -203,6 +204,32 @@ private:
   float _lodTransitionFadePercentage;
 };
 
+class CESIUM3DTILESSELECTION_API TileFeatureContent {
+public:
+  explicit TileFeatureContent(CesiumVectorData::GeoJsonDocument&& geoJson);
+
+  /**
+   * @brief Get the render resources created for the feature content
+   *
+   * @return The created render resources
+   */
+  void* getRenderResources() const noexcept;
+
+  void setGeoJson(const CesiumVectorData::GeoJsonDocument& geoJson);
+  void setGeoJson(CesiumVectorData::GeoJsonDocument&& geoJson);
+
+  /**
+   * @brief Set the render resources created for the feature content
+   *
+   * @param pRenderResources The created render resources
+   */
+  void setRenderResources(void* pRenderResources) noexcept;
+
+private:
+  CesiumVectorData::GeoJsonDocument _geoJson;
+  void* _pRenderResources;
+};
+
 /**
  * @brief A tile content container that can store and query the content type
  * that is currently being owned by the tile
@@ -212,7 +239,8 @@ class CESIUM3DTILESSELECTION_API TileContent {
       TileUnknownContent,
       TileEmptyContent,
       std::unique_ptr<TileExternalContent>,
-      std::unique_ptr<TileRenderContent>>;
+      std::unique_ptr<TileRenderContent>,
+      std::unique_ptr<TileFeatureContent>>;
 
 public:
   /**
@@ -255,6 +283,11 @@ public:
    * @brief Set a glTF model content for a tile
    */
   void setContentKind(std::unique_ptr<TileRenderContent>&& content);
+
+  /**
+   * @brief Set feature content for a tile
+   */
+  void setContentKind(std::unique_ptr<TileFeatureContent>&& content);
 
   /**
    * @brief Query if a tile has an unknown content
@@ -300,6 +333,10 @@ public:
    * the external tileset.
    */
   TileExternalContent* getExternalContent() noexcept;
+
+  const TileFeatureContent* getFeatureContent() const noexcept;
+
+  TileFeatureContent* getFeatureContent() noexcept;
 
 private:
   TileContentKindImpl _contentKind;

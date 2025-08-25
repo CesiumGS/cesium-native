@@ -7,6 +7,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
 
 #include <functional>
 #include <memory>
@@ -33,12 +34,15 @@ class Tile;
  * 3. Returning {@link TileExternalContent} means that this tile points to an external tileset
  *
  * 4. Returning {@link CesiumGltf::Model} means that this tile has glTF model
+ *
+ * 5. Returning {@Link CesiumVectorData::GeoJsonDocument} means that this tile has feature data
  */
 using TileContentKind = std::variant<
     TileUnknownContent,
     TileEmptyContent,
     TileExternalContent,
-    CesiumGltf::Model>;
+    CesiumGltf::Model,
+    CesiumVectorData::GeoJsonDocument>;
 
 /**
  * @brief Indicate the status of {@link Cesium3DTilesSelection::TilesetContentLoader::loadTileContent} and
