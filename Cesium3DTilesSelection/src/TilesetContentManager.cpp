@@ -1249,22 +1249,13 @@ void TilesetContentManager::loadTileContent(
     const TilesetOptions& tilesetOptions) {
   CESIUM_TRACE("TilesetContentManager::loadTileContent");
 
-  // Case of a tile previously loaded, but now outdated with respect to the
-  // modifier version (see matching condition in Tile::needsWorkerThreadLoading)
-  // => worker-thread phase of glTF modifier should be started.
-  if (this->_externals.pGltfModifier &&
-      this->_externals.pGltfModifier->isActive() &&
-      (tile.getState() == TileLoadState::Done ||
-       tile.getState() == TileLoadState::ContentLoaded)) {
+  if (GltfModifier::needsWorkerThreadModification(
+          tile,
+          this->_externals.pGltfModifier)) {
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
-    if (pRenderContent &&
-        pRenderContent->getGltfModifierState() == GltfModifier::State::Idle &&
-        GltfModifierVersionExtension::getVersion(pRenderContent->getModel()) !=
-            this->_externals.pGltfModifier->getCurrentVersion()) {
-      this->reapplyGltfModifier(tile, tilesetOptions, pRenderContent);
-      return;
-    }
-    // else: we may be in the case related to raster tiles, see just below
+    CESIUM_ASSERT(pRenderContent != nullptr);
+    this->reapplyGltfModifier(tile, tilesetOptions, pRenderContent);
+    return;
   }
 
   if (tile.getState() == TileLoadState::Unloading) {
@@ -1710,17 +1701,20 @@ void TilesetContentManager::finishLoading(
 
   // Case of a tile previously loaded that went outdated with respect to the
   // glTF modifier version => main-thread phase should be performed.
-  if (tile.getState() == TileLoadState::Done) {
+  if (GltfModifier::needsMainThreadModification(
+          tile,
+          this->_externals.pGltfModifier)) {
     CESIUM_ASSERT( // see matching condition in Tile::needsMainThreadLoading
-        _externals.pGltfModifier && pRenderContent->getGltfModifierState() ==
-                                        GltfModifier::State::WorkerDone);
+        this->_externals.pGltfModifier &&
+        pRenderContent->getGltfModifierState() ==
+            GltfModifier::State::WorkerDone);
     CESIUM_ASSERT(pRenderContent->getModifiedRenderResources());
     if (discardOutdatedRenderResources(tile, *pRenderContent)) {
       return;
     }
     pRenderContent->setGltfModifierState(GltfModifier::State::Idle);
     // free outdated render resources before replacing them
-    _externals.pPrepareRendererResources->free(
+    this->_externals.pPrepareRendererResources->free(
         tile,
         nullptr,
         pRenderContent->getRenderResources());
@@ -1729,11 +1723,12 @@ void TilesetContentManager::finishLoading(
     pRenderContent->replaceWithModifiedModel();
     // Run the main thread part of loading
     pRenderContent->setRenderResources(
-        _externals.pPrepareRendererResources->prepareInMainThread(
+        this->_externals.pPrepareRendererResources->prepareInMainThread(
             tile,
             pRenderContent->getRenderResources()));
     return;
   }
+
   CESIUM_ASSERT(tile.getState() == TileLoadState::ContentLoaded);
 
   // The tile was just loaded and may even have immediately been processed by

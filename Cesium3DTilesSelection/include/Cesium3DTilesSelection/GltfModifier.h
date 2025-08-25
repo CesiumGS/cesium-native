@@ -158,6 +158,13 @@ public:
   virtual CesiumAsync::Future<std::optional<GltfModifierOutput>>
   apply(GltfModifierInput&& input) = 0;
 
+  static bool needsWorkerThreadModification(
+      const Tile& tile,
+      const std::shared_ptr<GltfModifier>& pModifier);
+  static bool needsMainThreadModification(
+      const Tile& tile,
+      const std::shared_ptr<GltfModifier>& pModifier);
+
 protected:
   GltfModifier();
   virtual ~GltfModifier();

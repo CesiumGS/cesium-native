@@ -272,77 +272,21 @@ bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
   return false;
 }
 
-bool needsGltfModificationInWorker(
-    const Tile& tile,
-    std::optional<int64_t> modelVersion) {
-  if (!modelVersion)
-    return false;
-
-  if (tile.getState() != TileLoadState::Done &&
-      tile.getState() != TileLoadState::ContentLoaded) {
-    // The tile is not loaded at all, so there's no need to modify it.
-    return false;
-  }
-
-  const TileRenderContent* pRenderContent =
-      tile.getContent().getRenderContent();
-  if (!pRenderContent ||
-      pRenderContent->getGltfModifierState() != GltfModifier::State::Idle) {
-    // Can only modify tiles with render content, and not while modification is
-    // already in progress.
-    return false;
-  }
-
-  return GltfModifierVersionExtension::getVersion(pRenderContent->getModel()) !=
-         modelVersion;
-}
-
-bool needsGltfModificationInMainThread(
-    const Tile& tile,
-    std::optional<int64_t> modelVersion) {
-  if (!modelVersion)
-    return false;
-
-  // Only tiles already Done loading need main thread modification. For
-  // ContentLoaded, the modified mesh is applied by the normal transition to
-  // Done.
-  if (tile.getState() != TileLoadState::Done)
-    return false;
-
-  // Only tiles with render content can be modified.
-  const TileRenderContent* pRenderContent =
-      tile.getContent().getRenderContent();
-  if (!pRenderContent)
-    return false;
-
-  // TODO: What if we're in WorkerDone, but the version is still wrong? This
-  // code will do main thread transition to Idle, but there's really no need. We
-  // could just kick it back to Idle, and let the worker thread processing
-  // handle it, right?
-
-  if (pRenderContent->getGltfModifierState() !=
-      GltfModifier::State::WorkerDone) {
-    return false;
-  }
-
-  return true;
-}
-
 } // namespace
 
 bool Tile::needsWorkerThreadLoading(
-    std::optional<int64_t> modelVersion) const noexcept {
+    const std::shared_ptr<GltfModifier>& pModifier) const noexcept {
   return this->getState() == TileLoadState::Unloaded ||
          this->getState() == TileLoadState::FailedTemporarily ||
-         needsGltfModificationInWorker(*this, modelVersion) ||
+         GltfModifier::needsWorkerThreadModification(*this, pModifier) ||
          anyRasterOverlaysNeedLoading(*this);
 }
 
 bool Tile::needsMainThreadLoading(
-    std::optional<int64_t> modelVersion) const noexcept {
+    const std::shared_ptr<GltfModifier>& pModifier) const noexcept {
   return this->isRenderContent() &&
          (this->getState() == TileLoadState::ContentLoaded ||
-          needsGltfModificationInMainThread(*this, modelVersion));
+          GltfModifier::needsMainThreadModification(*this, pModifier));
 }
 
 void Tile::setParent(Tile* pParent) noexcept {

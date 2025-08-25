@@ -63,6 +63,100 @@ void GltfModifier::trigger() {
   this->_pNewVersionLoadRequester->notifyOfTrigger();
 }
 
+/*static*/ bool GltfModifier::needsWorkerThreadModification(
+    const Tile& tile,
+    const std::shared_ptr<GltfModifier>& pModifier) {
+  if (!pModifier)
+    return false;
+
+  std::optional<int64_t> modelVersion = pModifier->getCurrentVersion();
+  if (!modelVersion)
+    return false;
+
+  // If the tile is not loaded at all, so there's no need to modify it.
+  if (tile.getState() != TileLoadState::Done &&
+      tile.getState() != TileLoadState::ContentLoaded) {
+    return false;
+  }
+
+  const TileRenderContent* pRenderContent =
+      tile.getContent().getRenderContent();
+
+  // If a tile has no render content, there's nothing to modify.
+  if (!pRenderContent)
+    return false;
+
+  // We can't modify a tile for which modification is already in progress.
+  if (pRenderContent->getGltfModifierState() ==
+      GltfModifier::State::WorkerRunning) {
+    return false;
+  }
+
+  // If modification is Done, and the version is already up-to-date, we don't
+  // need to do it again.
+  if (pRenderContent->getGltfModifierState() ==
+      GltfModifier::State::WorkerDone) {
+    const std::optional<CesiumGltf::Model>& maybeModifiedModel =
+        pRenderContent->getModifiedModel();
+    if (maybeModifiedModel && GltfModifierVersionExtension::getVersion(
+                                  *maybeModifiedModel) == modelVersion) {
+      return false;
+    }
+  }
+
+  // If we get here, the worker is known to be in the Idle state.
+
+  // Modification is needed if the model version is out of date.
+  return GltfModifierVersionExtension::getVersion(pRenderContent->getModel()) !=
+         modelVersion;
+}
+
+/*static*/ bool GltfModifier::needsMainThreadModification(
+    const Tile& tile,
+    const std::shared_ptr<GltfModifier>& pModifier) {
+  if (!pModifier)
+    return false;
+
+  std::optional<int64_t> modelVersion = pModifier->getCurrentVersion();
+  if (!modelVersion)
+    return false;
+
+  // Only tiles already Done loading need main thread modification. For
+  // ContentLoaded, the modified mesh is applied by the normal transition to
+  // Done.
+  if (tile.getState() != TileLoadState::Done)
+    return false;
+
+  // Only tiles with render content can be modified.
+  const TileRenderContent* pRenderContent =
+      tile.getContent().getRenderContent();
+  if (!pRenderContent)
+    return false;
+
+  // We only need to do main thread processing after the worker thread
+  // processing has completed.
+  if (pRenderContent->getGltfModifierState() !=
+      GltfModifier::State::WorkerDone) {
+    return false;
+  }
+
+  // We only need to do main thread processing if there's a modified model.
+  const std::optional<CesiumGltf::Model>& maybeModifiedModel =
+      pRenderContent->getModifiedModel();
+  if (!maybeModifiedModel)
+    return false;
+
+  // If the version of the modified model is wrong (outdated), there's no point
+  // in doing main thread processing. We need to do worker thread processing
+  // again first.
+  if (GltfModifierVersionExtension::getVersion(*maybeModifiedModel) !=
+      modelVersion) {
+    return false;
+  }
+
+  return true;
+}
+
 CesiumAsync::Future<void> GltfModifier::onRegister(
     TilesetContentManager& contentManager,
     const TilesetMetadata& tilesetMetadata,

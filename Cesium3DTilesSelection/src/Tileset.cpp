@@ -1521,9 +1521,7 @@ void Tileset::addTileToLoadQueue(
     double priority) {
   frameState.viewGroup.addToLoadQueue(
       TileLoadTask{&tile, priorityGroup, priority},
-      this->_externals.pGltfModifier
-          ? this->_externals.pGltfModifier->getCurrentVersion()
-          : std::nullopt);
+      this->_externals.pGltfModifier);
 }
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(

@@ -538,24 +538,26 @@ public:
   /**
    * @brief Determines if this tile requires worker-thread loading.
    *
-   * @param modelVersion Optional version of the glTF model that this tile
-   * should check to determine whether it is up to date. See {@link TilesetExternals::pGltfModifier}.
+   * @param pModifier The optional glTF modifier. If not `nullptr`, this method
+   * will return true if the tile needs worker thread glTF modification. See
+   * {@link TilesetExternals::pGltfModifier}.
    * @return true if this Tile needs further work done in a worker thread to
    * load it; otherwise, false.
    */
-  bool
-  needsWorkerThreadLoading(std::optional<int64_t> modelVersion) const noexcept;
+  bool needsWorkerThreadLoading(
+      const std::shared_ptr<GltfModifier>& pModifier) const noexcept;
 
   /**
    * @brief Determines if this tile requires main-thread loading.
    *
-   * @param modelVersion Optional version of the glTF model that this tile
-   * should check to determine whether it is up to date. See {@link TilesetExternals::pGltfModifier}.
+   * @param pModifier The optional glTF modifier. If not `nullptr`, this method
+   * will return true if the tile needs worker thread glTF modification. See
+   * {@link TilesetExternals::pGltfModifier}.
    * @return true if this Tile needs further work done in the main thread to
    * load it; otherwise, false.
    */
-  bool
-  needsMainThreadLoading(std::optional<int64_t> modelVersion) const noexcept;
+  bool needsMainThreadLoading(
+      const std::shared_ptr<GltfModifier>& pModifier) const noexcept;
 
   /**
    * @brief Adds a reference to this tile. A live reference will keep this tile
