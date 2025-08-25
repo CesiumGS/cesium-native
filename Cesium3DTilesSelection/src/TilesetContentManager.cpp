@@ -1475,7 +1475,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
 
   TileLoadState state = tile.getState();
   // Test if a glTF modifier is in progress.
-  if (_externals.pGltfModifier && state == TileLoadState::Done) {
+  if (_externals.pGltfModifier) {
     auto* renderContent = tile.getContent().getRenderContent();
     if (renderContent) {
       switch (renderContent->getGltfModifierState()) {
