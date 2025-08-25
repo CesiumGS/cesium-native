@@ -634,80 +634,80 @@ postProcessContentInWorkerThread(
              pAssetAccessor,
              gltfOptions,
              std::move(gltfResult))
-      .thenInWorkerThread(
-          [result = std::move(result),
-           projections = std::move(projections),
-           tileLoadInfo = std::move(tileLoadInfo),
-           pGltfModifier,
-           version](CesiumGltfReader::GltfReaderResult&& gltfResult) mutable {
-            if (!gltfResult.errors.empty()) {
-              if (result.pCompletedRequest) {
-                SPDLOG_LOGGER_ERROR(
-                    tileLoadInfo.pLogger,
-                    "Failed resolving external glTF buffers from {}:\n- {}",
-                    result.pCompletedRequest->url(),
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-              } else {
-                SPDLOG_LOGGER_ERROR(
-                    tileLoadInfo.pLogger,
-                    "Failed resolving external glTF buffers:\n- {}",
-                    CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-              }
-            }
+      .thenInWorkerThread([result = std::move(result),
+                           projections = std::move(projections),
+                           tileLoadInfo = std::move(tileLoadInfo),
+                           version,
+                           pGltfModifier](CesiumGltfReader::GltfReaderResult&&
+                                              gltfResult) mutable {
+        if (!gltfResult.errors.empty()) {
+          if (result.pCompletedRequest) {
+            SPDLOG_LOGGER_ERROR(
+                tileLoadInfo.pLogger,
+                "Failed resolving external glTF buffers from {}:\n- {}",
+                result.pCompletedRequest->url(),
+                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+          } else {
+            SPDLOG_LOGGER_ERROR(
+                tileLoadInfo.pLogger,
+                "Failed resolving external glTF buffers:\n- {}",
+                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
+          }
+        }
 
-            if (!gltfResult.warnings.empty()) {
-              if (result.pCompletedRequest) {
-                SPDLOG_LOGGER_WARN(
-                    tileLoadInfo.pLogger,
-                    "Warning when resolving external gltf buffers from "
-                    "{}:\n- {}",
-                    result.pCompletedRequest->url(),
-                    CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
-              } else {
-                SPDLOG_LOGGER_ERROR(
-                    tileLoadInfo.pLogger,
-                    "Warning resolving external glTF buffers:\n- {}",
-                    CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
-              }
-            }
+        if (!gltfResult.warnings.empty()) {
+          if (result.pCompletedRequest) {
+            SPDLOG_LOGGER_WARN(
+                tileLoadInfo.pLogger,
+                "Warning when resolving external gltf buffers from "
+                "{}:\n- {}",
+                result.pCompletedRequest->url(),
+                CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
+          } else {
+            SPDLOG_LOGGER_ERROR(
+                tileLoadInfo.pLogger,
+                "Warning resolving external glTF buffers:\n- {}",
+                CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
+          }
+        }
 
-            if (!gltfResult.model) {
-              return tileLoadInfo.asyncSystem
-                  .createResolvedFuture(TileLoadResult::createFailedResult(
-                      result.pAssetAccessor,
-                      nullptr))
-                  .thenPassThrough(std::move(tileLoadInfo));
-            }
+        if (!gltfResult.model) {
+          return tileLoadInfo.asyncSystem
+              .createResolvedFuture(TileLoadResult::createFailedResult(
+                  result.pAssetAccessor,
+                  nullptr))
+              .thenPassThrough(std::move(tileLoadInfo));
+        }
 
-            result.contentKind = std::move(*gltfResult.model);
-            result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
-            result.initialContentBoundingVolume =
-                tileLoadInfo.tileContentBoundingVolume;
+        result.contentKind = std::move(*gltfResult.model);
+        result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
+        result.initialContentBoundingVolume =
+            tileLoadInfo.tileContentBoundingVolume;
 
-            postProcessGltfInWorkerThread(
-                result,
-                std::move(projections),
-                tileLoadInfo);
+        postProcessGltfInWorkerThread(
+            result,
+            std::move(projections),
+            tileLoadInfo);
 
-            if (pGltfModifier && version) {
-              // Apply the glTF modifier right away, otherwise it will be
-              // triggered immediately after the renderer-side resources
-              // have been created, which is both inefficient and a cause
-              // of visual glitches (the model will appear briefly in its
-              // unmodified state before stabilizing)
-              const CesiumGltf::Model& model =
-                  std::get<CesiumGltf::Model>(result.contentKind);
-              return pGltfModifier
-                  ->apply(GltfModifierInput{
-                      .version = *version,
-                      .asyncSystem = tileLoadInfo.asyncSystem,
-                      .pAssetAccessor = tileLoadInfo.pAssetAccessor,
-                      .pLogger = tileLoadInfo.pLogger,
-                      .previousModel = model,
-                      .tileTransform = tileLoadInfo.tileTransform})
-                  .thenInWorkerThread([result = std::move(result), version](
-                                          std::optional<GltfModifierOutput>&&
-                                              modified) mutable {
+        if (pGltfModifier && version) {
+          // Apply the glTF modifier right away, otherwise it will be
+          // triggered immediately after the renderer-side resources
+          // have been created, which is both inefficient and a cause
+          // of visual glitches (the model will appear briefly in its
+          // unmodified state before stabilizing)
+          const CesiumGltf::Model& model =
+              std::get<CesiumGltf::Model>(result.contentKind);
+          return pGltfModifier
+              ->apply(GltfModifierInput{
+                  .version = *version,
+                  .asyncSystem = tileLoadInfo.asyncSystem,
+                  .pAssetAccessor = tileLoadInfo.pAssetAccessor,
+                  .pLogger = tileLoadInfo.pLogger,
+                  .previousModel = model,
+                  .tileTransform = tileLoadInfo.tileTransform})
+              .thenInWorkerThread(
+                  [result = std::move(result), version](
+                      std::optional<GltfModifierOutput>&& modified) mutable {
                     if (modified) {
                       result.contentKind = std::move(modified->modifiedModel);
                     }
@@ -722,13 +722,13 @@ postProcessContentInWorkerThread(
 
                     return result;
                   })
-                  .thenPassThrough(std::move(tileLoadInfo));
-            } else {
-              return tileLoadInfo.asyncSystem
-                  .createResolvedFuture(std::move(result))
-                  .thenPassThrough(std::move(tileLoadInfo));
-            }
-          })
+              .thenPassThrough(std::move(tileLoadInfo));
+        } else {
+          return tileLoadInfo.asyncSystem
+              .createResolvedFuture(std::move(result))
+              .thenPassThrough(std::move(tileLoadInfo));
+        }
+      })
       .thenInWorkerThread([rendererOptions](
                               std::tuple<TileContentLoadInfo, TileLoadResult>&&
                                   tuple) {

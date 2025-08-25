@@ -1107,8 +1107,6 @@ bool Tileset::_kickDescendantsAndRenderTile(
   // If any kicked tiles were rendered last frame, add them to the
   // tilesFadingOut. This is unlikely! It would imply that a tile rendered last
   // frame has suddenly become unrenderable, and therefore eligible for kicking.
-  // However, it can happen when a GltfModifier version increment makes
-  // previously-renderably tiles unrenderable.
   //
   // In general, it's possible that a Tile previously traversed has been deleted
   // completely, so we have to be careful about dereferencing the Tile pointers
@@ -1149,8 +1147,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
       getPreviousState(frameState.viewGroup, tile).getResult();
   const bool wasRenderedLastFrame =
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
-  const bool wasReallyRenderedLastFrame =
-      wasRenderedLastFrame && tile.isRenderable();
+  const bool isRenderable = tile.isRenderable();
+  const bool wasReallyRenderedLastFrame = wasRenderedLastFrame && isRenderable;
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1174,7 +1172,6 @@ bool Tileset::_kickDescendantsAndRenderTile(
     queuedForLoad = true;
   }
 
-  bool isRenderable = tile.isRenderable();
   traversalDetails.allAreRenderable = isRenderable;
   traversalDetails.anyWereRenderedLastFrame = wasReallyRenderedLastFrame;
 

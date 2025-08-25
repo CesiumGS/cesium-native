@@ -288,8 +288,8 @@ bool needsGltfModificationInWorker(
       tile.getContent().getRenderContent();
   if (!pRenderContent ||
       pRenderContent->getGltfModifierState() != GltfModifier::State::Idle) {
-    // Can only modify renderable tiles, and not while modification is already
-    // in progress.
+    // Can only modify tiles with render content, and not while modification is
+    // already in progress.
     return false;
   }
 
@@ -306,10 +306,10 @@ bool needsGltfModificationInMainThread(
   // Only tiles already Done loading need main thread modification. For
   // ContentLoaded, the modified mesh is applied by the normal transition to
   // Done.
-  if (tile.getState() != TileLoadState::Done) {
+  if (tile.getState() != TileLoadState::Done)
     return false;
-  }
 
+  // Only tiles with render content can be modified.
   const TileRenderContent* pRenderContent =
       tile.getContent().getRenderContent();
   if (!pRenderContent)
