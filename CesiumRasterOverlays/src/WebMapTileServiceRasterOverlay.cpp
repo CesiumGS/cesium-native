@@ -1,16 +1,35 @@
+#include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/WebMapTileServiceRasterOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Uri.h>
 
-#include <cstddef>
+#include <nonstd/expected.hpp>
+#include <spdlog/logger.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
 #include <variant>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumUtility;
@@ -24,6 +43,7 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CreditSystem>& pCreditSystem,
       std::optional<Credit> credit,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
@@ -42,13 +62,14 @@ public:
       std::string layer,
       std::string style,
       std::string _tileMatrixSetID,
-      const std::optional<std::vector<std::string>> tileMatrixLabels,
-      const std::optional<std::map<std::string, std::string>> dimensions,
+      const std::optional<std::vector<std::string>>& tileMatrixLabels,
+      const std::optional<std::map<std::string, std::string>>& dimensions,
       const std::vector<std::string>& subdomains)
       : QuadtreeRasterOverlayTileProvider(
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            pCreditSystem,
             credit,
             pPrepareRendererResources,
             pLogger,
@@ -63,14 +84,14 @@ public:
         _headers(headers),
         _useKVP(useKVP),
         _format(format),
-        _layer(layer),
-        _style(style),
-        _tileMatrixSetID(_tileMatrixSetID),
+        _layer(std::move(layer)),
+        _style(std::move(style)),
+        _tileMatrixSetID(std::move(_tileMatrixSetID)),
         _labels(tileMatrixLabels),
         _staticDimensions(dimensions),
         _subdomains(subdomains) {}
 
-  virtual ~WebMapTileServiceTileProvider() {}
+  virtual ~WebMapTileServiceTileProvider() = default;
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
@@ -179,7 +200,7 @@ WebMapTileServiceRasterOverlay::WebMapTileServiceRasterOverlay(
       _headers(headers),
       _options(wmtsOptions) {}
 
-WebMapTileServiceRasterOverlay::~WebMapTileServiceRasterOverlay() {}
+WebMapTileServiceRasterOverlay::~WebMapTileServiceRasterOverlay() = default;
 
 Future<RasterOverlay::CreateTileProviderResult>
 WebMapTileServiceRasterOverlay::createTileProvider(
@@ -257,6 +278,7 @@ WebMapTileServiceRasterOverlay::createTileProvider(
               pOwner,
               asyncSystem,
               pAssetAccessor,
+              pCreditSystem,
               credit,
               pPrepareRendererResources,
               pLogger,

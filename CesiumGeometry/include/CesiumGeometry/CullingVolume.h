@@ -1,8 +1,10 @@
 #pragma once
 
-#include "Plane.h"
+#include <CesiumGeometry/Plane.h>
 
-namespace Cesium3DTilesSelection {
+#include <glm/ext/matrix_double4x4.hpp>
+
+namespace CesiumGeometry {
 
 /**
  * @brief A culling volume, defined by four planes.
@@ -58,4 +60,61 @@ CullingVolume createCullingVolume(
     const glm::dvec3& up,
     double fovx,
     double fovy) noexcept;
-} // namespace Cesium3DTilesSelection
+
+/**
+ * @brief Create a {@link CullingVolume} from a projection matrix.
+ *
+ * The matrix can be a composite view - projection matrix; the volume will then
+ * cull world coordinates. It can also be a model - view - projection matrix,
+ * which will cull model coordinates.
+ */
+CullingVolume createCullingVolume(const glm::dmat4& clipMatrix);
+
+/**
+ * @brief Creates a {@link CullingVolume} for a perspective frustum.
+ *
+ * @param position The eye position
+ * @param direction The viewing direction
+ * @param up The up-vector of the frustum
+ * @param l left edge
+ * @param r right edge
+ * @param t top edge
+ * @param b bottom edge
+ * @param n near plane distance
+ * @return The {@link CullingVolume}
+ */
+CullingVolume createCullingVolume(
+    const glm::dvec3& position,
+    const glm::dvec3& direction,
+    const glm::dvec3& up,
+    double l,
+    double r,
+    double b,
+    double t,
+    double n) noexcept;
+
+/**
+ * @brief Creates a {@link CullingVolume} for an orthographic frustum.
+ *
+ * @param position The eye position
+ * @param direction The viewing direction
+ * @param up The up-vector of the frustum
+ * @param l left edge
+ * @param r right edge
+ * @param t top edge
+ * @param b bottom edge
+ * @param n near plane distance
+ * @return The {@link CullingVolume}
+ */
+
+CullingVolume createOrthographicCullingVolume(
+    const glm::dvec3& position,
+    const glm::dvec3& direction,
+    const glm::dvec3& up,
+    double l,
+    double r,
+    double b,
+    double t,
+    double n) noexcept;
+
+} // namespace CesiumGeometry

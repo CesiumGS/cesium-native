@@ -37,7 +37,6 @@ target_sources(
     PRIVATE
         ${CESIUM_3DTILES_CONTENT_SOURCES}
         ${CESIUM_3DTILES_CONTENT_HEADERS}
-    PUBLIC
         ${CESIUM_3DTILES_CONTENT_PUBLIC_HEADERS}
 )
 
@@ -66,5 +65,3 @@ target_link_libraries(Cesium3DTilesContent
     PRIVATE
         libmorton::libmorton
 )
-
-target_compile_definitions(Cesium3DTilesContent PRIVATE GLM_ENABLE_EXPERIMENTAL)

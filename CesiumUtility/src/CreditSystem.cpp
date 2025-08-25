@@ -1,6 +1,12 @@
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace CesiumUtility {
 
@@ -10,90 +16,137 @@ Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen) {
 
 Credit CreditSystem::createCredit(std::string&& html, bool showOnScreen) {
   // if this credit already exists, return a Credit handle to it
-  for (size_t id = 0; id < _credits.size(); ++id) {
-    if (_credits[id].html == html) {
+  for (size_t id = 0; id < this->_credits.size(); ++id) {
+    if (this->_credits[id].html == html) {
       // Override the existing credit's showOnScreen value.
-      _credits[id].showOnScreen = showOnScreen;
+      this->_credits[id].showOnScreen = showOnScreen;
       return Credit(id);
     }
   }
 
-  _credits.push_back({std::move(html), showOnScreen, -1, 0});
+  this->_credits.push_back({std::move(html), showOnScreen, 0, false});
 
-  return Credit(_credits.size() - 1);
+  return Credit(this->_credits.size() - 1);
 }
 
 bool CreditSystem::shouldBeShownOnScreen(Credit credit) const noexcept {
-  if (credit.id < _credits.size()) {
-    return _credits[credit.id].showOnScreen;
+  if (credit.id < this->_credits.size()) {
+    return this->_credits[credit.id].showOnScreen;
   }
   return false;
 }
 
 void CreditSystem::setShowOnScreen(Credit credit, bool showOnScreen) noexcept {
-  if (credit.id < _credits.size()) {
-    _credits[credit.id].showOnScreen = showOnScreen;
+  if (credit.id < this->_credits.size()) {
+    this->_credits[credit.id].showOnScreen = showOnScreen;
   }
 }
 
 const std::string& CreditSystem::getHtml(Credit credit) const noexcept {
-  if (credit.id < _credits.size()) {
-    return _credits[credit.id].html;
+  if (credit.id < this->_credits.size()) {
+    return this->_credits[credit.id].html;
   }
   return INVALID_CREDIT_MESSAGE;
 }
 
-void CreditSystem::addCreditToFrame(Credit credit) {
-  // if this credit has already been added to the current frame, there's nothing
-  // to do
-  if (_credits[credit.id].lastFrameNumber == _currentFrameNumber) {
-    ++_credits[credit.id].count;
-    return;
-  }
+void CreditSystem::addCreditReference(Credit credit) {
+  CreditRecord& record = this->_credits[credit.id];
+  ++record.referenceCount;
 
-  // add the credit to this frame
-  _creditsToShowThisFrame.push_back(credit);
-
-  // if the credit was shown last frame, remove it from
-  // _creditsToNoLongerShowThisFrame since it will still be shown
-  if (_credits[credit.id].lastFrameNumber == _currentFrameNumber - 1) {
-    _creditsToNoLongerShowThisFrame.erase(
+  // If this is the first reference to this credit, and it was shown last frame,
+  // make sure this credit doesn't exist in _creditsToNoLongerShowThisSnapshot.
+  if (record.shownLastSnapshot && record.referenceCount == 1) {
+    this->_creditsToNoLongerShowThisSnapshot.erase(
         std::remove(
-            _creditsToNoLongerShowThisFrame.begin(),
-            _creditsToNoLongerShowThisFrame.end(),
+            this->_creditsToNoLongerShowThisSnapshot.begin(),
+            this->_creditsToNoLongerShowThisSnapshot.end(),
             credit),
-        _creditsToNoLongerShowThisFrame.end());
-  }
-
-  // update the last frame this credit was shown
-  _credits[credit.id].lastFrameNumber = _currentFrameNumber;
-}
-
-void CreditSystem::startNextFrame() noexcept {
-  _creditsToNoLongerShowThisFrame.swap(_creditsToShowThisFrame);
-  _creditsToShowThisFrame.clear();
-  _currentFrameNumber++;
-  for (const auto& credit : _creditsToNoLongerShowThisFrame) {
-    _credits[credit.id].count = 0;
+        this->_creditsToNoLongerShowThisSnapshot.end());
   }
 }
 
-const std::vector<Credit>& CreditSystem::getCreditsToShowThisFrame() noexcept {
+void CreditSystem::removeCreditReference(Credit credit) {
+  CreditRecord& record = this->_credits[credit.id];
+  CESIUM_ASSERT(record.referenceCount > 0);
+  --record.referenceCount;
+
+  // If this was the last reference to this credit, and it was shown last frame,
+  // add this credit to _creditsToNoLongerShowThisSnapshot.
+  if (record.shownLastSnapshot && record.referenceCount == 0) {
+    this->_creditsToNoLongerShowThisSnapshot.emplace_back(credit);
+  }
+}
+
+const CreditsSnapshot& CreditSystem::getSnapshot() noexcept {
+  std::vector<Credit>& currentCredits = this->_snapshot.currentCredits;
+  currentCredits.clear();
+
+  for (size_t i = 0; i < this->_credits.size(); ++i) {
+    CreditRecord& record = this->_credits[i];
+    if (record.referenceCount > 0) {
+      currentCredits.emplace_back(Credit(i));
+      record.shownLastSnapshot = true;
+    } else {
+      record.shownLastSnapshot = false;
+    }
+  }
+
+  this->_creditsToNoLongerShowThisSnapshot.swap(this->_snapshot.removedCredits);
+  this->_creditsToNoLongerShowThisSnapshot.clear();
+
   // sort credits based on the number of occurrences
-  if (_creditsToShowThisFrame.size() < 2) {
-    return _creditsToShowThisFrame;
-  }
   std::sort(
-      _creditsToShowThisFrame.begin(),
-      _creditsToShowThisFrame.end(),
+      currentCredits.begin(),
+      currentCredits.end(),
       [this](const Credit& a, const Credit& b) {
-        int32_t aCounts = _credits[a.id].count;
-        int32_t bCounts = _credits[b.id].count;
+        int32_t aCounts = this->_credits[a.id].referenceCount;
+        int32_t bCounts = this->_credits[b.id].referenceCount;
         if (aCounts == bCounts)
           return a.id < b.id;
         else
           return aCounts > bCounts;
       });
-  return _creditsToShowThisFrame;
+
+  return this->_snapshot;
 }
+
+void CreditSystem::addBulkReferences(
+    const std::vector<int32_t>& references) noexcept {
+  for (size_t i = 0; i < references.size(); ++i) {
+    CreditRecord& record = this->_credits[i];
+    int32_t referencesToAdd = references[i];
+
+    record.referenceCount += referencesToAdd;
+
+    // If this is the first reference to this credit, and it was shown last
+    // frame, make sure this credit doesn't exist in
+    // _creditsToNoLongerShowThisSnapshot.
+    if (record.shownLastSnapshot && record.referenceCount == referencesToAdd) {
+      this->_creditsToNoLongerShowThisSnapshot.erase(
+          std::remove(
+              this->_creditsToNoLongerShowThisSnapshot.begin(),
+              this->_creditsToNoLongerShowThisSnapshot.end(),
+              Credit(i)),
+          this->_creditsToNoLongerShowThisSnapshot.end());
+    }
+  }
+}
+
+void CreditSystem::releaseBulkReferences(
+    const std::vector<int32_t>& references) noexcept {
+  for (size_t i = 0; i < references.size(); ++i) {
+    CreditRecord& record = this->_credits[i];
+    int32_t referencesToRemove = references[i];
+
+    CESIUM_ASSERT(record.referenceCount >= referencesToRemove);
+    record.referenceCount -= referencesToRemove;
+
+    // If this was the last reference to this credit, and it was shown last
+    // frame, add this credit to _creditsToNoLongerShowThisSnapshot.
+    if (record.shownLastSnapshot && record.referenceCount == 0) {
+      this->_creditsToNoLongerShowThisSnapshot.emplace_back(Credit(i));
+    }
+  }
+}
+
 } // namespace CesiumUtility

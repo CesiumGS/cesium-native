@@ -1,7 +1,6 @@
 #pragma once
 
-#include "Library.h"
-
+#include <Cesium3DTilesSelection/Library.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 
@@ -56,6 +55,15 @@ struct CESIUM3DTILESSELECTION_API TileIdUtilities {
    * @return The string
    */
   static std::string createTileIdString(const TileID& tileId);
+
+  /**
+   * @brief Determines if a tile ID is a loadable identifier. All IDs are
+   * loadable except for a blank string.
+   *
+   * @param tileID The tile ID to check.
+   * @returns true for all tile IDs except for a blank string.
+   */
+  static bool isLoadable(const TileID& tileID);
 };
 
 } // namespace Cesium3DTilesSelection

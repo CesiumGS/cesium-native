@@ -1,14 +1,13 @@
 #pragma once
 
-#include "CesiumGltf/ImageAsset.h"
-#include "CesiumGltf/KhrTextureTransform.h"
-#include "CesiumGltf/PropertyTextureProperty.h"
-#include "CesiumGltf/PropertyTransformations.h"
-#include "CesiumGltf/PropertyTypeTraits.h"
-#include "CesiumGltf/PropertyView.h"
-#include "CesiumGltf/Sampler.h"
-#include "CesiumGltf/TextureView.h"
-
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/KhrTextureTransform.h>
+#include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumGltf/PropertyView.h>
+#include <CesiumGltf/Sampler.h>
+#include <CesiumGltf/TextureView.h>
 #include <CesiumUtility/Assert.h>
 
 #include <array>
@@ -31,39 +30,39 @@ public:
    * @brief This property view was initialized from an invalid
    * {@link PropertyTexture}.
    */
-  static const int ErrorInvalidPropertyTexture = 14;
+  static const int ErrorInvalidPropertyTexture = 15;
 
   /**
    * @brief This property view is associated with a {@link ClassProperty} of an
    * unsupported type.
    */
-  static const int ErrorUnsupportedProperty = 15;
+  static const int ErrorUnsupportedProperty = 16;
 
   /**
    * @brief This property view does not have a valid texture index.
    */
-  static const int ErrorInvalidTexture = 16;
+  static const int ErrorInvalidTexture = 17;
 
   /**
    * @brief This property view does not have a valid sampler index.
    */
-  static const int ErrorInvalidSampler = 17;
+  static const int ErrorInvalidSampler = 18;
 
   /**
    * @brief This property view does not have a valid image index.
    */
-  static const int ErrorInvalidImage = 18;
+  static const int ErrorInvalidImage = 19;
 
   /**
    * @brief This property is viewing an empty image.
    */
-  static const int ErrorEmptyImage = 19;
+  static const int ErrorEmptyImage = 20;
 
   /**
    * @brief This property uses an image with multi-byte channels. Only
    * single-byte channels are supported.
    */
-  static const int ErrorInvalidBytesPerChannel = 20;
+  static const int ErrorInvalidBytesPerChannel = 21;
 
   /**
    * @brief The channels of this property texture property are invalid.
@@ -72,7 +71,7 @@ public:
    * more than four channels can be defined for specialized texture
    * formats, this implementation only supports four channels max.
    */
-  static const int ErrorInvalidChannels = 21;
+  static const int ErrorInvalidChannels = 22;
 
   /**
    * @brief The channels of this property texture property do not provide
@@ -80,7 +79,7 @@ public:
    * because an incorrect number of channels was provided, or because the
    * image itself has a different channel count / byte size than expected.
    */
-  static const int ErrorChannelsAndTypeMismatch = 22;
+  static const int ErrorChannelsAndTypeMismatch = 23;
 };
 
 /**
@@ -102,14 +101,20 @@ ElementType assembleScalarValue(const std::span<uint8_t> bytes) noexcept {
     }
 
     // Reinterpret the bits as a float.
-    return *reinterpret_cast<float*>(&resultAsUint);
+    // We need to memcpy to avoid a "dereferencing type-punned pointer will
+    // break strict-aliasing rules" error on GCC. See:
+    // https://gist.github.com/shafik/848ae25ee209f698763cffee272a58f8#how-do-we-type-pun-correctly
+    float resultAsFloat;
+    std::memcpy(&resultAsFloat, &resultAsUint, sizeof(float));
+    return resultAsFloat;
   }
 
   if constexpr (IsMetadataInteger<ElementType>::value) {
     using UintType = std::make_unsigned_t<ElementType>;
     UintType resultAsUint = 0;
     for (size_t i = 0; i < bytes.size(); i++) {
-      resultAsUint |= static_cast<UintType>(bytes[i]) << i * 8;
+      resultAsUint |=
+          static_cast<UintType>(static_cast<UintType>(bytes[i]) << i * 8);
     }
 
     // Reinterpret the bits with the correct signedness.
@@ -128,8 +133,8 @@ template <typename ElementType>
 ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
   ElementType result = ElementType();
 
-  const glm::length_t N =
-      getDimensionsFromPropertyType(TypeToPropertyType<ElementType>::value);
+  [[maybe_unused]] constexpr glm::length_t N =
+      TypeToDimensions<ElementType>::dimensions;
   using T = typename ElementType::value_type;
 
   CESIUM_ASSERT(
@@ -139,9 +144,9 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
     CESIUM_ASSERT(
         N == 2 && "Only vec2s can contain two-byte integer components.");
     uint16_t x = static_cast<uint16_t>(bytes[0]) |
-                 (static_cast<uint16_t>(bytes[1]) << 8);
+                 static_cast<uint16_t>(static_cast<uint16_t>(bytes[1]) << 8);
     uint16_t y = static_cast<uint16_t>(bytes[2]) |
-                 (static_cast<uint16_t>(bytes[3]) << 8);
+                 static_cast<uint16_t>(static_cast<uint16_t>(bytes[3]) << 8);
 
     result[0] = *reinterpret_cast<int16_t*>(&x);
     result[1] = *reinterpret_cast<int16_t*>(&y);
@@ -151,20 +156,20 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
     CESIUM_ASSERT(
         N == 2 && "Only vec2s can contain two-byte integer components.");
     result[0] = static_cast<uint16_t>(bytes[0]) |
-                (static_cast<uint16_t>(bytes[1]) << 8);
+                static_cast<uint16_t>(static_cast<uint16_t>(bytes[1]) << 8);
     result[1] = static_cast<uint16_t>(bytes[2]) |
-                (static_cast<uint16_t>(bytes[3]) << 8);
+                static_cast<uint16_t>(static_cast<uint16_t>(bytes[3]) << 8);
   }
 
   if constexpr (std::is_same_v<T, int8_t>) {
     for (size_t i = 0; i < bytes.size(); i++) {
-      result[i] = *reinterpret_cast<const int8_t*>(&bytes[i]);
+      result[int32_t(i)] = *reinterpret_cast<const int8_t*>(&bytes[i]);
     }
   }
 
   if constexpr (std::is_same_v<T, uint8_t>) {
     for (size_t i = 0; i < bytes.size(); i++) {
-      result[i] = bytes[i];
+      result[int32_t(i)] = bytes[i];
     }
   }
 
@@ -184,10 +189,11 @@ assembleArrayValue(const std::span<uint8_t> bytes) noexcept {
   std::vector<T> result(bytes.size() / sizeof(T));
 
   if constexpr (sizeof(T) == 2) {
-    for (int i = 0, b = 0; i < result.size(); i++, b += 2) {
+    for (size_t i = 0, b = 0; i < result.size(); i++, b += 2) {
       using UintType = std::make_unsigned_t<T>;
-      UintType resultAsUint = static_cast<UintType>(bytes[b]) |
-                              (static_cast<UintType>(bytes[b + 1]) << 8);
+      UintType resultAsUint =
+          static_cast<UintType>(bytes[b]) |
+          static_cast<UintType>(static_cast<UintType>(bytes[b + 1]) << 8);
       result[i] = *reinterpret_cast<T*>(&resultAsUint);
     }
   } else {
@@ -329,6 +335,85 @@ public:
       const ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
+        TextureView(
+            sampler,
+            image,
+            property.texCoord,
+            property.getExtension<ExtensionKhrTextureTransform>(),
+            options),
+        _channels(property.channels),
+        _swizzle() {
+    if (this->_status != PropertyTexturePropertyViewStatus::Valid) {
+      return;
+    }
+
+    switch (this->getTextureViewStatus()) {
+    case TextureViewStatus::Valid:
+      break;
+    case TextureViewStatus::ErrorInvalidSampler:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
+      return;
+    case TextureViewStatus::ErrorInvalidImage:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidImage;
+      return;
+    case TextureViewStatus::ErrorEmptyImage:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorEmptyImage;
+      return;
+    case TextureViewStatus::ErrorInvalidBytesPerChannel:
+      this->_status =
+          PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
+      return;
+    case TextureViewStatus::ErrorUninitialized:
+    case TextureViewStatus::ErrorInvalidTexture:
+    default:
+      this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
+      return;
+    }
+
+    _swizzle.reserve(_channels.size());
+
+    for (size_t i = 0; i < _channels.size(); ++i) {
+      switch (_channels[i]) {
+      case 0:
+        _swizzle += "r";
+        break;
+      case 1:
+        _swizzle += "g";
+        break;
+      case 2:
+        _swizzle += "b";
+        break;
+      case 3:
+        _swizzle += "a";
+        break;
+      default:
+        CESIUM_ASSERT(
+            false && "A valid channels vector must be passed to the view.");
+      }
+    }
+  }
+
+  /**
+   * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
+   *
+   * @param property The {@link PropertyTextureProperty}
+   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param pEnumDefinition The {@link CesiumGltf::Enum} definition this property uses.
+   * @param sampler The {@link Sampler} used by the property.
+   * @param image The {@link ImageAsset} used by the property.
+   * @param options The options for constructing the view.
+   */
+  PropertyTexturePropertyView(
+      const PropertyTextureProperty& property,
+      const ClassProperty& classProperty,
+      const CesiumGltf::Enum* pEnumDefinition,
+      const Sampler& sampler,
+      const ImageAsset& image,
+      const TextureViewOptions& options = TextureViewOptions()) noexcept
+      : PropertyView<ElementType, false>(
+            classProperty,
+            property,
+            pEnumDefinition),
         TextureView(
             sampler,
             image,

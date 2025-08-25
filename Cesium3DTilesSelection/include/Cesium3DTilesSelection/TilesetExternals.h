@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Library.h"
-#include "TileOcclusionRendererProxy.h"
-#include "TilesetSharedAssetSystem.h"
-#include "spdlog-cesium.h"
-
+#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
+#include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
+#include <Cesium3DTilesSelection/spdlog-cesium.h>
 #include <CesiumAsync/AsyncSystem.h>
 
 #include <memory>
@@ -49,8 +48,8 @@ public:
 
   /**
    * @brief An external {@link CesiumUtility::CreditSystem} that can be used to manage credit
-   * strings and track which which credits to show and remove from the screen
-   * each frame.
+   * strings and periodically query which credits to show and and which to
+   * remove from the screen.
    */
   std::shared_ptr<CesiumUtility::CreditSystem> pCreditSystem;
 

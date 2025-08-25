@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Token.h"
+#include <CesiumIonClient/Token.h>
 
 namespace CesiumIonClient {
 

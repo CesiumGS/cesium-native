@@ -1,4 +1,5 @@
-#include "CesiumGltf/PropertyAttributePropertyView.h"
+#include <CesiumGltf/PropertyAttributePropertyView.h>
+#include <CesiumGltf/PropertyView.h>
 
 namespace CesiumGltf {
 // Re-initialize consts here to avoid "undefined reference" errors with GCC /

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "CesiumJsonWriter/ExtensionWriterContext.h"
-#include "CesiumJsonWriter/JsonWriter.h"
+#include <CesiumJsonWriter/ExtensionWriterContext.h>
+#include <CesiumJsonWriter/JsonWriter.h>
 
 #include <spdlog/fmt/fmt.h>
 

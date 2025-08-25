@@ -1,4 +1,4 @@
-#include "CesiumGltf/PropertyView.h"
+#include <CesiumGltf/PropertyView.h>
 
 using namespace CesiumGltf;
 
@@ -18,3 +18,4 @@ const PropertyViewStatusType PropertyViewStatus::ErrorInvalidMax;
 const PropertyViewStatusType PropertyViewStatus::ErrorInvalidMin;
 const PropertyViewStatusType PropertyViewStatus::ErrorInvalidNoDataValue;
 const PropertyViewStatusType PropertyViewStatus::ErrorInvalidDefaultValue;
+const PropertyViewStatusType PropertyViewStatus::ErrorInvalidEnum;

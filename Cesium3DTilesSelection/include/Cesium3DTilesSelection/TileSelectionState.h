@@ -1,22 +1,20 @@
 #pragma once
 
-#include "Library.h"
+#include <Cesium3DTilesSelection/Library.h>
 
 #include <cstdint>
 
 namespace Cesium3DTilesSelection {
 
 /**
- * @brief A description of the state of a {@link Tile} during the rendering
- * process
+ * @brief A description of the selection state of a {@link Tile} during the
+ * {@link Tileset::updateViewGroup} process.
  *
- * Instances of this class combine a frame number and a
- * {@link TileSelectionState::Result} that describes the actual state of the
- * tile.
- * Instances of this class are stored in a {@link Tile}, and are used to track
- * the state of the tile during the rendering process. The {@link Tileset}
- * updates this state while traversing the tile hierarchy, tracking whether a
- * tile was rendered, culled, or refined in the last frame.
+ * Instances of this class are stored in a {@link TilesetViewGroup} for each
+ * visited {@link Tile}, and are used to track the state of the tile during the
+ * process of selecting tiles for rendering. The {@link Tileset} updates this
+ * state while traversing the tile hierarchy, tracking whether a tile was
+ * rendered, culled, or refined in the last frame.
  */
 class TileSelectionState final {
 public:
@@ -51,7 +49,8 @@ public:
      * @brief This tile was rendered but then removed from the render list
      *
      * This tile was originally rendered, but it got kicked out of the render
-     * list in favor of an ancestor because it is not yet renderable.
+     * list in favor of an ancestor because some tiles in its subtree were not
+     * yet renderable.
      */
     RenderedAndKicked = 4,
 
@@ -59,8 +58,8 @@ public:
      * @brief This tile was refined but then removed from the render list
      *
      * This tile was originally refined, but its rendered descendants got kicked
-     * out of the render list in favor of an ancestor because it is not yet
-     * renderable.
+     * out of the render list in favor of an ancestor because some tiles in its
+     * subtree were not yet renderable.
      */
     RefinedAndKicked = 5
   };
@@ -69,42 +68,22 @@ public:
    * @brief Initializes a new instance with
    * {@link TileSelectionState::Result::None}
    */
-  constexpr TileSelectionState() noexcept
-      : _frameNumber(0), _result(Result::None) {}
+  constexpr TileSelectionState() noexcept : _result(Result::None) {}
 
   /**
    * @brief Initializes a new instance with a given
    * {@link TileSelectionState::Result}.
    *
-   * @param frameNumber The frame number in which the selection took place.
    * @param result The result of the selection.
    */
-  constexpr TileSelectionState(int32_t frameNumber, Result result) noexcept
-      : _frameNumber(frameNumber), _result(result) {}
-
-  /**
-   * @brief Gets the frame number in which selection took place.
-   */
-  constexpr int32_t getFrameNumber() const noexcept {
-    return this->_frameNumber;
-  }
+  constexpr TileSelectionState(Result result) noexcept : _result(result) {}
 
   /**
    * @brief Gets the result of selection.
    *
-   * The given frame number must match the frame number in which selection last
-   * took place. Otherwise, {@link TileSelectionState::Result::None} is
-   * returned.
-   *
-   * @param frameNumber The previous frame number.
    * @return The {@link TileSelectionState::Result}
    */
-  constexpr Result getResult(int32_t frameNumber) const noexcept {
-    if (this->_frameNumber != frameNumber) {
-      return Result::None;
-    }
-    return this->_result;
-  }
+  constexpr Result getResult() const noexcept { return this->_result; }
 
   /**
    * @brief Determines if this tile or its descendents were kicked from the
@@ -114,11 +93,10 @@ public:
    * {@link TileSelectionState::Result::RenderedAndKicked} or
    * {@link TileSelectionState::Result::RefinedAndKicked}.
    *
-   * @param frameNumber The previous frame number.
    * @return `true` if the tile was kicked, and `false` otherwise
    */
-  constexpr bool wasKicked(int32_t frameNumber) const noexcept {
-    const Result result = this->getResult(frameNumber);
+  constexpr bool wasKicked() const noexcept {
+    const Result result = this->getResult();
     return result == Result::RenderedAndKicked ||
            result == Result::RefinedAndKicked;
   }
@@ -128,11 +106,10 @@ public:
    *
    * If the tile wasn't kicked, the original value is returned.
    *
-   * @param frameNumber The previous frame number.
    * @return The {@link TileSelectionState::Result} prior to being kicked.
    */
-  constexpr Result getOriginalResult(int32_t frameNumber) const noexcept {
-    const Result result = this->getResult(frameNumber);
+  constexpr Result getOriginalResult() const noexcept {
+    const Result result = this->getResult();
 
     switch (result) {
     case Result::RefinedAndKicked:
@@ -161,7 +138,6 @@ public:
   }
 
 private:
-  int32_t _frameNumber;
   Result _result;
 };
 

@@ -1,9 +1,17 @@
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
-#include <spdlog/fwd.h>
+#include <memory>
+#include <string>
+#include <utility>
 
 using namespace CesiumAsync;
 using namespace CesiumRasterOverlays;
@@ -16,11 +24,13 @@ public:
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CreditSystem>& pCreditSystem,
       const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
       : RasterOverlayTileProvider(
             pOwner,
             asyncSystem,
             pAssetAccessor,
+            pCreditSystem,
             ellipsoid) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
@@ -71,5 +81,6 @@ RasterOverlay::createPlaceholder(
       this,
       asyncSystem,
       pAssetAccessor,
+      nullptr,
       ellipsoid);
 }

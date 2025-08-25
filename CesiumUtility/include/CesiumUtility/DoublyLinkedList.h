@@ -31,7 +31,7 @@ public:
    * @brief Assignment operator.
    */
   DoublyLinkedListPointers&
-  operator=(const DoublyLinkedListPointers& /*rhs*/) noexcept {
+  operator=(const DoublyLinkedListPointers& /*rhs*/) noexcept { // NOLINT
     return *this;
   }
 

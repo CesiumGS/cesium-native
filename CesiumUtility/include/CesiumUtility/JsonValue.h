@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Library.h"
+#include <CesiumUtility/Library.h>
 
 #include <cmath>
 #include <cstdint>
@@ -17,53 +17,31 @@
 namespace CesiumUtility {
 
 /**
- * @brief Attempts a narrowing conversion of `U` into `T` without losing
+ * @brief Attempts a narrowing conversion of `TFrom` into `TTo` without losing
  * information. If a lossless conversion can't be performed, `std::nullopt` is
  * returned.
  *
- * @tparam U The type to convert from.
- * @tparam T The type to convert to.
- * @param u The value to perform the conversion on.
+ * @tparam TTo The type to convert to.
+ * @tparam TFrom The type to convert from.
+ * @param from The value to perform the conversion on.
  */
-template <typename T, typename U>
-constexpr std::optional<T> losslessNarrow(U u) noexcept {
-  constexpr const bool is_different_signedness =
-      (std::is_signed<T>::value != std::is_signed<U>::value);
-
-  const T t = static_cast<T>(u);
-
-  if (static_cast<U>(t) != u ||
-      (is_different_signedness && ((t < T{}) != (u < U{})))) {
-    return std::nullopt;
-  }
-
-  return t;
-}
+template <typename TTo, typename TFrom>
+extern std::optional<TTo> losslessNarrow(TFrom from) noexcept;
 
 /**
- * @brief Attempts a narrowing conversion of `U` into `T` without losing
+ * @brief Attempts a narrowing conversion of `TFrom` into `TTo` without losing
  * information. If a lossless conversion can't be performed, `defaultValue` is
  * returned.
  *
- * @tparam U The type to convert from.
- * @tparam T The type to convert to.
- * @param u The value to perform the conversion on.
+ * @tparam TTo The type to convert to.
+ * @tparam TFrom The type to convert from.
+ * @param from The value to perform the conversion on.
  * @param defaultValue The value that will be returned if a lossless conversion
  * can't be performed.
  */
-template <typename T, typename U>
-constexpr T losslessNarrowOrDefault(U u, T defaultValue) noexcept {
-  constexpr const bool is_different_signedness =
-      (std::is_signed<T>::value != std::is_signed<U>::value);
-
-  const T t = static_cast<T>(u);
-
-  if (static_cast<U>(t) != u ||
-      (is_different_signedness && ((t < T{}) != (u < U{})))) {
-    return defaultValue;
-  }
-
-  return t;
+template <typename TTo, typename TFrom>
+constexpr TTo losslessNarrowOrDefault(TFrom from, TTo defaultValue) noexcept {
+  return losslessNarrow<TTo, TFrom>(from).value_or(defaultValue);
 }
 
 /**

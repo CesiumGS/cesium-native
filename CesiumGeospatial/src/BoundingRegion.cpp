@@ -1,12 +1,20 @@
-#include "CesiumGeospatial/BoundingRegion.h"
-
-#include "CesiumGeospatial/EllipsoidTangentPlane.h"
-
+#include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/IntersectionTests.h>
 #include <CesiumGeometry/Plane.h>
 #include <CesiumGeometry/Ray.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/EllipsoidTangentPlane.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumUtility/Math.h>
 
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/geometric.hpp>
+
+#include <optional>
 #include <stdexcept>
 
 using namespace CesiumUtility;
@@ -228,7 +236,8 @@ BoundingRegion BoundingRegion::computeUnion(
       ellipsoid);
 }
 
-static OrientedBoundingBox fromPlaneExtents(
+namespace {
+OrientedBoundingBox fromPlaneExtents(
     const glm::dvec3& planeOrigin,
     const glm::dvec3& planeXAxis,
     const glm::dvec3& planeYAxis,
@@ -260,6 +269,7 @@ static OrientedBoundingBox fromPlaneExtents(
       planeOrigin + (halfAxes * centerOffset),
       scaledHalfAxes);
 }
+} // namespace
 
 /*static*/ OrientedBoundingBox BoundingRegion::_computeBoundingBox(
     const GlobeRectangle& rectangle,
@@ -461,6 +471,32 @@ static OrientedBoundingBox fromPlaneExtents(
       maxY,
       minZ,
       maxZ);
+}
+
+bool BoundingRegion::equals(
+    const BoundingRegion& left,
+    const BoundingRegion& right) noexcept {
+  return GlobeRectangle::equals(left.getRectangle(), right.getRectangle()) &&
+         left._minimumHeight == right._minimumHeight &&
+         left._maximumHeight == right._maximumHeight;
+}
+
+bool BoundingRegion::equalsEpsilon(
+    const BoundingRegion& left,
+    const BoundingRegion& right,
+    double relativeEpsilon) noexcept {
+  return GlobeRectangle::equalsEpsilon(
+             left.getRectangle(),
+             right.getRectangle(),
+             relativeEpsilon) &&
+         Math::equalsEpsilon(
+             left._minimumHeight,
+             right._minimumHeight,
+             relativeEpsilon) &&
+         Math::equalsEpsilon(
+             left._maximumHeight,
+             right._maximumHeight,
+             relativeEpsilon);
 }
 
 } // namespace CesiumGeospatial

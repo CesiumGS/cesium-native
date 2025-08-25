@@ -1,14 +1,31 @@
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/TileBoundingVolumes.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/quaternion_double.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <libmorton/morton.h>
+
+#include <cstdint>
+#include <optional>
+#include <string>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -130,6 +147,33 @@ OctreeTileID ImplicitTilingUtilities::absoluteTileIDToRelative(
       tileID.z - (rootID.z << relativeTileLevel));
 }
 
+std::optional<CesiumGeometry::QuadtreeTileID>
+ImplicitTilingUtilities::getParentID(
+    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+  if (tileID.level == 0) {
+    return std::nullopt;
+  }
+
+  return CesiumGeometry::QuadtreeTileID(
+      tileID.level - 1,
+      tileID.x >> 1,
+      tileID.y >> 1);
+}
+
+std::optional<CesiumGeometry::OctreeTileID>
+ImplicitTilingUtilities::getParentID(
+    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+  if (tileID.level == 0) {
+    return std::nullopt;
+  }
+
+  return CesiumGeometry::OctreeTileID(
+      tileID.level - 1,
+      tileID.x >> 1,
+      tileID.y >> 1,
+      tileID.z >> 1);
+}
+
 namespace {
 template <typename T>
 Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
@@ -166,6 +210,14 @@ Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
         tileID,
         ellipsoid);
     TileBoundingVolumes::setS2CellBoundingVolume(result, s2);
+  }
+
+  std::optional<BoundingCylinderRegion> maybeCylinder =
+      TileBoundingVolumes::getBoundingCylinderRegion(rootBoundingVolume);
+  if (maybeCylinder) {
+    BoundingCylinderRegion cylinder =
+        ImplicitTilingUtilities::computeBoundingVolume(*maybeCylinder, tileID);
+    TileBoundingVolumes::setBoundingCylinderRegion(result, cylinder);
   }
 
   return result;
@@ -332,6 +384,100 @@ ImplicitTilingUtilities::computeBoundingVolume(
       childMinHeight,
       childMaxHeight,
       ellipsoid);
+}
+
+CesiumGeometry::BoundingCylinderRegion
+ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeometry::BoundingCylinderRegion& rootBoundingVolume,
+    const CesiumGeometry::QuadtreeTileID& tileID) noexcept {
+  double denominator = computeLevelDenominator(tileID.level);
+
+  const glm::dvec2& rootRadialBounds = rootBoundingVolume.getRadialBounds();
+  const glm::dvec2& rootAngularBounds = rootBoundingVolume.getAngularBounds();
+
+  // The angle range is "reversed" when the region sweeps over the -pi / pi
+  // discontinuity line.
+  bool angleReversed = rootAngularBounds.x > rootAngularBounds.y;
+
+  double rootRadiusRange = rootRadialBounds.y - rootRadialBounds.x;
+  double rootAngularRange = glm::abs(rootAngularBounds.y - rootAngularBounds.x);
+
+  if (angleReversed) {
+    // When the angle range is "reversed", the difference must be subtracted
+    // from the full circle.
+    rootAngularRange = CesiumUtility::Math::TwoPi - rootAngularRange;
+  }
+
+  double radiusDim = rootRadiusRange / denominator;
+  double angleDim = rootAngularRange / denominator;
+
+  double minRadius = rootRadialBounds.x + double(tileID.x) * radiusDim;
+  double minAngle = rootAngularBounds.x + double(tileID.y) * angleDim;
+  double maxAngle = minAngle + angleDim;
+
+  // Ensure that the angular bounds stay within the [-pi, pi] range, but don't
+  // accidentally wrap pi to -pi.
+  if (minAngle >= CesiumUtility::Math::OnePi) {
+    minAngle = CesiumUtility::Math::convertLongitudeRange(minAngle);
+  }
+
+  if (maxAngle > CesiumUtility::Math::OnePi) {
+    maxAngle = CesiumUtility::Math::convertLongitudeRange(maxAngle);
+  }
+
+  return CesiumGeometry::BoundingCylinderRegion(
+      rootBoundingVolume.getTranslation(),
+      rootBoundingVolume.getRotation(),
+      rootBoundingVolume.getHeight(),
+      glm::dvec2(minRadius, minRadius + radiusDim),
+      glm::dvec2(minAngle, maxAngle));
+}
+
+CesiumGeometry::BoundingCylinderRegion
+ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumGeometry::BoundingCylinderRegion& rootBoundingVolume,
+    const CesiumGeometry::OctreeTileID& tileID) noexcept {
+  double denominator = computeLevelDenominator(tileID.level);
+
+  CesiumGeometry::BoundingCylinderRegion quadtreeRegion =
+      ImplicitTilingUtilities::computeBoundingVolume(
+          rootBoundingVolume,
+          CesiumGeometry::QuadtreeTileID(tileID.level, tileID.x, tileID.y));
+
+  double rootHeight = rootBoundingVolume.getHeight();
+  double heightDim = rootHeight / denominator;
+
+  // Due to the smaller height, the region has to be translated along its local
+  // height axis.
+  // Start at the center of the bottommost tiles:
+  double heightOffset = -0.5 * rootHeight + 0.5 * heightDim;
+  // Then offset according to tileID.z.
+  heightOffset += heightDim * double(tileID.z);
+
+  // However, this translation needs to be done before the previous translation
+  // or rotation are applied.
+  glm::dmat4 transform =
+      CesiumGeometry::Transforms::createTranslationRotationScaleMatrix(
+          rootBoundingVolume.getTranslation(),
+          rootBoundingVolume.getRotation(),
+          glm::dvec3(1.0)) *
+      glm::translate(glm::dmat4(1.0), glm::dvec3(0.0, 0.0, heightOffset));
+
+  glm::dvec3 translation(0.0);
+  glm::dquat rotation(1.0, 0.0, 0.0, 0.0);
+
+  CesiumGeometry::Transforms::computeTranslationRotationScaleFromMatrix(
+      transform,
+      &translation,
+      &rotation,
+      nullptr);
+
+  return CesiumGeometry::BoundingCylinderRegion(
+      translation,
+      rotation,
+      heightDim,
+      quadtreeRegion.getRadialBounds(),
+      quadtreeRegion.getAngularBounds());
 }
 
 double

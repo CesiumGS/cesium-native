@@ -1,10 +1,13 @@
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumGeospatial/Projection.h"
-
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumUtility/Math.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/vector_double2.hpp>
 #include <glm/geometric.hpp>
 
 using namespace CesiumGeometry;
@@ -12,7 +15,7 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 
 TEST_CASE("computeProjectedRectangleSize") {
-  SECTION("Entire Globe") {
+  SUBCASE("Entire Globe") {
     GeographicProjection projection(Ellipsoid::WGS84);
     Rectangle rectangle = projectRectangleSimple(
         projection,
@@ -31,7 +34,7 @@ TEST_CASE("computeProjectedRectangleSize") {
         1.0));
   }
 
-  SECTION("Hemispheres") {
+  SUBCASE("Hemispheres") {
     // A hemisphere should have approximately the diameter of the
     // globe.
     GeographicProjection projection(Ellipsoid::WGS84);
@@ -75,7 +78,7 @@ TEST_CASE("computeProjectedRectangleSize") {
         1.0));
   }
 
-  SECTION("Rectangle crossing the equator") {
+  SUBCASE("Rectangle crossing the equator") {
     // For a rectangle that crosses the equator, the widest part is at the
     // equator.
     GeographicProjection projection(Ellipsoid::WGS84);
@@ -99,7 +102,7 @@ TEST_CASE("computeProjectedRectangleSize") {
         1.0));
   }
 
-  SECTION("Narrow band around the entire globe") {
+  SUBCASE("Narrow band around the entire globe") {
     GeographicProjection projection(Ellipsoid::WGS84);
     Rectangle rectangle = projectRectangleSimple(
         projection,

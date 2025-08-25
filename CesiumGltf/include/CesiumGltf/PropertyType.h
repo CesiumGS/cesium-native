@@ -4,7 +4,6 @@
 
 #include <cstdint>
 #include <string>
-#include <string_view>
 
 namespace CesiumGltf {
 /**
@@ -129,6 +128,26 @@ std::string convertPropertyTypeToString(PropertyType type);
 PropertyType convertStringToPropertyType(const std::string& str);
 
 /**
+ * @brief Converts a string type listed in \ref AccessorSpec::Type to its
+ * corresponding \ref PropertyType.
+ *
+ * @param type The string to convert to a \ref PropertyType.
+ * @returns The corresponding \ref PropertyType, or \ref PropertyType::Invalid
+ * if no conversion is possible.
+ */
+PropertyType convertAccessorTypeToPropertyType(const std::string& type);
+
+/**
+ * @brief Converts a \ref PropertyType to a string type listed in \ref
+ * AccessorSpec::Type.
+ *
+ * @param type The \ref PropertyType to convert to a string.
+ * @returns The string listed in AccessorSpec::Type, or `"INVALID"` if no
+ * conversion is possible.
+ */
+std::string convertPropertyTypeToAccessorType(PropertyType type);
+
+/**
  * @brief Converts a \ref PropertyComponentType value to a string.
  *
  * For example, \ref PropertyComponentType::Uint8 will become `"UINT8"`.
@@ -187,6 +206,18 @@ convertStringOffsetTypeStringToPropertyComponentType(const std::string& str);
  */
 PropertyComponentType
 convertAccessorComponentTypeToPropertyComponentType(int componentType);
+
+/**
+ * @brief Converts a \ref PropertyComponentType to an integer type ID listed in
+ * \ref AccessorSpec::ComponentType.
+ *
+ * @param componentType The \ref PropertyComponentType to convert to an integer
+ * type ID.
+ * @returns The integer type ID listed in \ref AccessorSpec::ComponentType, or
+ * -1 if no conversion is possible.
+ */
+int32_t convertPropertyComponentTypeToAccessorComponentType(
+    PropertyComponentType componentType);
 
 /**
  * @brief Checks if the given \ref PropertyType represents a vector with any

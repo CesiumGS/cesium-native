@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Library.h"
-#include "TilesetExternals.h"
-
+#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
@@ -15,6 +15,8 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
+
+class LoadedTileEnumerator;
 
 /**
  * @brief A collection of {@link CesiumRasterOverlays::RasterOverlay} instances that are associated
@@ -32,17 +34,30 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param loadedTiles The list of loaded tiles. The collection does not own
-   * this list, so the list needs to be kept alive as long as the collection's
-   * lifetime
+   * @param loadedTiles An enumerator for the loaded tiles. The raster overlay
+   * collection will copy this enumerator, and the copy must remain valid for
+   * the lifetime of the overlay collection or until \ref
+   * setLoadedTileEnumerator is called with a new enumerator.
    * @param externals A collection of loading system to load a raster overlay
    * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    */
   RasterOverlayCollection(
-      Tile::LoadedLinkedList& loadedTiles,
+      const LoadedTileEnumerator& loadedTiles,
       const TilesetExternals& externals,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) noexcept;
+
+  /**
+   * @brief Provides a new \ref LoadedTileEnumerator to use to update
+   * loaded tiles when a raster overlay is added or removed.
+   *
+   * The raster overlay collection will copy this enumerator, and the copy must
+   * remain valid for the lifetime of the overlay collection or until \ref
+   * setLoadedTileEnumerator is called with a new enumerator.
+   *
+   * @param loadedTiles The new loaded tile enumerator.
+   */
+  void setLoadedTileEnumerator(const LoadedTileEnumerator& loadedTiles);
 
   /**
    * @brief Deleted Copy constructor.
@@ -191,9 +206,8 @@ private:
   // that create tile providers from overlays need to have somewhere to write
   // the result. And we can't extend the lifetime of the entire
   // RasterOverlayCollection until the async operations complete because the
-  // RasterOverlayCollection has a pointer to the tile LoadedLinkedList, which
-  // is owned externally and may become invalid before the async operations
-  // complete.
+  // RasterOverlayCollection has a LoadedTileEnumerator, which is owned
+  // externally and may become invalid before the async operations complete.
   struct OverlayList
       : public CesiumUtility::ReferenceCountedNonThreadSafe<OverlayList> {
     std::vector<
@@ -207,7 +221,7 @@ private:
         placeholders{};
   };
 
-  Tile::LoadedLinkedList* _pLoadedTiles;
+  LoadedTileEnumerator _loadedTiles;
   TilesetExternals _externals;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumUtility::IntrusivePointer<OverlayList> _pOverlays;

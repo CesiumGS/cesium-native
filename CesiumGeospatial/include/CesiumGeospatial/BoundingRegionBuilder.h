@@ -1,8 +1,8 @@
 #pragma once
 
-#include "BoundingRegion.h"
-#include "GlobeRectangle.h"
-#include "Library.h"
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Library.h>
 
 namespace CesiumGeospatial {
 
@@ -70,6 +70,17 @@ public:
    * contained the position.
    */
   bool expandToIncludePosition(const Cartographic& position);
+
+  /**
+   * @brief Expands the bounding region to include the given globe rectangle.
+   *
+   * The region will be kept as small as possible.
+   *
+   * @param rectangle The rectangle to be included in the region.
+   * @returns True if the region was modified, or false if the region already
+   * contained the rectangle.
+   */
+  bool expandToIncludeGlobeRectangle(const GlobeRectangle& rectangle);
 
 private:
   /**

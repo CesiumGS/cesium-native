@@ -2,16 +2,38 @@
 
 #include "logTileLoadResult.h"
 
+#include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
+#include <Cesium3DTilesContent/SubtreeAvailability.h>
+#include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
-#include <CesiumUtility/Uri.h>
 
+#include <glm/ext/matrix_double4x4.hpp>
 #include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
 #include <variant>
+#include <vector>
 
 using namespace Cesium3DTilesContent;
 
@@ -27,6 +49,13 @@ struct BoundingVolumeSubdivision {
 
   BoundingVolume operator()(const CesiumGeometry::OrientedBoundingBox& obb) {
     return ImplicitTilingUtilities::computeBoundingVolume(obb, this->tileID);
+  }
+
+  BoundingVolume
+  operator()(const CesiumGeometry::BoundingCylinderRegion& cylinderRegion) {
+    return ImplicitTilingUtilities::computeBoundingVolume(
+        cylinderRegion,
+        this->tileID);
   }
 
   const CesiumGeometry::OctreeTileID& tileID;
@@ -89,9 +118,9 @@ std::vector<Tile> populateSubtree(
                 relativeChildLevel,
                 relativeChildMortonID,
                 0)) {
-          children.emplace_back(&loader);
+          children.emplace_back(&loader, childID);
         } else {
-          children.emplace_back(&loader, TileEmptyContent{});
+          children.emplace_back(&loader, childID, TileEmptyContent{});
         }
 
         Tile& child = children.back();
@@ -102,7 +131,6 @@ std::vector<Tile> populateSubtree(
             ellipsoid));
         child.setGeometricError(tile.getGeometricError() * 0.5);
         child.setRefine(tile.getRefine());
-        child.setTileID(childID);
       }
     }
   }

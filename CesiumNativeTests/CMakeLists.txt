@@ -18,10 +18,16 @@ set(cesium_native_targets
     CesiumGltfReader
     CesiumGltfWriter
     CesiumIonClient
+    CesiumITwinClient
+    CesiumVectorData
     CesiumQuantizedMeshTerrain
     CesiumRasterOverlays
     CesiumUtility
 )
+
+if(NOT CESIUM_DISABLE_CURL) 
+    list(APPEND cesium_native_targets CesiumCurl)
+endif()
 
 cesium_glob_files(test_sources
     ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
@@ -85,8 +91,7 @@ target_include_directories(
 
 target_link_libraries(cesium-native-tests
 PUBLIC
-    Catch2::Catch2 Catch2::Catch2WithMain
-    include_helpers # catch2/catch.hpp For the header fix
+    doctest::doctest
     ${cesium_native_targets}
 PRIVATE
     s2::s2
@@ -94,10 +99,9 @@ PRIVATE
 
 target_compile_definitions(cesium-native-tests
 PRIVATE
-  GLM_ENABLE_EXPERIMENTAL
   CESIUM_NATIVE_DATA_DIR=\"${CMAKE_CURRENT_LIST_DIR}/../data\"
 )
 
 include(CTest)
-include(Catch)
-catch_discover_tests(cesium-native-tests)
+include(doctest)
+doctest_discover_tests(cesium-native-tests)

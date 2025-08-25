@@ -4,24 +4,54 @@
 #include "SimplePrepareRendererResource.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
+#include <Cesium3DTiles/Schema.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
+#include <Cesium3DTilesSelection/TilesetMetadata.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyTablePropertyView.h>
+#include <CesiumGltf/PropertyTableView.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumUtility/CreditSystem.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <spdlog/sinks/ringbuffer_sink.h>
+#include <spdlog/spdlog.h>
 
+#include <array>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
+#include <map>
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
+using namespace doctest;
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
+using namespace CesiumGltf;
 using namespace CesiumNativeTests;
 using namespace CesiumUtility;
 
@@ -32,14 +62,23 @@ TileLoadResult loadTileContent(
     const std::filesystem::path& tilePath,
     TilesetContentLoader& loader,
     Tile& tile) {
-  auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
-      static_cast<uint16_t>(200),
-      "doesn't matter",
-      CesiumAsync::HttpHeaders{},
-      readFile(tilePath));
+  std::unique_ptr<SimpleAssetResponse> pMockCompletedResponse;
+  if (std::filesystem::exists(tilePath)) {
+    pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(200),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        readFile(tilePath));
+  } else {
+    pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
+        static_cast<uint16_t>(404),
+        "doesn't matter",
+        CesiumAsync::HttpHeaders{},
+        std::vector<std::byte>{});
+  }
   auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
       "GET",
-      "doesn't matter",
+      tilePath.filename().string(),
       CesiumAsync::HttpHeaders{},
       std::move(pMockCompletedResponse));
 
@@ -69,10 +108,60 @@ TileLoadResult loadTileContent(
 }
 } // namespace
 
+Cesium3DTilesSelection::TilesetContentLoaderResult<TilesetJsonLoader>
+Cesium3DTilesSelection::createTilesetJsonLoader(
+    const std::filesystem::path& tilesetPath) {
+  std::string tilesetPathStr = tilesetPath.string();
+  auto pAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
+  auto externals = createMockJsonTilesetExternals(tilesetPathStr, pAccessor);
+  auto loaderResultFuture =
+      TilesetJsonLoader::createLoader(externals, tilesetPathStr, {});
+  externals.asyncSystem.dispatchMainThreadTasks();
+
+  return loaderResultFuture.wait();
+}
+Cesium3DTilesSelection::TilesetExternals
+Cesium3DTilesSelection::createMockJsonTilesetExternals(
+    const std::string& tilesetPath,
+    std::shared_ptr<CesiumNativeTests::SimpleAssetAccessor>& pAssetAccessor) {
+  auto tilesetContent = readFile(tilesetPath);
+  auto pMockCompletedResponse =
+      std::make_unique<CesiumNativeTests::SimpleAssetResponse>(
+          static_cast<uint16_t>(200),
+          "doesn't matter",
+          CesiumAsync::HttpHeaders{},
+          std::move(tilesetContent));
+
+  auto pMockCompletedRequest =
+      std::make_shared<CesiumNativeTests::SimpleAssetRequest>(
+          "GET",
+          "tileset.json",
+          CesiumAsync::HttpHeaders{},
+          std::move(pMockCompletedResponse));
+
+  pAssetAccessor->mockCompletedRequests.insert(
+      {tilesetPath, std::move(pMockCompletedRequest)});
+
+  auto pMockPrepareRendererResource =
+      std::make_shared<SimplePrepareRendererResource>();
+
+  auto pMockCreditSystem = std::make_shared<CesiumUtility::CreditSystem>();
+
+  CesiumAsync::AsyncSystem asyncSystem{
+      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>()};
+
+  return TilesetExternals{
+      std::move(pAssetAccessor),
+      std::move(pMockPrepareRendererResource),
+      std::move(asyncSystem),
+      std::move(pMockCreditSystem)};
+}
+
 TEST_CASE("Test creating tileset json loader") {
   Cesium3DTilesContent::registerAllTileContentTypes();
 
-  SECTION("Create valid tileset json with REPLACE refinement") {
+  SUBCASE("Create valid tileset json with REPLACE refinement") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "ReplaceTileset" / "tileset.json");
 
@@ -139,7 +228,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Create valid tileset json with ADD refinement") {
+  SUBCASE("Create valid tileset json with ADD refinement") {
     auto loaderResult =
         createTilesetJsonLoader(testDataPath / "AddTileset" / "tileset2.json");
 
@@ -187,7 +276,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset has tile with sphere bounding volume") {
+  SUBCASE("Tileset has tile with sphere bounding volume") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "SphereBoundingVolumeTileset.json");
@@ -205,7 +294,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset has tile with box bounding volume") {
+  SUBCASE("Tileset has tile with box bounding volume") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "BoxBoundingVolumeTileset.json");
@@ -224,7 +313,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(box.getCenter() == glm::dvec3(0.0, 0.0, 10.0));
   }
 
-  SECTION("Tileset has tile with no bounding volume field") {
+  SUBCASE("Tileset has tile with no bounding volume field") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "NoBoundingVolumeTileset.json");
@@ -239,7 +328,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset has tile with no geometric error field") {
+  SUBCASE("Tileset has tile with no geometric error field") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "NoGeometricErrorTileset.json");
@@ -258,7 +347,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset has tile with no capitalized Refinement field") {
+  SUBCASE("Tileset has tile with no capitalized Refinement field") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "NoCapitalizedRefineTileset.json");
@@ -279,7 +368,7 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Scale geometric error along with tile transform") {
+  SUBCASE("Scale geometric error along with tile transform") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "ScaleGeometricErrorTileset.json");
@@ -298,7 +387,12 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset with empty tile") {
+  SUBCASE("Tileset with empty tile") {
+    std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor =
+        std::make_shared<SimpleAssetAccessor>(
+            std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
+    AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" / "EmptyTileTileset.json");
     CHECK(!loaderResult.errors.hasErrors());
@@ -308,14 +402,27 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(pRootTile->getGeometricError() == Approx(70.0));
     CHECK(pRootTile->getChildren().size() == 1);
 
-    const Tile& child = pRootTile->getChildren().front();
+    Tile& child = pRootTile->getChildren().front();
+    auto future = loaderResult.pLoader->loadTileContent(TileLoadInput{
+        child,
+        {},
+        asyncSystem,
+        pMockAssetAccessor,
+        spdlog::default_logger(),
+        {}});
+    TileLoadResult result = future.wait();
+    REQUIRE(result.state == TileLoadResultState::Success);
+    TileEmptyContent* emptyContent =
+        std::get_if<TileEmptyContent>(&result.contentKind);
+    REQUIRE(emptyContent);
+    child.getContent().setContentKind(*emptyContent);
     CHECK(child.isEmptyContent());
 
     // check loader up axis
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
-  SECTION("Tileset with quadtree implicit tile") {
+  SUBCASE("Tileset with quadtree implicit tile") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "QuadtreeImplicitTileset.json");
@@ -338,7 +445,7 @@ TEST_CASE("Test creating tileset json loader") {
         CesiumGeometry::QuadtreeTileID(0, 0, 0));
   }
 
-  SECTION("Tileset with octree implicit tile") {
+  SUBCASE("Tileset with octree implicit tile") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "MultipleKindsOfTilesets" /
         "OctreeImplicitTileset.json");
@@ -361,7 +468,7 @@ TEST_CASE("Test creating tileset json loader") {
         CesiumGeometry::OctreeTileID(0, 0, 0, 0));
   }
 
-  SECTION("Tileset with metadata") {
+  SUBCASE("Tileset with metadata") {
     auto loaderResult =
         createTilesetJsonLoader(testDataPath / "WithMetadata" / "tileset.json");
 
@@ -378,12 +485,32 @@ TEST_CASE("Test creating tileset json loader") {
     REQUIRE(schema);
     CHECK(schema->id == "foo");
   }
+
+  SUBCASE("Tileset with 3DTILES_content_voxels") {
+    auto loaderResult =
+        createTilesetJsonLoader(testDataPath / "Voxels" / "tileset.json");
+
+    CHECK(!loaderResult.errors.hasErrors());
+    REQUIRE(loaderResult.pLoader);
+    REQUIRE(loaderResult.pRootTile);
+
+    TileExternalContent* pExternal =
+        loaderResult.pRootTile->getContent().getExternalContent();
+    REQUIRE(pExternal);
+    CHECK(pExternal->hasExtension<
+          Cesium3DTiles::ExtensionContent3dTilesContentVoxels>());
+
+    const TilesetMetadata& metadata = pExternal->metadata;
+    const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
+    REQUIRE(schema);
+    CHECK(schema->id == "voxel");
+  }
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {
   Cesium3DTilesContent::registerAllTileContentTypes();
 
-  SECTION("Load tile that has render content") {
+  SUBCASE("Load tile that has render content") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "ReplaceTileset" / "tileset.json");
     REQUIRE(loaderResult.pRootTile);
@@ -407,7 +534,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     CHECK(!tileLoadResult.tileInitializer);
   }
 
-  SECTION("Load tile that has external content") {
+  SUBCASE("Load tile that has external content") {
     auto loaderResult =
         createTilesetJsonLoader(testDataPath / "AddTileset" / "tileset.json");
 
@@ -459,7 +586,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     }
   }
 
-  SECTION("Load tile that has external content with implicit tiling") {
+  SUBCASE("Load tile that has external content with implicit tiling") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "ImplicitTileset" / "tileset_1.1.json");
 
@@ -558,7 +685,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     }
   }
 
-  SECTION("Check that tile with legacy implicit tiling extension still works") {
+  SUBCASE("Check that tile with legacy implicit tiling extension still works") {
     auto loaderResult = createTilesetJsonLoader(
         testDataPath / "ImplicitTileset" / "tileset_1.0.json");
 
@@ -580,53 +707,196 @@ TEST_CASE("Test loading individual tile of tileset json") {
     CHECK(pLoader->getSubtreeLevels() == 2);
     CHECK(pLoader->getAvailableLevels() == 2);
   }
-}
-Cesium3DTilesSelection::TilesetContentLoaderResult<TilesetJsonLoader>
-Cesium3DTilesSelection::createTilesetJsonLoader(
-    const std::filesystem::path& tilesetPath) {
-  std::string tilesetPathStr = tilesetPath.string();
-  auto pAccessor = std::make_shared<SimpleAssetAccessor>(
-      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
-  auto externals = createMockJsonTilesetExternals(tilesetPathStr, pAccessor);
-  auto loaderResultFuture =
-      TilesetJsonLoader::createLoader(externals, tilesetPathStr, {});
-  externals.asyncSystem.dispatchMainThreadTasks();
 
-  return loaderResultFuture.wait();
-}
-Cesium3DTilesSelection::TilesetExternals
-Cesium3DTilesSelection::createMockJsonTilesetExternals(
-    const std::string& tilesetPath,
-    std::shared_ptr<CesiumNativeTests::SimpleAssetAccessor>& pAssetAccessor) {
-  auto tilesetContent = readFile(tilesetPath);
-  auto pMockCompletedResponse =
-      std::make_unique<CesiumNativeTests::SimpleAssetResponse>(
-          static_cast<uint16_t>(200),
-          "doesn't matter",
-          CesiumAsync::HttpHeaders{},
-          std::move(tilesetContent));
+  SUBCASE("Tile with missing content") {
+    auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
+    spdlog::default_logger()->sinks().emplace_back(pLog);
 
-  auto pMockCompletedRequest =
-      std::make_shared<CesiumNativeTests::SimpleAssetRequest>(
-          "GET",
-          "tileset.json",
-          CesiumAsync::HttpHeaders{},
-          std::move(pMockCompletedResponse));
+    auto loaderResult = createTilesetJsonLoader(
+        testDataPath / "MultipleKindsOfTilesets" /
+        "ErrorMissingContentTileset.json");
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
 
-  pAssetAccessor->mockCompletedRequests.insert(
-      {tilesetPath, std::move(pMockCompletedRequest)});
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
 
-  auto pMockPrepareRendererResource =
-      std::make_shared<SimplePrepareRendererResource>();
+    const auto& tileID = std::get<std::string>(pRootTile->getTileID());
+    CHECK(tileID == "nonexistent.b3dm");
 
-  auto pMockCreditSystem = std::make_shared<CesiumUtility::CreditSystem>();
+    // check tile content
+    auto tileLoadResult = loadTileContent(
+        testDataPath / "MultipleKindsOfTilesets" / tileID,
+        *loaderResult.pLoader,
+        *pRootTile);
+    CHECK(tileLoadResult.state == TileLoadResultState::Failed);
 
-  CesiumAsync::AsyncSystem asyncSystem{
-      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>()};
+    std::vector<std::string> logMessages = pLog->last_formatted();
+    REQUIRE(logMessages.size() == 1);
+    REQUIRE(
+        logMessages.back()
+            .substr(0, logMessages.back().find_last_not_of("\n\r") + 1)
+            .ends_with(
+                "Received status code 404 for tile content nonexistent.b3dm"));
+  }
 
-  return TilesetExternals{
-      std::move(pAssetAccessor),
-      std::move(pMockPrepareRendererResource),
-      std::move(asyncSystem),
-      std::move(pMockCreditSystem)};
+  SUBCASE("Tile with complex structural metadata") {
+    auto loaderResult =
+        createTilesetJsonLoader(testDataPath / "ComplexTypes" / "tileset.json");
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+
+    const auto& tileID = std::get<std::string>(pRootTile->getTileID());
+    CHECK(tileID == "ComplexTypes.gltf");
+
+    // check tile content
+    auto tileLoadResult = loadTileContent(
+        testDataPath / "ComplexTypes" / tileID,
+        *loaderResult.pLoader,
+        *pRootTile);
+    Model* pModel = std::get_if<CesiumGltf::Model>(&tileLoadResult.contentKind);
+    REQUIRE(pModel);
+    CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
+    CHECK(tileLoadResult.updatedContentBoundingVolume == std::nullopt);
+    CHECK(tileLoadResult.state == TileLoadResultState::Success);
+    CHECK(!tileLoadResult.tileInitializer);
+
+    ExtensionModelExtStructuralMetadata* pMetadata =
+        pModel->getExtension<ExtensionModelExtStructuralMetadata>();
+    REQUIRE(pMetadata);
+    REQUIRE(pMetadata->schema);
+    REQUIRE(pMetadata->propertyTables.size() == 1);
+
+    PropertyTable& propertyTable = pMetadata->propertyTables.front();
+    REQUIRE(propertyTable.properties.size() == 4);
+
+    PropertyTableView view(*pModel, propertyTable);
+    REQUIRE(view.status() == PropertyTableViewStatus::Valid);
+
+    const std::array<std::vector<uint8_t>, 4> expectedUint8{
+        std::vector<uint8_t>{0, 255},
+        std::vector<uint8_t>{0, 128, 255},
+        std::vector<uint8_t>{0, 85, 170, 255},
+        std::vector<uint8_t>{0, 64, 128, 192, 255}};
+    const PropertyTablePropertyView<PropertyArrayView<uint8_t>, true>
+        varLenUintPropertyView =
+            view.getPropertyView<PropertyArrayView<uint8_t>, true>(
+                "example_variable_length_ARRAY_normalized_UINT8");
+    REQUIRE(
+        varLenUintPropertyView.status() ==
+        PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(varLenUintPropertyView.size() == expectedUint8.size());
+    for (size_t i = 0; i < expectedUint8.size(); i++) {
+      const auto& value =
+          varLenUintPropertyView.getRaw(static_cast<int64_t>(i));
+      for (int64_t j = 0; j < value.size(); j++) {
+        CHECK(expectedUint8[i][static_cast<size_t>(j)] == value[j]);
+      }
+    }
+
+    const std::array<std::vector<bool>, 4> expectedBool{
+        std::vector<bool>{
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false},
+        std::vector<bool>{
+            true,
+            true,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            true,
+            true},
+        std::vector<bool>{
+            false,
+            false,
+            true,
+            true,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false},
+        std::vector<bool>{
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
+            true}};
+    const PropertyTablePropertyView<PropertyArrayView<bool>, false>
+        fixedLenBoolPropertyView =
+            view.getPropertyView<PropertyArrayView<bool>, false>(
+                "example_fixed_length_ARRAY_BOOLEAN");
+    REQUIRE(
+        fixedLenBoolPropertyView.status() ==
+        PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(fixedLenBoolPropertyView.size() == expectedBool.size());
+    for (size_t i = 0; i < expectedBool.size(); i++) {
+      const auto& value = fixedLenBoolPropertyView.get(static_cast<int64_t>(i));
+      REQUIRE(value);
+      for (int64_t j = 0; j < value->size(); j++) {
+        CHECK(expectedBool[i][static_cast<size_t>(j)] == (*value)[j]);
+      }
+    }
+
+    const std::array<std::vector<std::string>, 4> expectedString{
+        std::vector<std::string>{"One"},
+        std::vector<std::string>{"One", "Two"},
+        std::vector<std::string>{"One", "Two", "Three"},
+        std::vector<std::string>{"One", "Two", "Theee", "Four"}};
+    const PropertyTablePropertyView<PropertyArrayView<std::string_view>, false>
+        varLenStringPropertyView =
+            view.getPropertyView<PropertyArrayView<std::string_view>, false>(
+                "example_variable_length_ARRAY_STRING");
+    REQUIRE(
+        varLenStringPropertyView.status() ==
+        PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(varLenStringPropertyView.size() == expectedString.size());
+    for (size_t i = 0; i < expectedString.size(); i++) {
+      const auto& value = varLenStringPropertyView.get(static_cast<int64_t>(i));
+      REQUIRE(value);
+      for (int64_t j = 0; j < value->size(); j++) {
+        CHECK(expectedString[i][static_cast<size_t>(j)] == (*value)[j]);
+      }
+    }
+
+    const std::array<std::vector<uint16_t>, 4> expectedEnum{
+        std::vector<uint16_t>{0, 1},
+        std::vector<uint16_t>{1, 2},
+        std::vector<uint16_t>{2, 0},
+        std::vector<uint16_t>{1, 2},
+    };
+    const PropertyTablePropertyView<PropertyArrayView<uint16_t>, false>
+        fixenLenEnumPropertyView =
+            view.getPropertyView<PropertyArrayView<uint16_t>, false>(
+                "example_fixed_length_ARRAY_ENUM");
+    REQUIRE(
+        fixenLenEnumPropertyView.status() ==
+        PropertyTablePropertyViewStatus::Valid);
+    REQUIRE(fixenLenEnumPropertyView.size() == expectedEnum.size());
+    for (size_t i = 0; i < expectedEnum.size(); i++) {
+      const auto& value = fixenLenEnumPropertyView.get(static_cast<int64_t>(i));
+      REQUIRE(value);
+      for (int64_t j = 0; j < value->size(); j++) {
+        CHECK(expectedEnum[i][static_cast<size_t>(j)] == (*value)[j]);
+      }
+    }
+  }
 }

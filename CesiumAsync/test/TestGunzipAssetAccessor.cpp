@@ -4,9 +4,15 @@
 #include "MockTaskProcessor.h"
 
 #include <CesiumAsync/GunzipAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 
@@ -27,7 +33,7 @@ std::vector<std::byte> asBytes(const std::vector<int>& ints) {
 } // namespace
 
 TEST_CASE("GunzipAssetAccessor") {
-  SECTION("passes through responses without gzip header") {
+  SUBCASE("passes through responses without gzip header") {
     auto pAccessor = std::make_shared<GunzipAssetAccessor>(
         std::make_shared<MockAssetAccessor>(std::make_shared<MockAssetRequest>(
             "GET",
@@ -65,7 +71,7 @@ TEST_CASE("GunzipAssetAccessor") {
         asBytes(std::vector<int>{0x01, 0x02, 0x03}));
   }
 
-  SECTION("gunzips a gzipped responses") {
+  SUBCASE("gunzips a gzipped responses") {
     auto pAccessor = std::make_shared<GunzipAssetAccessor>(
         std::make_shared<MockAssetAccessor>(std::make_shared<MockAssetRequest>(
             "GET",
@@ -107,7 +113,7 @@ TEST_CASE("GunzipAssetAccessor") {
         asBytes(std::vector<int>{0x01, 0x02, 0x03}));
   }
 
-  SECTION("passes through a response that has a gzip header but can't be "
+  SUBCASE("passes through a response that has a gzip header but can't be "
           "gunzipped") {
     auto pAccessor = std::make_shared<GunzipAssetAccessor>(
         std::make_shared<MockAssetAccessor>(std::make_shared<MockAssetRequest>(
@@ -146,7 +152,7 @@ TEST_CASE("GunzipAssetAccessor") {
         asBytes(std::vector<int>{0x1F, 0x8B, 0x01, 0x02, 0x03}));
   }
 
-  SECTION("works with request method") {
+  SUBCASE("works with request method") {
     auto pAccessor = std::make_shared<GunzipAssetAccessor>(
         std::make_shared<MockAssetAccessor>(std::make_shared<MockAssetRequest>(
             "GET",

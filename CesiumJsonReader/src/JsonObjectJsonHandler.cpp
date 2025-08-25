@@ -1,6 +1,12 @@
-#include "CesiumJsonReader/JsonObjectJsonHandler.h"
+#include <CesiumJsonReader/IJsonHandler.h>
+#include <CesiumJsonReader/JsonHandler.h>
+#include <CesiumJsonReader/JsonObjectJsonHandler.h>
+#include <CesiumUtility/JsonValue.h>
 
 #include <cstdint>
+#include <string>
+#include <string_view>
+#include <variant>
 
 namespace CesiumJsonReader {
 namespace {

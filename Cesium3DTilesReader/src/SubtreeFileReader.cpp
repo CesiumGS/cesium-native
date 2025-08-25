@@ -1,6 +1,24 @@
+#include <Cesium3DTiles/Buffer.h>
+#include <Cesium3DTiles/Subtree.h>
 #include <Cesium3DTilesReader/SubtreeFileReader.h>
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumJsonReader/JsonReader.h>
+#include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumUtility/Uri.h>
+
+#include <fmt/format.h>
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <span>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace Cesium3DTiles;
 using namespace CesiumAsync;
@@ -269,7 +287,8 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::postprocess(
   for (size_t i = 0; i < buffers.size(); ++i) {
     const Buffer& buffer = buffers[i];
     if (buffer.uri && !buffer.uri->empty()) {
-      std::string bufferUrl = CesiumUtility::Uri::resolve(url, *buffer.uri);
+      std::string bufferUrl =
+          CesiumUtility::Uri::resolve(url, *buffer.uri, true);
       bufferRequests.emplace_back(requestBuffer(
           pAssetAccessor,
           asyncSystem,

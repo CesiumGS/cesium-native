@@ -1,8 +1,31 @@
-#include "CesiumGltf/PropertyTableView.h"
+#include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyTablePropertyView.h>
+#include <CesiumGltf/PropertyTableView.h>
+#include <CesiumGltf/PropertyType.h>
+#include <CesiumGltf/PropertyView.h>
+#include <CesiumGltf/Schema.h>
+#include <CesiumUtility/IntrusivePointer.h>
+
+#include <glm/common.hpp>
+
+#include <cstddef>
+#include <cstdint>
+#include <span>
+#include <string>
+#include <string_view>
 
 namespace CesiumGltf {
+
+namespace {
 template <typename T>
-static PropertyViewStatusType checkOffsetsBuffer(
+PropertyViewStatusType checkOffsetsBuffer(
     const std::span<const std::byte>& offsetBuffer,
     size_t valueBufferSize,
     size_t instanceCount,
@@ -46,7 +69,7 @@ static PropertyViewStatusType checkOffsetsBuffer(
 }
 
 template <typename T>
-static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
+PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     const std::span<const std::byte>& arrayOffsets,
     const std::span<const std::byte>& stringOffsets,
     size_t valueBufferSize,
@@ -71,7 +94,7 @@ static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return checkOffsetsBuffer<uint8_t>(
         stringOffsets,
         valueBufferSize,
-        pValue[propertyTableCount] / sizeof(T),
+        pValue[propertyTableCount],
         false,
         PropertyTablePropertyViewStatus::ErrorStringOffsetsNotSorted,
         PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds);
@@ -79,7 +102,7 @@ static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return checkOffsetsBuffer<uint16_t>(
         stringOffsets,
         valueBufferSize,
-        pValue[propertyTableCount] / sizeof(T),
+        pValue[propertyTableCount],
         false,
         PropertyTablePropertyViewStatus::ErrorStringOffsetsNotSorted,
         PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds);
@@ -87,7 +110,7 @@ static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return checkOffsetsBuffer<uint32_t>(
         stringOffsets,
         valueBufferSize,
-        pValue[propertyTableCount] / sizeof(T),
+        pValue[propertyTableCount],
         false,
         PropertyTablePropertyViewStatus::ErrorStringOffsetsNotSorted,
         PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds);
@@ -95,7 +118,7 @@ static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return checkOffsetsBuffer<uint64_t>(
         stringOffsets,
         valueBufferSize,
-        pValue[propertyTableCount] / sizeof(T),
+        pValue[propertyTableCount],
         false,
         PropertyTablePropertyViewStatus::ErrorStringOffsetsNotSorted,
         PropertyTablePropertyViewStatus::ErrorStringOffsetOutOfBounds);
@@ -103,6 +126,7 @@ static PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
     return PropertyTablePropertyViewStatus::ErrorInvalidStringOffsetType;
   }
 }
+} // namespace
 
 PropertyTableView::PropertyTableView(
     const Model& model,
@@ -110,6 +134,7 @@ PropertyTableView::PropertyTableView(
     : _pModel{&model},
       _pPropertyTable{&propertyTable},
       _pClass{nullptr},
+      _pEnumDefinitions{},
       _status() {
   const ExtensionModelExtStructuralMetadata* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
@@ -131,6 +156,7 @@ PropertyTableView::PropertyTableView(
   }
 
   _pClass = &classIter->second;
+  _pEnumDefinitions = &schema->enums;
 }
 
 const ClassProperty*

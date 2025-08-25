@@ -1,7 +1,6 @@
 #pragma once
 
-#include "IPrepareRendererResources.h"
-
+#include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>

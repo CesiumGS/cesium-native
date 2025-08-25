@@ -1,10 +1,11 @@
-#include "CesiumGltf/AccessorSpec.h"
-#include "CesiumGltf/ClassProperty.h"
-#include "CesiumGltf/PropertyTableProperty.h"
-#include "CesiumGltf/PropertyType.h"
+#include <CesiumGltf/AccessorSpec.h>
+#include <CesiumGltf/ClassProperty.h>
+#include <CesiumGltf/PropertyTableProperty.h>
+#include <CesiumGltf/PropertyType.h>
 
-#include <catch2/catch.hpp>
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
+
+#include <cstdint>
 
 using namespace CesiumGltf;
 
@@ -140,6 +141,60 @@ TEST_CASE("Test convertPropertyTypeToString") {
   REQUIRE(
       convertPropertyTypeToString(PropertyType::Enum) ==
       ClassProperty::Type::ENUM);
+
+  REQUIRE(convertPropertyTypeToString(PropertyType::Invalid) == "INVALID");
+}
+
+TEST_CASE("Test convertAccessorTypeToPropertyType") {
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::SCALAR) ==
+      PropertyType::Scalar);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::VEC2) ==
+      PropertyType::Vec2);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::VEC3) ==
+      PropertyType::Vec3);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::VEC4) ==
+      PropertyType::Vec4);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::MAT2) ==
+      PropertyType::Mat2);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::MAT3) ==
+      PropertyType::Mat3);
+  REQUIRE(
+      convertAccessorTypeToPropertyType(AccessorSpec::Type::MAT4) ==
+      PropertyType::Mat4);
+  REQUIRE(
+      convertAccessorTypeToPropertyType("invalid") == PropertyType::Invalid);
+}
+
+TEST_CASE("Test convertPropertyTypeToAccessorType") {
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Scalar) ==
+      AccessorSpec::Type::SCALAR);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Vec2) ==
+      AccessorSpec::Type::VEC2);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Vec3) ==
+      AccessorSpec::Type::VEC3);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Vec4) ==
+      AccessorSpec::Type::VEC4);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Mat2) ==
+      AccessorSpec::Type::MAT2);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Mat3) ==
+      AccessorSpec::Type::MAT3);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Mat4) ==
+      AccessorSpec::Type::MAT4);
+  REQUIRE(
+      convertPropertyTypeToAccessorType(PropertyType::Invalid) == "INVALID");
 }
 
 TEST_CASE("Test convertPropertyComponentTypeToString") {
@@ -182,6 +237,10 @@ TEST_CASE("Test convertPropertyComponentTypeToString") {
   REQUIRE(
       convertPropertyComponentTypeToString(PropertyComponentType::Float64) ==
       ClassProperty::ComponentType::FLOAT64);
+
+  REQUIRE(
+      convertPropertyComponentTypeToString(PropertyComponentType::None) ==
+      "NONE");
 }
 
 TEST_CASE("Test convertArrayOffsetTypeStringToPropertyComponentType") {
@@ -253,15 +312,71 @@ TEST_CASE("Test convertAccessorComponentTypeToPropertyComponentType") {
       PropertyComponentType::Uint16);
   REQUIRE(
       convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::INT) == PropertyComponentType::Int32);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
           AccessorSpec::ComponentType::UNSIGNED_INT) ==
       PropertyComponentType::Uint32);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::INT64) == PropertyComponentType::Int64);
+  REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::UNSIGNED_INT64) ==
+      PropertyComponentType::Uint64);
   REQUIRE(
       convertAccessorComponentTypeToPropertyComponentType(
           AccessorSpec::ComponentType::FLOAT) ==
       PropertyComponentType::Float32);
   REQUIRE(
+      convertAccessorComponentTypeToPropertyComponentType(
+          AccessorSpec::ComponentType::DOUBLE) ==
+      PropertyComponentType::Float64);
+  REQUIRE(
       convertAccessorComponentTypeToPropertyComponentType(-1) ==
       PropertyComponentType::None);
+}
+
+TEST_CASE("Test convertPropertyComponentTypeToAccessorComponentType") {
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int8) == AccessorSpec::ComponentType::BYTE);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint8) ==
+      AccessorSpec::ComponentType::UNSIGNED_BYTE);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int16) == AccessorSpec::ComponentType::SHORT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint16) ==
+      AccessorSpec::ComponentType::UNSIGNED_SHORT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int32) == AccessorSpec::ComponentType::INT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint32) ==
+      AccessorSpec::ComponentType::UNSIGNED_INT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Int64) == AccessorSpec::ComponentType::INT64);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Uint64) ==
+      AccessorSpec::ComponentType::UNSIGNED_INT64);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Float32) ==
+      AccessorSpec::ComponentType::FLOAT);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::Float64) ==
+      AccessorSpec::ComponentType::DOUBLE);
+  REQUIRE(
+      convertPropertyComponentTypeToAccessorComponentType(
+          PropertyComponentType::None) == -1);
 }
 
 TEST_CASE("Test isPropertyTypeVecN") {

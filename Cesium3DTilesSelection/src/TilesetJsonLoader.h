@@ -1,8 +1,7 @@
 #pragma once
 
-#include "TilesetContentLoaderResult.h"
-
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/Future.h>
@@ -50,8 +49,11 @@ public:
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& tilesetJsonUrl,
       const CesiumAsync::HttpHeaders& requestHeaders,
-      const rapidjson::Document& tilesetJson,
+      rapidjson::Document&& tilesetJson,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+protected:
+  void setOwnerOfNestedLoaders(TilesetContentManager& owner) noexcept override;
 
 private:
   std::string _baseUrl;

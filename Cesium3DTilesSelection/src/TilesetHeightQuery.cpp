@@ -1,13 +1,35 @@
 #include "TilesetHeightQuery.h"
 
-#include "TileUtilities.h"
 #include "TilesetContentManager.h"
 
+#include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/ITilesetHeightSampler.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileRefine.h>
+#include <CesiumAsync/Promise.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/IntersectionTests.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+
+#include <glm/exponential.hpp>
+
+#include <cstddef>
+#include <iterator>
+#include <list>
+#include <optional>
+#include <set>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
@@ -52,6 +74,13 @@ bool boundingVolumeContainsCoordinate(
       return s2Cell.computeBoundingRegion(ellipsoid).getRectangle().contains(
           coordinate);
     }
+
+    bool operator()(const BoundingCylinderRegion& cylinderRegion) noexcept {
+      std::optional<double> t = IntersectionTests::rayOBBParametric(
+          ray,
+          cylinderRegion.toOrientedBoundingBox());
+      return t && t.value() >= 0;
+    }
   };
 
   return std::visit(Operation{ray, coordinate, ellipsoid}, boundingVolume);
@@ -89,6 +118,8 @@ TilesetHeightQuery::TilesetHeightQuery(
       candidateTiles(),
       previousCandidateTiles() {}
 
+Cesium3DTilesSelection::TilesetHeightQuery::~TilesetHeightQuery() = default;
+
 void TilesetHeightQuery::intersectVisibleTile(
     Tile* pTile,
     std::vector<std::string>& outWarnings) {
@@ -113,39 +144,20 @@ void TilesetHeightQuery::intersectVisibleTile(
   // Set ray info to this hit if closer, or the first hit
   if (!this->intersection.has_value()) {
     this->intersection = std::move(gltfIntersectResult.hit);
-  } else {
+  } else if (gltfIntersectResult.hit) {
     double prevDistSq = this->intersection->rayToWorldPointDistanceSq;
-    double thisDistSq = intersection->rayToWorldPointDistanceSq;
+    double thisDistSq = gltfIntersectResult.hit->rayToWorldPointDistanceSq;
     if (thisDistSq < prevDistSq)
       this->intersection = std::move(gltfIntersectResult.hit);
   }
 }
 
-namespace {
-
-void markTileVisited(Tile::LoadedLinkedList& loadedTiles, Tile* pTile) {
-  // Don't move the root tile to the tail, because this tile is used to mark the
-  // beginning of the tiles used in the current frame. If we move it, some tiles
-  // may be deemed to have most recently been used last frame, and so will be
-  // unloaded.
-  if (pTile == nullptr || pTile->getParent() == nullptr)
-    return;
-
-  loadedTiles.insertAtTail(*pTile);
-}
-
-} // namespace
-
 void TilesetHeightQuery::findCandidateTiles(
     Tile* pTile,
-    Tile::LoadedLinkedList& loadedTiles,
     std::vector<std::string>& warnings) {
-  // Make sure this tile is not unloaded until we're done with it.
-  markTileVisited(loadedTiles, pTile);
-
   // If tile failed to load, this means we can't complete the intersection
   if (pTile->getState() == TileLoadState::Failed) {
-    warnings.push_back("Tile load failed during query. Ignoring.");
+    warnings.emplace_back("Tile load failed during query. Ignoring.");
     return;
   }
 
@@ -161,10 +173,11 @@ void TilesetHeightQuery::findCandidateTiles(
               *contentBoundingVolume,
               this->ray,
               this->inputPosition,
-              this->ellipsoid))
-        this->candidateTiles.push_back(pTile);
+              this->ellipsoid)) {
+        this->candidateTiles.emplace_back(pTile);
+      }
     } else {
-      this->candidateTiles.push_back(pTile);
+      this->candidateTiles.emplace_back(pTile);
     }
   } else {
     // We have children
@@ -177,10 +190,11 @@ void TilesetHeightQuery::findCandidateTiles(
                 *contentBoundingVolume,
                 this->ray,
                 this->inputPosition,
-                this->ellipsoid))
-          this->additiveCandidateTiles.push_back(pTile);
+                this->ellipsoid)) {
+          this->additiveCandidateTiles.emplace_back(pTile);
+        }
       } else {
-        this->additiveCandidateTiles.push_back(pTile);
+        this->additiveCandidateTiles.emplace_back(pTile);
       }
     }
 
@@ -195,32 +209,35 @@ void TilesetHeightQuery::findCandidateTiles(
         continue;
 
       // Child is a candidate, traverse it and its children
-      findCandidateTiles(&child, loadedTiles, warnings);
+      findCandidateTiles(&child, warnings);
     }
   }
 }
+
+TilesetHeightRequest::TilesetHeightRequest(
+    std::vector<TilesetHeightQuery>&& queries_,
+    const CesiumAsync::Promise<SampleHeightResult>& promise_) noexcept
+    : queries(std::move(queries_)), promise(promise_) {}
+
+TilesetHeightRequest::TilesetHeightRequest(
+    TilesetHeightRequest&& rhs) noexcept = default;
+
+TilesetHeightRequest::~TilesetHeightRequest() noexcept = default;
 
 /*static*/ void TilesetHeightRequest::processHeightRequests(
     const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,
     const TilesetOptions& options,
-    Tile::LoadedLinkedList& loadedTiles,
-    std::list<TilesetHeightRequest>& heightRequests,
-    std::vector<Tile*>& heightQueryLoadQueue) {
+    std::list<TilesetHeightRequest>& heightRequests) {
   if (heightRequests.empty())
     return;
 
   // Go through all requests, either complete them, or gather the tiles they
   // need for completion
-  std::set<Tile*> tileLoadSet;
   for (auto it = heightRequests.begin(); it != heightRequests.end();) {
     TilesetHeightRequest& request = *it;
-    if (!request.tryCompleteHeightRequest(
-            asyncSystem,
-            contentManager,
-            options,
-            loadedTiles,
-            tileLoadSet)) {
+    if (!request
+             .tryCompleteHeightRequest(asyncSystem, contentManager, options)) {
       ++it;
     } else {
       auto deleteIt = it;
@@ -228,8 +245,33 @@ void TilesetHeightQuery::findCandidateTiles(
       heightRequests.erase(deleteIt);
     }
   }
+}
 
-  heightQueryLoadQueue.assign(tileLoadSet.begin(), tileLoadSet.end());
+double TilesetHeightRequest::getWeight() const { return 1.0; }
+
+bool TilesetHeightRequest::hasMoreTilesToLoadInWorkerThread() const {
+  return !this->tilesToLoad.empty();
+}
+
+const Tile* TilesetHeightRequest::getNextTileToLoadInWorkerThread() {
+  Tile* pResult = nullptr;
+
+  auto it = this->tilesToLoad.begin();
+  if (it != this->tilesToLoad.end()) {
+    pResult = *it;
+    this->tilesToLoad.erase(it);
+  }
+
+  return pResult;
+}
+
+bool TilesetHeightRequest::hasMoreTilesToLoadInMainThread() const {
+  // We don't need to do any main thread loading for height queries.
+  return false;
+}
+
+const Tile* TilesetHeightRequest::getNextTileToLoadInMainThread() {
+  return nullptr;
 }
 
 void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
@@ -254,9 +296,9 @@ void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
 bool TilesetHeightRequest::tryCompleteHeightRequest(
     const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,
-    const TilesetOptions& options,
-    Tile::LoadedLinkedList& loadedTiles,
-    std::set<Tile*>& tileLoadSet) {
+    const TilesetOptions& options) {
+  this->tilesToLoad.clear();
+
   // If this TilesetContentLoader supports direct height queries, use that
   // instead of downloading tiles.
   if (contentManager.getRootTile() &&
@@ -287,10 +329,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
     if (query.candidateTiles.empty() && query.additiveCandidateTiles.empty()) {
       // Find the initial set of tiles whose bounding volume is intersected by
       // the query ray.
-      query.findCandidateTiles(
-          contentManager.getRootTile(),
-          loadedTiles,
-          warnings);
+      query.findCandidateTiles(contentManager.getRootTile(), warnings);
     } else {
       // Refine the current set of candidate tiles, in case further tiles from
       // implicit tiling, external tilesets, etc. having been loaded since last
@@ -299,50 +338,40 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
 
       query.candidateTiles.clear();
 
-      for (Tile* pCandidate : query.previousCandidateTiles) {
+      for (const Tile::Pointer& pCandidate : query.previousCandidateTiles) {
         TileLoadState loadState = pCandidate->getState();
         if (!pCandidate->getChildren().empty() &&
             loadState >= TileLoadState::ContentLoaded) {
-          query.findCandidateTiles(pCandidate, loadedTiles, warnings);
+          query.findCandidateTiles(pCandidate.get(), warnings);
         } else {
-          // Make sure this tile stays loaded.
-          markTileVisited(loadedTiles, pCandidate);
-
           // Check again next frame to see if this tile has children.
           query.candidateTiles.emplace_back(pCandidate);
         }
       }
     }
 
-    auto checkTile = [&contentManager,
-                      &options,
-                      &tileLoadSet,
-                      &tileStillNeedsLoading](Tile* pTile) {
-      contentManager.createLatentChildrenIfNecessary(*pTile, options);
+    auto checkTile =
+        [this, &contentManager, &options, &tileStillNeedsLoading](Tile* pTile) {
+          contentManager.createLatentChildrenIfNecessary(*pTile, options);
 
-      TileLoadState state = pTile->getState();
-      if (state == TileLoadState::Unloading) {
-        // This tile is in the process of unloading, which must complete
-        // before we can load it again.
-        contentManager.unloadTileContent(*pTile);
-        tileStillNeedsLoading = true;
-      } else if (state <= TileLoadState::ContentLoading) {
-        tileLoadSet.insert(pTile);
-        tileStillNeedsLoading = true;
-      }
-    };
+          TileLoadState state = pTile->getState();
+          if (state == TileLoadState::Unloading) {
+            // This tile is in the process of unloading, which must complete
+            // before we can load it again.
+            contentManager.unloadTileContent(*pTile);
+            tileStillNeedsLoading = true;
+          } else if (state <= TileLoadState::ContentLoading) {
+            this->tilesToLoad.insert(pTile);
+            tileStillNeedsLoading = true;
+          }
+        };
 
     // If any candidates need loading, add to return set
-    for (Tile* pTile : query.additiveCandidateTiles) {
-      // Additive tiles are only enumerated once in findCandidateTiles, so we
-      // need to continue every frame to make sure they're not unloaded before
-      // we're done with them.
-      markTileVisited(loadedTiles, pTile);
-
-      checkTile(pTile);
+    for (const Tile::Pointer& pTile : query.additiveCandidateTiles) {
+      checkTile(pTile.get());
     }
-    for (Tile* pTile : query.candidateTiles) {
-      checkTile(pTile);
+    for (const Tile::Pointer& pTile : query.candidateTiles) {
+      checkTile(pTile.get());
     }
   }
 
@@ -352,11 +381,11 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
 
   // Do the intersect tests
   for (TilesetHeightQuery& query : this->queries) {
-    for (Tile* pTile : query.additiveCandidateTiles) {
-      query.intersectVisibleTile(pTile, warnings);
+    for (const Tile::Pointer& pTile : query.additiveCandidateTiles) {
+      query.intersectVisibleTile(pTile.get(), warnings);
     }
-    for (Tile* pTile : query.candidateTiles) {
-      query.intersectVisibleTile(pTile, warnings);
+    for (const Tile::Pointer& pTile : query.candidateTiles) {
+      query.intersectVisibleTile(pTile.get(), warnings);
     }
   }
 

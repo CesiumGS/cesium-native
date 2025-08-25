@@ -1,13 +1,15 @@
-#include "CesiumGeometry/OrientedBoundingBox.h"
-
-#include "CesiumGeometry/Plane.h"
-
+#include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Plane.h>
 #include <CesiumUtility/Math.h>
 
-#include <glm/ext/matrix_transform.hpp>
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double3x3.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
-
-#include <stdexcept>
 
 namespace CesiumGeometry {
 CullingResult
@@ -61,9 +63,84 @@ double OrientedBoundingBox::computeDistanceSquaredToPosition(
   const double vHalf = glm::length(v);
   const double wHalf = glm::length(w);
 
-  u /= uHalf;
-  v /= vHalf;
-  w /= wHalf;
+  bool uValid = uHalf > 0;
+  bool vValid = vHalf > 0;
+  bool wValid = wHalf > 0;
+
+  if (uValid) {
+    u /= uHalf;
+  }
+
+  if (vValid) {
+    v /= vHalf;
+  }
+
+  if (wValid) {
+    w /= wHalf;
+  }
+
+  const int numberOfDegenerateAxes = !uValid + !vValid + !wValid;
+  glm::dvec3 validAxis1;
+  glm::dvec3 validAxis2;
+  glm::dvec3 validAxis3;
+
+  if (numberOfDegenerateAxes == 1) {
+    glm::dvec3 degenerateAxis = u;
+    validAxis1 = v;
+    validAxis2 = w;
+
+    if (!vValid) {
+      degenerateAxis = v;
+      validAxis1 = u;
+    } else if (!wValid) {
+      degenerateAxis = w;
+      validAxis2 = u;
+    }
+
+    validAxis3 = glm::cross(validAxis1, validAxis2);
+
+    if (!uValid) {
+      u = validAxis3;
+    } else if (!vValid) {
+      v = validAxis3;
+    } else {
+      w = validAxis3;
+    }
+  } else if (numberOfDegenerateAxes == 2) {
+    if (uValid) {
+      validAxis1 = u;
+    } else if (vValid) {
+      validAxis1 = v;
+    } else {
+      validAxis1 = w;
+    }
+
+    glm::dvec3 crossVector{0, 1, 0};
+    if (CesiumUtility::Math::equalsEpsilon(
+            validAxis1,
+            crossVector,
+            CesiumUtility::Math::Epsilon3)) {
+      crossVector = {1, 0, 0};
+    }
+
+    validAxis2 = glm::normalize(glm::cross(validAxis1, crossVector));
+    validAxis3 = glm::normalize(glm::cross(validAxis1, validAxis2));
+
+    if (uValid) {
+      v = validAxis2;
+      w = validAxis3;
+    } else if (vValid) {
+      w = validAxis2;
+      u = validAxis3;
+    } else if (wValid) {
+      u = validAxis2;
+      v = validAxis3;
+    }
+  } else if (numberOfDegenerateAxes == 3) {
+    u = {1, 0, 0};
+    v = {0, 1, 0};
+    w = {0, 0, 1};
+  }
 
   const glm::dvec3 pPrime(
       glm::dot(offset, u),
