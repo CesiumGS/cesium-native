@@ -389,7 +389,7 @@ if(CESIUM_INSTALL_STATIC_LIBS AND CESIUM_INSTALL_HEADERS)
   install(EXPORT CesiumExports
     FILE cesium-nativeNoNamespaceTargets.cmake
     DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
-  
+
   install(FILES
     "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findzlib-ng.cmake"
     "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findmodp_b64.cmake"
