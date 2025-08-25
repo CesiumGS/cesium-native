@@ -613,7 +613,6 @@ void processPolygons(
       polygonCountIt->value.HasMember("byteOffset")) {
 
     uint32_t byteOffset = polygonCountIt->value["byteOffset"].GetUint();
-    std::cout << "POLYGON_COUNT byteOffset: " << byteOffset << std::endl;
 
     // Read polygonsLength uint32 values
     size_t dataSize = static_cast<size_t>(polygonsLength) * sizeof(uint32_t);
@@ -644,7 +643,6 @@ void processPolygons(
       polygonIndexCountIt->value.HasMember("byteOffset")) {
 
     uint32_t byteOffset = polygonIndexCountIt->value["byteOffset"].GetUint();
-    std::cout << "POLYGON_INDEX_COUNT byteOffset: " << byteOffset << std::endl;
 
     // Read polygonsLength uint32 values
     size_t dataSize = static_cast<size_t>(polygonsLength) * sizeof(uint32_t);
@@ -677,7 +675,6 @@ void processPolygons(
       polygonBatchIdsIt->value.HasMember("byteOffset")) {
 
     uint32_t byteOffset = polygonBatchIdsIt->value["byteOffset"].GetUint();
-    std::cout << "POLYGON_BATCH_IDS byteOffset: " << byteOffset << std::endl;
 
     // Read polygonsLength uint16 values ​​(UNSIGNED_SHORT)
     size_t dataSize = static_cast<size_t>(polygonsLength) * sizeof(uint16_t);
@@ -702,33 +699,9 @@ void processPolygons(
     return;
   }
 
-  // Calculate and verify the total number of vertices and indices
-  uint32_t totalVertices = 0;
-  uint32_t totalIndices = 0;
-  for (size_t i = 0; i < polygonCounts.size(); i++) {
-    totalVertices += polygonCounts[i];
-    totalIndices += polygonIndexCounts[i];
-  }
-
-  // 바이너리 데이터 크기와 비교
-  /*
-  size_t expectedVertexBytes =
-      static_cast<size_t>(totalVertices) * sizeof(uint16_t) * 2; // u, v
-  size_t expectedIndexBytes =
-      static_cast<size_t>(totalIndices) * sizeof(uint32_t);
-
-  std::cout << "Polygon positions byte length: "
-            << header.polygonPositionsByteLength
-            << " (expected: " << expectedVertexBytes << ")" << std::endl;
-  std::cout << "Polygon indices byte length: "
-            << header.polygonIndicesByteLength
-            << " (expected: " << expectedIndexBytes << ")" << std::endl;
-  */
-
   // extract POLYGON_MINIMUM_HEIGHTS and POLYGON_MAXIMUM_HEIGHTS
   std::vector<float> polygonMinimumHeights;
   std::vector<float> polygonMaximumHeights;
-  bool hasHeights = false;
 
   const auto minHeightsIt =
       featureTableJson.FindMember("POLYGON_MINIMUM_HEIGHTS");
@@ -758,8 +731,6 @@ void processPolygons(
           break;
         }
       }
-
-      hasHeights = !polygonMinimumHeights.empty();
     }
   }
 
@@ -1105,7 +1076,7 @@ void processPolylines(
     return;
   }
 
-// extract POLYLINE_COUNTS and POLYLINE_COUNT
+  // extract POLYLINE_COUNTS and POLYLINE_COUNT
   const auto polylineCountsIt = featureTableJson.FindMember("POLYLINE_COUNTS");
   const auto polylineCountIt = featureTableJson.FindMember("POLYLINE_COUNT");
 
@@ -1151,7 +1122,6 @@ void processPolylines(
     // If no polyline width is given, default to 2.0 (matching CesiumJs JavaScript implementation).
     polylineWidths.resize(static_cast<size_t>(polylinesLength), 2);
   }
-
 
   // extract POLYLINE_BATCH_IDS
   std::vector<uint16_t> polylineBatchIds;
@@ -1216,7 +1186,7 @@ void processPolylines(
 
     int16_t u = 0;
     int16_t v = 0;
-    int16_t h = 0;
+    //int16_t h = 0;
 
     const double west = region[0];
     const double south = region[1];
@@ -1225,20 +1195,17 @@ void processPolylines(
     //const double minimumHeight = region[4];
     //const double maximumHeight = region[5];
 
-    // Calculate center point (longitude, latitude, height)
-    //glm::dvec3 center = computeRegionCenter(region);
-
     CesiumGeospatial::Ellipsoid ellipsoid = CesiumGeospatial::Ellipsoid::WGS84;
 
     // Decode ZigZag encodings
     for (size_t i = 0; i < vertexCount; i++) {
       uint16_t uValue = rawPositions[i];
       uint16_t vValue = rawPositions[i + vertexCount];
-      uint16_t hValue = rawPositions[i + 2 * vertexCount];
+      //uint16_t hValue = rawPositions[i + 2 * vertexCount];
 
       u += zigZagDecode(uValue);
       v += zigZagDecode(vValue);
-      h += zigZagDecode(hValue);
+      //h += zigZagDecode(hValue);
 
       double uRatio = static_cast<double>(u) / maxShort;
       double vRatio = static_cast<double>(v) / maxShort;
@@ -1250,8 +1217,6 @@ void processPolylines(
 
       glm::dvec3 position = ellipsoid.cartographicToCartesian(
           CesiumGeospatial::Cartographic(longitude, latitude, height));
-
-      //position -= center;
 
       decodedPositions[i] = position;
 
@@ -1273,25 +1238,12 @@ void processPolylines(
           indices.push_back(static_cast<uint32_t>(currentPosition) + j);
           indices.push_back(static_cast<uint32_t>(currentPosition) + j + 1);
 
-          // Optional: Specify line colors (here, for example, different colors for each line. temporary code)
-          float hue =
-              static_cast<float>(i) / static_cast<float>(polylineCounts.size());
-          glm::vec4 color;
-
-          // Simple conversion from HSV to RGB
-          if (hue < 1.0f / 6.0f) {
-            color = glm::vec4(1.0f, hue * 6.0f, 0.0f, 1.0f);
-          } else if (hue < 2.0f / 6.0f) {
-            color = glm::vec4((2.0f / 6.0f - hue) * 6.0f, 1.0f, 0.0f, 1.0f);
-          } else if (hue < 3.0f / 6.0f) {
-            color = glm::vec4(0.0f, 1.0f, (hue - 2.0f / 6.0f) * 6.0f, 1.0f);
-          } else if (hue < 4.0f / 6.0f) {
-            color = glm::vec4(0.0f, (4.0f / 6.0f - hue) * 6.0f, 1.0f, 1.0f);
-          } else if (hue < 5.0f / 6.0f) {
-            color = glm::vec4((hue - 4.0f / 6.0f) * 6.0f, 0.0f, 1.0f, 1.0f);
-          } else {
-            color = glm::vec4(1.0f, 0.0f, (1.0f - hue) * 6.0f, 1.0f);
-          }
+          // use same color for all lines
+          glm::vec4 color = glm::vec4(
+              1.0f,
+              1.0f,
+              1.0f,
+              1.0f); 
 
           // Apply the same color to each point
           lineColors.push_back(color);
@@ -1386,16 +1338,9 @@ void processPoints(
   model.extras["vctr_point"] = static_cast<int>(1);
 
   // Get point-related properties
-  int32_t pointsLength = 0;
+  //int32_t pointsLength = 0;
   std::array<double, 6> region =
       {0, 0, 0, 0, 0, 0}; // [west, south, east, north, min_height, max_height]
-
-  // extract POINTS_LENGTH
-  const auto pointsLengthIt = featureTableJson.FindMember("POINTS_LENGTH");
-  if (pointsLengthIt != featureTableJson.MemberEnd() &&
-      pointsLengthIt->value.IsInt()) {
-    pointsLength = pointsLengthIt->value.GetInt();
-  }
 
   // extract REGION
   const auto regionIt = featureTableJson.FindMember("REGION");
