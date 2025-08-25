@@ -72,7 +72,7 @@ std::string encodeBase64(const std::vector<uint8_t>& bytes) {
   // in [RFC7636 Appendix A](https://tools.ietf.org/html/rfc7636#appendix-A)
   const size_t firstPaddingIndex = result.find('=');
   if (firstPaddingIndex != std::string::npos) {
-    result.erase(result.begin() + int64_t(firstPaddingIndex), result.end());
+    result.erase(result.begin() + ptrdiff_t(firstPaddingIndex), result.end());
   }
   std::replace(result.begin(), result.end(), '+', '-');
   std::replace(result.begin(), result.end(), '/', '_');

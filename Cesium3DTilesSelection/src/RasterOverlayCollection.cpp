@@ -213,7 +213,7 @@ void RasterOverlayCollection::remove(
     return;
   }
 
-  int64_t index = it - list.overlays.begin();
+  ptrdiff_t index = it - list.overlays.begin();
   list.overlays.erase(list.overlays.begin() + index);
   list.tileProviders.erase(list.tileProviders.begin() + index);
   list.placeholders.erase(list.placeholders.begin() + index);
