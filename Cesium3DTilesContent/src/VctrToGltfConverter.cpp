@@ -1454,11 +1454,14 @@ void processPoints(
   rtcPos = ellipsoid.cartographicToCartesian(
       CesiumGeospatial::Cartographic(rtcPos.x, rtcPos.y, rtcPos.z));
 
-    cesiumRTC.center = {rtcPos.x, rtcPos.y, rtcPos.z};
-	
+  cesiumRTC.center = {rtcPos.x, rtcPos.y, rtcPos.z};
+
+  std::vector<glm::vec3> pointVertex = {glm::vec3(0.0f, 0.0f, 0.0f)};
+  std::vector<uint32_t> vertexIndex = {0,0,0};
   // cube data for debugging (visualization)
+  /*
   float cubeSize = 100.0f; // You can adjust the cube size
-  std::vector<glm::vec3> cubeVertices = {
+  std::vector<glm::vec3> pointVertex = {
       glm::vec3(-0.5f, -0.5f, -0.5f) * cubeSize,
       glm::vec3(0.5f, -0.5f, -0.5f) * cubeSize,
       glm::vec3(0.5f, -0.5f, 0.5f) * cubeSize,
@@ -1469,7 +1472,7 @@ void processPoints(
       glm::vec3(-0.5f, 0.5f, 0.5f) * cubeSize};
 
   // Define cube indices (12 triangles, 36 indices)
-  std::vector<uint32_t> cubeIndices = {
+  std::vector<uint32_t> vertexIndex = {
       0, 1, 2, 0, 2, 3, // bottom surface
       4, 6, 5, 4, 7, 6, // top surface
       0, 4, 1, 1, 4, 5, // front side
@@ -1477,6 +1480,7 @@ void processPoints(
       2, 6, 3, 3, 6, 7, // back side
       3, 7, 0, 0, 7, 4  // left side
   };
+  */
 
   // Processing point batch ID
   std::vector<uint16_t> pointBatchIds;
@@ -1574,11 +1578,11 @@ void processPoints(
     // Create vertex buffer
     const int64_t vertexByteStride = static_cast<int64_t>(sizeof(glm::vec3));
     const int64_t vertexByteLength =
-        static_cast<int64_t>(cubeVertices.size() * sizeof(glm::vec3));
+        static_cast<int64_t>(pointVertex.size() * sizeof(glm::vec3));
     std::vector<std::byte> vertexData(static_cast<size_t>(vertexByteLength));
     std::memcpy(
         vertexData.data(),
-        cubeVertices.data(),
+        pointVertex.data(),
         static_cast<size_t>(vertexByteLength));
     int32_t vertexBufferId = createBufferInGltf(model, std::move(vertexData));
 
@@ -1595,31 +1599,38 @@ void processPoints(
         model,
         vertexBufferViewId,
         CesiumGltf::Accessor::ComponentType::FLOAT,
-        static_cast<int64_t>(cubeVertices.size()),
+        static_cast<int64_t>(pointVertex.size()),
         CesiumGltf::Accessor::Type::VEC3);
 
     // Set min/max values ​​for accessors
     CesiumGltf::Accessor& vertexAccessor =
         model.accessors[static_cast<uint32_t>(vertexAccessorId)];
-    float halfSize = cubeSize / 2.0f;
+
+    //float halfSize = cubeSize / 2.0f;
     vertexAccessor.min = {
-        relPos.x - halfSize,
-        relPos.y - halfSize,
-        relPos.z - halfSize
+        //relPos.x - halfSize,
+        //relPos.y - halfSize,
+        //relPos.z - halfSize
+        relPos.x,
+        relPos.y,
+        relPos.z
     };
     vertexAccessor.max = {
-        relPos.x + halfSize,
-        relPos.y + halfSize,
-        relPos.z + halfSize
+        //relPos.x + halfSize,
+        //relPos.y + halfSize,
+        //relPos.z + halfSize
+        relPos.x,
+        relPos.y,
+        relPos.z
     };
 
     // Create an index buffer
     const int64_t indexByteLength =
-        static_cast<int64_t>(cubeIndices.size() * sizeof(uint32_t));
+        static_cast<int64_t>(pointVertex.size() * sizeof(uint32_t));
     std::vector<std::byte> indexData(static_cast<size_t>(indexByteLength));
     std::memcpy(
         indexData.data(),
-        cubeIndices.data(),
+        vertexIndex.data(),
         static_cast<size_t>(indexByteLength));
     int32_t indexBufferId = createBufferInGltf(model, std::move(indexData));
 
@@ -1637,7 +1648,7 @@ void processPoints(
         model,
         indexBufferViewId,
         CesiumGltf::Accessor::ComponentType::UNSIGNED_INT,
-        static_cast<int64_t>(cubeIndices.size()),
+        static_cast<int64_t>(vertexIndex.size()),
         CesiumGltf::Accessor::Type::SCALAR);
 
      // Add batch ID for this point
