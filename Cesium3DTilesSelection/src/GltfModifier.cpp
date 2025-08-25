@@ -21,7 +21,7 @@ class GltfModifier::NewVersionLoadRequester : public TileLoadRequester {
 public:
   NewVersionLoadRequester(GltfModifier* pModifier);
 
-  double getWeight() const override { return 1.0; }
+  double getWeight() const override { return 0.5; }
   bool hasMoreTilesToLoadInWorkerThread() const override;
   const Tile* getNextTileToLoadInWorkerThread() override;
   bool hasMoreTilesToLoadInMainThread() const override;
