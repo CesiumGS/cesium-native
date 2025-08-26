@@ -115,8 +115,13 @@ set(PACKAGES_PRIVATE
 if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     list(APPEND PACKAGES_PRIVATE blend2d asmjit)
 else()
-    # Use [core] feature to disable default jit feature.
-    list(APPEND PACKAGES_PRIVATE blend2d[core])
+    if(CESIUM_TARGET_WASM)
+        # Need to install blend2d for wasm builds
+        list(APPEND PACKAGES_PUBLIC blend2d[core])
+    else()
+        # Use [core] feature to disable default jit feature.
+        list(APPEND PACKAGES_PRIVATE blend2d[core])
+    endif()
 endif()
 
 if(NOT CESIUM_DISABLE_CURL)
@@ -173,7 +178,7 @@ project(cesium-native
 )
 
 if(CESIUM_TARGET_WASM)
-    # Set to 8 for wasm64, 4 for wasm32
+    # Set to 8 for wasm64, 4 for wasm32. Currently only wasm32 is used.
     set(CMAKE_SIZEOF_VOID_P 4)
     # Tells emscripten to output an HTML harness for the generated WASM
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
@@ -211,8 +216,11 @@ set(CESIUM_CLANG_TIDY_USE_THREADS 14 CACHE STRING "Sets the number of threads fo
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS AND EZVCPKG_PACKAGES_DIR)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
         string(REGEX REPLACE "\[.*\]" "" PACKAGE ${PACKAGE})
+        # TODO: why doesn't the above command work to replace "blend2d[core]" with "blend2d"?
+        if(PACKAGE STREQUAL "blend2d[core]")
+            set(PACKAGE "blend2d")
+        endif()
         set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
-        message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
 
         if(CESIUM_INSTALL_HEADERS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_HEADERS)
             install(
