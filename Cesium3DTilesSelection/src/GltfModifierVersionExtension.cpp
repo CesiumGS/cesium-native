@@ -1,6 +1,9 @@
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <CesiumGltf/Model.h>
 
+#include <cstdint>
+#include <optional>
+
 namespace Cesium3DTilesSelection {
 
 /* static */ std::optional<int64_t> GltfModifierVersionExtension::getVersion(

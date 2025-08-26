@@ -1,16 +1,20 @@
 #include "TilesetContentManager.h"
 
 #include <Cesium3DTilesSelection/GltfModifier.h>
+#include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
+#include <CesiumGltf/Model.h>
 #include <CesiumUtility/Assert.h>
 
 #include <spdlog/logger.h>
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
