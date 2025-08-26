@@ -167,7 +167,7 @@ public:
    * a worker thread, or `false` otherwise.
    */
   static bool needsWorkerThreadModification(
-      const std::shared_ptr<GltfModifier>& pModifier,
+      const GltfModifier* pModifier,
       const Tile& tile);
 
   /**
@@ -178,9 +178,8 @@ public:
    * @returns `true` if the tile needs to be processed by the `GltfModifier` in
    * the main thread, or `false` otherwise.
    */
-  static bool needsMainThreadModification(
-      const std::shared_ptr<GltfModifier>& pModifier,
-      const Tile& tile);
+  static bool
+  needsMainThreadModification(const GltfModifier* pModifier, const Tile& tile);
 
 protected:
   GltfModifier();

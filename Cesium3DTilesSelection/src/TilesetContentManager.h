@@ -216,9 +216,6 @@ private:
           loadErrorCallback,
       TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
 
-  bool
-  discardOutdatedRenderResources(Tile& tile, TileRenderContent& renderContent);
-
   CesiumAsync::Future<void> registerGltfModifier(const Tile* pRootTile);
 
   TilesetExternals _externals;

@@ -544,8 +544,7 @@ public:
    * @return true if this Tile needs further work done in a worker thread to
    * load it; otherwise, false.
    */
-  bool needsWorkerThreadLoading(
-      const std::shared_ptr<GltfModifier>& pModifier) const noexcept;
+  bool needsWorkerThreadLoading(const GltfModifier* pModifier) const noexcept;
 
   /**
    * @brief Determines if this tile requires main-thread loading.
@@ -556,8 +555,7 @@ public:
    * @return true if this Tile needs further work done in the main thread to
    * load it; otherwise, false.
    */
-  bool needsMainThreadLoading(
-      const std::shared_ptr<GltfModifier>& pModifier) const noexcept;
+  bool needsMainThreadLoading(const GltfModifier* pModifier) const noexcept;
 
   /**
    * @brief Adds a reference to this tile. A live reference will keep this tile

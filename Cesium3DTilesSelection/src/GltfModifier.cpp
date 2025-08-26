@@ -64,7 +64,7 @@ void GltfModifier::trigger() {
 }
 
 /*static*/ bool GltfModifier::needsWorkerThreadModification(
-    const std::shared_ptr<GltfModifier>& pModifier,
+    const GltfModifier* pModifier,
     const Tile& tile) {
   if (!pModifier)
     return false;
@@ -73,7 +73,7 @@ void GltfModifier::trigger() {
   if (!modelVersion)
     return false;
 
-  // If the tile is not loaded at all, so there's no need to modify it.
+  // If the tile is not loaded at all, there's no need to modify it.
   if (tile.getState() != TileLoadState::Done &&
       tile.getState() != TileLoadState::ContentLoaded) {
     return false;
@@ -92,27 +92,30 @@ void GltfModifier::trigger() {
     return false;
   }
 
-  // If modification is Done, and the version is already up-to-date, we don't
-  // need to do it again.
+  // If modification is WorkerDone, and the version is already up-to-date, we
+  // don't need to do it again. But if it's outdated, we want to run the worker
+  // thread modification again.
   if (pRenderContent->getGltfModifierState() ==
       GltfModifier::State::WorkerDone) {
     const std::optional<CesiumGltf::Model>& maybeModifiedModel =
         pRenderContent->getModifiedModel();
-    if (maybeModifiedModel && GltfModifierVersionExtension::getVersion(
-                                  *maybeModifiedModel) == modelVersion) {
-      return false;
-    }
+    bool hasUpToDateModifiedModel =
+        maybeModifiedModel && GltfModifierVersionExtension::getVersion(
+                                  *maybeModifiedModel) == modelVersion;
+    return !hasUpToDateModifiedModel;
+  } else {
+    // Worker is idle. Modification is needed if the model version is out of
+    // date.
+    CESIUM_ASSERT(
+        pRenderContent->getGltfModifierState() == GltfModifier::State::Idle);
+    bool hasUpToDateModel = GltfModifierVersionExtension::getVersion(
+                                pRenderContent->getModel()) == modelVersion;
+    return !hasUpToDateModel;
   }
-
-  // If we get here, the worker is known to be in the Idle state.
-
-  // Modification is needed if the model version is out of date.
-  return GltfModifierVersionExtension::getVersion(pRenderContent->getModel()) !=
-         modelVersion;
 }
 
 /*static*/ bool GltfModifier::needsMainThreadModification(
-    const std::shared_ptr<GltfModifier>& pModifier,
+    const GltfModifier* pModifier,
     const Tile& tile) {
   if (!pModifier)
     return false;
@@ -205,9 +208,15 @@ void GltfModifier::onOldVersionContentLoadingComplete(const Tile& tile) {
 
 void GltfModifier::onWorkerThreadApplyComplete(const Tile& tile) {
   // GltfModifier::apply just finished, so now we need to do the main-thread
-  // processing of the new version.
+  // processing of the new version. But if the new version is already outdated,
+  // we need to do worker thread modification (again) instead of main thread
+  // modification.
   if (this->_pNewVersionLoadRequester->isRegistered()) {
-    this->_pNewVersionLoadRequester->mainThreadQueue.emplace_back(&tile);
+    if (tile.needsMainThreadLoading(this)) {
+      this->_pNewVersionLoadRequester->mainThreadQueue.emplace_back(&tile);
+    } else if (tile.needsWorkerThreadLoading(this)) {
+      this->_pNewVersionLoadRequester->workerThreadQueue.emplace_back(&tile);
+    }
   }
 }
 

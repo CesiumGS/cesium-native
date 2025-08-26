@@ -62,9 +62,9 @@ void TilesetViewGroup::addToLoadQueue(
           [&](const TileLoadTask& task) { return task.pTile == pTile; }) ==
       this->_mainThreadLoadQueue.end());
 
-  if (pTile->needsWorkerThreadLoading(pModifier)) {
+  if (pTile->needsWorkerThreadLoading(pModifier.get())) {
     this->_workerThreadLoadQueue.emplace_back(task);
-  } else if (pTile->needsMainThreadLoading(pModifier)) {
+  } else if (pTile->needsMainThreadLoading(pModifier.get())) {
     this->_mainThreadLoadQueue.emplace_back(task);
   } else if (
       pTile->getState() == TileLoadState::ContentLoading ||

@@ -275,7 +275,7 @@ bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
 } // namespace
 
 bool Tile::needsWorkerThreadLoading(
-    const std::shared_ptr<GltfModifier>& pModifier) const noexcept {
+    const GltfModifier* pModifier) const noexcept {
   return this->getState() == TileLoadState::Unloaded ||
          this->getState() == TileLoadState::FailedTemporarily ||
          GltfModifier::needsWorkerThreadModification(pModifier, *this) ||
@@ -283,7 +283,7 @@ bool Tile::needsWorkerThreadLoading(
 }
 
 bool Tile::needsMainThreadLoading(
-    const std::shared_ptr<GltfModifier>& pModifier) const noexcept {
+    const GltfModifier* pModifier) const noexcept {
   return this->isRenderContent() &&
          (this->getState() == TileLoadState::ContentLoaded ||
           GltfModifier::needsMainThreadModification(pModifier, *this));
