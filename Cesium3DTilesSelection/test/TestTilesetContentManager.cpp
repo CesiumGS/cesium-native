@@ -1945,23 +1945,23 @@ TEST_CASE("Test glTF modifier state machine") {
   int expectedCallCount = 1;
   auto const& applyModifier = [&]() {
     pGltfModifier->trigger();
-    CHECK(tile.needsWorkerThreadLoading(pGltfModifier));
+    CHECK(tile.needsWorkerThreadLoading(pGltfModifier.get()));
     // Start worker-thread phase of glTF modifier.
     pManager->loadTileContent(tile, options);
     // Unloading should be refused while worker-thread is running.
     CHECK(pManager->unloadTileContent(tile) == UnloadTileContentResult::Keep);
     // Wait completion of worker-thread phase.
     pManager->waitUntilIdle();
-    CHECK(!tile.needsWorkerThreadLoading(pGltfModifier));
-    CHECK(tile.needsMainThreadLoading(pGltfModifier));
+    CHECK(!tile.needsWorkerThreadLoading(pGltfModifier.get()));
+    CHECK(tile.needsMainThreadLoading(pGltfModifier.get()));
     CHECK(pGltfModifier->applyCallCount == expectedCallCount);
     // The temporary renderer resource should have been created.
     CHECK(pMockedPrepareRendererResources->totalAllocation == 2);
 
     SUBCASE("Perform main-thread phase of glTF modifier") {
       pManager->finishLoading(tile, options);
-      CHECK(!tile.needsWorkerThreadLoading(pGltfModifier));
-      CHECK(!tile.needsMainThreadLoading(pGltfModifier));
+      CHECK(!tile.needsWorkerThreadLoading(pGltfModifier.get()));
+      CHECK(!tile.needsMainThreadLoading(pGltfModifier.get()));
       // The temporary renderer resource should have been freed.
       CHECK(pGltfModifier->applyCallCount == expectedCallCount);
       CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
@@ -1986,8 +1986,8 @@ TEST_CASE("Test glTF modifier state machine") {
   CHECK(tile.getContent().isRenderContent());
   // After the tile is loaded, glTF modifier should not be needed,
   // as it has already been done as part of the loading.
-  CHECK(!tile.needsWorkerThreadLoading(pGltfModifier));
-  CHECK(!tile.needsMainThreadLoading(pGltfModifier));
+  CHECK(!tile.needsWorkerThreadLoading(pGltfModifier.get()));
+  CHECK(!tile.needsMainThreadLoading(pGltfModifier.get()));
   CHECK(pGltfModifier->applyCallCount == expectedCallCount);
   CHECK(pMockedPrepareRendererResources->totalAllocation == 1);
 
