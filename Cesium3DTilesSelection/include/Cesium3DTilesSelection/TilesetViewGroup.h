@@ -211,12 +211,12 @@ public:
   /** @inheritdoc */
   bool hasMoreTilesToLoadInWorkerThread() const override;
   /** @inheritdoc */
-  Tile* getNextTileToLoadInWorkerThread() override;
+  const Tile* getNextTileToLoadInWorkerThread() override;
 
   /** @inheritdoc */
   bool hasMoreTilesToLoadInMainThread() const override;
   /** @inheritdoc */
-  Tile* getNextTileToLoadInMainThread() override;
+  const Tile* getNextTileToLoadInMainThread() override;
 
 private:
   double _weight = 1.0;
