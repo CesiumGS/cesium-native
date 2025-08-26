@@ -64,8 +64,8 @@ void GltfModifier::trigger() {
 }
 
 /*static*/ bool GltfModifier::needsWorkerThreadModification(
-    const Tile& tile,
-    const std::shared_ptr<GltfModifier>& pModifier) {
+    const std::shared_ptr<GltfModifier>& pModifier,
+    const Tile& tile) {
   if (!pModifier)
     return false;
 
@@ -112,8 +112,8 @@ void GltfModifier::trigger() {
 }
 
 /*static*/ bool GltfModifier::needsMainThreadModification(
-    const Tile& tile,
-    const std::shared_ptr<GltfModifier>& pModifier) {
+    const std::shared_ptr<GltfModifier>& pModifier,
+    const Tile& tile) {
   if (!pModifier)
     return false;
 

@@ -238,7 +238,7 @@ public:
    * been determined to be outdated and have been freed with
    * {@link IPrepareRendererResources::free}.
    */
-  void resetModifiedRenderResources() noexcept;
+  void resetModifiedModelAndRenderResources() noexcept;
 
   /**
    * @brief Overwrites this instance's model and renderer resources with the

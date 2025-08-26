@@ -278,7 +278,7 @@ bool Tile::needsWorkerThreadLoading(
     const std::shared_ptr<GltfModifier>& pModifier) const noexcept {
   return this->getState() == TileLoadState::Unloaded ||
          this->getState() == TileLoadState::FailedTemporarily ||
-         GltfModifier::needsWorkerThreadModification(*this, pModifier) ||
+         GltfModifier::needsWorkerThreadModification(pModifier, *this) ||
          anyRasterOverlaysNeedLoading(*this);
 }
 
@@ -286,7 +286,7 @@ bool Tile::needsMainThreadLoading(
     const std::shared_ptr<GltfModifier>& pModifier) const noexcept {
   return this->isRenderContent() &&
          (this->getState() == TileLoadState::ContentLoaded ||
-          GltfModifier::needsMainThreadModification(*this, pModifier));
+          GltfModifier::needsMainThreadModification(pModifier, *this));
 }
 
 void Tile::setParent(Tile* pParent) noexcept {

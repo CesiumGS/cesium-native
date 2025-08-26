@@ -161,26 +161,26 @@ public:
   /**
    * @brief Checks if the given tile needs to be processed by the given
    * `GltfModifier` in a worker thread.
-   * @param tile The tile to check.
    * @param pModifier The `GltfModifier` to check.
+   * @param tile The tile to check.
    * @returns `true` if the tile needs to be processed by the `GltfModifier` in
    * a worker thread, or `false` otherwise.
    */
   static bool needsWorkerThreadModification(
-      const Tile& tile,
-      const std::shared_ptr<GltfModifier>& pModifier);
+      const std::shared_ptr<GltfModifier>& pModifier,
+      const Tile& tile);
 
   /**
    * @brief Checks if the given tile needs to be processed by the given
    * `GltfModifier` in the main thread.
-   * @param tile The tile to check.
    * @param pModifier The `GltfModifier` to check.
+   * @param tile The tile to check.
    * @returns `true` if the tile needs to be processed by the `GltfModifier` in
    * the main thread, or `false` otherwise.
    */
   static bool needsMainThreadModification(
-      const Tile& tile,
-      const std::shared_ptr<GltfModifier>& pModifier);
+      const std::shared_ptr<GltfModifier>& pModifier,
+      const Tile& tile);
 
 protected:
   GltfModifier();
