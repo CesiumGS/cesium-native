@@ -9,19 +9,19 @@
 
 namespace CesiumGltf {
 /**
- * @brief Compressed data for SPZ primitive.
+ * @brief Compressed data for SPZ v2 primitive.
  */
-struct CESIUMGLTF_API ExtensionKhrGaussianSplattingCompressionSpz final
+struct CESIUMGLTF_API ExtensionKhrGaussianSplattingCompressionSpz2 final
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
   static constexpr const char* TypeName =
-      "ExtensionKhrGaussianSplattingCompressionSpz";
+      "ExtensionKhrGaussianSplattingCompressionSpz2";
   /** @brief The official name of the extension. This should be the same as its
    * key in the `extensions` object. */
   static constexpr const char* ExtensionName =
-      "KHR_gaussian_splatting_compression_spz";
+      "KHR_gaussian_splatting_compression_spz_2";
 
   /**
    * @brief The index of the bufferView.
@@ -36,7 +36,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplattingCompressionSpz final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionKhrGaussianSplattingCompressionSpz));
+    accum += int64_t(sizeof(ExtensionKhrGaussianSplattingCompressionSpz2));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
 
