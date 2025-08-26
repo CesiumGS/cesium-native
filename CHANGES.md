@@ -14,6 +14,7 @@
 - Added `element_type` to `IntrusivePointer`, allowing it to be used with `std::pointer_types`.
 - Added implicit conversion of `IntrusivePointer<T>` to `T*`.
 - All properties and extensions from `tileset.json`, except `"root"`, are now parsed into `TilesetMetadata` when a tileset is loaded by `Cesium3DTilesSelection::Tileset`.
+- Added `accessorView` to `PropertyAttributePropertyView` to retrieve the underlying `AccessorView`.
 
 ##### Fixes :wrench:
 
