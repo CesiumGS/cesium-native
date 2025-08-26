@@ -5,7 +5,8 @@
 #include "splat-types.h"
 
 #include <CesiumGltf/Accessor.h>
-#include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
 
@@ -24,7 +25,7 @@ const float SH_C0 = 0.282095f;
 std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
     GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& /* primitive */,
-    const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz& spz) {
+    const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& spz) {
   CESIUM_TRACE("CesiumGltfReader::decodeBufferViewToGaussianCloud");
   CESIUM_ASSERT(readGltf.model.has_value());
   CesiumGltf::Model& model = readGltf.model.value();
@@ -98,7 +99,7 @@ CesiumGltf::Accessor* findAccessor(
   if (attributeIndex == -1) {
     readGltf.warnings.emplace_back(
         "Failed to find " + attributeName +
-        " attribute on KHR_guassian_splatting_compression_spz primitive");
+        " attribute on KHR_gaussian_splatting_compression_spz_2 primitive");
     return nullptr;
   }
 
@@ -170,7 +171,7 @@ void copyShCoeff(
 void decodePrimitive(
     GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& primitive,
-    CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz& spz) {
+    CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& spz) {
   CESIUM_TRACE("CesiumGltfReader::decodePrimitive");
   CESIUM_ASSERT(readGltf.model.has_value());
 
@@ -330,9 +331,14 @@ void decodeSpz(CesiumGltfReader::GltfReaderResult& readGltf) {
 
   for (CesiumGltf::Mesh& mesh : model.meshes) {
     for (CesiumGltf::MeshPrimitive& primitive : mesh.primitives) {
-      CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz* pSpz =
-          primitive.getExtension<
-              CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz>();
+      CesiumGltf::ExtensionKhrGaussianSplatting* pSplat = primitive.getExtension<CesiumGltf::ExtensionKhrGaussianSplatting>();
+      if(!pSplat) {
+        continue;
+      }
+
+      CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* pSpz =
+          pSplat->getExtension<
+              CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2>();
       if (!pSpz) {
         continue;
       }
@@ -340,13 +346,13 @@ void decodeSpz(CesiumGltfReader::GltfReaderResult& readGltf) {
       decodePrimitive(readGltf, primitive, *pSpz);
 
       // Remove the SPZ extension as it no longer applies.
-      primitive.extensions.erase(
-          CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz::
+      pSplat->extensions.erase(
+          CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2::
               ExtensionName);
     }
   }
 
   model.removeExtensionRequired(
-      CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz::ExtensionName);
+      CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2::ExtensionName);
 }
 } // namespace CesiumGltfReader
