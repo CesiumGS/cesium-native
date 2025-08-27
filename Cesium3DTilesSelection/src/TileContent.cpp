@@ -153,6 +153,11 @@ bool TileContent::isRenderContent() const noexcept {
       this->_contentKind);
 }
 
+bool TileContent::isFeatureContent() const noexcept {
+  return std::holds_alternative<std::unique_ptr<TileFeatureContent>>(
+      this->_contentKind);
+}
+
 const TileRenderContent* TileContent::getRenderContent() const noexcept {
   const std::unique_ptr<TileRenderContent>* pRenderContent =
       std::get_if<std::unique_ptr<TileRenderContent>>(&this->_contentKind);

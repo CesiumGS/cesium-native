@@ -311,6 +311,11 @@ public:
   bool isRenderContent() const noexcept;
 
   /**
+   * @brief Query if a tile has feature content
+   */
+  bool isFeatureContent() const noexcept;
+
+  /**
    * @brief Get the {@link TileRenderContent} which stores the glTF model
    * and render resources of the tile
    */

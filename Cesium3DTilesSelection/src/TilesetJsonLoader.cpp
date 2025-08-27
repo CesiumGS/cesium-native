@@ -793,7 +793,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
     ExternalContentInitializer&& externalContentInitializer,
-    const rapidjson::Document& tilesetJson,
+    rapidjson::Document& tilesetJson,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const auto& tileUrl = pCompletedRequest->url();
 
