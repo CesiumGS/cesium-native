@@ -236,7 +236,6 @@ const Tile* GltfModifier::getNextTileToLoadInMainThread() {
   CESIUM_ASSERT(!this->_mainThreadQueue.empty());
   const Tile* pResult = this->_mainThreadQueue.back().get();
   this->_mainThreadQueue.pop_back();
-  this->mainThreadQueue.pop_back();
   return pResult;
 }
 
