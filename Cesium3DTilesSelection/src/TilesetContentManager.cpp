@@ -1171,7 +1171,6 @@ void TilesetContentManager::reapplyGltfModifier(
                 modified ? modified->modifiedModel : previousModel;
             const auto it = model.extras.find("gltfUpAxis");
             if (it == model.extras.end()) {
-              CESIUM_ASSERT(false);
               tileLoadResult.glTFUpAxis = CesiumGeometry::Axis::Y;
             } else {
               tileLoadResult.glTFUpAxis = static_cast<CesiumGeometry::Axis>(
@@ -1190,11 +1189,19 @@ void TilesetContentManager::reapplyGltfModifier(
                 std::get<CesiumGltf::Model>(tileLoadResult.contentKind),
                 version);
 
-            return externals.pPrepareRendererResources->prepareInLoadThread(
-                externals.asyncSystem,
-                std::move(tileLoadResult),
-                tileTransform,
-                rendererOptions);
+            if (externals.pPrepareRendererResources) {
+              return externals.pPrepareRendererResources->prepareInLoadThread(
+                  externals.asyncSystem,
+                  std::move(tileLoadResult),
+                  tileTransform,
+                  rendererOptions);
+            } else {
+              return externals.asyncSystem
+                  .createResolvedFuture<TileLoadResultAndRenderResources>(
+                      TileLoadResultAndRenderResources{
+                          std::move(tileLoadResult),
+                          nullptr});
+            }
           })
       .thenInMainThread([this, pTile = Tile::Pointer(&tile)](
                             TileLoadResultAndRenderResources&& pair) {
@@ -1211,10 +1218,12 @@ void TilesetContentManager::reapplyGltfModifier(
           // resources but can then send the tile through the rest of the normal
           // pipeline. We know a Tile in the ContentLoaded state isn't already
           // being rendered.
-          this->_externals.pPrepareRendererResources->free(
-              *pTile,
-              pRenderContent->getRenderResources(),
-              nullptr);
+          if (this->_externals.pPrepareRendererResources) {
+            this->_externals.pPrepareRendererResources->free(
+                *pTile,
+                pRenderContent->getRenderResources(),
+                nullptr);
+          }
           pRenderContent->setModel(
               std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)));
           pRenderContent->setRenderResources(pair.pRenderResources);
@@ -1485,10 +1494,12 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
       case GltfModifierState::WorkerDone:
         // Free temporary render resources.
         CESIUM_ASSERT(pRenderContent->getModifiedRenderResources());
-        this->_externals.pPrepareRendererResources->free(
-            tile,
-            pRenderContent->getModifiedRenderResources(),
-            nullptr);
+        if (this->_externals.pPrepareRendererResources) {
+          this->_externals.pPrepareRendererResources->free(
+              tile,
+              pRenderContent->getModifiedRenderResources(),
+              nullptr);
+        }
         pRenderContent->resetModifiedModelAndRenderResources();
         pRenderContent->setGltfModifierState(GltfModifierState::Idle);
         break;
@@ -1687,20 +1698,26 @@ void TilesetContentManager::finishLoading(
           this->_externals.pGltfModifier.get(),
           tile)) {
     // Free outdated render resources before replacing them.
-    this->_externals.pPrepareRendererResources->free(
-        tile,
-        nullptr,
-        pRenderContent->getRenderResources());
+    if (this->_externals.pPrepareRendererResources) {
+      this->_externals.pPrepareRendererResources->free(
+          tile,
+          nullptr,
+          pRenderContent->getRenderResources());
+    }
 
     // Replace model and render resources with the newly modified versions,
     // discarding the old ones
     pRenderContent->replaceWithModifiedModel();
 
     // Run the main thread part of loading.
-    pRenderContent->setRenderResources(
-        this->_externals.pPrepareRendererResources->prepareInMainThread(
-            tile,
-            pRenderContent->getRenderResources()));
+    if (this->_externals.pPrepareRendererResources) {
+      pRenderContent->setRenderResources(
+          this->_externals.pPrepareRendererResources->prepareInMainThread(
+              tile,
+              pRenderContent->getRenderResources()));
+    } else {
+      pRenderContent->setRenderResources(nullptr);
+    }
 
     pRenderContent->setGltfModifierState(GltfModifierState::Idle);
     return;

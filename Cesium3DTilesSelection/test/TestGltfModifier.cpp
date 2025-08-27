@@ -3,6 +3,7 @@
 
 #include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
+#include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
@@ -168,5 +169,25 @@ TEST_CASE("GltfModifier") {
         *static_cast<TilesetContentManager*>(nullptr));
     CHECK_FALSE(pRequester->hasMoreTilesToLoadInWorkerThread());
     CHECK_FALSE(pRequester->hasMoreTilesToLoadInMainThread());
+  }
+
+  SUBCASE("trigger causes modifier to be reapplied and version number to be "
+          "updated") {
+    const TileRenderContent* pRenderContent =
+        pTile->getContent().getRenderContent();
+    REQUIRE(pRenderContent);
+
+    CHECK(
+        GltfModifierVersionExtension::getVersion(pRenderContent->getModel()) ==
+        std::nullopt);
+
+    pModifier->trigger();
+    REQUIRE(pModifier->getCurrentVersion() == 0);
+
+    while (GltfModifierVersionExtension::getVersion(
+               pRenderContent->getModel()) != 0) {
+      pTileset->loadTiles();
+      externals.asyncSystem.dispatchMainThreadTasks();
+    }
   }
 }
