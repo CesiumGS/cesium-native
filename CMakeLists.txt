@@ -31,9 +31,10 @@ endif()
 
 option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
 option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
+option(CESIUM_WASM64 "Enable 64-bit WebAssembly target" OFF)
 
 if (CESIUM_TARGET_WASM)
-    # Disable curl on wasm builds, as it is not supported.
+    # Make sure curl is disabled on wasm builds, as it is not supported.
     set(CESIUM_DISABLE_CURL ON)
 endif()
 
@@ -111,12 +112,12 @@ set(PACKAGES_PRIVATE
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
 
-# asmjit needed by blend2d on non-iOS platforms (iOS doesn't support JIT)
+# asmjit needed by blend2d on non-iOS platforms (iOS and wasm don't support JIT)
 if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     list(APPEND PACKAGES_PRIVATE blend2d asmjit)
 else()
     if(CESIUM_TARGET_WASM)
-        # Need to install blend2d for wasm builds
+        # libblend2d.a needs to be installed for wasm builds
         list(APPEND PACKAGES_PUBLIC blend2d[core])
     else()
         # Use [core] feature to disable default jit feature.
@@ -139,6 +140,15 @@ if(CESIUM_TARGET_WASM)
     # Does this make sense? No. Does it work? Somehow. ¯\_(ツ)_/¯
     set(ENV{CC} ${CMAKE_C_COMPILER})
     set(ENV{CXX} ${CMAKE_CXX_COMPILER})
+
+    # Make sure all files are compiled with -pthread and other required flags.
+    if(CESIUM_WASM64)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -sMEMORY64=1 -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -sMEMORY64=1 -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
+    else()
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -sMEMORY64=1 -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
+    endif()
 endif()
 
 if(CESIUM_USE_EZVCPKG)
@@ -159,7 +169,11 @@ if(CESIUM_USE_EZVCPKG)
 
     if(CESIUM_TARGET_WASM)
         # vcpkg will attempt to make this wasm32-emscripten if we don't declare it
-        set(VCPKG_TARGET_TRIPLET wasm32-emscripten)
+        if(CESIUM_WASM64)
+            set(VCPKG_TARGET_TRIPLET wasm64-emscripten)
+        else()
+            set(VCPKG_TARGET_TRIPLET wasm32-emscripten)
+        endif()
     endif()
 endif()
 
@@ -178,8 +192,11 @@ project(cesium-native
 )
 
 if(CESIUM_TARGET_WASM)
-    # Set to 8 for wasm64, 4 for wasm32. Currently only wasm32 is used.
-    set(CMAKE_SIZEOF_VOID_P 4)
+    if(CESIUM_WASM64)
+        set(CMAKE_SIZEOF_VOID_P 8)
+    else()
+        set(CMAKE_SIZEOF_VOID_P 4)
+    endif()
     # Tells emscripten to output an HTML harness for the generated WASM
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
 endif()
@@ -367,7 +384,7 @@ find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
 find_package(blend2d CONFIG REQUIRED)
-# asmjit should not be included with iOS builds as iOS doesn't support JIT compilation.
+# asmjit should not be included with iOS or wasm builds as they don't support JIT compilation.
 if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     find_package(asmjit CONFIG REQUIRED)
 endif()
