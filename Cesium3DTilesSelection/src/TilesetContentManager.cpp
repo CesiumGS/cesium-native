@@ -1104,17 +1104,17 @@ void TilesetContentManager::reapplyGltfModifier(
   if (pRenderContent->getModifiedModel()) {
     CESIUM_ASSERT(
         pRenderContent->getGltfModifierState() ==
-        GltfModifier::State::WorkerDone);
+        GltfModifierState::WorkerDone);
     this->_externals.pPrepareRendererResources->free(
         tile,
         pRenderContent->getModifiedRenderResources(),
         nullptr);
     pRenderContent->resetModifiedModelAndRenderResources();
-    pRenderContent->setGltfModifierState(GltfModifier::State::Idle);
+    pRenderContent->setGltfModifierState(GltfModifierState::Idle);
   }
 
   this->notifyTileStartLoading(&tile);
-  pRenderContent->setGltfModifierState(GltfModifier::State::WorkerRunning);
+  pRenderContent->setGltfModifierState(GltfModifierState::WorkerRunning);
 
   const CesiumGltf::Model& previousModel = pRenderContent->getModel();
 
@@ -1218,12 +1218,12 @@ void TilesetContentManager::reapplyGltfModifier(
           pRenderContent->setModel(
               std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)));
           pRenderContent->setRenderResources(pair.pRenderResources);
-          pRenderContent->setGltfModifierState(GltfModifier::State::Idle);
+          pRenderContent->setGltfModifierState(GltfModifierState::Idle);
         } else {
           // This is a reapply of the GltfModifier to an already loaded and
           // potentially rendered tile.
           CESIUM_ASSERT(pTile->getState() == TileLoadState::Done);
-          pRenderContent->setGltfModifierState(GltfModifier::State::WorkerDone);
+          pRenderContent->setGltfModifierState(GltfModifierState::WorkerDone);
           pRenderContent->setModifiedModelAndRenderResources(
               std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)),
               pair.pRenderResources);
@@ -1234,7 +1234,7 @@ void TilesetContentManager::reapplyGltfModifier(
           [this, pTile = Tile::Pointer(&tile), &externals, version](
               std::exception&& e) {
             pTile->getContent().getRenderContent()->setGltfModifierState(
-                GltfModifier::State::WorkerDone);
+                GltfModifierState::WorkerDone);
             this->notifyTileDoneLoading(pTile.get());
             SPDLOG_LOGGER_ERROR(
                 externals.pLogger,
@@ -1479,10 +1479,10 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     if (pRenderContent) {
       switch (pRenderContent->getGltfModifierState()) {
-      case GltfModifier::State::WorkerRunning:
+      case GltfModifierState::WorkerRunning:
         // Worker thread is running, we cannot unload yet.
         return UnloadTileContentResult::Keep;
-      case GltfModifier::State::WorkerDone:
+      case GltfModifierState::WorkerDone:
         // Free temporary render resources.
         CESIUM_ASSERT(pRenderContent->getModifiedRenderResources());
         this->_externals.pPrepareRendererResources->free(
@@ -1490,7 +1490,7 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
             pRenderContent->getModifiedRenderResources(),
             nullptr);
         pRenderContent->resetModifiedModelAndRenderResources();
-        pRenderContent->setGltfModifierState(GltfModifier::State::Idle);
+        pRenderContent->setGltfModifierState(GltfModifierState::Idle);
         break;
       default:
         break;
@@ -1702,7 +1702,7 @@ void TilesetContentManager::finishLoading(
             tile,
             pRenderContent->getRenderResources()));
 
-    pRenderContent->setGltfModifierState(GltfModifier::State::Idle);
+    pRenderContent->setGltfModifierState(GltfModifierState::Idle);
     return;
   }
 

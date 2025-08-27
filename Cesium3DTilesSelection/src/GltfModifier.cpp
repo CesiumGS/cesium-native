@@ -21,31 +21,11 @@
 
 namespace Cesium3DTilesSelection {
 
-class GltfModifier::NewVersionLoadRequester : public TileLoadRequester {
-public:
-  NewVersionLoadRequester(GltfModifier* pModifier);
-
-  double getWeight() const override { return 0.5; }
-  bool hasMoreTilesToLoadInWorkerThread() const override;
-  const Tile* getNextTileToLoadInWorkerThread() override;
-  bool hasMoreTilesToLoadInMainThread() const override;
-  const Tile* getNextTileToLoadInMainThread() override;
-
-  void notifyOfTrigger();
-
-  GltfModifier* pModifier;
-  const Tile* pRootTile;
-
-  // Ideally these would be weak pointers, but we don't currently have a good
-  // way to do that.
-  std::vector<Tile::ConstPointer> workerThreadQueue;
-  std::vector<Tile::ConstPointer> mainThreadQueue;
-};
-
 GltfModifier::GltfModifier()
     : _currentVersion(),
-      _pNewVersionLoadRequester(
-          std::make_unique<NewVersionLoadRequester>(this)){};
+      _pRootTile(nullptr),
+      _workerThreadQueue(),
+      _mainThreadQueue(){};
 
 GltfModifier::~GltfModifier() = default;
 
@@ -64,7 +44,19 @@ void GltfModifier::trigger() {
     ++*this->_currentVersion;
   }
 
-  this->_pNewVersionLoadRequester->notifyOfTrigger();
+  if (!this->isRegistered()) {
+    return;
+  }
+
+  // Add all already-loaded tiles to this requester worker thread load queue.
+  // Tiles that are in ContentLoading will be added to this queue when they
+  // finish.
+  LoadedConstTileEnumerator enumerator(this->_pRootTile);
+  for (const Tile& tile : enumerator) {
+    if (GltfModifier::needsWorkerThreadModification(this, tile)) {
+      this->_workerThreadQueue.emplace_back(&tile);
+    }
+  }
 }
 
 /*static*/ bool GltfModifier::needsWorkerThreadModification(
@@ -92,15 +84,14 @@ void GltfModifier::trigger() {
 
   // We can't modify a tile for which modification is already in progress.
   if (pRenderContent->getGltfModifierState() ==
-      GltfModifier::State::WorkerRunning) {
+      GltfModifierState::WorkerRunning) {
     return false;
   }
 
   // If modification is WorkerDone, and the version is already up-to-date, we
   // don't need to do it again. But if it's outdated, we want to run the worker
   // thread modification again.
-  if (pRenderContent->getGltfModifierState() ==
-      GltfModifier::State::WorkerDone) {
+  if (pRenderContent->getGltfModifierState() == GltfModifierState::WorkerDone) {
     const std::optional<CesiumGltf::Model>& maybeModifiedModel =
         pRenderContent->getModifiedModel();
     bool hasUpToDateModifiedModel =
@@ -111,7 +102,7 @@ void GltfModifier::trigger() {
     // Worker is idle. Modification is needed if the model version is out of
     // date.
     CESIUM_ASSERT(
-        pRenderContent->getGltfModifierState() == GltfModifier::State::Idle);
+        pRenderContent->getGltfModifierState() == GltfModifierState::Idle);
     bool hasUpToDateModel = GltfModifierVersionExtension::getVersion(
                                 pRenderContent->getModel()) == modelVersion;
     return !hasUpToDateModel;
@@ -142,8 +133,7 @@ void GltfModifier::trigger() {
 
   // We only need to do main thread processing after the worker thread
   // processing has completed.
-  if (pRenderContent->getGltfModifierState() !=
-      GltfModifier::State::WorkerDone) {
+  if (pRenderContent->getGltfModifierState() != GltfModifierState::WorkerDone) {
     return false;
   }
 
@@ -168,8 +158,8 @@ CesiumAsync::Future<void> GltfModifier::onRegister(
     TilesetContentManager& contentManager,
     const TilesetMetadata& tilesetMetadata,
     const Tile& rootTile) {
-  this->_pNewVersionLoadRequester->pRootTile = &rootTile;
-  contentManager.registerTileRequester(*this->_pNewVersionLoadRequester);
+  this->_pRootTile = &rootTile;
+  contentManager.registerTileRequester(*this);
 
   const TilesetExternals& externals = contentManager.getExternals();
   return this->onRegister(
@@ -181,9 +171,9 @@ CesiumAsync::Future<void> GltfModifier::onRegister(
 }
 
 void GltfModifier::onUnregister(TilesetContentManager& /* contentManager */) {
-  this->_pNewVersionLoadRequester->unregister();
-  this->_pNewVersionLoadRequester->mainThreadQueue.clear();
-  this->_pNewVersionLoadRequester->workerThreadQueue.clear();
+  this->unregister();
+  this->_mainThreadQueue.clear();
+  this->_workerThreadQueue.clear();
 }
 
 CesiumAsync::Future<void> GltfModifier::onRegister(
@@ -204,8 +194,9 @@ void GltfModifier::onOldVersionContentLoadingComplete(const Tile& tile) {
     // Tile just transitioned from ContentLoading -> ContentLoaded, but it did
     // so based on the load version. Add it to the worker thread queue in order
     // to re-run the GltfModifier on it.
-    if (this->_pNewVersionLoadRequester->isRegistered()) {
-      this->_pNewVersionLoadRequester->workerThreadQueue.emplace_back(&tile);
+    if (this->isRegistered() &&
+        GltfModifier::needsWorkerThreadModification(this, tile)) {
+      this->_workerThreadQueue.emplace_back(&tile);
     }
   }
 }
@@ -215,61 +206,36 @@ void GltfModifier::onWorkerThreadApplyComplete(const Tile& tile) {
   // processing of the new version. But if the new version is already outdated,
   // we need to do worker thread modification (again) instead of main thread
   // modification.
-  if (this->_pNewVersionLoadRequester->isRegistered()) {
+  if (this->isRegistered()) {
     if (tile.needsMainThreadLoading(this)) {
-      this->_pNewVersionLoadRequester->mainThreadQueue.emplace_back(&tile);
+      this->_mainThreadQueue.emplace_back(&tile);
     } else if (tile.needsWorkerThreadLoading(this)) {
-      this->_pNewVersionLoadRequester->workerThreadQueue.emplace_back(&tile);
+      this->_workerThreadQueue.emplace_back(&tile);
     }
   }
 }
 
-GltfModifier::NewVersionLoadRequester::NewVersionLoadRequester(
-    GltfModifier* pModifier_)
-    : pModifier(pModifier_),
-      pRootTile(nullptr),
-      workerThreadQueue(),
-      mainThreadQueue() {}
+double GltfModifier::getWeight() const { return 0.5; }
 
-void GltfModifier::NewVersionLoadRequester::notifyOfTrigger() {
-  if (!this->isRegistered()) {
-    return;
-  }
-
-  // Add all already-loaded tiles to this requester worker thread load queue.
-  // Tiles that are in ContentLoading will be added to this queue when they
-  // finish.
-  LoadedConstTileEnumerator enumerator(this->pRootTile);
-  for (const Tile& tile : enumerator) {
-    TileLoadState state = tile.getState();
-    if (state == TileLoadState::ContentLoaded || state == TileLoadState::Done) {
-      this->workerThreadQueue.emplace_back(&tile);
-    }
-  }
+bool GltfModifier::hasMoreTilesToLoadInWorkerThread() const {
+  return !this->_workerThreadQueue.empty();
 }
 
-bool GltfModifier::NewVersionLoadRequester::hasMoreTilesToLoadInWorkerThread()
-    const {
-  return !this->workerThreadQueue.empty();
-}
-
-const Tile*
-GltfModifier::NewVersionLoadRequester::getNextTileToLoadInWorkerThread() {
-  CESIUM_ASSERT(!this->workerThreadQueue.empty());
-  const Tile* pResult = this->workerThreadQueue.back().get();
-  this->workerThreadQueue.pop_back();
+const Tile* GltfModifier::getNextTileToLoadInWorkerThread() {
+  CESIUM_ASSERT(!this->_workerThreadQueue.empty());
+  const Tile* pResult = this->_workerThreadQueue.back().get();
+  this->_workerThreadQueue.pop_back();
   return pResult;
 }
 
-bool GltfModifier::NewVersionLoadRequester::hasMoreTilesToLoadInMainThread()
-    const {
-  return !this->mainThreadQueue.empty();
+bool GltfModifier::hasMoreTilesToLoadInMainThread() const {
+  return !this->_mainThreadQueue.empty();
 }
 
-const Tile*
-GltfModifier::NewVersionLoadRequester::getNextTileToLoadInMainThread() {
-  CESIUM_ASSERT(!this->mainThreadQueue.empty());
-  const Tile* pResult = this->mainThreadQueue.back().get();
+const Tile* GltfModifier::getNextTileToLoadInMainThread() {
+  CESIUM_ASSERT(!this->_mainThreadQueue.empty());
+  const Tile* pResult = this->_mainThreadQueue.back().get();
+  this->_mainThreadQueue.pop_back();
   this->mainThreadQueue.pop_back();
   return pResult;
 }

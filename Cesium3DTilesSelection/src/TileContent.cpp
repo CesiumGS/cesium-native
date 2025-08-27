@@ -17,7 +17,7 @@ namespace Cesium3DTilesSelection {
 TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
     : _model{std::move(model)},
       _pRenderResources{nullptr},
-      _modifierState{GltfModifier::State::Idle},
+      _modifierState{GltfModifierState::Idle},
       _modifiedModel{},
       _pModifiedRenderResources(nullptr),
       _rasterOverlayDetails{},
@@ -38,12 +38,12 @@ void TileRenderContent::setModel(CesiumGltf::Model&& model) {
   this->_model = std::move(model);
 }
 
-GltfModifier::State TileRenderContent::getGltfModifierState() const noexcept {
+GltfModifierState TileRenderContent::getGltfModifierState() const noexcept {
   return this->_modifierState;
 }
 
 void TileRenderContent::setGltfModifierState(
-    GltfModifier::State modifierState) noexcept {
+    GltfModifierState modifierState) noexcept {
   this->_modifierState = modifierState;
 }
 

@@ -26,6 +26,7 @@
 
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
+class GltfModifier;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 class TileReferenceCountTracker {

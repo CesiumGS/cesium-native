@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/GltfModifier.h>
+#include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumGeospatial/Projection.h>
@@ -202,13 +202,13 @@ public:
    * @brief Gets the state of the {@link GltfModifier} processing of this
    * tile's content.
    * */
-  GltfModifier::State getGltfModifierState() const noexcept;
+  GltfModifierState getGltfModifierState() const noexcept;
 
   /**
    * @brief Sets the state of the {@link GltfModifier} processing of this
    * tile's content.
    */
-  void setGltfModifierState(GltfModifier::State modifierState) noexcept;
+  void setGltfModifierState(GltfModifierState modifierState) noexcept;
 
   /**
    * @brief Gets the modified model produced by the {@link GltfModifier} but
@@ -255,7 +255,7 @@ private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
 
-  GltfModifier::State _modifierState;
+  GltfModifierState _modifierState;
   std::optional<CesiumGltf::Model> _modifiedModel;
   void* _pModifiedRenderResources;
 

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/GltfModifierState.h>
+#include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumGltf/Model.h>
@@ -18,7 +21,6 @@ class IAssetAccessor;
 
 namespace Cesium3DTilesSelection {
 
-class Tile;
 class TilesetMetadata;
 class TilesetContentManager;
 
@@ -97,19 +99,8 @@ struct GltfModifierOutput {
  * The {@link apply} function is called from a worker thread. All other methods
  * must only be called from the main thread.
  */
-class GltfModifier {
+class GltfModifier : private TileLoadRequester {
 public:
-  /** The state of the glTF modifier process for a given tile content's model.
-   */
-  enum class State {
-    /** Modifier is not currently processing this tile. */
-    Idle,
-    /** Worker-thread phase is in progress. */
-    WorkerRunning,
-    /** Worker-thread phase is complete, main-thread phase is not done yet. */
-    WorkerDone,
-  };
-
   /**
    * @brief Gets the current version number, or `std::nullopt` if the
    * `GltfModifier` is currently inactive.
@@ -264,12 +255,24 @@ private:
    */
   void onWorkerThreadApplyComplete(const Tile& tile);
 
+  // TileLoadRequester implementation
+  double getWeight() const override;
+  bool hasMoreTilesToLoadInWorkerThread() const override;
+  const Tile* getNextTileToLoadInWorkerThread() override;
+  bool hasMoreTilesToLoadInMainThread() const override;
+  const Tile* getNextTileToLoadInMainThread() override;
+
   std::optional<int64_t> _currentVersion;
 
-  class NewVersionLoadRequester;
-  std::unique_ptr<NewVersionLoadRequester> _pNewVersionLoadRequester;
+  const Tile* _pRootTile;
+
+  // Ideally these would be weak pointers, but we don't currently have a good
+  // way to do that.
+  std::vector<Tile::ConstPointer> _workerThreadQueue;
+  std::vector<Tile::ConstPointer> _mainThreadQueue;
 
   friend class TilesetContentManager;
+  friend class MockTilesetContentManagerForGltfModifier;
 };
 
 } // namespace Cesium3DTilesSelection
