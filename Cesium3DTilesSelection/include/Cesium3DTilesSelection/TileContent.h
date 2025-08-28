@@ -204,8 +204,17 @@ private:
   float _lodTransitionFadePercentage;
 };
 
+/**
+ * @brief A content tag that indicates a tile has a GeoJson content and
+ * render resources for the resulting geometry.
+ */
 class CESIUM3DTILESSELECTION_API TileFeatureContent {
 public:
+  /**
+   * @brief Construct the content with a GeoJson document.
+   *
+   * @param geoJson A GeoJson document that will be owned by this content
+   */
   explicit TileFeatureContent(CesiumVectorData::GeoJsonDocument&& geoJson);
 
   /**
@@ -339,8 +348,16 @@ public:
    */
   TileExternalContent* getExternalContent() noexcept;
 
+  /**
+   * @brief Get the {@link TileFeatureContent} which stores GeoJson
+   * and render resources of the tile
+   */
   const TileFeatureContent* getFeatureContent() const noexcept;
 
+  /**
+   * @brief Get the {@link TileFeatureContent} which stores GeoJson
+   * and render resources of the tile
+   */
   TileFeatureContent* getFeatureContent() noexcept;
 
 private:

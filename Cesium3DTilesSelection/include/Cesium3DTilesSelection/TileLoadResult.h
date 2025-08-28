@@ -35,7 +35,7 @@ class Tile;
  *
  * 4. Returning {@link CesiumGltf::Model} means that this tile has glTF model
  *
- * 5. Returning {@Link CesiumVectorData::GeoJsonDocument} means that this tile has feature data
+ * 5. Returning {@link CesiumVectorData::GeoJsonDocument} means that this tile has feature data
  */
 using TileContentKind = std::variant<
     TileUnknownContent,
