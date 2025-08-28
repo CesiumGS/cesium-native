@@ -1,6 +1,7 @@
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
 
 #include <memory>
 #include <utility>

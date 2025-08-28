@@ -41,6 +41,7 @@
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
 
 #include <fmt/format.h>
 #include <glm/common.hpp>

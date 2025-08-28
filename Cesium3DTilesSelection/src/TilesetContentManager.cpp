@@ -49,6 +49,7 @@
 #include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/joinToString.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
 
 #include <fmt/format.h>
 #include <glm/common.hpp>
