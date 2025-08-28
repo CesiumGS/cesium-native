@@ -1146,17 +1146,20 @@ void TilesetContentManager::loadTileContent(
                       std::move(tileLoadInfo),
                       rendererOptions);
                 });
-          } else if (std::holds_alternative<CesiumVectorData::GeoJsonDocument>(result.contentKind)
-                     && tileLoadInfo.pPrepareRendererResources) {
+          } else if (
+              std::holds_alternative<CesiumVectorData::GeoJsonDocument>(
+                  result.contentKind) &&
+              tileLoadInfo.pPrepareRendererResources) {
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
                  tileLoadInfo = std::move(tileLoadInfo),
                  rendererOptions]() mutable {
-                  return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-                      tileLoadInfo.asyncSystem,
-                      std::move(result),
-                      tileLoadInfo.tileTransform,
-                      rendererOptions);
+                  return tileLoadInfo.pPrepareRendererResources
+                      ->prepareInLoadThread(
+                          tileLoadInfo.asyncSystem,
+                          std::move(result),
+                          tileLoadInfo.tileTransform,
+                          rendererOptions);
                 });
           }
         }

@@ -847,46 +847,6 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       ellipsoid};
 }
 
-TileLoadResult parseExternalTilesetInWorkerThread(
-    const glm::dmat4& tileTransform,
-    CesiumGeometry::Axis upAxis,
-    TileRefine tileRefine,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
-    ExternalContentInitializer&& externalContentInitializer,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  // create external tileset
-  const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
-  const auto& responseData = pResponse->data();
-
-  rapidjson::Document tilesetJson;
-  tilesetJson.Parse(
-      reinterpret_cast<const char*>(responseData.data()),
-      responseData.size());
-  if (tilesetJson.HasParseError()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Error when parsing tileset JSON, error code {} at byte offset {}",
-        tilesetJson.GetParseError(),
-        tilesetJson.GetErrorOffset());
-    return TileLoadResult::createFailedResult(
-        pAssetAccessor,
-        std::move(pCompletedRequest));
-  }
-
-  return parseExternalTilesetInWorkerThread(
-      tileTransform,
-      upAxis,
-      tileRefine,
-      pLogger,
-      pAssetAccessor,
-      std::move(pCompletedRequest),
-      std::move(externalContentInitializer),
-      tilesetJson,
-      ellipsoid);
-}
-
 TileLoadResult parseJsonContentInWorkerThread(
     const glm::dmat4& tileTransform,
     CesiumGeometry::Axis upAxis,
