@@ -2,17 +2,19 @@
 
 #include "CesiumGltf/BufferView.h"
 #include "CesiumGltf/MeshPrimitive.h"
-#include "splat-types.h"
 
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/JsonValue.h>
 
 #include <fmt/format.h>
 #include <glm/fwd.hpp>
 #include <load-spz.h>
+#include <splat-types.h>
 
 #include <cmath>
 #include <cstdlib>
@@ -21,6 +23,10 @@ namespace CesiumGltfReader {
 namespace {
 
 const float SH_C0 = 0.282095f;
+
+const std::string ALTERNATE_EXT_NAME1 = "KHR_spz_compression";
+const std::string ALTERNATE_EXT_NAME2 =
+    "KHR_gaussian_splatting_compression_spz";
 
 std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
     GltfReaderResult& readGltf,
@@ -323,6 +329,79 @@ void decodePrimitive(
     copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 6);
   }
 }
+
+CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2*
+addExtensionFromJsonValue(
+    const std::string& extName,
+    CesiumGltfReader::GltfReaderResult& readGltf,
+    CesiumGltf::ExtensionKhrGaussianSplatting& splatting,
+    CesiumUtility::JsonValue* pKhrJson) {
+
+  if (!pKhrJson->isObject()) {
+    readGltf.errors.push_back(fmt::format("Invalid {} extension", extName));
+    return nullptr;
+  }
+  const CesiumUtility::JsonValue::Object::const_iterator it =
+      pKhrJson->getObject().find("bufferView");
+  if (it == pKhrJson->getObject().end()) {
+    readGltf.errors.push_back(
+        fmt::format("No `bufferView` property found on {} extension", extName));
+    return nullptr;
+  }
+  if (!it->second.isInt64()) {
+    readGltf.errors.push_back(fmt::format(
+        "`bufferView` property on {} extension must be an integer value",
+        extName));
+    return nullptr;
+  }
+
+  CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& ext =
+      splatting.addExtension<
+          CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2>();
+  ext.bufferView = static_cast<int32_t>(it->second.getInt64());
+  return &ext;
+}
+
+CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* conformExtension(
+    CesiumGltfReader::GltfReaderResult& readGltf,
+    CesiumGltf::MeshPrimitive& primitive,
+    CesiumGltf::ExtensionKhrGaussianSplatting& splatting) {
+
+  // Check for the real thing.
+  CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* pSpz =
+      splatting.getExtension<
+          CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2>();
+  if (pSpz) {
+    return pSpz;
+  }
+
+  // Check for the old versions.
+  CesiumUtility::JsonValue* pKhrSpz =
+      primitive.getGenericExtension(ALTERNATE_EXT_NAME1);
+  if (pKhrSpz != nullptr) {
+    CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* pResult =
+        addExtensionFromJsonValue(
+            ALTERNATE_EXT_NAME1,
+            readGltf,
+            splatting,
+            pKhrSpz);
+    primitive.extensions.erase(ALTERNATE_EXT_NAME1);
+    return pResult;
+  }
+
+  CesiumUtility::JsonValue* pSpzNoVersion =
+      primitive.getGenericExtension(ALTERNATE_EXT_NAME2);
+  if (pSpzNoVersion != nullptr) {
+    CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* pResult =
+        addExtensionFromJsonValue(
+            ALTERNATE_EXT_NAME2,
+            readGltf,
+            splatting,
+            pKhrSpz);
+    primitive.extensions.erase(ALTERNATE_EXT_NAME2);
+    return pResult;
+  }
+}
 } // namespace
 
 void decodeSpz(CesiumGltfReader::GltfReaderResult& readGltf) {
@@ -342,8 +421,7 @@ void decodeSpz(CesiumGltfReader::GltfReaderResult& readGltf) {
       }
 
       CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* pSpz =
-          pSplat->getExtension<
-              CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2>();
+          conformExtension(readGltf, primitive, *pSplat);
       if (!pSpz) {
         continue;
       }
@@ -359,5 +437,25 @@ void decodeSpz(CesiumGltfReader::GltfReaderResult& readGltf) {
 
   model.removeExtensionRequired(
       CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2::ExtensionName);
+  model.removeExtensionRequired(ALTERNATE_EXT_NAME1);
+  model.removeExtensionRequired(ALTERNATE_EXT_NAME2);
+}
+
+bool hasSpzExtension(GltfReaderResult& readGltf) {
+  if (readGltf.model->isExtensionUsed(
+          CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2::
+              ExtensionName)) {
+    return true;
+  }
+
+  if (readGltf.model->isExtensionUsed(ALTERNATE_EXT_NAME1)) {
+    return true;
+  }
+
+  if (readGltf.model->isExtensionUsed(ALTERNATE_EXT_NAME2)) {
+    return true;
+  }
+
+  return false;
 }
 } // namespace CesiumGltfReader
