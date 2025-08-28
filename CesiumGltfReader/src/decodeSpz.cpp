@@ -401,6 +401,8 @@ CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* conformExtension(
     primitive.extensions.erase(ALTERNATE_EXT_NAME2);
     return pResult;
   }
+
+  return nullptr;
 }
 } // namespace
 
