@@ -164,9 +164,8 @@ TEST_CASE("GltfModifier") {
     pModifier->trigger();
     CHECK(pRequester->hasMoreTilesToLoadInWorkerThread());
 
-    MockTilesetContentManagerForGltfModifier::onUnregister(
-        *pModifier,
-        *static_cast<TilesetContentManager*>(nullptr));
+    pTileset.reset();
+
     CHECK_FALSE(pRequester->hasMoreTilesToLoadInWorkerThread());
     CHECK_FALSE(pRequester->hasMoreTilesToLoadInMainThread());
   }
