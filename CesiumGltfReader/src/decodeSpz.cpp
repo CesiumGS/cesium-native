@@ -175,6 +175,8 @@ void decodePrimitive(
   CESIUM_TRACE("CesiumGltfReader::decodePrimitive");
   CESIUM_ASSERT(readGltf.model.has_value());
 
+  // TODO: handle different accessor component types
+
   std::unique_ptr<spz::GaussianCloud> pGaussian =
       decodeBufferViewToGaussianCloud(readGltf, primitive, spz);
   if (!pGaussian) {
@@ -240,84 +242,86 @@ void decodePrimitive(
   CesiumGltf::Accessor* pColorAccessor =
       findAccessor(readGltf, primitive, "COLOR_0", false);
   if (pColorAccessor) {
-    {
-      pColorAccessor->bufferView =
-          static_cast<int32_t>(readGltf.model->bufferViews.size());
-      CesiumGltf::BufferView& bufferView =
-          readGltf.model->bufferViews.emplace_back();
-      bufferView.buffer =
-          static_cast<int32_t>(readGltf.model->buffers.size() - 1);
-      bufferView.byteLength = static_cast<int64_t>(
-          sizeof(float) *
-          (pGaussian->colors.size() + pGaussian->alphas.size()));
+    pColorAccessor->bufferView =
+        static_cast<int32_t>(readGltf.model->bufferViews.size());
+    CesiumGltf::BufferView& bufferView =
+        readGltf.model->bufferViews.emplace_back();
+    bufferView.buffer =
+        static_cast<int32_t>(readGltf.model->buffers.size() - 1);
+    bufferView.byteLength = static_cast<int64_t>(
+        (pGaussian->colors.size() + pGaussian->alphas.size()));
 
-      size_t start = buffer.cesium.data.size();
-      buffer.cesium.data.resize(start + pGaussian->alphas.size() * 4);
-      bufferView.byteOffset = static_cast<int64_t>(start);
-      for (size_t i = 0; i < pGaussian->alphas.size(); i++) {
-        glm::fvec4 color(
-            0.5 + pGaussian->colors[i * 3] * SH_C0,
-            0.5 + pGaussian->colors[i * 3 + 1] * SH_C0,
-            0.5 + pGaussian->colors[i * 3 + 2] * SH_C0,
-            1.0 / (1.0 + exp(-pGaussian->alphas[i])));
-        memcpy(
-            buffer.cesium.data.data() + start + i * sizeof(glm::fvec4),
-            &color,
-            sizeof(glm::fvec4));
-      }
+    size_t start = buffer.cesium.data.size();
+    buffer.cesium.data.resize(
+        start + static_cast<size_t>(bufferView.byteLength));
+    bufferView.byteOffset = static_cast<int64_t>(start);
+    for (size_t i = 0; i < pGaussian->alphas.size(); i++) {
+      glm::fvec4 color(
+          0.5 + pGaussian->colors[i * 3] * SH_C0,
+          0.5 + pGaussian->colors[i * 3 + 1] * SH_C0,
+          0.5 + pGaussian->colors[i * 3 + 2] * SH_C0,
+          1.0 / (1.0 + exp(-pGaussian->alphas[i])));
+      glm::u8vec4 coloru8(
+          (uint8_t)(color.x * 0xff),
+          (uint8_t)(color.y * 0xff),
+          (uint8_t)(color.z * 0xff),
+          (uint8_t)(color.w * 0xff));
+      memcpy(
+          buffer.cesium.data.data() + start + i * sizeof(glm::u8vec4),
+          &coloru8,
+          sizeof(glm::u8vec4));
     }
+  }
 
-    // Scale needs to be converted
-    CesiumGltf::Accessor* pScaleAccessor =
-        findAccessor(readGltf, primitive, "_SCALE", true);
-    if (pScaleAccessor) {
-      {
-        pScaleAccessor->bufferView =
-            static_cast<int32_t>(readGltf.model->bufferViews.size());
-        CesiumGltf::BufferView& bufferView =
-            readGltf.model->bufferViews.emplace_back();
-        bufferView.buffer =
-            static_cast<int32_t>(readGltf.model->buffers.size() - 1);
-        bufferView.byteLength =
-            static_cast<int64_t>(sizeof(float) * pGaussian->scales.size());
+  // Scale needs to be converted
+  CesiumGltf::Accessor* pScaleAccessor =
+      findAccessor(readGltf, primitive, "_SCALE", true);
+  if (pScaleAccessor) {
+    pScaleAccessor->bufferView =
+        static_cast<int32_t>(readGltf.model->bufferViews.size());
+    CesiumGltf::BufferView& bufferView =
+        readGltf.model->bufferViews.emplace_back();
+    bufferView.buffer =
+        static_cast<int32_t>(readGltf.model->buffers.size() - 1);
+    bufferView.byteLength =
+        static_cast<int64_t>(sizeof(float) * pGaussian->scales.size());
 
-        size_t start = buffer.cesium.data.size();
-        buffer.cesium.data.resize(start + pGaussian->scales.size());
-        bufferView.byteOffset = static_cast<int64_t>(start);
-        for (size_t i = 0; i < pGaussian->scales.size(); i++) {
-          float scale = exp(pGaussian->scales[i]);
-          memcpy(
-              buffer.cesium.data.data() + start + i * sizeof(float),
-              &scale,
-              sizeof(float));
-        }
-      }
+    size_t start = buffer.cesium.data.size();
+    buffer.cesium.data.resize(
+        start + static_cast<size_t>(bufferView.byteLength));
+    bufferView.byteOffset = static_cast<int64_t>(start);
+    for (size_t i = 0; i < pGaussian->scales.size(); i++) {
+      float scale = exp(pGaussian->scales[i]);
+      memcpy(
+          buffer.cesium.data.data() + start + i * sizeof(float),
+          &scale,
+          sizeof(float));
     }
+  }
 
-    if (pGaussian->shDegree > 0) {
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, 0);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, 1);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, 2);
-    }
+  if (pGaussian->shDegree > 0) {
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, 0);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, 1);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, 2);
+  }
 
-    if (pGaussian->shDegree > 1) {
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 0);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 1);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 2);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 3);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 4);
-    }
+  if (pGaussian->shDegree > 1) {
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 0);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 1);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 2);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 3);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 4);
+  }
 
-    if (pGaussian->shDegree > 2) {
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 0);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 1);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 2);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 3);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 4);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 5);
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 6);
-    }
-  } // namespace
+  if (pGaussian->shDegree > 2) {
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 0);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 1);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 2);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 3);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 4);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 5);
+    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 6);
+  }
 }
 } // namespace
 
@@ -331,8 +335,9 @@ void decodeSpz(CesiumGltfReader::GltfReaderResult& readGltf) {
 
   for (CesiumGltf::Mesh& mesh : model.meshes) {
     for (CesiumGltf::MeshPrimitive& primitive : mesh.primitives) {
-      CesiumGltf::ExtensionKhrGaussianSplatting* pSplat = primitive.getExtension<CesiumGltf::ExtensionKhrGaussianSplatting>();
-      if(!pSplat) {
+      CesiumGltf::ExtensionKhrGaussianSplatting* pSplat =
+          primitive.getExtension<CesiumGltf::ExtensionKhrGaussianSplatting>();
+      if (!pSplat) {
         continue;
       }
 
