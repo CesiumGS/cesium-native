@@ -71,49 +71,26 @@ std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
   return std::make_unique<spz::GaussianCloud>(std::move(gaussians));
 }
 
-int32_t findAttributeIndex(
-    CesiumGltf::MeshPrimitive& primitive,
-    const std::string& attributeName,
-    bool mightHavePrefix) {
-  // In previous versions of the KHR_gaussian_splatting draft, the attributes
-  // were prefixed with an underscore. Now, they are prefixed with
-  // `KHR_gaussian_splatting:`. We need to check for both as some tilesets were
-  // already created with the previous naming conventions.
-  auto attrIt = primitive.attributes.find(attributeName);
-  if (attrIt != primitive.attributes.end()) {
-    return attrIt->second;
-  }
-
-  if (mightHavePrefix) {
-    attrIt = primitive.attributes.find(
-        "KHR_gaussian_splatting:" + attributeName.substr(1));
-    if (attrIt != primitive.attributes.end()) {
-      return attrIt->second;
-    }
-  }
-
-  return -1;
-}
-
 CesiumGltf::Accessor* findAccessor(
     GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& primitive,
-    const std::string& attributeName,
-    bool mightHavePrefix) {
-  const int32_t attributeIndex =
-      findAttributeIndex(primitive, attributeName, mightHavePrefix);
-  if (attributeIndex == -1) {
+    const std::string& attributeName) {
+  const std::unordered_map<const std::string, int32_t>::const_iterator
+      attributeIt = primitive.attributes.find(attributeName);
+  if (attributeIt == primitive.attributes.end()) {
     readGltf.warnings.emplace_back(
         "Failed to find " + attributeName +
         " attribute on KHR_gaussian_splatting_compression_spz_2 primitive");
     return nullptr;
   }
 
-  CesiumGltf::Accessor* pAccessor =
-      CesiumGltf::Model::getSafe(&readGltf.model->accessors, attributeIndex);
+  CesiumGltf::Accessor* pAccessor = CesiumGltf::Model::getSafe(
+      &readGltf.model->accessors,
+      attributeIt->second);
   if (!pAccessor) {
     readGltf.warnings.emplace_back(
-        "Failed to find accessor at index " + std::to_string(attributeIndex));
+        "Failed to find accessor at index " +
+        std::to_string(attributeIt->second));
     return nullptr;
   }
 
@@ -148,8 +125,10 @@ void copyShCoeff(
   CesiumGltf::Accessor* pAccessor = findAccessor(
       readGltf,
       primitive,
-      fmt::format("_SH_DEGREE_{}_COEF_{}", degree, coeffIndex),
-      true);
+      fmt::format(
+          "KHR_gaussian_splatting:SH_DEGREE_{}_COEF_{}",
+          degree,
+          coeffIndex));
   if (!pAccessor) {
     return;
   }
@@ -201,7 +180,7 @@ void decodePrimitive(
 
   // Position and rotation can be copied verbatim
   CesiumGltf::Accessor* pPosAccessor =
-      findAccessor(readGltf, primitive, "POSITION", false);
+      findAccessor(readGltf, primitive, "POSITION");
   if (pPosAccessor) {
     pPosAccessor->bufferView =
         static_cast<int32_t>(readGltf.model->bufferViews.size());
@@ -223,7 +202,7 @@ void decodePrimitive(
   }
 
   CesiumGltf::Accessor* pRotAccessor =
-      findAccessor(readGltf, primitive, "_ROTATION", true);
+      findAccessor(readGltf, primitive, "KHR_gaussian_splatting:ROTATION");
   if (pRotAccessor) {
     pRotAccessor->bufferView =
         static_cast<int32_t>(readGltf.model->bufferViews.size());
@@ -246,7 +225,7 @@ void decodePrimitive(
 
   // Color needs to be interleaved with alphas and have its values converted
   CesiumGltf::Accessor* pColorAccessor =
-      findAccessor(readGltf, primitive, "COLOR_0", false);
+      findAccessor(readGltf, primitive, "COLOR_0");
   if (pColorAccessor) {
     pColorAccessor->bufferView =
         static_cast<int32_t>(readGltf.model->bufferViews.size());
@@ -281,7 +260,7 @@ void decodePrimitive(
 
   // Scale needs to be converted
   CesiumGltf::Accessor* pScaleAccessor =
-      findAccessor(readGltf, primitive, "_SCALE", true);
+      findAccessor(readGltf, primitive, "KHR_gaussian_splatting:SCALE");
   if (pScaleAccessor) {
     pScaleAccessor->bufferView =
         static_cast<int32_t>(readGltf.model->bufferViews.size());
@@ -306,27 +285,21 @@ void decodePrimitive(
   }
 
   if (pGaussian->shDegree > 0) {
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, 0);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, 1);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, 2);
+    for (int i = 0; i < 3; i++) {
+      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, i);
+    }
   }
 
   if (pGaussian->shDegree > 1) {
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 0);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 1);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 2);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 3);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, 4);
+    for (int i = 0; i < 5; i++) {
+      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, i);
+    }
   }
 
   if (pGaussian->shDegree > 2) {
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 0);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 1);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 2);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 3);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 4);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 5);
-    copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, 6);
+    for (int i = 0; i < 7; i++) {
+      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, i);
+    }
   }
 }
 
@@ -362,7 +335,30 @@ addExtensionFromJsonValue(
   return &ext;
 }
 
-CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* conformExtension(
+// Maps attribute names from older versions of the extension to the names from
+// the current version of the extension.
+void fixAttributeNames(CesiumGltf::MeshPrimitive& primitive) {
+  std::vector<std::string> attributesToConvert;
+  attributesToConvert.reserve(primitive.attributes.size());
+  for (std::pair<const std::string, int32_t>& attribute :
+       primitive.attributes) {
+    if (attribute.first == "_SCALE" || attribute.first == "_ROTATION" ||
+        attribute.first.starts_with("_SH_DEGREE_")) {
+      attributesToConvert.push_back(attribute.first);
+    }
+  }
+
+  for (const std::string& oldName : attributesToConvert) {
+    const int32_t accessorIndex = primitive.attributes[oldName];
+    primitive.attributes.erase(oldName);
+    primitive.attributes.emplace(
+        "KHR_gaussian_splatting:" + oldName.substr(1),
+        accessorIndex);
+  }
+}
+
+CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2*
+getAndMaybeConvertSpzExtension(
     CesiumGltfReader::GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& primitive,
     CesiumGltf::ExtensionKhrGaussianSplatting& splatting) {
@@ -423,11 +419,12 @@ void decodeSpz(CesiumGltfReader::GltfReaderResult& readGltf) {
       }
 
       CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* pSpz =
-          conformExtension(readGltf, primitive, *pSplat);
+          getAndMaybeConvertSpzExtension(readGltf, primitive, *pSplat);
       if (!pSpz) {
         continue;
       }
 
+      fixAttributeNames(primitive);
       decodePrimitive(readGltf, primitive, *pSpz);
 
       // Remove the SPZ extension as it no longer applies.
