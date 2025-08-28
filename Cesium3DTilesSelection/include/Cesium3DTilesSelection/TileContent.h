@@ -224,7 +224,18 @@ public:
    */
   void* getRenderResources() const noexcept;
 
+  /**
+   * @brief Set the GeoJson for this content
+   *
+   * @param geoJson a GeoJsonDocument that will be owned by this content
+   */
   void setGeoJson(const CesiumVectorData::GeoJsonDocument& geoJson);
+
+  /**
+   * @brief Set the GeoJson for this content
+   *
+   * @param geoJson a GeoJsonDocument that will be owned by this content
+   */
   void setGeoJson(CesiumVectorData::GeoJsonDocument&& geoJson);
 
   /**
