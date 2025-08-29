@@ -1,4 +1,4 @@
-#include <Cesium3DTilesSelection/GltfModifier.h>
+#include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/Assert.h>

@@ -1,6 +1,7 @@
 #include "TilesetContentManager.h"
 
 #include <Cesium3DTilesSelection/GltfModifier.h>
+#include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/Tile.h>

@@ -7,6 +7,7 @@
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
+#include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
