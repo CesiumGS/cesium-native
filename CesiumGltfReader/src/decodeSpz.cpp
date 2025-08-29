@@ -133,6 +133,10 @@ void copyShCoeff(
     return;
   }
 
+  // Some gaussion splats seem to set this value as VEC4, even though the spec
+  // requires VEC3.
+  pAccessor->type = CesiumGltf::Accessor::Type::VEC3;
+
   pAccessor->bufferView =
       static_cast<int32_t>(readGltf.model->bufferViews.size());
   CesiumGltf::BufferView& bufferView =
@@ -182,6 +186,7 @@ void decodePrimitive(
   CesiumGltf::Accessor* pPosAccessor =
       findAccessor(readGltf, primitive, "POSITION");
   if (pPosAccessor) {
+    pPosAccessor->type = CesiumGltf::Accessor::Type::VEC3;
     pPosAccessor->bufferView =
         static_cast<int32_t>(readGltf.model->bufferViews.size());
     CesiumGltf::BufferView& bufferView =
@@ -204,6 +209,7 @@ void decodePrimitive(
   CesiumGltf::Accessor* pRotAccessor =
       findAccessor(readGltf, primitive, "KHR_gaussian_splatting:ROTATION");
   if (pRotAccessor) {
+    pRotAccessor->type = CesiumGltf::Accessor::Type::VEC4;
     pRotAccessor->bufferView =
         static_cast<int32_t>(readGltf.model->bufferViews.size());
     CesiumGltf::BufferView& bufferView =
@@ -227,6 +233,7 @@ void decodePrimitive(
   CesiumGltf::Accessor* pColorAccessor =
       findAccessor(readGltf, primitive, "COLOR_0");
   if (pColorAccessor) {
+    pColorAccessor->type = CesiumGltf::Accessor::Type::VEC4;
     pColorAccessor->bufferView =
         static_cast<int32_t>(readGltf.model->bufferViews.size());
     CesiumGltf::BufferView& bufferView =
@@ -262,6 +269,7 @@ void decodePrimitive(
   CesiumGltf::Accessor* pScaleAccessor =
       findAccessor(readGltf, primitive, "KHR_gaussian_splatting:SCALE");
   if (pScaleAccessor) {
+    pScaleAccessor->type = CesiumGltf::Accessor::Type::VEC3;
     pScaleAccessor->bufferView =
         static_cast<int32_t>(readGltf.model->bufferViews.size());
     CesiumGltf::BufferView& bufferView =
@@ -309,11 +317,11 @@ addExtensionFromJsonValue(
     CesiumGltfReader::GltfReaderResult& readGltf,
     CesiumGltf::ExtensionKhrGaussianSplatting& splatting,
     CesiumUtility::JsonValue* pKhrJson) {
-
   if (!pKhrJson->isObject()) {
     readGltf.errors.push_back(fmt::format("Invalid {} extension", extName));
     return nullptr;
   }
+
   const CesiumUtility::JsonValue::Object::const_iterator it =
       pKhrJson->getObject().find("bufferView");
   if (it == pKhrJson->getObject().end()) {
@@ -321,6 +329,7 @@ addExtensionFromJsonValue(
         fmt::format("No `bufferView` property found on {} extension", extName));
     return nullptr;
   }
+
   if (!it->second.isInt64() && !it->second.isUint64()) {
     readGltf.errors.push_back(fmt::format(
         "`bufferView` property on {} extension must be an integer value",
