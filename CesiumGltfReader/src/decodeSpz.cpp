@@ -24,7 +24,7 @@ namespace {
 
 const float SH_C0 = 0.282095f;
 
-const std::string ALTERNATE_EXT_NAME1 = "KHR_spz_compression";
+const std::string ALTERNATE_EXT_NAME1 = "KHR_spz_gaussian_splats_compression";
 const std::string ALTERNATE_EXT_NAME2 =
     "KHR_gaussian_splatting_compression_spz";
 
@@ -66,7 +66,7 @@ std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
       reinterpret_cast<uint8_t*>(
           buffer.cesium.data.data() + bufferView.byteOffset),
       static_cast<int32_t>(bufferView.byteLength),
-      spz::UnpackOptions{spz::CoordinateSystem::LUF});
+      spz::UnpackOptions{spz::CoordinateSystem::UNSPECIFIED});
 
   return std::make_unique<spz::GaussianCloud>(std::move(gaussians));
 }
@@ -321,7 +321,7 @@ addExtensionFromJsonValue(
         fmt::format("No `bufferView` property found on {} extension", extName));
     return nullptr;
   }
-  if (!it->second.isInt64()) {
+  if (!it->second.isInt64() && !it->second.isUint64()) {
     readGltf.errors.push_back(fmt::format(
         "`bufferView` property on {} extension must be an integer value",
         extName));
@@ -331,7 +331,9 @@ addExtensionFromJsonValue(
   CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& ext =
       splatting.addExtension<
           CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2>();
-  ext.bufferView = static_cast<int32_t>(it->second.getInt64());
+  ext.bufferView = it->second.isInt64()
+                       ? static_cast<int32_t>(it->second.getInt64())
+                       : static_cast<int32_t>(it->second.getUint64());
   return &ext;
 }
 
@@ -386,14 +388,14 @@ getAndMaybeConvertSpzExtension(
   }
 
   CesiumUtility::JsonValue* pSpzNoVersion =
-      primitive.getGenericExtension(ALTERNATE_EXT_NAME2);
+      splatting.getGenericExtension(ALTERNATE_EXT_NAME2);
   if (pSpzNoVersion != nullptr) {
     CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* pResult =
         addExtensionFromJsonValue(
             ALTERNATE_EXT_NAME2,
             readGltf,
             splatting,
-            pKhrSpz);
+            pSpzNoVersion);
     primitive.extensions.erase(ALTERNATE_EXT_NAME2);
     return pResult;
   }
@@ -412,6 +414,12 @@ void decodeSpz(CesiumGltfReader::GltfReaderResult& readGltf) {
 
   for (CesiumGltf::Mesh& mesh : model.meshes) {
     for (CesiumGltf::MeshPrimitive& primitive : mesh.primitives) {
+      // KHR_spz_gaussian_splats_compression has no KHR_gaussian_splatting
+      // extension attached Just throw one on there to make this easier
+      if (primitive.extensions.contains(ALTERNATE_EXT_NAME1)) {
+        primitive.addExtension<CesiumGltf::ExtensionKhrGaussianSplatting>();
+      }
+
       CesiumGltf::ExtensionKhrGaussianSplatting* pSplat =
           primitive.getExtension<CesiumGltf::ExtensionKhrGaussianSplatting>();
       if (!pSplat) {

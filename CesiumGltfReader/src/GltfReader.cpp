@@ -359,11 +359,7 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
     decodeMeshOpt(model, readGltf);
   }
 
-  if (options.decodeSpz && std::find(
-                               model.extensionsUsed.begin(),
-                               model.extensionsUsed.end(),
-                               "KHR_gaussian_splatting_compression_spz_2") !=
-                               model.extensionsUsed.end()) {
+  if (options.decodeSpz && hasSpzExtension(readGltf)) {
     decodeSpz(readGltf);
   }
 
