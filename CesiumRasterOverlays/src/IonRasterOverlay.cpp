@@ -2,6 +2,8 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/NetworkAssetDescriptor.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
 #include <CesiumRasterOverlays/IonRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -10,6 +12,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/Hash.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 
@@ -207,6 +210,17 @@ IonRasterOverlay::createTileProvider(
     CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
   pOwner = pOwner ? pOwner : this;
 
+  NetworkAssetDescriptor descriptor;
+  descriptor.url = this->_overlayUrl;
+
+  if (this->_needsAuthHeader) {
+    descriptor.headers.emplace_back(
+        "Authorization",
+        fmt::format("Bearer {}", this->_ionAccessToken));
+  }
+
+  getEndpointCache()->getOrCreate(asyncSystem, pAssetAccessor, descriptor);
+
   auto cacheIt = IonRasterOverlay::endpointCache.find(this->_overlayUrl);
   if (cacheIt != IonRasterOverlay::endpointCache.end()) {
     IntrusivePointer<const IonRasterOverlay> pThis = this;
@@ -245,14 +259,6 @@ IonRasterOverlay::createTileProvider(
 
               return asyncSystem.createResolvedFuture(std::move(result));
             });
-  }
-
-  std::vector<IAssetAccessor::THeader> headers;
-
-  if (this->_needsAuthHeader) {
-    headers.emplace_back(
-        "Authorization",
-        fmt::format("Bearer {}", this->_ionAccessToken));
   }
 
   return pAssetAccessor->get(asyncSystem, this->_overlayUrl, headers)
@@ -379,4 +385,112 @@ IonRasterOverlay::createTileProvider(
             }
           });
 }
+
+/* static */ CesiumUtility::IntrusivePointer<IonRasterOverlay::EndpointDepot>
+IonRasterOverlay::getEndpointCache() {
+  static CesiumUtility::IntrusivePointer<EndpointDepot> pDepot =
+      new EndpointDepot(
+          [](const AsyncSystem& asyncSystem,
+             const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+             const NetworkAssetDescriptor& key)
+              -> CesiumAsync::Future<
+                  CesiumUtility::ResultPointer<ExternalAssetEndpoint>> {
+            return key.loadBytesFromNetwork(asyncSystem, pAssetAccessor)
+                .thenImmediately([](Result<std::vector<std::byte>>&& result) {
+                  if (!result.value) {
+                    return ResultPointer<ExternalAssetEndpoint>(result.errors);
+                  }
+
+                  rapidjson::Document response;
+                  response.Parse(
+                      reinterpret_cast<const char*>(result.value->data()),
+                      result.value->size());
+
+                  if (response.HasParseError()) {
+                    return ResultPointer<ExternalAssetEndpoint>(
+                        ErrorList::error(fmt::format(
+                            "Error while parsing Cesium ion raster overlay "
+                            "response, error code {} at byte offset {}.",
+                            response.GetParseError(),
+                            response.GetErrorOffset())));
+                  }
+
+                  std::string type = JsonHelpers::getStringOrDefault(
+                      response,
+                      "type",
+                      "unknown");
+                  if (type != "IMAGERY") {
+                    return ResultPointer<ExternalAssetEndpoint>(
+                        ErrorList::error(fmt::format(
+                            "Assets used with a raster overlay must have type "
+                            "'IMAGERY', but instead saw '{}'.",
+                            type)));
+                  }
+
+                  ExternalAssetEndpoint endpoint;
+                  endpoint.externalType = JsonHelpers::getStringOrDefault(
+                      response,
+                      "externalType",
+                      "unknown");
+                  if (endpoint.externalType == "BING") {
+                    const auto optionsIt = response.FindMember("options");
+                    if (optionsIt == response.MemberEnd() ||
+                        !optionsIt->value.IsObject()) {
+                      return ResultPointer<ExternalAssetEndpoint>(
+                          ErrorList::error(fmt::format(
+                              "Cesium ion Bing Maps raster overlay metadata "
+                              "response does not contain 'options' or it is "
+                              "not an object.")));
+                    }
+
+                    const auto attributionsIt =
+                        response.FindMember("attributions");
+                    if (attributionsIt != response.MemberEnd() &&
+                        attributionsIt->value.IsArray()) {
+                      for (const rapidjson::Value& attribution :
+                           attributionsIt->value.GetArray()) {
+                        AssetEndpointAttribution& endpointAttribution =
+                            endpoint.attributions.emplace_back();
+                        const auto html = attribution.FindMember("html");
+                        if (html != attribution.MemberEnd() &&
+                            html->value.IsString()) {
+                          endpointAttribution.html = html->value.GetString();
+                        }
+                        auto collapsible =
+                            attribution.FindMember("collapsible");
+                        if (collapsible != attribution.MemberEnd() &&
+                            collapsible->value.IsBool()) {
+                          endpointAttribution.collapsible =
+                              collapsible->value.GetBool();
+                        }
+                      }
+                    }
+
+                    const auto& options = optionsIt->value;
+                    endpoint.url =
+                        JsonHelpers::getStringOrDefault(options, "url", "");
+                    endpoint.key =
+                        JsonHelpers::getStringOrDefault(options, "key", "");
+                    endpoint.mapStyle = JsonHelpers::getStringOrDefault(
+                        options,
+                        "mapStyle",
+                        "AERIAL");
+                    endpoint.culture =
+                        JsonHelpers::getStringOrDefault(options, "culture", "");
+                  } else {
+                    endpoint.url =
+                        JsonHelpers::getStringOrDefault(response, "url", "");
+                    endpoint.accessToken = JsonHelpers::getStringOrDefault(
+                        response,
+                        "accessToken",
+                        "");
+                  }
+
+                  return ResultPointer<ExternalAssetEndpoint>(
+                      new ExternalAssetEndpoint(std::move(endpoint)));
+                });
+          });
+  return pDepot;
+}
+
 } // namespace CesiumRasterOverlays

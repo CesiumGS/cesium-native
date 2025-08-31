@@ -1,9 +1,12 @@
 #pragma once
 
 #include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/NetworkAssetDescriptor.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumUtility/SharedAsset.h>
 
 #include <memory>
 
@@ -79,7 +82,9 @@ private:
     bool collapsible = true;
   };
 
-  struct ExternalAssetEndpoint {
+  struct ExternalAssetEndpoint
+      : public CesiumUtility::SharedAsset<ExternalAssetEndpoint> {
+    int64_t refreshCount;
     std::string externalType;
     std::string url;
     std::string mapStyle;
@@ -100,6 +105,11 @@ private:
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const;
+
+  using EndpointDepot = CesiumAsync::
+      SharedAssetDepot<ExternalAssetEndpoint, NetworkAssetDescriptor>;
+
+  static CesiumUtility::IntrusivePointer<EndpointDepot> getEndpointCache();
 };
 
 } // namespace CesiumRasterOverlays
