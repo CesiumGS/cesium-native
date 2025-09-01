@@ -16,9 +16,9 @@ Color ColorStyle::getColor(size_t randomColorSeed) const {
   std::hash<size_t> hash{};
   size_t h = hash(randomColorSeed);
 
-  float r = (h & 0xFF) / 255.0f;
-  float g = ((h >> 8) & 0xFF) / 255.0f;
-  float b = ((h >> 16) & 0xFF) / 255.0f;
+  float r = uint8_t(h & 0xFF) / 255.0f;
+  float g = uint8_t((h >> 8) & 0xFF) / 255.0f;
+  float b = uint8_t((h >> 16) & 0xFF) / 255.0f;
 
   return Color{
       (uint8_t)(r * this->color.r),
