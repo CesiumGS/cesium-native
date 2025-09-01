@@ -3,8 +3,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
-#include <type_traits>
 
 using namespace CesiumUtility;
 
