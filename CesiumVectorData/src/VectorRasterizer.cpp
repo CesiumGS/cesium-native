@@ -59,8 +59,8 @@ void setStrokeWidth(
   }
 }
 
-template <typename T> uint32_t seedForObject(const T& object, uint32_t base) {
-  return base ^ static_cast<uint32_t>(reinterpret_cast<uint64_t>(&object));
+template <typename T> size_t seedForObject(const T& object, size_t base) {
+  return base ^ reinterpret_cast<size_t>(&object);
 }
 } // namespace
 
@@ -180,7 +180,7 @@ void VectorRasterizer::drawPolygon(
 }
 
 void VectorRasterizer::drawPolyline(
-    const std::span<const glm::dvec3>& points,
+    const std::vector<glm::dvec3>& points,
     const LineStyle& style) {
   if (this->_finalized) {
     return;
