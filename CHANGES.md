@@ -20,6 +20,7 @@
 
 - Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
 - Fixed a bug in `IonRasterOverlay` that would cause unnecessary extra use of Bing Maps sessions when manually reloading the raster overlay after an expired token was automatically refreshed.
+- Fixed a bug that could lead to a crash when using raster overlays with tilesets that use "external tilesets", such as Google Photorealistic 3D Tiles.
 
 ### v0.50.0 - 2025-08-01
 
