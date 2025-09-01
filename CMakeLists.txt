@@ -116,13 +116,14 @@ set(PACKAGES_PRIVATE
 if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     list(APPEND PACKAGES_PRIVATE blend2d asmjit)
 else()
-    if(CESIUM_TARGET_WASM)
+    #if(CESIUM_TARGET_WASM)
+        # TODO: commented out because vcpkg build of blend2d is crashing at runtime.
         # libblend2d.a needs to be installed for wasm builds
-        list(APPEND PACKAGES_PUBLIC blend2d[core])
-    else()
+        #list(APPEND PACKAGES_PUBLIC blend2d[core])
+    #else()
         # Use [core] feature to disable default jit feature.
         list(APPEND PACKAGES_PRIVATE blend2d[core])
-    endif()
+    #endif()
 endif()
 
 if(NOT CESIUM_DISABLE_CURL)
