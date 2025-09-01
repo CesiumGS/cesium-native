@@ -135,6 +135,10 @@ IonRasterOverlay::createTileProvider(
             auto cacheIt = endpointCache.find(url);
             if (cacheIt != endpointCache.end()) {
               cacheIt->second.accessToken = update.token;
+
+              // For Bing Maps endpoints, the access token is stored in the key
+              // field instead.
+              cacheIt->second.key = update.token;
             }
 
             if (pHolder->pProvider) {

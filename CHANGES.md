@@ -15,11 +15,14 @@
 - Added `element_type` to `IntrusivePointer`, allowing it to be used with `std::pointer_types`.
 - Added implicit conversion of `IntrusivePointer<T>` to `T*`.
 - All properties and extensions from `tileset.json`, except `"root"`, are now parsed into `TilesetMetadata` when a tileset is loaded by `Cesium3DTilesSelection::Tileset`.
+- Added `accessorView` to `PropertyAttributePropertyView` to retrieve the underlying `AccessorView`.
 
 ##### Fixes :wrench:
 
 - Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
 - Fixed `ColorMode::Random` in `VectorStyle` producing different results each time a raster overlay tile was rendered.
+- Fixed a bug in `IonRasterOverlay` that would cause unnecessary extra use of Bing Maps sessions when manually reloading the raster overlay after an expired token was automatically refreshed.
+- Fixed a bug that could lead to a crash when using raster overlays with tilesets that use "external tilesets", such as Google Photorealistic 3D Tiles.
 
 ### v0.50.0 - 2025-08-01
 
