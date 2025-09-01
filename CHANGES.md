@@ -19,6 +19,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
+- Fixed a bug that could lead to a crash when using raster overlays with tilesets that use "external tilesets", such as Google Photorealistic 3D Tiles.
 
 ### v0.50.0 - 2025-08-01
 
