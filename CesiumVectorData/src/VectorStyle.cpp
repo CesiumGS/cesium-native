@@ -1,9 +1,10 @@
 #include <CesiumUtility/Color.h>
 #include <CesiumVectorData/VectorStyle.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <utility>
+#include <type_traits>
 
 using namespace CesiumUtility;
 
