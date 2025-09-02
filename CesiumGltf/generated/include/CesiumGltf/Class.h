@@ -31,5 +31,10 @@ namespace CesiumGltf {
          */
         std::unordered_map<std::string, CesiumGltf::ClassProperty> properties;
 
+        /**
+         * @brief Experimental. The parent class ID.
+         */
+        std::optional<std::string> parent;
+
     };
 }

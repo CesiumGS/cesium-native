@@ -28,7 +28,8 @@
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionCesiumPrimitiveOutlineJsonHandler.h"
-#include "ExtensionKhrSpzGaussianSplatsCompressionJsonHandler.h"
+#include "ExtensionKhrGaussianSplattingJsonHandler.h"
+#include "ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler.h"
 #include "ExtensionExtInstanceFeaturesJsonHandler.h"
 #include "ExtensionExtMeshGpuInstancingJsonHandler.h"
 #include "ExtensionExtStructuralMetadataJsonHandler.h"
@@ -59,7 +60,8 @@ options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveExtSt
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrDracoMeshCompressionJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler>();
 options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionCesiumPrimitiveOutlineJsonHandler>();
-options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrSpzGaussianSplatsCompressionJsonHandler>();
+options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrGaussianSplattingJsonHandler>();
+options.registerExtension<CesiumGltf::MeshPrimitive, ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionExtInstanceFeaturesJsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionExtMeshGpuInstancingJsonHandler>();
 options.registerExtension<CesiumGltf::Node, ExtensionExtStructuralMetadataJsonHandler>();

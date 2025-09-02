@@ -29,7 +29,9 @@
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
-#include <CesiumGltf/ExtensionKhrSpzGaussianSplatsCompression.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplattingHintsValue.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariantsMappingsValue.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariantsValue.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue.h>
@@ -182,7 +184,17 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression& obj,
+    const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrGaussianSplattingHintsValue& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -975,7 +987,28 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression& obj,
+    const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.shape != "ellipsoid") {
+  jsonWriter.Key("shape");
+  writeJson(obj.shape, jsonWriter, context);
+  }
+
+  if (obj.hints.has_value()) {
+  jsonWriter.Key("hints");
+  writeJson(obj.hints, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -983,6 +1016,27 @@ void writeJson(
   if (obj.bufferView > -1) {
   jsonWriter.Key("bufferView");
   writeJson(obj.bufferView, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrGaussianSplattingHintsValue& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.projection != "perspective") {
+  jsonWriter.Key("projection");
+  writeJson(obj.projection, jsonWriter, context);
+  }
+
+  if (obj.sortingMethod != "cameraDistance") {
+  jsonWriter.Key("sortingMethod");
+  writeJson(obj.sortingMethod, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -1394,6 +1448,11 @@ void writeJson(
   if (!obj.properties.empty()) {
   jsonWriter.Key("properties");
   writeJson(obj.properties, jsonWriter, context);
+  }
+
+  if (obj.parent.has_value()) {
+  jsonWriter.Key("parent");
+  writeJson(obj.parent, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -2530,8 +2589,22 @@ void ExtensionCesiumPrimitiveOutlineJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionKhrSpzGaussianSplatsCompressionJsonWriter::write(
-    const CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression& obj,
+void ExtensionKhrGaussianSplattingJsonWriter::write(
+    const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionKhrGaussianSplattingCompressionSpz2JsonWriter::write(
+    const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionKhrGaussianSplattingHintsValueJsonWriter::write(
+    const CesiumGltf::ExtensionKhrGaussianSplattingHintsValue& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

@@ -137,8 +137,11 @@
     "CESIUM_primitive_outline glTF primitive extension": {
       "overrideName": "ExtensionCesiumPrimitiveOutline"
     },
-    "KHR_spz_gaussian_splats_compression glTF Mesh Primitive Extension": {
-      "overrideName": "ExtensionKhrSpzGaussianSplatsCompression"
+    "KHR_gaussian_splatting glTF Mesh Primitive Extension": {
+      "overrideName": "ExtensionKhrGaussianSplatting"
+    },
+    "KHR_gaussian_splatting_compression_spz_2 glTF Mesh Primitive Extension": {
+      "overrideName": "ExtensionKhrGaussianSplattingCompressionSpz2"
     }
   },
   "extensions": [
@@ -246,8 +249,15 @@
       ]
     },
     {
-      "extensionName": "KHR_spz_gaussian_splats_compression",
-      "schema": "Khronos/KHR_spz_gaussian_splats_compression/schema/mesh.primitive.KHR_spz_gaussian_splats_compression.schema.json",
+      "extensionName": "KHR_gaussian_splatting",
+      "schema": "Khronos/KHR_gaussian_splatting/schema/mesh.primitive.KHR_gaussian_splatting.schema.json",
+      "attachTo": [
+        "mesh.primitive"
+      ]
+    },
+    {
+      "extensionName": "KHR_gaussian_splatting_compression_spz_2",
+      "schema": "Khronos/KHR_gaussian_splatting_compression_spz_2/schema/mesh.primitive.KHR_gaussian_splatting_compression_spz_2.schema.json",
       "attachTo": [
           "mesh.primitive"
       ]

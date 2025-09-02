@@ -31,5 +31,6 @@ namespace CesiumGltfReader {
     CesiumJsonReader::StringJsonHandler _name;
     CesiumJsonReader::StringJsonHandler _description;
     CesiumJsonReader::DictionaryJsonHandler<CesiumGltf::ClassProperty, ClassPropertyJsonHandler> _properties;
+    CesiumJsonReader::StringJsonHandler _parent;
   };
 }

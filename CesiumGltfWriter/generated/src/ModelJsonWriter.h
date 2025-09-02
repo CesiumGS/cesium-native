@@ -30,7 +30,9 @@ struct ExtensionNodeMaxarMeshVariants;
 struct ExtensionKhrTextureTransform;
 struct ExtensionTextureWebp;
 struct ExtensionCesiumPrimitiveOutline;
-struct ExtensionKhrSpzGaussianSplatsCompression;
+struct ExtensionKhrGaussianSplatting;
+struct ExtensionKhrGaussianSplattingCompressionSpz2;
+struct ExtensionKhrGaussianSplattingHintsValue;
 struct ExtensionNodeMaxarMeshVariantsMappingsValue;
 struct ExtensionModelMaxarMeshVariantsValue;
 struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
@@ -301,13 +303,33 @@ struct ExtensionCesiumPrimitiveOutlineJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ExtensionKhrSpzGaussianSplatsCompressionJsonWriter {
-  using ValueType = CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression;
+struct ExtensionKhrGaussianSplattingJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrGaussianSplatting;
 
-  static inline constexpr const char* ExtensionName = "KHR_spz_gaussian_splats_compression";
+  static inline constexpr const char* ExtensionName = "KHR_gaussian_splatting";
 
   static void write(
-      const CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression& obj,
+      const CesiumGltf::ExtensionKhrGaussianSplatting& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionKhrGaussianSplattingCompressionSpz2JsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2;
+
+  static inline constexpr const char* ExtensionName = "KHR_gaussian_splatting_compression_spz_2";
+
+  static void write(
+      const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionKhrGaussianSplattingHintsValueJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrGaussianSplattingHintsValue;
+
+  static void write(
+      const CesiumGltf::ExtensionKhrGaussianSplattingHintsValue& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
