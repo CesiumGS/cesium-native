@@ -12,9 +12,7 @@
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
 #include <Cesium3DTilesReader/ContentReader.h>
 #include <Cesium3DTilesReader/ExtensionContent3dTilesContentVoxelsReader.h>
-#include <Cesium3DTilesReader/GroupMetadataReader.h>
-#include <Cesium3DTilesReader/MetadataEntityReader.h>
-#include <Cesium3DTilesReader/SchemaReader.h>
+#include <Cesium3DTilesReader/TilesetReader.h>
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -24,6 +22,7 @@
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -60,6 +59,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <span>
@@ -710,41 +710,55 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
       ErrorList{}};
 }
 
-void parseTilesetMetadata(
+void removeRootPropertyAndParseTilesetMetadata(
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
-    const rapidjson::Document& tilesetJson,
+    rapidjson::Document&& tilesetJson,
     TileExternalContent& externalContent) {
-  auto schemaIt = tilesetJson.FindMember("schema");
-  if (schemaIt != tilesetJson.MemberEnd()) {
-    Cesium3DTilesReader::SchemaReader schemaReader;
-    auto schemaResult = schemaReader.readFromJson(schemaIt->value);
-    if (schemaResult.value) {
-      externalContent.metadata.schema = std::move(*schemaResult.value);
-    }
+  // Remove the root tile from the RapidJSON document. Parsing the complete tile
+  // tree will take too long, and we don't need it.
+  tilesetJson.RemoveMember("root");
+
+  Cesium3DTilesReader::TilesetReader tilesetReader;
+  auto tilesetResult = tilesetReader.readFromJson(tilesetJson);
+
+  if (!tilesetResult.errors.empty() || !tilesetResult.warnings.empty()) {
+    ErrorList errorList;
+    errorList.warnings.resize(
+        tilesetResult.errors.size() + tilesetResult.warnings.size());
+    std::copy(
+        std::make_move_iterator(tilesetResult.errors.begin()),
+        std::make_move_iterator(tilesetResult.errors.end()),
+        errorList.warnings.begin());
+    std::copy(
+        std::make_move_iterator(tilesetResult.warnings.begin()),
+        std::make_move_iterator(tilesetResult.warnings.end()),
+        errorList.warnings.begin() + std::vector<std::string>::difference_type(
+                                         tilesetResult.errors.size()));
+    errorList.logWarning(pLogger, "Could not parse metadata from tileset.json");
   }
 
-  auto schemaUriIt = tilesetJson.FindMember("schemaUri");
-  if (schemaUriIt != tilesetJson.MemberEnd() && schemaUriIt->value.IsString()) {
-    externalContent.metadata.schemaUri =
-        CesiumUtility::Uri::resolve(baseUrl, schemaUriIt->value.GetString());
-  }
+  if (tilesetResult.value) {
+    Cesium3DTiles::Tileset& tileset = *tilesetResult.value;
+    Cesium3DTilesSelection::TilesetMetadata& metadata =
+        externalContent.metadata;
 
-  const auto metadataIt = tilesetJson.FindMember("metadata");
-  if (metadataIt != tilesetJson.MemberEnd()) {
-    Cesium3DTilesReader::MetadataEntityReader metadataReader;
-    auto metadataResult = metadataReader.readFromJson(metadataIt->value);
-    if (metadataResult.value) {
-      externalContent.metadata.metadata = std::move(*metadataResult.value);
+    metadata.asset = std::move(tileset.asset);
+    metadata.extensions = std::move(tileset.extensions);
+    metadata.extensionsRequired = std::move(tileset.extensionsRequired);
+    metadata.extensionsUsed = std::move(tileset.extensionsUsed);
+    metadata.extras = std::move(tileset.extras);
+    metadata.geometricError = tileset.geometricError;
+    metadata.groups = std::move(tileset.groups);
+    metadata.metadata = std::move(tileset.metadata);
+    metadata.properties = std::move(tileset.properties);
+    metadata.schema = std::move(tileset.schema);
+    if (tileset.schemaUri) {
+      metadata.schemaUri =
+          CesiumUtility::Uri::resolve(baseUrl, *tileset.schemaUri);
     }
-  }
-
-  const auto groupsIt = tilesetJson.FindMember("groups");
-  if (groupsIt != tilesetJson.MemberEnd()) {
-    Cesium3DTilesReader::GroupMetadataReader groupMetadataReader;
-    auto groupsResult = groupMetadataReader.readArrayFromJson(groupsIt->value);
-    if (groupsResult.value) {
-      externalContent.metadata.groups = std::move(*groupsResult.value);
-    }
+    metadata.statistics = std::move(tileset.statistics);
+    metadata.unknownProperties = std::move(tileset.unknownProperties);
   }
 }
 
@@ -792,9 +806,10 @@ TileLoadResult parseExternalTilesetInWorkerThread(
           ellipsoid);
 
   // Populate the root tile with metadata
-  parseTilesetMetadata(
+  removeRootPropertyAndParseTilesetMetadata(
+      pLogger,
       tileUrl,
-      tilesetJson,
+      std::move(tilesetJson),
       externalContentInitializer.externalContent);
 
   // check and log any errors
@@ -893,7 +908,7 @@ TilesetJsonLoader::createLoader(
             pLogger,
             pCompletedRequest->url(),
             pCompletedRequest->headers(),
-            tilesetJson,
+            std::move(tilesetJson),
             ellipsoid);
       });
 }
@@ -905,7 +920,7 @@ TilesetJsonLoader::createLoader(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& tilesetJsonUrl,
     const CesiumAsync::HttpHeaders& requestHeaders,
-    const rapidjson::Document& tilesetJson,
+    rapidjson::Document&& tilesetJson,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   TilesetContentLoaderResult<TilesetJsonLoader> result = parseTilesetJson(
       pLogger,
@@ -963,7 +978,11 @@ TilesetJsonLoader::createLoader(
       result.pRootTile->getContent().getExternalContent();
   CESIUM_ASSERT(pExternal);
   if (pExternal) {
-    parseTilesetMetadata(tilesetJsonUrl, tilesetJson, *pExternal);
+    removeRootPropertyAndParseTilesetMetadata(
+        pLogger,
+        tilesetJsonUrl,
+        std::move(tilesetJson),
+        *pExternal);
   }
 
   return asyncSystem.createResolvedFuture(std::move(result))
