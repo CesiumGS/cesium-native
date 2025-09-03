@@ -96,6 +96,18 @@ public:
       const TAssetKey& assetKey);
 
   /**
+   * @brief Invalidates the previously-cached asset with the given key, so that
+   * the next call to {@link getOrCreate} will create the asset instead of
+   * returning the existing one.
+   *
+   * Anyone already using the existing instance may continue to do so.
+   *
+   * If an asset with the given key does not exist in the depot, this method
+   * does nothing.
+   */
+  void invalidate(const TAssetKey& assetKey);
+
+  /**
    * @brief Returns the total number of distinct assets contained in this depot,
    * including both active and inactive assets.
    */
@@ -254,6 +266,11 @@ private:
   // list.
   int64_t _totalDeletionCandidateMemoryUsage;
 
+  // The number of assets that have been invalidated but that have not been
+  // deleted yet. Such assets hold a pointer to the depot, so the depot must be
+  // kept alive for their entire lifetime.
+  int64_t _liveInvalidatedAssets;
+
   // Mutex serializing access to _assets, _assetsByPointer, _deletionCandidates,
   // and any AssetEntry owned by this depot.
   mutable std::mutex _mutex;
@@ -275,6 +292,7 @@ SharedAssetDepot<TAssetType, TAssetKey>::SharedAssetDepot(
       _assetsByPointer(),
       _deletionCandidates(),
       _totalDeletionCandidateMemoryUsage(0),
+      _liveInvalidatedAssets(0),
       _mutex(),
       _factory(std::move(factory)),
       _pKeepAlive(nullptr) {}
@@ -302,6 +320,7 @@ SharedAssetDepot<TAssetType, TAssetKey>::~SharedAssetDepot() {
   // this destructor from being called except when all of its assets are also
   // in the _deletionCandidates list.
 
+  CESIUM_ASSERT(this->_liveInvalidatedAssets == 0);
   CESIUM_ASSERT(this->_assets.size() == this->_deletionCandidates.size());
 }
 
@@ -402,6 +421,34 @@ SharedAssetDepot<TAssetType, TAssetKey>::getOrCreate(
 }
 
 template <typename TAssetType, typename TAssetKey>
+void SharedAssetDepot<TAssetType, TAssetKey>::invalidate(
+    const TAssetKey& assetKey) {
+  LockHolder lock = this->lock();
+
+  auto it = this->_assets.find(assetKey);
+  if (it == this->_assets.end())
+    return;
+
+  AssetEntry* pEntry = it->second.get();
+  CESIUM_ASSERT(pEntry);
+
+  // This will remove the asset from the deletion candidates list, if it's
+  // there.
+  CesiumUtility::ResultPointer<TAssetType> assetResult =
+      pEntry->toResultUnderLock();
+
+  if (assetResult.pValue) {
+    bool wasInvalidated = assetResult.pValue->_isInvalidated.exchange(true);
+    if (!wasInvalidated) {
+      ++this->_liveInvalidatedAssets;
+    }
+    this->_assetsByPointer.erase(assetResult.pValue.get());
+  }
+
+  this->_assets.erase(it);
+}
+
+template <typename TAssetType, typename TAssetKey>
 size_t SharedAssetDepot<TAssetType, TAssetKey>::getAssetCount() const {
   LockHolder lock = this->lock();
   return this->_assets.size();
@@ -448,6 +495,21 @@ void SharedAssetDepot<TAssetType, TAssetKey>::markDeletionCandidate(
 template <typename TAssetType, typename TAssetKey>
 void SharedAssetDepot<TAssetType, TAssetKey>::markDeletionCandidateUnderLock(
     const TAssetType& asset) {
+  if (asset._isInvalidated) {
+    // This asset is no longer tracked by the depot, so delete it.
+    --this->_liveInvalidatedAssets;
+    delete &asset;
+
+    // If this depot is not managing any live assets, then we no longer need to
+    // keep it alive.
+    if (this->_assets.size() == this->_deletionCandidates.size() &&
+        this->_liveInvalidatedAssets == 0) {
+      this->_pKeepAlive.reset();
+    }
+
+    return;
+  }
+
   // Verify that the reference count is still zero.
   // See: https://github.com/CesiumGS/cesium-native/issues/1073
   if (asset._referenceCount != 0) {
@@ -494,7 +556,8 @@ void SharedAssetDepot<TAssetType, TAssetKey>::markDeletionCandidateUnderLock(
 
   // If this depot is not managing any live assets, then we no longer need to
   // keep it alive.
-  if (this->_assets.size() == this->_deletionCandidates.size()) {
+  if (this->_assets.size() == this->_deletionCandidates.size() &&
+      this->_liveInvalidatedAssets == 0) {
     this->_pKeepAlive.reset();
   }
 }
@@ -514,6 +577,8 @@ void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidate(
 template <typename TAssetType, typename TAssetKey>
 void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidateUnderLock(
     const TAssetType& asset) {
+  CESIUM_ASSERT(!asset._isInvalidated);
+
   auto it = this->_assetsByPointer.find(const_cast<TAssetType*>(&asset));
   CESIUM_ASSERT(it != this->_assetsByPointer.end());
   if (it == this->_assetsByPointer.end()) {
