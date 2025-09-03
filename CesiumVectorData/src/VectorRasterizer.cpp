@@ -24,7 +24,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <span>
 #include <vector>
 
 using namespace CesiumGeospatial;
@@ -57,6 +56,10 @@ void setStrokeWidth(
         (context.targetWidth() * style.width) /
         (bounds.computeWidth() * ellipsoid.getRadii().x));
   }
+}
+
+template <typename T> size_t seedForObject(const T& object, size_t base) {
+  return base ^ reinterpret_cast<size_t>(&object);
 }
 } // namespace
 
@@ -116,7 +119,7 @@ void VectorRasterizer::drawPolygon(
     this->_context.fillPolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.fill->getColor().toRgba32()));
+        BLRgba32(style.fill->getColor(seedForObject(polygon, 13)).toRgba32()));
   }
 
   if (style.outline) {
@@ -128,7 +131,8 @@ void VectorRasterizer::drawPolygon(
     this->_context.strokePolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.outline->getColor().toRgba32()));
+        BLRgba32(
+            style.outline->getColor(seedForObject(polygon, 31)).toRgba32()));
   }
 }
 
@@ -157,7 +161,7 @@ void VectorRasterizer::drawPolygon(
     this->_context.fillPolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.fill->getColor().toRgba32()));
+        BLRgba32(style.fill->getColor(seedForObject(polygon, 13)).toRgba32()));
   }
 
   if (style.outline) {
@@ -169,12 +173,13 @@ void VectorRasterizer::drawPolygon(
     this->_context.strokePolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.outline->getColor().toRgba32()));
+        BLRgba32(
+            style.outline->getColor(seedForObject(polygon, 31)).toRgba32()));
   }
 }
 
 void VectorRasterizer::drawPolyline(
-    const std::span<const glm::dvec3>& points,
+    const std::vector<glm::dvec3>& points,
     const LineStyle& style) {
   if (this->_finalized) {
     return;
@@ -197,7 +202,7 @@ void VectorRasterizer::drawPolyline(
   this->_context.strokePolyline(
       vertices.data(),
       vertices.size(),
-      BLRgba32(style.getColor().toRgba32()));
+      BLRgba32(style.getColor(seedForObject(points, 31)).toRgba32()));
 }
 
 void VectorRasterizer::drawGeoJsonObject(
