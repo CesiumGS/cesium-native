@@ -445,7 +445,19 @@ void SharedAssetDepot<TAssetType, TAssetKey>::invalidate(
     this->_assetsByPointer.erase(assetResult.pValue.get());
   }
 
+  // Detach the asset from the AssetEntry, so that its lifetime is controlled by
+  // reference counting.
+  pEntry->pAsset.release();
+
+  // Remove the asset entry. This won't immediately delete the asset, because
+  // `assetResult` above still holds a reference to it. But once that goes out
+  // of scope, too, the asset _may_ be destroyed.
   this->_assets.erase(it);
+
+  // Unlock the mutex before allowing `assetResult` to go out of scope. When it
+  // goes out of scope, the asset may be destroyed. If it is, that would cause
+  // us to try to re-enter the lock, which is not allowed.
+  lock.unlock();
 }
 
 template <typename TAssetType, typename TAssetKey>
