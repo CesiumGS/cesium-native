@@ -122,6 +122,12 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       MeshPrimitive& primitive,
       const glm::dmat4& transform);
 
+  typedef void ForEachMeshInSceneCallback(
+      Model& gltf,
+      Node& node,
+       Mesh& mesh,
+       const glm::dmat4& transform);
+
   /**
    * @brief Apply the given callback to all relevant primitives.
    *
@@ -166,6 +172,11 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * @brief Fills in smooth normals for any primitives with missing normals.
    */
   void generateMissingNormalsSmooth();
+
+  /**
+   * @brief Generates vertex tangents for any primitive with missing tangents.
+   */
+  void generateMissingTangents();
 
   /**
    * @brief Safely gets the element with a given index, returning a default

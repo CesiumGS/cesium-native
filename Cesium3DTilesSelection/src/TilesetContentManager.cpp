@@ -585,6 +585,9 @@ void postProcessGltfInWorkerThread(
   if (tileLoadInfo.contentOptions.generateMissingNormalsSmooth) {
     model.generateMissingNormalsSmooth();
   }
+  if (tileLoadInfo.contentOptions.generateMissingTangents) {
+    model.generateMissingTangents();
+  }
 }
 
 CesiumAsync::Future<TileLoadResultAndRenderResources>

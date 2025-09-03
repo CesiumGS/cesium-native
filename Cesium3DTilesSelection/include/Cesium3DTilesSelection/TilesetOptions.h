@@ -43,6 +43,17 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
   bool generateMissingNormalsSmooth = false;
 
   /**
+   * @brief Whether to generate per-vertex tangents when tangents are missing in
+   * the original glTF.
+   *
+   * According to the glTF spec: "When tangents are not specified, client
+   * implementations SHOULD calculate tangents using default MikkTSpace
+   * algorithms with the specified vertex positions, normals, and texture
+   * coordinates associated with the normal texture."
+   */
+  bool generateMissingTangents = false;
+
+  /**
    * @brief For each possible input transmission format, this struct names
    * the ideal target gpu-compressed pixel format to transcode to.
    */

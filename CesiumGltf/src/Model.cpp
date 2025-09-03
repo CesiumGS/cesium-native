@@ -895,6 +895,8 @@ void generateSmoothNormals(
 }
 } // namespace
 
+
+
 void Model::generateMissingNormalsSmooth() {
   forEachPrimitiveInScene(
       -1,
@@ -929,6 +931,197 @@ void Model::generateMissingNormalsSmooth() {
           generateSmoothNormals(gltf, primitive, positionView, indexAccessor);
         }
       });
+}
+
+namespace mikkT {
+
+#include "mikktspace.h"
+
+template<typename TIndex>
+struct Payload {
+  std::vector<glm::vec4>& tangents;
+  Model& gltf;
+  Mesh& mesh;
+  MeshPrimitive& primitive;
+  const AccessorView<glm::vec3>& positionView;
+  const AccessorView<glm::vec3>& normalView;
+  const AccessorView<glm::vec2>& texCoordView;
+  const AccessorView<TIndex>& indexView;
+};
+
+// --- MikkTSpace callback implementations ---
+int getNumFaces(const SMikkTSpaceContext *pContext) {
+  auto& payload = *static_cast<Payload*>(pContext->m_pUserData);
+
+  return static_cast<int>(payload.mesh.primitives.size());
+}
+
+int getNumVerticesOfFace(const SMikkTSpaceContext *pContext, const int iFace) {
+  auto& payload = *static_cast<Payload*>(pContext->m_pUserData);
+  assert(payload.primitive.mode == MeshPrimitive::Mode::TRIANGLES && "Unhandled mesh topology");
+  // other than lines and points into triangles, with no support for quads.
+  return 3;
+}
+
+void getPosition(const SMikkTSpaceContext *pContext, float fvPosOut[], const int iFace, const int iVert) {
+  auto& payload = *static_cast<Payload*>(pContext->m_pUserData);
+
+  // struct MyMeshData *data = (struct MyMeshData *)pContext->m_pUserData;
+  // int index_in_array = data->indices[iFace * 3 + iVert];
+  // memcpy(fvPosOut, &data->positions[index_in_array * 3], sizeof(float) * 3);
+}
+
+void getNormal(const SMikkTSpaceContext *pContext, float fvNormOut[], const int iFace, const int iVert) {
+  auto& payload = *static_cast<Payload*>(pContext->m_pUserData);
+  // struct MyMeshData *data = (struct MyMeshData *)pContext->m_pUserData;
+  // int index_in_array = data->indices[iFace * 3 + iVert];
+  // memcpy(fvNormOut, &data->normals[index_in_array * 3], sizeof(float) * 3);
+}
+
+void getTexCoord(const SMikkTSpaceContext *pContext, float fvTexCout[], const int iFace, const int iVert) {
+  auto& payload = *static_cast<Payload*>(pContext->m_pUserData);
+  // struct MyMeshData *data = (struct MyMeshData *)pContext->m_pUserData;
+  // int index_in_array = data->indices[iFace * 3 + iVert];
+  // memcpy(fvTexCout, &data->uvs[index_in_array * 2], sizeof(float) * 2);
+}
+
+void setTSpaceBasic(const SMikkTSpaceContext *pContext, const float fvTangent[], const float fSign, const int iFace, const int iVert) {
+  auto& payload = *static_cast<Payload*>(pContext->m_pUserData);
+  // struct MyMeshData *data = (struct MyMeshData *)pContext->m_pUserData;
+  // int index_in_array = data->indices[iFace * 3 + iVert];
+  // memcpy(&data->tangents[index_in_array * 4], fvTangent, sizeof(float) * 3);
+  // data->tangents[index_in_array * 4 + 3] = fSign;
+}
+
+// --- Main function to generate tangents ---
+template<typename TIndex>
+void generate_mikktspace_tangents(Payload<T>& payload) {
+    SMikkTSpaceInterface my_interface;
+    my_interface.m_getNumFaces = getNumFaces;
+    my_interface.m_getNumVerticesOfFace = getNumVerticesOfFace;
+    my_interface.m_getPosition = getPosition;
+    my_interface.m_getNormal = getNormal;
+    my_interface.m_getTexCoord = getTexCoord;
+    my_interface.m_setTSpaceBasic = setTSpaceBasic;
+
+    SMikkTSpaceContext context;
+    context.m_pInterface = &my_interface;
+    context.m_pUserData = &payload;
+
+    genTangSpaceDefault(&context);
+}
+} // namespace mikkT
+
+template<typename TIndex>
+void generateMissingTangents(
+  Model& gltf,
+  MeshPrimitive& primitive,
+  const AccessorView<glm::vec3>& positionView,
+  const AccessorView<glm::vec3>& normalView,
+  const AccessorView<glm::vec2>& texCoordView,
+  const std::optional<Accessor>& indexView) {
+
+}
+
+void generateMissingTangents(
+    Model& gltf,
+    MeshPrimitive& primitive,
+    const AccessorView<glm::vec3>& positionView,
+    const AccessorView<glm::vec3>& normalView,
+    const AccessorView<glm::vec2>& texCoordView,
+    const std::optional<Accessor>& indexAccessor)
+{
+  if (indexAccessor) {
+    switch (indexAccessor->componentType) {
+    case Accessor::ComponentType::UNSIGNED_BYTE:
+      generateMissingTangents<uint8_t>(
+          gltf,
+          primitive,
+          positionView,
+          normalView,
+          texCoordView,
+          indexAccessor);
+      break;
+    case Accessor::ComponentType::UNSIGNED_SHORT:
+      generateMissingTangents<uint16_t>(
+        gltf,
+        primitive,
+        positionView,
+        normalView,
+        texCoordView,
+        indexAccessor);
+      break;
+    case Accessor::ComponentType::UNSIGNED_INT:
+      generateMissingTangents<uint32_t>(
+        gltf,
+        primitive,
+        positionView,
+        normalView,
+        texCoordView,
+        indexAccessor);
+      break;
+    default:
+      return;
+
+    }
+  }
+
+}
+
+void Model::generateMissingTangents() {
+  forEachPrimitiveInScene(
+    -1,
+    [](Model& gltf,
+       Node& /*node*/,
+       Mesh& mesh,
+       MeshPrimitive& primitive,
+       const glm::dmat4& /*transform*/) {
+
+      auto tangentIt = primitive.attributes.find("TANGENT");
+      if (tangentIt != primitive.attributes.end()) {
+        // This
+        return;
+      }
+
+      auto positionIt = primitive.attributes.find("POSITION");
+      if (positionIt == primitive.attributes.end()) {
+        return;
+      }
+      const int32_t positionAccessorId = positionIt->second;
+      const AccessorView<glm::vec3> positionView(gltf, positionAccessorId);
+      if (positionView.status() != AccessorViewStatus::Valid) {
+        return;
+      }
+
+      // mikkT needs position, normal and texture coords.
+      auto normalIt = primitive.attributes.find("NORMAL");
+      if (normalIt == primitive.attributes.end()) {
+        return;
+      }
+      const int32_t normalAccessorId = normalIt->second;
+      const AccessorView<glm::vec3> normalView(gltf, normalAccessorId);
+      if (normalView.status() != AccessorViewStatus::Valid) {
+        return;
+      }
+
+      auto texCoordIt = primitive.attributes.find("TEXCOORD");
+      if (texCoordIt == primitive.attributes.end()) {
+        return;
+      }
+      const int32_t texCoordAccessorId = texCoordIt->second;
+      const AccessorView<glm::vec2> texCoordView(gltf, texCoordAccessorId);
+      if (texCoordView.status() != AccessorViewStatus::Valid) {
+        return;
+      }
+
+      if (primitive.indices < 0 || size_t(primitive.indices) >= gltf.accessors.size()) {
+        ::CesiumGltf::generateMissingTangents(gltf, primitive, positionView, normalView, texCoordView, std::nullopt);
+      } else {
+        Accessor& indexAccessor = gltf.accessors[size_t(primitive.indices)];
+        ::CesiumGltf::generateMissingTangents(gltf, primitive, positionView, normalView, texCoordView, indexAccessor);
+      }
+
+    });
 }
 
 void Model::addExtensionUsed(const std::string& extensionName) {
