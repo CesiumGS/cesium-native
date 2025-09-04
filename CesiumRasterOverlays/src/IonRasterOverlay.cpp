@@ -64,9 +64,6 @@ IonRasterOverlay::IonRasterOverlay(
 
 IonRasterOverlay::~IonRasterOverlay() = default;
 
-std::unordered_map<std::string, IonRasterOverlay::ExternalAssetEndpoint>
-    IonRasterOverlay::endpointCache;
-
 Future<RasterOverlay::CreateTileProviderResult>
 IonRasterOverlay::createTileProvider(
     const ExternalAssetEndpoint& endpoint,
@@ -132,18 +129,9 @@ IonRasterOverlay::createTileProvider(
           pAssetAccessor,
           this->_overlayUrl,
           requestHeaders,
-          [asyncSystem, url = this->_overlayUrl, pHolder, isBing, pOverlay](
+          [asyncSystem, pHolder, isBing, pOverlay](
               const CesiumIonAssetAccessor::UpdatedToken& update) {
-            // update cache with new access token
-            auto cacheIt = endpointCache.find(url);
-            if (cacheIt != endpointCache.end()) {
-              cacheIt->second.accessToken = update.token;
-
-              // For Bing Maps endpoints, the access token is stored in the key
-              // field instead.
-              cacheIt->second.key = update.token;
-            }
-
+            // Update the existing tile provider with the new key.
             if (pHolder->pProvider) {
               // Use static_cast instead of dynamic_cast below to avoid the
               // need for RTTI, and because we are certain of the type.
@@ -219,145 +207,8 @@ IonRasterOverlay::createTileProvider(
         fmt::format("Bearer {}", this->_ionAccessToken));
   }
 
-  getEndpointCache()->getOrCreate(asyncSystem, pAssetAccessor, descriptor);
-
-  auto cacheIt = IonRasterOverlay::endpointCache.find(this->_overlayUrl);
-  if (cacheIt != IonRasterOverlay::endpointCache.end()) {
-    IntrusivePointer<const IonRasterOverlay> pThis = this;
-    return createTileProvider(
-               cacheIt->second,
-               asyncSystem,
-               pAssetAccessor,
-               pCreditSystem,
-               pPrepareRendererResources,
-               pLogger,
-               pOwner)
-        .thenInMainThread(
-            [pThis,
-             asyncSystem,
-             pAssetAccessor,
-             pCreditSystem,
-             pPrepareRendererResources,
-             pLogger,
-             pOwner](RasterOverlay::CreateTileProviderResult&& result) {
-              if (!result) {
-                const RasterOverlayLoadFailureDetails& error = result.error();
-                if (error.pRequest && error.pRequest->response() &&
-                    error.pRequest->response()->statusCode() == 401) {
-                  // Cached endpoint response is no good, so remove it and
-                  // retry.
-                  endpointCache.erase(pThis->_overlayUrl);
-                  return pThis->createTileProvider(
-                      asyncSystem,
-                      pAssetAccessor,
-                      pCreditSystem,
-                      pPrepareRendererResources,
-                      pLogger,
-                      pOwner);
-                }
-              }
-
-              return asyncSystem.createResolvedFuture(std::move(result));
-            });
-  }
-
-  return pAssetAccessor->get(asyncSystem, this->_overlayUrl, headers)
-      .thenImmediately(
-          [](std::shared_ptr<IAssetRequest>&& pRequest)
-              -> nonstd::expected<
-                  ExternalAssetEndpoint,
-                  RasterOverlayLoadFailureDetails> {
-            const IAssetResponse* pResponse = pRequest->response();
-
-            rapidjson::Document response;
-            response.Parse(
-                reinterpret_cast<const char*>(pResponse->data().data()),
-                pResponse->data().size());
-
-            if (response.HasParseError()) {
-              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                  RasterOverlayLoadType::CesiumIon,
-                  std::move(pRequest),
-                  fmt::format(
-                      "Error while parsing Cesium ion raster overlay "
-                      "response, "
-                      "error code {} at byte offset {}",
-                      response.GetParseError(),
-                      response.GetErrorOffset())});
-            }
-
-            std::string type =
-                JsonHelpers::getStringOrDefault(response, "type", "unknown");
-            if (type != "IMAGERY") {
-              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                  RasterOverlayLoadType::CesiumIon,
-                  std::move(pRequest),
-                  fmt::format(
-                      "Assets used with a raster overlay must have type "
-                      "'IMAGERY', but instead saw '{}'.",
-                      type)});
-            }
-
-            ExternalAssetEndpoint endpoint;
-            endpoint.externalType = JsonHelpers::getStringOrDefault(
-                response,
-                "externalType",
-                "unknown");
-            if (endpoint.externalType == "BING") {
-              const auto optionsIt = response.FindMember("options");
-              if (optionsIt == response.MemberEnd() ||
-                  !optionsIt->value.IsObject()) {
-                return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                    RasterOverlayLoadType::CesiumIon,
-                    std::move(pRequest),
-                    fmt::format("Cesium ion Bing Maps raster overlay metadata "
-                                "response "
-                                "does not contain 'options' or it is not an "
-                                "object.")});
-              }
-
-              const auto attributionsIt = response.FindMember("attributions");
-              if (attributionsIt != response.MemberEnd() &&
-                  attributionsIt->value.IsArray()) {
-
-                for (const rapidjson::Value& attribution :
-                     attributionsIt->value.GetArray()) {
-                  AssetEndpointAttribution& endpointAttribution =
-                      endpoint.attributions.emplace_back();
-                  const auto html = attribution.FindMember("html");
-                  if (html != attribution.MemberEnd() &&
-                      html->value.IsString()) {
-                    endpointAttribution.html = html->value.GetString();
-                  }
-                  auto collapsible = attribution.FindMember("collapsible");
-                  if (collapsible != attribution.MemberEnd() &&
-                      collapsible->value.IsBool()) {
-                    endpointAttribution.collapsible =
-                        collapsible->value.GetBool();
-                  }
-                }
-              }
-
-              const auto& options = optionsIt->value;
-              endpoint.url =
-                  JsonHelpers::getStringOrDefault(options, "url", "");
-              endpoint.key =
-                  JsonHelpers::getStringOrDefault(options, "key", "");
-              endpoint.mapStyle = JsonHelpers::getStringOrDefault(
-                  options,
-                  "mapStyle",
-                  "AERIAL");
-              endpoint.culture =
-                  JsonHelpers::getStringOrDefault(options, "culture", "");
-            } else {
-              endpoint.url =
-                  JsonHelpers::getStringOrDefault(response, "url", "");
-              endpoint.accessToken =
-                  JsonHelpers::getStringOrDefault(response, "accessToken", "");
-            }
-
-            return endpoint;
-          })
+  return getEndpointCache()
+      ->getOrCreate(asyncSystem, pAssetAccessor, descriptor)
       .thenInMainThread(
           [asyncSystem,
            pOwner,
@@ -365,14 +216,12 @@ IonRasterOverlay::createTileProvider(
            pCreditSystem,
            pPrepareRendererResources,
            this,
-           pLogger](nonstd::expected<
-                    ExternalAssetEndpoint,
-                    RasterOverlayLoadFailureDetails>&& result)
+           pLogger](
+              const Result<IntrusivePointer<ExternalAssetEndpoint>>& result)
               -> Future<CreateTileProviderResult> {
-            if (result) {
-              IonRasterOverlay::endpointCache[this->_overlayUrl] = *result;
+            if (result.pValue) {
               return this->createTileProvider(
-                  *result,
+                  *result.pValue,
                   asyncSystem,
                   pAssetAccessor,
                   pCreditSystem,
@@ -381,7 +230,12 @@ IonRasterOverlay::createTileProvider(
                   pOwner);
             } else {
               return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
-                  nonstd::make_unexpected(std::move(result).error()));
+                  nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                      .type = RasterOverlayLoadType::CesiumIon,
+                      .pRequest = nullptr,
+                      .message = result.errors.format(
+                          "Could not access Cesium ion asset"),
+                  }));
             }
           });
 }

@@ -106,8 +106,9 @@ private:
       const std::shared_ptr<spdlog::logger>& pLogger,
       CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const;
 
-  using EndpointDepot = CesiumAsync::
-      SharedAssetDepot<ExternalAssetEndpoint, NetworkAssetDescriptor>;
+  using EndpointDepot = CesiumAsync::SharedAssetDepot<
+      ExternalAssetEndpoint,
+      CesiumAsync::NetworkAssetDescriptor>;
 
   static CesiumUtility::IntrusivePointer<EndpointDepot> getEndpointCache();
 };
