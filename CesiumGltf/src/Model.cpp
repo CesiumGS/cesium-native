@@ -951,7 +951,8 @@ struct MikkTPayload {
   const AccessorView<glm::vec3>& positionView;
   const AccessorView<glm::vec3>& normalView;
   const AccessorView<glm::vec2>& texCoordView;
-  std::function<int64_t(int64_t)> getIndex;
+  const int numFaces;
+  std::function<int64_t(int64_t)>& getIndex;
   std::vector<glm::vec4>& tangents;
 };
 
@@ -1069,9 +1070,48 @@ struct MikkTPayload {
 //
 //   }
 
-
-
 // }
+ int getNumFaces(const SMikkTSpaceContext *pContext) {
+   auto& payload = *static_cast<MikkTPayload*>(pContext->m_pUserData);
+   return payload.numFaces;
+ }
+
+int getNumVerticesOfFace(const SMikkTSpaceContext *pContext, const int /*iFace*/) {
+  auto& payload = *static_cast<MikkTPayload*>(pContext->m_pUserData);
+  assert(MeshPrimitive::Mode::TRIANGLES == payload.primitive.mode && "Unsupported primitive topology.");
+  return 3;
+};
+
+void getPosition(const SMikkTSpaceContext *pContext, float fvPosOut[], const int iFace, const int iVert) {
+  auto& payload = *static_cast<MikkTPayload*>(pContext->m_pUserData);
+  int64_t index = payload.getIndex(3 * iFace + iVert);
+  glm::vec3 pos = payload.positionView[index];
+  memcpy(fvPosOut, &pos, sizeof(pos));
+};
+
+void getNormal(const SMikkTSpaceContext *pContext, float fvNormOut[], const int iFace, const int iVert) {
+  auto& payload = *static_cast<MikkTPayload*>(pContext->m_pUserData);
+  int64_t index = payload.getIndex(3 * iFace + iVert);
+  glm::vec3 normal = payload.normalView[index];
+  memcpy(fvNormOut, &normal, sizeof(normal));
+};
+
+void getTexCoord(const SMikkTSpaceContext *pContext, float fvTexCout[], const int iFace, const int iVert) {
+  auto& payload = *static_cast<MikkTPayload*>(pContext->m_pUserData);
+  int64_t index = payload.getIndex(3 * iFace + iVert);
+  glm::vec2 texCoord = payload.texCoordView[index];
+  memcpy(fvTexCout, &texCoord, sizeof(texCoord));
+};
+
+void setTSpaceBasic(const SMikkTSpaceContext *pContext, const float fvTangent[], const float fSign, const int iFace, const int iVert) {
+  auto& payload = *static_cast<MikkTPayload*>(pContext->m_pUserData);
+  int64_t index = payload.getIndex(3 * iFace + iVert);
+  payload.tangents[size_t(index)] = glm::vec4 { fvTangent[0], fvTangent[1], fvTangent[2], fSign};
+  // struct MyMeshData *data = (struct MyMeshData *)pContext->m_pUserData;
+  // int index_in_array = data->indices[iFace * 3 + iVert];
+  // memcpy(&data->tangents[index_in_array * 4], fvTangent, sizeof(float) * 3);
+  // data->tangents[index_in_array * 4 + 3] = fSign;
+}
 
 template<typename TIndex>
 void generateTangents(
@@ -1085,15 +1125,13 @@ void generateTangents(
   std::vector<glm::vec4>& tangents) {
 
   SMikkTSpaceInterface interface;
-  // const size_t numVertices = static_cast<size_t>(positionView.size());
-  // // interface.m_getNumFaces = getNumFaces;
-  // interface.m_getNumVerticesOfFace = getNumVerticesOfFace;
-  // interface.m_getPosition = getPosition;
-  // interface.m_getNormal = getNormal;
-  // interface.m_getTexCoord = getTexCoord;
-  // interface.m_setTSpaceBasic = setTSpaceBasic;
-
-  // MikkTPayload<TIndex> payload { gltf, mesh, primitive, positionView, normalView, texCoordView,/* tangents */ };
+  interface.m_getNumFaces = getNumFaces;
+  interface.m_getNumVerticesOfFace = getNumVerticesOfFace;
+  interface.m_getPosition = getPosition;
+  interface.m_getNormal = getNormal;
+  interface.m_getTexCoord = getTexCoord;
+  interface.m_setTSpaceBasic = setTSpaceBasic;
+  int64_t numFaces;
 
   std::function<int64_t(int64_t)> getIndex;
   if (indexAccessor) {
@@ -1101,68 +1139,25 @@ void generateTangents(
     if (indexView.status() != AccessorViewStatus::Valid) {
       return;
     }
-
+    numFaces = indexView.size() / 3;
     getIndex = [&indexView](int64_t index) {
       return indexView[index];
     };
 
-    interface.m_getNumFaces = [&](const SMikkTSpaceContext*) {
-      assert(MeshPrimitive::Mode::TRIANGLES== primitive.mode && "Unsupported primitive topology.");
-      return indexView.size() / 3;
-    };
   } else {
+    numFaces = positionView.size() / 3;
     getIndex = [](int64_t index) {
       return static_cast<TIndex>(index);
     };
-
-    interface.m_getNumFaces = [&](const SMikkTSpaceContext*) {
-      return positionView.size() / 3;
-    };
   }
 
-  interface.m_getNumVerticesOfFace = [&](const SMikkTSpaceContext*) {
-    assert(MeshPrimitive::Mode::TRIANGLES == primitive.mode && "Unsupported primitive topology.");
-    return 3;
-  };
-
-  interface.m_getPosition = [&](const SMikkTSpaceContext */*context*/, float fvPosOut[], const int iFace, const int iVert) {
-    int64_t index = getIndex(3 * iFace + iVert);
-    glm::vec3 pos = positionView[index];
-    memcpy(fvPosOut, &pos, sizeof(pos));
-  };
-
-  interface.m_getNormal = [&](const SMikkTSpaceContext */*context*/, float fvNormOut[], const int iFace, const int iVert) {
-    int64_t index = getIndex(3 * iFace + iVert);
-    glm::vec3 normal = normalView[index];
-    memcpy(fvNormOut, &normal, sizeof(normal));
-  };
-
-  interface.m_getTexCoord = [&](const SMikkTSpaceContext */*pContext*/, float fvTexCout[], const int iFace, const int iVert) {
-    int64_t index = getIndex(3 * iFace + iVert);
-    glm::vec2 texCoord = texCoordView[index];
-    memcpy(fvTexCout, &texCoord, sizeof(texCoord));
-  };
-
-  // void setTSpaceBasic(const SMikkTSpaceContext *pContext, const float fvTangent[], const float fSign, const int iFace, const int iVert) {
-  //   auto& payload = *static_cast<MikkTPayload*>(pContext->m_pUserData);
-  //   // struct MyMeshData *data = (struct MyMeshData *)pContext->m_pUserData;
-  //   // int index_in_array = data->indices[iFace * 3 + iVert];
-  //   // memcpy(&data->tangents[index_in_array * 4], fvTangent, sizeof(float) * 3);
-  //   // data->tangents[index_in_array * 4 + 3] = fSign;
-  // }
-
-  interface.m_setTSpaceBasic = [&](const SMikkTSpaceContext */*pContext*/, const float fvTangent[], const float fSign, const int iFace, const int iVert) {
-    auto index = getIndex(3 * iFace + iVert);
-    // auto& tangents = *static_cast<std::vector<glm::vec4>*>(pContext->m_pUserData);
-    glm::vec4 tangent { fvTangent[0], fvTangent[1], fvTangent[2], fSign };
-    tangents[size_t(index)] = tangent;
-  };
+  MikkTPayload payload { primitive, positionView, normalView, texCoordView, int(numFaces), getIndex, tangents  };
 
   tangents.resize(size_t(positionView.size()));
 
   SMikkTSpaceContext context;
   context.m_pInterface = &interface;
-  context.m_pUserData = tangents.data();
+  context.m_pUserData = &payload;
 
   genTangSpaceDefault(&context);
 }
@@ -1282,13 +1277,10 @@ void Model::generateMissingTangents() {
       if (primitive.indices < 0 || size_t(primitive.indices) >= gltf.accessors.size()) {
         // can't generate tangents without faces.
         return;
-        // generateTangents(gltf, mesh, primitive, positionView, normalView, texCoordView, std::nullopt);
       } else {
         Accessor& indexAccessor = gltf.accessors[size_t(primitive.indices)];
         generateTangents(gltf, mesh, primitive, positionView, normalView, texCoordView, indexAccessor);
       }
-      // mikkT::MikkTPayload payload { gltf, mesh, primitive, positionView, normalView, texCoordView, indexAccessor, tangents };
-
     });
 }
 
