@@ -119,7 +119,7 @@ struct CESIUMUTILITY_API ErrorList {
   void
   log(const std::shared_ptr<spdlog::logger>& pLogger,
       PromptStr&& prompt) const noexcept {
-    if (!this.errors.empty()) {
+    if (!this->errors.empty()) {
       SPDLOG_LOGGER_ERROR(
           pLogger,
           this->format(std::forward<PromptStr>(prompt)));
