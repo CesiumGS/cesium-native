@@ -1,7 +1,6 @@
 #include <CesiumAsync/CesiumIonAssetAccessor.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/NetworkAssetDescriptor.h>
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
@@ -12,20 +11,20 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
-#include <CesiumUtility/Hash.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Result.h>
 
 #include <fmt/format.h>
 #include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/logger.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
