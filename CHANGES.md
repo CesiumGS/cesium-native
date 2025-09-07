@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.51.0 - 2025-09-02
 
 ##### Breaking Changes :mega:
 
@@ -8,6 +8,7 @@
 - `ViewUpdateResult` now holds pointers to const `Tile` instances.
 - The `slowlyGetCurrentStates` and `slowlyGetPreviousStates` methods of `TreeTraversalState` now return the state map with a raw pointer to a constant node as the key, even if the node pointer type is a smart pointer.
 - `DebugTileStateDatabase::recordTileState` now expects the states to be provided as `std::unordered_map<const Tile*, TileSelectionState>` instead of `std::unordered_map<IntrusivePointer<Tile>, TileSelectionState>`.
+- `VectorRasterizer::drawPolyline` now takes a `std::vector` instead of a `std::span`.
 
 ##### Additions :tada:
 
@@ -20,6 +21,9 @@
 ##### Fixes :wrench:
 
 - Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
+- Fixed a bug with `ColorMode::Random` in `VectorStyle` that caused it to produce different results each time a raster overlay tile was rendered.
+- Fixed a bug in `IonRasterOverlay` that would cause unnecessary extra use of Bing Maps sessions when manually reloading the raster overlay after an expired token was automatically refreshed.
+- Fixed a bug that could lead to a crash when using raster overlays with tilesets that use "external tilesets", such as Google Photorealistic 3D Tiles.
 
 ### v0.50.0 - 2025-08-01
 

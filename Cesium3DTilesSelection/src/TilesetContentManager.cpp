@@ -1528,6 +1528,13 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     return UnloadTileContentResult::Remove;
   }
 
+  // Detach raster tiles first so that the renderer's tile free
+  // process doesn't need to worry about them.
+  for (RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+    mapped.detachFromTile(*this->_externals.pPrepareRendererResources, tile);
+  }
+  tile.getMappedRasterTiles().clear();
+
   if (content.isExternalContent()) {
     // We can unload an external content tile with one reference, because this
     // represents the external content itself. Any more than that indicates
@@ -1543,13 +1550,6 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     tile.releaseReference("UnloadTileContent: External");
     return UnloadTileContentResult::RemoveAndClearChildren;
   }
-
-  // Detach raster tiles first so that the renderer's tile free
-  // process doesn't need to worry about them.
-  for (RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
-    mapped.detachFromTile(*this->_externals.pPrepareRendererResources, tile);
-  }
-  tile.getMappedRasterTiles().clear();
 
   // Unload the renderer resources and clear any raster overlay tiles. We can do
   // this even if the tile can't be fully unloaded because this tile's geometry
