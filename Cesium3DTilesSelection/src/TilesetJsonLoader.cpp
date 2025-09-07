@@ -861,8 +861,7 @@ TilesetJsonLoader::createLoader(
       .thenInWorkerThread([ellipsoid,
                            asyncSystem = externals.asyncSystem,
                            pAssetAccessor = externals.pAssetAccessor,
-                           pLogger = externals.pLogger,
-                           pGltfModifier = externals.pGltfModifier](
+                           pLogger = externals.pLogger](
                               const std::shared_ptr<CesiumAsync::IAssetRequest>&
                                   pCompletedRequest) {
         const CesiumAsync::IAssetResponse* pResponse =
