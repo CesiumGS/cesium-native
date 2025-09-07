@@ -28,7 +28,9 @@ const CesiumGltf::Model& TileRenderContent::getModel() const noexcept {
   return this->_model;
 }
 
-CesiumGltf::Model& TileRenderContent::getModel() noexcept { return _model; }
+CesiumGltf::Model& TileRenderContent::getModel() noexcept {
+  return this->_model;
+}
 
 void TileRenderContent::setModel(const CesiumGltf::Model& model) {
   this->_model = model;
