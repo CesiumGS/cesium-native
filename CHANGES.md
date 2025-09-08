@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `invalidate` method to `SharedAssetDepot`.
+
 ### v0.51.0 - 2025-09-02
 
 ##### Breaking Changes :mega:

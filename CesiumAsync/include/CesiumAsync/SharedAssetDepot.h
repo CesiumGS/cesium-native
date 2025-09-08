@@ -589,6 +589,10 @@ void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidate(
 template <typename TAssetType, typename TAssetKey>
 void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidateUnderLock(
     const TAssetType& asset) {
+  // This asset better not already be invalidated. That would imply this asset
+  // was resurrected after its reference count hit zero. This should only be
+  // possible if the asset depot returned a pointer to the asset, which it
+  // will not do for one that is invalidated.
   CESIUM_ASSERT(!asset._isInvalidated);
 
   auto it = this->_assetsByPointer.find(const_cast<TAssetType*>(&asset));
