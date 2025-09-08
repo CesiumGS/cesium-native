@@ -69,7 +69,7 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
   }
 };
 
-class IRasterOverlayTileProvider {
+class IRasterOverlayTileLoader {
 public:
   /**
    * @brief Loads the image for a tile.
@@ -78,7 +78,10 @@ public:
    * @return A future that resolves to the image or error information.
    */
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) = 0;
+  loadTileImage(const RasterOverlayTile& overlayTile) = 0;
+
+  virtual void addReference() const = 0;
+  virtual void releaseReference() const = 0;
 };
 
 } // namespace CesiumRasterOverlays

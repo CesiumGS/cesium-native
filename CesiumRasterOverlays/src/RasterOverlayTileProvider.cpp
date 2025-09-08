@@ -60,7 +60,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
       _throttledTilesCurrentlyLoading(0),
-      _destructionCompleteDetails() {}
+      _destructionCompleteDetails(),
+      _pTileLoader(nullptr) {}
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
@@ -86,7 +87,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
       _throttledTilesCurrentlyLoading(0),
-      _destructionCompleteDetails() {}
+      _destructionCompleteDetails(),
+      _pTileLoader(nullptr) {}
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
@@ -159,6 +161,41 @@ bool RasterOverlayTileProvider::loadTileThrottled(RasterOverlayTile& tile) {
 
   this->doLoad(tile, true);
   return true;
+}
+
+CesiumUtility::IntrusivePointer<IRasterOverlayTileLoader>
+RasterOverlayTileProvider::getTileLoader() const {
+  return this->_pTileLoader;
+}
+
+void RasterOverlayTileProvider::setTileLoader(
+    const CesiumUtility::IntrusivePointer<IRasterOverlayTileLoader>& pLoader) {
+  this->_pTileLoader = pLoader;
+}
+
+void RasterOverlayTileProvider::addReference() const {
+  ReferenceCountedNonThreadSafe<RasterOverlayTileProvider>::addReference();
+}
+
+void RasterOverlayTileProvider::releaseReference() const {
+  ReferenceCountedNonThreadSafe<RasterOverlayTileProvider>::releaseReference();
+}
+
+CesiumAsync::Future<LoadedRasterOverlayImage>
+RasterOverlayTileProvider::loadTileImage(const RasterOverlayTile& overlayTile) {
+  if (this->_pTileLoader) {
+    return this->_pTileLoader->loadTileImage(overlayTile);
+  } else {
+    return this->getAsyncSystem()
+        .createResolvedFuture<LoadedRasterOverlayImage>(
+            LoadedRasterOverlayImage{
+                .pImage = nullptr,
+                .rectangle = overlayTile.getRectangle(),
+                .credits = {},
+                .errorList = ErrorList::error(
+                    "RasterOverlayTileProvider has no tile loader."),
+                .moreDetailAvailable = false});
+  }
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>

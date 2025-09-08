@@ -3,7 +3,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
-#include <CesiumRasterOverlays/IRasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/IRasterOverlayTileLoader.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
@@ -92,7 +92,7 @@ struct TileProviderAndTile {
 class CESIUMRASTEROVERLAYS_API RasterOverlayTileProvider
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
           RasterOverlayTileProvider>,
-      protected IRasterOverlayTileProvider {
+      protected IRasterOverlayTileLoader {
 public:
   /**
    * Constructs a placeholder tile provider.
@@ -335,6 +335,15 @@ public:
    */
   bool loadTileThrottled(RasterOverlayTile& tile);
 
+  CesiumUtility::IntrusivePointer<IRasterOverlayTileLoader>
+  getTileLoader() const;
+
+  void setTileLoader(
+      const CesiumUtility::IntrusivePointer<IRasterOverlayTileLoader>& pLoader);
+
+  virtual void addReference() const override final;
+  virtual void releaseReference() const override final;
+
 protected:
   /**
    * @brief Loads the image for a tile.
@@ -343,7 +352,7 @@ protected:
    * @return A future that resolves to the image or error information.
    */
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) = 0;
+  loadTileImage(const RasterOverlayTile& overlayTile);
 
   /**
    * @brief Loads an image from a URL and optionally some request headers.
@@ -404,6 +413,7 @@ private:
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
   std::optional<DestructionCompleteDetails> _destructionCompleteDetails;
+  CesiumUtility::IntrusivePointer<IRasterOverlayTileLoader> _pTileLoader;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
       "Raster Overlay Tile Loading Slot")
