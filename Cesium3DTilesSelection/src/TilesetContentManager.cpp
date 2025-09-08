@@ -952,10 +952,7 @@ TilesetContentManager::TilesetContentManager(
                   });
             })
         .thenInMainThread(
-            [thiz,
-             asyncSystem = externals.asyncSystem,
-             errorCallback = tilesetOptions.loadErrorCallback,
-             pGltfModifier = externals.pGltfModifier](
+            [thiz, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<TilesetContentLoader>&& result) {
               thiz->notifyTileDoneLoading(result.pRootTile.get());
               thiz->propagateTilesetContentLoaderResult(
@@ -1150,61 +1147,56 @@ void TilesetContentManager::reapplyGltfModifier(
             .previousModel = previousModel,
             .tileTransform = tileTransform});
       })
-      .thenInWorkerThread(
-          [&externals,
-           &previousModel,
-           pRenderContent,
-           tileTransform = tile.getTransform(),
-           tileBoundingVolume = tile.getBoundingVolume(),
-           tileContentBoundingVolume = tile.getContentBoundingVolume(),
-           rendererOptions = tilesetOptions.rendererOptions,
-           version](std::optional<GltfModifierOutput>&& modified) {
-            TileLoadResult tileLoadResult;
-            tileLoadResult.state = TileLoadResultState::Success;
-            tileLoadResult.pAssetAccessor = externals.pAssetAccessor;
-            tileLoadResult.rasterOverlayDetails =
-                pRenderContent->getRasterOverlayDetails();
-            tileLoadResult.initialBoundingVolume = tileBoundingVolume;
-            tileLoadResult.initialContentBoundingVolume =
-                tileContentBoundingVolume;
+      .thenInWorkerThread([&externals,
+                           &previousModel,
+                           pRenderContent,
+                           tileTransform = tile.getTransform(),
+                           tileBoundingVolume = tile.getBoundingVolume(),
+                           tileContentBoundingVolume =
+                               tile.getContentBoundingVolume(),
+                           rendererOptions = tilesetOptions.rendererOptions](
+                              std::optional<GltfModifierOutput>&& modified) {
+        TileLoadResult tileLoadResult;
+        tileLoadResult.state = TileLoadResultState::Success;
+        tileLoadResult.pAssetAccessor = externals.pAssetAccessor;
+        tileLoadResult.rasterOverlayDetails =
+            pRenderContent->getRasterOverlayDetails();
+        tileLoadResult.initialBoundingVolume = tileBoundingVolume;
+        tileLoadResult.initialContentBoundingVolume = tileContentBoundingVolume;
 
-            const CesiumGltf::Model& model =
-                modified ? modified->modifiedModel : previousModel;
-            const auto it = model.extras.find("gltfUpAxis");
-            if (it == model.extras.end()) {
-              tileLoadResult.glTFUpAxis = CesiumGeometry::Axis::Y;
-            } else {
-              tileLoadResult.glTFUpAxis = static_cast<CesiumGeometry::Axis>(
-                  it->second.getSafeNumberOrDefault(1));
-            }
+        {
+          const CesiumGltf::Model& model =
+              modified ? modified->modifiedModel : previousModel;
+          const auto it = model.extras.find("gltfUpAxis");
+          if (it == model.extras.end()) {
+            tileLoadResult.glTFUpAxis = CesiumGeometry::Axis::Y;
+          } else {
+            tileLoadResult.glTFUpAxis = static_cast<CesiumGeometry::Axis>(
+                it->second.getSafeNumberOrDefault(1));
+          }
+        }
 
-            if (modified) {
-              tileLoadResult.contentKind = std::move(modified->modifiedModel);
-            } else {
-              tileLoadResult.contentKind = previousModel;
-            }
+        if (modified) {
+          tileLoadResult.contentKind = std::move(modified->modifiedModel);
+        } else {
+          tileLoadResult.contentKind = previousModel;
+        }
 
-            // Whether the GltfModifier modified anything or not, the model is
-            // now up-to-date with the version that triggered this run.
-            GltfModifierVersionExtension::setVersion(
-                std::get<CesiumGltf::Model>(tileLoadResult.contentKind),
-                version);
-
-            if (externals.pPrepareRendererResources) {
-              return externals.pPrepareRendererResources->prepareInLoadThread(
-                  externals.asyncSystem,
-                  std::move(tileLoadResult),
-                  tileTransform,
-                  rendererOptions);
-            } else {
-              return externals.asyncSystem
-                  .createResolvedFuture<TileLoadResultAndRenderResources>(
-                      TileLoadResultAndRenderResources{
-                          std::move(tileLoadResult),
-                          nullptr});
-            }
-          })
-      .thenInMainThread([this, pTile = Tile::Pointer(&tile)](
+        if (modified && externals.pPrepareRendererResources) {
+          return externals.pPrepareRendererResources->prepareInLoadThread(
+              externals.asyncSystem,
+              std::move(tileLoadResult),
+              tileTransform,
+              rendererOptions);
+        } else {
+          return externals.asyncSystem
+              .createResolvedFuture<TileLoadResultAndRenderResources>(
+                  TileLoadResultAndRenderResources{
+                      std::move(tileLoadResult),
+                      nullptr});
+        }
+      })
+      .thenInMainThread([this, version, pTile = Tile::Pointer(&tile)](
                             TileLoadResultAndRenderResources&& pair) {
         TileRenderContent* pRenderContent =
             pTile->getContent().getRenderContent();
@@ -1212,7 +1204,18 @@ void TilesetContentManager::reapplyGltfModifier(
 
         this->notifyTileDoneLoading(pTile.get());
 
-        if (pTile->getState() == TileLoadState::ContentLoaded) {
+        if (std::holds_alternative<TileUnknownContent>(
+                pair.result.contentKind)) {
+          // GltfModifier did not actually modify the model.
+          pRenderContent->resetModifiedModelAndRenderResources();
+          pRenderContent->setGltfModifierState(GltfModifierState::Idle);
+
+          // Even though the GltfModifier chose not to modify anything, the
+          // model is now up-to-date with the version that triggered this run.
+          GltfModifierVersionExtension::setVersion(
+              pRenderContent->getModel(),
+              version);
+        } else if (pTile->getState() == TileLoadState::ContentLoaded) {
           // This Tile is in the ContentLoaded state, which means that it was
           // (partially) loaded before the GltfModifier triggered to the current
           // version. In that case, we need to free the previous renderer
@@ -1229,13 +1232,26 @@ void TilesetContentManager::reapplyGltfModifier(
               std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)));
           pRenderContent->setRenderResources(pair.pRenderResources);
           pRenderContent->setGltfModifierState(GltfModifierState::Idle);
+
+          // The model is now up-to-date with the version that triggered this
+          // run.
+          GltfModifierVersionExtension::setVersion(
+              pRenderContent->getModel(),
+              version);
         } else {
           // This is a reapply of the GltfModifier to an already loaded and
           // potentially rendered tile.
           CESIUM_ASSERT(pTile->getState() == TileLoadState::Done);
           pRenderContent->setGltfModifierState(GltfModifierState::WorkerDone);
+
+          // The modified model is up-to-date with the version that triggered
+          // this run.
+          CesiumGltf::Model& modifiedModel =
+              std::get<CesiumGltf::Model>(pair.result.contentKind);
+          GltfModifierVersionExtension::setVersion(modifiedModel, version);
+
           pRenderContent->setModifiedModelAndRenderResources(
-              std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)),
+              std::move(modifiedModel),
               pair.pRenderResources);
           this->_externals.pGltfModifier->onWorkerThreadApplyComplete(*pTile);
         }
