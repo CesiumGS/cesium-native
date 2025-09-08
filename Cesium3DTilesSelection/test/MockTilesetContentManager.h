@@ -12,5 +12,10 @@ public:
   static void setTileShouldContinueUpdating(
       Cesium3DTilesSelection::Tile& tile,
       bool shouldContinueToBeUpdating);
+
+  static void setTileContent(
+      Cesium3DTilesSelection::Tile& tile,
+      Cesium3DTilesSelection::TileContent&& content);
 };
+
 } // namespace Cesium3DTilesSelection

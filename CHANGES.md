@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `GltfModifier` class. It can be used to modify tile glTFs during load, as well as apply new modifications to them later.
+
 ### v0.51.0 - 2025-09-02
 
 ##### Breaking Changes :mega:
