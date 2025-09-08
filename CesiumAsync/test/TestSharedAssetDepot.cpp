@@ -151,4 +151,72 @@ TEST_CASE("SharedAssetDepot") {
 
     assetOne.pValue.reset();
   }
+
+  SUBCASE("recreates invalidated asset") {
+    auto pDepot = createDepot();
+
+    ResultPointer<TestAsset> assetOne =
+        pDepot->getOrCreate(asyncSystem, nullptr, "one").waitInMainThread();
+
+    REQUIRE(assetOne.pValue != nullptr);
+
+    pDepot->invalidate("one");
+
+    ResultPointer<TestAsset> assetOne2 =
+        pDepot->getOrCreate(asyncSystem, nullptr, "one").waitInMainThread();
+
+    REQUIRE(assetOne.pValue != assetOne2.pValue);
+    CHECK(assetOne.pValue->someValue == "one");
+    CHECK(assetOne2.pValue->someValue == "one");
+  }
+
+  SUBCASE("is kept alive for as long as invalidated assets are alive") {
+    auto pDepot = createDepot();
+    SharedAssetDepot<TestAsset, std::string>* pDepotRaw = pDepot.get();
+
+    ResultPointer<TestAsset> assetOne =
+        pDepot->getOrCreate(asyncSystem, nullptr, "one").waitInMainThread();
+
+    REQUIRE(assetOne.pValue != nullptr);
+
+    pDepot->invalidate("one");
+
+    pDepot.reset();
+
+    REQUIRE(assetOne.pValue->getDepot() == pDepotRaw);
+    CHECK(pDepotRaw->getInactiveAssetTotalSizeBytes() == 0);
+
+    assetOne.pValue.reset();
+  }
+
+  SUBCASE("invalidated assets don't count against inactive asset size") {
+    auto pDepot = createDepot();
+
+    ResultPointer<TestAsset> assetOne =
+        pDepot->getOrCreate(asyncSystem, nullptr, "one").waitInMainThread();
+
+    REQUIRE(assetOne.pValue != nullptr);
+    assetOne.pValue.reset();
+
+    CHECK(pDepot->getInactiveAssetTotalSizeBytes() > 0);
+    pDepot->invalidate("one");
+    CHECK(pDepot->getInactiveAssetTotalSizeBytes() == 0);
+  }
+
+  SUBCASE("can invalidate an asset that was never valid") {
+    auto pDepot = createDepot();
+    pDepot->invalidate("one");
+  }
+
+  SUBCASE("can invalidate the same asset twice") {
+    auto pDepot = createDepot();
+
+    ResultPointer<TestAsset> assetOne =
+        pDepot->getOrCreate(asyncSystem, nullptr, "one").waitInMainThread();
+
+    REQUIRE(assetOne.pValue != nullptr);
+
+    pDepot->invalidate("one");
+    pDepot->invalidate("one");
+  }
 }
