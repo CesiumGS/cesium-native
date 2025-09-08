@@ -100,7 +100,7 @@ public:
    * the next call to {@link getOrCreate} will create the asset instead of
    * returning the existing one.
    *
-   * Anyone already using the existing instance may continue to do so.
+   * Anyone already using the existing asset may continue to do so.
    *
    * If an asset with the given key does not exist in the depot, this method
    * does nothing.
