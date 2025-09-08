@@ -149,7 +149,7 @@ private:
 
   mutable std::atomic<std::int32_t> _referenceCount{0};
   IDepotOwningAsset<T>* _pDepot{nullptr};
-  std::atomic<bool> _isInvalidated{false};
+  bool _isInvalidated{false};
 
   // To allow the depot to modify _pDepot.
   template <typename TAssetType, typename TAssetKey>
