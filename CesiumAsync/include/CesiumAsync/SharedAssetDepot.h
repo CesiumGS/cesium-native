@@ -47,7 +47,8 @@ public:
    *
    * Default is 16MiB.
    */
-  int64_t inactiveAssetSizeLimitBytes = static_cast<int64_t>(16 * 1024 * 1024);
+  std::atomic<int64_t> inactiveAssetSizeLimitBytes =
+      static_cast<int64_t>(16 * 1024 * 1024);
 
   /**
    * @brief Signature for the callback function that will be called to fetch and
@@ -438,8 +439,8 @@ void SharedAssetDepot<TAssetType, TAssetKey>::invalidate(
       pEntry->toResultUnderLock();
 
   if (assetResult.pValue) {
-    bool wasInvalidated = assetResult.pValue->_isInvalidated.exchange(true);
-    if (!wasInvalidated) {
+    if (!assetResult.pValue->_isInvalidated) {
+      assetResult.pValue->_isInvalidated = true;
       ++this->_liveInvalidatedAssets;
     }
     this->_assetsByPointer.erase(assetResult.pValue.get());
