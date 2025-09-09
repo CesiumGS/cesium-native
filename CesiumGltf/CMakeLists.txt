@@ -55,5 +55,4 @@ target_link_libraries(CesiumGltf
     PUBLIC
         CesiumUtility
         mikktspace::mikktspace
-
 )

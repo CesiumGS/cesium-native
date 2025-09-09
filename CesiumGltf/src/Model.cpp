@@ -932,7 +932,7 @@ void Model::generateMissingNormalsSmooth() {
 }
 
 namespace {
-#include "mikktspace.h"
+#include <mikktspace.h>
 
 // // template<typename TIndex>
 // struct MikkTPayload {
@@ -1104,6 +1104,7 @@ void getTexCoord(const SMikkTSpaceContext *pContext, float fvTexCout[], const in
 };
 
 void setTSpaceBasic(const SMikkTSpaceContext *pContext, const float fvTangent[], const float fSign, const int iFace, const int iVert) {
+  return;
   auto& payload = *static_cast<MikkTPayload*>(pContext->m_pUserData);
   int64_t index = payload.getIndex(3 * iFace + iVert);
   payload.tangents[size_t(index)] = glm::vec4 { fvTangent[0], fvTangent[1], fvTangent[2], fSign};
@@ -1262,7 +1263,8 @@ void Model::generateMissingTangents() {
         return;
       }
 
-      auto texCoordIt = primitive.attributes.find("TEXCOORD");
+      static std::string attributeName = "TEXCCOORD";
+      auto texCoordIt = primitive.attributes.find(attributeName);
       if (texCoordIt == primitive.attributes.end()) {
         return;
       }
