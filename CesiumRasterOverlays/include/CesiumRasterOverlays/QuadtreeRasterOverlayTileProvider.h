@@ -125,7 +125,7 @@ protected:
 
 private:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) override final;
+  loadTileImage(const RasterOverlayTile& overlayTile) override final;
 
   struct LoadedQuadtreeImage
       : public CesiumUtility::SharedAsset<LoadedQuadtreeImage> {
