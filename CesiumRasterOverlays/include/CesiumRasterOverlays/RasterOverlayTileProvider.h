@@ -1,10 +1,10 @@
 #pragma once
 
-#include <CesiuMRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumRasterOverlays/Library.h>
+#include <CesiumRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/ErrorList.h>
