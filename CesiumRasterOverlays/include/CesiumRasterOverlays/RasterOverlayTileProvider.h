@@ -1,10 +1,11 @@
 #pragma once
 
+#include <CesiuMRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
-#include <CesiumRasterOverlays/IRasterOverlayTileLoader.h>
 #include <CesiumRasterOverlays/Library.h>
+#include <CesiumRasterOverlays/LoadedRasterOverlayImage.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/ErrorList.h>
@@ -18,9 +19,10 @@
 
 namespace CesiumRasterOverlays {
 
+class IPrepareRasterOverlayRendererResources;
+class IRasterOverlayTileLoader;
 class RasterOverlay;
 class RasterOverlayTile;
-class IPrepareRasterOverlayRendererResources;
 
 /**
  * @brief Options for {@link RasterOverlayTileProvider::loadTileImageFromUrl}.
@@ -91,8 +93,7 @@ struct TileProviderAndTile {
  */
 class CESIUMRASTEROVERLAYS_API RasterOverlayTileProvider
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
-          RasterOverlayTileProvider>,
-      protected IRasterOverlayTileLoader {
+          RasterOverlayTileProvider> {
 public:
   /**
    * Constructs a placeholder tile provider.
@@ -118,6 +119,10 @@ public:
   /**
    * @brief Creates a new instance.
    *
+   * @deprecated Instead of inheriting from `RasterOverlayTileProvider`,
+   * implement `IRasterOverlayTileLoader` and pass an instance of your derived
+   * class to the `RasterOverlayTileProvider` constructor.
+   *
    * @param pOwner The raster overlay that created this tile provider.
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
@@ -133,6 +138,10 @@ public:
    * @param coverageRectangle The rectangle that bounds all the area covered by
    * this overlay, expressed in projected coordinates.
    */
+  /*[[deprecated(
+      "Instead of inheriting from RasterOverlayTileProvider, implement "
+      "IRasterOverlayTileLoader and pass an instance of your derived class to "
+      "the RasterOverlayTileProvider constructor.")]]*/
   RasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
@@ -142,6 +151,33 @@ public:
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
+      const CesiumGeospatial::Projection& projection,
+      const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
+
+  /**
+   * @brief Creates a new instance with a {@link IRasterOverlayTileLoader}.
+   *
+   * @param pOwner The raster overlay that created this tile provider.
+   * @param externals Interfaces for
+   * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
+   * this raster overlay.
+   * @param pCreditSystem The credit system that receives this tile provider's
+   * credits.
+   * @param credit The {@link CesiumUtility::Credit} for this tile provider, if it exists.
+   * @param pPrepareRendererResources The interface used to prepare raster
+   * images for rendering.
+   * @param pLogger The logger to which to send messages about the tile provider
+   * and tiles.
+   * @param projection The {@link CesiumGeospatial::Projection}.
+   * @param coverageRectangle The rectangle that bounds all the area covered by
+   * this overlay, expressed in projected coordinates.
+   */
+  RasterOverlayTileProvider(
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
+      const RasterOverlayExternals& externals,
+      const CesiumUtility::IntrusivePointer<IRasterOverlayTileLoader>&
+          pTileLoader,
+      std::optional<CesiumUtility::Credit> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
 
@@ -189,7 +225,7 @@ public:
    */
   const std::shared_ptr<CesiumAsync::IAssetAccessor>&
   getAssetAccessor() const noexcept {
-    return this->_pAssetAccessor;
+    return this->_externals.pAssetAccessor;
   }
 
   /**
@@ -197,14 +233,14 @@ public:
    */
   const std::shared_ptr<CesiumUtility::CreditSystem>&
   getCreditSystem() const noexcept {
-    return this->_pCreditSystem;
+    return this->_externals.pCreditSystem;
   }
 
   /**
    * @brief Gets the async system used to do work in threads.
    */
   const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept {
-    return this->_asyncSystem;
+    return this->_externals.asyncSystem;
   }
 
   /**
@@ -213,7 +249,7 @@ public:
    */
   const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
   getPrepareRendererResources() const noexcept {
-    return this->_pPrepareRendererResources;
+    return this->_externals.pPrepareRendererResources;
   }
 
   /**
@@ -221,7 +257,7 @@ public:
    * and tiles.
    */
   const std::shared_ptr<spdlog::logger>& getLogger() const noexcept {
-    return this->_pLogger;
+    return this->_externals.pLogger;
   }
 
   /**
@@ -341,9 +377,6 @@ public:
   void setTileLoader(
       const CesiumUtility::IntrusivePointer<IRasterOverlayTileLoader>& pLoader);
 
-  virtual void addReference() const override final;
-  virtual void releaseReference() const override final;
-
 protected:
   /**
    * @brief Loads the image for a tile.
@@ -369,7 +402,6 @@ protected:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers = {},
       LoadTileImageFromUrlOptions&& options = {}) const;
 
-private:
   CesiumAsync::Future<TileProviderAndTile>
   doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 
@@ -399,13 +431,9 @@ private:
   };
 
   CesiumUtility::IntrusivePointer<RasterOverlay> _pOwner;
-  CesiumAsync::AsyncSystem _asyncSystem;
-  std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
-  std::shared_ptr<CesiumUtility::CreditSystem> _pCreditSystem;
+  RasterOverlayExternals _externals;
+  CesiumUtility::IntrusivePointer<IRasterOverlayTileLoader> _pTileLoader;
   std::optional<CesiumUtility::Credit> _credit;
-  std::shared_ptr<IPrepareRasterOverlayRendererResources>
-      _pPrepareRendererResources;
-  std::shared_ptr<spdlog::logger> _pLogger;
   CesiumGeospatial::Projection _projection;
   CesiumGeometry::Rectangle _coverageRectangle;
   CesiumUtility::IntrusivePointer<RasterOverlayTile> _pPlaceholder;
@@ -413,7 +441,6 @@ private:
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
   std::optional<DestructionCompleteDetails> _destructionCompleteDetails;
-  CesiumUtility::IntrusivePointer<IRasterOverlayTileLoader> _pTileLoader;
   CESIUM_TRACE_DECLARE_TRACK_SET(
       _loadingSlots,
       "Raster Overlay Tile Loading Slot")
