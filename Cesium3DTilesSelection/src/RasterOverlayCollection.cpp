@@ -179,6 +179,9 @@ RasterOverlayCollection::addTileOverlays(
   tile.getMappedRasterTiles().clear();
 
   std::vector<CesiumGeospatial::Projection> projections;
+  if (!this->_pOverlays) {
+    return projections;
+  }
 
   const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
 
