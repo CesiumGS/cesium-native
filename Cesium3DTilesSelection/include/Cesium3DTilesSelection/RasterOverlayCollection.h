@@ -16,7 +16,34 @@
 
 namespace Cesium3DTilesSelection {
 
+class ActivatedRasterOverlay;
 class LoadedTileEnumerator;
+struct TilesetOptions;
+
+/**
+ * @brief Captures the tile overlay status as produced by
+ * {@link RasterOverlayCollection::updateTileOverlays}.
+ */
+struct TileRasterOverlayStatus {
+  /**
+   * @brief The index of the first entry in {@link Tile::getMappedRasterTiles},
+   * if any, for which more overlay detail is available than is shown by this
+   * {@link Tile}.
+   *
+   * If this is a leaf {@link Tile}, an overlay with more detail available will
+   * necessitate upsampling of the leaf geometry so that the overlay can be
+   * rendered at full resolution.
+   */
+  std::optional<size_t> firstIndexWithMoreDetailAvailable;
+
+  /**
+   * @brief The index of the first entry in {@link Tile::getMappedRasterTiles},
+   * if any, for which the availability of more overlay detail is not yet known.
+   */
+  std::optional<size_t> firstIndexWithUnknownAvailability;
+
+  std::optional<size_t> firstIndexWithMissingProjection;
+};
 
 /**
  * @brief A collection of {@link CesiumRasterOverlays::RasterOverlay} instances that are associated
@@ -104,6 +131,40 @@ public:
    */
   void remove(const CesiumUtility::IntrusivePointer<
               CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
+
+  /**
+   * @brief Adds raster overlays to a new {@link Tile}.
+   *
+   * The tile should be in the {@link TileLoadState::Unloaded} or
+   * {@link TileLoadState::FailedTemporarily} state.
+   *
+   * Any existing raster overlays on the tile will be cleared.
+   *
+   * @param tilesetOptions The {@link TilesetOptions} for the tileset to which
+   * the tile belongs.
+   * @param tile The tile for which to add the overlays.
+   * @returns The list of projections required by the overlays that were added
+   * to the tile.
+   */
+  std::vector<CesiumGeospatial::Projection>
+  addTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile);
+
+  /**
+   * @brief Updates the raster overlays associated with a tile.
+   *
+   * This method is called internally for each tile that is rendered, and gives
+   * the raster overlay system a chance to replace raster overlay placeholders
+   * with real tiles. Its return value is also used to determine whether or not
+   * this tile should be upsampled in order to attach further raster overlay
+   * detail.
+   *
+   * @param tilesetOptions The {@link TilesetOptions} for the tileset to which
+   * the tile belongs.
+   * @param tile The tile for which to update the overlays.
+   * @returns Details of the raster overlays attached to this tile.
+   */
+  TileRasterOverlayStatus
+  updateTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile);
 
   /**
    * @brief Gets the overlays in this collection.
@@ -200,26 +261,10 @@ public:
   size_t size() const noexcept;
 
 private:
-  // We store the list of overlays and tile providers in this separate class
-  // so that we can separate its lifetime from the lifetime of the
-  // RasterOverlayCollection. We need to do this because the async operations
-  // that create tile providers from overlays need to have somewhere to write
-  // the result. And we can't extend the lifetime of the entire
-  // RasterOverlayCollection until the async operations complete because the
-  // RasterOverlayCollection has a LoadedTileEnumerator, which is owned
-  // externally and may become invalid before the async operations complete.
-  struct OverlayList
-      : public CesiumUtility::ReferenceCountedNonThreadSafe<OverlayList> {
-    std::vector<
-        CesiumUtility::IntrusivePointer<CesiumRasterOverlays::RasterOverlay>>
-        overlays{};
-    std::vector<CesiumUtility::IntrusivePointer<
-        CesiumRasterOverlays::RasterOverlayTileProvider>>
-        tileProviders{};
-    std::vector<CesiumUtility::IntrusivePointer<
-        CesiumRasterOverlays::RasterOverlayTileProvider>>
-        placeholders{};
-  };
+  ActivatedRasterOverlay*
+  findActivatedForOverlay(const CesiumRasterOverlays::RasterOverlay& overlay);
+
+  struct OverlayList;
 
   LoadedTileEnumerator _loadedTiles;
   TilesetExternals _externals;

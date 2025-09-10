@@ -10,6 +10,7 @@
 
 namespace Cesium3DTilesSelection {
 
+class ActivatedRasterOverlay;
 class Tile;
 
 /**
@@ -223,8 +224,7 @@ public:
    */
   static RasterMappedTo3DTile* mapOverlayToTile(
       double maximumScreenSpaceError,
-      CesiumRasterOverlays::RasterOverlayTileProvider& tileProvider,
-      CesiumRasterOverlays::RasterOverlayTileProvider& placeholder,
+      Cesium3DTilesSelection::ActivatedRasterOverlay& activatedOverlay,
       Tile& tile,
       std::vector<CesiumGeospatial::Projection>& missingProjections,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);

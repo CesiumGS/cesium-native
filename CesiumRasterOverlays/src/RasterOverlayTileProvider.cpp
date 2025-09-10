@@ -139,10 +139,6 @@ RasterOverlayTileProvider::getAsyncDestructionCompleteEvent() {
   return this->_destructionCompleteDetails->future;
 }
 
-bool RasterOverlayTileProvider::isPlaceholder() const noexcept {
-  return this->_pPlaceholder != nullptr;
-}
-
 RasterOverlay& RasterOverlayTileProvider::getOwner() noexcept {
   return *this->_pOwner;
 }
@@ -184,21 +180,6 @@ RasterOverlayTileProvider::getProjection() const noexcept {
 const CesiumGeometry::Rectangle&
 RasterOverlayTileProvider::getCoverageRectangle() const noexcept {
   return this->_coverageRectangle;
-}
-
-CesiumUtility::IntrusivePointer<RasterOverlayTile>
-RasterOverlayTileProvider::getTile(
-    const CesiumGeometry::Rectangle& rectangle,
-    const glm::dvec2& targetScreenPixels) {
-  if (this->_pPlaceholder) {
-    return this->_pPlaceholder;
-  }
-
-  if (!rectangle.overlaps(this->_coverageRectangle)) {
-    return nullptr;
-  }
-
-  return new RasterOverlayTile(*this, targetScreenPixels, rectangle);
 }
 
 int64_t RasterOverlayTileProvider::getTileDataBytes() const noexcept {

@@ -220,27 +220,6 @@ public:
   CesiumAsync::SharedFuture<void>& getAsyncDestructionCompleteEvent();
 
   /**
-   * @brief Returns whether this is a placeholder.
-   *
-   * For many types of {@link RasterOverlay}, we can't create a functioning
-   * `RasterOverlayTileProvider` right away. For example, we may not know the
-   * bounds of the overlay, or what projection it uses, until after we've
-   * (asynchronously) loaded a metadata service that gives us this information.
-   *
-   * So until that real `RasterOverlayTileProvider` becomes available, we use
-   * a placeholder. When {@link RasterOverlayTileProvider::getTile} is invoked
-   * on a placeholder, it returns a {@link RasterOverlayTile} that is also
-   * a placeholder. And whenever we see a placeholder `RasterOverlayTile` in
-   * {@link Cesium3DTilesSelection::RasterMappedTo3DTile::update}, we check if the corresponding `RasterOverlay` is
-   * ready yet. Once it's ready, we remove the placeholder tile and replace
-   * it with the real tiles.
-   *
-   * So the placeholder system gives us a way to defer the mapping of raster
-   * overlay tiles to geometry tiles until that mapping can be determined.
-   */
-  bool isPlaceholder() const noexcept;
-
-  /**
    * @brief Returns the {@link RasterOverlay} that created this instance.
    */
   RasterOverlay& getOwner() noexcept;
@@ -288,29 +267,6 @@ public:
    * instance.
    */
   const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept;
-
-  /**
-   * @brief Returns a new {@link RasterOverlayTile} with the given
-   * specifications.
-   *
-   * The returned tile will not start loading immediately. To start loading,
-   * call {@link RasterOverlayTileProvider::loadTile} or
-   * {@link RasterOverlayTileProvider::loadTileThrottled}.
-   *
-   * @param rectangle The rectangle that the returned image must cover. It is
-   * allowed to cover a slightly larger rectangle in order to maintain pixel
-   * alignment. It may also cover a smaller rectangle when the overlay itself
-   * does not cover the entire rectangle.
-   * @param targetScreenPixels The maximum number of pixels on the screen that
-   * this tile is meant to cover. The overlay image should be approximately this
-   * many pixels divided by the
-   * {@link RasterOverlayOptions::maximumScreenSpaceError} in order to achieve
-   * the desired level-of-detail, but it does not need to be exactly this size.
-   * @return The tile.
-   */
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> getTile(
-      const CesiumGeometry::Rectangle& rectangle,
-      const glm::dvec2& targetScreenPixels);
 
   /**
    * @brief Gets the number of bytes of tile data that are currently loaded.

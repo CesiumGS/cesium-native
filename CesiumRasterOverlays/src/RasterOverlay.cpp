@@ -4,6 +4,7 @@
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Assert.h>
@@ -74,13 +75,12 @@ RasterOverlay::getAsyncDestructionCompleteEvent(
 
 CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>
 RasterOverlay::createPlaceholder(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const RasterOverlayExternals& externals,
     const CesiumGeospatial::Ellipsoid& ellipsoid) const {
   return new PlaceholderTileProvider(
       this,
-      asyncSystem,
-      pAssetAccessor,
+      externals.asyncSystem,
+      externals.pAssetAccessor,
       nullptr,
       ellipsoid);
 }
