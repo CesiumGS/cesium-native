@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a build system bug that prevented `libblend2d.a` from being installed for iOS.
+
 ### v0.51.0 - 2025-09-02
 
 ##### Breaking Changes :mega:
