@@ -1228,6 +1228,7 @@ void generateTangents(
 } // namespace mikkT
 
 void Model::generateMissingTangents() {
+
   forEachPrimitiveInScene(
     -1,
     [](Model& gltf,
