@@ -91,7 +91,7 @@ void RasterOverlayCollection::add(
   IntrusivePointer<OverlayList> pList = this->_pOverlays;
 
   pList->overlays.push_back(pOverlay);
-  pList->activatedOverlays.emplace_back(new ActivatedRasterOverlay(
+  pList->activatedOverlays.emplace_back(ActivatedRasterOverlay::create(
       RasterOverlayExternals{
           .pAssetAccessor = this->_externals.pAssetAccessor,
           .pPrepareRendererResources =

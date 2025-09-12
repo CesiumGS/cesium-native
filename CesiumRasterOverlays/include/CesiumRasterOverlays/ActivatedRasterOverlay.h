@@ -4,6 +4,7 @@
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumRasterOverlays/Library.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 
@@ -21,15 +22,16 @@ struct TileProviderAndTile;
 
 namespace CesiumRasterOverlays {
 
-class ActivatedRasterOverlay
+class CESIUMRASTEROVERLAYS_API ActivatedRasterOverlay
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
           ActivatedRasterOverlay> {
 public:
-  ActivatedRasterOverlay(
+  static CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> create(
       const CesiumRasterOverlays::RasterOverlayExternals& externals,
       const CesiumUtility::IntrusivePointer<
           CesiumRasterOverlays::RasterOverlay>& pOverlay,
       const CesiumGeospatial::Ellipsoid& ellipsoid);
+
   ~ActivatedRasterOverlay();
 
   CesiumAsync::SharedFuture<void>& getReadyEvent();
@@ -142,6 +144,12 @@ public:
   bool loadTileThrottled(RasterOverlayTile& tile);
 
 private:
+  ActivatedRasterOverlay(
+      const CesiumRasterOverlays::RasterOverlayExternals& externals,
+      const CesiumUtility::IntrusivePointer<
+          CesiumRasterOverlays::RasterOverlay>& pOverlay,
+      const CesiumGeospatial::Ellipsoid& ellipsoid);
+
   CesiumAsync::Future<TileProviderAndTile>
   doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 

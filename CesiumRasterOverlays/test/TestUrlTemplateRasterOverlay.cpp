@@ -44,7 +44,7 @@ TEST_CASE("UrlTemplateRasterOverlay getTile") {
           "http://example.com/{x}/{y}/{z}.png");
 
   IntrusivePointer<ActivatedRasterOverlay> pActivated =
-      new ActivatedRasterOverlay(
+      ActivatedRasterOverlay::create(
           RasterOverlayExternals{
               pAssetAccessor,
               nullptr,

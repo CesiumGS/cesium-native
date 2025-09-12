@@ -18,21 +18,12 @@ using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
 
-ActivatedRasterOverlay::ActivatedRasterOverlay(
+IntrusivePointer<ActivatedRasterOverlay> ActivatedRasterOverlay::create(
     const RasterOverlayExternals& externals,
     const IntrusivePointer<RasterOverlay>& pOverlay,
-    const Ellipsoid& ellipsoid)
-    : _pOverlay(pOverlay),
-      _pPlaceholderTileProvider(
-          pOverlay->createPlaceholder(externals, ellipsoid)),
-      _pPlaceholderTile(nullptr),
-      _pTileProvider(nullptr),
-      _tileDataBytes(0),
-      _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0),
-      _readyEvent(externals.asyncSystem.createResolvedFuture().share()) {
-  this->_pPlaceholderTile =
-      new RasterOverlayTile(*this, glm::dvec2(0.0), Rectangle());
+    const Ellipsoid& ellipsoid) {
+  IntrusivePointer<ActivatedRasterOverlay> pResult =
+      new ActivatedRasterOverlay(externals, pOverlay, ellipsoid);
 
   CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> future =
       pOverlay->createTileProvider(
@@ -43,12 +34,9 @@ ActivatedRasterOverlay::ActivatedRasterOverlay(
           externals.pLogger,
           nullptr);
 
-  // This continuation, by capturing thiz, keeps the instance from being
+  // This continuation, by capturing pResult, keeps the instance from being
   // destroyed. But it does not keep the RasterOverlayCollection itself alive.
-  IntrusivePointer<ActivatedRasterOverlay> thiz = this;
-  // TODO: dangerous to do this in the constructor, because no one else can
-  // possibly have a reference to it yet.
-  this->_readyEvent =
+  pResult->_readyEvent =
       std::move(future)
           .catchInMainThread(
               [](const std::exception& e)
@@ -61,7 +49,7 @@ ActivatedRasterOverlay::ActivatedRasterOverlay(
                         e.what())});
               })
           .thenInMainThread(
-              [pOverlay, thiz, externals](
+              [pOverlay, pResult, externals](
                   RasterOverlay::CreateTileProviderResult&& result) {
                 IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
                 if (result) {
@@ -84,9 +72,28 @@ ActivatedRasterOverlay::ActivatedRasterOverlay(
                       externals.asyncSystem);
                 }
 
-                thiz->_pTileProvider = pProvider;
+                pResult->_pTileProvider = pProvider;
               })
           .share();
+
+  return pResult;
+}
+
+ActivatedRasterOverlay::ActivatedRasterOverlay(
+    const RasterOverlayExternals& externals,
+    const IntrusivePointer<RasterOverlay>& pOverlay,
+    const Ellipsoid& ellipsoid)
+    : _pOverlay(pOverlay),
+      _pPlaceholderTileProvider(
+          pOverlay->createPlaceholder(externals, ellipsoid)),
+      _pPlaceholderTile(nullptr),
+      _pTileProvider(nullptr),
+      _tileDataBytes(0),
+      _totalTilesCurrentlyLoading(0),
+      _throttledTilesCurrentlyLoading(0),
+      _readyEvent(externals.asyncSystem.createResolvedFuture().share()) {
+  this->_pPlaceholderTile =
+      new RasterOverlayTile(*this, glm::dvec2(0.0), Rectangle());
 }
 
 ActivatedRasterOverlay::~ActivatedRasterOverlay() {

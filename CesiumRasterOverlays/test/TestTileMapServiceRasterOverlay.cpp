@@ -73,7 +73,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
   SUBCASE("can load images") {
     IntrusivePointer<ActivatedRasterOverlay> pActivated =
-        new ActivatedRasterOverlay(
+        ActivatedRasterOverlay::create(
             RasterOverlayExternals{
                 pMockAssetAccessor,
                 nullptr,

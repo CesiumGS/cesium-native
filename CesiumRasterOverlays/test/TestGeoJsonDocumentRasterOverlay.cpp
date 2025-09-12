@@ -74,7 +74,7 @@ TEST_CASE(
               std::shared_ptr<CesiumNativeTests::SimpleAssetRequest>>());
 
   IntrusivePointer<ActivatedRasterOverlay> pActivated =
-      new ActivatedRasterOverlay(
+      ActivatedRasterOverlay::create(
           RasterOverlayExternals{
               .pAssetAccessor = pAssetAccessor,
               .pPrepareRendererResources = nullptr,

@@ -166,7 +166,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
   IntrusivePointer<TestRasterOverlay> pOverlay = new TestRasterOverlay("Test");
 
   IntrusivePointer<ActivatedRasterOverlay> pActivated =
-      new ActivatedRasterOverlay(
+      ActivatedRasterOverlay::create(
           RasterOverlayExternals{
               pAssetAccessor,
               nullptr,

@@ -132,7 +132,7 @@ TEST_CASE("Add raster overlay to glTF") {
       new TileMapServiceRasterOverlay("test", tmr);
 
   IntrusivePointer<ActivatedRasterOverlay> pActivated =
-      new ActivatedRasterOverlay(
+      ActivatedRasterOverlay::create(
           RasterOverlayExternals{
               .pAssetAccessor = pMockAssetAccessor,
               .pPrepareRendererResources = nullptr,
