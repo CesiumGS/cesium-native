@@ -234,6 +234,7 @@ void decodePrimitive(
       findAccessor(readGltf, primitive, "COLOR_0");
   if (pColorAccessor) {
     pColorAccessor->type = CesiumGltf::Accessor::Type::VEC4;
+    pColorAccessor->componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
     pColorAccessor->bufferView =
         static_cast<int32_t>(readGltf.model->bufferViews.size());
     CesiumGltf::BufferView& bufferView =
@@ -241,7 +242,7 @@ void decodePrimitive(
     bufferView.buffer =
         static_cast<int32_t>(readGltf.model->buffers.size() - 1);
     bufferView.byteLength = static_cast<int64_t>(
-        (pGaussian->colors.size() + pGaussian->alphas.size()));
+        (pGaussian->colors.size() + pGaussian->alphas.size()) * sizeof(float));
 
     size_t start = buffer.cesium.data.size();
     buffer.cesium.data.resize(
@@ -253,15 +254,10 @@ void decodePrimitive(
           0.5 + pGaussian->colors[i * 3 + 1] * SH_C0,
           0.5 + pGaussian->colors[i * 3 + 2] * SH_C0,
           1.0 / (1.0 + exp(-pGaussian->alphas[i])));
-      glm::u8vec4 coloru8(
-          (uint8_t)(color.x * 0xff),
-          (uint8_t)(color.y * 0xff),
-          (uint8_t)(color.z * 0xff),
-          (uint8_t)(color.w * 0xff));
       memcpy(
-          buffer.cesium.data.data() + start + i * sizeof(glm::u8vec4),
-          &coloru8,
-          sizeof(glm::u8vec4));
+          buffer.cesium.data.data() + start + i * sizeof(glm::fvec4),
+          &color,
+          sizeof(glm::fvec4));
     }
   }
 
