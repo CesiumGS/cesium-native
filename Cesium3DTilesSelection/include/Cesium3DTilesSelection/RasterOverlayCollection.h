@@ -14,9 +14,12 @@
 #include <span>
 #include <vector>
 
+namespace CesiumRasterOverlays {
+class ActivatedRasterOverlay;
+}
+
 namespace Cesium3DTilesSelection {
 
-class ActivatedRasterOverlay;
 class LoadedTileEnumerator;
 struct TilesetOptions;
 
@@ -166,30 +169,9 @@ public:
   TileRasterOverlayStatus
   updateTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile);
 
-  /**
-   * @brief Gets the overlays in this collection.
-   */
-  const std::vector<
-      CesiumUtility::IntrusivePointer<CesiumRasterOverlays::RasterOverlay>>&
-  getOverlays() const;
-
-  /**
-   * @brief Gets the tile providers in this collection. Each tile provider
-   * corresponds with the overlay at the same position in the collection
-   * returned by {@link getOverlays}.
-   */
   const std::vector<CesiumUtility::IntrusivePointer<
-      CesiumRasterOverlays::RasterOverlayTileProvider>>&
-  getTileProviders() const;
-
-  /**
-   * @brief Gets the placeholder tile providers in this collection. Each
-   * placeholder tile provider corresponds with the overlay at the same position
-   * in the collection returned by {@link getOverlays}.
-   */
-  const std::vector<CesiumUtility::IntrusivePointer<
-      CesiumRasterOverlays::RasterOverlayTileProvider>>&
-  getPlaceholderTileProviders() const;
+      CesiumRasterOverlays::ActivatedRasterOverlay>>&
+  getActivatedOverlays() const;
 
   /**
    * @brief Finds the tile provider for a given overlay.
@@ -261,7 +243,7 @@ public:
   size_t size() const noexcept;
 
 private:
-  ActivatedRasterOverlay*
+  CesiumRasterOverlays::ActivatedRasterOverlay*
   findActivatedForOverlay(const CesiumRasterOverlays::RasterOverlay& overlay);
 
   struct OverlayList;

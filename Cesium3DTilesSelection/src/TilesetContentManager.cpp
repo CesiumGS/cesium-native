@@ -38,6 +38,7 @@
 #include <CesiumGltf/Image.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -1278,9 +1279,9 @@ void TilesetContentManager::waitUntilIdle() {
     this->_externals.asyncSystem.dispatchMainThreadTasks();
 
     rasterOverlayTilesLoading = 0;
-    for (const auto& pTileProvider :
-         this->_overlayCollection.getTileProviders()) {
-      rasterOverlayTilesLoading += pTileProvider->getNumberOfTilesLoading();
+    for (const auto& pActivated :
+         this->_overlayCollection.getActivatedOverlays()) {
+      rasterOverlayTilesLoading += pActivated->getNumberOfTilesLoading();
     }
   }
 }
@@ -1341,9 +1342,9 @@ int32_t TilesetContentManager::getNumberOfTilesLoaded() const noexcept {
 
 int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   int64_t bytes = this->_tilesDataUsed;
-  for (const auto& pTileProvider :
-       this->_overlayCollection.getTileProviders()) {
-    bytes += pTileProvider->getTileDataBytes();
+  for (const auto& pActivated :
+       this->_overlayCollection.getActivatedOverlays()) {
+    bytes += pActivated->getTileDataBytes();
   }
 
   return bytes;

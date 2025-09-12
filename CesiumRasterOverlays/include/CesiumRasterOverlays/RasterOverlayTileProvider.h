@@ -148,21 +148,6 @@ class CESIUMRASTEROVERLAYS_API RasterOverlayTileProvider
           RasterOverlayTileProvider> {
 public:
   /**
-   * Constructs a placeholder tile provider.
-   *
-   * @see RasterOverlayTileProvider::isPlaceholder
-   *
-   * @param pOwner The raster overlay that created this tile provider.
-   * @param externals The external interfaces for use by the raster overlay.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
-   */
-  RasterOverlayTileProvider(
-      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-      const RasterOverlayExternals& externals,
-      const CesiumGeospatial::Ellipsoid& ellipsoid
-          CESIUM_DEFAULT_ELLIPSOID) noexcept;
-
-  /**
    * @brief Creates a new instance.
    *
    * @param pOwner The raster overlay that created this tile provider.
@@ -178,19 +163,6 @@ public:
       std::optional<CesiumUtility::Credit> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
-
-  /**
-   * Constructs a placeholder tile provider.
-   * @deprecated Use the overload that takes a \ref RasterOverlayExternals
-   * instead.
-   */
-  RasterOverlayTileProvider(
-      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const CesiumGeospatial::Ellipsoid& ellipsoid
-          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Creates a new instance.
@@ -269,74 +241,10 @@ public:
   const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept;
 
   /**
-   * @brief Gets the number of bytes of tile data that are currently loaded.
-   */
-  int64_t getTileDataBytes() const noexcept;
-
-  /**
-   * @brief Returns the number of tiles that are currently loading.
-   */
-  uint32_t getNumberOfTilesLoading() const noexcept;
-
-  /**
-   * @brief Removes a no-longer-referenced tile from this provider's cache and
-   * deletes it.
-   *
-   * This function is not supposed to be called by client. Calling this method
-   * in a tile with a reference count greater than 0 will result in undefined
-   * behavior.
-   *
-   * @param pTile The tile, which must have no oustanding references.
-   */
-  void removeTile(RasterOverlayTile* pTile) noexcept;
-
-  /**
    * @brief Get the per-TileProvider {@link CesiumUtility::Credit} if one exists.
    */
   const std::optional<CesiumUtility::Credit>& getCredit() const noexcept;
 
-  /**
-   * @brief Loads a tile immediately, without throttling requests.
-   *
-   * If the tile is not in the `Tile::LoadState::Unloaded` state, this method
-   * returns without doing anything. Otherwise, it puts the tile into the
-   * `Tile::LoadState::Loading` state and begins the asynchronous process
-   * to load the tile. When the process completes, the tile will be in the
-   * `Tile::LoadState::Loaded` or `Tile::LoadState::Failed` state.
-   *
-   * Calling this method on many tiles at once can result in very slow
-   * performance. Consider using {@link loadTileThrottled} instead.
-   *
-   * @param tile The tile to load.
-   * @return A future that, when the tile is loaded, resolves to the loaded tile
-   * and the tile provider that loaded it.
-   */
-  CesiumAsync::Future<TileProviderAndTile> loadTile(RasterOverlayTile& tile);
-
-  /**
-   * @brief Loads a tile, unless there are too many tile loads already in
-   * progress.
-   *
-   * If the tile is not in the `Tile::LoadState::Unloading` state, this method
-   * returns true without doing anything. If too many tile loads are
-   * already in flight, it returns false without doing anything. Otherwise, it
-   * puts the tile into the `Tile::LoadState::Loading` state, begins the
-   * asynchronous process to load the tile, and returns true. When the process
-   * completes, the tile will be in the `Tile::LoadState::Loaded` or
-   * `Tile::LoadState::Failed` state.
-   *
-   * The number of allowable simultaneous tile requests is provided in the
-   * {@link RasterOverlayOptions::maximumSimultaneousTileLoads} property of
-   * {@link RasterOverlay::getOptions}.
-   *
-   * @param tile The tile to load.
-   * @returns True if the tile load process is started or is already complete,
-   * false if the load could not be started because too many loads are already
-   * in progress.
-   */
-  bool loadTileThrottled(RasterOverlayTile& tile);
-
-protected:
   /**
    * @brief Loads the image for a tile.
    *
@@ -346,6 +254,7 @@ protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(const RasterOverlayTile& overlayTile) = 0;
 
+protected:
   /**
    * @brief Loads an image from a URL and optionally some request headers.
    *
@@ -362,29 +271,6 @@ protected:
       LoadTileImageFromUrlOptions&& options = {}) const;
 
 private:
-  CesiumAsync::Future<TileProviderAndTile>
-  doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
-
-  /**
-   * @brief Begins the process of loading of a tile.
-   *
-   * This method should be called at the beginning of the tile load process.
-   *
-   * @param isThrottledLoad True if the load was originally throttled.
-   */
-  void beginTileLoad(bool isThrottledLoad) noexcept;
-
-  /**
-   * @brief Finalizes loading of a tile.
-   *
-   * This method should be called at the end of the tile load process,
-   * no matter whether the load succeeded or failed.
-   *
-   * @param isThrottledLoad True if the load was originally throttled.
-   */
-  void finalizeTileLoad(bool isThrottledLoad) noexcept;
-
-private:
   struct DestructionCompleteDetails {
     CesiumAsync::Promise<void> promise;
     CesiumAsync::SharedFuture<void> future;
@@ -395,13 +281,6 @@ private:
   std::optional<CesiumUtility::Credit> _credit;
   CesiumGeospatial::Projection _projection;
   CesiumGeometry::Rectangle _coverageRectangle;
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> _pPlaceholder;
-  int64_t _tileDataBytes;
-  int32_t _totalTilesCurrentlyLoading;
-  int32_t _throttledTilesCurrentlyLoading;
   std::optional<DestructionCompleteDetails> _destructionCompleteDetails;
-  CESIUM_TRACE_DECLARE_TRACK_SET(
-      _loadingSlots,
-      "Raster Overlay Tile Loading Slot")
 };
 } // namespace CesiumRasterOverlays

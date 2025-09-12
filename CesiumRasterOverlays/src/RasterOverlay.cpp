@@ -32,7 +32,11 @@ public:
             asyncSystem,
             pAssetAccessor,
             pCreditSystem,
-            ellipsoid) {}
+            std::nullopt,
+            nullptr,
+            spdlog::default_logger(),
+            CesiumGeospatial::GeographicProjection(ellipsoid),
+            CesiumGeometry::Rectangle()) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(const RasterOverlayTile& /* overlayTile */) override {

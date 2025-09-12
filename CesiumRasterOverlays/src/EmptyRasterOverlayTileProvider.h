@@ -2,7 +2,7 @@
 
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 class EmptyRasterOverlayTileProvider
     : public CesiumRasterOverlays::RasterOverlayTileProvider {

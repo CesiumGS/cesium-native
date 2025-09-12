@@ -8,9 +8,12 @@
 
 #include <memory>
 
+namespace CesiumRasterOverlays {
+class ActivatedRasterOverlay;
+}
+
 namespace Cesium3DTilesSelection {
 
-class ActivatedRasterOverlay;
 class Tile;
 
 /**
@@ -224,7 +227,7 @@ public:
    */
   static RasterMappedTo3DTile* mapOverlayToTile(
       double maximumScreenSpaceError,
-      Cesium3DTilesSelection::ActivatedRasterOverlay& activatedOverlay,
+      CesiumRasterOverlays::ActivatedRasterOverlay& activatedOverlay,
       Tile& tile,
       std::vector<CesiumGeospatial::Projection>& missingProjections,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);

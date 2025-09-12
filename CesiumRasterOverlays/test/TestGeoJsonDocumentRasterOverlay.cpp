@@ -6,6 +6,7 @@
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/GeoJsonDocumentRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Math.h>
@@ -72,25 +73,24 @@ TEST_CASE(
               std::string,
               std::shared_ptr<CesiumNativeTests::SimpleAssetRequest>>());
 
-  nonstd::expected_lite::expected<
-      IntrusivePointer<RasterOverlayTileProvider>,
-      CesiumRasterOverlays::RasterOverlayLoadFailureDetails>
-      result = pOverlay
-                   ->createTileProvider(
-                       asyncSystem,
-                       pAssetAccessor,
-                       std::make_shared<CreditSystem>(),
-                       nullptr,
-                       spdlog::default_logger(),
-                       pOverlay)
-                   .waitInMainThread();
+  IntrusivePointer<ActivatedRasterOverlay> pActivated =
+      new ActivatedRasterOverlay(
+          RasterOverlayExternals{
+              .pAssetAccessor = pAssetAccessor,
+              .pPrepareRendererResources = nullptr,
+              .asyncSystem = asyncSystem,
+              .pCreditSystem = nullptr,
+              .pLogger = spdlog::default_logger()},
+          pOverlay,
+          Ellipsoid::WGS84);
 
-  REQUIRE(result);
-  const IntrusivePointer<RasterOverlayTileProvider>& pProvider = *result;
+  pActivated->getReadyEvent().waitInMainThread();
+
+  REQUIRE(pActivated->getTileProvider() != nullptr);
 
   const CesiumGeometry::Rectangle fullRectangle =
       builder.toGlobeRectangle().toSimpleRectangle();
-  RasterOverlayTile tile{*pProvider, glm::dvec2(256, 256), fullRectangle};
+  RasterOverlayTile tile{*pActivated, glm::dvec2(256, 256), fullRectangle};
 
   // Generate random tiles but use a constant seed so the results are the same
   // every run.
@@ -110,8 +110,8 @@ TEST_CASE(
         std::max(y1, y2)};
 
     IntrusivePointer<RasterOverlayTile> pTile;
-    pTile.emplace(*pProvider, glm::dvec2(256, 256), thisRect);
+    pTile.emplace(*pActivated, glm::dvec2(256, 256), thisRect);
 
-    pProvider->loadTile(*pTile).waitInMainThread();
+    pActivated->loadTile(*pTile).waitInMainThread();
   }
 }

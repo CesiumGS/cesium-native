@@ -23,6 +23,7 @@
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
@@ -130,22 +131,27 @@ TEST_CASE("Add raster overlay to glTF") {
   IntrusivePointer<TileMapServiceRasterOverlay> pRasterOverlay =
       new TileMapServiceRasterOverlay("test", tmr);
 
+  IntrusivePointer<ActivatedRasterOverlay> pActivated =
+      new ActivatedRasterOverlay(
+          RasterOverlayExternals{
+              .pAssetAccessor = pMockAssetAccessor,
+              .pPrepareRendererResources = nullptr,
+              .asyncSystem = asyncSystem,
+              .pCreditSystem = nullptr,
+              .pLogger = spdlog::default_logger()},
+          pRasterOverlay,
+          Ellipsoid::WGS84);
+
   auto future =
-      pRasterOverlay
-          ->createTileProvider(
-              asyncSystem,
-              pMockAssetAccessor,
-              nullptr,
-              nullptr,
-              spdlog::default_logger(),
-              nullptr)
-          .thenInMainThread([&gltf, &modelToEcef, textureCoordinateIndex](
-                                RasterOverlay::CreateTileProviderResult&&
-                                    tileProviderResult) {
-            REQUIRE(tileProviderResult);
+      pActivated->getReadyEvent()
+          .thenInMainThread([&gltf,
+                             &modelToEcef,
+                             textureCoordinateIndex,
+                             pActivated]() {
+            REQUIRE(pActivated->getTileProvider());
 
             IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
-                *tileProviderResult;
+                pActivated->getTileProvider();
 
             std::optional<RasterOverlayDetails> details =
                 RasterOverlayUtilities::createRasterOverlayTextureCoordinates(
@@ -176,7 +182,7 @@ TEST_CASE("Add raster overlay to glTF") {
 
             // Get a raster overlay texture of the proper dimensions.
             IntrusivePointer<RasterOverlayTile> pRasterTile =
-                pTileProvider->getTile(
+                pActivated->getTile(
                     details->rasterOverlayRectangles[0],
                     targetScreenPixels);
 
@@ -186,7 +192,7 @@ TEST_CASE("Add raster overlay to glTF") {
                     pRasterTile->getRectangle());
 
             // Go load the texture.
-            return pTileProvider->loadTile(*pRasterTile)
+            return pActivated->loadTile(*pRasterTile)
                 .thenPassThrough(std::move(textureTranslationAndScale));
           })
           .thenInMainThread([&gltf, textureCoordinateIndex](

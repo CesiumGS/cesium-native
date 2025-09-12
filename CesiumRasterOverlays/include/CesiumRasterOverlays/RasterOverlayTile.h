@@ -15,6 +15,7 @@ struct Credit;
 
 namespace CesiumRasterOverlays {
 
+class ActivatedRasterOverlay;
 class RasterOverlay;
 class RasterOverlayTileProvider;
 
@@ -99,7 +100,7 @@ public:
    * _must_ remain valid for the entire lifetime of the tile. If the tile
    * provider is destroyed before the tile, undefined behavior will result.
    */
-  RasterOverlayTile(RasterOverlayTileProvider& tileProvider) noexcept;
+  RasterOverlayTile(ActivatedRasterOverlay& activatedOverlay) noexcept;
 
   /**
    * @brief Creates a new instance.
@@ -122,26 +123,26 @@ public:
    * itself does not cover the entire rectangle.
    */
   RasterOverlayTile(
-      RasterOverlayTileProvider& tileProvider,
+      ActivatedRasterOverlay& activatedOverlay,
       const glm::dvec2& targetScreenPixels,
       const CesiumGeometry::Rectangle& imageryRectangle) noexcept;
 
   /** @brief Default destructor. */
   ~RasterOverlayTile();
 
-  /**
-   * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
-   */
-  RasterOverlayTileProvider& getTileProvider() noexcept {
-    return *this->_pTileProvider;
-  }
+  ActivatedRasterOverlay& getActivatedOverlay() noexcept;
+
+  const ActivatedRasterOverlay& getActivatedOverlay() const noexcept;
 
   /**
    * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
    */
-  const RasterOverlayTileProvider& getTileProvider() const noexcept {
-    return *this->_pTileProvider;
-  }
+  RasterOverlayTileProvider& getTileProvider() noexcept;
+
+  /**
+   * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
+   */
+  const RasterOverlayTileProvider& getTileProvider() const noexcept;
 
   /**
    * @brief Returns the {@link RasterOverlay} that created this instance.
@@ -245,17 +246,24 @@ public:
     return this->_moreDetailAvailable;
   }
 
-private:
-  friend class RasterOverlayTileProvider;
-
+  /**
+   * @brief Sets the load state of this tile.
+   *
+   * This function is not supposed to be called by clients.
+   *
+   * @private
+   */
   void setState(LoadState newState) noexcept;
+
+private:
+  friend class ActivatedRasterOverlay;
 
   // This is a raw pointer instead of an IntrusivePointer in order to avoid
   // circular references, particularly among a placeholder tile provider and
   // placeholder tile. However, to avoid undefined behavior, the tile provider
   // is required to outlive the tile. In normal use, the RasterOverlayCollection
   // ensures that this is true.
-  RasterOverlayTileProvider* _pTileProvider;
+  ActivatedRasterOverlay* _pActivatedOverlay;
   glm::dvec2 _targetScreenPixels;
   CesiumGeometry::Rectangle _rectangle;
   std::vector<CesiumUtility::Credit> _tileCredits;

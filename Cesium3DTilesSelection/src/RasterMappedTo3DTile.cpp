@@ -1,5 +1,3 @@
-#include "ActivatedRasterOverlay.h"
-
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
@@ -9,6 +7,7 @@
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
@@ -248,8 +247,8 @@ bool RasterMappedTo3DTile::loadThrottled() noexcept {
     return true;
   }
 
-  RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-  return provider.loadTileThrottled(*pLoading);
+  ActivatedRasterOverlay& activated = pLoading->getActivatedOverlay();
+  return activated.loadTileThrottled(*pLoading);
 }
 
 namespace {
@@ -303,7 +302,7 @@ RasterMappedTo3DTile* addRealTile(
 
 /*static*/ RasterMappedTo3DTile* RasterMappedTo3DTile::mapOverlayToTile(
     double maximumScreenSpaceError,
-    Cesium3DTilesSelection::ActivatedRasterOverlay& activatedOverlay,
+    ActivatedRasterOverlay& activatedOverlay,
     Tile& tile,
     std::vector<Projection>& missingProjections,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
