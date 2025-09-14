@@ -1,6 +1,7 @@
 #pragma once
 
 #include <CesiumAsync/Future.h>
+#include <CesiumAsync/Promise.h>
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -26,24 +27,24 @@ class CESIUMRASTEROVERLAYS_API ActivatedRasterOverlay
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
           ActivatedRasterOverlay> {
 public:
-  static CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> create(
-      const CesiumRasterOverlays::RasterOverlayExternals& externals,
-      const CesiumUtility::IntrusivePointer<
-          CesiumRasterOverlays::RasterOverlay>& pOverlay,
+  ActivatedRasterOverlay(
+      const RasterOverlayExternals& externals,
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOverlay,
       const CesiumGeospatial::Ellipsoid& ellipsoid);
-
   ~ActivatedRasterOverlay();
 
   CesiumAsync::SharedFuture<void>& getReadyEvent();
 
   const CesiumRasterOverlays::RasterOverlay* getOverlay() const noexcept;
 
-  CesiumRasterOverlays::RasterOverlay* getOverlay() noexcept;
-
   const CesiumRasterOverlays::RasterOverlayTileProvider*
   getTileProvider() const noexcept;
 
   CesiumRasterOverlays::RasterOverlayTileProvider* getTileProvider() noexcept;
+
+  void setTileProvider(
+      const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
+          pTileProvider);
 
   const CesiumRasterOverlays::RasterOverlayTileProvider*
   getPlaceholderTileProvider() const noexcept;
@@ -144,12 +145,6 @@ public:
   bool loadTileThrottled(RasterOverlayTile& tile);
 
 private:
-  ActivatedRasterOverlay(
-      const CesiumRasterOverlays::RasterOverlayExternals& externals,
-      const CesiumUtility::IntrusivePointer<
-          CesiumRasterOverlays::RasterOverlay>& pOverlay,
-      const CesiumGeospatial::Ellipsoid& ellipsoid);
-
   CesiumAsync::Future<TileProviderAndTile>
   doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 
@@ -172,7 +167,7 @@ private:
    */
   void finalizeTileLoad(bool isThrottledLoad) noexcept;
 
-  CesiumUtility::IntrusivePointer<CesiumRasterOverlays::RasterOverlay>
+  CesiumUtility::IntrusivePointer<const CesiumRasterOverlays::RasterOverlay>
       _pOverlay;
   CesiumUtility::IntrusivePointer<
       CesiumRasterOverlays::RasterOverlayTileProvider>
@@ -187,6 +182,7 @@ private:
   int32_t _totalTilesCurrentlyLoading;
   int32_t _throttledTilesCurrentlyLoading;
 
+  CesiumAsync::Promise<void> _readyPromise;
   CesiumAsync::SharedFuture<void> _readyEvent;
 };
 

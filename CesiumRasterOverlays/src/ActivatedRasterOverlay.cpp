@@ -18,70 +18,9 @@ using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
 
-IntrusivePointer<ActivatedRasterOverlay> ActivatedRasterOverlay::create(
-    const RasterOverlayExternals& externals,
-    const IntrusivePointer<RasterOverlay>& pOverlay,
-    const Ellipsoid& ellipsoid) {
-  IntrusivePointer<ActivatedRasterOverlay> pResult =
-      new ActivatedRasterOverlay(externals, pOverlay, ellipsoid);
-
-  CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> future =
-      pOverlay->createTileProvider(
-          externals.asyncSystem,
-          externals.pAssetAccessor,
-          externals.pCreditSystem,
-          externals.pPrepareRendererResources,
-          externals.pLogger,
-          nullptr);
-
-  // This continuation, by capturing pResult, keeps the instance from being
-  // destroyed. But it does not keep the RasterOverlayCollection itself alive.
-  pResult->_readyEvent =
-      std::move(future)
-          .catchInMainThread(
-              [](const std::exception& e)
-                  -> RasterOverlay::CreateTileProviderResult {
-                return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                    RasterOverlayLoadType::Unknown,
-                    nullptr,
-                    fmt::format(
-                        "Error while creating tile provider: {0}",
-                        e.what())});
-              })
-          .thenInMainThread(
-              [pOverlay, pResult, externals](
-                  RasterOverlay::CreateTileProviderResult&& result) {
-                IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
-                if (result) {
-                  pProvider = *result;
-                } else {
-                  // Report error creating the tile provider.
-                  const RasterOverlayLoadFailureDetails& failureDetails =
-                      result.error();
-                  SPDLOG_LOGGER_ERROR(
-                      externals.pLogger,
-                      failureDetails.message);
-                  if (pOverlay->getOptions().loadErrorCallback) {
-                    pOverlay->getOptions().loadErrorCallback(failureDetails);
-                  }
-
-                  // Create a tile provider that does not provide any tiles at
-                  // all.
-                  pProvider = new EmptyRasterOverlayTileProvider(
-                      pOverlay,
-                      externals.asyncSystem);
-                }
-
-                pResult->_pTileProvider = pProvider;
-              })
-          .share();
-
-  return pResult;
-}
-
 ActivatedRasterOverlay::ActivatedRasterOverlay(
     const RasterOverlayExternals& externals,
-    const IntrusivePointer<RasterOverlay>& pOverlay,
+    const IntrusivePointer<const RasterOverlay>& pOverlay,
     const Ellipsoid& ellipsoid)
     : _pOverlay(pOverlay),
       _pPlaceholderTileProvider(
@@ -91,7 +30,8 @@ ActivatedRasterOverlay::ActivatedRasterOverlay(
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
       _throttledTilesCurrentlyLoading(0),
-      _readyEvent(externals.asyncSystem.createResolvedFuture().share()) {
+      _readyPromise(externals.asyncSystem.createPromise<void>()),
+      _readyEvent(this->_readyPromise.getFuture().share()) {
   this->_pPlaceholderTile =
       new RasterOverlayTile(*this, glm::dvec2(0.0), Rectangle());
 }
@@ -113,10 +53,6 @@ const RasterOverlay* ActivatedRasterOverlay::getOverlay() const noexcept {
   return this->_pOverlay;
 }
 
-RasterOverlay* ActivatedRasterOverlay::getOverlay() noexcept {
-  return this->_pOverlay;
-}
-
 const CesiumRasterOverlays::RasterOverlayTileProvider*
 ActivatedRasterOverlay::getTileProvider() const noexcept {
   return this->_pTileProvider;
@@ -125,6 +61,17 @@ ActivatedRasterOverlay::getTileProvider() const noexcept {
 CesiumRasterOverlays::RasterOverlayTileProvider*
 ActivatedRasterOverlay::getTileProvider() noexcept {
   return this->_pTileProvider;
+}
+
+void ActivatedRasterOverlay::setTileProvider(
+    const IntrusivePointer<RasterOverlayTileProvider>& pTileProvider) {
+  CESIUM_ASSERT(pTileProvider != nullptr);
+
+  bool hadValue = this->_pTileProvider != nullptr;
+  this->_pTileProvider = pTileProvider;
+  if (!hadValue && this->_pTileProvider != nullptr) {
+    this->_readyPromise.resolve();
+  }
 }
 
 const CesiumRasterOverlays::RasterOverlayTileProvider*

@@ -43,16 +43,14 @@ TEST_CASE("UrlTemplateRasterOverlay getTile") {
           "Test",
           "http://example.com/{x}/{y}/{z}.png");
 
-  IntrusivePointer<ActivatedRasterOverlay> pActivated =
-      ActivatedRasterOverlay::create(
-          RasterOverlayExternals{
-              pAssetAccessor,
-              nullptr,
-              asyncSystem,
-              nullptr,
-              spdlog::default_logger()},
-          pOverlay,
-          Ellipsoid::WGS84);
+  IntrusivePointer<ActivatedRasterOverlay> pActivated = pOverlay->activate(
+      RasterOverlayExternals{
+          pAssetAccessor,
+          nullptr,
+          asyncSystem,
+          nullptr,
+          spdlog::default_logger()},
+      Ellipsoid::WGS84);
 
   asyncSystem.dispatchMainThreadTasks();
 

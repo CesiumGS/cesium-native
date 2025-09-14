@@ -26,6 +26,7 @@ class CreditSystem;
 
 namespace CesiumRasterOverlays {
 
+class ActivatedRasterOverlay;
 class IPrepareRasterOverlayRendererResources;
 class RasterOverlayTileProvider;
 class RasterOverlayExternals;
@@ -186,6 +187,22 @@ public:
   std::vector<CesiumUtility::Credit>& getCredits() noexcept {
     return this->_credits;
   }
+
+  /**
+   * @brief Activates this overlay.
+   *
+   * This method is called by a {@link RasterOverlayCollection} when an overlay
+   * is added to it. The returned {@link ActivatedRasterOverlay} is used by the
+   * collection to manage the overlay.
+   *
+   * @param externals The external interfaces for use by the raster overlay.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @return The activated overlay.
+   */
+  CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> activate(
+      const RasterOverlayExternals& externals,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) const;
 
   /**
    * @brief Create a placeholder tile provider can be used in place of the real

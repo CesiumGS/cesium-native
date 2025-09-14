@@ -73,16 +73,14 @@ TEST_CASE(
               std::string,
               std::shared_ptr<CesiumNativeTests::SimpleAssetRequest>>());
 
-  IntrusivePointer<ActivatedRasterOverlay> pActivated =
-      ActivatedRasterOverlay::create(
-          RasterOverlayExternals{
-              .pAssetAccessor = pAssetAccessor,
-              .pPrepareRendererResources = nullptr,
-              .asyncSystem = asyncSystem,
-              .pCreditSystem = nullptr,
-              .pLogger = spdlog::default_logger()},
-          pOverlay,
-          Ellipsoid::WGS84);
+  IntrusivePointer<ActivatedRasterOverlay> pActivated = pOverlay->activate(
+      RasterOverlayExternals{
+          .pAssetAccessor = pAssetAccessor,
+          .pPrepareRendererResources = nullptr,
+          .asyncSystem = asyncSystem,
+          .pCreditSystem = nullptr,
+          .pLogger = spdlog::default_logger()},
+      Ellipsoid::WGS84);
 
   pActivated->getReadyEvent().waitInMainThread();
 

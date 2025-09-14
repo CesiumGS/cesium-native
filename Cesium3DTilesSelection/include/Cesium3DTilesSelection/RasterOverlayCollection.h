@@ -127,13 +127,13 @@ public:
    * @param pOverlay The pointer to the overlay. This may not be `nullptr`.
    */
   void add(const CesiumUtility::IntrusivePointer<
-           CesiumRasterOverlays::RasterOverlay>& pOverlay);
+           const CesiumRasterOverlays::RasterOverlay>& pOverlay);
 
   /**
    * @brief Remove the given {@link CesiumRasterOverlays::RasterOverlay} from this collection.
    */
   void remove(const CesiumUtility::IntrusivePointer<
-              CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
+              const CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
 
   /**
    * @brief Adds raster overlays to a new {@link Tile}.
@@ -225,7 +225,8 @@ public:
    * @brief A constant iterator for {@link CesiumRasterOverlays::RasterOverlay} instances.
    */
   typedef std::vector<CesiumUtility::IntrusivePointer<
-      CesiumRasterOverlays::RasterOverlay>>::const_iterator const_iterator;
+      const CesiumRasterOverlays::RasterOverlay>>::const_iterator
+      const_iterator;
 
   /**
    * @brief Returns an iterator at the beginning of this collection.

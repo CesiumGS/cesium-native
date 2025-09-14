@@ -73,14 +73,13 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
   SUBCASE("can load images") {
     IntrusivePointer<ActivatedRasterOverlay> pActivated =
-        ActivatedRasterOverlay::create(
+        pRasterOverlay->activate(
             RasterOverlayExternals{
                 pMockAssetAccessor,
                 nullptr,
                 asyncSystem,
                 nullptr,
                 spdlog::default_logger()},
-            pRasterOverlay,
             CesiumGeospatial::Ellipsoid::WGS84);
 
     waitForFuture(

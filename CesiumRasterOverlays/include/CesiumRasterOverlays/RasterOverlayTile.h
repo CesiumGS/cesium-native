@@ -147,11 +147,6 @@ public:
   /**
    * @brief Returns the {@link RasterOverlay} that created this instance.
    */
-  RasterOverlay& getOverlay() noexcept;
-
-  /**
-   * @brief Returns the {@link RasterOverlay} that created this instance.
-   */
   const RasterOverlay& getOverlay() const noexcept;
 
   /**

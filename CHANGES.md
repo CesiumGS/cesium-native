@@ -5,10 +5,24 @@
 ##### Breaking Changes :mega:
 
 - `RasterOverlayTileProvider::loadTileImage` now receives a const `RasterOverlayTile`.
+- Removed the following from `RasterOverlayTileProvider`:
+  - The constructor overloads that were used to create a placeholder tile provider.
+  - `isPlaceholder`
+  - `getTile`
+  - `getTileDataBytes`
+  - `getNumberOfTilesLoading`
+  - `removeTile`
+  - `loadTile`
+  - `loadTileThrottled`
 
 ##### Additions :tada:
 
 - Added `RasterOverlayExternals` class. This is similar to `TilesetExternals` and is a more convenient way to pass around the various external interfaces that raster overlays use.
+- Added `ActivatedRasterOverlay`, encapsulating most of the functionality that was previously found on `RasterOverlayTileProvider`.
+
+##### Fixes :wrench:
+
+- `LoadedTileEnumerator` now provides non-const access to enumerated `Tile` instances, even if the enumerator itself is const.
 
 ### v0.51.0 - 2025-09-02
 

@@ -18,4 +18,4 @@ protected:
       const CesiumRasterOverlays::RasterOverlayTile& overlayTile) override;
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

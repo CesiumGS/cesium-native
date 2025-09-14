@@ -78,10 +78,6 @@ RasterOverlayTile::getTileProvider() const noexcept {
   return *this->_pActivatedOverlay->getTileProvider();
 }
 
-RasterOverlay& RasterOverlayTile::getOverlay() noexcept {
-  return *this->_pActivatedOverlay->getOverlay();
-}
-
 const RasterOverlay& RasterOverlayTile::getOverlay() const noexcept {
   return *this->_pActivatedOverlay->getOverlay();
 }

@@ -51,11 +51,10 @@ const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
 // RasterOverlayCollection has a LoadedTileEnumerator, which is owned
 // externally and may become invalid before the async operations complete.
 struct RasterOverlayCollection::OverlayList
-    : public CesiumUtility::ReferenceCountedNonThreadSafe<OverlayList> {
-  std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>> overlays{};
+    : public ReferenceCountedNonThreadSafe<OverlayList> {
+  std::vector<IntrusivePointer<const RasterOverlay>> overlays{};
 
-  std::vector<CesiumUtility::IntrusivePointer<ActivatedRasterOverlay>>
-      activatedOverlays{};
+  std::vector<IntrusivePointer<ActivatedRasterOverlay>> activatedOverlays{};
 };
 
 RasterOverlayCollection::RasterOverlayCollection(
@@ -87,11 +86,11 @@ void RasterOverlayCollection::setLoadedTileEnumerator(
 }
 
 void RasterOverlayCollection::add(
-    const CesiumUtility::IntrusivePointer<RasterOverlay>& pOverlay) {
+    const IntrusivePointer<const RasterOverlay>& pOverlay) {
   IntrusivePointer<OverlayList> pList = this->_pOverlays;
 
   pList->overlays.push_back(pOverlay);
-  pList->activatedOverlays.emplace_back(ActivatedRasterOverlay::create(
+  pList->activatedOverlays.emplace_back(pOverlay->activate(
       RasterOverlayExternals{
           .pAssetAccessor = this->_externals.pAssetAccessor,
           .pPrepareRendererResources =
@@ -99,7 +98,6 @@ void RasterOverlayCollection::add(
           .asyncSystem = this->_externals.asyncSystem,
           .pCreditSystem = this->_externals.pCreditSystem,
           .pLogger = this->_externals.pLogger},
-      pOverlay,
       this->_ellipsoid));
 
   CesiumRasterOverlays::RasterOverlayTile* pPlaceholderTile =
@@ -131,7 +129,7 @@ void RasterOverlayCollection::add(
 }
 
 void RasterOverlayCollection::remove(
-    const CesiumUtility::IntrusivePointer<RasterOverlay>& pOverlay) noexcept {
+    const IntrusivePointer<const RasterOverlay>& pOverlay) noexcept {
   if (!this->_pOverlays)
     return;
 

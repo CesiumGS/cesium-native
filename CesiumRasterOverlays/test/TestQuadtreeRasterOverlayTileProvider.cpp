@@ -165,16 +165,14 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
   AsyncSystem asyncSystem(pTaskProcessor);
   IntrusivePointer<TestRasterOverlay> pOverlay = new TestRasterOverlay("Test");
 
-  IntrusivePointer<ActivatedRasterOverlay> pActivated =
-      ActivatedRasterOverlay::create(
-          RasterOverlayExternals{
-              pAssetAccessor,
-              nullptr,
-              asyncSystem,
-              nullptr,
-              spdlog::default_logger()},
-          pOverlay,
-          Ellipsoid::WGS84);
+  IntrusivePointer<ActivatedRasterOverlay> pActivated = pOverlay->activate(
+      RasterOverlayExternals{
+          pAssetAccessor,
+          nullptr,
+          asyncSystem,
+          nullptr,
+          spdlog::default_logger()},
+      Ellipsoid::WGS84);
 
   asyncSystem.dispatchMainThreadTasks();
 
