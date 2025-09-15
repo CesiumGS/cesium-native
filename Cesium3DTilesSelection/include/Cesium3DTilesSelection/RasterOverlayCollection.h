@@ -4,11 +4,13 @@
 #include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/TransformIterator.h>
 
 #include <memory>
 #include <span>
@@ -173,60 +175,17 @@ public:
       CesiumRasterOverlays::ActivatedRasterOverlay>>&
   getActivatedOverlays() const;
 
-  /**
-   * @brief Finds the tile provider for a given overlay.
-   *
-   * If the specified raster overlay is not part of this collection, this method
-   * will return nullptr.
-   *
-   * If the overlay's real tile provider hasn't finished being
-   * created yet, a placeholder will be returned. That is, its
-   * {@link CesiumRasterOverlays::RasterOverlayTileProvider::isPlaceholder} method will return true.
-   *
-   * @param overlay The overlay for which to obtain the tile provider.
-   * @return The tile provider, if any, corresponding to the raster overlay.
-   */
-  CesiumRasterOverlays::RasterOverlayTileProvider* findTileProviderForOverlay(
-      CesiumRasterOverlays::RasterOverlay& overlay) noexcept;
+private:
+  struct GetOverlayFunctor;
 
-  /**
-   * @copydoc findTileProviderForOverlay
-   */
-  const CesiumRasterOverlays::RasterOverlayTileProvider*
-  findTileProviderForOverlay(
-      const CesiumRasterOverlays::RasterOverlay& overlay) const noexcept;
-
-  /**
-   * @brief Finds the placeholder tile provider for a given overlay.
-   *
-   * If the specified raster overlay is not part of this collection, this method
-   * will return nullptr.
-   *
-   * This method will return the placeholder tile provider even if the real one
-   * has been created. This is useful to create placeholder tiles when the
-   * rectangle in the overlay's projection is not yet known.
-   *
-   * @param overlay The overlay for which to obtain the tile provider.
-   * @return The placeholder tile provider, if any, corresponding to the raster
-   * overlay.
-   */
-  CesiumRasterOverlays::RasterOverlayTileProvider*
-  findPlaceholderTileProviderForOverlay(
-      CesiumRasterOverlays::RasterOverlay& overlay) noexcept;
-
-  /**
-   * @copydoc findPlaceholderTileProviderForOverlay
-   */
-  const CesiumRasterOverlays::RasterOverlayTileProvider*
-  findPlaceholderTileProviderForOverlay(
-      const CesiumRasterOverlays::RasterOverlay& overlay) const noexcept;
-
+public:
   /**
    * @brief A constant iterator for {@link CesiumRasterOverlays::RasterOverlay} instances.
    */
-  typedef std::vector<CesiumUtility::IntrusivePointer<
-      const CesiumRasterOverlays::RasterOverlay>>::const_iterator
-      const_iterator;
+  using const_iterator = CesiumUtility::TransformIterator<
+      GetOverlayFunctor,
+      std::vector<CesiumUtility::IntrusivePointer<
+          CesiumRasterOverlays::ActivatedRasterOverlay>>::const_iterator>;
 
   /**
    * @brief Returns an iterator at the beginning of this collection.
@@ -244,15 +203,20 @@ public:
   size_t size() const noexcept;
 
 private:
+  struct GetOverlayFunctor {
+    CesiumUtility::IntrusivePointer<const CesiumRasterOverlays::RasterOverlay>
+    operator()(const CesiumUtility::IntrusivePointer<
+               CesiumRasterOverlays::ActivatedRasterOverlay>& p) const {
+      return p->getOverlay();
+    }
+  };
+
   CesiumRasterOverlays::ActivatedRasterOverlay*
   findActivatedForOverlay(const CesiumRasterOverlays::RasterOverlay& overlay);
 
   LoadedTileEnumerator _loadedTiles;
   TilesetExternals _externals;
   CesiumGeospatial::Ellipsoid _ellipsoid;
-  std::vector<CesiumUtility::IntrusivePointer<
-      const CesiumRasterOverlays::RasterOverlay>>
-      _overlays;
   std::vector<CesiumUtility::IntrusivePointer<
       CesiumRasterOverlays::ActivatedRasterOverlay>>
       _activatedOverlays;

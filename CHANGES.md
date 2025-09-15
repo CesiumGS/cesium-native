@@ -14,11 +14,13 @@
   - `removeTile`
   - `loadTile`
   - `loadTileThrottled`
+- `RasterMappedTo3DTile::mapOverlayToTile` now takes an `ActivatedRasterOverlay` instead of a `RasterOverlayTileProvider`.
 
 ##### Additions :tada:
 
 - Added `RasterOverlayExternals` class. This is similar to `TilesetExternals` and is a more convenient way to pass around the various external interfaces that raster overlays use.
 - Added `ActivatedRasterOverlay`, encapsulating most of the functionality that was previously found on `RasterOverlayTileProvider`.
+- Added `addTileOverlays` and `updateTileOverlays` to `RasterOverlayCollection`.
 
 ##### Fixes :wrench:
 

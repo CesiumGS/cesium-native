@@ -49,7 +49,6 @@ RasterOverlayCollection::RasterOverlayCollection(
     : _loadedTiles(loadedTiles),
       _externals{externals},
       _ellipsoid(ellipsoid),
-      _overlays(),
       _activatedOverlays() {}
 
 RasterOverlayCollection::~RasterOverlayCollection() noexcept {
@@ -68,7 +67,6 @@ void RasterOverlayCollection::setLoadedTileEnumerator(
 
 void RasterOverlayCollection::add(
     const IntrusivePointer<const RasterOverlay>& pOverlay) {
-  this->_overlays.push_back(pOverlay);
   this->_activatedOverlays.emplace_back(pOverlay->activate(
       RasterOverlayExternals{
           .pAssetAccessor = this->_externals.pAssetAccessor,
@@ -147,9 +145,7 @@ void RasterOverlayCollection::remove(
     return;
   }
 
-  int64_t index = it - this->_activatedOverlays.begin();
-  this->_activatedOverlays.erase(this->_activatedOverlays.begin() + index);
-  this->_overlays.erase(this->_overlays.begin() + index);
+  this->_activatedOverlays.erase(it);
 }
 
 std::vector<CesiumGeospatial::Projection>
@@ -250,63 +246,14 @@ RasterOverlayCollection::getActivatedOverlays() const {
   return this->_activatedOverlays;
 }
 
-RasterOverlayTileProvider* RasterOverlayCollection::findTileProviderForOverlay(
-    RasterOverlay& overlay) noexcept {
-  // Call the const version
-  const RasterOverlayTileProvider* pResult = this->findTileProviderForOverlay(
-      const_cast<const RasterOverlay&>(overlay));
-  return const_cast<RasterOverlayTileProvider*>(pResult);
-}
-
-const RasterOverlayTileProvider*
-RasterOverlayCollection::findTileProviderForOverlay(
-    const RasterOverlay& overlay) const noexcept {
-  auto it = std::find_if(
-      this->_activatedOverlays.begin(),
-      this->_activatedOverlays.end(),
-      [&overlay](
-          const IntrusivePointer<ActivatedRasterOverlay>& pCheck) noexcept {
-        return pCheck->getOverlay() == &overlay;
-      });
-
-  return it == this->_activatedOverlays.end() ? nullptr
-                                              : (*it)->getTileProvider();
-}
-
-RasterOverlayTileProvider*
-RasterOverlayCollection::findPlaceholderTileProviderForOverlay(
-    RasterOverlay& overlay) noexcept {
-  // Call the const version
-  const RasterOverlayTileProvider* pResult =
-      this->findPlaceholderTileProviderForOverlay(
-          const_cast<const RasterOverlay&>(overlay));
-  return const_cast<RasterOverlayTileProvider*>(pResult);
-}
-
-const RasterOverlayTileProvider*
-RasterOverlayCollection::findPlaceholderTileProviderForOverlay(
-    const RasterOverlay& overlay) const noexcept {
-  auto it = std::find_if(
-      this->_activatedOverlays.begin(),
-      this->_activatedOverlays.end(),
-      [&overlay](
-          const IntrusivePointer<ActivatedRasterOverlay>& pCheck) noexcept {
-        return pCheck->getOverlay() == &overlay;
-      });
-
-  return it == this->_activatedOverlays.end()
-             ? nullptr
-             : (*it)->getPlaceholderTileProvider();
-}
-
 RasterOverlayCollection::const_iterator
 RasterOverlayCollection::begin() const noexcept {
-  return this->_overlays.begin();
+  return const_iterator(GetOverlayFunctor{}, this->_activatedOverlays.begin());
 }
 
 RasterOverlayCollection::const_iterator
 RasterOverlayCollection::end() const noexcept {
-  return this->_overlays.end();
+  return const_iterator(GetOverlayFunctor{}, this->_activatedOverlays.end());
 }
 
 size_t RasterOverlayCollection::size() const noexcept {
