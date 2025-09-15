@@ -247,12 +247,16 @@ private:
   CesiumRasterOverlays::ActivatedRasterOverlay*
   findActivatedForOverlay(const CesiumRasterOverlays::RasterOverlay& overlay);
 
-  struct OverlayList;
-
   LoadedTileEnumerator _loadedTiles;
   TilesetExternals _externals;
   CesiumGeospatial::Ellipsoid _ellipsoid;
-  CesiumUtility::IntrusivePointer<OverlayList> _pOverlays;
+  std::vector<CesiumUtility::IntrusivePointer<
+      const CesiumRasterOverlays::RasterOverlay>>
+      _overlays;
+  std::vector<CesiumUtility::IntrusivePointer<
+      CesiumRasterOverlays::ActivatedRasterOverlay>>
+      _activatedOverlays;
+
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Raster Overlay Loading Slot")
 };
 

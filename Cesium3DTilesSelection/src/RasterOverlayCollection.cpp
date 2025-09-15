@@ -42,21 +42,6 @@ const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
 
 } // namespace
 
-// We store the list of overlays and tile providers in this separate class
-// so that we can separate its lifetime from the lifetime of the
-// RasterOverlayCollection. We need to do this because the async operations
-// that create tile providers from overlays need to have somewhere to write
-// the result. And we can't extend the lifetime of the entire
-// RasterOverlayCollection until the async operations complete because the
-// RasterOverlayCollection has a LoadedTileEnumerator, which is owned
-// externally and may become invalid before the async operations complete.
-struct RasterOverlayCollection::OverlayList
-    : public ReferenceCountedNonThreadSafe<OverlayList> {
-  std::vector<IntrusivePointer<const RasterOverlay>> overlays{};
-
-  std::vector<IntrusivePointer<ActivatedRasterOverlay>> activatedOverlays{};
-};
-
 RasterOverlayCollection::RasterOverlayCollection(
     const LoadedTileEnumerator& loadedTiles,
     const TilesetExternals& externals,
@@ -64,19 +49,15 @@ RasterOverlayCollection::RasterOverlayCollection(
     : _loadedTiles(loadedTiles),
       _externals{externals},
       _ellipsoid(ellipsoid),
-      _pOverlays(new OverlayList()) {}
+      _overlays(),
+      _activatedOverlays() {}
 
 RasterOverlayCollection::~RasterOverlayCollection() noexcept {
-  if (this->_pOverlays) {
-    OverlayList& list = *this->_pOverlays;
-    if (!list.activatedOverlays.empty()) {
-      for (int64_t i = static_cast<int64_t>(list.activatedOverlays.size() - 1);
-           i >= 0;
-           --i) {
-        this->remove(
-            list.activatedOverlays[static_cast<size_t>(i)]->getOverlay());
-      }
-    }
+  for (int64_t i = static_cast<int64_t>(this->_activatedOverlays.size() - 1);
+       i >= 0;
+       --i) {
+    this->remove(
+        this->_activatedOverlays[static_cast<size_t>(i)]->getOverlay());
   }
 }
 
@@ -87,10 +68,8 @@ void RasterOverlayCollection::setLoadedTileEnumerator(
 
 void RasterOverlayCollection::add(
     const IntrusivePointer<const RasterOverlay>& pOverlay) {
-  IntrusivePointer<OverlayList> pList = this->_pOverlays;
-
-  pList->overlays.push_back(pOverlay);
-  pList->activatedOverlays.emplace_back(pOverlay->activate(
+  this->_overlays.push_back(pOverlay);
+  this->_activatedOverlays.emplace_back(pOverlay->activate(
       RasterOverlayExternals{
           .pAssetAccessor = this->_externals.pAssetAccessor,
           .pPrepareRendererResources =
@@ -101,7 +80,7 @@ void RasterOverlayCollection::add(
       this->_ellipsoid));
 
   CesiumRasterOverlays::RasterOverlayTile* pPlaceholderTile =
-      pList->activatedOverlays.back()->getPlaceholderTile();
+      this->_activatedOverlays.back()->getPlaceholderTile();
 
   // Add a placeholder for this overlay to existing geometry tiles.
   for (Tile& tile : this->_loadedTiles) {
@@ -130,9 +109,6 @@ void RasterOverlayCollection::add(
 
 void RasterOverlayCollection::remove(
     const IntrusivePointer<const RasterOverlay>& pOverlay) noexcept {
-  if (!this->_pOverlays)
-    return;
-
   // Remove all mappings of this overlay to geometry tiles.
   auto removeCondition = [pOverlay](
                              const RasterMappedTo3DTile& mapped) noexcept {
@@ -160,22 +136,20 @@ void RasterOverlayCollection::remove(
     mapped.erase(firstToRemove, mapped.end());
   }
 
-  OverlayList& list = *this->_pOverlays;
-
   auto it = std::find_if(
-      list.activatedOverlays.begin(),
-      list.activatedOverlays.end(),
+      this->_activatedOverlays.begin(),
+      this->_activatedOverlays.end(),
       [pOverlay](
           const IntrusivePointer<ActivatedRasterOverlay>& pCheck) noexcept {
         return pCheck->getOverlay() == pOverlay;
       });
-  if (it == list.activatedOverlays.end()) {
+  if (it == this->_activatedOverlays.end()) {
     return;
   }
 
-  int64_t index = it - list.activatedOverlays.begin();
-  list.activatedOverlays.erase(list.activatedOverlays.begin() + index);
-  list.overlays.erase(list.overlays.begin() + index);
+  int64_t index = it - this->_activatedOverlays.begin();
+  this->_activatedOverlays.erase(this->_activatedOverlays.begin() + index);
+  this->_overlays.erase(this->_overlays.begin() + index);
 }
 
 std::vector<CesiumGeospatial::Projection>
@@ -187,15 +161,10 @@ RasterOverlayCollection::addTileOverlays(
   tile.getMappedRasterTiles().clear();
 
   std::vector<CesiumGeospatial::Projection> projections;
-  if (!this->_pOverlays) {
-    return projections;
-  }
-
   const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
 
-  for (size_t i = 0; i < this->_pOverlays->activatedOverlays.size(); ++i) {
-    ActivatedRasterOverlay& activatedOverlay =
-        *this->_pOverlays->activatedOverlays[i];
+  for (size_t i = 0; i < this->_activatedOverlays.size(); ++i) {
+    ActivatedRasterOverlay& activatedOverlay = *this->_activatedOverlays[i];
 
     RasterMappedTo3DTile* pMapped = RasterMappedTo3DTile::mapOverlayToTile(
         tilesetOptions.maximumScreenSpaceError,
@@ -278,7 +247,7 @@ TileRasterOverlayStatus RasterOverlayCollection::updateTileOverlays(
 const std::vector<CesiumUtility::IntrusivePointer<
     CesiumRasterOverlays::ActivatedRasterOverlay>>&
 RasterOverlayCollection::getActivatedOverlays() const {
-  return this->_pOverlays->activatedOverlays;
+  return this->_activatedOverlays;
 }
 
 RasterOverlayTileProvider* RasterOverlayCollection::findTileProviderForOverlay(
@@ -293,16 +262,15 @@ const RasterOverlayTileProvider*
 RasterOverlayCollection::findTileProviderForOverlay(
     const RasterOverlay& overlay) const noexcept {
   auto it = std::find_if(
-      this->_pOverlays->activatedOverlays.begin(),
-      this->_pOverlays->activatedOverlays.end(),
+      this->_activatedOverlays.begin(),
+      this->_activatedOverlays.end(),
       [&overlay](
           const IntrusivePointer<ActivatedRasterOverlay>& pCheck) noexcept {
         return pCheck->getOverlay() == &overlay;
       });
 
-  return it == this->_pOverlays->activatedOverlays.end()
-             ? nullptr
-             : (*it)->getTileProvider();
+  return it == this->_activatedOverlays.end() ? nullptr
+                                              : (*it)->getTileProvider();
 }
 
 RasterOverlayTileProvider*
@@ -319,46 +287,43 @@ const RasterOverlayTileProvider*
 RasterOverlayCollection::findPlaceholderTileProviderForOverlay(
     const RasterOverlay& overlay) const noexcept {
   auto it = std::find_if(
-      this->_pOverlays->activatedOverlays.begin(),
-      this->_pOverlays->activatedOverlays.end(),
+      this->_activatedOverlays.begin(),
+      this->_activatedOverlays.end(),
       [&overlay](
           const IntrusivePointer<ActivatedRasterOverlay>& pCheck) noexcept {
         return pCheck->getOverlay() == &overlay;
       });
 
-  return it == this->_pOverlays->activatedOverlays.end()
+  return it == this->_activatedOverlays.end()
              ? nullptr
              : (*it)->getPlaceholderTileProvider();
 }
 
 RasterOverlayCollection::const_iterator
 RasterOverlayCollection::begin() const noexcept {
-  return this->_pOverlays->overlays.begin();
+  return this->_overlays.begin();
 }
 
 RasterOverlayCollection::const_iterator
 RasterOverlayCollection::end() const noexcept {
-  return this->_pOverlays->overlays.end();
+  return this->_overlays.end();
 }
 
 size_t RasterOverlayCollection::size() const noexcept {
-  if (!this->_pOverlays)
-    return 0;
-
-  return this->_pOverlays->activatedOverlays.size();
+  return this->_activatedOverlays.size();
 }
 
 ActivatedRasterOverlay*
 RasterOverlayCollection::findActivatedForOverlay(const RasterOverlay& overlay) {
   auto it = std::find_if(
-      this->_pOverlays->activatedOverlays.begin(),
-      this->_pOverlays->activatedOverlays.end(),
+      this->_activatedOverlays.begin(),
+      this->_activatedOverlays.end(),
       [&overlay](
           const IntrusivePointer<ActivatedRasterOverlay>& pCheck) noexcept {
         return pCheck->getOverlay() == &overlay;
       });
 
-  return it == this->_pOverlays->activatedOverlays.end() ? nullptr : it->get();
+  return it == this->_activatedOverlays.end() ? nullptr : it->get();
 }
 
 } // namespace Cesium3DTilesSelection
