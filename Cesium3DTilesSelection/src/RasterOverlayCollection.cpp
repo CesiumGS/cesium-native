@@ -181,12 +181,10 @@ TileRasterOverlayStatus RasterOverlayCollection::updateTileOverlays(
     RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
     if (pLoadingTile &&
         pLoadingTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
-      ActivatedRasterOverlay* pActivated =
-          this->findActivatedForOverlay(pLoadingTile->getOverlay());
-      CESIUM_ASSERT(pActivated);
+      ActivatedRasterOverlay& activated = pLoadingTile->getActivatedOverlay();
 
       // Try to replace this placeholder with real tiles.
-      if (pActivated && pActivated->getTileProvider() != nullptr) {
+      if (activated.getTileProvider() != nullptr) {
         // Remove the existing placeholder mapping
         rasterTiles.erase(
             rasterTiles.begin() +
@@ -197,7 +195,7 @@ TileRasterOverlayStatus RasterOverlayCollection::updateTileOverlays(
         std::vector<CesiumGeospatial::Projection> missingProjections;
         RasterMappedTo3DTile::mapOverlayToTile(
             tilesetOptions.maximumScreenSpaceError,
-            *pActivated,
+            activated,
             tile,
             missingProjections,
             tilesetOptions.ellipsoid);
@@ -248,19 +246,6 @@ RasterOverlayCollection::end() const noexcept {
 
 size_t RasterOverlayCollection::size() const noexcept {
   return this->_activatedOverlays.size();
-}
-
-ActivatedRasterOverlay*
-RasterOverlayCollection::findActivatedForOverlay(const RasterOverlay& overlay) {
-  auto it = std::find_if(
-      this->_activatedOverlays.begin(),
-      this->_activatedOverlays.end(),
-      [&overlay](
-          const IntrusivePointer<ActivatedRasterOverlay>& pCheck) noexcept {
-        return pCheck->getOverlay() == &overlay;
-      });
-
-  return it == this->_activatedOverlays.end() ? nullptr : it->get();
 }
 
 } // namespace Cesium3DTilesSelection

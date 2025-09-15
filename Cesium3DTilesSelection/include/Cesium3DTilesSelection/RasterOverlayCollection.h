@@ -211,9 +211,6 @@ private:
     }
   };
 
-  CesiumRasterOverlays::ActivatedRasterOverlay*
-  findActivatedForOverlay(const CesiumRasterOverlays::RasterOverlay& overlay);
-
   LoadedTileEnumerator _loadedTiles;
   TilesetExternals _externals;
   CesiumGeospatial::Ellipsoid _ellipsoid;
