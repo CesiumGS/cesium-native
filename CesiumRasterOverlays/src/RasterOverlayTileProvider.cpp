@@ -232,10 +232,4 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
           });
 }
 
-TileProviderAndTile::~TileProviderAndTile() noexcept {
-  // Ensure the tile is released before the tile provider.
-  pTile = nullptr;
-  pTileProvider = nullptr;
-}
-
 } // namespace CesiumRasterOverlays

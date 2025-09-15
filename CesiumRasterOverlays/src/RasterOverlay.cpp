@@ -113,15 +113,15 @@ CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> RasterOverlay::activate(
           const RasterOverlayLoadFailureDetails& failureDetails =
               result.error();
           SPDLOG_LOGGER_ERROR(externals.pLogger, failureDetails.message);
-          if (pResult->getOverlay()->getOptions().loadErrorCallback) {
-            pResult->getOverlay()->getOptions().loadErrorCallback(
+          if (pResult->getOverlay().getOptions().loadErrorCallback) {
+            pResult->getOverlay().getOptions().loadErrorCallback(
                 failureDetails);
           }
 
           // Create a tile provider that does not provide any tiles at
           // all.
           pProvider = new EmptyRasterOverlayTileProvider(
-              pResult->getOverlay(),
+              &pResult->getOverlay(),
               externals.asyncSystem);
         }
 

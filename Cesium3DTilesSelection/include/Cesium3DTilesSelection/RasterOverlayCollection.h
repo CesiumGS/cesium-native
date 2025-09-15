@@ -47,6 +47,11 @@ struct TileRasterOverlayStatus {
    */
   std::optional<size_t> firstIndexWithUnknownAvailability;
 
+  /**
+   * @brief The index of the first entry in {@link Tile::getMappedRasterTiles},
+   * if any, for which texture coordinates for the overlay's projection are not
+   * yet available on the {@link Tile}.
+   */
   std::optional<size_t> firstIndexWithMissingProjection;
 };
 
@@ -121,7 +126,17 @@ public:
   RasterOverlayCollection&
   operator=(RasterOverlayCollection&& rhs) noexcept = default;
 
+  /**
+   * @brief Destroys the collection.
+   */
   ~RasterOverlayCollection() noexcept;
+
+  /**
+   * @brief Gets the activated raster overlays in this collection.
+   */
+  const std::vector<CesiumUtility::IntrusivePointer<
+      CesiumRasterOverlays::ActivatedRasterOverlay>>&
+  getActivatedOverlays() const noexcept;
 
   /**
    * @brief Adds the given {@link CesiumRasterOverlays::RasterOverlay} to this collection.
@@ -129,13 +144,22 @@ public:
    * @param pOverlay The pointer to the overlay. This may not be `nullptr`.
    */
   void add(const CesiumUtility::IntrusivePointer<
-           const CesiumRasterOverlays::RasterOverlay>& pOverlay);
+           const CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
 
   /**
-   * @brief Remove the given {@link CesiumRasterOverlays::RasterOverlay} from this collection.
+   * @brief Remove the given {@link CesiumRasterOverlays::RasterOverlay} from
+   * this collection.
    */
   void remove(const CesiumUtility::IntrusivePointer<
               const CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
+
+  /**
+   * @brief Remove the given {@link CesiumRasterOverlays::ActivatedRasterOverlay}
+   * from this collection.
+   */
+  void
+  remove(const CesiumUtility::IntrusivePointer<
+         CesiumRasterOverlays::ActivatedRasterOverlay>& pActivated) noexcept;
 
   /**
    * @brief Adds raster overlays to a new {@link Tile}.
@@ -152,7 +176,7 @@ public:
    * to the tile.
    */
   std::vector<CesiumGeospatial::Projection>
-  addTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile);
+  addTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile) noexcept;
 
   /**
    * @brief Updates the raster overlays associated with a tile.
@@ -169,11 +193,7 @@ public:
    * @returns Details of the raster overlays attached to this tile.
    */
   TileRasterOverlayStatus
-  updateTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile);
-
-  const std::vector<CesiumUtility::IntrusivePointer<
-      CesiumRasterOverlays::ActivatedRasterOverlay>>&
-  getActivatedOverlays() const;
+  updateTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile) noexcept;
 
 private:
   struct GetOverlayFunctor;
@@ -207,7 +227,7 @@ private:
     CesiumUtility::IntrusivePointer<const CesiumRasterOverlays::RasterOverlay>
     operator()(const CesiumUtility::IntrusivePointer<
                CesiumRasterOverlays::ActivatedRasterOverlay>& p) const {
-      return p->getOverlay();
+      return &p->getOverlay();
     }
   };
 

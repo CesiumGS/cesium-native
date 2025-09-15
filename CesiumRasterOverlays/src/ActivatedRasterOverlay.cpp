@@ -21,7 +21,7 @@ namespace CesiumRasterOverlays {
 ActivatedRasterOverlay::ActivatedRasterOverlay(
     const RasterOverlayExternals& externals,
     const IntrusivePointer<const RasterOverlay>& pOverlay,
-    const Ellipsoid& ellipsoid)
+    const Ellipsoid& ellipsoid) noexcept
     : _pOverlay(pOverlay),
       _pPlaceholderTileProvider(
           pOverlay->createPlaceholder(externals, ellipsoid)),
@@ -49,8 +49,8 @@ CesiumAsync::SharedFuture<void>& ActivatedRasterOverlay::getReadyEvent() {
   return this->_readyEvent;
 }
 
-const RasterOverlay* ActivatedRasterOverlay::getOverlay() const noexcept {
-  return this->_pOverlay;
+const RasterOverlay& ActivatedRasterOverlay::getOverlay() const noexcept {
+  return *this->_pOverlay;
 }
 
 const CesiumRasterOverlays::RasterOverlayTileProvider*
@@ -332,6 +332,12 @@ void ActivatedRasterOverlay::finalizeTileLoad(bool isThrottledLoad) noexcept {
   if (isThrottledLoad) {
     --this->_throttledTilesCurrentlyLoading;
   }
+}
+
+TileProviderAndTile::~TileProviderAndTile() noexcept {
+  // Ensure the tile is released before the tile provider.
+  pTile = nullptr;
+  pTileProvider = nullptr;
 }
 
 } // namespace CesiumRasterOverlays

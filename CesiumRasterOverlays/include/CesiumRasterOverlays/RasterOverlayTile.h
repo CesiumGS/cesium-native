@@ -96,9 +96,9 @@ public:
    * The {@link getState} of this instance will always be
    * {@link LoadState::Placeholder}.
    *
-   * @param tileProvider The {@link RasterOverlayTileProvider}. This object
-   * _must_ remain valid for the entire lifetime of the tile. If the tile
-   * provider is destroyed before the tile, undefined behavior will result.
+   * @param activatedOverlay The {@link ActivatedRasterOverlay}. This object
+   * _must_ remain valid for the entire lifetime of the tile. If the activated
+   * overlay is destroyed before the tile, undefined behavior will result.
    */
   RasterOverlayTile(ActivatedRasterOverlay& activatedOverlay) noexcept;
 
@@ -106,12 +106,12 @@ public:
    * @brief Creates a new instance.
    *
    * The tile will start in the `Unloaded` state, and will not begin loading
-   * until {@link RasterOverlayTileProvider::loadTile} or
-   * {@link RasterOverlayTileProvider::loadTileThrottled} is called.
+   * until {@link ActivatedRasterOverlay::loadTile} or
+   * {@link ActivatedRasterOverlay::loadTileThrottled} is called.
    *
-   * @param tileProvider The {@link RasterOverlayTileProvider}. This object
-   * _must_ remain valid for the entire lifetime of the tile. If the tile
-   * provider is destroyed before the tile, undefined behavior may result.
+   * @param activatedOverlay The {@link ActivatedRasterOverlay}. This object
+   * _must_ remain valid for the entire lifetime of the tile. If the activated
+   * overlay is destroyed before the tile, undefined behavior will result.
    * @param targetScreenPixels The maximum number of pixels on the screen that
    * this tile is meant to cover. The overlay image should be approximately this
    * many pixels divided by the
@@ -130,22 +130,25 @@ public:
   /** @brief Default destructor. */
   ~RasterOverlayTile();
 
+  /**
+   * @brief Gets the activated overlay that created this instance.
+   */
   ActivatedRasterOverlay& getActivatedOverlay() noexcept;
 
+  /** @copydoc getActivatedOverlay */
   const ActivatedRasterOverlay& getActivatedOverlay() const noexcept;
 
   /**
-   * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
+   * @brief Returns the {@link RasterOverlayTileProvider} that is responsible
+   * for loading this tile's image.
    */
   RasterOverlayTileProvider& getTileProvider() noexcept;
 
-  /**
-   * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
-   */
+  /** @copydoc getTileProvider */
   const RasterOverlayTileProvider& getTileProvider() const noexcept;
 
   /**
-   * @brief Returns the {@link RasterOverlay} that created this instance.
+   * @brief Gets the {@link RasterOverlay} associated with this instance.
    */
   const RasterOverlay& getOverlay() const noexcept;
 

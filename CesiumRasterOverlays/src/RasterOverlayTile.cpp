@@ -79,7 +79,7 @@ RasterOverlayTile::getTileProvider() const noexcept {
 }
 
 const RasterOverlay& RasterOverlayTile::getOverlay() const noexcept {
-  return *this->_pActivatedOverlay->getOverlay();
+  return this->_pActivatedOverlay->getOverlay();
 }
 
 void RasterOverlayTile::loadInMainThread() {

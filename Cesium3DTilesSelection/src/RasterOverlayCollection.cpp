@@ -45,8 +45,7 @@ RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   for (int64_t i = static_cast<int64_t>(this->_activatedOverlays.size() - 1);
        i >= 0;
        --i) {
-    this->remove(
-        this->_activatedOverlays[static_cast<size_t>(i)]->getOverlay());
+    this->remove(this->_activatedOverlays[static_cast<size_t>(i)]);
   }
 }
 
@@ -55,8 +54,14 @@ void RasterOverlayCollection::setLoadedTileEnumerator(
   this->_loadedTiles = loadedTiles;
 }
 
+const std::vector<CesiumUtility::IntrusivePointer<
+    CesiumRasterOverlays::ActivatedRasterOverlay>>&
+RasterOverlayCollection::getActivatedOverlays() const noexcept {
+  return this->_activatedOverlays;
+}
+
 void RasterOverlayCollection::add(
-    const IntrusivePointer<const RasterOverlay>& pOverlay) {
+    const IntrusivePointer<const RasterOverlay>& pOverlay) noexcept {
   this->_activatedOverlays.emplace_back(pOverlay->activate(
       RasterOverlayExternals{
           .pAssetAccessor = this->_externals.pAssetAccessor,
@@ -97,15 +102,31 @@ void RasterOverlayCollection::add(
 
 void RasterOverlayCollection::remove(
     const IntrusivePointer<const RasterOverlay>& pOverlay) noexcept {
+  auto it = std::find_if(
+      this->_activatedOverlays.begin(),
+      this->_activatedOverlays.end(),
+      [pOverlay](
+          const IntrusivePointer<ActivatedRasterOverlay>& pCheck) noexcept {
+        return &pCheck->getOverlay() == pOverlay;
+      });
+  if (it == this->_activatedOverlays.end()) {
+    return;
+  }
+
+  this->remove(*it);
+}
+
+void RasterOverlayCollection::remove(
+    const IntrusivePointer<ActivatedRasterOverlay>& pActivated) noexcept {
   // Remove all mappings of this overlay to geometry tiles.
-  auto removeCondition = [pOverlay](
-                             const RasterMappedTo3DTile& mapped) noexcept {
-    return (
-        (mapped.getLoadingTile() &&
-         pOverlay == &mapped.getLoadingTile()->getTileProvider().getOwner()) ||
-        (mapped.getReadyTile() &&
-         pOverlay == &mapped.getReadyTile()->getTileProvider().getOwner()));
-  };
+  auto removeCondition =
+      [pActivated](const RasterMappedTo3DTile& mapped) noexcept {
+        return (
+            (mapped.getLoadingTile() &&
+             pActivated == &mapped.getLoadingTile()->getActivatedOverlay()) ||
+            (mapped.getReadyTile() &&
+             pActivated == &mapped.getReadyTile()->getActivatedOverlay()));
+      };
 
   auto pPrepareRenderResources =
       this->_externals.pPrepareRendererResources.get();
@@ -124,13 +145,10 @@ void RasterOverlayCollection::remove(
     mapped.erase(firstToRemove, mapped.end());
   }
 
-  auto it = std::find_if(
+  auto it = std::find(
       this->_activatedOverlays.begin(),
       this->_activatedOverlays.end(),
-      [pOverlay](
-          const IntrusivePointer<ActivatedRasterOverlay>& pCheck) noexcept {
-        return pCheck->getOverlay() == pOverlay;
-      });
+      pActivated);
   if (it == this->_activatedOverlays.end()) {
     return;
   }
@@ -141,7 +159,7 @@ void RasterOverlayCollection::remove(
 std::vector<CesiumGeospatial::Projection>
 RasterOverlayCollection::addTileOverlays(
     const TilesetOptions& tilesetOptions,
-    Tile& tile) {
+    Tile& tile) noexcept {
   // when tile fails temporarily, it may still have mapped raster tiles, so
   // clear it here
   tile.getMappedRasterTiles().clear();
@@ -170,7 +188,7 @@ RasterOverlayCollection::addTileOverlays(
 
 TileRasterOverlayStatus RasterOverlayCollection::updateTileOverlays(
     const TilesetOptions& tilesetOptions,
-    Tile& tile) {
+    Tile& tile) noexcept {
   TileRasterOverlayStatus result{};
 
   std::vector<RasterMappedTo3DTile>& rasterTiles = tile.getMappedRasterTiles();
@@ -226,12 +244,6 @@ TileRasterOverlayStatus RasterOverlayCollection::updateTileOverlays(
   }
 
   return result;
-}
-
-const std::vector<CesiumUtility::IntrusivePointer<
-    CesiumRasterOverlays::ActivatedRasterOverlay>>&
-RasterOverlayCollection::getActivatedOverlays() const {
-  return this->_activatedOverlays;
 }
 
 RasterOverlayCollection::const_iterator

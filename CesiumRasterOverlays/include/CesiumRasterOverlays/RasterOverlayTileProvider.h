@@ -108,8 +108,8 @@ struct LoadTileImageFromUrlOptions {
    * a valid 0x0 image. If false, such a response will be reported as an
    * error.
    *
-   * {@link RasterOverlayTileProvider::loadTile} and
-   * {@link RasterOverlayTileProvider::loadTileThrottled} will treat such an
+   * {@link ActivatedRasterOverlay::loadTile} and
+   * {@link ActivatedRasterOverlay::loadTileThrottled} will treat such an
    * image as "failed" and use the quadtree parent (or ancestor) image
    * instead, but will not report any error.
    *
@@ -121,21 +121,6 @@ struct LoadTileImageFromUrlOptions {
 };
 
 class RasterOverlayTileProvider;
-
-/**
- * @brief Holds a tile and its corresponding tile provider. Used as the return
- * value of {@link RasterOverlayTileProvider::loadTile}.
- */
-struct TileProviderAndTile {
-  /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
-   * RasterOverlayTileProvider used for this tile. */
-  CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider;
-  /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
-   * RasterOverlayTile used for this tile. */
-  CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
-
-  ~TileProviderAndTile() noexcept;
-};
 
 /**
  * @brief Provides individual tiles for a {@link RasterOverlay} on demand.

@@ -23,38 +23,116 @@ struct TileProviderAndTile;
 
 namespace CesiumRasterOverlays {
 
+/**
+ * @brief Holds a tile and its corresponding tile provider. Used as the return
+ * value of {@link ActivatedRasterOverlay::loadTile}.
+ */
+struct TileProviderAndTile {
+  /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
+   * RasterOverlayTileProvider used for this tile. */
+  CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider;
+  /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
+   * RasterOverlayTile used for this tile. */
+  CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
+
+  ~TileProviderAndTile() noexcept;
+};
+
+/**
+ * @brief A {@link RasterOverlay} that has been activated for use. While a
+ * {@link RasterOverlayTileProvider} can be used directly to load images,
+ * this class provides additional functionality for managing
+ * {@link RasterOverlayTile} lifecycle and state.
+ *
+ * To create an instance of this class, call {@link RasterOverlay::activate}.
+ */
 class CESIUMRASTEROVERLAYS_API ActivatedRasterOverlay
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
           ActivatedRasterOverlay> {
 public:
+  /**
+   * @brief Constructs a new instance.
+   *
+   * Consider calling {@link RasterOverlay::activate} instead of using the
+   * constructor directly.
+   *
+   * @param externals The external interfaces to use.
+   * @param pOverlay The overlay to activate.
+   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   */
   ActivatedRasterOverlay(
       const RasterOverlayExternals& externals,
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOverlay,
-      const CesiumGeospatial::Ellipsoid& ellipsoid);
-  ~ActivatedRasterOverlay();
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
+  /**
+   * @brief Destroys the instance. Use {@link addReference} and
+   * {@link releaseReference} instead of destroying this instance directly.
+   */
+  ~ActivatedRasterOverlay() noexcept;
+
+  /**
+   * @brief Gets a shared future that resolves when this instance is ready to
+   * provide tiles.
+   *
+   * It is safe to call {@link getTile} before this future resolves, but the
+   * returned tile will be a placeholder.
+   */
   CesiumAsync::SharedFuture<void>& getReadyEvent();
 
-  const CesiumRasterOverlays::RasterOverlay* getOverlay() const noexcept;
+  /**
+   * @brief Gets the {@link RasterOverlay} that was activated to create this
+   * instance.
+   */
+  const CesiumRasterOverlays::RasterOverlay& getOverlay() const noexcept;
 
+  /**
+   * @brief Gets the tile provider created for this activated overlay. This will
+   * be `nullptr` before `getReadyEvent` resolves.
+   */
   const CesiumRasterOverlays::RasterOverlayTileProvider*
   getTileProvider() const noexcept;
 
+  /** @copydoc getTileProvider */
   CesiumRasterOverlays::RasterOverlayTileProvider* getTileProvider() noexcept;
 
+  /**
+   * @brief Sets the tile provider for this activated overlay.
+   *
+   * It is usually unnecessary to call this method because
+   * {@link RasterOverlay::activate} will call it automatically at the
+   * appropriate time.
+   *
+   * Calling this method will resolve the {@link getReadyEvent}.
+   *
+   * @param pTileProvider The tile provider. This must not be `nullptr`.
+   */
   void setTileProvider(
       const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
           pTileProvider);
 
+  /**
+   * @brief Gets the placeholder tile provider.
+   *
+   * The placeholder may be used prior to {@link getReadyEvent} resolving,
+   * but it will create placeholder tiles only.
+   */
   const CesiumRasterOverlays::RasterOverlayTileProvider*
   getPlaceholderTileProvider() const noexcept;
 
+  /** @copydoc getPlaceholderTileProvider */
   CesiumRasterOverlays::RasterOverlayTileProvider*
   getPlaceholderTileProvider() noexcept;
 
+  /**
+   * @brief Gets the placeholder tile created by the
+   * {@link getPlaceholderTileProvider}.
+   */
   const CesiumRasterOverlays::RasterOverlayTile*
   getPlaceholderTile() const noexcept;
 
+  /** @copydoc getPlaceholderTile */
   CesiumRasterOverlays::RasterOverlayTile* getPlaceholderTile() noexcept;
 
   /**
@@ -62,8 +140,8 @@ public:
    * specifications.
    *
    * The returned tile will not start loading immediately. To start loading,
-   * call {@link RasterOverlayTileProvider::loadTile} or
-   * {@link RasterOverlayTileProvider::loadTileThrottled}.
+   * call {@link ActivatedRasterOverlay::loadTile} or
+   * {@link ActivatedRasterOverlay::loadTileThrottled}.
    *
    * @param rectangle The rectangle that the returned image must cover. It is
    * allowed to cover a slightly larger rectangle in order to maintain pixel
@@ -106,11 +184,12 @@ public:
   /**
    * @brief Loads a tile immediately, without throttling requests.
    *
-   * If the tile is not in the `Tile::LoadState::Unloaded` state, this method
-   * returns without doing anything. Otherwise, it puts the tile into the
-   * `Tile::LoadState::Loading` state and begins the asynchronous process
-   * to load the tile. When the process completes, the tile will be in the
-   * `Tile::LoadState::Loaded` or `Tile::LoadState::Failed` state.
+   * If the tile is not in the `RasterOverlayTile::LoadState::Unloaded` state,
+   * this method returns without doing anything. Otherwise, it puts the tile
+   * into the `RasterOverlayTile::LoadState::Loading` state and begins the
+   * asynchronous process to load the tile. When the process completes, the tile
+   * will be in the `RasterOverlayTile::LoadState::Loaded` or
+   * `RasterOverlayTile::LoadState::Failed` state.
    *
    * Calling this method on many tiles at once can result in very slow
    * performance. Consider using {@link loadTileThrottled} instead.
@@ -128,10 +207,11 @@ public:
    * If the tile is not in the `Tile::LoadState::Unloading` state, this method
    * returns true without doing anything. If too many tile loads are
    * already in flight, it returns false without doing anything. Otherwise, it
-   * puts the tile into the `Tile::LoadState::Loading` state, begins the
-   * asynchronous process to load the tile, and returns true. When the process
-   * completes, the tile will be in the `Tile::LoadState::Loaded` or
-   * `Tile::LoadState::Failed` state.
+   * puts the tile into the `RasterOverlayTile::LoadState::Loading` state,
+   * begins the asynchronous process to load the tile, and returns true. When
+   * the process completes, the tile will be in the
+   * `RasterOverlayTile::LoadState::Loaded` or
+   * `RasterOverlayTile::LoadState::Failed` state.
    *
    * The number of allowable simultaneous tile requests is provided in the
    * {@link RasterOverlayOptions::maximumSimultaneousTileLoads} property of
