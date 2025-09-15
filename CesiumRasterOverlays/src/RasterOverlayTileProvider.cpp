@@ -4,27 +4,21 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Rectangle.h>
-#include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
-#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <fmt/format.h>
-#include <glm/ext/vector_double2.hpp>
 #include <spdlog/fwd.h>
 
-#include <any>
 #include <cstddef>
-#include <cstdint>
-#include <exception>
 #include <memory>
 #include <optional>
 #include <span>

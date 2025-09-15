@@ -1,5 +1,11 @@
 #include "EmptyRasterOverlayTileProvider.h"
 
+#include <CesiumAsync/AsyncSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayExternals.h>
@@ -8,7 +14,12 @@
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
+
+#include <exception>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 

@@ -4,25 +4,17 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
-#include <CesiumAsync/Future.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
-#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
-
-#include <fmt/format.h>
-#include <glm/ext/vector_double2.hpp>
-#include <nonstd/expected.hpp>
-#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <exception>
-#include <utility>
 #include <vector>
 
 using namespace CesiumGeometry;

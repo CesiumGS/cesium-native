@@ -1,15 +1,27 @@
-#include "EmptyRasterOverlayTileProvider.h"
-
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/Assert.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Tracing.h>
 
-#include <glm/vec2.hpp>
-#include <spdlog/spdlog.h>
+#include <glm/ext/vector_double2.hpp>
+#include <spdlog/logger.h>
+
+#include <any>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <memory>
+#include <utility>
+#include <vector>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
