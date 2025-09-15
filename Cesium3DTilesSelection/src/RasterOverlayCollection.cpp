@@ -32,16 +32,6 @@ using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 
-namespace {
-
-// We use these to avoid a heap allocation just to return empty vectors.
-const std::vector<CesiumUtility::IntrusivePointer<RasterOverlay>>
-    emptyOverlays{};
-const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>
-    emptyTileProviders{};
-
-} // namespace
-
 RasterOverlayCollection::RasterOverlayCollection(
     const LoadedTileEnumerator& loadedTiles,
     const TilesetExternals& externals,
