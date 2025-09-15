@@ -15,6 +15,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <fmt/format.h>
+#include <nonstd/expected.hpp>
 #include <spdlog/spdlog.h>
 
 #include <exception>

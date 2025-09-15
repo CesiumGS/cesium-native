@@ -48,7 +48,7 @@ ActivatedRasterOverlay::ActivatedRasterOverlay(
       new RasterOverlayTile(*this, glm::dvec2(0.0), Rectangle());
 }
 
-ActivatedRasterOverlay::~ActivatedRasterOverlay() {
+ActivatedRasterOverlay::~ActivatedRasterOverlay() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
   // be destroyed before the tile provider that created them.
   if (this->_pPlaceholderTile) {
