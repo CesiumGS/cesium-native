@@ -23,6 +23,7 @@
 - Added `ActivatedRasterOverlay`, encapsulating most of the functionality that was previously found on `RasterOverlayTileProvider`.
 - Added `addTileOverlays` and `updateTileOverlays` to `RasterOverlayCollection`.
 - `RasterOverlayCollection::add` and `remove` now take a pointer to a const `RasterOverlay`.
+- Added `CesiumUtility::TransformIterator`.
 
 ##### Fixes :wrench:
 
