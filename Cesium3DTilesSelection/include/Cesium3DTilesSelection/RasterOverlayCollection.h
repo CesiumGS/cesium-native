@@ -154,6 +154,13 @@ public:
               const CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
 
   /**
+   * @brief Remove the given {@link CesiumRasterOverlays::RasterOverlay} from
+   * this collection.
+   */
+  void remove(const CesiumUtility::IntrusivePointer<
+              CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
+
+  /**
    * @brief Remove the given {@link CesiumRasterOverlays::ActivatedRasterOverlay}
    * from this collection.
    */

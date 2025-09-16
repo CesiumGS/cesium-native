@@ -109,6 +109,11 @@ void RasterOverlayCollection::remove(
 }
 
 void RasterOverlayCollection::remove(
+    const IntrusivePointer<RasterOverlay>& pOverlay) noexcept {
+  this->remove(IntrusivePointer<const RasterOverlay>(pOverlay));
+}
+
+void RasterOverlayCollection::remove(
     const IntrusivePointer<ActivatedRasterOverlay>& pActivated) noexcept {
   // Remove all mappings of this overlay to geometry tiles.
   auto removeCondition =
