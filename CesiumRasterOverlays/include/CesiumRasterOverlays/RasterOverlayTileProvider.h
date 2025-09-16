@@ -133,7 +133,16 @@ struct TileProviderAndTile {
    * RasterOverlayTile used for this tile. */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
 
+  TileProviderAndTile(
+      const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
+          pTileProvider_,
+      const CesiumUtility::IntrusivePointer<RasterOverlayTile>&
+          pTile_) noexcept;
   ~TileProviderAndTile() noexcept;
+  TileProviderAndTile(const TileProviderAndTile&) = delete;
+  TileProviderAndTile& operator=(const TileProviderAndTile&) = delete;
+  TileProviderAndTile(TileProviderAndTile&&) noexcept;
+  TileProviderAndTile& operator=(TileProviderAndTile&&) noexcept;
 };
 
 /**
