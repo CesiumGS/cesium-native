@@ -13,12 +13,12 @@
 namespace CesiumRasterOverlays {
 
 /**
- * @brief External interfaces used by a {@link RasterOverlay}.
+ * @brief External interfaces used by a @ref RasterOverlay.
  */
 class CESIUMRASTEROVERLAYS_API RasterOverlayExternals final {
 public:
   /**
-   * @brief The {@link CesiumAsync::IAssetAccessor} that is used to download
+   * @brief The @ref CesiumAsync::IAssetAccessor that is used to download
    * raster overlay tiles and other assets.
    *
    * This may only be `nullptr` if the raster overlay does not attempt to
@@ -27,7 +27,7 @@ public:
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
 
   /**
-   * @brief The {@link IPrepareRasterOverlayRendererResources} that is used to
+   * @brief The @ref IPrepareRasterOverlayRendererResources that is used to
    * create renderer-specific resources for raster overlay tiles.
    *
    * This may be `nullptr` if the renderer does not need to create any resources
@@ -42,9 +42,9 @@ public:
   CesiumAsync::AsyncSystem asyncSystem;
 
   /**
-   * @brief The {@link CesiumUtility::CreditSystem} that can be used to manage
-   * credit strings and periodically query which credits to show and and which
-   * to remove from the screen.
+   * @brief The @ref CesiumUtility::CreditSystem that can be used to manage
+   * credit strings and periodically query which credits to show and which to
+   * remove from the screen.
    *
    * While not recommended, this may be `nullptr` if the client does not need to
    * receive credits.
