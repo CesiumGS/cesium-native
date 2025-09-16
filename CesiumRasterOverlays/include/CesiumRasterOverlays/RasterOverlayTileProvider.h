@@ -149,7 +149,14 @@ struct TileProviderAndTile {
   TileProviderAndTile(const TileProviderAndTile&) = delete;
   TileProviderAndTile& operator=(const TileProviderAndTile&) = delete;
 
+  /**
+   * @brief Move constructor.
+   */
   TileProviderAndTile(TileProviderAndTile&&) noexcept;
+
+  /**
+   * @brief Move assignment operator.
+   */
   TileProviderAndTile& operator=(TileProviderAndTile&&) noexcept;
 };
 
