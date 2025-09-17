@@ -119,7 +119,7 @@ void rasterizePolygons(
       const double maxY = glm::max(a.y, glm::max(b.y, c.y));
 
       const CesiumGeospatial::GlobeRectangle triangleBounds(
-          minX, 
+          minX,
           minY,
           maxX,
           maxY);
