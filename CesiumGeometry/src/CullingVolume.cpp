@@ -41,8 +41,7 @@ CullingVolume createCullingVolume(
 
   // Left plane computation
   glm::dvec3 normal = right * l;
-  normal = nearCenter + normal;
-  normal = normal - position;
+  normal += direction * n;
   normal = glm::normalize(normal);
   normal = glm::cross(normal, up);
   normal = glm::normalize(normal);
@@ -51,8 +50,7 @@ CullingVolume createCullingVolume(
 
   // Right plane computation
   normal = right * r;
-  normal = nearCenter + normal;
-  normal = normal - position;
+  normal += direction * n;
   normal = glm::cross(up, normal);
   normal = glm::normalize(normal);
 
@@ -60,8 +58,7 @@ CullingVolume createCullingVolume(
 
   // Bottom plane computation
   normal = up * b;
-  normal = nearCenter + normal;
-  normal = normal - position;
+  normal += direction * n;
   normal = glm::cross(right, normal);
   normal = glm::normalize(normal);
 
@@ -69,8 +66,7 @@ CullingVolume createCullingVolume(
 
   // Top plane computation
   normal = up * t;
-  normal = nearCenter + normal;
-  normal = normal - position;
+  normal += direction * n;
   normal = glm::cross(normal, right);
   normal = glm::normalize(normal);
 
