@@ -204,7 +204,6 @@ TileRasterOverlayStatus RasterOverlayCollection::updateTileOverlays(
         rasterTiles.erase(
             rasterTiles.begin() +
             static_cast<std::vector<RasterMappedTo3DTile>::difference_type>(i));
-        --i;
 
         // Add a new mapping.
         std::vector<CesiumGeospatial::Projection> missingProjections;
@@ -218,7 +217,10 @@ TileRasterOverlayStatus RasterOverlayCollection::updateTileOverlays(
         if (!missingProjections.empty()) {
           if (!result.firstIndexWithMissingProjection)
             result.firstIndexWithMissingProjection = i;
+          break;
         }
+
+        --i;
       }
 
       continue;

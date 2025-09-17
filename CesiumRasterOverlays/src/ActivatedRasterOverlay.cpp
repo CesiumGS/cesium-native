@@ -44,8 +44,7 @@ ActivatedRasterOverlay::ActivatedRasterOverlay(
       _throttledTilesCurrentlyLoading(0),
       _readyPromise(externals.asyncSystem.createPromise<void>()),
       _readyEvent(this->_readyPromise.getFuture().share()) {
-  this->_pPlaceholderTile =
-      new RasterOverlayTile(*this, glm::dvec2(0.0), Rectangle());
+  this->_pPlaceholderTile = new RasterOverlayTile(*this);
 }
 
 ActivatedRasterOverlay::~ActivatedRasterOverlay() noexcept {
