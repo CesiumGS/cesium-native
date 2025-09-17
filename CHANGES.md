@@ -2,6 +2,14 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- `RasterOverlayTileProvider::loadTileImage` now receives a const `RasterOverlayTile`.
+
+##### Additions :tada:
+
+- Added `RasterOverlayExternals` class. This is similar to `TilesetExternals` and is a more convenient way to pass around the various external interfaces that raster overlays use.
+
 ##### Fixes :wrench:
 
 - Fixed a build system bug that prevented `libblend2d.a` from being installed for iOS.
