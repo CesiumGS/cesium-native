@@ -2,9 +2,14 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- `RasterOverlayTileProvider::loadTileImage` now receives a const `RasterOverlayTile`.
+
 ##### Additions :tada:
 
 - Added `invalidate` method to `SharedAssetDepot`.
+- Added `RasterOverlayExternals` class. This is similar to `TilesetExternals` and is a more convenient way to pass around the various external interfaces that raster overlays use.
 
 ### v0.51.0 - 2025-09-02
 
