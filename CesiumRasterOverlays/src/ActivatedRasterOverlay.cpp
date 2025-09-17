@@ -37,15 +37,13 @@ ActivatedRasterOverlay::ActivatedRasterOverlay(
     : _pOverlay(pOverlay),
       _pPlaceholderTileProvider(
           pOverlay->createPlaceholder(externals, ellipsoid)),
-      _pPlaceholderTile(nullptr),
+      _pPlaceholderTile(new RasterOverlayTile(*this)),
       _pTileProvider(nullptr),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
       _throttledTilesCurrentlyLoading(0),
       _readyPromise(externals.asyncSystem.createPromise<void>()),
-      _readyEvent(this->_readyPromise.getFuture().share()) {
-  this->_pPlaceholderTile = new RasterOverlayTile(*this);
-}
+      _readyEvent(this->_readyPromise.getFuture().share()) {}
 
 ActivatedRasterOverlay::~ActivatedRasterOverlay() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
