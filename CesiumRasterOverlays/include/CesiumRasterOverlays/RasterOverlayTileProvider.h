@@ -147,8 +147,15 @@ struct TileProviderAndTile {
 
   ~TileProviderAndTile() noexcept;
 
-  TileProviderAndTile(const TileProviderAndTile&) = delete;
-  TileProviderAndTile& operator=(const TileProviderAndTile&) = delete;
+  /**
+   * @brief Copy constructor.
+   */
+  TileProviderAndTile(const TileProviderAndTile&) noexcept;
+
+  /**
+   * @brief Copy assignment operator.
+   */
+  TileProviderAndTile& operator=(const TileProviderAndTile&) noexcept;
 
   /**
    * @brief Move constructor.

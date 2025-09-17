@@ -534,6 +534,12 @@ TileProviderAndTile::~TileProviderAndTile() noexcept {
   pTileProvider = nullptr;
 }
 
+TileProviderAndTile::TileProviderAndTile(const TileProviderAndTile&) noexcept =
+    default;
+
+TileProviderAndTile&
+TileProviderAndTile::operator=(const TileProviderAndTile&) noexcept = default;
+
 TileProviderAndTile::TileProviderAndTile(TileProviderAndTile&&) noexcept =
     default;
 
