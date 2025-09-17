@@ -114,6 +114,7 @@ TileLoadResult convertToTileLoadResult(
 TilesetContentLoaderResult<LayerJsonTerrainLoader>
 convertToTilesetContentLoaderResult(
     const Ellipsoid& ellipsoid,
+    std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
     LoadLayersResult&& loadLayersResult) {
   if (loadLayersResult.errors) {
     TilesetContentLoaderResult<LayerJsonTerrainLoader> result;
@@ -176,7 +177,7 @@ convertToTilesetContentLoaderResult(
       std::move(pLoader),
       std::move(pRootTile),
       std::move(credits),
-      std::vector<IAssetAccessor::THeader>{},
+      std::move(requestHeaders),
       std::move(loadLayersResult.errors)};
 }
 
@@ -395,6 +396,7 @@ Future<LoadLayersResult> loadLayersRecursive(
              pAssetAccessor,
              tilingScheme,
              useWaterMask,
+             requestHeaders,
              loadLayersResult = std::move(loadLayersResult)](
                 std::shared_ptr<IAssetRequest>&& pCompletedRequest) mutable {
               const CesiumAsync::IAssetResponse* pResponse =
@@ -434,16 +436,12 @@ Future<LoadLayersResult> loadLayersRecursive(
                     std::move(loadLayersResult));
               }
 
-              const CesiumAsync::HttpHeaders& completedRequestHeaders =
-                  pCompletedRequest->headers();
-              std::vector<IAssetAccessor::THeader> flatHeaders(
-                  completedRequestHeaders.begin(),
-                  completedRequestHeaders.end());
+              // Use the original user headers instead of completed request headers
               return loadLayersRecursive(
                   asyncSystem,
                   pAssetAccessor,
                   pCompletedRequest->url(),
-                  flatHeaders,
+                  requestHeaders,
                   layerJson,
                   tilingScheme,
                   useWaterMask,
@@ -567,6 +565,7 @@ LayerJsonTerrainLoader::createLoader(
            ellipsoid,
            asyncSystem = externals.asyncSystem,
            pAssetAccessor = externals.pAssetAccessor,
+           requestHeaders,
            useWaterMask](
               std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
             const CesiumAsync::IAssetResponse* pResponse =
@@ -591,24 +590,19 @@ LayerJsonTerrainLoader::createLoader(
               return asyncSystem.createResolvedFuture(std::move(result));
             }
 
-            const CesiumAsync::HttpHeaders& completedRequestHeaders =
-                pCompletedRequest->headers();
-            std::vector<IAssetAccessor::THeader> flatHeaders(
-                completedRequestHeaders.begin(),
-                completedRequestHeaders.end());
-
             return loadLayerJson(
                 asyncSystem,
                 pAssetAccessor,
                 pCompletedRequest->url(),
-                flatHeaders,
+                requestHeaders,
                 pResponse->data(),
                 useWaterMask,
                 ellipsoid);
           })
-      .thenInMainThread([ellipsoid](LoadLayersResult&& loadLayersResult) {
+      .thenInMainThread([ellipsoid, requestHeaders](LoadLayersResult&& loadLayersResult) {
         return convertToTilesetContentLoaderResult(
             ellipsoid,
+            std::vector<CesiumAsync::IAssetAccessor::THeader>(requestHeaders),
             std::move(loadLayersResult));
       });
 }
@@ -630,9 +624,10 @@ Cesium3DTilesSelection::LayerJsonTerrainLoader::createLoader(
              layerJson,
              contentOptions.enableWaterMask,
              ellipsoid)
-      .thenInMainThread([ellipsoid](LoadLayersResult&& loadLayersResult) {
+      .thenInMainThread([ellipsoid, requestHeaders](LoadLayersResult&& loadLayersResult) {
         return convertToTilesetContentLoaderResult(
             ellipsoid,
+            std::vector<CesiumAsync::IAssetAccessor::THeader>(requestHeaders),
             std::move(loadLayersResult));
       });
 }
