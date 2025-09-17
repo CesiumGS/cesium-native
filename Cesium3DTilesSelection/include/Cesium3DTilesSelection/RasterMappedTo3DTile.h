@@ -8,6 +8,10 @@
 
 #include <memory>
 
+namespace CesiumRasterOverlays {
+class ActivatedRasterOverlay;
+}
+
 namespace Cesium3DTilesSelection {
 
 class Tile;
@@ -206,10 +210,7 @@ public:
    *
    * @param maximumScreenSpaceError The maximum screen space error that is used
    * for the current tile
-   * @param tileProvider The overlay tile provider to map to the tile. This may
-   * be a placeholder if the tile provider is not yet ready.
-   * @param placeholder The placeholder tile provider for this overlay. This is
-   * always a placeholder, even if the tile provider is already ready.
+   * @param activatedOverlay The activated overlay to map to the tile.
    * @param tile The tile to which to map the overlay.
    * @param missingProjections The list of projections for which there are not
    * yet any texture coordiantes. On return, the given overlay's Projection may
@@ -223,8 +224,7 @@ public:
    */
   static RasterMappedTo3DTile* mapOverlayToTile(
       double maximumScreenSpaceError,
-      CesiumRasterOverlays::RasterOverlayTileProvider& tileProvider,
-      CesiumRasterOverlays::RasterOverlayTileProvider& placeholder,
+      CesiumRasterOverlays::ActivatedRasterOverlay& activatedOverlay,
       Tile& tile,
       std::vector<CesiumGeospatial::Projection>& missingProjections,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
