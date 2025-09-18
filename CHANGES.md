@@ -29,6 +29,11 @@
 
 - `LoadedTileEnumerator` now provides non-const access to enumerated `Tile` instances, even if the enumerator itself is const.
 
+##### Fixes :wrench:
+
+- Fixed a build system bug that prevented `libblend2d.a` from being installed for iOS.
+- Added a move constructor and assignment operator to `TileProviderAndTile`. This is important to prevent it from inadvertently incrementing/decrementing non-thread-safe reference counts from the wrong thread while being moved.
+
 ### v0.51.0 - 2025-09-02
 
 ##### Breaking Changes :mega:

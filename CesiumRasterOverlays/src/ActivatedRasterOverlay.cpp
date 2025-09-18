@@ -343,10 +343,28 @@ void ActivatedRasterOverlay::finalizeTileLoad(bool isThrottledLoad) noexcept {
   }
 }
 
+TileProviderAndTile::TileProviderAndTile(
+    const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
+        pTileProvider_,
+    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pTile_) noexcept
+    : pTileProvider(pTileProvider_), pTile(pTile_) {}
+
 TileProviderAndTile::~TileProviderAndTile() noexcept {
   // Ensure the tile is released before the tile provider.
   pTile = nullptr;
   pTileProvider = nullptr;
 }
+
+TileProviderAndTile::TileProviderAndTile(const TileProviderAndTile&) noexcept =
+    default;
+
+TileProviderAndTile&
+TileProviderAndTile::operator=(const TileProviderAndTile&) noexcept = default;
+
+TileProviderAndTile::TileProviderAndTile(TileProviderAndTile&&) noexcept =
+    default;
+
+TileProviderAndTile&
+TileProviderAndTile::operator=(TileProviderAndTile&&) noexcept = default;
 
 } // namespace CesiumRasterOverlays

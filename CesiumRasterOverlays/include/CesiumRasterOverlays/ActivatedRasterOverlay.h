@@ -35,7 +35,38 @@ struct TileProviderAndTile {
    * RasterOverlayTile used for this tile. */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
 
+  /**
+   * @brief Constructs an instance.
+   * @param pTileProvider_ The tile provider used for this tile.
+   * @param pTile_ The tile.
+   */
+  TileProviderAndTile(
+      const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
+          pTileProvider_,
+      const CesiumUtility::IntrusivePointer<RasterOverlayTile>&
+          pTile_) noexcept;
+
   ~TileProviderAndTile() noexcept;
+
+  /**
+   * @brief Copy constructor.
+   */
+  TileProviderAndTile(const TileProviderAndTile&) noexcept;
+
+  /**
+   * @brief Copy assignment operator.
+   */
+  TileProviderAndTile& operator=(const TileProviderAndTile&) noexcept;
+
+  /**
+   * @brief Move constructor.
+   */
+  TileProviderAndTile(TileProviderAndTile&&) noexcept;
+
+  /**
+   * @brief Move assignment operator.
+   */
+  TileProviderAndTile& operator=(TileProviderAndTile&&) noexcept;
 };
 
 /**
