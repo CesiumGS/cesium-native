@@ -293,6 +293,26 @@ void Cesium3DTilesSelection::TilesetHeightRequest::failHeightRequests(
   heightRequests.clear();
 }
 
+bool TilesetHeightRequest::doRequest(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    TilesetContentManager& contentManager,
+    const TilesetOptions& options) {
+  return this->tryCompleteHeightRequest(asyncSystem, contentManager, options);
+}
+
+void TilesetHeightRequest::fail(const std::string& message) {
+  SampleHeightResult result;
+  result.warnings.emplace_back(message);
+  result.sampleSuccess.resize(this->queries.size(), false);
+  result.positions.reserve(this->queries.size());
+  for (const TilesetHeightQuery& query : this->queries) {
+    result.positions.emplace_back(query.inputPosition);
+  }
+
+  this->promise.resolve(std::move(result));
+}
+
+
 bool TilesetHeightRequest::tryCompleteHeightRequest(
     const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,

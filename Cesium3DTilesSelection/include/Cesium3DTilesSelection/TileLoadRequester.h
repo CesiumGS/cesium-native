@@ -2,10 +2,17 @@
 
 #include <CesiumUtility/IntrusivePointer.h>
 
+#include <string>
+
+namespace CesiumAsync {
+class AsyncSystem;
+}
+
 namespace Cesium3DTilesSelection {
 
 class Tile;
 class TilesetContentManager;
+struct TilesetOptions;
 
 /**
  * @brief The base class for something that requests loading of specific tiles
@@ -106,6 +113,24 @@ public:
    */
   void unregister() noexcept;
 
+  /**
+   * @brief Alternate interface for certain requests.
+   */
+  virtual bool doRequest(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      TilesetContentManager& contentManager,
+      const TilesetOptions& options);
+
+  /**
+   * @brief Called when pending requests will not be fulfilled.
+   */
+  virtual void fail(const std::string& message);
+  
+  /**
+   * @brief Destroys this instance.
+   */
+  virtual ~TileLoadRequester() noexcept;
+
 protected:
   /**
    * @brief Constructs a new instance.
@@ -132,11 +157,6 @@ protected:
    * @param rhs The existing instance to move into this one.
    */
   TileLoadRequester(TileLoadRequester&& rhs) noexcept;
-
-  /**
-   * @brief Destroys this instance.
-   */
-  virtual ~TileLoadRequester() noexcept;
 
 private:
   CesiumUtility::IntrusivePointer<TilesetContentManager>

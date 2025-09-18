@@ -78,7 +78,7 @@ Tileset::Tileset(
               std::move(pCustomLoader),
               std::move(pRootTile)),
       },
-      _heightRequests(),
+      _tilesetRequests(),
       _defaultViewGroup() {}
 
 Tileset::Tileset(
@@ -93,7 +93,7 @@ Tileset::Tileset(
       _pTilesetContentManager{
           new TilesetContentManager(this->_externals, this->_options, url),
       },
-      _heightRequests(),
+      _tilesetRequests(),
       _defaultViewGroup() {}
 
 Tileset::Tileset(
@@ -113,7 +113,7 @@ Tileset::Tileset(
           ionAssetID,
           ionAccessToken,
           ionAssetEndpointUrl)},
-      _heightRequests(),
+      _tilesetRequests(),
       _defaultViewGroup() {}
 
 Tileset::Tileset(
@@ -131,10 +131,10 @@ Tileset::Tileset(
           std::move(loaderFactory))} {}
 
 Tileset::~Tileset() noexcept {
-  TilesetHeightRequest::failHeightRequests(
-      this->_heightRequests,
-      "Tileset is being destroyed.");
-
+  for (auto& tileRequest : _tilesetRequests) {
+    tileRequest->fail("Tileset is being destroyed.");
+  }
+  _tilesetRequests.clear();
   this->_pTilesetContentManager->markTilesetDestroyed();
   this->_pTilesetContentManager->unloadAll();
   if (this->_externals.pTileOcclusionProxyPool) {
@@ -438,25 +438,36 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 void Tileset::loadTiles() {
   CESIUM_TRACE("Tileset::loadTiles");
 
+  for (const auto& secondaryTileset : _secondaryTilesets) {
+    secondaryTileset->loadTiles();
+  }
   this->_asyncSystem.dispatchMainThreadTasks();
 
   Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   if (!pRootTile) {
     // If the root tile is marked as ready, but doesn't actually exist, then
     // the tileset couldn't load. Fail any outstanding height requests.
-    if (!this->_heightRequests.empty() && this->_pTilesetContentManager &&
+    if (!this->_tilesetRequests.empty() && this->_pTilesetContentManager &&
         this->_pTilesetContentManager->getRootTileAvailableEvent().isReady()) {
-      TilesetHeightRequest::failHeightRequests(
-          this->_heightRequests,
-          "Height requests could not complete because the tileset failed to "
-          "load.");
+      for (auto& request : this->_tilesetRequests) {
+        request->fail(
+            "Height requests could not complete because the tileset failed to "
+            "load.");
+      }
+      this->_tilesetRequests.clear();
     }
   } else {
-    TilesetHeightRequest::processHeightRequests(
-        this->getAsyncSystem(),
-        *this->_pTilesetContentManager,
-        this->_options,
-        this->_heightRequests);
+    for (auto it = _tilesetRequests.begin(); it != _tilesetRequests.end();) {
+      if (!(*it)->doRequest(
+              this->getAsyncSystem(),
+              *this->_pTilesetContentManager,
+              this->_options)) {
+        ++it;
+      } else {
+        auto deleteIt = it++;
+        _tilesetRequests.erase(deleteIt);
+      }
+    }
   }
 
   this->_pTilesetContentManager->unloadCachedBytes(
@@ -578,8 +589,9 @@ Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
     queries.emplace_back(position, this->_options.ellipsoid);
   }
 
-  this->_heightRequests.emplace_back(std::move(queries), promise);
-  this->registerLoadRequester(this->_heightRequests.back());
+  this->_tilesetRequests.push_back(
+      std::make_unique<TilesetHeightRequest>(std::move(queries), promise));
+  this->registerLoadRequester(*this->_tilesetRequests.back());
 
   return promise.getFuture();
 }
@@ -1559,4 +1571,18 @@ Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
   return traversalDetails;
 }
 
+void Tileset::registerSecondaryTileset(
+    std::shared_ptr<Tileset> secondaryTileset) {
+  this->_secondaryTilesets.emplace_back(std::move(secondaryTileset));
+}
+
+void Tileset::unregisterSecondaryTileset(const Tileset* secondaryTileset) {
+  auto removeItr = std::remove_if(
+      this->_secondaryTilesets.begin(),
+      this->_secondaryTilesets.end(),
+      [secondaryTileset](const auto& tileset) {
+        return tileset.get() == secondaryTileset;
+      });
+  this->_secondaryTilesets.erase(removeItr, this->_secondaryTilesets.end());
+}
 } // namespace Cesium3DTilesSelection

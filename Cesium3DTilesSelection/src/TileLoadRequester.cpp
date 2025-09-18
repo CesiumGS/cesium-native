@@ -14,6 +14,15 @@ void TileLoadRequester::unregister() noexcept {
   }
 }
 
+bool TileLoadRequester::doRequest(
+    const CesiumAsync::AsyncSystem&,
+    TilesetContentManager&,
+    const TilesetOptions&) {
+  return true;
+}
+
+void TileLoadRequester::fail(const std::string&) {}
+
 TileLoadRequester::TileLoadRequester() noexcept
     : _pTilesetContentManager(nullptr) {}
 

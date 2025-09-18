@@ -149,6 +149,15 @@ struct TilesetHeightRequest : public TileLoadRequester {
       const TilesetOptions& options,
       std::list<TilesetHeightRequest>& heightRequests);
 
+  /** @inheritdoc */
+  bool doRequest(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      TilesetContentManager& contentManager,
+      const TilesetOptions& options) override;
+
+  /** @inheritdoc */
+  void fail(const std::string& message) override;
+
   double getWeight() const override;
 
   /** @inheritdoc */

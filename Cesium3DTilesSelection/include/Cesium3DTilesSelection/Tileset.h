@@ -446,6 +446,9 @@ public:
    */
   void registerLoadRequester(TileLoadRequester& requester);
 
+  void registerSecondaryTileset(std::shared_ptr<Tileset> secondaryTileset);
+  void unregisterSecondaryTileset(const Tileset* secondaryTileset);
+  
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
 
@@ -610,7 +613,7 @@ private:
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
-  std::list<TilesetHeightRequest> _heightRequests;
+  std::list<std::unique_ptr<TileLoadRequester>> _tilesetRequests;
 
   TilesetViewGroup _defaultViewGroup;
 
@@ -623,6 +626,8 @@ private:
   static TraversalDetails createTraversalDetailsForSingleTile(
       const TilesetFrameState& frameState,
       const Tile& tile);
+
+  std::vector<std::shared_ptr<Tileset>> _secondaryTilesets;
 };
 
 } // namespace Cesium3DTilesSelection
