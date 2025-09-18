@@ -38,6 +38,7 @@
 #include <CesiumGltf/Image.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -349,44 +350,6 @@ void createQuadtreeSubdividedChildren(
   se.setTransform(parent.getTransform());
   nw.setTransform(parent.getTransform());
   ne.setTransform(parent.getTransform());
-}
-
-std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
-    Tile& tile,
-    RasterOverlayCollection& overlays,
-    const TilesetOptions& tilesetOptions) {
-  // when tile fails temporarily, it may still have mapped raster tiles, so
-  // clear it here
-  tile.getMappedRasterTiles().clear();
-
-  std::vector<CesiumGeospatial::Projection> projections;
-  const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
-      tileProviders = overlays.getTileProviders();
-  const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
-      placeholders = overlays.getPlaceholderTileProviders();
-  CESIUM_ASSERT(tileProviders.size() == placeholders.size());
-
-  const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
-
-  for (size_t i = 0; i < tileProviders.size() && i < placeholders.size(); ++i) {
-    RasterOverlayTileProvider& tileProvider = *tileProviders[i];
-    RasterOverlayTileProvider& placeholder = *placeholders[i];
-
-    RasterMappedTo3DTile* pMapped = RasterMappedTo3DTile::mapOverlayToTile(
-        tilesetOptions.maximumScreenSpaceError,
-        tileProvider,
-        placeholder,
-        tile,
-        projections,
-        ellipsoid);
-    if (pMapped) {
-      // Try to load now, but if the mapped raster tile is a placeholder this
-      // won't do anything.
-      pMapped->loadThrottled();
-    }
-  }
-
-  return projections;
 }
 
 // Really, these two methods are risky and could easily result in bugs, but
@@ -1081,7 +1044,7 @@ void TilesetContentManager::loadTileContent(
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
-      mapOverlaysToTile(tile, this->_overlayCollection, tilesetOptions);
+      this->_overlayCollection.addTileOverlays(tilesetOptions, tile);
 
   // begin loading tile
   notifyTileStartLoading(&tile);
@@ -1316,9 +1279,9 @@ void TilesetContentManager::waitUntilIdle() {
     this->_externals.asyncSystem.dispatchMainThreadTasks();
 
     rasterOverlayTilesLoading = 0;
-    for (const auto& pTileProvider :
-         this->_overlayCollection.getTileProviders()) {
-      rasterOverlayTilesLoading += pTileProvider->getNumberOfTilesLoading();
+    for (const auto& pActivated :
+         this->_overlayCollection.getActivatedOverlays()) {
+      rasterOverlayTilesLoading += pActivated->getNumberOfTilesLoading();
     }
   }
 }
@@ -1379,9 +1342,9 @@ int32_t TilesetContentManager::getNumberOfTilesLoaded() const noexcept {
 
 int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   int64_t bytes = this->_tilesDataUsed;
-  for (const auto& pTileProvider :
-       this->_overlayCollection.getTileProviders()) {
-    bytes += pTileProvider->getTileDataBytes();
+  for (const auto& pActivated :
+       this->_overlayCollection.getActivatedOverlays()) {
+    bytes += pActivated->getTileDataBytes();
   }
 
   return bytes;
@@ -1865,76 +1828,32 @@ void TilesetContentManager::updateDoneState(
   TileContent& content = tile.getContent();
   const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent) {
-    bool moreRasterDetailAvailable = false;
-    bool skippedUnknown = false;
-    std::vector<RasterMappedTo3DTile>& rasterTiles =
-        tile.getMappedRasterTiles();
-    for (size_t i = 0; i < rasterTiles.size(); ++i) {
-      RasterMappedTo3DTile& mappedRasterTile = rasterTiles[i];
+    TileRasterOverlayStatus status =
+        this->_overlayCollection.updateTileOverlays(tilesetOptions, tile);
 
-      RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
-      if (pLoadingTile && pLoadingTile->getState() ==
-                              RasterOverlayTile::LoadState::Placeholder) {
-        RasterOverlayTileProvider* pProvider =
-            this->_overlayCollection.findTileProviderForOverlay(
-                pLoadingTile->getOverlay());
-        RasterOverlayTileProvider* pPlaceholder =
-            this->_overlayCollection.findPlaceholderTileProviderForOverlay(
-                pLoadingTile->getOverlay());
-
-        // Try to replace this placeholder with real tiles.
-        if (pProvider && pPlaceholder && !pProvider->isPlaceholder()) {
-          // Remove the existing placeholder mapping
-          rasterTiles.erase(
-              rasterTiles.begin() +
-              static_cast<std::vector<RasterMappedTo3DTile>::difference_type>(
-                  i));
-          --i;
-
-          // Add a new mapping.
-          std::vector<CesiumGeospatial::Projection> missingProjections;
-          RasterMappedTo3DTile::mapOverlayToTile(
-              tilesetOptions.maximumScreenSpaceError,
-              *pProvider,
-              *pPlaceholder,
-              tile,
-              missingProjections,
-              ellipsoid);
-
-          if (!missingProjections.empty()) {
-            // The mesh doesn't have the right texture coordinates for this
-            // overlay's projection, so we need to kick it back to the unloaded
-            // state to fix that.
-            // In the future, we could add the ability to add the required
-            // texture coordinates without starting over from scratch.
-            unloadTileContent(tile);
-            return;
-          }
-        }
-
-        continue;
-      }
-
-      const RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
-          mappedRasterTile.update(
-              *this->_externals.pPrepareRendererResources,
-              tile);
-
-      if (moreDetailAvailable ==
-              RasterOverlayTile::MoreDetailAvailable::Unknown &&
-          !moreRasterDetailAvailable) {
-        skippedUnknown = true;
-      }
-
-      moreRasterDetailAvailable |=
-          moreDetailAvailable == RasterOverlayTile::MoreDetailAvailable::Yes;
+    if (status.firstIndexWithMissingProjection) {
+      // The mesh doesn't have the right texture coordinates for this
+      // overlay's projection, so we need to kick it back to the unloaded
+      // state to fix that.
+      // In the future, we could add the ability to add the required
+      // texture coordinates without starting over from scratch.
+      unloadTileContent(tile);
+      return;
     }
+
+    bool hasMoreDetailAvailable =
+        status.firstIndexWithMoreDetailAvailable.has_value();
+    bool hasUnknown = status.firstIndexWithUnknownAvailability.has_value();
+
+    bool doSubdivide =
+        hasMoreDetailAvailable &&
+        (!hasUnknown || *status.firstIndexWithUnknownAvailability >
+                            *status.firstIndexWithMoreDetailAvailable);
 
     // If this tile still has no children after it's done loading, but it does
     // have raster tiles that are not the most detailed available, create fake
     // children to hang more detailed rasters on by subdividing this tile.
-    if (!skippedUnknown && moreRasterDetailAvailable &&
-        tile.getChildren().empty()) {
+    if (doSubdivide && tile.getChildren().empty()) {
       createQuadtreeSubdividedChildren(ellipsoid, tile, this->_upsampler);
     }
   } else {
