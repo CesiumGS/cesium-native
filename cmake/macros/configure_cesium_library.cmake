@@ -1,8 +1,16 @@
 function(configure_cesium_library targetName)
+    get_target_property(_target_type ${targetName} TYPE)
+    if (NOT (_target_type STREQUAL "EXECUTABLE"))
+        add_library(cesium-native::${targetName} ALIAS ${targetName})
+    endif()
+    unset(_target_type)
     if (MSVC)
         target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /bigobj /w45038 /w44254 /w44242 /w44191 /w45220)
     else()
-        target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion -Wno-unknown-pragmas)
+        if (CMAKE_VERSION VERSION_LESS 3.24)
+            target_compile_options(${targetName} PRIVATE -Werror)
+        endif()
+        target_compile_options(${targetName} PRIVATE -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion -Wno-unknown-pragmas)
     endif()
 
     set_target_properties(${targetName} PROPERTIES
