@@ -37,15 +37,13 @@ ActivatedRasterOverlay::ActivatedRasterOverlay(
     : _pOverlay(pOverlay),
       _pPlaceholderTileProvider(
           pOverlay->createPlaceholder(externals, ellipsoid)),
-      _pPlaceholderTile(nullptr),
+      _pPlaceholderTile(new RasterOverlayTile(*this)),
       _pTileProvider(nullptr),
       _tileDataBytes(0),
       _totalTilesCurrentlyLoading(0),
       _throttledTilesCurrentlyLoading(0),
       _readyPromise(externals.asyncSystem.createPromise<void>()),
-      _readyEvent(this->_readyPromise.getFuture().share()) {
-  this->_pPlaceholderTile = new RasterOverlayTile(*this);
-}
+      _readyEvent(this->_readyPromise.getFuture().share()) {}
 
 ActivatedRasterOverlay::~ActivatedRasterOverlay() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
@@ -345,10 +343,28 @@ void ActivatedRasterOverlay::finalizeTileLoad(bool isThrottledLoad) noexcept {
   }
 }
 
+TileProviderAndTile::TileProviderAndTile(
+    const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
+        pTileProvider_,
+    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pTile_) noexcept
+    : pTileProvider(pTileProvider_), pTile(pTile_) {}
+
 TileProviderAndTile::~TileProviderAndTile() noexcept {
   // Ensure the tile is released before the tile provider.
   pTile = nullptr;
   pTileProvider = nullptr;
 }
+
+TileProviderAndTile::TileProviderAndTile(const TileProviderAndTile&) noexcept =
+    default;
+
+TileProviderAndTile&
+TileProviderAndTile::operator=(const TileProviderAndTile&) noexcept = default;
+
+TileProviderAndTile::TileProviderAndTile(TileProviderAndTile&&) noexcept =
+    default;
+
+TileProviderAndTile&
+TileProviderAndTile::operator=(TileProviderAndTile&&) noexcept = default;
 
 } // namespace CesiumRasterOverlays
