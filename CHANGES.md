@@ -1,5 +1,15 @@
 # Change Log
 
+### v0.52.0 - 2025-10-??
+
+##### Breaking Changes :mega:
+
+##### Additions :tada:
+
+##### Fixes :wrench:
+
+- Fixed a bug when loading terrain where custom HTTP headers were not propagated through all terrain loading requests, preventing authentication tokens and API keys from working correctly with authenticated terrain services.
+
 ### v0.51.0 - 2025-09-02
 
 ##### Breaking Changes :mega:
