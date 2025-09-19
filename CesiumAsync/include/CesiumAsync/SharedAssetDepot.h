@@ -119,7 +119,7 @@ public:
    * invalidated, this method does nothing. If another asset with the same key
    * already exists in the depot, invalidating this one will not affect it.
    */
-  void invalidate(const TAssetType& asset);
+  void invalidate(TAssetType& asset);
 
   /**
    * @brief Returns the total number of distinct assets contained in this depot,
@@ -184,6 +184,14 @@ private:
       bool threadOwnsDepotLock) override;
 
   void unmarkDeletionCandidateUnderLock(const TAssetType& asset);
+
+  /**
+   * @brief Invalidates the asset with the given key.
+   *
+   * The depot lock must be held when this is called, and it will be released by
+   * the time this method returns.
+   */
+  void invalidateUnderLock(LockHolder&& lock, const TAssetKey& assetKey);
 
   /**
    * @brief An entry for an asset owned by this depot. This is reference counted
@@ -438,46 +446,21 @@ template <typename TAssetType, typename TAssetKey>
 void SharedAssetDepot<TAssetType, TAssetKey>::invalidate(
     const TAssetKey& assetKey) {
   LockHolder lock = this->lock();
-
-  auto it = this->_assets.find(assetKey);
-  if (it == this->_assets.end())
-    return;
-
-  AssetEntry* pEntry = it->second.get();
-  CESIUM_ASSERT(pEntry);
-
-  // This will remove the asset from the deletion candidates list, if it's
-  // there.
-  CesiumUtility::ResultPointer<TAssetType> assetResult =
-      pEntry->toResultUnderLock();
-
-  if (assetResult.pValue) {
-    if (!assetResult.pValue->_isInvalidated) {
-      assetResult.pValue->_isInvalidated = true;
-      ++this->_liveInvalidatedAssets;
-    }
-    this->_assetsByPointer.erase(assetResult.pValue.get());
-  }
-
-  // Detach the asset from the AssetEntry, so that its lifetime is controlled by
-  // reference counting.
-  pEntry->pAsset.release();
-
-  // Remove the asset entry. This won't immediately delete the asset, because
-  // `assetResult` above still holds a reference to it. But once that goes out
-  // of scope, too, the asset _may_ be destroyed.
-  this->_assets.erase(it);
-
-  // Unlock the mutex before allowing `assetResult` to go out of scope. When it
-  // goes out of scope, the asset may be destroyed. If it is, that would cause
-  // us to try to re-enter the lock, which is not allowed.
-  lock.unlock();
+  this->invalidateUnderLock(std::move(lock), assetKey);
 }
 
 template <typename TAssetType, typename TAssetKey>
-void SharedAssetDepot<TAssetType, TAssetKey>::invalidate(
-    const TAssetType& /* asset */) {
-  // TODO
+void SharedAssetDepot<TAssetType, TAssetKey>::invalidate(TAssetType& asset) {
+  LockHolder lock = this->lock();
+
+  auto it = this->_assetsByPointer.find(&asset);
+  if (it == this->_assetsByPointer.end())
+    return;
+
+  AssetEntry* pEntry = it->second;
+  CESIUM_ASSERT(pEntry);
+
+  this->invalidateUnderLock(std::move(lock), pEntry->key);
 }
 
 template <typename TAssetType, typename TAssetKey>
@@ -635,6 +618,45 @@ void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidateUnderLock(
 
   // This depot is now managing at least one live asset, so keep it alive.
   this->_pKeepAlive = this;
+}
+
+template <typename TAssetType, typename TAssetKey>
+void SharedAssetDepot<TAssetType, TAssetKey>::invalidateUnderLock(
+    LockHolder&& lock,
+    const TAssetKey& assetKey) {
+  auto it = this->_assets.find(assetKey);
+  if (it == this->_assets.end())
+    return;
+
+  AssetEntry* pEntry = it->second.get();
+  CESIUM_ASSERT(pEntry);
+
+  // This will remove the asset from the deletion candidates list, if it's
+  // there.
+  CesiumUtility::ResultPointer<TAssetType> assetResult =
+      pEntry->toResultUnderLock();
+
+  if (assetResult.pValue) {
+    if (!assetResult.pValue->_isInvalidated) {
+      assetResult.pValue->_isInvalidated = true;
+      ++this->_liveInvalidatedAssets;
+    }
+    this->_assetsByPointer.erase(assetResult.pValue.get());
+  }
+
+  // Detach the asset from the AssetEntry, so that its lifetime is controlled by
+  // reference counting.
+  pEntry->pAsset.release();
+
+  // Remove the asset entry. This won't immediately delete the asset, because
+  // `assetResult` above still holds a reference to it. But once that goes out
+  // of scope, too, the asset _may_ be destroyed.
+  this->_assets.erase(it);
+
+  // Unlock the mutex before allowing `assetResult` to go out of scope. When it
+  // goes out of scope, the asset may be destroyed. If it is, that would cause
+  // us to try to re-enter the lock, which is not allowed.
+  lock.unlock();
 }
 
 template <typename TAssetType, typename TAssetKey>
