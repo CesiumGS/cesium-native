@@ -69,6 +69,96 @@ public:
         _descriptor(descriptor),
         _factory(std::move(tileProviderFactory)){};
 
+  static CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> create(
+      const RasterOverlayExternals& externals,
+      const NetworkAssetDescriptor& descriptor,
+      const IntrusivePointer<const RasterOverlay>& pOwner) {
+    return getEndpointCache()
+        ->getOrCreate(
+            externals.asyncSystem,
+            externals.pAssetAccessor,
+            descriptor)
+        .thenInMainThread(
+            [externals, descriptor](
+                const ResultPointer<ExternalAssetEndpoint>& assetResult)
+                -> Future<IntrusivePointer<ExternalAssetEndpoint>> {
+              if (!assetResult.pValue ||
+                  std::chrono::steady_clock::now() >
+                      assetResult.pValue->requestTime +
+                          AssetEndpointRerequestInterval) {
+                // Invalidate by asset pointer instead of key. This way, if
+                // another `loadTileImage` has already invalidated this asset
+                // and started loading a new one, we don't inadvertently
+                // invalidate the new one. But if we don't have a valid asset,
+                // we must invalidate by key.
+                if (assetResult.pValue &&
+                        IonRasterOverlay::getEndpointCache()->invalidate(
+                            *assetResult.pValue) ||
+                    !assetResult.pValue &&
+                        IonRasterOverlay::getEndpointCache()->invalidate(
+                            descriptor)) {
+                  SPDLOG_LOGGER_INFO(
+                      externals.pLogger,
+                      "Refreshing Cesium ion token for URL {}.",
+                      descriptor.url);
+                }
+
+                return IonRasterOverlay::getEndpointCache()
+                    ->getOrCreate(
+                        externals.asyncSystem,
+                        externals.pAssetAccessor,
+                        descriptor)
+                    .thenImmediately(
+                        [](const ResultPointer<ExternalAssetEndpoint>&
+                               assetResult) {
+                          // This thenImmediately turns the SharedFuture into a
+                          // Future. That's better than turning the Future into
+                          // a SharedFuture in the hot path else block below.
+                          return assetResult.pValue;
+                        });
+              } else {
+                return externals.asyncSystem.createResolvedFuture(
+                    IntrusivePointer<ExternalAssetEndpoint>(
+                        assetResult.pValue));
+              }
+            })
+        .thenInMainThread(
+            [pOwner, externals](
+                const ResultPointer<ExternalAssetEndpoint>& result) mutable {
+              TileProvider::TileProviderFactoryType factory(
+                  TileProvider::CreateTileProvider{
+                      .pOwner = pOwner,
+                      .externals = std::move(externals)});
+              if (result.pValue) {
+                return factory(result.pValue)
+                    .thenPassThrough(std::move(factory));
+              } else {
+                return externals.asyncSystem
+                    .createResolvedFuture<CreateTileProviderResult>(
+                        nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                            .type = RasterOverlayLoadType::CesiumIon,
+                            .pRequest = nullptr,
+                            .message = result.errors.format(
+                                "Could not access Cesium ion asset"),
+                        }))
+                    .thenPassThrough(std::move(factory));
+              }
+            })
+        .thenInMainThread(
+            [descriptor](auto&& tuple) -> CreateTileProviderResult {
+              auto& [factory, result] = tuple;
+              if (result) {
+                return IntrusivePointer<RasterOverlayTileProvider>(
+                    new TileProvider(
+                        result.value(),
+                        descriptor,
+                        std::move(factory)));
+              } else {
+                return std::move(result);
+              }
+            });
+  }
+
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(const RasterOverlayTile& overlayTile) override {
     IntrusivePointer<TileProvider> thiz(this);
@@ -197,78 +287,7 @@ IonRasterOverlay::createTileProvider(
       .pLogger = pLogger,
   };
 
-  return getEndpointCache()
-      ->getOrCreate(asyncSystem, pAssetAccessor, descriptor)
-      .thenInMainThread(
-          [asyncSystem, pAssetAccessor, pLogger, descriptor](
-              const ResultPointer<ExternalAssetEndpoint>& assetResult)
-              -> Future<IntrusivePointer<ExternalAssetEndpoint>> {
-            if (!assetResult.pValue || std::chrono::steady_clock::now() >
-                                           assetResult.pValue->requestTime +
-                                               AssetEndpointRerequestInterval) {
-              // Invalidate by asset pointer instead of key. This way, if
-              // another `loadTileImage` has already invalidated this asset
-              // and started loading a new one, we don't inadvertently
-              // invalidate the new one. But if we don't have a valid asset,
-              // we must invalidate by key.
-              if (assetResult.pValue &&
-                      IonRasterOverlay::getEndpointCache()->invalidate(
-                          *assetResult.pValue) ||
-                  !assetResult.pValue &&
-                      IonRasterOverlay::getEndpointCache()->invalidate(
-                          descriptor)) {
-                SPDLOG_LOGGER_INFO(
-                    pLogger,
-                    "Refreshing Cesium ion token for URL {}.",
-                    descriptor.url);
-              }
-
-              return IonRasterOverlay::getEndpointCache()
-                  ->getOrCreate(asyncSystem, pAssetAccessor, descriptor)
-                  .thenImmediately(
-                      [](const ResultPointer<ExternalAssetEndpoint>&
-                             assetResult) {
-                        // This thenImmediately turns the SharedFuture into a
-                        // Future. That's better than turning the Future into
-                        // a SharedFuture in the hot path else block below.
-                        return assetResult.pValue;
-                      });
-            } else {
-              return asyncSystem.createResolvedFuture(
-                  IntrusivePointer<ExternalAssetEndpoint>(assetResult.pValue));
-            }
-          })
-      .thenInMainThread(
-          [asyncSystem, pOwner, externals = std::move(externals), this](
-              const ResultPointer<ExternalAssetEndpoint>& result) mutable {
-            TileProvider::TileProviderFactoryType factory(
-                TileProvider::CreateTileProvider{
-                    .pOwner = pOwner,
-                    .externals = std::move(externals)});
-            if (result.pValue) {
-              return factory(result.pValue).thenPassThrough(std::move(factory));
-            } else {
-              return asyncSystem
-                  .createResolvedFuture<CreateTileProviderResult>(
-                      nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                          .type = RasterOverlayLoadType::CesiumIon,
-                          .pRequest = nullptr,
-                          .message = result.errors.format(
-                              "Could not access Cesium ion asset"),
-                      }))
-                  .thenPassThrough(std::move(factory));
-            }
-          })
-      .thenInMainThread([descriptor](auto&& tuple) -> CreateTileProviderResult {
-        auto& [factory, result] = tuple;
-        if (result) {
-          return IntrusivePointer<RasterOverlayTileProvider>(
-              new TileProvider(result.value(), descriptor, std::move(factory)));
-        } else {
-          return std::move(result);
-        }
-      });
-  ;
+  return TileProvider::create(externals, descriptor, pOwner);
 }
 
 /* static */ CesiumUtility::IntrusivePointer<IonRasterOverlay::EndpointDepot>
