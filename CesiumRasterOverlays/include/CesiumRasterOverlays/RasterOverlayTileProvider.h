@@ -185,6 +185,11 @@ public:
   const RasterOverlay& getOwner() const noexcept;
 
   /**
+   * @brief Get the external interfaces for use by the tile provider.
+   */
+  const RasterOverlayExternals& getExternals() const noexcept;
+
+  /**
    * @brief Get the system to use for asychronous requests and threaded work.
    */
   const std::shared_ptr<CesiumAsync::IAssetAccessor>&
