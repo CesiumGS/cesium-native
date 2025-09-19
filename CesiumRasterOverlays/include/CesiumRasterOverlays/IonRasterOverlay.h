@@ -99,16 +99,6 @@ private:
 
   static std::unordered_map<std::string, ExternalAssetEndpoint> endpointCache;
 
-  CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const ExternalAssetEndpoint& endpoint,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const;
-
   using EndpointDepot = CesiumAsync::SharedAssetDepot<
       ExternalAssetEndpoint,
       CesiumAsync::NetworkAssetDescriptor>;
