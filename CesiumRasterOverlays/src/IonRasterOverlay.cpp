@@ -11,6 +11,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/DerivedValue.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
@@ -32,6 +33,102 @@ using namespace CesiumAsync;
 using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
+
+namespace {
+
+// How long to cache the asset endpoint response. After this duration, the
+// `/assets/#/endpoint` service will be re-requested when it is next required.
+const std::chrono::steady_clock::duration AssetEndpointRerequestInterval =
+    std::chrono::minutes(55);
+
+} // namespace
+
+class IonRasterOverlay::TileProvider : public RasterOverlayTileProvider {
+public:
+  struct CreateTileProvider {
+    SharedFuture<RasterOverlay::CreateTileProviderResult>
+    operator()(const IntrusivePointer<ExternalAssetEndpoint>& pEndpoint);
+  };
+
+  using TileProviderFactoryType =
+      DerivedValue<IntrusivePointer<ExternalAssetEndpoint>, CreateTileProvider>;
+
+  TileProvider(
+      const IntrusivePointer<RasterOverlayTileProvider>& pInitialProvider,
+      const NetworkAssetDescriptor& descriptor,
+      TileProviderFactoryType&& tileProviderFactory)
+      : RasterOverlayTileProvider(
+            &pInitialProvider->getOwner(),
+            pInitialProvider->getExternals(),
+            pInitialProvider->getCredit(),
+            pInitialProvider->getProjection(),
+            pInitialProvider->getCoverageRectangle()),
+        _descriptor(descriptor),
+        _factory(std::move(tileProviderFactory)){};
+
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage>
+  loadTileImage(const RasterOverlayTile& overlayTile) override {
+    IntrusivePointer<TileProvider> thiz(this);
+
+    return IonRasterOverlay::getEndpointCache()
+        ->getOrCreate(
+            this->getAsyncSystem(),
+            this->getAssetAccessor(),
+            this->_descriptor)
+        .thenInMainThread(
+            [thiz](const ResultPointer<ExternalAssetEndpoint>& assetResult)
+                -> Future<IntrusivePointer<ExternalAssetEndpoint>> {
+              if (!assetResult.pValue ||
+                  std::chrono::steady_clock::now() >
+                      assetResult.pValue->requestTime +
+                          AssetEndpointRerequestInterval) {
+                // Invalidate by asset pointer instead of key. This way, if
+                // another `loadTileImage` has already invalidated this asset
+                // and started loading a new one, we don't inadvertently
+                // invalidate the new one.
+                IonRasterOverlay::getEndpointCache()->invalidate(
+                    *assetResult.pValue);
+
+                return IonRasterOverlay::getEndpointCache()
+                    ->getOrCreate(
+                        thiz->getAsyncSystem(),
+                        thiz->getAssetAccessor(),
+                        thiz->_descriptor)
+                    .thenImmediately(
+                        [](const ResultPointer<ExternalAssetEndpoint>&
+                               assetResult) {
+                          // This thenImmediately turns the SharedFuture into a
+                          // Future. That's better than turning the Future into
+                          // a SharedFuture in the hot path else block below.
+                          return assetResult.pValue;
+                        });
+              } else {
+                return thiz->getAsyncSystem().createResolvedFuture(
+                    IntrusivePointer<ExternalAssetEndpoint>(
+                        assetResult.pValue));
+              }
+            })
+        .thenInMainThread(
+            [thiz](ResultPointer<ExternalAssetEndpoint>&& assetResult) {
+              return thiz->_factory(assetResult.pValue);
+            })
+        .thenInMainThread(
+            [thiz, &overlayTile](
+                const RasterOverlay::CreateTileProviderResult& result) {
+              if (result) {
+                return result.value()->loadTileImage(overlayTile);
+              } else {
+                return thiz->getAsyncSystem()
+                    .createResolvedFuture<LoadedRasterOverlayImage>(
+                        LoadedRasterOverlayImage{});
+              }
+            });
+  }
+
+private:
+  NetworkAssetDescriptor _descriptor;
+  TileProviderFactoryType _factory;
+};
 
 IonRasterOverlay::IonRasterOverlay(
     const std::string& name,
@@ -216,27 +313,33 @@ IonRasterOverlay::createTileProvider(
            pPrepareRendererResources,
            this,
            pLogger](
-              const Result<IntrusivePointer<ExternalAssetEndpoint>>& result)
-              -> Future<CreateTileProviderResult> {
+              const Result<IntrusivePointer<ExternalAssetEndpoint>>& result) {
+            TileProvider::TileProviderFactoryType factory(
+                TileProvider::CreateTileProvider{});
             if (result.pValue) {
-              return this->createTileProvider(
-                  *result.pValue,
-                  asyncSystem,
-                  pAssetAccessor,
-                  pCreditSystem,
-                  pPrepareRendererResources,
-                  pLogger,
-                  pOwner);
+              return factory(result.pValue).thenPassThrough(std::move(factory));
             } else {
-              return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
-                  nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                      .type = RasterOverlayLoadType::CesiumIon,
-                      .pRequest = nullptr,
-                      .message = result.errors.format(
-                          "Could not access Cesium ion asset"),
-                  }));
+              return asyncSystem
+                  .createResolvedFuture<CreateTileProviderResult>(
+                      nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                          .type = RasterOverlayLoadType::CesiumIon,
+                          .pRequest = nullptr,
+                          .message = result.errors.format(
+                              "Could not access Cesium ion asset"),
+                      }))
+                  .thenPassThrough(std::move(factory));
             }
-          });
+          })
+      .thenInMainThread([descriptor](auto&& tuple) -> CreateTileProviderResult {
+        auto& [factory, result] = tuple;
+        if (result) {
+          return IntrusivePointer<RasterOverlayTileProvider>(
+              new TileProvider(result.value(), descriptor, std::move(factory)));
+        } else {
+          return std::move(result);
+        }
+      });
+  ;
 }
 
 /* static */ CesiumUtility::IntrusivePointer<IonRasterOverlay::EndpointDepot>
@@ -248,8 +351,12 @@ IonRasterOverlay::getEndpointCache() {
              const NetworkAssetDescriptor& key)
               -> CesiumAsync::Future<
                   CesiumUtility::ResultPointer<ExternalAssetEndpoint>> {
+            std::chrono::steady_clock::time_point requestTime =
+                std::chrono::steady_clock::now();
+
             return key.loadBytesFromNetwork(asyncSystem, pAssetAccessor)
-                .thenImmediately([](Result<std::vector<std::byte>>&& result) {
+                .thenImmediately([requestTime](
+                                     Result<std::vector<std::byte>>&& result) {
                   if (!result.value) {
                     return ResultPointer<ExternalAssetEndpoint>(result.errors);
                   }
@@ -281,6 +388,7 @@ IonRasterOverlay::getEndpointCache() {
                   }
 
                   ExternalAssetEndpoint endpoint;
+                  endpoint.requestTime = requestTime;
                   endpoint.externalType = JsonHelpers::getStringOrDefault(
                       response,
                       "externalType",

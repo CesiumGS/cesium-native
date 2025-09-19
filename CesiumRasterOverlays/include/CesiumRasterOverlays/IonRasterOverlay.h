@@ -8,6 +8,7 @@
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumUtility/SharedAsset.h>
 
+#include <chrono>
 #include <memory>
 
 namespace CesiumRasterOverlays {
@@ -77,6 +78,8 @@ private:
   std::string _ionAccessToken;
   bool _needsAuthHeader = false;
 
+  class TileProvider;
+
   struct AssetEndpointAttribution {
     std::string html;
     bool collapsible = true;
@@ -84,7 +87,7 @@ private:
 
   struct ExternalAssetEndpoint
       : public CesiumUtility::SharedAsset<ExternalAssetEndpoint> {
-    int64_t refreshCount;
+    std::chrono::steady_clock::time_point requestTime;
     std::string externalType;
     std::string url;
     std::string mapStyle;

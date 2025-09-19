@@ -109,6 +109,19 @@ public:
   void invalidate(const TAssetKey& assetKey);
 
   /**
+   * @brief Invalidates the previously-cached asset, so that the next call to
+   * {@link getOrCreate} will create the asset instead of returning the existing
+   * one.
+   *
+   * Anyone already using the existing asset may continue to do so.
+   *
+   * If the asset is not associated with the depot, or if it has already been
+   * invalidated, this method does nothing. If another asset with the same key
+   * already exists in the depot, invalidating this one will not affect it.
+   */
+  void invalidate(const TAssetType& asset);
+
+  /**
    * @brief Returns the total number of distinct assets contained in this depot,
    * including both active and inactive assets.
    */
@@ -459,6 +472,12 @@ void SharedAssetDepot<TAssetType, TAssetKey>::invalidate(
   // goes out of scope, the asset may be destroyed. If it is, that would cause
   // us to try to re-enter the lock, which is not allowed.
   lock.unlock();
+}
+
+template <typename TAssetType, typename TAssetKey>
+void SharedAssetDepot<TAssetType, TAssetKey>::invalidate(
+    const TAssetType& /* asset */) {
+  // TODO
 }
 
 template <typename TAssetType, typename TAssetKey>
