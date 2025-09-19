@@ -105,8 +105,12 @@ public:
    *
    * If an asset with the given key does not exist in the depot, this method
    * does nothing.
+   *
+   * @param assetKey The asset key to invalidate.
+   * @returns True if the asset was invalidated; false if the asset key does not
+   * exist in the depot or was already invalidated.
    */
-  void invalidate(const TAssetKey& assetKey);
+  bool invalidate(const TAssetKey& assetKey);
 
   /**
    * @brief Invalidates the previously-cached asset, so that the next call to
@@ -118,8 +122,12 @@ public:
    * If the asset is not associated with the depot, or if it has already been
    * invalidated, this method does nothing. If another asset with the same key
    * already exists in the depot, invalidating this one will not affect it.
+   *
+   * @param asset The asset to invalidate.
+   * @returns True if the asset was invalidated; false if the asset is not owned
+   * by the depot or was already invalidated.
    */
-  void invalidate(TAssetType& asset);
+  bool invalidate(TAssetType& asset);
 
   /**
    * @brief Returns the total number of distinct assets contained in this depot,
@@ -191,7 +199,7 @@ private:
    * The depot lock must be held when this is called, and it will be released by
    * the time this method returns.
    */
-  void invalidateUnderLock(LockHolder&& lock, const TAssetKey& assetKey);
+  bool invalidateUnderLock(LockHolder&& lock, const TAssetKey& assetKey);
 
   /**
    * @brief An entry for an asset owned by this depot. This is reference counted
@@ -443,24 +451,24 @@ SharedAssetDepot<TAssetType, TAssetKey>::getOrCreate(
 }
 
 template <typename TAssetType, typename TAssetKey>
-void SharedAssetDepot<TAssetType, TAssetKey>::invalidate(
+bool SharedAssetDepot<TAssetType, TAssetKey>::invalidate(
     const TAssetKey& assetKey) {
   LockHolder lock = this->lock();
-  this->invalidateUnderLock(std::move(lock), assetKey);
+  return this->invalidateUnderLock(std::move(lock), assetKey);
 }
 
 template <typename TAssetType, typename TAssetKey>
-void SharedAssetDepot<TAssetType, TAssetKey>::invalidate(TAssetType& asset) {
+bool SharedAssetDepot<TAssetType, TAssetKey>::invalidate(TAssetType& asset) {
   LockHolder lock = this->lock();
 
   auto it = this->_assetsByPointer.find(&asset);
   if (it == this->_assetsByPointer.end())
-    return;
+    return false;
 
   AssetEntry* pEntry = it->second;
   CESIUM_ASSERT(pEntry);
 
-  this->invalidateUnderLock(std::move(lock), pEntry->key);
+  return this->invalidateUnderLock(std::move(lock), pEntry->key);
 }
 
 template <typename TAssetType, typename TAssetKey>
@@ -621,12 +629,12 @@ void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidateUnderLock(
 }
 
 template <typename TAssetType, typename TAssetKey>
-void SharedAssetDepot<TAssetType, TAssetKey>::invalidateUnderLock(
+bool SharedAssetDepot<TAssetType, TAssetKey>::invalidateUnderLock(
     LockHolder&& lock,
     const TAssetKey& assetKey) {
   auto it = this->_assets.find(assetKey);
   if (it == this->_assets.end())
-    return;
+    return false;
 
   AssetEntry* pEntry = it->second.get();
   CESIUM_ASSERT(pEntry);
@@ -636,8 +644,11 @@ void SharedAssetDepot<TAssetType, TAssetKey>::invalidateUnderLock(
   CesiumUtility::ResultPointer<TAssetType> assetResult =
       pEntry->toResultUnderLock();
 
+  bool wasInvalidated = false;
+
   if (assetResult.pValue) {
     if (!assetResult.pValue->_isInvalidated) {
+      wasInvalidated = true;
       assetResult.pValue->_isInvalidated = true;
       ++this->_liveInvalidatedAssets;
     }
@@ -657,6 +668,8 @@ void SharedAssetDepot<TAssetType, TAssetKey>::invalidateUnderLock(
   // goes out of scope, the asset may be destroyed. If it is, that would cause
   // us to try to re-enter the lock, which is not allowed.
   lock.unlock();
+
+  return wasInvalidated;
 }
 
 template <typename TAssetType, typename TAssetKey>

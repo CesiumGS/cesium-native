@@ -89,8 +89,13 @@ public:
                 // another `loadTileImage` has already invalidated this asset
                 // and started loading a new one, we don't inadvertently
                 // invalidate the new one.
-                IonRasterOverlay::getEndpointCache()->invalidate(
-                    *assetResult.pValue);
+                if (IonRasterOverlay::getEndpointCache()->invalidate(
+                        *assetResult.pValue)) {
+                  SPDLOG_LOGGER_INFO(
+                      thiz->getLogger(),
+                      "Refresh Cesium ion token for URL {}.",
+                      thiz->_descriptor.url);
+                }
 
                 return IonRasterOverlay::getEndpointCache()
                     ->getOrCreate(
