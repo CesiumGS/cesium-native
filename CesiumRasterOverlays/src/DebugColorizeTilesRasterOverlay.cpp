@@ -52,7 +52,7 @@ public:
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& overlayTile) override {
+  loadTileImage(const RasterOverlayTile& overlayTile) override {
     LoadedRasterOverlayImage result;
 
     // Indicate that there is no more detail available so that tiles won't get

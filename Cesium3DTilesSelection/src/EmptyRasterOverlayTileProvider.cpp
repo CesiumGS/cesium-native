@@ -27,7 +27,7 @@ EmptyRasterOverlayTileProvider::EmptyRasterOverlayTileProvider(
 
 CesiumAsync::Future<CesiumRasterOverlays::LoadedRasterOverlayImage>
 EmptyRasterOverlayTileProvider::loadTileImage(
-    CesiumRasterOverlays::RasterOverlayTile& /*overlayTile*/) {
+    const CesiumRasterOverlays::RasterOverlayTile& /*overlayTile*/) {
   return this->getAsyncSystem()
       .createResolvedFuture<CesiumRasterOverlays::LoadedRasterOverlayImage>({});
 }
