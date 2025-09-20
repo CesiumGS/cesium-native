@@ -506,7 +506,7 @@ void addSkirts(
       westEdgeIndices.begin(),
       westEdgeIndices.end(),
       sortEdgeIndices.begin(),
-      sortEdgeIndices.begin() + (ptrdiff_t)westVertexCount,
+      sortEdgeIndices.begin() + westVertexCount,
       [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].y < uvsAndHeights[rhs].y;
       });
@@ -539,7 +539,7 @@ void addSkirts(
       southEdgeIndices.begin(),
       southEdgeIndices.end(),
       sortEdgeIndices.begin(),
-      sortEdgeIndices.begin() + (ptrdiff_t)southVertexCount,
+      sortEdgeIndices.begin() + southVertexCount,
       [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].x > uvsAndHeights[rhs].x;
       });
@@ -572,7 +572,7 @@ void addSkirts(
       eastEdgeIndices.begin(),
       eastEdgeIndices.end(),
       sortEdgeIndices.begin(),
-      sortEdgeIndices.begin() + (ptrdiff_t)eastVertexCount,
+      sortEdgeIndices.begin() + eastVertexCount,
       [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].y > uvsAndHeights[rhs].y;
       });
@@ -605,7 +605,7 @@ void addSkirts(
       northEdgeIndices.begin(),
       northEdgeIndices.end(),
       sortEdgeIndices.begin(),
-      sortEdgeIndices.begin() + (ptrdiff_t)northVertexCount,
+      sortEdgeIndices.begin() + northVertexCount,
       [&uvsAndHeights](auto lhs, auto rhs) noexcept {
         return uvsAndHeights[lhs].x < uvsAndHeights[rhs].x;
       });
@@ -754,7 +754,7 @@ QuantizedMeshMetadataResult processMetadata(
   // decode position without skirt, but preallocate position buffer to include
   // skirt as well
   std::vector<std::byte> outputPositionsBuffer(
-      static_cast<size_t>((vertexCount + skirtVertexCount) * 3) *
+      static_cast<uint64_t>((vertexCount + skirtVertexCount) * 3) *
       sizeof(float));
   std::span<float> outputPositions(
       reinterpret_cast<float*>(outputPositionsBuffer.data()),

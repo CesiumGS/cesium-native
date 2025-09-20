@@ -1,5 +1,29 @@
 # Change Log
 
+### v0.51.0 - 2025-09-02
+
+##### Breaking Changes :mega:
+
+- The `getRootTile`, `loadedTiles`, and `forEachLoadedTile` methods on `Tileset` now only provide a const pointer to `Tile` instances, even when called on a non-const `Tileset`. Most modifications to tile instances owned by the tileset would be unsafe.
+- `ViewUpdateResult` now holds pointers to const `Tile` instances.
+- The `slowlyGetCurrentStates` and `slowlyGetPreviousStates` methods of `TreeTraversalState` now return the state map with a raw pointer to a constant node as the key, even if the node pointer type is a smart pointer.
+- `DebugTileStateDatabase::recordTileState` now expects the states to be provided as `std::unordered_map<const Tile*, TileSelectionState>` instead of `std::unordered_map<IntrusivePointer<Tile>, TileSelectionState>`.
+- `VectorRasterizer::drawPolyline` now takes a `std::vector` instead of a `std::span`.
+
+##### Additions :tada:
+
+- Added `element_type` to `IntrusivePointer`, allowing it to be used with `std::pointer_types`.
+- Added implicit conversion of `IntrusivePointer<T>` to `T*`.
+- All properties and extensions from `tileset.json`, except `"root"`, are now parsed into `TilesetMetadata` when a tileset is loaded by `Cesium3DTilesSelection::Tileset`.
+- Added `accessorView` to `PropertyAttributePropertyView` to retrieve the underlying `AccessorView`.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `Tileset::updateViewGroupOffline` that would cause it to get stuck in an endless loop when invoked with no frustums.
+- Fixed a bug with `ColorMode::Random` in `VectorStyle` that caused it to produce different results each time a raster overlay tile was rendered.
+- Fixed a bug in `IonRasterOverlay` that would cause unnecessary extra use of Bing Maps sessions when manually reloading the raster overlay after an expired token was automatically refreshed.
+- Fixed a bug that could lead to a crash when using raster overlays with tilesets that use "external tilesets", such as Google Photorealistic 3D Tiles.
+
 ### v0.50.0 - 2025-08-01
 
 ##### Breaking Changes :mega:

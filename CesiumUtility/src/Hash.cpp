@@ -59,8 +59,8 @@ namespace CesiumUtility {
 // (https://mostlymangling.blogspot.com/2019/12/stronger-better-morer-moremur-better.html)
 namespace {
 
-inline uint64_t mix(uint64_t x) {
-  uint64_t const m = 0xe9846af9b1a615d;
+inline std::size_t mix(std::size_t x) {
+  std::size_t const m = 0xe9846af9b1a615d;
 
   x ^= x >> 32;
   x *= m;
@@ -68,15 +68,14 @@ inline uint64_t mix(uint64_t x) {
   x *= m;
   x ^= x >> 28;
 
-  return static_cast<size_t>(x);
+  return x;
 }
 
 } // namespace
 
 // This function is adapted from Boost's `hash_combine`.
-size_t Hash::combine(uint64_t first, uint64_t second) {
-  // This will truncate bits on 32-bit builds.
-  return (size_t)mix(first + 0x9e3779b9 + second);
+std::size_t Hash::combine(std::size_t first, std::size_t second) {
+  return mix(first + 0x9e3779b9 + second);
 }
 
 } // namespace CesiumUtility

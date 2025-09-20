@@ -4,14 +4,6 @@ if (NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
-get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
-if(toolchainFile STREQUAL "Emscripten.cmake")
-    set(CESIUM_TARGET_WASM ON)
-    # Include the toolchain directly as ezvcpkg will overwrite the 
-    # toolchain before it's loaded
-    include(${CMAKE_TOOLCHAIN_FILE})
-endif()
-
 # By default, Use ezvcpkg to install dependencies. But don't use
 # ezvcpkg if it appears that this configuration is using vcpkg
 # manifest mode already, either by building cesium-native directly,
@@ -24,6 +16,7 @@ set(CESIUM_USE_EZVCPKG_DEFAULT ON)
 if (VCPKG_MANIFEST_MODE)
     set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
 elseif (CMAKE_TOOLCHAIN_FILE)
+    get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
     if(toolchainFile STREQUAL "vcpkg.cmake")
         set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
     endif()
@@ -31,12 +24,6 @@ endif()
 
 option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
 option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
-option(CESIUM_WASM64 "Enable 64-bit WebAssembly target" OFF)
-
-if (CESIUM_TARGET_WASM)
-    # Make sure curl is disabled on wasm builds, as it is not supported.
-    set(CESIUM_DISABLE_CURL ON)
-endif()
 
 if(CESIUM_USE_EZVCPKG)
   # Keep vcpkg from running in manifset mode. It will try to because
@@ -92,10 +79,6 @@ if (NOT VCPKG_OVERLAY_TRIPLETS)
     endif()
 endif()
 
-if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
-    list(APPEND VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
-endif()
-
 message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
 
 # These packages are used in the public headers of Cesium libraries, so we need to distribute the headers and binaries
@@ -112,45 +95,20 @@ set(PACKAGES_PRIVATE
     earcut-hpp cpp-httplib[core] libmorton zstd
 )
 
-# asmjit needed by blend2d on non-iOS platforms (iOS and wasm don't support JIT)
-if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
+# asmjit needed by blend2d on non-iOS platforms (iOS doesn't support JIT)
+if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     list(APPEND PACKAGES_PRIVATE blend2d asmjit)
 else()
-    #if(CESIUM_TARGET_WASM)
-        # TODO: commented out because vcpkg build of blend2d is crashing at runtime.
-        # libblend2d.a needs to be installed for wasm builds
-        #list(APPEND PACKAGES_PUBLIC blend2d[core])
-    #else()
-        # Use [core] feature to disable default jit feature.
-        list(APPEND PACKAGES_PRIVATE blend2d[core])
-    #endif()
+    # Use [core] feature to disable default jit feature.
+    list(APPEND PACKAGES_PRIVATE blend2d[core])
 endif()
 
 if(NOT CESIUM_DISABLE_CURL)
     list(APPEND PACKAGES_PRIVATE curl)
 endif()
 
-
 # Packages only used for testing
 set(PACKAGES_TEST doctest)
-
-if(CESIUM_TARGET_WASM)
-    # vcpkg will attempt to second-guess our CMAKE_C_COMPILER setting, choosing to go with the value of CC instead.
-    # While normally this is the correct value to go with, for wasm we need to be using emcc and em++.
-    # So we set CC and CXX to emcc and em++ here so vcpkg will pick them up properly.
-    # Does this make sense? No. Does it work? Somehow. ¯\_(ツ)_/¯
-    set(ENV{CC} ${CMAKE_C_COMPILER})
-    set(ENV{CXX} ${CMAKE_CXX_COMPILER})
-
-    # Make sure all files are compiled with -pthread and other required flags.
-    if(CESIUM_WASM64)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -sMEMORY64=1 -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -sMEMORY64=1 -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
-    else()
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
-    endif()
-endif()
 
 if(CESIUM_USE_EZVCPKG)
     set(PACKAGES_ALL ${PACKAGES_PUBLIC})
@@ -167,15 +125,6 @@ if(CESIUM_USE_EZVCPKG)
         # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
         SERIALIZE
     )
-
-    if(CESIUM_TARGET_WASM)
-        # vcpkg will attempt to make this wasm32-emscripten if we don't declare it
-        if(CESIUM_WASM64)
-            set(VCPKG_TARGET_TRIPLET wasm64-emscripten)
-        else()
-            set(VCPKG_TARGET_TRIPLET wasm32-emscripten)
-        endif()
-    endif()
 endif()
 
 if (NOT CMAKE_TOOLCHAIN_FILE)
@@ -188,19 +137,9 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.50.0
+    VERSION 0.51.0
     LANGUAGES CXX C
 )
-
-if(CESIUM_TARGET_WASM)
-    if(CESIUM_WASM64)
-        set(CMAKE_SIZEOF_VOID_P 8)
-    else()
-        set(CMAKE_SIZEOF_VOID_P 4)
-    endif()
-    # Tells emscripten to output an HTML harness for the generated WASM
-    set(CMAKE_EXECUTABLE_SUFFIX ".html")
-endif()
 
 include(GNUInstallDirs)
 include(CMakeDependentOption)
@@ -234,11 +173,8 @@ set(CESIUM_CLANG_TIDY_USE_THREADS 14 CACHE STRING "Sets the number of threads fo
 if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS AND EZVCPKG_PACKAGES_DIR)
     foreach(PACKAGE ${PACKAGES_PUBLIC})
         string(REGEX REPLACE "\[.*\]" "" PACKAGE ${PACKAGE})
-        # TODO: why doesn't the above command work to replace "blend2d[core]" with "blend2d"?
-        if(PACKAGE STREQUAL "blend2d[core]")
-            set(PACKAGE "blend2d")
-        endif()
         set(PACKAGE_DIR ${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET})
+        message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
 
         if(CESIUM_INSTALL_HEADERS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_HEADERS)
             install(
@@ -385,10 +321,15 @@ find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
 find_package(blend2d CONFIG REQUIRED)
-# asmjit should not be included with iOS or wasm builds as they don't support JIT compilation.
-if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
+# asmjit should not be included with iOS builds as iOS doesn't support JIT compilation.
+if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     find_package(asmjit CONFIG REQUIRED)
 endif()
+
+if(NOT CESIUM_DISABLE_CURL)
+    find_package(CURL REQUIRED)
+endif()
+
 
 if(NOT CESIUM_DISABLE_CURL)
     find_package(CURL REQUIRED)

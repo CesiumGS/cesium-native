@@ -1014,7 +1014,7 @@ void copyStringsToBuffers(
     for (const auto& str : arrayMember.GetArray()) {
       OffsetType byteLength = static_cast<OffsetType>(
           str.GetStringLength() * sizeof(rapidjson::Value::Ch));
-      std::memcpy(valueBuffer.data() + offset, str.GetString(), (size_t)byteLength);
+      std::memcpy(valueBuffer.data() + offset, str.GetString(), byteLength);
       std::memcpy(
           offsetBuffer.data() + offsetIndex * sizeof(OffsetType),
           &offset,
@@ -1075,7 +1075,7 @@ void updateStringArrayProperty(
     ++it;
   }
 
-  const size_t totalByteLength =
+  const uint64_t totalByteLength =
       totalCharCount * sizeof(rapidjson::Value::Ch);
   std::vector<std::byte> valueBuffer;
   std::vector<std::byte> stringOffsetBuffer;

@@ -165,12 +165,12 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
   }
 
   ReadJsonResult<Subtree> result = this->_reader.readFromJson(
-      data.subspan(sizeof(SubtreeHeader), (size_t)header->jsonByteLength));
+      data.subspan(sizeof(SubtreeHeader), header->jsonByteLength));
 
   if (result.value) {
     std::span<const std::byte> binaryChunk = data.subspan(
-        sizeof(SubtreeHeader) + (size_t)header->jsonByteLength,
-        (size_t)header->binaryByteLength);
+        sizeof(SubtreeHeader) + header->jsonByteLength,
+        header->binaryByteLength);
 
     if (binaryChunk.size() > 0) {
       if (result.value->buffers.empty()) {
@@ -207,7 +207,7 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
 
       buffer.cesium.data = std::vector<std::byte>(
           binaryChunk.begin(),
-          binaryChunk.begin() + (ptrdiff_t)buffer.byteLength);
+          binaryChunk.begin() + buffer.byteLength);
     }
   }
 

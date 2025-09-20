@@ -823,7 +823,7 @@ void decodeDracoMetadata(
     const std::unique_ptr<draco::PointCloud>& pPointCloud,
     rapidjson::Document& batchTableJson,
     PntsContent& parsedContent) {
-  const size_t pointsLength = parsedContent.pointsLength;
+  const uint64_t pointsLength = parsedContent.pointsLength;
   std::vector<std::byte>& data = parsedContent.dracoBatchTableBinary;
 
   const auto& dracoMetadataSemantics = parsedContent.dracoMetadataSemantics;

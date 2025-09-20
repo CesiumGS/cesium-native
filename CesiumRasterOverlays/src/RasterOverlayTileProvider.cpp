@@ -18,7 +18,7 @@
 
 #include <fmt/format.h>
 #include <glm/ext/vector_double2.hpp>
-#include <spdlog/spdlog.h>
+#include <spdlog/fwd.h>
 
 #include <any>
 #include <cstddef>

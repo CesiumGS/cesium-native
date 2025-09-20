@@ -18,7 +18,7 @@
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
-#include <spdlog/spdlog.h>
+#include <spdlog/fwd.h>
 
 #include <cstddef>
 #include <cstdint>

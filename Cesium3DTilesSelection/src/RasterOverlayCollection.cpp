@@ -102,19 +102,26 @@ void RasterOverlayCollection::add(
   // Add a placeholder for this overlay to existing geometry tiles.
   for (Tile& tile : this->_loadedTiles) {
     // The tile rectangle and geometric error don't matter for a placeholder.
-    // - When a tile is transitioned from Unloaded to Loading, raster overlay
-    // tiles will be mapped to the tile automatically by TilesetContentManager,
-    // so we don't need to map the raster tiles to this unloaded or unloading
-    // tile now.
+    // - When a tile is transitioned from Unloaded (or FailedTemporarily) to
+    // ContentLoading, raster overlay tiles will be mapped to the tile
+    // automatically by TilesetContentManager, so we don't need to map the
+    // raster tiles to this unloaded or unloading tile now.
     // - When a tile is already failed to load, there is no need to map the
     // raster tiles to the tile as it is not rendered any way
     TileLoadState tileState = tile.getState();
-    if (tileState != TileLoadState::Unloaded &&
-        tileState != TileLoadState::Unloading &&
-        tileState != TileLoadState::Failed) {
-      tile.getMappedRasterTiles().emplace_back(
-          pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
-          -1);
+    if (tileState == TileLoadState::ContentLoading ||
+        tileState == TileLoadState::ContentLoaded ||
+        tileState == TileLoadState::Done) {
+      // Only tiles with renderable content should have raster overlays
+      // attached. In the ContentLoading state, we won't know yet whether the
+      // content is renderable, so assume that it is for now and
+      // `setTileContent` will clear them out if necessary.
+      if (tile.getContent().isRenderContent() ||
+          tileState == TileLoadState::ContentLoading) {
+        tile.getMappedRasterTiles().emplace_back(
+            pPlaceholder->getTile(Rectangle(), glm::dvec2(0.0)),
+            -1);
+      }
     }
   }
 
@@ -213,7 +220,7 @@ void RasterOverlayCollection::remove(
     return;
   }
 
-  ptrdiff_t index = it - list.overlays.begin();
+  int64_t index = it - list.overlays.begin();
   list.overlays.erase(list.overlays.begin() + index);
   list.tileProviders.erase(list.tileProviders.begin() + index);
   list.placeholders.erase(list.placeholders.begin() + index);

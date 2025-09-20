@@ -44,10 +44,9 @@ cesium_target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
-if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
+if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     set(CESIUM_VECTOR_DATA_ASMJIT_DEPENDENCY asmjit::asmjit)
 endif()
-
 
 target_link_libraries(CesiumVectorData
     PUBLIC

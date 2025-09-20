@@ -40,7 +40,7 @@ cesium_target_include_directories(
 target_link_libraries(CesiumAsync
     PUBLIC
         CesiumUtility
-        spdlog::spdlog_header_only
+        spdlog::spdlog spdlog::spdlog_header_only
         Async++
     PRIVATE
         unofficial::sqlite3::sqlite3

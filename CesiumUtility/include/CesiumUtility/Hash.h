@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 
 namespace CesiumUtility {
 
@@ -18,7 +17,7 @@ struct Hash {
    * @param second The second hash value.
    * @return A new hash value which is a combination of the two.
    */
-  static size_t combine(uint64_t first, uint64_t second);
+  static std::size_t combine(std::size_t first, std::size_t second);
 };
 
 } // namespace CesiumUtility

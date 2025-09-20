@@ -281,7 +281,7 @@ void SubtreeAvailability::setTileAvailable(
 bool SubtreeAvailability::isContentAvailable(
     const CesiumGeometry::QuadtreeTileID& subtreeId,
     const CesiumGeometry::QuadtreeTileID& tileId,
-    size_t contentId) const noexcept {
+    uint64_t contentId) const noexcept {
   uint64_t relativeTileMortonIdx =
       ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   return this->isContentAvailable(
@@ -293,7 +293,7 @@ bool SubtreeAvailability::isContentAvailable(
 bool SubtreeAvailability::isContentAvailable(
     const CesiumGeometry::OctreeTileID& subtreeId,
     const CesiumGeometry::OctreeTileID& tileId,
-    size_t contentId) const noexcept {
+    uint64_t contentId) const noexcept {
   uint64_t relativeTileMortonIdx =
       ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   return this->isContentAvailable(
@@ -305,7 +305,7 @@ bool SubtreeAvailability::isContentAvailable(
 bool SubtreeAvailability::isContentAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId,
-    size_t contentId) const noexcept {
+    uint64_t contentId) const noexcept {
   if (contentId >= this->_contentAvailability.size())
     return false;
   return isAvailable(
@@ -317,7 +317,7 @@ bool SubtreeAvailability::isContentAvailable(
 void SubtreeAvailability::setContentAvailable(
     const CesiumGeometry::QuadtreeTileID& subtreeId,
     const CesiumGeometry::QuadtreeTileID& tileId,
-    size_t contentId,
+    uint64_t contentId,
     bool isAvailable) noexcept {
   uint64_t relativeTileMortonIdx =
       ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
@@ -331,7 +331,7 @@ void SubtreeAvailability::setContentAvailable(
 void SubtreeAvailability::setContentAvailable(
     const CesiumGeometry::OctreeTileID& subtreeId,
     const CesiumGeometry::OctreeTileID& tileId,
-    size_t contentId,
+    uint64_t contentId,
     bool isAvailable) noexcept {
   uint64_t relativeTileMortonIdx =
       ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
@@ -345,7 +345,7 @@ void SubtreeAvailability::setContentAvailable(
 void SubtreeAvailability::setContentAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId,
-    size_t contentId,
+    uint64_t contentId,
     bool isAvailable) noexcept {
   if (contentId < this->_contentAvailability.size()) {
     this->setAvailable(
@@ -518,7 +518,7 @@ bool SubtreeAvailability::isAvailableUsingBufferView(
   const SubtreeBufferViewAvailability* bufferViewAvailability =
       std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
 
-  const size_t byteIndex = static_cast<size_t>(availabilityBitIndex / 8);
+  const uint64_t byteIndex = availabilityBitIndex / 8;
   if (byteIndex >= bufferViewAvailability->view.size()) {
     return false;
   }
@@ -541,7 +541,7 @@ void SubtreeAvailability::setAvailableUsingBufferView(
   const SubtreeBufferViewAvailability* pBufferViewAvailability =
       std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
 
-  const size_t byteIndex = static_cast<size_t>(availabilityBitIndex / 8);
+  const uint64_t byteIndex = availabilityBitIndex / 8;
   if (byteIndex >= pBufferViewAvailability->view.size()) {
     // Attempting to set an invalid tile. Assert, but otherwise ignore it.
     CESIUM_ASSERT(false);
