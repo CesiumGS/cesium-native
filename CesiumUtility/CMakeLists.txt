@@ -38,11 +38,24 @@ cesium_target_include_directories(
         ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
-target_link_libraries(
-    CesiumUtility
-    PUBLIC
-        zlib-ng::zlib-ng
-        spdlog::spdlog
-        glm::glm
-        ada::ada
-)
+# for some reason, spdlog_header_only causes non-wasm builds to fail
+if (CESIUM_TARGET_WASM)
+    target_link_libraries(
+        CesiumUtility
+        PUBLIC
+            zlib-ng::zlib-ng
+            #spdlog::spdlog
+            spdlog::spdlog_header_only
+            glm::glm
+            ada::ada
+    )
+else()
+    target_link_libraries(
+        CesiumUtility
+        PUBLIC
+            zlib-ng::zlib-ng
+            spdlog::spdlog
+            glm::glm
+            ada::ada
+    )
+endif()

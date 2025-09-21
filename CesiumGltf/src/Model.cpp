@@ -408,7 +408,7 @@ ErrorList Model::merge(Model&& rhs) {
     std::copy(
         pRhsDefaultScene->nodes.begin(),
         pRhsDefaultScene->nodes.end(),
-        newScene.nodes.begin() + int64_t(originalNodeCount));
+        newScene.nodes.begin() + ptrdiff_t(originalNodeCount));
 
     // No need to update indices because they've already been updated when
     // we copied them from rhs to this.

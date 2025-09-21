@@ -3,3 +3,10 @@
 # else()
 #     add_compile_options(-Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
 # endif()
+
+if(CESIUM_TARGET_WASM)
+  add_compile_options(-pthread -msimd128 -mnontrapping-fptoint -fwasm-exceptions -sSUPPORT_LONGJMP=wasm -DHAS_FUTIME=0)
+  add_link_options(-pthread -sALLOW_MEMORY_GROWTH=1 -sPTHREAD_POOL_SIZE=4 -sMAXIMUM_MEMORY=4294967296 -sMIN_NODE_VERSION=200000 -sINITIAL_MEMORY=268435456 -sSTACK_SIZE=1048576 -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -msse4.2 -sMALLOC=mimalloc -sWASM_BIGINT -sSUPPORT_LONGJMP=wasm -sFORCE_FILESYSTEM -sPROXY_TO_PTHREAD)
+
+  add_link_options($<$<CONFIG:Debug>:-gsource-map>)
+endif()

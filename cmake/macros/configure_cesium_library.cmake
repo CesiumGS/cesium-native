@@ -2,7 +2,11 @@ function(configure_cesium_library targetName)
     if (MSVC)
         target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /bigobj /w45038 /w44254 /w44242 /w44191 /w45220)
     else()
-        target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion -Wno-unknown-pragmas)
+        if (CESIUM_TARGET_WASM)
+            target_compile_options(${targetName} PRIVATE -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion -Wno-unknown-pragmas)
+        else()
+            target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion -Wno-unknown-pragmas)
+        endif()
     endif()
 
     set_target_properties(${targetName} PROPERTIES
@@ -32,6 +36,7 @@ function(configure_cesium_library targetName)
         PUBLIC 
             GLM_FORCE_INTRINSICS # Force SIMD code paths
             GLM_ENABLE_EXPERIMENTAL # Allow use of experimental extensions
+            SPDLOG_HEADER_ONLY # Use header-only spdlog implementation
     )
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CESIUM_CLANG_TIME_TRACE)
@@ -44,6 +49,21 @@ function(configure_cesium_library targetName)
             PUBLIC
                 CESIUM_DEBUG_TILE_UNLOADING
         )
+    endif()
+
+    if(CESIUM_TARGET_WASM)
+        # std::format is better behaved with wasm builds than fmt::format
+        # Emscripten 3.1.39 doesn't like std::format
+        #target_compile_definitions(
+            #${targetName} 
+            #PUBLIC 
+                #SPDLOG_USE_STD_FORMAT)
+        
+        # Emscripten 3.1.39 doesn't like <sys/utime.h> from tidyhtml
+        target_compile_definitions(
+            ${targetName} 
+            PUBLIC 
+                HAS_FUTIME=0)
     endif()
 
     if (BUILD_SHARED_LIBS)
