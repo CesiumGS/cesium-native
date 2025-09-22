@@ -87,8 +87,10 @@ private:
 
   struct ExternalAssetEndpoint
       : public CesiumUtility::SharedAsset<ExternalAssetEndpoint> {
-    ExternalAssetEndpoint() = default;
-    ~ExternalAssetEndpoint() = default;
+    ExternalAssetEndpoint() noexcept = default;
+    ~ExternalAssetEndpoint() noexcept = default;
+    ExternalAssetEndpoint(const ExternalAssetEndpoint&) noexcept = default;
+    ExternalAssetEndpoint(ExternalAssetEndpoint&&) noexcept = default;
 
     std::chrono::steady_clock::time_point requestTime;
     std::string externalType;

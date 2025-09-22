@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Library.h>
 
 #include <optional>
@@ -59,6 +60,7 @@ public:
       this->_lastOutput.emplace(this->_derivation(*this->_lastInput));
     }
 
+    CESIUM_ASSERT(this->_lastOutput);
     return *this->_lastOutput;
   }
 

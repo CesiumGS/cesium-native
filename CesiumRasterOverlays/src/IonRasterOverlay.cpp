@@ -1,6 +1,6 @@
-#include <CesiumAsync/CesiumIonAssetAccessor.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/NetworkAssetDescriptor.h>
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
@@ -20,9 +20,12 @@
 #include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <memory>
 #include <optional>
 #include <string>
@@ -76,7 +79,7 @@ public:
     auto pFactory = std::make_unique<TileProvider::TileProviderFactoryType>(
         TileProvider::TileProviderFactoryType(TileProvider::CreateTileProvider{
             .pOwner = pOwner,
-            .externals = std::move(externals)}));
+            .externals = externals}));
     return TileProvider::getTileProvider(externals, descriptor, *pFactory)
         .thenInMainThread(
             [descriptor, pFactory = std::move(pFactory)](
