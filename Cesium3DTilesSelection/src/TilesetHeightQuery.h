@@ -133,22 +133,6 @@ struct TilesetHeightRequest : public TileLoadRequester {
    */
   std::set<Tile*> tilesToLoad;
 
-  /**
-   * @brief Process a given list of height requests. This is called by the {@link Tileset}
-   * in every call to {@link Tileset::updateView}.
-   *
-   * @param asyncSystem The async system used to do work in threads.
-   * @param contentManager The content manager.
-   * @param options Options associated with the tileset.
-   * @param heightRequests The list of all height requests. Completed requests
-   * will be removed from this list.
-   */
-  static void processHeightRequests(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      TilesetContentManager& contentManager,
-      const TilesetOptions& options,
-      std::list<TilesetHeightRequest>& heightRequests);
-
   /** @inheritdoc */
   bool doRequest(
       const CesiumAsync::AsyncSystem& asyncSystem,

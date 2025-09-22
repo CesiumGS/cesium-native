@@ -224,29 +224,6 @@ TilesetHeightRequest::TilesetHeightRequest(
 
 TilesetHeightRequest::~TilesetHeightRequest() noexcept = default;
 
-/*static*/ void TilesetHeightRequest::processHeightRequests(
-    const AsyncSystem& asyncSystem,
-    TilesetContentManager& contentManager,
-    const TilesetOptions& options,
-    std::list<TilesetHeightRequest>& heightRequests) {
-  if (heightRequests.empty())
-    return;
-
-  // Go through all requests, either complete them, or gather the tiles they
-  // need for completion
-  for (auto it = heightRequests.begin(); it != heightRequests.end();) {
-    TilesetHeightRequest& request = *it;
-    if (!request
-             .tryCompleteHeightRequest(asyncSystem, contentManager, options)) {
-      ++it;
-    } else {
-      auto deleteIt = it;
-      ++it;
-      heightRequests.erase(deleteIt);
-    }
-  }
-}
-
 double TilesetHeightRequest::getWeight() const { return 1.0; }
 
 bool TilesetHeightRequest::hasMoreTilesToLoadInWorkerThread() const {

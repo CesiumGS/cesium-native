@@ -114,7 +114,14 @@ public:
   void unregister() noexcept;
 
   /**
-   * @brief Alternate interface for certain requests.
+   * @brief Alternate interface for certain requests. This is called by the {@link Tileset}
+   * in every call to {@link Tileset::updateView}.
+   *
+   * @param asyncSystem The async system used to do work in threads.
+   * @param contentManager The content manager.
+   * @param options Options associated with the tileset.
+   * @param heightRequests The list of all height requests. Completed requests
+   * will be removed from this list.
    */
   virtual bool doRequest(
       const CesiumAsync::AsyncSystem& asyncSystem,
