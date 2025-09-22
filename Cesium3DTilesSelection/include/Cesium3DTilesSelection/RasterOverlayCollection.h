@@ -176,14 +176,14 @@ public:
    *
    * Any existing raster overlays on the tile will be cleared.
    *
+   * @param tile The tile for which to add the overlays.
    * @param tilesetOptions The {@link TilesetOptions} for the tileset to which
    * the tile belongs.
-   * @param tile The tile for which to add the overlays.
    * @returns The list of projections required by the overlays that were added
    * to the tile.
    */
   std::vector<CesiumGeospatial::Projection>
-  addTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile) noexcept;
+  addTileOverlays(Tile& tile, const TilesetOptions& tilesetOptions) noexcept;
 
   /**
    * @brief Updates the raster overlays associated with a tile.
@@ -194,13 +194,13 @@ public:
    * this tile should be upsampled in order to attach further raster overlay
    * detail.
    *
+   * @param tile The tile for which to update the overlays.
    * @param tilesetOptions The {@link TilesetOptions} for the tileset to which
    * the tile belongs.
-   * @param tile The tile for which to update the overlays.
    * @returns Details of the raster overlays attached to this tile.
    */
   TileRasterOverlayStatus
-  updateTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile) noexcept;
+  updateTileOverlays(Tile& tile, const TilesetOptions& tilesetOptions) noexcept;
 
 private:
   struct GetOverlayFunctor;

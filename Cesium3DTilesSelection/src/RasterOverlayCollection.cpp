@@ -155,8 +155,8 @@ void RasterOverlayCollection::remove(
 
 std::vector<CesiumGeospatial::Projection>
 RasterOverlayCollection::addTileOverlays(
-    const TilesetOptions& tilesetOptions,
-    Tile& tile) noexcept {
+    Tile& tile,
+    const TilesetOptions& tilesetOptions) noexcept {
   // When a tile temporarily fails to load, it may still
   // have mapped raster tiles, so clear them here
   tile.getMappedRasterTiles().clear();
@@ -184,8 +184,8 @@ RasterOverlayCollection::addTileOverlays(
 }
 
 TileRasterOverlayStatus RasterOverlayCollection::updateTileOverlays(
-    const TilesetOptions& tilesetOptions,
-    Tile& tile) noexcept {
+    Tile& tile,
+    const TilesetOptions& tilesetOptions) noexcept {
   TileRasterOverlayStatus result{};
 
   std::vector<RasterMappedTo3DTile>& rasterTiles = tile.getMappedRasterTiles();
