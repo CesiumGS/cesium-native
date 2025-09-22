@@ -406,7 +406,7 @@ SharedAssetDepot<TAssetType, TAssetKey, TContext>::getOrCreate(
   // So we jump through some hoops here to publish "this thread is working
   // on it", then unlock the mutex, and _then_ actually call the factory
   // function.
-  Promise<void> promise = context.asyncSystem.createPromise<void>();
+  Promise<void> promise = context.asyncSystem.template createPromise<void>();
 
   // We haven't loaded or started to load this asset yet.
   // Let's do that now.
