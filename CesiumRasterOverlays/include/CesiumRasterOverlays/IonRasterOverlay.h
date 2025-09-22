@@ -87,6 +87,9 @@ private:
 
   struct ExternalAssetEndpoint
       : public CesiumUtility::SharedAsset<ExternalAssetEndpoint> {
+    ExternalAssetEndpoint() = default;
+    ~ExternalAssetEndpoint() = default;
+
     std::chrono::steady_clock::time_point requestTime;
     std::string externalType;
     std::string url;
@@ -95,6 +98,7 @@ private:
     std::string culture;
     std::string accessToken;
     std::vector<AssetEndpointAttribution> attributions;
+    std::shared_ptr<CesiumAsync::IAssetRequest> pRequestThatFailed;
   };
 
   static std::unordered_map<std::string, ExternalAssetEndpoint> endpointCache;

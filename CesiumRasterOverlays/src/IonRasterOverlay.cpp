@@ -160,7 +160,8 @@ private:
                                          const ResultPointer<
                                              ExternalAssetEndpoint>&
                                              assetResult) {
-                      if (assetResult.pValue) {
+                      if (assetResult.pValue &&
+                          !assetResult.pValue->url.empty()) {
                         SPDLOG_LOGGER_INFO(
                             pLogger,
                             "Successfully refreshed Cesium ion token for "
@@ -285,26 +286,48 @@ IonRasterOverlay::getEndpointCache() {
             std::chrono::steady_clock::time_point requestTime =
                 std::chrono::steady_clock::now();
 
-            return key.loadBytesFromNetwork(asyncSystem, pAssetAccessor)
-                .thenImmediately([requestTime](
-                                     Result<std::vector<std::byte>>&& result) {
-                  if (!result.value) {
+            return key.loadFromNetwork(asyncSystem, pAssetAccessor)
+                .thenImmediately([requestTime](std::shared_ptr<IAssetRequest>&&
+                                                   pRequest) {
+                  ExternalAssetEndpoint endpoint{};
+
+                  const CesiumAsync::IAssetResponse* pResponse =
+                      pRequest->response();
+                  if (!pResponse) {
+                    endpoint.pRequestThatFailed = pRequest;
                     return ResultPointer<ExternalAssetEndpoint>(
-                        new ExternalAssetEndpoint(),
-                        result.errors);
+                        new ExternalAssetEndpoint(std::move(endpoint)),
+                        ErrorList::error(fmt::format(
+                            "Request for {} failed.",
+                            pRequest->url())));
                   }
+
+                  uint16_t statusCode = pResponse->statusCode();
+                  if (statusCode != 0 &&
+                      (statusCode < 200 || statusCode >= 300)) {
+                    endpoint.pRequestThatFailed = pRequest;
+                    return ResultPointer<ExternalAssetEndpoint>(
+                        new ExternalAssetEndpoint(std::move(endpoint)),
+                        ErrorList::error(fmt::format(
+                            "Request for {} failed with code {}",
+                            pRequest->url(),
+                            pResponse->statusCode())));
+                  }
+
+                  std::span<const std::byte> data = pResponse->data();
 
                   rapidjson::Document response;
                   response.Parse(
-                      reinterpret_cast<const char*>(result.value->data()),
-                      result.value->size());
+                      reinterpret_cast<const char*>(data.data()),
+                      data.size());
 
                   if (response.HasParseError()) {
+                    endpoint.pRequestThatFailed = std::move(pRequest);
                     return ResultPointer<ExternalAssetEndpoint>(
-                        new ExternalAssetEndpoint(),
+                        new ExternalAssetEndpoint(std::move(endpoint)),
                         ErrorList::error(fmt::format(
                             "Error while parsing Cesium ion raster overlay "
-                            "response, error code {} at byte offset {}.",
+                            "response: error code {} at byte offset {}.",
                             response.GetParseError(),
                             response.GetErrorOffset())));
                   }
@@ -314,15 +337,15 @@ IonRasterOverlay::getEndpointCache() {
                       "type",
                       "unknown");
                   if (type != "IMAGERY") {
+                    endpoint.pRequestThatFailed = std::move(pRequest);
                     return ResultPointer<ExternalAssetEndpoint>(
-                        new ExternalAssetEndpoint(),
+                        new ExternalAssetEndpoint(std::move(endpoint)),
                         ErrorList::error(fmt::format(
                             "Assets used with a raster overlay must have type "
                             "'IMAGERY', but instead saw '{}'.",
                             type)));
                   }
 
-                  ExternalAssetEndpoint endpoint;
                   endpoint.requestTime = requestTime;
                   endpoint.externalType = JsonHelpers::getStringOrDefault(
                       response,
@@ -332,8 +355,9 @@ IonRasterOverlay::getEndpointCache() {
                     const auto optionsIt = response.FindMember("options");
                     if (optionsIt == response.MemberEnd() ||
                         !optionsIt->value.IsObject()) {
+                      endpoint.pRequestThatFailed = std::move(pRequest);
                       return ResultPointer<ExternalAssetEndpoint>(
-                          new ExternalAssetEndpoint(),
+                          new ExternalAssetEndpoint(std::move(endpoint)),
                           ErrorList::error(fmt::format(
                               "Cesium ion Bing Maps raster overlay metadata "
                               "response does not contain 'options' or it is "
@@ -406,7 +430,7 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
         .createResolvedFuture<CreateTileProviderResult>(
             nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                 RasterOverlayLoadType::CesiumIon,
-                nullptr,
+                pEndpoint ? pEndpoint->pRequestThatFailed : nullptr,
                 "Could not access Cesium ion asset."}))
         .share();
   }
