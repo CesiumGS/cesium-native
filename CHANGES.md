@@ -27,10 +27,13 @@
 - `RasterOverlayCollection::add` and `remove` now take a pointer to a const `RasterOverlay`.
 - Added `CesiumUtility::TransformIterator`.
 - Added `CesiumUtility::DerivedValue`.
+- Added `RasterOverlayTileProvider::getExternals`.
+- Added bew `log` and `format` methods to `ErrorList`.
 
 ##### Fixes :wrench:
 
 - `LoadedTileEnumerator` now provides non-const access to enumerated `Tile` instances, even if the enumerator itself is const.
+- The Cesium ion token for raster overlays is now automatically refreshed every 55 minutes. Previously, it would refresh on a 401 HTTP status code, which could cause extraneous session usage if the raster overlay ever returned a 401 error for a non-token-related reason.
 
 ##### Fixes :wrench:
 
