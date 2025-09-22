@@ -138,12 +138,12 @@ private:
                 // and started loading a new one, we don't inadvertently
                 // invalidate the new one. But if we don't have a valid asset,
                 // we must invalidate by key.
-                if (assetResult.pValue &&
-                        IonRasterOverlay::getEndpointCache()->invalidate(
-                            *assetResult.pValue) ||
-                    !assetResult.pValue &&
-                        IonRasterOverlay::getEndpointCache()->invalidate(
-                            descriptor)) {
+                if ((assetResult.pValue &&
+                     IonRasterOverlay::getEndpointCache()->invalidate(
+                         *assetResult.pValue)) ||
+                    (!assetResult.pValue &&
+                     IonRasterOverlay::getEndpointCache()->invalidate(
+                         descriptor))) {
                   SPDLOG_LOGGER_INFO(
                       externals.pLogger,
                       "Refreshing Cesium ion token for URL {}.",
@@ -436,9 +436,7 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
   }
 
   IntrusivePointer<RasterOverlay> pOverlay = nullptr;
-  bool isBing;
   if (pEndpoint->externalType == "BING") {
-    isBing = true;
     pOverlay = new BingMapsRasterOverlay(
         this->pOwner->getName(),
         pEndpoint->url,
@@ -447,7 +445,6 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
         pEndpoint->culture,
         this->pOwner->getOptions());
   } else {
-    isBing = false;
     pOverlay = new TileMapServiceRasterOverlay(
         this->pOwner->getName(),
         pEndpoint->url,
