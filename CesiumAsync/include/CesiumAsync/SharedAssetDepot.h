@@ -107,9 +107,7 @@ public:
    * @brief Gets an asset from the depot if it already exists, or creates it
    * using the depot's factory if it does not.
    *
-   * @param asyncSystem The async system.
-   * @param pAssetAccessor The asset accessor to use to download assets, if
-   * necessary.
+   * @param context The context to pass to the factory function.
    * @param assetKey The key uniquely identifying the asset to get or create.
    * @return A shared future that resolves when the asset is ready or fails.
    */
