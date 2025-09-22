@@ -191,12 +191,12 @@ public:
   /**
    * @brief Activates this overlay.
    *
-   * This method is called by a {@link Cesium3DTilesSelection::RasterOverlayCollection}
-   * when an overlay is added to it. The returned {@link ActivatedRasterOverlay}
+   * This method is called by a @ref Cesium3DTilesSelection::RasterOverlayCollection
+   * when an overlay is added to it. The returned @ref ActivatedRasterOverlay
    * is used by the collection to manage the overlay.
    *
    * @param externals The external interfaces for use by the raster overlay.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
    * @return The activated overlay.
    */
   CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> activate(

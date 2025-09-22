@@ -27,30 +27,30 @@ struct TilesetOptions;
 
 /**
  * @brief Captures the tile overlay status as produced by
- * {@link RasterOverlayCollection::updateTileOverlays}.
+ * @ref RasterOverlayCollection::updateTileOverlays.
  */
 struct TileRasterOverlayStatus {
   /**
-   * @brief The index of the first entry in {@link Tile::getMappedRasterTiles},
+   * @brief The index of the first entry in @ref Tile::getMappedRasterTiles,
    * if any, for which more overlay detail is available than is shown by this
-   * {@link Tile}.
+   * @ref Tile.
    *
-   * If this is a leaf {@link Tile}, an overlay with more detail available will
+   * If this is a leaf @ref Tile, an overlay with more detail available will
    * necessitate upsampling of the leaf geometry so that the overlay can be
    * rendered at full resolution.
    */
   std::optional<size_t> firstIndexWithMoreDetailAvailable;
 
   /**
-   * @brief The index of the first entry in {@link Tile::getMappedRasterTiles},
+   * @brief The index of the first entry in @ref Tile::getMappedRasterTiles,
    * if any, for which the availability of more overlay detail is not yet known.
    */
   std::optional<size_t> firstIndexWithUnknownAvailability;
 
   /**
-   * @brief The index of the first entry in {@link Tile::getMappedRasterTiles},
+   * @brief The index of the first entry in @ref Tile::getMappedRasterTiles,
    * if any, for which texture coordinates for the overlay's projection are not
-   * yet available on the {@link Tile}.
+   * yet available on the @ref Tile.
    */
   std::optional<size_t> firstIndexWithMissingProjection;
 };

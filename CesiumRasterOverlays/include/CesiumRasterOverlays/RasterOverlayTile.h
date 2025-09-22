@@ -26,7 +26,7 @@ class RasterOverlayTileProvider;
  * an associated image, which us used as an imagery overlay
  * for tile geometry. The connection between the imagery data
  * and the actual tile geometry is established via the
- * {@link Cesium3DTilesSelection::RasterMappedTo3DTile} class, which combines a
+ * @ref Cesium3DTilesSelection::RasterMappedTo3DTile class, which combines a
  * raster overlay tile with texture coordinates, to map the
  * image on the geometry of a {@link Cesium3DTilesSelection::Tile}.
  */
