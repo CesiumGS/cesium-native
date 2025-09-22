@@ -205,7 +205,7 @@ public:
    * deletes it.
    *
    * This function is not supposed to be called by client. Calling this method
-   * in a tile with a reference count greater than 0 will result in undefined
+   * on a tile with a reference count greater than 0 will result in undefined
    * behavior.
    *
    * @param pTile The tile, which must have no oustanding references.
