@@ -25,6 +25,7 @@
 - Added `addTileOverlays` and `updateTileOverlays` to `RasterOverlayCollection`.
 - `RasterOverlayCollection::add` and `remove` now take a pointer to a const `RasterOverlay`.
 - Added `CesiumUtility::TransformIterator`.
+- Added `CesiumUtility::DerivedValue`.
 
 ##### Fixes :wrench:
 

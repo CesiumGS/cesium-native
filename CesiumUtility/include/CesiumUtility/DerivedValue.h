@@ -1,5 +1,8 @@
 #pragma once
 
+#include <CesiumUtility/Library.h>
+
+#include <optional>
 #include <type_traits>
 
 namespace CesiumUtility {
@@ -50,13 +53,11 @@ public:
    *
    * Otherwise, the previously-computed value will be returned.
    */
-  TOutput operator()(TInput input) {
+  template <typename T> TOutput operator()(T&& input) {
     if (input != this->_lastInput) {
-      this->_lastInput.emplace(std::move(input));
+      this->_lastInput.emplace(std::forward<T>(input));
       this->_lastOutput.emplace(this->_derivation(*this->_lastInput));
     }
-
-    CESIUM_ASSERT(this->_lastOutput);
 
     return *this->_lastOutput;
   }
@@ -66,5 +67,24 @@ private:
   std::optional<TInput> _lastInput;
   std::optional<TOutput> _lastOutput;
 };
+
+/**
+ * @brief Helper factory to construct a \ref DerivedValue while specifying only
+ * the input type explicitly and letting the callable type (`TDerivation`) be
+ * deduced.
+ */
+template <typename TInput, typename TDerivation>
+auto makeDerivedValue(TDerivation&& derivation)
+    -> DerivedValue<TInput, std::decay_t<TDerivation>> {
+  static_assert(
+      std::is_invocable_r_v<
+          std::invoke_result_t<std::decay_t<TDerivation>, TInput>,
+          std::decay_t<TDerivation>,
+          TInput>,
+      "Callable provided to makeDerivedValue is not invocable with the "
+      "specified TInput.");
+  return DerivedValue<TInput, std::decay_t<TDerivation>>(
+      std::forward<TDerivation>(derivation));
+}
 
 } // namespace CesiumUtility
