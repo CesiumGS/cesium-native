@@ -27,30 +27,30 @@ struct TilesetOptions;
 
 /**
  * @brief Captures the tile overlay status as produced by
- * {@link RasterOverlayCollection::updateTileOverlays}.
+ * @ref RasterOverlayCollection::updateTileOverlays.
  */
 struct TileRasterOverlayStatus {
   /**
-   * @brief The index of the first entry in {@link Tile::getMappedRasterTiles},
+   * @brief The index of the first entry in @ref Tile::getMappedRasterTiles,
    * if any, for which more overlay detail is available than is shown by this
-   * {@link Tile}.
+   * @ref Tile.
    *
-   * If this is a leaf {@link Tile}, an overlay with more detail available will
+   * If this is a leaf @ref Tile, an overlay with more detail available will
    * necessitate upsampling of the leaf geometry so that the overlay can be
    * rendered at full resolution.
    */
   std::optional<size_t> firstIndexWithMoreDetailAvailable;
 
   /**
-   * @brief The index of the first entry in {@link Tile::getMappedRasterTiles},
+   * @brief The index of the first entry in @ref Tile::getMappedRasterTiles,
    * if any, for which the availability of more overlay detail is not yet known.
    */
   std::optional<size_t> firstIndexWithUnknownAvailability;
 
   /**
-   * @brief The index of the first entry in {@link Tile::getMappedRasterTiles},
+   * @brief The index of the first entry in @ref Tile::getMappedRasterTiles,
    * if any, for which texture coordinates for the overlay's projection are not
-   * yet available on the {@link Tile}.
+   * yet available on the @ref Tile.
    */
   std::optional<size_t> firstIndexWithMissingProjection;
 };
@@ -176,14 +176,14 @@ public:
    *
    * Any existing raster overlays on the tile will be cleared.
    *
+   * @param tile The tile for which to add the overlays.
    * @param tilesetOptions The {@link TilesetOptions} for the tileset to which
    * the tile belongs.
-   * @param tile The tile for which to add the overlays.
    * @returns The list of projections required by the overlays that were added
    * to the tile.
    */
   std::vector<CesiumGeospatial::Projection>
-  addTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile) noexcept;
+  addTileOverlays(Tile& tile, const TilesetOptions& tilesetOptions) noexcept;
 
   /**
    * @brief Updates the raster overlays associated with a tile.
@@ -194,13 +194,13 @@ public:
    * this tile should be upsampled in order to attach further raster overlay
    * detail.
    *
+   * @param tile The tile for which to update the overlays.
    * @param tilesetOptions The {@link TilesetOptions} for the tileset to which
    * the tile belongs.
-   * @param tile The tile for which to update the overlays.
    * @returns Details of the raster overlays attached to this tile.
    */
   TileRasterOverlayStatus
-  updateTileOverlays(const TilesetOptions& tilesetOptions, Tile& tile) noexcept;
+  updateTileOverlays(Tile& tile, const TilesetOptions& tilesetOptions) noexcept;
 
 private:
   struct GetOverlayFunctor;

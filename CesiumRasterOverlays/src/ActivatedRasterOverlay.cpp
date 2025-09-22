@@ -184,7 +184,7 @@ struct LoadResult {
  * function will return a `LoadResult` with the image, the prepared renderer
  * resources, and the state `RasterOverlayTile::LoadState::Loaded`.
  *
- * @param tileId The {@link TileID} - only used for logging
+ * @param tileId The @ref TileID - only used for logging
  * @param pPrepareRendererResources The `IPrepareRasterOverlayRendererResources`
  * @param pLogger The logger
  * @param loadedImage The `LoadedRasterOverlayImage`
@@ -244,6 +244,7 @@ LoadResult createLoadResultFromLoadedImage(
     result.moreDetailAvailable = loadedImage.moreDetailAvailable;
     return result;
   }
+
   LoadResult result;
   result.pRendererResources = nullptr;
   result.state = RasterOverlayTile::LoadState::Failed;

@@ -1044,7 +1044,7 @@ void TilesetContentManager::loadTileContent(
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
-      this->_overlayCollection.addTileOverlays(tilesetOptions, tile);
+      this->_overlayCollection.addTileOverlays(tile, tilesetOptions);
 
   // begin loading tile
   notifyTileStartLoading(&tile);
@@ -1829,7 +1829,7 @@ void TilesetContentManager::updateDoneState(
   const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent) {
     TileRasterOverlayStatus status =
-        this->_overlayCollection.updateTileOverlays(tilesetOptions, tile);
+        this->_overlayCollection.updateTileOverlays(tile, tilesetOptions);
 
     if (status.firstIndexWithMissingProjection) {
       // The mesh doesn't have the right texture coordinates for this
