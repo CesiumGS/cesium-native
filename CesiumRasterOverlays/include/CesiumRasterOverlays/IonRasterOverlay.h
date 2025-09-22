@@ -105,7 +105,8 @@ private:
 
   using EndpointDepot = CesiumAsync::SharedAssetDepot<
       ExternalAssetEndpoint,
-      CesiumAsync::NetworkAssetDescriptor>;
+      CesiumAsync::NetworkAssetDescriptor,
+      RasterOverlayExternals>;
 
   static CesiumUtility::IntrusivePointer<EndpointDepot> getEndpointCache();
 };

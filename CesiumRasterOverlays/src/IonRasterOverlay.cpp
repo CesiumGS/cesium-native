@@ -121,14 +121,11 @@ private:
       const NetworkAssetDescriptor& descriptor,
       TileProviderFactoryType& factory) {
     return IonRasterOverlay::getEndpointCache()
-        ->getOrCreate(
-            externals.asyncSystem,
-            externals.pAssetAccessor,
-            descriptor)
+        ->getOrCreate(externals, descriptor)
         .thenInMainThread(
             [externals, descriptor](
-                const ResultPointer<ExternalAssetEndpoint>& assetResult)
-                -> Future<IntrusivePointer<ExternalAssetEndpoint>> {
+                const ResultPointer<ExternalAssetEndpoint>& assetResult) mutable
+            -> Future<IntrusivePointer<ExternalAssetEndpoint>> {
               if (!assetResult.pValue ||
                   std::chrono::steady_clock::now() >
                       assetResult.pValue->requestTime +
@@ -151,39 +148,16 @@ private:
                 }
 
                 return IonRasterOverlay::getEndpointCache()
-                    ->getOrCreate(
-                        externals.asyncSystem,
-                        externals.pAssetAccessor,
-                        descriptor)
-                    .thenImmediately([pLogger = externals.pLogger,
-                                      url = descriptor.url](
-                                         const ResultPointer<
-                                             ExternalAssetEndpoint>&
-                                             assetResult) {
-                      if (assetResult.pValue &&
-                          !assetResult.pValue->url.empty()) {
-                        SPDLOG_LOGGER_INFO(
-                            pLogger,
-                            "Successfully refreshed Cesium ion token for "
-                            "URL {}.",
-                            url);
-                      } else {
-                        SPDLOG_LOGGER_INFO(
-                            pLogger,
-                            "Failed to refresh Cesium ion token for URL {}.",
-                            url);
-                      }
-
-                      assetResult.errors.log(
-                          pLogger,
-                          "The following messages were reported while "
-                          "refreshing the token:");
-
-                      // This thenImmediately turns the SharedFuture into a
-                      // Future. That's better than turning the Future into
-                      // a SharedFuture in the hot path else block below.
-                      return assetResult.pValue;
-                    });
+                    ->getOrCreate(externals, descriptor)
+                    .thenImmediately(
+                        [pLogger = externals.pLogger, url = descriptor.url](
+                            const ResultPointer<ExternalAssetEndpoint>&
+                                assetResult) {
+                          // This thenImmediately turns the SharedFuture into a
+                          // Future. That's better than turning the Future into
+                          // a SharedFuture in the hot path else block below.
+                          return assetResult.pValue;
+                        });
               } else {
                 return externals.asyncSystem.createResolvedFuture(
                     IntrusivePointer<ExternalAssetEndpoint>(
@@ -191,12 +165,12 @@ private:
               }
             })
         .thenInMainThread(
-            [&factory, externals](
+            [&factory, asyncSystem = externals.asyncSystem](
                 const ResultPointer<ExternalAssetEndpoint>& result) mutable {
               if (result.pValue) {
                 return factory(result.pValue);
               } else {
-                return externals.asyncSystem
+                return asyncSystem
                     .createResolvedFuture<CreateTileProviderResult>(
                         nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                             .type = RasterOverlayLoadType::CesiumIon,
@@ -278,15 +252,15 @@ IonRasterOverlay::createTileProvider(
 IonRasterOverlay::getEndpointCache() {
   static CesiumUtility::IntrusivePointer<EndpointDepot> pDepot =
       new EndpointDepot(
-          [](const AsyncSystem& asyncSystem,
-             const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+          [](const RasterOverlayExternals& context,
              const NetworkAssetDescriptor& key)
               -> CesiumAsync::Future<
                   CesiumUtility::ResultPointer<ExternalAssetEndpoint>> {
             std::chrono::steady_clock::time_point requestTime =
                 std::chrono::steady_clock::now();
 
-            return key.loadFromNetwork(asyncSystem, pAssetAccessor)
+            return key
+                .loadFromNetwork(context.asyncSystem, context.pAssetAccessor)
                 .thenImmediately([requestTime](std::shared_ptr<IAssetRequest>&&
                                                    pRequest) {
                   ExternalAssetEndpoint endpoint{};
@@ -417,7 +391,31 @@ IonRasterOverlay::getEndpointCache() {
                           std::string(
                               "Error while accessing Cesium ion asset: ") +
                           e.what()));
-                });
+                })
+                .thenImmediately(
+                    [pLogger = context.pLogger, url = key.url](
+                        ResultPointer<ExternalAssetEndpoint>&& assetResult) {
+                      if (assetResult.pValue &&
+                          !assetResult.pValue->url.empty()) {
+                        SPDLOG_LOGGER_INFO(
+                            pLogger,
+                            "Successfully refreshed Cesium ion token for "
+                            "URL {}.",
+                            url);
+                      } else {
+                        SPDLOG_LOGGER_INFO(
+                            pLogger,
+                            "Failed to refresh Cesium ion token for URL {}.",
+                            url);
+                      }
+
+                      assetResult.errors.log(
+                          pLogger,
+                          "The following messages were reported while "
+                          "refreshing the token:");
+
+                      return std::move(assetResult);
+                    });
           });
   return pDepot;
 }

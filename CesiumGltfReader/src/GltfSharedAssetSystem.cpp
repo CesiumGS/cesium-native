@@ -24,19 +24,17 @@ CesiumUtility::IntrusivePointer<GltfSharedAssetSystem> createDefault() {
       new GltfSharedAssetSystem();
 
   p->pImage.emplace(std::function(
-      [](const AsyncSystem& asyncSystem,
-         const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      [](const SharedAssetContext& context,
          const NetworkImageAssetDescriptor& key)
           -> Future<ResultPointer<ImageAsset>> {
-        return key.load(asyncSystem, pAssetAccessor);
+        return key.load(context.asyncSystem, context.pAssetAccessor);
       }));
 
   p->pExternalMetadataSchema.emplace(std::function(
-      [](const AsyncSystem& asyncSystem,
-         const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+      [](const SharedAssetContext& context,
          const NetworkSchemaAssetDescriptor& key)
           -> Future<ResultPointer<Schema>> {
-        return key.load(asyncSystem, pAssetAccessor);
+        return key.load(context.asyncSystem, context.pAssetAccessor);
       }));
 
   return p;

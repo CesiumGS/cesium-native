@@ -98,9 +98,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
 
   this->_pTileDepot.emplace(std::function(
       [pThis = this, loadParentTile](
-          const AsyncSystem& asyncSystem,
-          [[maybe_unused]] const std::shared_ptr<IAssetAccessor>&
-              pAssetAccessor,
+          const SharedAssetContext& context,
           const QuadtreeTileID& key)
           -> Future<ResultPointer<LoadedQuadtreeImage>> {
         return pThis->loadQuadtreeTileImage(key)
@@ -115,7 +113,8 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
                  key,
                  currentLevel = key.level,
                  minimumLevel = pThis->getMinimumLevel(),
-                 asyncSystem](LoadedRasterOverlayImage&& loaded)
+                 asyncSystem =
+                     context.asyncSystem](LoadedRasterOverlayImage&& loaded)
                     -> Future<ResultPointer<LoadedQuadtreeImage>> {
                   if (loaded.pImage && !loaded.errorList.hasErrors() &&
                       loaded.pImage->width > 0 && loaded.pImage->height > 0) {
@@ -394,8 +393,9 @@ CesiumAsync::SharedFuture<
 QuadtreeRasterOverlayTileProvider::getQuadtreeTile(
     const CesiumGeometry::QuadtreeTileID& tileID) {
   return this->_pTileDepot->getOrCreate(
-      this->getAsyncSystem(),
-      this->getAssetAccessor(),
+      SharedAssetContext{
+          .asyncSystem = this->getAsyncSystem(),
+          .pAssetAccessor = this->getAssetAccessor()},
       tileID);
 }
 
