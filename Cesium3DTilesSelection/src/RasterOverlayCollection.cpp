@@ -34,7 +34,7 @@ RasterOverlayCollection::RasterOverlayCollection(
       _activatedOverlays() {}
 
 RasterOverlayCollection::~RasterOverlayCollection() noexcept {
-  for (int64_t i = static_cast<int64_t>(this->_activatedOverlays.size() - 1);
+  for (int64_t i = static_cast<int64_t>(this->_activatedOverlays.size()) - 1;
        i >= 0;
        --i) {
     this->remove(this->_activatedOverlays[static_cast<size_t>(i)]);
