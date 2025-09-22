@@ -157,8 +157,8 @@ std::vector<CesiumGeospatial::Projection>
 RasterOverlayCollection::addTileOverlays(
     const TilesetOptions& tilesetOptions,
     Tile& tile) noexcept {
-  // when tile fails temporarily, it may still have mapped raster tiles, so
-  // clear it here
+  // When a tile temporarily fails to load, it may still
+  // have mapped raster tiles, so clear them here
   tile.getMappedRasterTiles().clear();
 
   std::vector<CesiumGeospatial::Projection> projections;
