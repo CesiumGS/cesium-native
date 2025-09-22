@@ -12,6 +12,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>

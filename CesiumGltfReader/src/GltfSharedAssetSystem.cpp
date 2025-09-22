@@ -1,6 +1,6 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
-#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfReader/GltfSharedAssetSystem.h>
@@ -10,7 +10,6 @@
 #include <CesiumUtility/Result.h>
 
 #include <functional>
-#include <memory>
 
 using namespace CesiumAsync;
 using namespace CesiumGltf;
