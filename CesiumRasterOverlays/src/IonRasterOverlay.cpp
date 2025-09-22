@@ -155,14 +155,34 @@ private:
                         externals.asyncSystem,
                         externals.pAssetAccessor,
                         descriptor)
-                    .thenImmediately(
-                        [](const ResultPointer<ExternalAssetEndpoint>&
-                               assetResult) {
-                          // This thenImmediately turns the SharedFuture into a
-                          // Future. That's better than turning the Future into
-                          // a SharedFuture in the hot path else block below.
-                          return assetResult.pValue;
-                        });
+                    .thenImmediately([pLogger = externals.pLogger,
+                                      url = descriptor.url](
+                                         const ResultPointer<
+                                             ExternalAssetEndpoint>&
+                                             assetResult) {
+                      if (assetResult.pValue) {
+                        SPDLOG_LOGGER_INFO(
+                            pLogger,
+                            "Successfully refreshed Cesium ion token for "
+                            "URL {}.",
+                            url);
+                      } else {
+                        SPDLOG_LOGGER_INFO(
+                            pLogger,
+                            "Failed to refresh Cesium ion token for URL {}.",
+                            url);
+                      }
+
+                      assetResult.errors.log(
+                          pLogger,
+                          "The following messages were reported while "
+                          "refreshing the token:");
+
+                      // This thenImmediately turns the SharedFuture into a
+                      // Future. That's better than turning the Future into
+                      // a SharedFuture in the hot path else block below.
+                      return assetResult.pValue;
+                    });
               } else {
                 return externals.asyncSystem.createResolvedFuture(
                     IntrusivePointer<ExternalAssetEndpoint>(
