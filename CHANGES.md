@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - `RasterOverlayTileProvider::loadTileImage` now receives a const `RasterOverlayTile`.
+- `SharedAssetDepot` now uses a templatized "context" instead of separate `AsyncSystem` and `IAssetAccessor` parameters. It defaults to `SharedAssetContext`.
 
 ##### Additions :tada:
 
