@@ -28,7 +28,7 @@
 - Added `CesiumUtility::TransformIterator`.
 - Added `CesiumUtility::DerivedValue`.
 - Added `RasterOverlayTileProvider::getExternals`.
-- Added bew `log` and `format` methods to `ErrorList`.
+- Added new `log` and `format` methods to `ErrorList`.
 
 ##### Fixes :wrench:
 
