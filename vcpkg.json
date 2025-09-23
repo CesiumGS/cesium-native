@@ -27,6 +27,7 @@
     "cpp-httplib",
     "libmorton",
     "zstd",
+    "mikktspace",
     {
       "name": "blend2d",
       "default-features": false,
