@@ -1,5 +1,20 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- `RasterOverlayTileProvider::loadTileImage` now receives a const `RasterOverlayTile`.
+
+##### Additions :tada:
+
+- Added `RasterOverlayExternals` class. This is similar to `TilesetExternals` and is a more convenient way to pass around the various external interfaces that raster overlays use.
+
+##### Fixes :wrench:
+
+- Fixed a build system bug that prevented `libblend2d.a` from being installed for iOS.
+- Added a move constructor and assignment operator to `TileProviderAndTile`. This is important to prevent it from inadvertently incrementing/decrementing non-thread-safe reference counts from the wrong thread while being moved.
+
 ### v0.51.0 - 2025-09-02
 
 ##### Breaking Changes :mega:

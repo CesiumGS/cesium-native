@@ -9,6 +9,7 @@
 #include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Assert.h>
@@ -42,17 +43,11 @@ namespace CesiumRasterOverlays {
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+    const RasterOverlayExternals& externals,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
     : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
-      _asyncSystem(asyncSystem),
-      _pAssetAccessor(pAssetAccessor),
-      _pCreditSystem(pCreditSystem),
+      _externals(externals),
       _credit(std::nullopt),
-      _pPrepareRendererResources(nullptr),
-      _pLogger(nullptr),
       _projection(CesiumGeospatial::GeographicProjection(ellipsoid)),
       _coverageRectangle(CesiumGeospatial::GeographicProjection::
                              computeMaximumProjectedRectangle(ellipsoid)),
@@ -61,6 +56,39 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _totalTilesCurrentlyLoading(0),
       _throttledTilesCurrentlyLoading(0),
       _destructionCompleteDetails() {}
+
+RasterOverlayTileProvider::RasterOverlayTileProvider(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
+    const RasterOverlayExternals& externals,
+    std::optional<CesiumUtility::Credit> credit,
+    const CesiumGeospatial::Projection& projection,
+    const CesiumGeometry::Rectangle& coverageRectangle) noexcept
+    : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
+      _externals(externals),
+      _credit(credit),
+      _projection(projection),
+      _coverageRectangle(coverageRectangle),
+      _pPlaceholder(nullptr),
+      _tileDataBytes(0),
+      _totalTilesCurrentlyLoading(0),
+      _throttledTilesCurrentlyLoading(0),
+      _destructionCompleteDetails() {}
+
+RasterOverlayTileProvider::RasterOverlayTileProvider(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
+    : RasterOverlayTileProvider(
+          pOwner,
+          RasterOverlayExternals{
+              .pAssetAccessor = pAssetAccessor,
+              .pPrepareRendererResources = nullptr,
+              .asyncSystem = asyncSystem,
+              .pCreditSystem = pCreditSystem,
+              .pLogger = nullptr},
+          ellipsoid) {}
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
@@ -73,20 +101,17 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumGeospatial::Projection& projection,
     const Rectangle& coverageRectangle) noexcept
-    : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
-      _asyncSystem(asyncSystem),
-      _pAssetAccessor(pAssetAccessor),
-      _pCreditSystem(pCreditSystem),
-      _credit(credit),
-      _pPrepareRendererResources(pPrepareRendererResources),
-      _pLogger(pLogger),
-      _projection(projection),
-      _coverageRectangle(coverageRectangle),
-      _pPlaceholder(nullptr),
-      _tileDataBytes(0),
-      _totalTilesCurrentlyLoading(0),
-      _throttledTilesCurrentlyLoading(0),
-      _destructionCompleteDetails() {}
+    : RasterOverlayTileProvider(
+          pOwner,
+          RasterOverlayExternals{
+              .pAssetAccessor = pAssetAccessor,
+              .pPrepareRendererResources = pPrepareRendererResources,
+              .asyncSystem = asyncSystem,
+              .pCreditSystem = pCreditSystem,
+              .pLogger = pLogger},
+          credit,
+          projection,
+          coverageRectangle) {}
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
   // Explicitly release the placeholder first, because RasterOverlayTiles must
@@ -104,7 +129,7 @@ RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
 CesiumAsync::SharedFuture<void>&
 RasterOverlayTileProvider::getAsyncDestructionCompleteEvent() {
   if (!this->_destructionCompleteDetails) {
-    auto promise = this->_asyncSystem.createPromise<void>();
+    auto promise = this->_externals.asyncSystem.createPromise<void>();
     auto sharedFuture = promise.getFuture().share();
     this->_destructionCompleteDetails.emplace(DestructionCompleteDetails{
         std::move(promise),
@@ -112,6 +137,53 @@ RasterOverlayTileProvider::getAsyncDestructionCompleteEvent() {
   }
 
   return this->_destructionCompleteDetails->future;
+}
+
+bool RasterOverlayTileProvider::isPlaceholder() const noexcept {
+  return this->_pPlaceholder != nullptr;
+}
+
+RasterOverlay& RasterOverlayTileProvider::getOwner() noexcept {
+  return *this->_pOwner;
+}
+
+const RasterOverlay& RasterOverlayTileProvider::getOwner() const noexcept {
+  return *this->_pOwner;
+}
+
+const std::shared_ptr<CesiumAsync::IAssetAccessor>&
+RasterOverlayTileProvider::getAssetAccessor() const noexcept {
+  return this->_externals.pAssetAccessor;
+}
+
+const std::shared_ptr<CesiumUtility::CreditSystem>&
+RasterOverlayTileProvider::getCreditSystem() const noexcept {
+  return this->_externals.pCreditSystem;
+}
+
+const CesiumAsync::AsyncSystem&
+RasterOverlayTileProvider::getAsyncSystem() const noexcept {
+  return this->_externals.asyncSystem;
+}
+
+const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+RasterOverlayTileProvider::getPrepareRendererResources() const noexcept {
+  return this->_externals.pPrepareRendererResources;
+}
+
+const std::shared_ptr<spdlog::logger>&
+RasterOverlayTileProvider::getLogger() const noexcept {
+  return this->_externals.pLogger;
+}
+
+const CesiumGeospatial::Projection&
+RasterOverlayTileProvider::getProjection() const noexcept {
+  return this->_projection;
+}
+
+const CesiumGeometry::Rectangle&
+RasterOverlayTileProvider::getCoverageRectangle() const noexcept {
+  return this->_coverageRectangle;
 }
 
 CesiumUtility::IntrusivePointer<RasterOverlayTile>
@@ -129,11 +201,25 @@ RasterOverlayTileProvider::getTile(
   return new RasterOverlayTile(*this, targetScreenPixels, rectangle);
 }
 
+int64_t RasterOverlayTileProvider::getTileDataBytes() const noexcept {
+  return this->_tileDataBytes;
+}
+
+uint32_t RasterOverlayTileProvider::getNumberOfTilesLoading() const noexcept {
+  CESIUM_ASSERT(this->_totalTilesCurrentlyLoading > -1);
+  return static_cast<uint32_t>(this->_totalTilesCurrentlyLoading);
+}
+
 void RasterOverlayTileProvider::removeTile(RasterOverlayTile* pTile) noexcept {
   CESIUM_ASSERT(pTile->getReferenceCount() == 0);
   if (pTile->getImage()) {
     this->_tileDataBytes -= pTile->getImage()->sizeBytes;
   }
+}
+
+const std::optional<CesiumUtility::Credit>&
+RasterOverlayTileProvider::getCredit() const noexcept {
+  return _credit;
 }
 
 CesiumAsync::Future<TileProviderAndTile>
@@ -281,7 +367,7 @@ struct LoadResult {
  * @param rendererOptions Renderer options
  * @return The `LoadResult`
  */
-static LoadResult createLoadResultFromLoadedImage(
+LoadResult createLoadResultFromLoadedImage(
     const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
@@ -436,10 +522,28 @@ void RasterOverlayTileProvider::finalizeTileLoad(
   }
 }
 
+TileProviderAndTile::TileProviderAndTile(
+    const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
+        pTileProvider_,
+    const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pTile_) noexcept
+    : pTileProvider(pTileProvider_), pTile(pTile_) {}
+
 TileProviderAndTile::~TileProviderAndTile() noexcept {
   // Ensure the tile is released before the tile provider.
   pTile = nullptr;
   pTileProvider = nullptr;
 }
+
+TileProviderAndTile::TileProviderAndTile(const TileProviderAndTile&) noexcept =
+    default;
+
+TileProviderAndTile&
+TileProviderAndTile::operator=(const TileProviderAndTile&) noexcept = default;
+
+TileProviderAndTile::TileProviderAndTile(TileProviderAndTile&&) noexcept =
+    default;
+
+TileProviderAndTile&
+TileProviderAndTile::operator=(TileProviderAndTile&&) noexcept = default;
 
 } // namespace CesiumRasterOverlays
