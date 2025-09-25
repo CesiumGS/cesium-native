@@ -507,8 +507,10 @@ public:
 
   /**
    * @brief Determines if this tile is currently renderable.
+   * @param modelVersion Optionally, a model version required to allow this
+   * tile to render. See CesiumGltf::Model::version.
    */
-  bool isRenderable() const noexcept;
+  bool isRenderable(std::optional<int> modelVersion) const noexcept;
 
   /**
    * @brief Determines if this tile has mesh content.
@@ -538,18 +540,22 @@ public:
   /**
    * @brief Determines if this tile requires worker-thread loading.
    *
+   * @param modelVersion Optional version of the glTF model that this tile
+   * should check to determine whether it is up to date. See {@link TilesetExternals::pGltfModifier}.
    * @return true if this Tile needs further work done in a worker thread to
    * load it; otherwise, false.
    */
-  bool needsWorkerThreadLoading() const noexcept;
+  bool needsWorkerThreadLoading(std::optional<int> modelVersion) const noexcept;
 
   /**
    * @brief Determines if this tile requires main-thread loading.
    *
+   * @param modelVersion Optional version of the glTF model that this tile
+   * should check to determine whether it is up to date. See {@link TilesetExternals::pGltfModifier}.
    * @return true if this Tile needs further work done in the main thread to
    * load it; otherwise, false.
    */
-  bool needsMainThreadLoading() const noexcept;
+  bool needsMainThreadLoading(std::optional<int> modelVersion) const noexcept;
 
   /**
    * @brief Adds a reference to this tile. A live reference will keep this tile

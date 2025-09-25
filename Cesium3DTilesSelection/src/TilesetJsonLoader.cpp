@@ -861,7 +861,8 @@ TilesetJsonLoader::createLoader(
       .thenInWorkerThread([ellipsoid,
                            asyncSystem = externals.asyncSystem,
                            pAssetAccessor = externals.pAssetAccessor,
-                           pLogger = externals.pLogger](
+                           pLogger = externals.pLogger,
+                           pGltfModifier = externals.pGltfModifier](
                               const std::shared_ptr<CesiumAsync::IAssetRequest>&
                                   pCompletedRequest) {
         const CesiumAsync::IAssetResponse* pResponse =
@@ -900,6 +901,12 @@ TilesetJsonLoader::createLoader(
               tilesetJson.GetParseError(),
               tilesetJson.GetErrorOffset()));
           return asyncSystem.createResolvedFuture(std::move(result));
+        }
+
+        // Let the optional modifier parse any extra information from
+        // tileset.json
+        if (pGltfModifier) {
+          pGltfModifier->parseTilesetJson(tilesetJson);
         }
 
         return TilesetJsonLoader::createLoader(
