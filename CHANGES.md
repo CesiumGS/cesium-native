@@ -6,11 +6,30 @@
 
 - `RasterOverlayTileProvider::loadTileImage` now receives a const `RasterOverlayTile`.
 - `SharedAssetDepot` now uses a templatized "context" instead of separate `AsyncSystem` and `IAssetAccessor` parameters. It defaults to `SharedAssetContext`.
+- Removed the following from `RasterOverlayTileProvider`:
+  - The constructor overloads that were used to create a placeholder tile provider.
+  - `isPlaceholder`
+  - `getTile`
+  - `getTileDataBytes`
+  - `getNumberOfTilesLoading`
+  - `removeTile`
+  - `loadTile`
+  - `loadTileThrottled`
+- `RasterMappedTo3DTile::mapOverlayToTile` now takes an `ActivatedRasterOverlay` instead of a `RasterOverlayTileProvider`.
+- Removed `getOverlays`, `getTileProviders`, and `getPlaceholderTileProviders` from `RasterOverlayCollection`. Use `getActivatedOverlays` instead.
 
 ##### Additions :tada:
 
 - Added `invalidate` method to `SharedAssetDepot`.
 - Added `RasterOverlayExternals` class. This is similar to `TilesetExternals` and is a more convenient way to pass around the various external interfaces that raster overlays use.
+- Added `ActivatedRasterOverlay`, encapsulating most of the functionality that was previously found on `RasterOverlayTileProvider`.
+- Added `addTileOverlays` and `updateTileOverlays` to `RasterOverlayCollection`.
+- `RasterOverlayCollection::add` and `remove` now take a pointer to a const `RasterOverlay`.
+- Added `CesiumUtility::TransformIterator`.
+
+##### Fixes :wrench:
+
+- `LoadedTileEnumerator` now provides non-const access to enumerated `Tile` instances, even if the enumerator itself is const.
 
 ##### Fixes :wrench:
 

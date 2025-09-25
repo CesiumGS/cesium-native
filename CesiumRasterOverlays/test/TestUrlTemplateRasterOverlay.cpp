@@ -2,6 +2,7 @@
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/UrlTemplateRasterOverlay.h>
@@ -42,32 +43,24 @@ TEST_CASE("UrlTemplateRasterOverlay getTile") {
           "Test",
           "http://example.com/{x}/{y}/{z}.png");
 
-  IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
-
-  pOverlay
-      ->createTileProvider(
-          asyncSystem,
+  IntrusivePointer<ActivatedRasterOverlay> pActivated = pOverlay->activate(
+      RasterOverlayExternals{
           pAssetAccessor,
           nullptr,
+          asyncSystem,
           nullptr,
-          spdlog::default_logger(),
-          nullptr)
-      .thenInMainThread(
-          [&pProvider](RasterOverlay::CreateTileProviderResult&& created) {
-            CHECK(created);
-            pProvider = *created;
-          });
+          spdlog::default_logger()},
+      Ellipsoid::WGS84);
 
   asyncSystem.dispatchMainThreadTasks();
 
-  REQUIRE(pProvider);
-  REQUIRE(!pProvider->isPlaceholder());
+  REQUIRE(pActivated->getTileProvider() != nullptr);
 
   Rectangle rectangle =
       GeographicProjection::computeMaximumProjectedRectangle(Ellipsoid::WGS84);
   IntrusivePointer<RasterOverlayTile> pTile =
-      pProvider->getTile(rectangle, glm::dvec2(256));
-  pProvider->loadTile(*pTile);
+      pActivated->getTile(rectangle, glm::dvec2(256));
+  pActivated->loadTile(*pTile);
 
   while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
     asyncSystem.dispatchMainThreadTasks();
