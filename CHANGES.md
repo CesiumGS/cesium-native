@@ -5,11 +5,35 @@
 ##### Breaking Changes :mega:
 
 - `RasterOverlayTileProvider::loadTileImage` now receives a const `RasterOverlayTile`.
+- Removed the following from `RasterOverlayTileProvider`:
+  - The constructor overloads that were used to create a placeholder tile provider.
+  - `isPlaceholder`
+  - `getTile`
+  - `getTileDataBytes`
+  - `getNumberOfTilesLoading`
+  - `removeTile`
+  - `loadTile`
+  - `loadTileThrottled`
+- `RasterMappedTo3DTile::mapOverlayToTile` now takes an `ActivatedRasterOverlay` instead of a `RasterOverlayTileProvider`.
+- Removed `getOverlays`, `getTileProviders`, and `getPlaceholderTileProviders` from `RasterOverlayCollection`. Use `getActivatedOverlays` instead.
+- `SharedAssetDepot` now uses a templatized "context" instead of separate `AsyncSystem` and `IAssetAccessor` parameters. It defaults to `SharedAssetContext`.
 
 ##### Additions :tada:
 
+- Added `invalidate` method to `SharedAssetDepot`.
 - Added `RasterOverlayExternals` class. This is similar to `TilesetExternals` and is a more convenient way to pass around the various external interfaces that raster overlays use.
+- Added `ActivatedRasterOverlay`, encapsulating most of the functionality that was previously found on `RasterOverlayTileProvider`.
+- Added `addTileOverlays` and `updateTileOverlays` to `RasterOverlayCollection`.
+- `RasterOverlayCollection::add` and `remove` now take a pointer to a const `RasterOverlay`.
+- Added `CesiumUtility::TransformIterator`.
+- Added `CesiumUtility::DerivedValue`.
+- Added `RasterOverlayTileProvider::getExternals`.
 - Added new `log` and `format` methods to `ErrorList`.
+
+##### Fixes :wrench:
+
+- `LoadedTileEnumerator` now provides non-const access to enumerated `Tile` instances, even if the enumerator itself is const.
+- The Cesium ion token for raster overlays is now automatically refreshed every 55 minutes. Previously, it would refresh on a 401 HTTP status code, which could cause extraneous session usage if the raster overlay ever returned a 401 error for a non-token-related reason.
 
 ##### Fixes :wrench:
 
