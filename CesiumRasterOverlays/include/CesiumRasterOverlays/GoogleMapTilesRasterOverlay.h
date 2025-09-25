@@ -13,13 +13,15 @@ namespace CesiumRasterOverlays {
  * @brief Additional options for @ref GoogleMapTilesRasterOverlay.
  */
 struct GoogleMapTilesOptions {
+  int32_t maximumZoomLevel{28};
+
   std::optional<std::string> imageFormat{};
   std::optional<std::string> scale{};
   std::optional<bool> highDpi{};
   std::optional<std::string> layerTypes{};
   std::optional<CesiumUtility::JsonValue::Array> styles{};
   std::optional<bool> overlay{};
-  std::string apiBaseUrl{"https://tile.googleapis.com/v1/"};
+  std::string apiBaseUrl{"https://tile.googleapis.com/"};
 };
 
 class CESIUMRASTEROVERLAYS_API GoogleMapTilesRasterOverlay

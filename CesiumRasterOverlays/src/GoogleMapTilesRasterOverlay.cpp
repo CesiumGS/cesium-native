@@ -1,19 +1,20 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumGeometry/QuadtreeRectangleAvailability.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumJsonReader/JsonObjectJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumRasterOverlays/GoogleMapTilesRasterOverlay.h>
-#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
-#include <CesiumRasterOverlays/UrlTemplateRasterOverlay.h>
+#include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumUtility/Uri.h>
 
 #include <memory>
 
 using namespace CesiumAsync;
+using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumJsonReader;
 using namespace CesiumJsonWriter;
@@ -23,7 +24,35 @@ using namespace CesiumUtility;
 namespace {
 
 class GoogleMapTilesRasterOverlayTileProvider
-    : public RasterOverlayTileProvider {};
+    : public QuadtreeRasterOverlayTileProvider {
+public:
+  GoogleMapTilesRasterOverlayTileProvider(
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+      std::optional<CesiumUtility::Credit> credit,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+          pPrepareRendererResources,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const std::string& apiBaseUrl,
+      const std::string& session,
+      const std::string& key,
+      uint32_t maximumLevel,
+      uint32_t imageWidth,
+      uint32_t imageHeight);
+
+protected:
+  virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
+      const CesiumGeometry::QuadtreeTileID& tileID) const override;
+
+private:
+  std::string _apiBaseUrl;
+  std::string _session;
+  std::string _key;
+  QuadtreeRectangleAvailability _availableTiles;
+  QuadtreeRectangleAvailability _availableAvailability;
+};
 
 } // namespace
 
@@ -53,7 +82,12 @@ GoogleMapTilesRasterOverlay::createTileProvider(
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     IntrusivePointer<const RasterOverlay> pOwner) const {
-  Uri createSessionUri(this->_googleOptions.apiBaseUrl, "createSession", true);
+  pOwner = pOwner ? pOwner : this;
+
+  Uri createSessionUri(
+      this->_googleOptions.apiBaseUrl,
+      "v1/createSession",
+      true);
 
   if (!this->_key.empty()) {
     UriQuery query(createSessionUri);
@@ -232,41 +266,126 @@ GoogleMapTilesRasterOverlay::createTileProvider(
 
             std::string imageFormat = it->second.getString();
 
-            UrlTemplateRasterOverlayOptions templateOptions{};
-            templateOptions.projection = WebMercatorProjection();
-            templateOptions.coverageRectangle =
-                WebMercatorProjection::computeMaximumProjectedRectangle(
-                    this->getOptions().ellipsoid);
-            templateOptions.tileWidth = static_cast<uint32_t>(tileWidth);
-            templateOptions.tileHeight = static_cast<uint32_t>(tileHeight);
-
-            Uri tileUri(this->_googleOptions.apiBaseUrl, "2dtiles/", true);
-
-            UriQuery tileQuery(tileUri);
-            tileQuery.setValue("session", session);
-            tileQuery.setValue("key", this->_key);
-
-            // Manually build the template URL, because the Uri class struggles with {placeholders}.
-            tileUri.setQuery("");
-            std::string tileUrlTemplate = std::string(tileUri.toString());
-            tileUrlTemplate += "{z}/{x}/{reverseY}?" + tileQuery.toQueryString();
-
-            IntrusivePointer<RasterOverlay> pOverlay =
-                new UrlTemplateRasterOverlay(
-                    this->getName(),
-                    tileUrlTemplate,
-                    {},
-                    templateOptions,
-                    this->getOptions());
-
-            return pOverlay->createTileProvider(
-                asyncSystem,
-                pAssetAccessor,
-                pCreditSystem,
-                pPrepareRendererResources,
-                pLogger,
-                pOwner);
+            return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
+                IntrusivePointer(new GoogleMapTilesRasterOverlayTileProvider(
+                    pOwner,
+                    asyncSystem,
+                    pAssetAccessor,
+                    pCreditSystem,
+                    std::nullopt,
+                    pPrepareRendererResources,
+                    pLogger,
+                    this->_googleOptions.apiBaseUrl,
+                    session,
+                    this->_key,
+                    this->_googleOptions.maximumZoomLevel,
+                    static_cast<uint32_t>(tileWidth),
+                    static_cast<uint32_t>(tileHeight))));
           });
 }
 
 } // namespace CesiumRasterOverlays
+
+namespace {
+
+Rectangle createRectangle(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
+  return WebMercatorProjection::computeMaximumProjectedRectangle(
+      pOwner->getOptions().ellipsoid);
+}
+
+QuadtreeTilingScheme createTilingScheme(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
+  return QuadtreeTilingScheme(createRectangle(pOwner), 1, 1);
+}
+
+GoogleMapTilesRasterOverlayTileProvider::
+    GoogleMapTilesRasterOverlayTileProvider(
+        const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+        const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+        std::optional<CesiumUtility::Credit> credit,
+        const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+            pPrepareRendererResources,
+        const std::shared_ptr<spdlog::logger>& pLogger,
+        const std::string& apiBaseUrl,
+        const std::string& session,
+        const std::string& key,
+        uint32_t maximumLevel,
+        uint32_t imageWidth,
+        uint32_t imageHeight)
+    : QuadtreeRasterOverlayTileProvider(
+          pOwner,
+          asyncSystem,
+          pAssetAccessor,
+          pCreditSystem,
+          credit,
+          pPrepareRendererResources,
+          pLogger,
+          WebMercatorProjection(pOwner->getOptions().ellipsoid),
+          createTilingScheme(pOwner),
+          createRectangle(pOwner),
+          0,
+          maximumLevel,
+          imageWidth,
+          imageHeight),
+      _apiBaseUrl(apiBaseUrl),
+      _session(session),
+      _key(key),
+      _availableTiles(createTilingScheme(pOwner), maximumLevel),
+      _availableAvailability(createTilingScheme(pOwner), maximumLevel) {}
+
+CesiumAsync::Future<LoadedRasterOverlayImage>
+GoogleMapTilesRasterOverlayTileProvider::loadQuadtreeTileImage(
+    const CesiumGeometry::QuadtreeTileID& tileID) const {
+  // 1. If the tile is known to be available, load it.
+  if (this->_availableTiles.isTileAvailable(tileID)) {
+    // return UrlTemplateRasterOverlay::loadTileImageFromUrl(
+    //     this,
+    //     fmt::format(
+    //         "https://mt.google.com/vt/lyrs=m&x={}&y={}&z={}",
+    //         tileID.x,
+    //         tileID.y,
+    //         tileID.level));
+  }
+
+  // 2. If we have complete availability information here, that means the tile
+  // is definitely _not_ available (or we would have returned at (1) above).
+  if (this->_availableAvailability.isTileAvailable(tileID)) {
+    // return this->createResolvedFuture<LoadedRasterOverlayImage>(
+    //     LoadedRasterOverlayImage{});
+  }
+
+  // 3. We can't tell if this tile is available. Check with the `viewport`
+  // service.
+
+  Uri tileUri(
+      this->_apiBaseUrl,
+      fmt::format(
+          "v1/2dtiles/{}/{}/{}",
+          tileID.level,
+          tileID.x,
+          tileID.computeInvertedY(this->getTilingScheme())),
+      true);
+
+  UriQuery tileQuery(tileUri);
+  tileQuery.setValue("session", this->_session);
+  tileQuery.setValue("key", this->_key);
+
+  tileUri.setQuery(tileQuery.toQueryString());
+
+  LoadTileImageFromUrlOptions options;
+  options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+  options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+
+  const GlobeRectangle unprojectedRect =
+      unprojectRectangleSimple(this->getProjection(), options.rectangle);
+
+  return this->loadTileImageFromUrl(
+      std::string(tileUri.toString()),
+      {},
+      std::move(options));
+}
+
+} // namespace
