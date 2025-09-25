@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - `RasterOverlayTileProvider::loadTileImage` now receives a const `RasterOverlayTile`.
+- `SharedAssetDepot` now uses a templatized "context" instead of separate `AsyncSystem` and `IAssetAccessor` parameters. It defaults to `SharedAssetContext`.
 - Removed the following from `RasterOverlayTileProvider`:
   - The constructor overloads that were used to create a placeholder tile provider.
   - `isPlaceholder`
@@ -19,6 +20,7 @@
 
 ##### Additions :tada:
 
+- Added `invalidate` method to `SharedAssetDepot`.
 - Added `RasterOverlayExternals` class. This is similar to `TilesetExternals` and is a more convenient way to pass around the various external interfaces that raster overlays use.
 - Added `ActivatedRasterOverlay`, encapsulating most of the functionality that was previously found on `RasterOverlayTileProvider`.
 - Added `addTileOverlays` and `updateTileOverlays` to `RasterOverlayCollection`.
