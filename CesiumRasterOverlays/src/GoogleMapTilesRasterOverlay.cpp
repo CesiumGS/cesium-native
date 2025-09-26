@@ -55,6 +55,9 @@ public:
   CesiumAsync::Future<void>
   loadAvailability(const CesiumGeometry::QuadtreeTileID& tileID) const;
 
+  virtual void
+  addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
+
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID) const override;
@@ -62,12 +65,19 @@ protected:
 private:
   CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImageFromService(const CesiumGeometry::QuadtreeTileID& tileID) const;
+  void loadCredits(const CesiumGeometry::QuadtreeTileID& tileID) const;
+
+  struct LevelCredits {
+    std::optional<CesiumAsync::Future<void>> future{};
+    std::vector<Credit> credits{};
+  };
 
   std::string _apiBaseUrl;
   std::string _session;
   std::string _key;
   mutable QuadtreeRectangleAvailability _availableTiles;
   mutable QuadtreeRectangleAvailability _availableAvailability;
+  mutable std::vector<LevelCredits> _creditsByLevel;
 };
 
 void ensureTrailingSlash(std::string& url) {
@@ -430,11 +440,25 @@ GoogleMapTilesRasterOverlayTileProvider::
       _session(session),
       _key(key),
       _availableTiles(createTilingScheme(pOwner), maximumLevel),
-      _availableAvailability(createTilingScheme(pOwner), maximumLevel) {}
+      _availableAvailability(createTilingScheme(pOwner), maximumLevel),
+      _creditsByLevel() {
+  this->_creditsByLevel.reserve(maximumLevel + 1);
+  for (size_t i = 0; i < this->_creditsByLevel.capacity(); ++i) {
+    this->_creditsByLevel.emplace_back(LevelCredits());
+  }
+}
+
+void GoogleMapTilesRasterOverlayTileProvider::addCredits(
+    CesiumUtility::CreditReferencer& creditReferencer) noexcept {
+  QuadtreeRasterOverlayTileProvider::addCredits(creditReferencer);
+}
 
 CesiumAsync::Future<LoadedRasterOverlayImage>
 GoogleMapTilesRasterOverlayTileProvider::loadQuadtreeTileImage(
     const CesiumGeometry::QuadtreeTileID& tileID) const {
+  // Load credits for this level if necessary.
+  this->loadCredits(tileID);
+
   // 1. If the tile is known to be available, load it.
   if (this->_availableTiles.isTileAvailable(tileID)) {
     return this->loadTileImageFromService(tileID);
@@ -495,6 +519,7 @@ GoogleMapTilesRasterOverlayTileProvider::loadTileImageFromService(
   LoadTileImageFromUrlOptions options;
   options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
   options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+  options.credits = this->_creditsByLevel[tileID.level].credits;
 
   const GlobeRectangle unprojectedRect =
       unprojectRectangleSimple(this->getProjection(), options.rectangle);
@@ -506,7 +531,6 @@ GoogleMapTilesRasterOverlayTileProvider::loadTileImageFromService(
 }
 
 namespace {
-
 QuadtreeTileRectangularRange rectangleForAvailability(
     const QuadtreeTilingScheme& tilingScheme,
     uint32_t maximumLevel,
@@ -517,8 +541,8 @@ QuadtreeTileRectangularRange rectangleForAvailability(
       tilingScheme.positionToTile(rectangle.getUpperRight(), maximumLevel);
 
   if (!sw || !ne) {
-    // This should never happen, because the input rectangle should always be
-    // within the tiling scheme's rectangle.
+    // This should never happen, because the input rectangle should always
+    // be within the tiling scheme's rectangle.
     return QuadtreeTileRectangularRange{
         .level = 0,
         .minimumX = 0,
@@ -535,72 +559,99 @@ QuadtreeTileRectangularRange rectangleForAvailability(
       .maximumY = ne->y};
 }
 
+CesiumAsync::Future<rapidjson::Document> fetchViewportData(
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& apiBaseUrl,
+    const std::string& session,
+    const std::string& key,
+    uint32_t zoom,
+    const Rectangle& rectangleDegrees) {
+  Uri viewportUri(apiBaseUrl, "tile/v1/viewport", true);
+
+  UriQuery query(viewportUri);
+  query.setValue("session", session);
+  query.setValue("key", key);
+  query.setValue("zoom", std::to_string(zoom));
+  query.setValue("west", std::to_string(rectangleDegrees.minimumX));
+  query.setValue("south", std::to_string(rectangleDegrees.minimumY));
+  query.setValue("east", std::to_string(rectangleDegrees.maximumX));
+  query.setValue("north", std::to_string(rectangleDegrees.maximumY));
+
+  viewportUri.setQuery(query.toQueryString());
+
+  return pAssetAccessor->get(asyncSystem, std::string(viewportUri.toString()))
+      .thenInMainThread(
+          [pLogger](const std::shared_ptr<IAssetRequest>& pRequest)
+              -> rapidjson::Document {
+            const IAssetResponse* pResponse = pRequest->response();
+            rapidjson::Document document;
+
+            if (!pResponse) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "No response received from Google Map Tiles API viewport "
+                  "service.");
+              return document;
+            }
+
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Error response {} received from Google Map Tiles API "
+                  "viewport service.",
+                  pResponse->statusCode());
+              return document;
+            }
+
+            document.Parse(
+                reinterpret_cast<const char*>(pResponse->data().data()),
+                pResponse->data().size());
+
+            if (document.HasParseError()) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Error when parsing Google Map Tiles API viewport "
+                  "service JSON, error code {} at byte offset {}.",
+                  document.GetParseError(),
+                  document.GetErrorOffset());
+              return document;
+            }
+
+            return document;
+          });
+}
+
 } // namespace
 
 CesiumAsync::Future<void>
 GoogleMapTilesRasterOverlayTileProvider::loadAvailability(
     const CesiumGeometry::QuadtreeTileID& tileID) const {
-  Uri viewportUri(this->_apiBaseUrl, "tile/v1/viewport", true);
-
   CesiumGeometry::Rectangle tileRectangle =
       this->getTilingScheme().tileToRectangle(tileID);
 
   GlobeRectangle tileGlobeRectangle =
       unprojectRectangleSimple(this->getProjection(), tileRectangle);
 
-  UriQuery query(viewportUri);
-  query.setValue("session", this->_session);
-  query.setValue("key", this->_key);
-  query.setValue("zoom", std::to_string(tileID.level));
-  query.setValue(
-      "west",
-      std::to_string(Math::radiansToDegrees(tileGlobeRectangle.getWest())));
-  query.setValue(
-      "south",
-      std::to_string(Math::radiansToDegrees(tileGlobeRectangle.getSouth())));
-  query.setValue(
-      "east",
-      std::to_string(Math::radiansToDegrees(tileGlobeRectangle.getEast())));
-  query.setValue(
-      "north",
-      std::to_string(Math::radiansToDegrees(tileGlobeRectangle.getNorth())));
+  Rectangle rectangleDegrees(
+      Math::radiansToDegrees(tileGlobeRectangle.getWest()),
+      Math::radiansToDegrees(tileGlobeRectangle.getSouth()),
+      Math::radiansToDegrees(tileGlobeRectangle.getEast()),
+      Math::radiansToDegrees(tileGlobeRectangle.getNorth()));
 
-  viewportUri.setQuery(query.toQueryString());
-
-  return this->getAssetAccessor()
-      ->get(this->getAsyncSystem(), std::string(viewportUri.toString()))
-      .thenInMainThread([this, tileRectangle](
-                            const std::shared_ptr<IAssetRequest>& pRequest) {
-        const IAssetResponse* pResponse = pRequest->response();
-        if (!pResponse) {
-          SPDLOG_LOGGER_ERROR(
-              this->getLogger(),
-              "No response received from Google Map Tiles API viewport "
-              "service.");
-          return;
-        }
-
-        if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
-          SPDLOG_LOGGER_ERROR(
-              this->getLogger(),
-              "Error response {} received from Google Map Tiles API viewport "
-              "service.",
-              pResponse->statusCode());
-          return;
-        }
-
-        rapidjson::Document document;
-        document.Parse(
-            reinterpret_cast<const char*>(pResponse->data().data()),
-            pResponse->data().size());
-
+  return fetchViewportData(
+             this->getAssetAccessor(),
+             this->getAsyncSystem(),
+             this->getLogger(),
+             this->_apiBaseUrl,
+             this->_session,
+             this->_key,
+             tileID.level,
+             rectangleDegrees)
+      .thenInMainThread([this, tileRectangle](rapidjson::Document&& document) {
         if (document.HasParseError()) {
-          SPDLOG_LOGGER_ERROR(
-              this->getLogger(),
-              "Error when parsing Google Map Tiles API viewport service JSON, "
-              "error code {} at byte offset {}.",
-              document.GetParseError(),
-              document.GetErrorOffset());
           return;
         }
 
@@ -609,7 +660,8 @@ GoogleMapTilesRasterOverlayTileProvider::loadAvailability(
             !maxZoomRectsIt->value.IsArray()) {
           SPDLOG_LOGGER_ERROR(
               this->getLogger(),
-              "Google Map Tiles API viewport service JSON is missing the "
+              "Google Map Tiles API viewport service JSON is missing "
+              "the "
               "`maxZoomRects` property.");
           return;
         }
@@ -642,10 +694,10 @@ GoogleMapTilesRasterOverlayTileProvider::loadAvailability(
           Cartographic northeastRadians =
               Cartographic::fromDegrees(*maybeEast, *maybeNorth);
 
-          // Clamp the South and North coordinates to the tiling scheme's
-          // rectangle, because the viewport service likes to tell us about
-          // rectangles that go all the way to the poles when that is not
-          // possible in Web Mercator.
+          // Clamp the South and North coordinates to the tiling
+          // scheme's rectangle, because the viewport service likes to
+          // tell us about rectangles that go all the way to the poles
+          // when that is not possible in Web Mercator.
           GlobeRectangle maxRectangle =
               WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
           southwestRadians.latitude =
@@ -658,8 +710,8 @@ GoogleMapTilesRasterOverlayTileProvider::loadAvailability(
           glm::dvec2 northeastMercator = glm::dvec2(
               projectPosition(this->getProjection(), northeastRadians));
 
-          // Clamp the projected position, too. A position right on the boundary
-          // can end up on the wrong side when projected.
+          // Clamp the projected position, too. A position right on the
+          // boundary can end up on the wrong side when projected.
           Rectangle maxProjectedRectangle =
               this->getTilingScheme().getRectangle();
           southwestMercator =
@@ -690,8 +742,8 @@ GoogleMapTilesRasterOverlayTileProvider::loadAvailability(
                   .maximumX = ne->x,
                   .maximumY = ne->y});
 
-          // Availability of this level implies availability of all prior
-          // levels, too.
+          // Availability of this level implies availability of all
+          // prior levels, too.
           while (maxZoom > 0) {
             --maxZoom;
             sw->x >>= 1;
@@ -709,9 +761,9 @@ GoogleMapTilesRasterOverlayTileProvider::loadAvailability(
           }
         }
 
-        // If the response has fewer than 100 maxZoomRects, we know that this is
-        // _all_ of them. If it contains 100, there may be more we don't know
-        // about yet because Google truncated the list.
+        // If the response has fewer than 100 maxZoomRects, we know that
+        // this is _all_ of them. If it contains 100, there may be more
+        // we don't know about yet because Google truncated the list.
         if (maxZoomRects.Size() < 100) {
           this->_availableAvailability.addAvailableTileRange(
               rectangleForAvailability(
@@ -720,6 +772,62 @@ GoogleMapTilesRasterOverlayTileProvider::loadAvailability(
                   tileRectangle));
         }
       });
+}
+
+void GoogleMapTilesRasterOverlayTileProvider::loadCredits(
+    const CesiumGeometry::QuadtreeTileID& tileID) const {
+  CESIUM_ASSERT(tileID.level < this->_creditsByLevel.size());
+  LevelCredits& levelCredits = this->_creditsByLevel[tileID.level];
+  if (levelCredits.future) {
+    // Credits already loaded or loading.
+    return;
+  }
+
+  Uri viewportUri(this->_apiBaseUrl, "tile/v1/viewport", true);
+
+  UriQuery query(viewportUri);
+  query.setValue("session", this->_session);
+  query.setValue("key", this->_key);
+  query.setValue("zoom", std::to_string(tileID.level));
+  query.setValue("west", "-180");
+  query.setValue("south", "-90");
+  query.setValue("east", "180");
+  query.setValue("north", "90");
+
+  viewportUri.setQuery(query.toQueryString());
+
+  IntrusivePointer thiz = this;
+
+  levelCredits.future =
+      fetchViewportData(
+          this->getAssetAccessor(),
+          this->getAsyncSystem(),
+          this->getLogger(),
+          this->_apiBaseUrl,
+          this->_session,
+          this->_key,
+          tileID.level,
+          Rectangle(-180.0, -90.0, 180.0, 90.0))
+          .thenInMainThread(
+              [thiz, level = tileID.level](rapidjson::Document&& document) {
+                if (document.HasParseError()) {
+                  return;
+                }
+
+                auto attributionsIt = document.FindMember("copyright");
+                if (attributionsIt == document.MemberEnd() ||
+                    !attributionsIt->value.IsString()) {
+                  return;
+                }
+
+                std::vector<Credit> credits;
+
+                credits.emplace_back(thiz->getCreditSystem()->createCredit(
+                    attributionsIt->value.GetString(),
+                    false));
+
+                thiz->_creditsByLevel[level].credits = std::move(credits);
+              });
 }
 
 } // namespace
