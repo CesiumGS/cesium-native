@@ -30,6 +30,11 @@ using namespace CesiumUtility;
 
 namespace {
 
+// Whether to try to use tile availability information from the `viewport`
+// service to only request tiles that are known to be available. This is
+// experimental.
+bool useTileAvailability = false;
+
 // The maximum zoom level supported by Google Maps. The documentation claims
 // this is 22, but that's obviously wrong. There's little harm in this being too
 // high (except that we can't let tile indices overflow a 32-bit signed integer,
@@ -462,7 +467,7 @@ CesiumAsync::Future<LoadedRasterOverlayImage>
 GoogleMapTilesRasterOverlayTileProvider::loadQuadtreeTileImage(
     const CesiumGeometry::QuadtreeTileID& tileID) const {
   // 1. If the tile is known to be available, load it.
-  if (this->_availableTiles.isTileAvailable(tileID)) {
+  if (!useTileAvailability || this->_availableTiles.isTileAvailable(tileID)) {
     return this->loadTileImageFromService(tileID);
   }
 
