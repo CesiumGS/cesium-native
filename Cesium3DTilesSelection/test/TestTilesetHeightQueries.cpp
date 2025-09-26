@@ -326,7 +326,8 @@ TEST_CASE("Tileset height queries") {
     Tileset tileset(externals, url, options);
 
     Cartographic samplePosition = Cartographic::fromDegrees(10.0, 45.0, 0.0);
-    Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed({samplePosition});
+    Future<SampleHeightResult> future =
+        tileset.sampleHeightMostDetailed({samplePosition});
 
     while (!future.isReady()) {
       tileset.loadTiles();
@@ -335,7 +336,7 @@ TEST_CASE("Tileset height queries") {
     SampleHeightResult results = future.waitInMainThread();
     CHECK(results.warnings.empty());
     REQUIRE(results.positions.size() == 1);
-    
+
     glm::dvec3 rayDirection = -ellipsoid.geodeticSurfaceNormal(samplePosition);
     glm::dvec3 difference = glm::dvec3(15.0) * rayDirection;
 
