@@ -59,7 +59,8 @@ public:
   static std::vector<std::string_view> splitOnCharacter(
       const std::string_view& s,
       char separator,
-      const SplitOptions& options = {});
+      const SplitOptions& options =
+          SplitOptions{.trimWhitespace = true, .omitEmptyParts = true});
 };
 
 } // namespace CesiumUtility

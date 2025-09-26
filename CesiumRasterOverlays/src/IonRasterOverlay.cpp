@@ -424,11 +424,11 @@ IonRasterOverlay::getEndpointCache() {
                         JsonHelpers::getStringOrDefault(options, "session", "");
                     google2D.expiry =
                         JsonHelpers::getStringOrDefault(options, "expiry", "");
-                    google2D.tileWidth = JsonHelpers::getInt32OrDefault(
+                    google2D.tileWidth = JsonHelpers::getUint32OrDefault(
                         options,
                         "tileWidth",
                         256);
-                    google2D.tileHeight = JsonHelpers::getInt32OrDefault(
+                    google2D.tileHeight = JsonHelpers::getUint32OrDefault(
                         options,
                         "tileHeight",
                         256);

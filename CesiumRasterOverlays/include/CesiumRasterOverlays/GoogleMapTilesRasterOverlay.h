@@ -14,8 +14,8 @@ struct GoogleMapTilesExistingSession {
   std::string key;
   std::string session;
   std::string expiry;
-  int32_t tileWidth;
-  int32_t tileHeight;
+  uint32_t tileWidth;
+  uint32_t tileHeight;
   std::string imageFormat;
 };
 

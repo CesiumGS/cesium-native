@@ -115,8 +115,8 @@ private:
       std::string session;
       std::string expiry;
       std::string imageFormat;
-      int32_t tileWidth;
-      int32_t tileHeight;
+      uint32_t tileWidth;
+      uint32_t tileHeight;
     };
 
     std::variant<std::monostate, TileMapService, Bing, Google2D> options{};

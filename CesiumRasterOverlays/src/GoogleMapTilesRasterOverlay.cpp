@@ -61,8 +61,8 @@ public:
 
   CesiumAsync::Future<void> loadCredits();
 
-  virtual void
-  addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
+  virtual void addCredits(
+      CesiumUtility::CreditReferencer& creditReferencer) noexcept override;
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
@@ -521,9 +521,6 @@ GoogleMapTilesRasterOverlayTileProvider::loadTileImageFromService(
   LoadTileImageFromUrlOptions options;
   options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
   options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
-
-  const GlobeRectangle unprojectedRect =
-      unprojectRectangleSimple(this->getProjection(), options.rectangle);
 
   return this->loadTileImageFromUrl(
       std::string(tileUri.toString()),
