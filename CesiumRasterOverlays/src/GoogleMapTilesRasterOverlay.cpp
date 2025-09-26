@@ -9,6 +9,7 @@
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumRasterOverlays/GoogleMapTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
+#include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/StringHelpers.h>
 #include <CesiumUtility/Uri.h>
@@ -58,6 +59,8 @@ public:
   CesiumAsync::Future<void>
   loadAvailability(const CesiumGeometry::QuadtreeTileID& tileID) const;
 
+  CesiumAsync::Future<void> loadCredits();
+
   virtual void
   addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
 
@@ -68,19 +71,13 @@ protected:
 private:
   CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImageFromService(const CesiumGeometry::QuadtreeTileID& tileID) const;
-  void loadCredits(const CesiumGeometry::QuadtreeTileID& tileID) const;
-
-  struct LevelCredits {
-    std::optional<CesiumAsync::Future<void>> future{};
-    std::vector<Credit> credits{};
-  };
 
   std::string _apiBaseUrl;
   std::string _session;
   std::string _key;
+  std::optional<Credit> _credit;
   mutable QuadtreeRectangleAvailability _availableTiles;
   mutable QuadtreeRectangleAvailability _availableAvailability;
-  mutable std::vector<LevelCredits> _creditsByLevel;
 };
 
 void ensureTrailingSlash(std::string& url) {
@@ -153,6 +150,9 @@ GoogleMapTilesRasterOverlay::createTileProvider(
             maximumZoomLevel,
             session.tileWidth,
             session.tileHeight);
+
+    // Load credits, but don't wait for them to load.
+    pTileProvider->loadCredits();
 
     // Load initial availability information before trying to fulfill
     // tile requests. This should drastically reduce the number of
@@ -383,6 +383,9 @@ GoogleMapTilesRasterOverlay::createNewSession(
                     static_cast<uint32_t>(tileWidth),
                     static_cast<uint32_t>(tileHeight));
 
+            // Load credits, but don't wait for them to load.
+            pTileProvider->loadCredits();
+
             // Load initial availability information before trying to fulfill
             // tile requests. This should drastically reduce the number of
             // viewport requests we need to do.
@@ -442,26 +445,22 @@ GoogleMapTilesRasterOverlayTileProvider::
       _apiBaseUrl(apiBaseUrl),
       _session(session),
       _key(key),
+      _credit(),
       _availableTiles(createTilingScheme(pOwner), maximumLevel),
-      _availableAvailability(createTilingScheme(pOwner), maximumLevel),
-      _creditsByLevel() {
-  this->_creditsByLevel.reserve(maximumLevel + 1);
-  for (size_t i = 0; i < this->_creditsByLevel.capacity(); ++i) {
-    this->_creditsByLevel.emplace_back(LevelCredits());
-  }
-}
+      _availableAvailability(createTilingScheme(pOwner), maximumLevel) {}
 
 void GoogleMapTilesRasterOverlayTileProvider::addCredits(
     CesiumUtility::CreditReferencer& creditReferencer) noexcept {
   QuadtreeRasterOverlayTileProvider::addCredits(creditReferencer);
+
+  if (this->_credit) {
+    creditReferencer.addCreditReference(*this->_credit);
+  }
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>
 GoogleMapTilesRasterOverlayTileProvider::loadQuadtreeTileImage(
     const CesiumGeometry::QuadtreeTileID& tileID) const {
-  // Load credits for this level if necessary.
-  this->loadCredits(tileID);
-
   // 1. If the tile is known to be available, load it.
   if (this->_availableTiles.isTileAvailable(tileID)) {
     return this->loadTileImageFromService(tileID);
@@ -522,7 +521,6 @@ GoogleMapTilesRasterOverlayTileProvider::loadTileImageFromService(
   LoadTileImageFromUrlOptions options;
   options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
   options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
-  options.credits = this->_creditsByLevel[0].credits;
 
   const GlobeRectangle unprojectedRect =
       unprojectRectangleSimple(this->getProjection(), options.rectangle);
@@ -777,23 +775,13 @@ GoogleMapTilesRasterOverlayTileProvider::loadAvailability(
       });
 }
 
-void GoogleMapTilesRasterOverlayTileProvider::loadCredits(
-    const CesiumGeometry::QuadtreeTileID& tileID) const {
-  size_t level = 0;
-
-  CESIUM_ASSERT(level < this->_creditsByLevel.size());
-  LevelCredits& levelCredits = this->_creditsByLevel[level];
-  if (levelCredits.future) {
-    // Credits already loaded or loading.
-    return;
-  }
-
+Future<void> GoogleMapTilesRasterOverlayTileProvider::loadCredits() {
   IntrusivePointer thiz = this;
 
   std::vector<Future<std::string>> creditFutures;
-  creditFutures.reserve(this->_creditsByLevel.size());
+  creditFutures.reserve(maximumZoomLevel + 1);
 
-  for (size_t i = 0; i < this->_creditsByLevel.size(); ++i) {
+  for (size_t i = 0; i <= maximumZoomLevel; ++i) {
     creditFutures.emplace_back(
         fetchViewportData(
             this->getAssetAccessor(),
@@ -804,95 +792,98 @@ void GoogleMapTilesRasterOverlayTileProvider::loadCredits(
             this->_key,
             uint32_t(i),
             Rectangle(-180.0, -90.0, 180.0, 90.0))
-            .thenInMainThread(
-                [thiz, level = tileID.level](rapidjson::Document&& document) {
-                  if (document.HasParseError()) {
-                    return std::string();
-                  }
+            .thenInMainThread([](rapidjson::Document&& document) {
+              if (document.HasParseError()) {
+                return std::string();
+              }
 
-                  auto attributionsIt = document.FindMember("copyright");
-                  if (attributionsIt == document.MemberEnd() ||
-                      !attributionsIt->value.IsString()) {
-                    return std::string();
-                  }
+              auto attributionsIt = document.FindMember("copyright");
+              if (attributionsIt == document.MemberEnd() ||
+                  !attributionsIt->value.IsString()) {
+                return std::string();
+              }
 
-                  return std::string(
-                      attributionsIt->value.GetString(),
-                      attributionsIt->value.GetStringLength());
-                }));
+              return std::string(
+                  attributionsIt->value.GetString(),
+                  attributionsIt->value.GetStringLength());
+            }));
   }
 
-  this->_creditsByLevel[level].future =
-      this->getAsyncSystem()
-          .all(std::move(creditFutures))
-          .thenInMainThread([thiz](std::vector<std::string>&& results) {
-            const std::string copyrightPrefix = "Imagery ©";
-            std::set<std::string> uniqueCredits;
-            std::vector<std::string> credits;
-            std::string preamble;
+  return this->getAsyncSystem()
+      .all(std::move(creditFutures))
+      .thenInMainThread([thiz](std::vector<std::string>&& results) {
+        const std::string copyrightPrefix = "Imagery ©";
+        std::set<std::string> uniqueCredits;
+        std::vector<std::string> credits;
+        std::string preamble;
 
-            for (size_t i = 0; i < results.size(); ++i) {
-              // Each copyright starts with "Imagery ©2025" (or some other year
-              // in the future, presumably). Remove that preamble, but remember
-              // it so we can re-add it later.
-              std::string creditString = results[i];
-              if (creditString.find(copyrightPrefix) == 0) {
-                // Skip any spaces after the copyright symbol.
-                size_t firstNonSpace =
-                    creditString.find_first_not_of(' ', copyrightPrefix.size());
-                size_t firstNonNumberAfterSpace =
-                    firstNonSpace == std::string::npos
-                        ? std::string::npos
-                        : creditString.find_first_not_of(
-                              "0123456789",
-                              firstNonSpace);
-                if (firstNonNumberAfterSpace != std::string::npos) {
-                  if (preamble.empty()) {
-                    preamble = creditString.substr(0, firstNonNumberAfterSpace);
-                  }
-                  creditString = creditString.substr(firstNonNumberAfterSpace);
-                }
+        for (size_t i = 0; i < results.size(); ++i) {
+          // Each copyright starts with "Imagery ©2025" (or some other year
+          // in the future, presumably). Remove that preamble, but remember
+          // it so we can re-add it later.
+          std::string creditString = results[i];
+          if (creditString.find(copyrightPrefix) == 0) {
+            // Skip any spaces after the copyright symbol.
+            size_t firstNonSpace =
+                creditString.find_first_not_of(' ', copyrightPrefix.size());
+
+            // Skip the number (year).
+            size_t firstNonNumberAfterSpace =
+                firstNonSpace == std::string::npos
+                    ? std::string::npos
+                    : creditString.find_first_not_of(
+                          "0123456789",
+                          firstNonSpace);
+            if (firstNonNumberAfterSpace != std::string::npos) {
+              // Use the first non-empty preamble we find. Hopefully they're all
+              // the same, but we don't check.
+              if (preamble.empty()) {
+                preamble = creditString.substr(0, firstNonNumberAfterSpace);
               }
 
-              std::vector<std::string_view> parts =
-                  StringHelpers::splitOnCharacter(
-                      creditString,
-                      ',',
-                      StringHelpers::SplitOptions{
-                          .trimWhitespace = true,
-                          .omitEmptyParts = true});
+              // The actual credit string starts after the preamble.
+              creditString = creditString.substr(firstNonNumberAfterSpace);
+            }
+          }
 
-              for (size_t partIndex = 0; partIndex < parts.size();
-                   ++partIndex) {
-                // If any of the parts are "Inc.", it should be tacked onto
-                // the previous item. It would be nice if comma weren't both a
-                // separator and a thing that occurs in individual credits,
-                // but alas. This is not an exhaustive list of things that
-                // could potentially include commas, but it's the only one
-                // we've seen so far.
-                std::string credit = std::string(parts[partIndex]);
-                if (partIndex != parts.size() - 1 &&
-                    parts[partIndex + 1] == "Inc.") {
-                  credit += ", Inc.";
-                  ++partIndex;
-                }
+          std::vector<std::string_view> parts = StringHelpers::splitOnCharacter(
+              creditString,
+              ',',
+              StringHelpers::SplitOptions{
+                  .trimWhitespace = true,
+                  .omitEmptyParts = true});
 
-                // `uniqueCredits` ensures uniqueness, `credits` maintains
-                // order.
-                if (uniqueCredits.insert(credit).second) {
-                  credits.emplace_back(std::move(credit));
-                }
-              }
+          for (size_t partIndex = 0; partIndex < parts.size(); ++partIndex) {
+            // If any of the parts are "Inc.", it should be tacked onto
+            // the previous item. It would be nice if comma weren't both a
+            // separator and a thing that occurs in individual credits,
+            // but alas. This is not an exhaustive list of things that
+            // could potentially include commas, but it's the only one
+            // we've seen so far.
+            std::string credit = std::string(parts[partIndex]);
+            if (partIndex != parts.size() - 1 &&
+                parts[partIndex + 1] == "Inc.") {
+              credit += ", Inc.";
+              ++partIndex;
             }
 
-            std::string joined = joinToString(credits, ", ");
-            if (!preamble.empty()) {
-              joined = preamble + " " + joined;
+            // `uniqueCredits` ensures uniqueness, `credits` maintains
+            // order.
+            if (uniqueCredits.insert(credit).second) {
+              credits.emplace_back(std::move(credit));
             }
+          }
+        }
 
-            thiz->_creditsByLevel[0].credits.emplace_back(
-                thiz->getCreditSystem()->createCredit(joined, false));
-          });
+        // Join all the credits back together, and re-add the preamble.
+        std::string joined = joinToString(credits, ", ");
+        if (!preamble.empty()) {
+          joined = preamble + " " + joined;
+        }
+
+        // Create a single credit from this giant string.
+        thiz->_credit = thiz->getCreditSystem()->createCredit(joined, false);
+      });
 }
 
 } // namespace
