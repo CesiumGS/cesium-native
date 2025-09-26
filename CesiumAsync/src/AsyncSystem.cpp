@@ -22,6 +22,11 @@ bool AsyncSystem::dispatchOneMainThreadTask() {
   return this->_pSchedulers->mainThread.dispatchZeroOrOneContinuation();
 }
 
+CesiumImpl::ImmediateScheduler<CesiumImpl::QueuedScheduler>::SchedulerScope
+AsyncSystem::enterMainThread() const {
+  return this->_pSchedulers->mainThread.immediate.scope();
+}
+
 ThreadPool AsyncSystem::createThreadPool(int32_t numberOfThreads) const {
   return ThreadPool(numberOfThreads);
 }

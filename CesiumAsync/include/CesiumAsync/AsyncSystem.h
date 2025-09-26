@@ -291,6 +291,9 @@ public:
    */
   bool dispatchOneMainThreadTask();
 
+  CesiumImpl::ImmediateScheduler<CesiumImpl::QueuedScheduler>::SchedulerScope
+  enterMainThread() const;
+
   /**
    * @brief Creates a new thread pool that can be used to run continuations.
    *

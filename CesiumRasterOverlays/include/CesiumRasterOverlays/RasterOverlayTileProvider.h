@@ -16,6 +16,10 @@
 
 #include <optional>
 
+namespace CesiumUtility {
+class CreditReferencer;
+}
+
 namespace CesiumRasterOverlays {
 
 class RasterOverlay;
@@ -137,7 +141,6 @@ public:
    *
    * @param pOwner The raster overlay that created this tile provider.
    * @param externals The external interfaces for use by the raster overlay.
-   * @param credit The {@link CesiumUtility::Credit} for this tile provider, if it exists.
    * @param projection The {@link CesiumGeospatial::Projection}.
    * @param coverageRectangle The rectangle that bounds all the area covered by
    * this overlay, expressed in projected coordinates.
@@ -145,7 +148,6 @@ public:
   RasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
       const RasterOverlayExternals& externals,
-      std::optional<CesiumUtility::Credit> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
 
@@ -232,8 +234,11 @@ public:
 
   /**
    * @brief Get the per-TileProvider {@link CesiumUtility::Credit} if one exists.
+   * @deprecated Implement {@link addCredits} instead.
    */
-  const std::optional<CesiumUtility::Credit>& getCredit() const noexcept;
+  [[deprecated(
+      "Use addCredits instead.")]] const std::optional<CesiumUtility::Credit>&
+  getCredit() const noexcept;
 
   /**
    * @brief Loads the image for a tile.
@@ -243,6 +248,9 @@ public:
    */
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(const RasterOverlayTile& overlayTile) = 0;
+
+  virtual void
+  addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
 
 protected:
   /**

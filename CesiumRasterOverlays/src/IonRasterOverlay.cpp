@@ -11,6 +11,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
+#include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/DerivedValue.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -50,11 +51,19 @@ const std::chrono::steady_clock::duration AssetEndpointRerequestInterval =
 
 class IonRasterOverlay::TileProvider : public RasterOverlayTileProvider {
 public:
+  struct AggregatedTileProviderSuccess {
+    CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pAggregated;
+    std::vector<Credit> creditsFromIon;
+  };
+
+  using AggregatedTileProviderResult = nonstd::
+      expected<AggregatedTileProviderSuccess, RasterOverlayLoadFailureDetails>;
+
   struct CreateTileProvider {
     IntrusivePointer<const RasterOverlay> pOwner;
     RasterOverlayExternals externals;
 
-    SharedFuture<RasterOverlay::CreateTileProviderResult>
+    SharedFuture<AggregatedTileProviderResult>
     operator()(const IntrusivePointer<ExternalAssetEndpoint>& pEndpoint);
   };
 
@@ -68,11 +77,11 @@ public:
       : RasterOverlayTileProvider(
             &pInitialProvider->getOwner(),
             pInitialProvider->getExternals(),
-            pInitialProvider->getCredit(),
             pInitialProvider->getProjection(),
             pInitialProvider->getCoverageRectangle()),
         _descriptor(descriptor),
-        _factory(std::move(tileProviderFactory)){};
+        _factory(std::move(tileProviderFactory)),
+        _credits() {}
 
   static CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> create(
       const RasterOverlayExternals& externals,
@@ -85,33 +94,36 @@ public:
     return TileProvider::getTileProvider(externals, descriptor, *pFactory)
         .thenInMainThread(
             [descriptor, pFactory = std::move(pFactory)](
-                RasterOverlay::CreateTileProviderResult&& result) mutable
+                AggregatedTileProviderResult&& result) mutable
             -> CreateTileProviderResult {
               if (result) {
-                return IntrusivePointer<RasterOverlayTileProvider>(
-                    new TileProvider(
-                        result.value(),
-                        descriptor,
-                        std::move(*pFactory)));
+                IntrusivePointer p = new TileProvider(
+                    result.value().pAggregated,
+                    descriptor,
+                    std::move(*pFactory));
+                p->_credits = std::move(result.value().creditsFromIon);
+                return IntrusivePointer<RasterOverlayTileProvider>(p);
               } else {
-                return std::move(result);
+                return nonstd::make_unexpected(result.error());
               }
             });
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(const RasterOverlayTile& overlayTile) override {
-    IntrusivePointer<TileProvider> thiz(this);
+    // This method may only be called from the main thread. Make sure the
+    // AsyncSystem knows that.
+    auto mainThreadScope = this->getAsyncSystem().enterMainThread();
 
+    IntrusivePointer<TileProvider> thiz(this);
     return TileProvider::getTileProvider(
                this->getExternals(),
                this->_descriptor,
                this->_factory)
         .thenInMainThread(
-            [thiz, &overlayTile](
-                const RasterOverlay::CreateTileProviderResult& result) {
+            [thiz, &overlayTile](const AggregatedTileProviderResult& result) {
               if (result) {
-                return result.value()->loadTileImage(overlayTile);
+                return result.value().pAggregated->loadTileImage(overlayTile);
               } else {
                 return thiz->getAsyncSystem()
                     .createResolvedFuture<LoadedRasterOverlayImage>(
@@ -120,8 +132,35 @@ public:
             });
   }
 
+  virtual void
+  addCredits(CreditReferencer& creditReferencer) noexcept override {
+    RasterOverlayTileProvider::addCredits(creditReferencer);
+
+    // Report the credits we got from ion.
+    for (const Credit& credit : this->_credits) {
+      creditReferencer.addCreditReference(credit);
+    }
+
+    // This method may only be called from the main thread. Make sure the
+    // AsyncSystem knows that.
+    auto mainThreadScope = this->getAsyncSystem().enterMainThread();
+
+    // If the aggregated provider is ready, report its credits, too.
+    Future<AggregatedTileProviderResult> future = TileProvider::getTileProvider(
+        this->getExternals(),
+        this->_descriptor,
+        this->_factory);
+    if (future.isReady()) {
+      // This is guaranteed not to block, because we just checked `isReady()`.
+      const AggregatedTileProviderResult& result = future.wait();
+      if (result) {
+        result.value().pAggregated->addCredits(creditReferencer);
+      }
+    }
+  }
+
 private:
-  static Future<RasterOverlay::CreateTileProviderResult> getTileProvider(
+  static Future<AggregatedTileProviderResult> getTileProvider(
       const RasterOverlayExternals& externals,
       const NetworkAssetDescriptor& descriptor,
       TileProviderFactoryType& factory) {
@@ -176,7 +215,7 @@ private:
                 return factory(result.pValue);
               } else {
                 return asyncSystem
-                    .createResolvedFuture<CreateTileProviderResult>(
+                    .createResolvedFuture<AggregatedTileProviderResult>(
                         nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                             .type = RasterOverlayLoadType::CesiumIon,
                             .pRequest = nullptr,
@@ -190,6 +229,7 @@ private:
 
   NetworkAssetDescriptor _descriptor;
   TileProviderFactoryType _factory;
+  std::vector<Credit> _credits;
 };
 
 IonRasterOverlay::IonRasterOverlay(
@@ -472,13 +512,13 @@ IonRasterOverlay::getEndpointCache() {
   return pDepot;
 }
 
-SharedFuture<RasterOverlay::CreateTileProviderResult>
+SharedFuture<IonRasterOverlay::TileProvider::AggregatedTileProviderResult>
 IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
     const IntrusivePointer<ExternalAssetEndpoint>& pEndpoint) {
   if (pEndpoint == nullptr ||
       std::holds_alternative<std::monostate>(pEndpoint->options)) {
     return this->externals.asyncSystem
-        .createResolvedFuture<CreateTileProviderResult>(
+        .createResolvedFuture<AggregatedTileProviderResult>(
             nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                 RasterOverlayLoadType::CesiumIon,
                 pEndpoint ? pEndpoint->pRequestThatFailed : nullptr,
@@ -531,9 +571,12 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
         this->pOwner->getOptions());
   }
 
+  std::vector<Credit> credits;
+
   if (this->externals.pCreditSystem) {
-    std::vector<Credit>& credits = pOverlay->getCredits();
-    for (const auto& attribution : pEndpoint->attributions) {
+    credits.reserve(pEndpoint->attributions.size());
+    for (const AssetEndpointAttribution& attribution :
+         pEndpoint->attributions) {
       credits.emplace_back(this->externals.pCreditSystem->createCredit(
           attribution.html,
           !attribution.collapsible ||
@@ -549,6 +592,18 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
           this->externals.pPrepareRendererResources,
           this->externals.pLogger,
           this->pOwner)
+      .thenImmediately([credits = std::move(credits)](
+                           CreateTileProviderResult&& result) mutable {
+        if (result) {
+          return AggregatedTileProviderResult(AggregatedTileProviderSuccess{
+              .pAggregated = result.value(),
+              .creditsFromIon = std::move(credits),
+          });
+        } else {
+          return AggregatedTileProviderResult(
+              nonstd::make_unexpected(result.error()));
+        }
+      })
       .share();
 }
 
