@@ -4,6 +4,7 @@
 #include <CesiumAsync/NetworkAssetDescriptor.h>
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
+#include <CesiumRasterOverlays/GoogleMapTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/IonRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -329,6 +330,7 @@ IonRasterOverlay::getEndpointCache() {
                       response,
                       "externalType",
                       "unknown");
+
                   if (endpoint.externalType == "BING") {
                     const auto optionsIt = response.FindMember("options");
                     if (optionsIt == response.MemberEnd() ||
@@ -342,47 +344,52 @@ IonRasterOverlay::getEndpointCache() {
                               "not an object.")));
                     }
 
-                    const auto attributionsIt =
-                        response.FindMember("attributions");
-                    if (attributionsIt != response.MemberEnd() &&
-                        attributionsIt->value.IsArray()) {
-                      for (const rapidjson::Value& attribution :
-                           attributionsIt->value.GetArray()) {
-                        AssetEndpointAttribution& endpointAttribution =
-                            endpoint.attributions.emplace_back();
-                        const auto html = attribution.FindMember("html");
-                        if (html != attribution.MemberEnd() &&
-                            html->value.IsString()) {
-                          endpointAttribution.html = html->value.GetString();
-                        }
-                        auto collapsible =
-                            attribution.FindMember("collapsible");
-                        if (collapsible != attribution.MemberEnd() &&
-                            collapsible->value.IsBool()) {
-                          endpointAttribution.collapsible =
-                              collapsible->value.GetBool();
-                        }
-                      }
-                    }
-
                     const auto& options = optionsIt->value;
-                    endpoint.url =
+                    ExternalAssetEndpoint::Bing& bing =
+                        endpoint.options.emplace<ExternalAssetEndpoint::Bing>();
+                    bing.url =
                         JsonHelpers::getStringOrDefault(options, "url", "");
-                    endpoint.key =
+                    bing.key =
                         JsonHelpers::getStringOrDefault(options, "key", "");
-                    endpoint.mapStyle = JsonHelpers::getStringOrDefault(
+                    bing.mapStyle = JsonHelpers::getStringOrDefault(
                         options,
                         "mapStyle",
                         "AERIAL");
-                    endpoint.culture =
+                    bing.culture =
                         JsonHelpers::getStringOrDefault(options, "culture", "");
                   } else {
-                    endpoint.url =
+                    ExternalAssetEndpoint::TileMapService& tileMapService =
+                        endpoint.options
+                            .emplace<ExternalAssetEndpoint::TileMapService>();
+                    tileMapService.url =
                         JsonHelpers::getStringOrDefault(response, "url", "");
-                    endpoint.accessToken = JsonHelpers::getStringOrDefault(
-                        response,
-                        "accessToken",
-                        "");
+                    tileMapService.accessToken =
+                        JsonHelpers::getStringOrDefault(
+                            response,
+                            "accessToken",
+                            "");
+                  }
+
+                  const auto attributionsIt =
+                      response.FindMember("attributions");
+                  if (attributionsIt != response.MemberEnd() &&
+                      attributionsIt->value.IsArray()) {
+                    for (const rapidjson::Value& attribution :
+                         attributionsIt->value.GetArray()) {
+                      AssetEndpointAttribution& endpointAttribution =
+                          endpoint.attributions.emplace_back();
+                      const auto html = attribution.FindMember("html");
+                      if (html != attribution.MemberEnd() &&
+                          html->value.IsString()) {
+                        endpointAttribution.html = html->value.GetString();
+                      }
+                      auto collapsible = attribution.FindMember("collapsible");
+                      if (collapsible != attribution.MemberEnd() &&
+                          collapsible->value.IsBool()) {
+                        endpointAttribution.collapsible =
+                            collapsible->value.GetBool();
+                      }
+                    }
                   }
 
                   return ResultPointer<ExternalAssetEndpoint>(
@@ -400,7 +407,8 @@ IonRasterOverlay::getEndpointCache() {
                     [pLogger = context.pLogger, url = key.url](
                         ResultPointer<ExternalAssetEndpoint>&& assetResult) {
                       if (assetResult.pValue &&
-                          !assetResult.pValue->url.empty()) {
+                          !std::holds_alternative<std::monostate>(
+                              assetResult.pValue->options)) {
                         SPDLOG_LOGGER_INFO(
                             pLogger,
                             "Successfully refreshed Cesium ion token for "
@@ -427,7 +435,8 @@ IonRasterOverlay::getEndpointCache() {
 SharedFuture<RasterOverlay::CreateTileProviderResult>
 IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
     const IntrusivePointer<ExternalAssetEndpoint>& pEndpoint) {
-  if (pEndpoint == nullptr || pEndpoint->url.empty()) {
+  if (pEndpoint == nullptr ||
+      std::holds_alternative<std::monostate>(pEndpoint->options)) {
     return this->externals.asyncSystem
         .createResolvedFuture<CreateTileProviderResult>(
             nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
@@ -439,20 +448,45 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
 
   IntrusivePointer<RasterOverlay> pOverlay = nullptr;
   if (pEndpoint->externalType == "BING") {
+    CESIUM_ASSERT(std::holds_alternative<ExternalAssetEndpoint::Bing>(
+        pEndpoint->options));
+    ExternalAssetEndpoint::Bing& bing =
+        std::get<ExternalAssetEndpoint::Bing>(pEndpoint->options);
     pOverlay = new BingMapsRasterOverlay(
         this->pOwner->getName(),
-        pEndpoint->url,
-        pEndpoint->key,
-        pEndpoint->mapStyle,
-        pEndpoint->culture,
+        bing.url,
+        bing.key,
+        bing.mapStyle,
+        bing.culture,
+        this->pOwner->getOptions());
+  } else if (pEndpoint->externalType == "GOOGLE_2D_MAPS") {
+    CESIUM_ASSERT(std::holds_alternative<ExternalAssetEndpoint::Google2D>(
+        pEndpoint->options));
+    ExternalAssetEndpoint::Google2D& google2D =
+        std::get<ExternalAssetEndpoint::Google2D>(pEndpoint->options);
+    pOverlay = new GoogleMapTilesRasterOverlay(
+        this->pOwner->getName(),
+        GoogleMapTilesExistingSession{
+            .apiBaseUrl = google2D.url,
+            .key = google2D.key,
+            .session = google2D.session,
+            .expiry = "",
+            .tileWidth = google2D.tileWidth,
+            .tileHeight = google2D.tileHeight,
+            .imageFormat = google2D.imageFormat,
+        },
         this->pOwner->getOptions());
   } else {
+    CESIUM_ASSERT(std::holds_alternative<ExternalAssetEndpoint::TileMapService>(
+        pEndpoint->options));
+    ExternalAssetEndpoint::TileMapService& tileMapService =
+        std::get<ExternalAssetEndpoint::TileMapService>(pEndpoint->options);
     pOverlay = new TileMapServiceRasterOverlay(
         this->pOwner->getName(),
-        pEndpoint->url,
+        tileMapService.url,
         std::vector<CesiumAsync::IAssetAccessor::THeader>{std::make_pair(
             "Authorization",
-            "Bearer " + pEndpoint->accessToken)},
+            "Bearer " + tileMapService.accessToken)},
         TileMapServiceRasterOverlayOptions(),
         this->pOwner->getOptions());
   }

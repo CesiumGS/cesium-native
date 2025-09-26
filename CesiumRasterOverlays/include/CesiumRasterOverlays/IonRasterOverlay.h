@@ -92,15 +92,33 @@ private:
     ExternalAssetEndpoint(const ExternalAssetEndpoint&) noexcept = default;
     ExternalAssetEndpoint(ExternalAssetEndpoint&&) noexcept = default;
 
-    std::chrono::steady_clock::time_point requestTime;
-    std::string externalType;
-    std::string url;
-    std::string mapStyle;
-    std::string key;
-    std::string culture;
-    std::string accessToken;
-    std::vector<AssetEndpointAttribution> attributions;
-    std::shared_ptr<CesiumAsync::IAssetRequest> pRequestThatFailed;
+    std::chrono::steady_clock::time_point requestTime{};
+    std::string externalType{};
+    std::vector<AssetEndpointAttribution> attributions{};
+    std::shared_ptr<CesiumAsync::IAssetRequest> pRequestThatFailed{};
+
+    struct TileMapService {
+      std::string url;
+      std::string accessToken;
+    };
+
+    struct Bing {
+      std::string key;
+      std::string url;
+      std::string mapStyle;
+      std::string culture;
+    };
+
+    struct Google2D {
+      std::string url;
+      std::string key;
+      std::string session;
+      std::string imageFormat;
+      int32_t tileWidth;
+      int32_t tileHeight;
+    };
+
+    std::variant<std::monostate, TileMapService, Bing, Google2D> options{};
   };
 
   static std::unordered_map<std::string, ExternalAssetEndpoint> endpointCache;

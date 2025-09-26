@@ -26,6 +26,13 @@ using namespace CesiumUtility;
 
 namespace {
 
+// The maximum zoom level supported by Google Maps. The documentation claims
+// this is 22, but that's obviously wrong. There's little harm in this being too
+// high (except that we can't let tile indices overflow a 32-bit signed integer,
+// so 30 is the practical maximum), but if this is too small then we may not
+// show some available detail.
+const int32_t maximumZoomLevel{28};
+
 class GoogleMapTilesRasterOverlayTileProvider
     : public QuadtreeRasterOverlayTileProvider {
 public:
@@ -69,18 +76,19 @@ namespace CesiumRasterOverlays {
 
 GoogleMapTilesRasterOverlay::GoogleMapTilesRasterOverlay(
     const std::string& name,
-    const std::string& key,
-    const std::string& mapType,
-    const std::string& language,
-    const std::string& region,
-    const GoogleMapTilesOptions& googleOptions,
+    const GoogleMapTilesNewSessionParameters& newSessionParameters,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
-      _key(key),
-      _mapType(mapType),
-      _language(language),
-      _region(region),
-      _googleOptions(googleOptions) {}
+      _newSessionParameters(newSessionParameters),
+      _existingSession(std::nullopt) {}
+
+GoogleMapTilesRasterOverlay::GoogleMapTilesRasterOverlay(
+    const std::string& name,
+    const GoogleMapTilesExistingSession& existingSession,
+    const RasterOverlayOptions& overlayOptions)
+    : RasterOverlay(name, overlayOptions),
+      _newSessionParameters(std::nullopt),
+      _existingSession(existingSession) {}
 
 Future<RasterOverlay::CreateTileProviderResult>
 GoogleMapTilesRasterOverlay::createTileProvider(
@@ -93,41 +101,99 @@ GoogleMapTilesRasterOverlay::createTileProvider(
     IntrusivePointer<const RasterOverlay> pOwner) const {
   pOwner = pOwner ? pOwner : this;
 
+  if (this->_newSessionParameters) {
+    return this->createNewSession(
+        asyncSystem,
+        pAssetAccessor,
+        pCreditSystem,
+        pPrepareRendererResources,
+        pLogger,
+        pOwner);
+  } else if (this->_existingSession) {
+    const GoogleMapTilesExistingSession& session = *this->_existingSession;
+
+    IntrusivePointer pTileProvider =
+        new GoogleMapTilesRasterOverlayTileProvider(
+            pOwner,
+            asyncSystem,
+            pAssetAccessor,
+            pCreditSystem,
+            std::nullopt,
+            pPrepareRendererResources,
+            pLogger,
+            session.apiBaseUrl,
+            session.session,
+            session.key,
+            maximumZoomLevel,
+            session.tileWidth,
+            session.tileHeight);
+
+    // Load initial availability information before trying to fulfill
+    // tile requests. This should drastically reduce the number of
+    // viewport requests we need to do.
+    return pTileProvider->loadAvailability(QuadtreeTileID(0, 0, 0))
+        .thenImmediately([pTileProvider]() {
+          return CreateTileProviderResult(pTileProvider);
+        });
+  } else {
+    return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
+        nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+            .type = RasterOverlayLoadType::TileProvider,
+            .pRequest = nullptr,
+            .message =
+                "GoogleMapTilesRasterOverlay is not configured with either "
+                "new session parameters or an existing session."}));
+  }
+}
+
+Future<RasterOverlay::CreateTileProviderResult>
+GoogleMapTilesRasterOverlay::createNewSession(
+    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    IntrusivePointer<const RasterOverlay> pOwner) const {
   Uri createSessionUri(
-      this->_googleOptions.apiBaseUrl,
+      this->_newSessionParameters->apiBaseUrl,
       "v1/createSession",
       true);
 
-  if (!this->_key.empty()) {
+  if (!this->_newSessionParameters->key.empty()) {
     UriQuery query(createSessionUri);
-    query.setValue("key", this->_key);
+    query.setValue("key", this->_newSessionParameters->key);
     createSessionUri.setQuery(query.toQueryString());
   }
 
   // Add required fields
   JsonValue::Object requestPayload = JsonValue::Object{
-      {"mapType", this->_mapType},
-      {"language", this->_language},
-      {"region", this->_region}};
+      {"mapType", this->_newSessionParameters->mapType},
+      {"language", this->_newSessionParameters->language},
+      {"region", this->_newSessionParameters->region}};
 
   // Add optional fields
-  if (this->_googleOptions.imageFormat) {
-    requestPayload.emplace("imageFormat", *this->_googleOptions.imageFormat);
+  if (this->_newSessionParameters->imageFormat) {
+    requestPayload.emplace(
+        "imageFormat",
+        *this->_newSessionParameters->imageFormat);
   }
-  if (this->_googleOptions.scale) {
-    requestPayload.emplace("scale", *this->_googleOptions.scale);
+  if (this->_newSessionParameters->scale) {
+    requestPayload.emplace("scale", *this->_newSessionParameters->scale);
   }
-  if (this->_googleOptions.highDpi) {
-    requestPayload.emplace("highDpi", *this->_googleOptions.highDpi);
+  if (this->_newSessionParameters->highDpi) {
+    requestPayload.emplace("highDpi", *this->_newSessionParameters->highDpi);
   }
-  if (this->_googleOptions.layerTypes) {
-    requestPayload.emplace("layerTypes", *this->_googleOptions.layerTypes);
+  if (this->_newSessionParameters->layerTypes) {
+    requestPayload.emplace(
+        "layerTypes",
+        *this->_newSessionParameters->layerTypes);
   }
-  if (this->_googleOptions.styles) {
-    requestPayload.emplace("styles", *this->_googleOptions.styles);
+  if (this->_newSessionParameters->styles) {
+    requestPayload.emplace("styles", *this->_newSessionParameters->styles);
   }
-  if (this->_googleOptions.overlay) {
-    requestPayload.emplace("overlay", *this->_googleOptions.overlay);
+  if (this->_newSessionParameters->overlay) {
+    requestPayload.emplace("overlay", *this->_newSessionParameters->overlay);
   }
 
   PrettyJsonWriter writer{};
@@ -284,10 +350,10 @@ GoogleMapTilesRasterOverlay::createTileProvider(
                     std::nullopt,
                     pPrepareRendererResources,
                     pLogger,
-                    this->_googleOptions.apiBaseUrl,
+                    this->_newSessionParameters->apiBaseUrl,
                     session,
-                    this->_key,
-                    this->_googleOptions.maximumZoomLevel,
+                    this->_newSessionParameters->key,
+                    maximumZoomLevel,
                     static_cast<uint32_t>(tileWidth),
                     static_cast<uint32_t>(tileHeight));
 

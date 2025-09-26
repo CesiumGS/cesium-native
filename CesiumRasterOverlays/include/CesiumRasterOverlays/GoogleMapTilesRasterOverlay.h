@@ -9,11 +9,21 @@
 
 namespace CesiumRasterOverlays {
 
-/**
- * @brief Additional options for @ref GoogleMapTilesRasterOverlay.
- */
-struct GoogleMapTilesOptions {
-  int32_t maximumZoomLevel{28};
+struct GoogleMapTilesExistingSession {
+  std::string apiBaseUrl;
+  std::string key;
+  std::string session;
+  std::string expiry;
+  int32_t tileWidth;
+  int32_t tileHeight;
+  std::string imageFormat;
+};
+
+struct GoogleMapTilesNewSessionParameters {
+  std::string key;
+  std::string mapType{"satellite"};
+  std::string language{"en-US"};
+  std::string region{"US"};
 
   std::optional<std::string> imageFormat{};
   std::optional<std::string> scale{};
@@ -21,6 +31,7 @@ struct GoogleMapTilesOptions {
   std::optional<std::string> layerTypes{};
   std::optional<CesiumUtility::JsonValue::Array> styles{};
   std::optional<bool> overlay{};
+
   std::string apiBaseUrl{"https://tile.googleapis.com/"};
 };
 
@@ -29,11 +40,12 @@ class CESIUMRASTEROVERLAYS_API GoogleMapTilesRasterOverlay
 public:
   GoogleMapTilesRasterOverlay(
       const std::string& name,
-      const std::string& key,
-      const std::string& mapType,
-      const std::string& language,
-      const std::string& region,
-      const GoogleMapTilesOptions& googleOptions = {},
+      const GoogleMapTilesNewSessionParameters& newSessionParameters,
+      const RasterOverlayOptions& overlayOptions = {});
+
+  GoogleMapTilesRasterOverlay(
+      const std::string& name,
+      const GoogleMapTilesExistingSession& existingSession,
       const RasterOverlayOptions& overlayOptions = {});
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
@@ -47,11 +59,17 @@ public:
       const override;
 
 private:
-  std::string _key;
-  std::string _mapType;
-  std::string _language;
-  std::string _region;
-  GoogleMapTilesOptions _googleOptions;
+  CesiumAsync::Future<CreateTileProviderResult> createNewSession(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
+      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+          pPrepareRendererResources,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const;
+
+  std::optional<GoogleMapTilesNewSessionParameters> _newSessionParameters;
+  std::optional<GoogleMapTilesExistingSession> _existingSession;
 };
 
 } // namespace CesiumRasterOverlays
