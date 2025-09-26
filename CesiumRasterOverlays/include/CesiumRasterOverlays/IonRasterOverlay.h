@@ -113,6 +113,7 @@ private:
       std::string url;
       std::string key;
       std::string session;
+      std::string expiry;
       std::string imageFormat;
       int32_t tileWidth;
       int32_t tileHeight;

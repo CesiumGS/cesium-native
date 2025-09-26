@@ -357,6 +357,46 @@ IonRasterOverlay::getEndpointCache() {
                         "AERIAL");
                     bing.culture =
                         JsonHelpers::getStringOrDefault(options, "culture", "");
+                  } else if (endpoint.externalType == "GOOGLE_2D_MAPS") {
+                    const auto optionsIt = response.FindMember("options");
+                    if (optionsIt == response.MemberEnd() ||
+                        !optionsIt->value.IsObject()) {
+                      endpoint.pRequestThatFailed = std::move(pRequest);
+                      return ResultPointer<ExternalAssetEndpoint>(
+                          new ExternalAssetEndpoint(std::move(endpoint)),
+                          ErrorList::error(fmt::format(
+                              "Cesium ion Google Map Tiles raster overlay "
+                              "metadata response does not contain 'options' or "
+                              "it is not an object.")));
+                    }
+
+                    const auto& options = optionsIt->value;
+                    ExternalAssetEndpoint::Google2D& google2D =
+                        endpoint.options
+                            .emplace<ExternalAssetEndpoint::Google2D>();
+                    google2D.url = JsonHelpers::getStringOrDefault(
+                        options,
+                        "url",
+                        google2D.url);
+                    google2D.key =
+                        JsonHelpers::getStringOrDefault(options, "key", "");
+                    google2D.session =
+                        JsonHelpers::getStringOrDefault(options, "session", "");
+                    google2D.expiry =
+                        JsonHelpers::getStringOrDefault(options, "expiry", "");
+                    google2D.tileWidth = JsonHelpers::getInt32OrDefault(
+                        options,
+                        "tileWidth",
+                        256);
+                    google2D.tileHeight = JsonHelpers::getInt32OrDefault(
+                        options,
+                        "tileHeight",
+                        256);
+                    google2D.imageFormat = JsonHelpers::getStringOrDefault(
+                        options,
+                        "imageFormat",
+                        "jpeg");
+
                   } else {
                     ExternalAssetEndpoint::TileMapService& tileMapService =
                         endpoint.options
@@ -470,7 +510,7 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
             .apiBaseUrl = google2D.url,
             .key = google2D.key,
             .session = google2D.session,
-            .expiry = "",
+            .expiry = google2D.expiry,
             .tileWidth = google2D.tileWidth,
             .tileHeight = google2D.tileHeight,
             .imageFormat = google2D.imageFormat,
