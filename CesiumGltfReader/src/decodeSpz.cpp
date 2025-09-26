@@ -104,22 +104,16 @@ void copyShCoeff(
     spz::GaussianCloud* pGaussian,
     int degree,
     int coeffIndex) {
-  size_t offset = 0;
+  size_t base = 0;
+  size_t stride = 0;
   if (degree == 1) {
-    offset = static_cast<size_t>(coeffIndex * 3);
+    stride = 9;
   } else if (degree == 2) {
-    offset = static_cast<size_t>(9 + coeffIndex * 3);
+    stride = 24;
+    base = 9;
   } else if (degree == 3) {
-    offset = static_cast<size_t>(24 + coeffIndex * 3);
-  }
-
-  size_t shTotal = 0;
-  if (pGaussian->shDegree == 1) {
-    shTotal = static_cast<size_t>(3 * 3);
-  } else if (pGaussian->shDegree == 2) {
-    shTotal = static_cast<size_t>(8 * 3);
-  } else if (pGaussian->shDegree == 3) {
-    shTotal = static_cast<size_t>(15 * 3);
+    stride = 45;
+    base = 24;
   }
 
   CesiumGltf::Accessor* pAccessor = findAccessor(
@@ -133,7 +127,7 @@ void copyShCoeff(
     return;
   }
 
-  // Some gaussion splats seem to set this value as VEC4, even though the spec
+  // Some gaussian splats seem to set this value as VEC4, even though the spec
   // requires VEC3.
   pAccessor->type = CesiumGltf::Accessor::Type::VEC3;
 
@@ -148,10 +142,11 @@ void copyShCoeff(
   size_t start = buffer.cesium.data.size();
   bufferView.byteOffset = static_cast<int64_t>(start);
   buffer.cesium.data.resize(start + static_cast<size_t>(bufferView.byteLength));
-  for (size_t i = offset; i < pGaussian->sh.size(); i += shTotal) {
+  for (size_t i = 0; i < static_cast<size_t>(pGaussian->numPoints); i++) {
+    const size_t idx = i * stride + base + static_cast<size_t>(coeffIndex) * 3;
     memcpy(
         buffer.cesium.data.data() + start,
-        pGaussian->sh.data() + i,
+        pGaussian->sh.data() + idx,
         sizeof(float) * 3);
     start += sizeof(float) * 3;
   }
