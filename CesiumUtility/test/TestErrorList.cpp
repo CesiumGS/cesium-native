@@ -32,24 +32,28 @@ TEST_CASE("ErrorList") {
   SUBCASE("formats one warning") {
     errorList.emplaceWarning("First warning");
     std::string formatted = errorList.format("The prompt:");
-    CHECK(formatted == "The prompt:\n- First warning");
+    CHECK(formatted == "The prompt:\n- [Warning] First warning");
 
     SUBCASE("formats multiple warnings") {
       errorList.emplaceWarning("Second warning");
       formatted = errorList.format("The prompt:");
-      CHECK(formatted == "The prompt:\n- First warning\n- Second warning");
+      CHECK(
+          formatted ==
+          "The prompt:\n- [Warning] First warning\n- [Warning] Second warning");
     }
   }
 
   SUBCASE("formats one error") {
     errorList.emplaceError("First error");
     std::string formatted = errorList.format("The prompt:");
-    CHECK(formatted == "The prompt:\n- First error");
+    CHECK(formatted == "The prompt:\n- [Error] First error");
 
     SUBCASE("formats multiple errors") {
       errorList.emplaceError("Second error");
       formatted = errorList.format("The prompt:");
-      CHECK(formatted == "The prompt:\n- First error\n- Second error");
+      CHECK(
+          formatted ==
+          "The prompt:\n- [Error] First error\n- [Error] Second error");
     }
   }
 
@@ -57,15 +61,18 @@ TEST_CASE("ErrorList") {
     errorList.emplaceError("First error");
     errorList.emplaceWarning("First warning");
     std::string formatted = errorList.format("The prompt:");
-    CHECK(formatted == "The prompt:\n- First error\n- First warning");
+    CHECK(
+        formatted ==
+        "The prompt:\n- [Error] First error\n- [Warning] First warning");
 
     SUBCASE("formats multiple errors and warnings") {
       errorList.emplaceError("Second error");
       errorList.emplaceWarning("Second warning");
       formatted = errorList.format("The prompt:");
       CHECK(
-          formatted == "The prompt:\n- First error\n- Second error\n- First "
-                       "warning\n- Second warning");
+          formatted ==
+          "The prompt:\n- [Error] First error\n- [Error] Second error\n- "
+          "[Warning] First warning\n- [Warning] Second warning");
     }
   }
 }
