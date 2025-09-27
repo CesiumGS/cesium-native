@@ -31,6 +31,7 @@
 ##### Fixes :wrench:
 
 - `LoadedTileEnumerator` now provides non-const access to enumerated `Tile` instances, even if the enumerator itself is const.
+- Fixed a bug where `TilesetHeightQuery` would always sample the WGS84 ellipsoid, even if a different one was supplied.
 - Fixed a build system bug that prevented `libblend2d.a` from being installed for iOS.
 - Added a move constructor and assignment operator to `TileProviderAndTile`. This is important to prevent it from inadvertently incrementing/decrementing non-thread-safe reference counts from the wrong thread while being moved.
 
