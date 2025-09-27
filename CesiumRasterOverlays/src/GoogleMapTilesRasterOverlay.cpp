@@ -4,6 +4,8 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeRectangleAvailability.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/QuadtreeTileRectangularRange.h>
+#include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
@@ -17,6 +19,7 @@
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -28,7 +31,7 @@
 
 #include <fmt/format.h>
 #include <glm/common.hpp>
-#include <glm/vec2.hpp>
+#include <glm/ext/vector_float2.hpp>
 #include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/logger.h>
@@ -42,6 +45,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -705,9 +709,9 @@ GoogleMapTilesRasterOverlayTileProvider::loadAvailability(
           GlobeRectangle maxRectangle =
               WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
           southwestRadians.latitude =
-              std::max(southwestRadians.latitude, maxRectangle.getSouth());
+              glm::max(southwestRadians.latitude, maxRectangle.getSouth());
           northeastRadians.latitude =
-              std::min(northeastRadians.latitude, maxRectangle.getNorth());
+              glm::min(northeastRadians.latitude, maxRectangle.getNorth());
 
           glm::dvec2 southwestMercator = glm::dvec2(
               projectPosition(this->getProjection(), southwestRadians));
