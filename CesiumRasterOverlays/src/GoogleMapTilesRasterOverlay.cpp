@@ -1,24 +1,47 @@
+#include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeRectangleAvailability.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumJsonReader/JsonObjectJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumRasterOverlays/GoogleMapTilesRasterOverlay.h>
+#include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
+#include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/CreditReferencer.h>
+#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumUtility/StringHelpers.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
 
+#include <fmt/format.h>
+#include <glm/common.hpp>
+#include <glm/vec2.hpp>
+#include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
+#include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <optional>
 #include <set>
+#include <string>
+#include <string_view>
+#include <utility>
 
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
@@ -185,7 +208,9 @@ GoogleMapTilesRasterOverlay::createNewSession(
     const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    IntrusivePointer<const RasterOverlay> pOwner) const {
+    const IntrusivePointer<const RasterOverlay>& pOwner) const {
+  CESIUM_ASSERT(this->_newSessionParameters);
+
   Uri createSessionUri(
       this->_newSessionParameters->apiBaseUrl,
       "v1/createSession",
@@ -319,20 +344,6 @@ GoogleMapTilesRasterOverlay::createNewSession(
 
             std::string session = it->second.getString();
 
-            it = responseObject.find("expiry");
-            if (it == responseObject.end() || !it->second.isString()) {
-              return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
-                  nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                      .type = RasterOverlayLoadType::TileProvider,
-                      .pRequest = pRequest,
-                      .message =
-                          "Response from Google Map Tiles API "
-                          "createSession service did not contain a valid "
-                          "'expiry' property."}));
-            }
-
-            std::string expiry = it->second.getString();
-
             it = responseObject.find("tileWidth");
             if (it == responseObject.end() || !it->second.isNumber()) {
               return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
@@ -361,20 +372,6 @@ GoogleMapTilesRasterOverlay::createNewSession(
 
             int32_t tileHeight =
                 it->second.getSafeNumberOrDefault<int32_t>(256);
-
-            it = responseObject.find("imageFormat");
-            if (it == responseObject.end() || !it->second.isString()) {
-              return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
-                  nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                      .type = RasterOverlayLoadType::TileProvider,
-                      .pRequest = pRequest,
-                      .message =
-                          "Response from Google Map Tiles API "
-                          "createSession service did not contain a valid "
-                          "'imageFormat' property."}));
-            }
-
-            std::string imageFormat = it->second.getString();
 
             IntrusivePointer pTileProvider =
                 new GoogleMapTilesRasterOverlayTileProvider(
@@ -828,7 +825,7 @@ Future<void> GoogleMapTilesRasterOverlayTileProvider::loadCredits() {
           // in the future, presumably). Remove that preamble, but remember
           // it so we can re-add it later.
           std::string creditString = results[i];
-          if (creditString.find(copyrightPrefix) == 0) {
+          if (creditString.starts_with(copyrightPrefix)) {
             // Skip any spaces after the copyright symbol.
             size_t firstNonSpace =
                 creditString.find_first_not_of(' ', copyrightPrefix.size());

@@ -294,7 +294,7 @@ private:
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const;
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) const;
 
   std::optional<GoogleMapTilesNewSessionParameters> _newSessionParameters;
   std::optional<GoogleMapTilesExistingSession> _existingSession;

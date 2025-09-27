@@ -11,6 +11,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/DerivedValue.h>
@@ -33,6 +34,7 @@
 #include <span>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 using namespace CesiumAsync;
