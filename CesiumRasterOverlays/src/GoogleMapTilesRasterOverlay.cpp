@@ -216,9 +216,13 @@ GoogleMapTilesRasterOverlay::createNewSession(
     requestPayload.emplace("highDpi", *this->_newSessionParameters->highDpi);
   }
   if (this->_newSessionParameters->layerTypes) {
-    requestPayload.emplace(
-        "layerTypes",
-        *this->_newSessionParameters->layerTypes);
+    JsonValue::Array layerTypesArray;
+    layerTypesArray.reserve(this->_newSessionParameters->layerTypes->size());
+    for (const std::string& layerType :
+         *this->_newSessionParameters->layerTypes) {
+      layerTypesArray.emplace_back(layerType);
+    }
+    requestPayload.emplace("layerTypes", layerTypesArray);
   }
   if (this->_newSessionParameters->styles) {
     requestPayload.emplace("styles", *this->_newSessionParameters->styles);

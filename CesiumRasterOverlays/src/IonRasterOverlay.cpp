@@ -547,13 +547,13 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
     pOverlay = new GoogleMapTilesRasterOverlay(
         this->pOwner->getName(),
         GoogleMapTilesExistingSession{
-            .apiBaseUrl = google2D.url,
             .key = google2D.key,
             .session = google2D.session,
             .expiry = google2D.expiry,
             .tileWidth = google2D.tileWidth,
             .tileHeight = google2D.tileHeight,
             .imageFormat = google2D.imageFormat,
+            .apiBaseUrl = google2D.url,
         },
         this->pOwner->getOptions());
   } else {

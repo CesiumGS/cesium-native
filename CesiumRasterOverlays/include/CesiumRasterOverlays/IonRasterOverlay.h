@@ -97,11 +97,13 @@ private:
     std::vector<AssetEndpointAttribution> attributions{};
     std::shared_ptr<CesiumAsync::IAssetRequest> pRequestThatFailed{};
 
+    /** @private */
     struct TileMapService {
       std::string url;
       std::string accessToken;
     };
 
+    /** @private */
     struct Bing {
       std::string key;
       std::string url;
@@ -109,6 +111,7 @@ private:
       std::string culture;
     };
 
+    /** @private */
     struct Google2D {
       std::string url;
       std::string key;

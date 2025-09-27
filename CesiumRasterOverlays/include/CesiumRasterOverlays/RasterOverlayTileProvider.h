@@ -249,6 +249,16 @@ public:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(const RasterOverlayTile& overlayTile) = 0;
 
+  /**
+   * @brief Adds this tile provider's credits to a credit referencer.
+   *
+   * The added credits will be displayed whenever the {@link RasterOverlay}
+   * that owns this tile provider is displayed. To show tile-specific credits,
+   * add them to @ref LoadedRasterOverlayImage::credits in the instance returned
+   * by @ref loadTileImage.
+   *
+   * @param creditReferencer The credit referencer to which to add credits.
+   */
   virtual void
   addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
 
