@@ -101,8 +101,8 @@ Ray createRay(const Cartographic& position, const Ellipsoid& ellipsoid) {
       ellipsoid.getMaximumRadius() * rayOriginHeightFraction);
 
   return Ray(
-      Ellipsoid::WGS84.cartographicToCartesian(startPosition),
-      -Ellipsoid::WGS84.geodeticSurfaceNormal(startPosition));
+      ellipsoid.cartographicToCartesian(startPosition),
+      -ellipsoid.geodeticSurfaceNormal(startPosition));
 }
 
 } // namespace
