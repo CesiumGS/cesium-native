@@ -57,6 +57,73 @@ using namespace CesiumUtility;
 
 namespace {
 
+const std::string GOOGLE_MAPS_LOGO_HTML =
+    "<img alt=\"Google Maps\" "
+    "src=\"data:image/"
+    "png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAGkAAAAWCAYAAADD9rIuAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZS"
+    "BJbWFnZVJlYWR5ccllPAAACXZJREFUeNrcmntszcsWx7e22npsigQtpVG2tE3j0ZAIkSIh4u0P"
+    "yb5ECCkSicdBcEMrBIl7vOIPDuIRNCQI6nXF43oG17NJG41qcamKxnZ26+"
+    "2667Mzq5n789ttyUmPeyeZ7N9vZs3MmvX4rjXz2w08jtKhQwev/"
+    "AyXOkKqz9FdJPWC1NwnT54EPfVchDf4+cWtT/iZ5vk/LVEOIWTKT7ZUbxh6n6l+oV0rgjlWz/"
+    "zCV8YfpPAMl7mKZE8XXGj9LjK5JbS36lVJwsgIoyDPwIEDvVOmTGndr1+/"
+    "OJv48uXLgYMHD1YcOnSI12w2Kozm1Ldl9ezZs3FOTk57nkeOHFn0g9OgoCxHW1D2hKKeO5Tp5r"
+    "2/"
+    "oah6U5LlQZ41a9Ykjhs3rrUbMUqjDh48uGL69OmlwKKMDcqmfq1PJcXFxUV269bN+"
+    "0fMhUH27dvXe+XKleC5c+c8RnG24YUUNHbs2Li0tLTGhq5eoT7CxKBvFFRcXPx2zpw5xd27d7/"
+    "bsWPHWzzfu3fPjbkiZ9yQmlAXuDFr10TjNXHou+"
+    "LW94xBQVOnTo1fvXp1UosWLSKN4WVY6OKjfcWKFUnQQf9nxKQQ3mJRqqCTJ0+"
+    "qp1QXgbgAddKkSa127txZYZqXEZfMZvx2ooGHyc8/"
+    "gAWFD0OHpca70P1KMmIU51e+DI3HQIu3BuXkmITHY425YNavFRLbtGkTPXPmzDbLly+"
+    "H1ywZP09+59K3atWqxCZNmkQ64VJo9jmSqyJT4x20CVZb9X7Nu98kac7+"
+    "arlFSAXqPMQgfsvLyz8uWrToabjNWAoKGqvbZzzRp/"
+    "DRqVOnaCNQhLaXwGvRxSudsVylO2pgd4tRZGge6KwYUpOHhBTEGGKWaWO+fcY4ai1+v7+"
+    "14T3D8OFlrqFDh7YKE9N8LonVcNNn13hH8hPar7VX137lO0IX0iRh79695a9fv/"
+    "7yHZlWCA42b96c9Pjx44wdO3b4zp8/"
+    "n37jxo10cNzQges+"
+    "BCDzJyvd3bt3u0NnFEH9G3QI5ujRo6F5oCsoKOgucSCFcbS7McNazMWYw4cPpzBm1qxZGluza4"
+    "NA0ANvWbBgQYIlcI8mKPTb9PaetfJuDM8D4sCr/ioN+7D2W71X7bfkRplL6IhyMpufn//"
+    "O2RZOMA8ePHi3cuXK55Lx+"
+    "ZKTkxs74WPdunXJzZo1K8X7YD4vLy9VYaOqquoLz9ChCGIecArTe/"
+    "bs8dnwwrNzfqeCWEvfQQPmnTt3buKbN2++GO/HUMKepQ4cOFDh8/"
+    "ka4TUixAqSA+"
+    "YlQSEWP3v27KNNv2vXrmT6WOvFixcf2rZtG8NY5pDxhYmJiTH0U9krmXF8fHw0+2C/"
+    "kydPLrpz585b3Sv9wWDwS//+/"
+    "XUvxSaL9kfUBQZ0MWft2rVro4kTJ7ZSAWZnZ5eSZJBsqOUtW7YsZF2K6zAMg6mpqXehI0GBbuH"
+    "ChYlqudDRPmDAgHzmGzNmTCHjwvGnYxEmc/bu3TufTdMmnpForDujtoRGkoN/"
+    "8Tt79ux4e155L3XSnj17NsAaQ4YMKeAYwJqsjywsuA0Z44QJE4rGjx9fjPKQEe0kKj169GisCq"
+    "KfPEDiYrEYzEtBmbcK4994Unp6eiNnirlt27Yy+"
+    "71Xr15NNQUeNGhQnMKBxivgkriGVcDEqFGj4nimb8uWLc91fugkYyoGorB8YEDn3bRpU9mjR49"
+    "C1nv79u23ubm5L8mu3M5MjOV5/fr1ZYsXL04YNmxYK/"
+    "VErBwlGQj3WwH7mwJfCBoegCXmRWDKh112795dISgRhUdpW9OmTSP1iKBtx48fr4B/"
+    "O6aLYbe2kYFQQxgQqAteunSpcv78+XZOkBuhKbRanmi0jeKqFjIeu+LatN+"
+    "8ebNSaZxwgFAePnwYYg7XV6E54dQWgJ3eAn02HeeTcGcmfQZGyFBZC6PBA7Fea4342lBDvQYh4"
+    "gXAuRsdEI/"
+    "RdO7cuVrYbpAsfAS+ObMUFVXLAFQBMlEU8Ew8JbxYOriFkkJXO9u3b3+"
+    "psQRocipKy5IlSxLUcsVKqhlo165dtDOwqlc8ffr0g8KV85xhsimPcz4reHrcxmkJBAJf7Fi0d"
+    "u3ap0Ae0FFSUvLBvsYBfWtTEgrFe9Tr3ZIoPB6FsJ7wlQ/"
+    "cUZ2IQ5E4FffN3ZrELeUd7wUqgXagEJhHboQRQz4CJeWRTkOszBEAT58+"
+    "nUpmghAROEJDwwo50OLGYLOO0WwKeoUBlHPkyJHAxYsXA5rmalrN3LKxZBUw8+"
+    "mBmcOj0vHLODehMoaxPFdWVn4+duxYAMEyRrwvnQO6xiTS8brEYLwHC9+"
+    "wYcPLmuhk7aAqEdh14xHotWMUMlUFJyUlRZOFYvgYB1AIzEMnivP+l/"
+    "dzPpH6T+rWrVuff62lnDhx4pXSUwXWqsLRLl26tAQasY47NdEJ8w+"
+    "gGz16dAHCDkcnAfV3aPWdMfa7s7AmaxteM63Dbpa9X10/"
+    "XFU6fjMzM+8rj8yPPGyemcuWI33QwLu2Caw+tOehb//+/"
+    "eX6rnKT+ksI0iRNLW3evDkazBSLD96/"
+    "f78yJibGk5CQEBMdHR1hX7BKevhMrPOFaWKMVzzsdcuWLSPEMmKVHksRCymVgP+a9/"
+    "fv33+FTrK1hl26dKm2LDxnxowZj65evVoVmrCs7NO1a9d+b9++"
+    "fUNhMFbnkvpB1mjI86lTp96kpKTE8izzVwisfRS+Q20aLzWZycrKKjHWnicn+J3aJ/"
+    "sNHTTxZpk3kjlZ2yQWuwzCUBvoGQ+669evByXRqSwsLKzq06ePV+JtLPvhHR4+f/"
+    "78b+YSSIsVD/IiM9CEmANvKhdiLnyxV/gG4tLS0pp8+vTpqyQl5Rs3blQv/"
+    "msDl+v7nDoE2KC5tsh1XseEoZ1nTtZ1+swAJIihvLOzIr1X1HT1O6+/"
+    "8py39XiSyy04ZZr9CaIGuhoLEEZoIE6ZqyY3uZTVcosSunaLcnw4uyVM/"
+    "cVcpwx3+"
+    "95i7sPy9F6JzcuYYya9zXQwYd9BTXO74zOM6ngvp3biGwGU9BysJr6A7RCfOXMmYI177kgMRjg"
+    "MrMh8oHT77lUW5lNDsI50eivhdfCTUIuRV8vFPPtd+NYPq/"
+    "XyKeR7bq+zaotJjviS4PkJizPW8Wv4zfrROSN/ls1JjMDqh0hciFWcriG+YGV//"
+    "xmVpLEuKirK8+rVq4+c74iZeKPE/h/yjAY/mRX6TOCuCS7Y6Lw/4z8WdfWkMDEM2P/"
+    "tf15J+qHP+T2pDvHlZ+I/I0yC9MP/ifiPAAMAoNyJ42QeWfcAAAAASUVORK5CYII=\" />";
+
 // Whether to try to use tile availability information from the `viewport`
 // service to only request tiles that are known to be available. This is
 // experimental.
@@ -107,7 +174,8 @@ private:
   std::string _apiBaseUrl;
   std::string _session;
   std::string _key;
-  std::optional<Credit> _credit;
+  std::optional<Credit> _googleCredit;
+  std::optional<Credit> _credits;
   mutable QuadtreeRectangleAvailability _availableTiles;
   mutable QuadtreeRectangleAvailability _availableAvailability;
 };
@@ -455,16 +523,26 @@ GoogleMapTilesRasterOverlayTileProvider::
       _apiBaseUrl(apiBaseUrl),
       _session(session),
       _key(key),
-      _credit(),
+      _googleCredit(),
+      _credits(),
       _availableTiles(createTilingScheme(pOwner), maximumLevel),
-      _availableAvailability(createTilingScheme(pOwner), maximumLevel) {}
+      _availableAvailability(createTilingScheme(pOwner), maximumLevel) {
+  if (pCreditSystem) {
+    this->_googleCredit =
+        pCreditSystem->createCredit(GOOGLE_MAPS_LOGO_HTML, true);
+  }
+}
 
 void GoogleMapTilesRasterOverlayTileProvider::addCredits(
     CesiumUtility::CreditReferencer& creditReferencer) noexcept {
   QuadtreeRasterOverlayTileProvider::addCredits(creditReferencer);
 
-  if (this->_credit) {
-    creditReferencer.addCreditReference(*this->_credit);
+  if (this->_googleCredit) {
+    creditReferencer.addCreditReference(*this->_googleCredit);
+  }
+
+  if (this->_credits) {
+    creditReferencer.addCreditReference(*this->_credits);
   }
 }
 
@@ -889,7 +967,7 @@ Future<void> GoogleMapTilesRasterOverlayTileProvider::loadCredits() {
         }
 
         // Create a single credit from this giant string.
-        thiz->_credit = thiz->getCreditSystem()->createCredit(joined, false);
+        thiz->_credits = thiz->getCreditSystem()->createCredit(joined, false);
       });
 }
 
