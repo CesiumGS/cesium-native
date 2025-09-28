@@ -31,7 +31,7 @@
 
 #include <fmt/format.h>
 #include <glm/common.hpp>
-#include <glm/ext/vector_float2.hpp>
+#include <glm/ext/vector_double2.hpp>
 #include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
 #include <spdlog/logger.h>
