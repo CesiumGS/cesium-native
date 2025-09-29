@@ -255,7 +255,7 @@ public:
    *
    * @param name The user-given name of this overlay layer.
    * @param newSessionParameters The parameters for starting a new session.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   GoogleMapTilesRasterOverlay(
       const std::string& name,
@@ -268,7 +268,7 @@ public:
    *
    * @param name The user-given name of this overlay layer.
    * @param existingSession The parameters for the existing session.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   GoogleMapTilesRasterOverlay(
       const std::string& name,
