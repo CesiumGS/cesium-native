@@ -6,6 +6,7 @@
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
@@ -71,25 +72,27 @@ TEST_CASE("TileMapServiceRasterOverlay") {
       new TileMapServiceRasterOverlay("test", tmr);
 
   SUBCASE("can load images") {
-    RasterOverlay::CreateTileProviderResult result = waitForFuture(
+    IntrusivePointer<ActivatedRasterOverlay> pActivated =
+        pRasterOverlay->activate(
+            RasterOverlayExternals{
+                pMockAssetAccessor,
+                nullptr,
+                asyncSystem,
+                nullptr,
+                spdlog::default_logger()},
+            CesiumGeospatial::Ellipsoid::WGS84);
+
+    waitForFuture(
         asyncSystem,
-        pRasterOverlay->createTileProvider(
-            asyncSystem,
-            pMockAssetAccessor,
-            nullptr,
-            nullptr,
-            spdlog::default_logger(),
-            nullptr));
+        pActivated->getReadyEvent().thenImmediately([]() {}));
 
-    REQUIRE(result);
+    REQUIRE(pActivated->getTileProvider());
 
-    CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
-        *result;
-    IntrusivePointer<RasterOverlayTile> pTile = pTileProvider->getTile(
-        pTileProvider->getCoverageRectangle(),
+    IntrusivePointer<RasterOverlayTile> pTile = pActivated->getTile(
+        pActivated->getTileProvider()->getCoverageRectangle(),
         glm::dvec2(256.0, 256.0));
     REQUIRE(pTile);
-    waitForFuture(asyncSystem, pTileProvider->loadTile(*pTile));
+    waitForFuture(asyncSystem, pActivated->loadTile(*pTile));
 
     REQUIRE(pTile->getImage());
 
