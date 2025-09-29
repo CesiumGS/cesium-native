@@ -621,12 +621,12 @@ QuadtreeTileRectangularRange rectangleForAvailability(
     const QuadtreeTilingScheme& tilingScheme,
     uint32_t maximumLevel,
     const Rectangle& rectangle) {
-  std::optional<QuadtreeTileID> sw =
+  std::optional<QuadtreeTileID> maybeSouthwest =
       tilingScheme.positionToTile(rectangle.getLowerLeft(), maximumLevel);
-  std::optional<QuadtreeTileID> ne =
+  std::optional<QuadtreeTileID> maybeNortheast =
       tilingScheme.positionToTile(rectangle.getUpperRight(), maximumLevel);
 
-  if (!sw || !ne) {
+  if (!maybeSouthwest || !maybeNortheast) {
     // This should never happen, because the input rectangle should always
     // be within the tiling scheme's rectangle.
     return QuadtreeTileRectangularRange{
@@ -639,10 +639,10 @@ QuadtreeTileRectangularRange rectangleForAvailability(
 
   return QuadtreeTileRectangularRange{
       .level = maximumLevel,
-      .minimumX = sw->x,
-      .minimumY = sw->y,
-      .maximumX = ne->x,
-      .maximumY = ne->y};
+      .minimumX = maybeSouthwest->x,
+      .minimumY = maybeSouthwest->y,
+      .maximumX = maybeNortheast->x,
+      .maximumY = maybeNortheast->y};
 }
 
 CesiumAsync::Future<rapidjson::Document> fetchViewportData(
@@ -809,43 +809,46 @@ GoogleMapTilesRasterOverlayTileProvider::loadAvailability(
               maxProjectedRectangle.getUpperRight());
 
           // Convert the geographic coordinates to tile coordinates.
-          std::optional<QuadtreeTileID> sw =
+          std::optional<QuadtreeTileID> maybeSouthwest =
               this->getTilingScheme().positionToTile(
                   southwestMercator,
                   uint32_t(maxZoom));
-          std::optional<QuadtreeTileID> ne =
+          std::optional<QuadtreeTileID> maybeNortheast =
               this->getTilingScheme().positionToTile(
                   northeastMercator,
                   uint32_t(maxZoom));
 
-          if (!sw || !ne) {
+          if (!maybeSouthwest || !maybeNortheast) {
             continue;
           }
+
+          QuadtreeTileID& sw = *maybeSouthwest;
+          QuadtreeTileID& ne = *maybeNortheast;
 
           this->_availableTiles.addAvailableTileRange(
               QuadtreeTileRectangularRange{
                   .level = uint32_t(maxZoom),
-                  .minimumX = sw->x,
-                  .minimumY = sw->y,
-                  .maximumX = ne->x,
-                  .maximumY = ne->y});
+                  .minimumX = sw.x,
+                  .minimumY = sw.y,
+                  .maximumX = ne.x,
+                  .maximumY = ne.y});
 
           // Availability of this level implies availability of all
           // prior levels, too.
           while (maxZoom > 0) {
             --maxZoom;
-            sw->x >>= 1;
-            sw->y >>= 1;
-            ne->x >>= 1;
-            ne->y >>= 1;
+            sw.x >>= 1;
+            sw.y >>= 1;
+            ne.x >>= 1;
+            ne.y >>= 1;
 
             this->_availableTiles.addAvailableTileRange(
                 QuadtreeTileRectangularRange{
                     .level = uint32_t(maxZoom),
-                    .minimumX = sw->x,
-                    .minimumY = sw->y,
-                    .maximumX = ne->x,
-                    .maximumY = ne->y});
+                    .minimumX = sw.x,
+                    .minimumY = sw.y,
+                    .maximumX = ne.x,
+                    .maximumY = ne.y});
           }
         }
 
