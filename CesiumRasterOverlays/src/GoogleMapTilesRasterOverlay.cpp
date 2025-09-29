@@ -549,7 +549,8 @@ void GoogleMapTilesRasterOverlayTileProvider::addCredits(
 CesiumAsync::Future<LoadedRasterOverlayImage>
 GoogleMapTilesRasterOverlayTileProvider::loadQuadtreeTileImage(
     const CesiumGeometry::QuadtreeTileID& tileID) const {
-  // 1. If the tile is known to be available, load it. Also load it if we're not querying tile availability at all.
+  // 1. If the tile is known to be available, load it. Also load it if we're not
+  // querying tile availability at all.
   if (!useTileAvailability || this->_availableTiles.isTileAvailable(tileID)) {
     return this->loadTileImageFromService(tileID);
   }
