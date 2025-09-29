@@ -38,6 +38,7 @@
 - Fixed a build system bug that prevented `libblend2d.a` from being installed for iOS.
 - Added a move constructor and assignment operator to `TileProviderAndTile`. This is important to prevent it from inadvertently incrementing/decrementing non-thread-safe reference counts from the wrong thread while being moved.
 - The Cesium ion token for raster overlays is now automatically refreshed every 55 minutes. Previously, it would refresh on a 401 HTTP status code, which could cause extraneous session usage if the raster overlay ever returned a 401 error for a non-token-related reason.
+- Reverted change to `RasterizedPolygonsOverlay` that could produce crashes with certain tilesets.
 
 ### v0.51.0 - 2025-09-02
 
