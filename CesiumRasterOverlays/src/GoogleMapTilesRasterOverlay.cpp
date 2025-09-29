@@ -687,8 +687,9 @@ CesiumAsync::Future<rapidjson::Document> fetchViewportData(
               SPDLOG_LOGGER_ERROR(
                   pLogger,
                   "Error response {} received from Google Map Tiles API "
-                  "viewport service.",
-                  pResponse->statusCode());
+                  "viewport service URL {}.",
+                  pResponse->statusCode(),
+                  pRequest->url());
               return document;
             }
 
@@ -700,7 +701,8 @@ CesiumAsync::Future<rapidjson::Document> fetchViewportData(
               SPDLOG_LOGGER_ERROR(
                   pLogger,
                   "Error when parsing Google Map Tiles API viewport "
-                  "service JSON, error code {} at byte offset {}.",
+                  "service JSON from URL {}, error code {} at byte offset {}.",
+                  pRequest->url(),
                   document.GetParseError(),
                   document.GetErrorOffset());
               return document;
