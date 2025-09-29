@@ -11,6 +11,7 @@
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -164,34 +165,26 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
   AsyncSystem asyncSystem(pTaskProcessor);
   IntrusivePointer<TestRasterOverlay> pOverlay = new TestRasterOverlay("Test");
 
-  IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
-
-  pOverlay
-      ->createTileProvider(
-          asyncSystem,
+  IntrusivePointer<ActivatedRasterOverlay> pActivated = pOverlay->activate(
+      RasterOverlayExternals{
           pAssetAccessor,
           nullptr,
+          asyncSystem,
           nullptr,
-          spdlog::default_logger(),
-          nullptr)
-      .thenInMainThread(
-          [&pProvider](RasterOverlay::CreateTileProviderResult&& created) {
-            CHECK(created);
-            pProvider = *created;
-          });
+          spdlog::default_logger()},
+      Ellipsoid::WGS84);
 
   asyncSystem.dispatchMainThreadTasks();
 
-  REQUIRE(pProvider);
-  REQUIRE(!pProvider->isPlaceholder());
+  REQUIRE(pActivated->getTileProvider() != nullptr);
 
   SUBCASE("uses root tile for a large area") {
     Rectangle rectangle =
         GeographicProjection::computeMaximumProjectedRectangle(
             Ellipsoid::WGS84);
     IntrusivePointer<RasterOverlayTile> pTile =
-        pProvider->getTile(rectangle, glm::dvec2(256));
-    pProvider->loadTile(*pTile);
+        pActivated->getTile(rectangle, glm::dvec2(256));
+    pActivated->loadTile(*pTile);
 
     while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();
@@ -215,7 +208,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
     glm::dvec2 center(0.1, 0.2);
 
     TestTileProvider* pTestProvider =
-        static_cast<TestTileProvider*>(pProvider.get());
+        static_cast<TestTileProvider*>(pActivated->getTileProvider());
 
     // Select a rectangle that spans four tiles at tile level 8.
     const uint32_t expectedLevel = 8;
@@ -246,8 +239,8 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
     pTestProvider->errorTiles.emplace_back(*southeastID);
 
     IntrusivePointer<RasterOverlayTile> pTile =
-        pProvider->getTile(tileRectangle, targetScreenPixels);
-    pProvider->loadTile(*pTile);
+        pActivated->getTile(tileRectangle, targetScreenPixels);
+    pActivated->loadTile(*pTile);
 
     while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();

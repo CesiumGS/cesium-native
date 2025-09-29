@@ -7,6 +7,7 @@
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
@@ -246,17 +247,11 @@ bool RasterMappedTo3DTile::loadThrottled() noexcept {
     return true;
   }
 
-  RasterOverlayTileProvider& provider = pLoading->getTileProvider();
-  return provider.loadTileThrottled(*pLoading);
+  ActivatedRasterOverlay& activated = pLoading->getActivatedOverlay();
+  return activated.loadTileThrottled(*pLoading);
 }
 
 namespace {
-
-IntrusivePointer<RasterOverlayTile>
-getPlaceholderTile(RasterOverlayTileProvider& tileProvider) {
-  // Rectangle and geometric error don't matter for a placeholder.
-  return tileProvider.getTile(Rectangle(), glm::dvec2(0.0));
-}
 
 std::optional<Rectangle> getPreciseRectangleFromBoundingVolume(
     const Projection& projection,
@@ -288,12 +283,12 @@ int32_t addProjectionToList(
 
 RasterMappedTo3DTile* addRealTile(
     Tile& tile,
-    RasterOverlayTileProvider& provider,
+    ActivatedRasterOverlay& activatedOverlay,
     const Rectangle& rectangle,
     const glm::dvec2& screenPixels,
     int32_t textureCoordinateIndex) {
   IntrusivePointer<RasterOverlayTile> pTile =
-      provider.getTile(rectangle, screenPixels);
+      activatedOverlay.getTile(rectangle, screenPixels);
   if (!pTile) {
     return nullptr;
   } else {
@@ -307,19 +302,19 @@ RasterMappedTo3DTile* addRealTile(
 
 /*static*/ RasterMappedTo3DTile* RasterMappedTo3DTile::mapOverlayToTile(
     double maximumScreenSpaceError,
-    RasterOverlayTileProvider& tileProvider,
-    RasterOverlayTileProvider& placeholder,
+    ActivatedRasterOverlay& activatedOverlay,
     Tile& tile,
     std::vector<Projection>& missingProjections,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  if (tileProvider.isPlaceholder()) {
+  if (activatedOverlay.getTileProvider() == nullptr) {
     // Provider not created yet, so add a placeholder tile.
     return &tile.getMappedRasterTiles().emplace_back(
-        getPlaceholderTile(placeholder),
+        activatedOverlay.getPlaceholderTile(),
         -1);
   }
 
-  const Projection& projection = tileProvider.getProjection();
+  const Projection& projection =
+      activatedOverlay.getTileProvider()->getProjection();
 
   // If the tile is loaded, use the precise rectangle computed from the content.
   const TileContent& content = tile.getContent();
@@ -340,7 +335,12 @@ RasterMappedTo3DTile* addRealTile(
               projection,
               *pRectangle,
               ellipsoid);
-      return addRealTile(tile, tileProvider, *pRectangle, screenPixels, index);
+      return addRealTile(
+          tile,
+          activatedOverlay,
+          *pRectangle,
+          screenPixels,
+          index);
     } else {
       // We don't have a precise rectangle for this projection, which means the
       // tile was loaded before we knew we needed this projection. We'll need to
@@ -350,7 +350,7 @@ RasterMappedTo3DTile* addRealTile(
       int32_t textureCoordinateIndex =
           existingIndex + addProjectionToList(missingProjections, projection);
       return &tile.getMappedRasterTiles().emplace_back(
-          getPlaceholderTile(placeholder),
+          activatedOverlay.getPlaceholderTile(),
           textureCoordinateIndex);
     }
   }
@@ -360,7 +360,7 @@ RasterMappedTo3DTile* addRealTile(
       addProjectionToList(missingProjections, projection);
   std::optional<Rectangle> maybeRectangle =
       getPreciseRectangleFromBoundingVolume(
-          tileProvider.getProjection(),
+          activatedOverlay.getTileProvider()->getProjection(),
           tile.getBoundingVolume());
   if (maybeRectangle) {
     const glm::dvec2 screenPixels =
@@ -372,14 +372,14 @@ RasterMappedTo3DTile* addRealTile(
             ellipsoid);
     return addRealTile(
         tile,
-        tileProvider,
+        activatedOverlay,
         *maybeRectangle,
         screenPixels,
         textureCoordinateIndex);
   } else {
     // No precise rectangle yet, so return a placeholder for now.
     return &tile.getMappedRasterTiles().emplace_back(
-        getPlaceholderTile(placeholder),
+        activatedOverlay.getPlaceholderTile(),
         textureCoordinateIndex);
   }
 }
