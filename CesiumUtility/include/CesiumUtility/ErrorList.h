@@ -146,11 +146,13 @@ struct CESIUMUTILITY_API ErrorList {
     std::string result = prompt;
 
     if (!this->errors.empty()) {
-      result += "\n- " + CesiumUtility::joinToString(this->errors, "\n- ");
+      result += "\n- [Error] " +
+                CesiumUtility::joinToString(this->errors, "\n- [Error] ");
     }
 
     if (!this->warnings.empty()) {
-      result += "\n- " + CesiumUtility::joinToString(this->warnings, "\n- ");
+      result += "\n- [Warning] " +
+                CesiumUtility::joinToString(this->warnings, "\n- [Warning] ");
     }
 
     return result;
