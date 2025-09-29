@@ -33,6 +33,7 @@
 - Fixed a bug where `TilesetHeightQuery` would always sample the WGS84 ellipsoid, even if a different one was supplied.
 - Fixed a build system bug that prevented `libblend2d.a` from being installed for iOS.
 - Added a move constructor and assignment operator to `TileProviderAndTile`. This is important to prevent it from inadvertently incrementing/decrementing non-thread-safe reference counts from the wrong thread while being moved.
+- Reverted change to `RasterizedPolygonsOverlay` that could produce crashes with certain tilesets.
 
 ### v0.51.0 - 2025-09-02
 
