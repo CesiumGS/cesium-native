@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - `RasterOverlayTileProvider::loadTileImage` now receives a const `RasterOverlayTile`.
+- `SharedAssetDepot` now uses a templatized "context" instead of separate `AsyncSystem` and `IAssetAccessor` parameters. It defaults to `SharedAssetContext`.
 - Removed the following from `RasterOverlayTileProvider`:
   - The constructor overloads that were used to create a placeholder tile provider.
   - `isPlaceholder`
@@ -34,12 +35,10 @@
 ##### Fixes :wrench:
 
 - `LoadedTileEnumerator` now provides non-const access to enumerated `Tile` instances, even if the enumerator itself is const.
-- The Cesium ion token for raster overlays is now automatically refreshed every 55 minutes. Previously, it would refresh on a 401 HTTP status code, which could cause extraneous session usage if the raster overlay ever returned a 401 error for a non-token-related reason.
-
-##### Fixes :wrench:
-
+- Fixed a bug where `TilesetHeightQuery` would always sample the WGS84 ellipsoid, even if a different one was supplied.
 - Fixed a build system bug that prevented `libblend2d.a` from being installed for iOS.
 - Added a move constructor and assignment operator to `TileProviderAndTile`. This is important to prevent it from inadvertently incrementing/decrementing non-thread-safe reference counts from the wrong thread while being moved.
+- The Cesium ion token for raster overlays is now automatically refreshed every 55 minutes. Previously, it would refresh on a 401 HTTP status code, which could cause extraneous session usage if the raster overlay ever returned a 401 error for a non-token-related reason.
 
 ### v0.51.0 - 2025-09-02
 
