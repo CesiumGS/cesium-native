@@ -44,6 +44,18 @@ public:
       const std::string& ionAssetEndpointUrl = "https://api.cesium.com/");
   virtual ~IonRasterOverlay() override;
 
+  /**
+   * @brief Gets the additional `options` to be passed to the asset endpoint.
+   * This is a JSON string describing parameters that are specific to the asset.
+   */
+  const std::optional<std::string>& getAssetOptions() const noexcept;
+
+  /**
+   * @brief Sets the additional `options` to be passed to the asset endpoint.
+   * This is a JSON string describing parameters that are specific to the asset.
+   */
+  void setAssetOptions(const std::optional<std::string>& options) noexcept;
+
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
@@ -80,7 +92,8 @@ protected:
 private:
   std::string _overlayUrl;
   std::string _ionAccessToken;
-  bool _needsAuthHeader = false;
+  bool _needsAuthHeader;
+  std::optional<std::string> _assetOptions;
 
   class TileProvider;
 

@@ -35,6 +35,7 @@
 - Added `AsyncSystem::enterMainThread`.
 - Added `JsonObjectJsonHandler::ValueType`.
 - Added `trimWhitespace` and `splitOnCharacter` to `StringHelpers`.
+- Added `IonRasterOverlay::setAssetOptions`, providing the ability to supply asset-specific options to Cesium ion when requesting an asset endpoint.
 
 ##### Fixes :wrench:
 

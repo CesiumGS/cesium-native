@@ -18,6 +18,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
+#include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>
 #include <nonstd/expected.hpp>
@@ -259,9 +260,20 @@ IonRasterOverlay::IonRasterOverlay(
     : RasterOverlay(name, overlayOptions),
       _overlayUrl(overlayUrl),
       _ionAccessToken(ionAccessToken),
-      _needsAuthHeader(needsAuthHeader) {}
+      _needsAuthHeader(needsAuthHeader),
+      _assetOptions() {}
 
 IonRasterOverlay::~IonRasterOverlay() = default;
+
+const std::optional<std::string>&
+IonRasterOverlay::getAssetOptions() const noexcept {
+  return this->_assetOptions;
+}
+
+void IonRasterOverlay::setAssetOptions(
+    const std::optional<std::string>& options) noexcept {
+  this->_assetOptions = options;
+}
 
 Future<RasterOverlay::CreateTileProviderResult>
 IonRasterOverlay::createTileProvider(
@@ -281,6 +293,14 @@ IonRasterOverlay::createTileProvider(
     descriptor.headers.emplace_back(
         "Authorization",
         fmt::format("Bearer {}", this->_ionAccessToken));
+  }
+
+  if (this->_assetOptions) {
+    Uri uri(descriptor.url);
+    UriQuery query = uri.getQuery();
+    query.setValue("options", *this->_assetOptions);
+    uri.setQuery(query.toQueryString());
+    descriptor.url = uri.toString();
   }
 
   RasterOverlayExternals externals{
