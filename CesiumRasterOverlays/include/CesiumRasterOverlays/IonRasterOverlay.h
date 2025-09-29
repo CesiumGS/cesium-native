@@ -1,10 +1,14 @@
 #pragma once
 
 #include <CesiumAsync/IAssetRequest.h>
+#include <CesiumAsync/NetworkAssetDescriptor.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumUtility/SharedAsset.h>
 
+#include <chrono>
 #include <memory>
 
 namespace CesiumRasterOverlays {
@@ -74,12 +78,21 @@ private:
   std::string _ionAccessToken;
   bool _needsAuthHeader = false;
 
+  class TileProvider;
+
   struct AssetEndpointAttribution {
     std::string html;
     bool collapsible = true;
   };
 
-  struct ExternalAssetEndpoint {
+  struct ExternalAssetEndpoint
+      : public CesiumUtility::SharedAsset<ExternalAssetEndpoint> {
+    ExternalAssetEndpoint() noexcept = default;
+    ~ExternalAssetEndpoint() noexcept = default;
+    ExternalAssetEndpoint(const ExternalAssetEndpoint&) noexcept = default;
+    ExternalAssetEndpoint(ExternalAssetEndpoint&&) noexcept = default;
+
+    std::chrono::steady_clock::time_point requestTime;
     std::string externalType;
     std::string url;
     std::string mapStyle;
@@ -87,19 +100,17 @@ private:
     std::string culture;
     std::string accessToken;
     std::vector<AssetEndpointAttribution> attributions;
+    std::shared_ptr<CesiumAsync::IAssetRequest> pRequestThatFailed;
   };
 
   static std::unordered_map<std::string, ExternalAssetEndpoint> endpointCache;
 
-  CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const ExternalAssetEndpoint& endpoint,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const;
+  using EndpointDepot = CesiumAsync::SharedAssetDepot<
+      ExternalAssetEndpoint,
+      CesiumAsync::NetworkAssetDescriptor,
+      RasterOverlayExternals>;
+
+  static CesiumUtility::IntrusivePointer<EndpointDepot> getEndpointCache();
 };
 
 } // namespace CesiumRasterOverlays

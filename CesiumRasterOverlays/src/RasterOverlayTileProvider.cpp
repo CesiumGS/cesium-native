@@ -98,6 +98,11 @@ const RasterOverlay& RasterOverlayTileProvider::getOwner() const noexcept {
   return *this->_pOwner;
 }
 
+const RasterOverlayExternals&
+RasterOverlayTileProvider::getExternals() const noexcept {
+  return this->_externals;
+}
+
 const std::shared_ptr<CesiumAsync::IAssetAccessor>&
 RasterOverlayTileProvider::getAssetAccessor() const noexcept {
   return this->_externals.pAssetAccessor;
