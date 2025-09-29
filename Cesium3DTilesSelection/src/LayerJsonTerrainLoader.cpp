@@ -436,7 +436,8 @@ Future<LoadLayersResult> loadLayersRecursive(
                     std::move(loadLayersResult));
               }
 
-              // Use the original user headers instead of completed request headers
+              // Use the original user headers instead of completed request
+              // headers
               return loadLayersRecursive(
                   asyncSystem,
                   pAssetAccessor,
@@ -599,7 +600,8 @@ LayerJsonTerrainLoader::createLoader(
                 useWaterMask,
                 ellipsoid);
           })
-      .thenInMainThread([ellipsoid, requestHeaders](LoadLayersResult&& loadLayersResult) {
+      .thenInMainThread([ellipsoid,
+                         requestHeaders](LoadLayersResult&& loadLayersResult) {
         return convertToTilesetContentLoaderResult(
             ellipsoid,
             std::vector<CesiumAsync::IAssetAccessor::THeader>(requestHeaders),
@@ -624,7 +626,8 @@ Cesium3DTilesSelection::LayerJsonTerrainLoader::createLoader(
              layerJson,
              contentOptions.enableWaterMask,
              ellipsoid)
-      .thenInMainThread([ellipsoid, requestHeaders](LoadLayersResult&& loadLayersResult) {
+      .thenInMainThread([ellipsoid,
+                         requestHeaders](LoadLayersResult&& loadLayersResult) {
         return convertToTilesetContentLoaderResult(
             ellipsoid,
             std::vector<CesiumAsync::IAssetAccessor::THeader>(requestHeaders),
