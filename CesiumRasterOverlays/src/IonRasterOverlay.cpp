@@ -457,7 +457,7 @@ IonRasterOverlay::getEndpointCache() {
                     google2D.imageFormat = JsonHelpers::getStringOrDefault(
                         options,
                         "imageFormat",
-                        "jpeg");
+                        GoogleMapTilesImageFormat::jpeg);
 
                   } else {
                     ExternalAssetEndpoint::TileMapService& tileMapService =

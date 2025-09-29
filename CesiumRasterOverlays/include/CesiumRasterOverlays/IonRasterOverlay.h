@@ -47,13 +47,17 @@ public:
 
   /**
    * @brief Gets the additional `options` to be passed to the asset endpoint.
-   * This is a JSON string describing parameters that are specific to the asset.
+   *
+   * @returns An optional JSON string describing parameters that are specific to
+   * the asset.
    */
   const std::optional<std::string>& getAssetOptions() const noexcept;
 
   /**
    * @brief Sets the additional `options` to be passed to the asset endpoint.
-   * This is a JSON string describing parameters that are specific to the asset.
+   *
+   * @param options An optional JSON string describing parameters that are
+   * specific to the asset.
    */
   void setAssetOptions(const std::optional<std::string>& options) noexcept;
 

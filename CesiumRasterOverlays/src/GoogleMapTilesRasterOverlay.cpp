@@ -251,7 +251,7 @@ GoogleMapTilesRasterOverlay::createTileProvider(
             session.tileWidth,
             session.tileHeight);
 
-    // Load credits, but don't wait for them to load.
+    // Start loading credits, but don't wait for the load to finish.
     pTileProvider->loadCredits();
 
     // Load initial availability information before trying to fulfill
@@ -461,7 +461,7 @@ GoogleMapTilesRasterOverlay::createNewSession(
                     static_cast<uint32_t>(tileWidth),
                     static_cast<uint32_t>(tileHeight));
 
-            // Load credits, but don't wait for them to load.
+            // Start loading credits, but don't wait for the load to finish.
             pTileProvider->loadCredits();
 
             // Load initial availability information before trying to fulfill
@@ -555,7 +555,8 @@ GoogleMapTilesRasterOverlayTileProvider::loadQuadtreeTileImage(
   }
 
   // 2. If we have complete availability information here, that means the tile
-  // is definitely _not_ available (or we would have returned at (1) above).
+  // is definitely _not_ available (otherwise we would have returned at (1)
+  // above).
   //
   // Note that _availableAvailability conceptually only stores level-less
   // rectangles. So, to query it, we use the maximum level tile that contains
