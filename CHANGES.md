@@ -18,10 +18,11 @@
 - `RasterMappedTo3DTile::mapOverlayToTile` now takes an `ActivatedRasterOverlay` instead of a `RasterOverlayTileProvider`.
 - Removed `getOverlays`, `getTileProviders`, and `getPlaceholderTileProviders` from `RasterOverlayCollection`. Use `getActivatedOverlays` instead.
 - `SharedAssetDepot` now uses a templatized "context" instead of separate `AsyncSystem` and `IAssetAccessor` parameters. It defaults to `SharedAssetContext`.
-- Removed `RasterOverlay::getCredits`, which was not actually used anywhere. Use `RasterOverlayTileProvider::getCredits` instead.
+- Removed `RasterOverlay::getCredits`, which was not actually used anywhere. Use `RasterOverlayTileProvider::addCredits` instead.
 
 ##### Additions :tada:
 
+- Added `GoogleMapTilesRasterOverlay`.
 - Added `invalidate` method to `SharedAssetDepot`.
 - Added `RasterOverlayExternals` class. This is similar to `TilesetExternals` and is a more convenient way to pass around the various external interfaces that raster overlays use.
 - Added `ActivatedRasterOverlay`, encapsulating most of the functionality that was previously found on `RasterOverlayTileProvider`.
@@ -31,6 +32,9 @@
 - Added `CesiumUtility::DerivedValue`.
 - Added `RasterOverlayTileProvider::getExternals`.
 - Added new `log` and `format` methods to `ErrorList`.
+- Added `AsyncSystem::enterMainThread`.
+- Added `JsonObjectJsonHandler::ValueType`.
+- Added `trimWhitespace` and `splitOnCharacter` to `StringHelpers`.
 
 ##### Fixes :wrench:
 
