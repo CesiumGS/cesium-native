@@ -110,6 +110,55 @@ struct CESIUMUTILITY_API ErrorList {
   }
 
   /**
+   * @brief Log all the error and warning messages
+   *
+   * @param pLogger The logger to log the messages
+   * @param prompt The message prompt for the messages.
+   */
+  template <typename PromptStr>
+  void
+  log(const std::shared_ptr<spdlog::logger>& pLogger,
+      PromptStr&& prompt) const noexcept {
+    if (!this->errors.empty()) {
+      SPDLOG_LOGGER_ERROR(
+          pLogger,
+          this->format(std::forward<PromptStr>(prompt)));
+    } else if (!this->warnings.empty()) {
+      SPDLOG_LOGGER_WARN(
+          pLogger,
+          this->format(std::forward<PromptStr>(prompt)));
+    }
+  }
+
+  /**
+   * @brief Format all of the errors and warnings into a single string.
+   *
+   * @param prompt The message prompt for the messages.
+   * @returns The formatted message, or an empty string if there are no errors
+   * or warnings.
+   */
+  template <typename PromptStr>
+  std::string format(PromptStr&& prompt) const noexcept {
+    if (this->warnings.empty() && this->errors.empty()) {
+      return std::string();
+    }
+
+    std::string result = prompt;
+
+    if (!this->errors.empty()) {
+      result += "\n- [Error] " +
+                CesiumUtility::joinToString(this->errors, "\n- [Error] ");
+    }
+
+    if (!this->warnings.empty()) {
+      result += "\n- [Warning] " +
+                CesiumUtility::joinToString(this->warnings, "\n- [Warning] ");
+    }
+
+    return result;
+  }
+
+  /**
    * @brief Check if there are any error messages.
    */
   explicit operator bool() const noexcept;
