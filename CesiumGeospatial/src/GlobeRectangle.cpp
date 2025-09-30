@@ -3,6 +3,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <glm/common.hpp>
+#include <glm/vec2.hpp>
 
 #include <optional>
 #include <utility>
