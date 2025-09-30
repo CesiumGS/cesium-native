@@ -10,6 +10,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
+#include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/StringHelpers.h>
@@ -247,10 +248,13 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
     CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
         *result;
-    std::optional<Credit> maybeCredit = pTileProvider->getCredit();
 
-    REQUIRE(maybeCredit);
-    CHECK(pCreditSystem->getHtml(*maybeCredit) == "test credit");
+    CreditReferencer referencer(pCreditSystem);
+    pTileProvider->addCredits(referencer);
+
+    const CreditsSnapshot& snapshot = pCreditSystem->getSnapshot();
+    REQUIRE(snapshot.currentCredits.size() == 1);
+    CHECK(pCreditSystem->getHtml(snapshot.currentCredits[0]) == "test credit");
   }
 
   SUBCASE("loads with credit and null credit system") {
@@ -273,6 +277,8 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
     CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
         *result;
-    CHECK(!pTileProvider->getCredit());
+
+    CreditReferencer referencer(nullptr);
+    pTileProvider->addCredits(referencer);
   }
 }

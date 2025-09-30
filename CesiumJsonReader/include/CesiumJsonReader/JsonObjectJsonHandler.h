@@ -12,6 +12,11 @@ namespace CesiumJsonReader {
  */
 class CESIUMJSONREADER_API JsonObjectJsonHandler : public JsonHandler {
 public:
+  /**
+   * @brief The type of value this handler produces.
+   */
+  using ValueType = CesiumUtility::JsonValue;
+
   JsonObjectJsonHandler() noexcept;
 
   /**

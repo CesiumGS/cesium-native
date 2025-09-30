@@ -11,6 +11,7 @@
 #include <CesiumRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Tracing.h>
@@ -38,12 +39,11 @@ namespace CesiumRasterOverlays {
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
     const RasterOverlayExternals& externals,
-    std::optional<CesiumUtility::Credit> credit,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::Rectangle& coverageRectangle) noexcept
     : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
       _externals(externals),
-      _credit(credit),
+      _credit(),
       _projection(projection),
       _coverageRectangle(coverageRectangle),
       _destructionCompleteDetails() {}
@@ -67,9 +67,10 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
               .asyncSystem = asyncSystem,
               .pCreditSystem = pCreditSystem,
               .pLogger = pLogger},
-          credit,
           projection,
-          coverageRectangle) {}
+          coverageRectangle) {
+  this->_credit = credit;
+}
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
   if (this->_destructionCompleteDetails) {
@@ -141,6 +142,13 @@ RasterOverlayTileProvider::getCoverageRectangle() const noexcept {
 const std::optional<CesiumUtility::Credit>&
 RasterOverlayTileProvider::getCredit() const noexcept {
   return _credit;
+}
+
+void RasterOverlayTileProvider::addCredits(
+    CreditReferencer& creditReferencer) noexcept {
+  if (this->_credit) {
+    creditReferencer.addCreditReference(*this->_credit);
+  }
 }
 
 CesiumAsync::Future<LoadedRasterOverlayImage>

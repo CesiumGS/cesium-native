@@ -185,11 +185,7 @@ void TilesetViewGroup::finishFrame(
       if (pActivated->getTileProvider() == nullptr)
         continue;
 
-      const std::optional<Credit>& overlayCredit =
-          pActivated->getTileProvider()->getCredit();
-      if (overlayCredit) {
-        this->_currentFrameCredits.addCreditReference(overlayCredit.value());
-      }
+      pActivated->getTileProvider()->addCredits(this->_currentFrameCredits);
     }
 
     // Add per-tile credits for tiles selected this frame.

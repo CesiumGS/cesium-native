@@ -175,20 +175,6 @@ public:
   }
 
   /**
-   * @brief Gets the credits for this overlay.
-   */
-  const std::vector<CesiumUtility::Credit>& getCredits() const noexcept {
-    return this->_credits;
-  }
-
-  /**
-   * @brief Gets the credits for this overlay.
-   */
-  std::vector<CesiumUtility::Credit>& getCredits() noexcept {
-    return this->_credits;
-  }
-
-  /**
    * @brief Activates this overlay.
    *
    * This method is called by a @ref
