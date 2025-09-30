@@ -1,5 +1,13 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed issues with GeoJsonRasterOverlay with certain types of data.
+  - Polygons with holes hould now display correctly.
+  - Using a GeoJSON file with data on either side of the antimeridian should now display correctly instead of causing the entire overlay to disappear.
+
 ### v0.52.0 - 2025-10-01
 
 ##### Breaking Changes :mega:
