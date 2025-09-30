@@ -199,3 +199,50 @@ TEST_CASE("GlobeRectangle::contains") {
   CHECK(wrapping.contains(Cartographic(-3.14, 0.2)));
   CHECK(!wrapping.contains(Cartographic(0.0, 0.2)));
 }
+
+TEST_CASE("GlobeRectangle::computeNormalizedCoordinates") {
+  GlobeRectangle simple(0.0, 0.0, 1.0, 1.0);
+  CHECK(
+      simple.computeNormalizedCoordinates(Cartographic(0.1, 0.1)) ==
+      glm::dvec2(0.1, 0.1));
+  CHECK(
+      simple.computeNormalizedCoordinates(Cartographic(0, 0.0)) ==
+      glm::dvec2(0.0, 0.0));
+  CHECK(
+      simple.computeNormalizedCoordinates(Cartographic(1.0, 1.0)) ==
+      glm::dvec2(1.0, 1.0));
+
+  GlobeRectangle wrapping =
+      GlobeRectangle::fromDegrees(175.0, 0.0, -175.0, 10.0);
+  CHECK(
+      wrapping.computeNormalizedCoordinates(
+          Cartographic::fromDegrees(175.0, 5.0)) == glm::dvec2(0.0, 0.5));
+  CHECK(
+      wrapping.computeNormalizedCoordinates(
+          Cartographic::fromDegrees(180.0, 10.0)) == glm::dvec2(0.5, 1.0));
+  CHECK(
+      wrapping.computeNormalizedCoordinates(
+          Cartographic::fromDegrees(-180.0, 0.0)) == glm::dvec2(0.5, 0.0));
+  CHECK(Math::equalsEpsilon(
+      wrapping.computeNormalizedCoordinates(
+          Cartographic::fromDegrees(-177.5, 0.0)),
+      glm::dvec2(0.75, 0.0),
+      Math::Epsilon6));
+  CHECK(
+      wrapping.computeNormalizedCoordinates(
+          Cartographic::fromDegrees(-175, 0.0)) == glm::dvec2(1.0, 0.0));
+
+  GlobeRectangle tile = GlobeRectangle::fromDegrees(0.5, 0, 1.0, 0.5);
+  CHECK(Math::equalsEpsilon(
+      tile.computeNormalizedCoordinates(Cartographic::fromDegrees(0.25, 0.25)),
+      glm::dvec2(-0.5, 0.5),
+      Math::Epsilon6));
+  CHECK(Math::equalsEpsilon(
+      tile.computeNormalizedCoordinates(Cartographic::fromDegrees(0.5, 0.75)),
+      glm::dvec2(0, 1.5),
+      Math::Epsilon6));
+  CHECK(Math::equalsEpsilon(
+      tile.computeNormalizedCoordinates(Cartographic::fromDegrees(0.75, 0.25)),
+      glm::dvec2(0.5, 0.5),
+      Math::Epsilon6));
+}

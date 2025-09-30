@@ -37,11 +37,11 @@ BLPoint radiansToPoint(
     double latitude,
     const GlobeRectangle& rect,
     const BLContext& context) {
+  const glm::dvec2 point =
+      rect.computeNormalizedCoordinates(Cartographic(longitude, latitude));
   return BLPoint(
-      (longitude - rect.getWest()) / rect.computeWidth() *
-          context.targetWidth(),
-      (1.0 - (latitude - rect.getSouth()) / rect.computeHeight()) *
-          context.targetHeight());
+      point.x * context.targetWidth(),
+      (1.0 - point.y) * context.targetHeight());
 }
 
 void setStrokeWidth(

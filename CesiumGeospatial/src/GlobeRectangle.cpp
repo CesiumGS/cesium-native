@@ -142,6 +142,22 @@ GlobeRectangle::computeUnion(const GlobeRectangle& other) const noexcept {
       glm::max(this->_north, other._north));
 }
 
+glm::dvec2 GlobeRectangle::computeNormalizedCoordinates(
+    const Cartographic& cartographic) const noexcept {
+  double east = this->_east;
+  double cartoLong = cartographic.longitude;
+  if (east < this->_west) {
+    east += CesiumUtility::Math::TwoPi;
+    if (cartographic.longitude < 0) {
+      cartoLong += CesiumUtility::Math::TwoPi;
+    }
+  }
+
+  return glm::dvec2(
+      (cartoLong - this->_west) / (east - this->_west),
+      (cartographic.latitude - this->_south) / (this->_north - this->_south));
+}
+
 std::pair<GlobeRectangle, std::optional<GlobeRectangle>>
 GlobeRectangle::splitAtAntiMeridian() const noexcept {
   if (this->_west <= this->_east) {
