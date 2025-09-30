@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.52.0 - 2025-10-01
 
 ##### Breaking Changes :mega:
 
