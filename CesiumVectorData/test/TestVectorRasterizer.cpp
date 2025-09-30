@@ -238,6 +238,47 @@ TEST_CASE("VectorRasterizer::rasterize") {
     checkFilesEqual(dir / "polygon-holes.tga", thisDir / "polygon-holes.tga");
   }
 
+  SUBCASE("Polygon with holes and outline") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 256;
+    asset->height = 256;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    VectorRasterizer rasterizer(rect, asset);
+
+    std::vector<std::vector<glm::dvec3>> composite{
+        std::vector<glm::dvec3>{
+            glm::dvec3(0.25, 0.25, 0.0),
+            glm::dvec3(0.25, 0.75, 0.0),
+            glm::dvec3(0.75, 0.75, 0.0),
+            glm::dvec3(0.75, 0.25, 0.0),
+            glm::dvec3(0.25, 0.25, 0.0)},
+        std::vector<glm::dvec3>{
+            glm::dvec3(0.4, 0.4, 0.0),
+            glm::dvec3(0.6, 0.4, 0.0),
+            glm::dvec3(0.6, 0.6, 0.0),
+            glm::dvec3(0.4, 0.6, 0.0),
+            glm::dvec3(0.4, 0.4, 0.0)}};
+
+    VectorStyle style{Color{255, 50, 12, 255}};
+    style.polygon.outline = LineStyle{
+        ColorStyle{Color{0, 0, 0, 255}, ColorMode::Normal},
+        5.0,
+        LineWidthMode::Pixels};
+
+    rasterizer.drawPolygon(composite, style.polygon);
+    rasterizer.finalize();
+    writeImageToTgaFile(*asset, "polygon-holes-outline.tga");
+    checkFilesEqual(
+        dir / "polygon-holes-outline.tga",
+        thisDir / "polygon-holes-outline.tga");
+  }
+
   SUBCASE("Mip levels") {
     CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
     asset.emplace();

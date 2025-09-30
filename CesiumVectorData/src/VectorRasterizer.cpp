@@ -98,6 +98,7 @@ VectorRasterizer::VectorRasterizer(
   this->_context.begin(this->_image);
   // Initialize the image as all transparent.
   this->_context.clearAll();
+  this->_context.setFillRule(BL_FILL_RULE_EVEN_ODD);
 }
 
 void VectorRasterizer::drawPolygon(
@@ -143,25 +144,36 @@ void VectorRasterizer::drawPolygon(
     return;
   }
 
-  std::vector<BLPoint> vertices;
-  vertices.reserve(polygon.size());
+  BLPath path;
 
   for (const std::vector<glm::dvec3>& ring : polygon) {
-    // GeoJSON polygons have the reverse winding order from blend2D
-    for (auto it = ring.rbegin(); it != ring.rend(); ++it) {
-      vertices.emplace_back(radiansToPoint(
+    if (ring.empty())
+      continue;
+
+    auto it = ring.rbegin();
+    auto end = ring.rend();
+
+    glm::dvec3 firstPoint = *it;
+    path.moveTo(radiansToPoint(
+        CesiumUtility::Math::degreesToRadians(firstPoint.x),
+        CesiumUtility::Math::degreesToRadians(firstPoint.y),
+        this->_bounds,
+        this->_context));
+    ++it;
+
+    for (; it != end; ++it) {
+      path.lineTo(radiansToPoint(
           CesiumUtility::Math::degreesToRadians(it->x),
           CesiumUtility::Math::degreesToRadians(it->y),
           this->_bounds,
           this->_context));
     }
+
+    path.close();
   }
 
   if (style.fill) {
-    this->_context.fillPolygon(
-        vertices.data(),
-        vertices.size(),
-        BLRgba32(style.fill->getColor(seedForObject(polygon, 13)).toRgba32()));
+    this->_context.fillPath(path, BLRgba32(style.fill->getColor().toRgba32()));
   }
 
   if (style.outline) {
@@ -170,11 +182,10 @@ void VectorRasterizer::drawPolygon(
         *style.outline,
         this->_ellipsoid,
         this->_bounds);
-    this->_context.strokePolygon(
-        vertices.data(),
-        vertices.size(),
-        BLRgba32(
-            style.outline->getColor(seedForObject(polygon, 31)).toRgba32()));
+
+    this->_context.strokePath(
+        path,
+        BLRgba32(style.outline->getColor().toRgba32()));
   }
 }
 
