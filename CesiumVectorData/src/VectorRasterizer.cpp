@@ -17,6 +17,7 @@
 #include <blend2d/context.h>
 #include <blend2d/format.h>
 #include <blend2d/geometry.h>
+#include <blend2d/path.h>
 #include <blend2d/rgba.h>
 #include <glm/ext/vector_double2.hpp>
 
