@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.52.1 - 2025-10-01
+
+##### Breaking Changes :mega:
+
+- Reverted vcpkg update that could interfere with builds on headless MacOS.
+
 ### v0.52.0 - 2025-10-01
 
 ##### Breaking Changes :mega:
@@ -19,6 +25,7 @@
 - Removed `getOverlays`, `getTileProviders`, and `getPlaceholderTileProviders` from `RasterOverlayCollection`. Use `getActivatedOverlays` instead.
 - `SharedAssetDepot` now uses a templatized "context" instead of separate `AsyncSystem` and `IAssetAccessor` parameters. It defaults to `SharedAssetContext`.
 - Removed `RasterOverlay::getCredits`, which was not actually used anywhere. Use `RasterOverlayTileProvider::addCredits` instead.
+- Upgraded vcpkg to `2025.09.17`.
 
 ##### Additions :tada:
 
