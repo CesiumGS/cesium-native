@@ -153,7 +153,8 @@ public:
       const std::string& key,
       uint32_t maximumLevel,
       uint32_t imageWidth,
-      uint32_t imageHeight);
+      uint32_t imageHeight,
+      bool showLogo);
 
   CesiumAsync::Future<void>
   loadAvailability(const CesiumGeometry::QuadtreeTileID& tileID) const;
