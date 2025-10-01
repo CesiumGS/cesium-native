@@ -472,6 +472,7 @@ TEST_CASE("Test tile state machine") {
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Success,
+        0,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
@@ -579,6 +580,7 @@ TEST_CASE("Test tile state machine") {
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::RetryLater,
+        0,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
@@ -657,6 +659,7 @@ TEST_CASE("Test tile state machine") {
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Failed,
+        0,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
     pMockedLoader->mockCreateTileChildren.children.emplace_back(
@@ -752,6 +755,7 @@ TEST_CASE("Test tile state machine") {
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Success,
+        0,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -823,6 +827,7 @@ TEST_CASE("Test tile state machine") {
         nullptr,
         [&](Tile&) { initializerCall = true; },
         TileLoadResultState::Success,
+        0,
         Ellipsoid::WGS84};
     pMockedLoaderRaw->mockCreateTileChildren = {
         {},
@@ -916,6 +921,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         nullptr,
         {},
         TileLoadResultState::Success,
+        0,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -988,6 +994,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         nullptr,
         {},
         TileLoadResultState::Success,
+        0,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -1057,6 +1064,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         nullptr,
         {},
         TileLoadResultState::Success,
+        0,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -1102,6 +1110,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         nullptr,
         {},
         TileLoadResultState::Success,
+        0,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -1398,6 +1407,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         nullptr,
         {},
         TileLoadResultState::Success,
+        0,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
 
@@ -1619,6 +1629,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         nullptr,
         {},
         TileLoadResultState::Success,
+        0,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
 
@@ -1799,6 +1810,7 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
         nullptr,
         [&](Tile&) {},
         TileLoadResultState::Success,
+        0,
         Ellipsoid::WGS84,
         boundingVolume,
         contentBoundingVolume};

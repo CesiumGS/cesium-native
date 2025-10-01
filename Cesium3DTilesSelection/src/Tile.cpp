@@ -32,6 +32,8 @@ using namespace CesiumUtility;
 using namespace std::string_literals;
 
 namespace Cesium3DTilesSelection {
+std::atomic<uint64_t> Tile::_uidCounter = 1;
+
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 std::unordered_map<std::string, std::vector<TileReferenceCountTracker::Entry>>
     TileReferenceCountTracker::_entries;
@@ -100,7 +102,8 @@ Tile::Tile(
       _loadState{loadState},
       _mightHaveLatentChildren{true},
       _rasterTiles(),
-      _referenceCount(0) {
+      _referenceCount(0),
+      _uid(_uidCounter++) {
   if (this->hasReferencingContent()) {
     // Add a reference for the loaded content.
     this->addReference("Constructor with content");
@@ -123,7 +126,9 @@ Tile::Tile(Tile&& rhs) noexcept
       _loadState{rhs._loadState},
       _mightHaveLatentChildren{rhs._mightHaveLatentChildren},
       _rasterTiles(std::move(rhs._rasterTiles)),
-      _referenceCount(0) {
+      _referenceCount(0),
+      _uid(rhs._uid) {
+  rhs._uid = 0;
   if (this->hasReferencingContent()) {
     this->addReference("Move constructor with content");
     rhs.releaseReference("RHS passed to move constructor");
@@ -458,5 +463,7 @@ bool Tile::hasReferencingContent() const noexcept {
   return !this->_content.isUnknownContent() &&
          TileIdUtilities::isLoadable(this->_id);
 }
+
+uint64_t Tile::getUid() const noexcept { return this->_uid; }
 
 } // namespace Cesium3DTilesSelection

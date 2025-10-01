@@ -795,7 +795,8 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
     ExternalContentInitializer&& externalContentInitializer,
     rapidjson::Document& tilesetJson,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    uint64_t tileUid) {
   const auto& tileUrl = pCompletedRequest->url();
 
   // Save the parsed external tileset into custom data.
@@ -845,6 +846,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       std::move(pCompletedRequest),
       std::move(externalContentInitializer),
       TileLoadResultState::Success,
+      tileUid,
       ellipsoid};
 }
 
@@ -856,7 +858,8 @@ TileLoadResult parseJsonContentInWorkerThread(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
     ExternalContentInitializer&& externalContentInitializer,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    uint64_t tileUid) {
   const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
   const auto& responseData = pResponse->data();
 
@@ -892,6 +895,7 @@ TileLoadResult parseJsonContentInWorkerThread(
         std::move(pCompletedRequest),
         {},
         TileLoadResultState::Success,
+        tileUid,
         ellipsoid};
   } else {
     return parseExternalTilesetInWorkerThread(
@@ -903,7 +907,8 @@ TileLoadResult parseJsonContentInWorkerThread(
         std::move(pCompletedRequest),
         std::move(externalContentInitializer),
         tilesetJson,
-        ellipsoid);
+        ellipsoid,
+        tileUid);
   }
 }
 
@@ -1126,6 +1131,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
             nullptr,
             {},
             TileLoadResultState::Success,
+            tile.getUid(),
             ellipsoid});
   }
 
@@ -1142,8 +1148,10 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            externalContentInitializer = std::move(externalContentInitializer),
            pAssetAccessor,
            asyncSystem,
-           requestHeaders](std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                               pCompletedRequest) mutable {
+           requestHeaders,
+           tileUid =
+               tile.getUid()](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                  pCompletedRequest) mutable {
             auto pResponse = pCompletedRequest->response();
             const std::string& tileUrl = pCompletedRequest->url();
             if (!pResponse) {
@@ -1198,8 +1206,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                        upAxis,
                        tileUrl,
                        pAssetAccessor,
-                       pCompletedRequest = std::move(pCompletedRequest)](
-                          GltfConverterResult&& result) mutable {
+                       pCompletedRequest = std::move(pCompletedRequest),
+                       tileUid](GltfConverterResult&& result) mutable {
                         logTileLoadResult(pLogger, tileUrl, result.errors);
                         if (result.errors) {
                           return TileLoadResult::createFailedResult(
@@ -1216,6 +1224,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                             std::move(pCompletedRequest),
                             {},
                             TileLoadResultState::Success,
+                            tileUid,
                             ellipsoid};
                       });
             } else {
@@ -1229,7 +1238,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                       pAssetAccessor,
                       std::move(pCompletedRequest),
                       std::move(externalContentInitializer),
-                      ellipsoid));
+                      ellipsoid,
+                      tileUid));
             }
           });
 }

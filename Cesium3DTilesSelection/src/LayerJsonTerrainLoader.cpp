@@ -91,7 +91,8 @@ BoundingVolume createDefaultLooseEarthBoundingVolume(
 TileLoadResult convertToTileLoadResult(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     QuantizedMeshLoadResult&& loadResult,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    uint64_t tileUid) {
   if (loadResult.errors || !loadResult.model) {
     return TileLoadResult::createFailedResult(
         pAssetAccessor,
@@ -108,6 +109,7 @@ TileLoadResult convertToTileLoadResult(
       nullptr,
       {},
       TileLoadResultState::Success,
+      tileUid,
       ellipsoid};
 }
 
@@ -933,7 +935,8 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
           auto finalResult = convertToTileLoadResult(
               pAssetAccessor,
               std::move(loadResult),
-              ellipsoid);
+              ellipsoid,
+              tile.getUid());
           bool doesTileHaveUpsampledChild = tileHasUpsampledChild(tile);
           if (doesTileHaveUpsampledChild &&
               finalResult.state == TileLoadResultState::Success) {
@@ -957,40 +960,42 @@ LayerJsonTerrainLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   bool doesTileHaveUpsampledChild = tileHasUpsampledChild(tile);
   return std::move(futureQuantizedMesh)
-      .thenImmediately(
-          [pAssetAccessor,
-           pLogger,
-           doesTileHaveUpsampledChild,
-           projection = this->_projection,
-           tileTransform = tile.getTransform(),
-           tileBoundingVolume = tile.getBoundingVolume(),
-           ellipsoid](QuantizedMeshLoadResult&& loadResult) mutable {
-            loadResult.errors.logWarning(
-                pLogger,
-                "Warnings loading quantized mesh terrain");
-            loadResult.errors.logError(
-                pLogger,
-                "Errors loading quantized mesh terrain");
+      .thenImmediately([pAssetAccessor,
+                        pLogger,
+                        doesTileHaveUpsampledChild,
+                        projection = this->_projection,
+                        tileTransform = tile.getTransform(),
+                        tileBoundingVolume = tile.getBoundingVolume(),
+                        ellipsoid,
+                        tileUid = tile.getUid()](
+                           QuantizedMeshLoadResult&& loadResult) mutable {
+        loadResult.errors.logWarning(
+            pLogger,
+            "Warnings loading quantized mesh terrain");
+        loadResult.errors.logError(
+            pLogger,
+            "Errors loading quantized mesh terrain");
 
-            // if this tile has one of the children needs to be upsampled, we
-            // will need to generate its raster overlay UVs in the worker thread
-            // based on the projection of the loader since the upsampler needs
-            // this UV to do the upsampling
-            auto result = convertToTileLoadResult(
-                pAssetAccessor,
-                std::move(loadResult),
-                ellipsoid);
-            if (doesTileHaveUpsampledChild &&
-                result.state == TileLoadResultState::Success) {
-              generateRasterOverlayUVs(
-                  tileBoundingVolume,
-                  tileTransform,
-                  projection,
-                  result);
-            }
+        // if this tile has one of the children needs to be upsampled, we
+        // will need to generate its raster overlay UVs in the worker thread
+        // based on the projection of the loader since the upsampler needs
+        // this UV to do the upsampling
+        auto result = convertToTileLoadResult(
+            pAssetAccessor,
+            std::move(loadResult),
+            ellipsoid,
+            tileUid);
+        if (doesTileHaveUpsampledChild &&
+            result.state == TileLoadResultState::Success) {
+          generateRasterOverlayUVs(
+              tileBoundingVolume,
+              tileTransform,
+              projection,
+              result);
+        }
 
-            return result;
-          });
+        return result;
+      });
 }
 
 TileChildrenResult LayerJsonTerrainLoader::createTileChildren(
@@ -1243,7 +1248,8 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
        ellipsoid,
        boundingVolume = tile.getBoundingVolume(),
        textureCoordinateIndex = index,
-       tileID = *pUpsampledTileID]() mutable {
+       tileID = *pUpsampledTileID,
+       tileUid = tile.getUid()]() mutable {
         auto model = RasterOverlayUtilities::upsampleGltfForRasterOverlays(
             parentModel,
             tileID,
@@ -1265,6 +1271,7 @@ CesiumAsync::Future<TileLoadResult> LayerJsonTerrainLoader::upsampleParentTile(
             nullptr,
             {},
             TileLoadResultState::Success,
+            tileUid,
             ellipsoid};
       });
 }

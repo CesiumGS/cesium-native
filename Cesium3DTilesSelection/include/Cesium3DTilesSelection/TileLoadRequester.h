@@ -132,7 +132,7 @@ public:
    * @brief Called when pending requests will not be fulfilled.
    */
   virtual void fail(const std::string& message);
-  
+
   /**
    * @brief Destroys this instance.
    */

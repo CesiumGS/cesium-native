@@ -639,6 +639,15 @@ public:
    */
   bool hasReferencingContent() const noexcept;
 
+  /**
+   * @brief Get a universal ID for this tile.
+   *
+   * No other tile will have the same ID. This ID is not tied to geographic
+   * location of a tile; if a tile is unloaded and then loaded again, the new
+   * tile will have a different ID.
+   */
+  uint64_t getUid() const noexcept;
+
 private:
   struct TileConstructorImpl {};
   template <
@@ -701,6 +710,9 @@ private:
   std::vector<RasterMappedTo3DTile> _rasterTiles;
 
   mutable int32_t _referenceCount;
+
+  uint64_t _uid;
+  static std::atomic<uint64_t> _uidCounter;
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;

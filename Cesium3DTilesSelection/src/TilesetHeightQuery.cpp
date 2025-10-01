@@ -289,7 +289,6 @@ void TilesetHeightRequest::fail(const std::string& message) {
   this->promise.resolve(std::move(result));
 }
 
-
 bool TilesetHeightRequest::tryCompleteHeightRequest(
     const AsyncSystem& asyncSystem,
     TilesetContentManager& contentManager,

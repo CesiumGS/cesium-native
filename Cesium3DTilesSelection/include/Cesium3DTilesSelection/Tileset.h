@@ -448,7 +448,7 @@ public:
 
   void registerSecondaryTileset(std::shared_ptr<Tileset> secondaryTileset);
   void unregisterSecondaryTileset(const Tileset* secondaryTileset);
-  
+
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
 

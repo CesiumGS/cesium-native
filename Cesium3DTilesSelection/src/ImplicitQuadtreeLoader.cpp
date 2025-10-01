@@ -157,7 +157,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
     bool applyTextureTransform,
     const glm::dmat4& tileTransform,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    uint64_t tileUid) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
       .thenInWorkerThread([ellipsoid,
                            pLogger,
@@ -166,7 +167,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                            &asyncSystem,
                            pAssetAccessor,
                            tileTransform,
-                           requestHeaders](
+                           requestHeaders,
+                           tileUid](
                               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                   pCompletedRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse =
@@ -217,32 +219,33 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               requestHeaders,
               CesiumGeometry::Axis::Y};
           return converter(responseData, gltfOptions, assetFetcher)
-              .thenImmediately(
-                  [ellipsoid,
-                   pLogger,
-                   tileUrl,
-                   pAssetAccessor,
-                   pCompletedRequest](GltfConverterResult&& result) mutable {
-                    // Report any errors if there are any
-                    logTileLoadResult(pLogger, tileUrl, result.errors);
-                    if (result.errors || !result.model) {
-                      return TileLoadResult::createFailedResult(
-                          pAssetAccessor,
-                          std::move(pCompletedRequest));
-                    }
+              .thenImmediately([ellipsoid,
+                                pLogger,
+                                tileUrl,
+                                pAssetAccessor,
+                                pCompletedRequest,
+                                tileUid](GltfConverterResult&& result) mutable {
+                // Report any errors if there are any
+                logTileLoadResult(pLogger, tileUrl, result.errors);
+                if (result.errors || !result.model) {
+                  return TileLoadResult::createFailedResult(
+                      pAssetAccessor,
+                      std::move(pCompletedRequest));
+                }
 
-                    return TileLoadResult{
-                        std::move(*result.model),
-                        CesiumGeometry::Axis::Y,
-                        std::nullopt,
-                        std::nullopt,
-                        std::nullopt,
-                        pAssetAccessor,
-                        std::move(pCompletedRequest),
-                        {},
-                        TileLoadResultState::Success,
-                        ellipsoid};
-                  });
+                return TileLoadResult{
+                    std::move(*result.model),
+                    CesiumGeometry::Axis::Y,
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    pAssetAccessor,
+                    std::move(pCompletedRequest),
+                    {},
+                    TileLoadResultState::Success,
+                    tileUid,
+                    ellipsoid};
+              });
         }
         // content type is not supported
         return fail();
@@ -361,6 +364,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
         nullptr,
         {},
         TileLoadResultState::Success,
+        tile.getUid(),
         ellipsoid});
   }
 
@@ -377,7 +381,8 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions.ktx2TranscodeTargets,
       contentOptions.applyTextureTransform,
       tile.getTransform(),
-      ellipsoid);
+      ellipsoid,
+      tile.getUid());
 }
 
 TileChildrenResult ImplicitQuadtreeLoader::createTileChildren(

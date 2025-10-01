@@ -95,7 +95,8 @@ EllipsoidTilesetLoader::loadTileContent(const TileLoadInput& input) {
       input.pAssetAccessor,
       nullptr,
       {},
-      TileLoadResultState::Success});
+      TileLoadResultState::Success,
+      input.tile.getUid()});
 }
 
 TileChildrenResult EllipsoidTilesetLoader::createTileChildren(

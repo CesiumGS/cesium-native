@@ -85,7 +85,8 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
        transform = loadInput.tile.getTransform(),
        textureCoordinateIndex = index,
        tileID = *pTileID,
-       pAssetAccessor = loadInput.pAssetAccessor]() mutable {
+       pAssetAccessor = loadInput.pAssetAccessor,
+       tileUid = loadInput.tile.getUid()]() mutable {
         auto model = RasterOverlayUtilities::upsampleGltfForRasterOverlays(
             parentModel,
             tileID,
@@ -118,6 +119,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             nullptr,
             {},
             TileLoadResultState::Success,
+            tileUid,
             ellipsoid};
       });
 }

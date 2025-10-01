@@ -132,6 +132,11 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   TileLoadResultState state;
 
   /**
+   * @brief The tile's UID.
+   */
+  uint64_t tileUid;
+
+  /**
    * @brief The ellipsoid that this tile uses.
    *
    * This value is only guaranteed to be accurate when {@link TileLoadResult::state} is equal to {@link TileLoadResultState::Success}.

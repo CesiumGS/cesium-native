@@ -47,6 +47,7 @@ TileLoadResult TileLoadResult::createFailedResult(
       std::move(pCompletedRequest),
       {},
       TileLoadResultState::Failed,
+      0,
       CesiumGeospatial::Ellipsoid::UNIT_SPHERE};
 }
 
@@ -63,6 +64,7 @@ TileLoadResult TileLoadResult::createRetryLaterResult(
       std::move(pCompletedRequest),
       {},
       TileLoadResultState::RetryLater,
+      0,
       CesiumGeospatial::Ellipsoid::UNIT_SPHERE};
 }
 
