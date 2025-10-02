@@ -50,6 +50,7 @@
 #include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Tracing.h>
 #include <CesiumUtility/joinToString.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
 
 #include <fmt/format.h>
 #include <glm/common.hpp>
@@ -122,6 +123,11 @@ struct ContentKindSetter {
     }
 
     tileContent.setContentKind(std::move(pRenderContent));
+  }
+
+  void operator()(CesiumVectorData::GeoJsonDocument&& content) {
+    tileContent.setContentKind(
+        std::make_unique<TileFeatureContent>(std::move(content)));
   }
 
   TileContent& tileContent;
@@ -1091,8 +1097,8 @@ void TilesetContentManager::loadTileContent(
         // related to render content. We only ever spawn a new task in the
         // worker thread if the content is a render content
         if (result.state == TileLoadResultState::Success) {
+          auto asyncSystem = tileLoadInfo.asyncSystem;
           if (std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
-            auto asyncSystem = tileLoadInfo.asyncSystem;
             return asyncSystem.runInWorkerThread(
                 [result = std::move(result),
                  projections = std::move(projections),
@@ -1103,6 +1109,21 @@ void TilesetContentManager::loadTileContent(
                       std::move(projections),
                       std::move(tileLoadInfo),
                       rendererOptions);
+                });
+          } else if (
+              std::holds_alternative<CesiumVectorData::GeoJsonDocument>(
+                  result.contentKind) &&
+              tileLoadInfo.pPrepareRendererResources) {
+            return asyncSystem.runInWorkerThread(
+                [result = std::move(result),
+                 tileLoadInfo = std::move(tileLoadInfo),
+                 rendererOptions]() mutable {
+                  return tileLoadInfo.pPrepareRendererResources
+                      ->prepareInLoadThread(
+                          tileLoadInfo.asyncSystem,
+                          std::move(result),
+                          tileLoadInfo.tileTransform,
+                          rendererOptions);
                 });
           }
         }
