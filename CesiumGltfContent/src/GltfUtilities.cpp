@@ -36,6 +36,7 @@
 #include <CesiumGltfContent/SkirtMeshMetadata.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonValue.h>
+#include <CesiumUtility/StringHelpers.h>
 
 #include <fmt/format.h>
 #include <glm/ext/matrix_double4x4.hpp>
@@ -290,45 +291,14 @@ GltfUtilities::parseGltfCopyright(const CesiumGltf::Model& gltf) {
   }
 }
 
-namespace {
-std::string_view trimWhitespace(const std::string_view& s) {
-  size_t end = s.find_last_not_of(" \t");
-  if (end == std::string::npos)
-    return {};
-
-  std::string_view trimmedRight = s.substr(0, end + 1);
-  size_t start = trimmedRight.find_first_not_of(" \t");
-  if (start == std::string::npos)
-    return {};
-
-  return trimmedRight.substr(start);
-}
-} // namespace
-
 std::vector<std::string_view>
 GltfUtilities::parseGltfCopyright(const std::string_view& s) {
-  std::vector<std::string_view> result;
-  if (s.empty())
-    return result;
-
-  size_t start = 0;
-
-  auto addPart = [&](size_t end) {
-    std::string_view trimmed = trimWhitespace(s.substr(start, end - start));
-    if (!trimmed.empty())
-      result.emplace_back(std::move(trimmed));
-  };
-
-  for (size_t i = 0, length = s.size(); i < length; ++i) {
-    if (s[i] == ';') {
-      addPart(i);
-      start = i + 1;
-    }
-  }
-
-  addPart(s.size());
-
-  return result;
+  return CesiumUtility::StringHelpers::splitOnCharacter(
+      s,
+      ';',
+      CesiumUtility::StringHelpers::SplitOptions{
+          .trimWhitespace = true,
+          .omitEmptyParts = true});
 }
 
 namespace {

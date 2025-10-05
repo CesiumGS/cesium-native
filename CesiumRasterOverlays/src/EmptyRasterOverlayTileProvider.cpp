@@ -7,9 +7,7 @@
 
 #include <optional>
 
-using namespace CesiumRasterOverlays;
-
-namespace Cesium3DTilesSelection {
+namespace CesiumRasterOverlays {
 
 EmptyRasterOverlayTileProvider::EmptyRasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
@@ -32,4 +30,4 @@ EmptyRasterOverlayTileProvider::loadTileImage(
       .createResolvedFuture<CesiumRasterOverlays::LoadedRasterOverlayImage>({});
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumRasterOverlays

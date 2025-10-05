@@ -12,6 +12,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
+#include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -596,8 +597,9 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
           } else {
             // We have a depot, so fetch this asset via that depot.
             return options.pSharedAssetSystem->pImage->getOrCreate(
-                asyncSystem,
-                pAssetAccessor,
+                SharedAssetContext{
+                    .asyncSystem = asyncSystem,
+                    .pAssetAccessor = pAssetAccessor},
                 assetKey);
           }
         };
@@ -643,8 +645,9 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
       } else {
         // We have a depot, so fetch this asset via that depot.
         return options.pSharedAssetSystem->pExternalMetadataSchema->getOrCreate(
-            asyncSystem,
-            pAssetAccessor,
+            SharedAssetContext{
+                .asyncSystem = asyncSystem,
+                .pAssetAccessor = pAssetAccessor},
             assetKey);
       }
     };

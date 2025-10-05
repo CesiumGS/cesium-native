@@ -7,6 +7,7 @@
 #include <Cesium3DTilesSelection/TilesetFrameState.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Assert.h>
@@ -180,11 +181,11 @@ void TilesetViewGroup::finishFrame(
 
     // per-raster overlay credit
     const RasterOverlayCollection& overlayCollection = tileset.getOverlays();
-    for (auto& pTileProvider : overlayCollection.getTileProviders()) {
-      const std::optional<Credit>& overlayCredit = pTileProvider->getCredit();
-      if (overlayCredit) {
-        this->_currentFrameCredits.addCreditReference(overlayCredit.value());
-      }
+    for (auto& pActivated : overlayCollection.getActivatedOverlays()) {
+      if (pActivated->getTileProvider() == nullptr)
+        continue;
+
+      pActivated->getTileProvider()->addCredits(this->_currentFrameCredits);
     }
 
     // Add per-tile credits for tiles selected this frame.

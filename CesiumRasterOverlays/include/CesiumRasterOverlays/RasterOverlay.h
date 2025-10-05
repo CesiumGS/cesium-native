@@ -26,8 +26,10 @@ class CreditSystem;
 
 namespace CesiumRasterOverlays {
 
+class ActivatedRasterOverlay;
 class IPrepareRasterOverlayRendererResources;
 class RasterOverlayTileProvider;
+class RasterOverlayExternals;
 
 /**
  * @brief Options for loading raster overlays.
@@ -173,32 +175,32 @@ public:
   }
 
   /**
-   * @brief Gets the credits for this overlay.
+   * @brief Activates this overlay.
+   *
+   * This method is called by a @ref
+   * Cesium3DTilesSelection::RasterOverlayCollection when an overlay is added to
+   * it. The returned @ref ActivatedRasterOverlay is used by the collection to
+   * manage the overlay.
+   *
+   * @param externals The external interfaces for use by the raster overlay.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
+   * @return The activated overlay.
    */
-  const std::vector<CesiumUtility::Credit>& getCredits() const noexcept {
-    return this->_credits;
-  }
-
-  /**
-   * @brief Gets the credits for this overlay.
-   */
-  std::vector<CesiumUtility::Credit>& getCredits() noexcept {
-    return this->_credits;
-  }
+  CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> activate(
+      const RasterOverlayExternals& externals,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) const;
 
   /**
    * @brief Create a placeholder tile provider can be used in place of the real
    * one while {@link createTileProvider} completes asynchronously.
    *
-   * @param asyncSystem The async system used to do work in threads.
-   * @param pAssetAccessor The interface used to download assets like overlay
-   * metadata and tiles.
+   * @param externals The external interfaces for use by the raster overlay.
    * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
    * @return The placeholder.
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> createPlaceholder(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const RasterOverlayExternals& externals,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) const;
 

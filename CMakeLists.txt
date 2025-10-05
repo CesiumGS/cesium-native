@@ -74,6 +74,7 @@ endif()
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
 message(STATUS "VCPKG_TARGET_TRIPLET ${VCPKG_TARGET_TRIPLET}")
+message(STATUS "VCPKG_PLATFORM_TOOLSET_VERSION $ENV{VCPKG_PLATFORM_TOOLSET_VERSION}")
 
 if (NOT VCPKG_OVERLAY_PORTS)
     if (DEFINED ENV{VCPKG_OVERLAY_PORTS})
@@ -148,7 +149,7 @@ if(CESIUM_USE_EZVCPKG)
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
     ezvcpkg_fetch(
-        COMMIT dbe35ceb30c688bf72e952ab23778e009a578f18
+        COMMIT 2025.09.17
         PACKAGES ${PACKAGES_ALL}
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
@@ -178,7 +179,7 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.51.0
+    VERSION 0.52.0
     LANGUAGES CXX C
 )
 
