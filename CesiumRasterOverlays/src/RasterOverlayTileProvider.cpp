@@ -8,6 +8,7 @@
 #include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/CreditReferencer.h>
@@ -80,7 +81,7 @@ RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
 CesiumAsync::SharedFuture<void>&
 RasterOverlayTileProvider::getAsyncDestructionCompleteEvent() {
   if (!this->_destructionCompleteDetails) {
-    auto promise = this->_asyncSystem.createPromise<void>();
+    auto promise = this->_externals.asyncSystem.createPromise<void>();
     auto sharedFuture = promise.getFuture().share();
     this->_destructionCompleteDetails.emplace(DestructionCompleteDetails{
         std::move(promise),

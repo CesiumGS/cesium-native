@@ -464,7 +464,7 @@ void blitImage(
 
 CesiumAsync::Future<LoadedRasterOverlayImage>
 QuadtreeRasterOverlayTileProvider::loadTileImage(
-    RasterOverlayTile& overlayTile) {
+    const RasterOverlayTile& overlayTile) {
   // Figure out which quadtree level we need, and which tiles from that level.
   // Load each needed tile (or pull it from cache).
   std::vector<CesiumAsync::SharedFuture<ResultPointer<LoadedQuadtreeImage>>>

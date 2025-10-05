@@ -49,7 +49,7 @@ public:
             CesiumGeometry::Rectangle()) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& /* overlayTile */) override {
+  loadTileImage(const RasterOverlayTile& /* overlayTile */) override {
     return this->getAsyncSystem()
         .createResolvedFuture<LoadedRasterOverlayImage>({});
   }

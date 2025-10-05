@@ -14,7 +14,7 @@ public:
 
 protected:
   virtual CesiumAsync::Future<CesiumRasterOverlays::LoadedRasterOverlayImage>
-  loadTileImage(CesiumRasterOverlays::RasterOverlayTile& overlayTile) override;
+  loadTileImage(const CesiumRasterOverlays::RasterOverlayTile& overlayTile) override;
 };
 
 } // namespace CesiumRasterOverlays
