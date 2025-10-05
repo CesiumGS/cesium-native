@@ -44,7 +44,6 @@ if (CESIUM_TARGET_WASM)
         CesiumUtility
         PUBLIC
             zlib-ng::zlib-ng
-            #spdlog::spdlog
             spdlog::spdlog_header_only
             glm::glm
             ada::ada
