@@ -711,7 +711,6 @@ CesiumAsync::Future<rapidjson::Document> fetchViewportData(
                   pRequest->url(),
                   document.GetParseError(),
                   document.GetErrorOffset());
-              return document;
             }
 
             return document;
@@ -889,7 +888,7 @@ Future<void> GoogleMapTilesRasterOverlayTileProvider::loadCredits() {
             uint32_t(i),
             Rectangle(-180.0, -90.0, 180.0, 90.0))
             .thenInMainThread([](rapidjson::Document&& document) {
-              if (document.HasParseError()) {
+              if (document.HasParseError() || !document.IsObject()) {
                 return std::string();
               }
 
