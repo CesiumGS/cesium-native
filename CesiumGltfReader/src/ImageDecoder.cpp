@@ -28,8 +28,6 @@
 #define STB_IMAGE_RESIZE_STATIC
 #include <stb_image_resize2.h>
 
-#include <thread>
-
 namespace CesiumGltfReader {
 
 using namespace CesiumGltf;
