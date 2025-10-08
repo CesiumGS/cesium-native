@@ -212,7 +212,7 @@ int64_t Tile::computeByteSize() const noexcept {
   return bytes;
 }
 
-bool Tile::isRenderable() const noexcept {
+bool Tile::isRenderable(std::optional<int> modelVersion) const noexcept {
   if (getState() == TileLoadState::Failed) {
     // Explicitly treat failed tiles as "renderable" - we just treat them like
     // empty tiles.
@@ -220,6 +220,11 @@ bool Tile::isRenderable() const noexcept {
   }
 
   if (getState() == TileLoadState::Done) {
+    auto* renderContent = getContent().getRenderContent();
+    if (renderContent && modelVersion &&
+        // compares optional values if both have one:
+        modelVersion != renderContent->getModel().version)
+      return false;
     // An unconditionally-refined tile is never renderable... UNLESS it has no
     // children, in which case waiting longer will be futile.
     if (!getUnconditionallyRefine() || this->_children.empty()) {
@@ -231,7 +236,6 @@ bool Tile::isRenderable() const noexcept {
           });
     }
   }
-
   return false;
 }
 
@@ -271,16 +275,42 @@ bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
 
 } // namespace
 
-bool Tile::needsWorkerThreadLoading() const noexcept {
+bool Tile::needsWorkerThreadLoading(
+    std::optional<int> modelVersion) const noexcept {
   TileLoadState state = this->getState();
+  // Test if worker-thread phase of glTF modifier should be started.
+  if (modelVersion && state == TileLoadState::Done) {
+    const auto* renderContent = getContent().getRenderContent();
+    if (renderContent &&
+        renderContent->getGltfModifierState() == GltfModifier::State::Idle) {
+      // Need to account for the modified model's version too in case
+      // finishLoading hasn't yet been called
+      std::optional<int> latestVersion =
+          renderContent->getModifiedModel()
+              ? renderContent->getModifiedModel()->version
+              : std::nullopt;
+      if (!latestVersion)
+        latestVersion = renderContent->getModel().version;
+      if (!latestVersion || latestVersion != modelVersion)
+        return true;
+    }
+  }
   return state == TileLoadState::Unloaded ||
          state == TileLoadState::FailedTemporarily ||
          anyRasterOverlaysNeedLoading(*this);
 }
 
-bool Tile::needsMainThreadLoading() const noexcept {
-  return this->getState() == TileLoadState::ContentLoaded &&
-         this->isRenderContent();
+bool Tile::needsMainThreadLoading(
+    std::optional<int> modelVersion) const noexcept {
+  TileLoadState state = this->getState();
+  // Test if main-thread phase of glTF modifier should be performed.
+  if (modelVersion && state == TileLoadState::Done) {
+    const auto* renderContent = getContent().getRenderContent();
+    if (renderContent && renderContent->getGltfModifierState() ==
+                             GltfModifier::State::WorkerDone)
+      return true;
+  }
+  return state == TileLoadState::ContentLoaded && this->isRenderContent();
 }
 
 void Tile::setParent(Tile* pParent) noexcept {
