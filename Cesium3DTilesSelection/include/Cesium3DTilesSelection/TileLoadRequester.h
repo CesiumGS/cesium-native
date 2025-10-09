@@ -106,6 +106,12 @@ public:
    */
   void unregister() noexcept;
 
+  /**
+   * @brief Determines if this requester is currently registered with a
+   * {@link Tileset}.
+   */
+  bool isRegistered() const noexcept;
+
 protected:
   /**
    * @brief Constructs a new instance.
@@ -142,7 +148,7 @@ private:
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
-  friend class Tileset;
+  friend class TilesetContentManager;
 };
 
 } // namespace Cesium3DTilesSelection

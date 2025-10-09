@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added `GltfModifier` class. It can be used to modify tile glTFs during load, as well as apply new modifications to them later.
+- 
 ##### Fixes :wrench:
 
 - Fixed a bug in `GoogleMapTilesRasterOverlay` that tried to parse credits from an erroneous viewport service response.

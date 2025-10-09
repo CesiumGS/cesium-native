@@ -110,6 +110,8 @@ TEST_CASE("TileLoadRequester") {
 
     auto pTileset = EllipsoidTilesetLoader::createTileset(externals);
 
+    externals.asyncSystem.dispatchMainThreadTasks();
+
     const Tile* pRoot = pTileset->getRootTile();
     REQUIRE(pRoot != nullptr);
     REQUIRE(pRoot->getChildren().size() == 2);
@@ -176,6 +178,8 @@ TEST_CASE("TileLoadRequester") {
         std::move(pCustomLoader),
         std::move(pRootTile),
         options);
+
+    externals.asyncSystem.dispatchMainThreadTasks();
 
     const Tile* pRoot = pTileset->getRootTile();
     REQUIRE(pRoot != nullptr);
