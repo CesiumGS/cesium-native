@@ -22,6 +22,10 @@ bool AsyncSystem::dispatchOneMainThreadTask() {
   return this->_pSchedulers->mainThread.dispatchZeroOrOneContinuation();
 }
 
+AsyncSystem::MainThreadScope AsyncSystem::enterMainThread() const {
+  return this->_pSchedulers->mainThread.immediate.scope();
+}
+
 ThreadPool AsyncSystem::createThreadPool(int32_t numberOfThreads) const {
   return ThreadPool(numberOfThreads);
 }

@@ -292,6 +292,23 @@ public:
   bool dispatchOneMainThreadTask();
 
   /**
+   * @brief An object that denotes a scope for the current thread acting as the
+   * "main thread". When this object is constructed, the current thread becomes
+   * the main thread. When it's destroyed, the current thread is no longer
+   * treated as the main thread.
+   */
+  using MainThreadScope = CesiumImpl::ImmediateScheduler<
+      CesiumImpl::QueuedScheduler>::SchedulerScope;
+
+  /**
+   * @brief Enters a scope in which the current thread is treated as the "main
+   * thread". It is essential that no other thread be acting as the main thread
+   * at the same time, or undefined behavior will result. The scope continues
+   * until the returned object is destroyed.
+   */
+  MainThreadScope enterMainThread() const;
+
+  /**
    * @brief Creates a new thread pool that can be used to run continuations.
    *
    * @param numberOfThreads The number of threads in the pool.
