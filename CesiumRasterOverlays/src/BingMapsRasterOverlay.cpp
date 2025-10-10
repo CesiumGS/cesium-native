@@ -188,12 +188,6 @@ protected:
     options.allowEmptyImages = true;
     options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
     options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
-    std::vector<Credit>& tileCredits = options.credits =
-        this->getOwner().getCredits();
-    const std::optional<Credit>& thisCredit = this->getCredit();
-    if (thisCredit.has_value()) {
-      tileCredits.push_back(*thisCredit);
-    }
 
     const CesiumGeospatial::GlobeRectangle tileRectangle =
         CesiumGeospatial::unprojectRectangleSimple(
@@ -210,7 +204,7 @@ protected:
             bingTileLevel <= coverageArea.zoomMax &&
             coverageArea.rectangle.computeIntersection(tileRectangle)
                 .has_value()) {
-          tileCredits.push_back(creditAndCoverageAreas.credit);
+          options.credits.push_back(creditAndCoverageAreas.credit);
           break;
         }
       }
