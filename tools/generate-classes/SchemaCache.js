@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require("fs");
-const request = require("sync-request");
+const request = require("sync-request-curl");
 
 function readJsonStringFromFile(path) {
   try {
