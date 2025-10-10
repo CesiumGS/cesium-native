@@ -94,6 +94,17 @@ const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
     "OXfbBoeDOo8wHpy8lKpvoafRoG6YgXFYKP4GSj63gtwWfhHzl7Skq9JTshAAAAAElFTkSuQmCC"
     "\" title=\"Bing Imagery\"/></a>";
 
+Rectangle createRectangle(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
+  return WebMercatorProjection::computeMaximumProjectedRectangle(
+      pOwner->getOptions().ellipsoid);
+}
+
+QuadtreeTilingScheme createTilingScheme(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
+  return QuadtreeTilingScheme(createRectangle(pOwner), 2, 2);
+}
+
 class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
@@ -113,8 +124,7 @@ public:
       uint32_t height,
       uint32_t minimumLevel,
       uint32_t maximumLevel,
-      const std::string& culture,
-      const CesiumGeospatial::Ellipsoid& ellipsoid)
+      const std::string& culture)
       : QuadtreeRasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -123,13 +133,9 @@ public:
             bingCredit,
             pPrepareRendererResources,
             pLogger,
-            WebMercatorProjection(ellipsoid),
-            QuadtreeTilingScheme(
-                WebMercatorProjection::computeMaximumProjectedRectangle(
-                    ellipsoid),
-                2,
-                2),
-            WebMercatorProjection::computeMaximumProjectedRectangle(ellipsoid),
+            WebMercatorProjection(pOwner->getOptions().ellipsoid),
+            createTilingScheme(pOwner),
+            createRectangle(pOwner),
             minimumLevel,
             maximumLevel,
             width,
@@ -379,8 +385,6 @@ BingMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  const CesiumGeospatial::Ellipsoid& ellipsoid = this->getOptions().ellipsoid;
-
   auto handleResponse =
       [pOwner,
        asyncSystem,
@@ -388,7 +392,6 @@ BingMapsRasterOverlay::createTileProvider(
        pCreditSystem,
        pPrepareRendererResources,
        pLogger,
-       ellipsoid,
        baseUrl = this->_url,
        culture = this->_culture](
           const std::shared_ptr<IAssetRequest>& pRequest,
@@ -470,8 +473,7 @@ BingMapsRasterOverlay::createTileProvider(
         height,
         0,
         maximumLevel,
-        culture,
-        ellipsoid);
+        culture);
   };
 
   auto cacheResultIt = sessionCache.find(metadataUrl);
