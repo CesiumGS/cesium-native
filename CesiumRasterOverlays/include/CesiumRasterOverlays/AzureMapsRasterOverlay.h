@@ -125,7 +125,7 @@ struct AzureMapsSessionParameters {
   /**
    * @brief The base URL for the Azure Maps API.
    */
-  std::string apiBaseUrl{"https://atlas.microsoft.com/map/"};
+  std::string apiBaseUrl{"https://atlas.microsoft.com/"};
 };
 
 /**

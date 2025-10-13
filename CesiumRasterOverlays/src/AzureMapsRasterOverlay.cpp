@@ -212,7 +212,7 @@ AzureMapsRasterOverlay::createTileProvider(
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     IntrusivePointer<const RasterOverlay> pOwner) const {
-  Uri tilesetUri(this->_sessionParameters.apiBaseUrl, "tileset");
+  Uri tilesetUri(this->_sessionParameters.apiBaseUrl, "map/tileset");
 
   UriQuery tilesetQuery(tilesetUri);
   tilesetQuery.setValue("api-version", this->_sessionParameters.apiVersion);
@@ -422,7 +422,7 @@ Future<void> AzureMapsRasterOverlay::refreshTileProviderWithNewKey(
         if (!result) {
           SPDLOG_LOGGER_WARN(
               pProvider->getLogger(),
-              "Could not refresh Bing Maps raster overlay with a new key: {}.",
+              "Could not refresh Azure Maps raster overlay with a new key: {}.",
               result.error().message);
           return;
         }
