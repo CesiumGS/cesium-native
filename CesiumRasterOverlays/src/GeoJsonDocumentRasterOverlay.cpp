@@ -606,8 +606,8 @@ public:
                 result.pImage->mipPositions.emplace_back(
                     CesiumGltf::ImageAssetMipPosition{
                         totalSize,
-                        (size_t)(rowPitch * height),
-                        (size_t)rowPitch});
+                        size_t(rowPitch * height),
+                        size_t(rowPitch)});
                 totalSize += result.pImage->mipPositions[i].byteSize;
               }
               result.pImage->pixelData.resize(totalSize, std::byte{0});
