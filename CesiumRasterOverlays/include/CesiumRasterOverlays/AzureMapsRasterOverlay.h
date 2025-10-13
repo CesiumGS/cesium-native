@@ -11,18 +11,13 @@
 namespace CesiumRasterOverlays {
 
 /**
- * @brief Supported values for @ref AzureMapSessionParameters::tilesetId.
- * See the [official
+ * @brief Supported values for @ref AzureMapsParameters::tilesetId. See the
+ * [official
  * documentation](https://learn.microsoft.com/en-us/rest/api/maps/render/get-map-tile?tabs=HTTP#tilesetid)
  * for all standard values. Note that some tileset IDs return vector data, which
  * is currently unsupported.
  */
-struct AzureMapTilesetId {
-  /**
-   * @brief Shaded relief and terra layers.
-   */
-  inline static const std::string terra = "microsoft.terra.main";
-
+struct AzureMapsTilesetId {
   /**
    * @brief All layers with Azure Maps' main style.
    */
@@ -41,7 +36,8 @@ struct AzureMapTilesetId {
   /**
    * @brief Label data in Azure Maps' dark grey style.
    */
-  inline static const std::string baseLabelsDarkGrey = "microsoft.base.labels.darkgrey";
+  inline static const std::string baseLabelsDarkGrey =
+      "microsoft.base.labels.darkgrey";
 
   /**
    * @brief A combination of satellite or aerial imagery. Only available in S1
@@ -49,13 +45,17 @@ struct AzureMapTilesetId {
    */
   inline static const std::string imagery = "microsoft.imagery";
 
+  /**
+   * @brief Shaded relief and terra layers.
+   */
+  inline static const std::string terra = "microsoft.terra.main";
   // todo weather / traffic?
 };
 
 /**
- * @brief Parameters for an Azure Maps overlay.
+ * @brief Session parameters for an Azure Maps overlay.
  */
-struct AzureMapsParameters {
+struct AzureMapsSessionParameters {
   /**
    * @brief The Azure Maps subscription key to use.
    */
@@ -77,7 +77,7 @@ struct AzureMapsParameters {
    * The supported ready-to-use tilesets supplied by Azure Maps are listed in
    * below. For example, microsoft.base.road.
    */
-  std::string tilesetId{AzureMapTilesetId::imagery};
+  std::string tilesetId{AzureMapsTilesetId::imagery};
 
   /**
    * @brief The language in which search results should be returned. Should be
@@ -98,10 +98,10 @@ struct AzureMapsParameters {
    * geopolitically disputed regions. Different countries/regions have different
    * views of such regions, and the View parameter allows your application to
    * comply with the view required by the country/region your application will
-   * be serving. By default, the View parameter is set to “Unified” even if you
-   * haven’t defined it in the request. It is your responsibility to determine
+   * be serving. By default, the View parameter is set to "Unified" even if you
+   * haven't defined it in the request. It is your responsibility to determine
    * the location of your users, and then set the View parameter correctly for
-   * that location. Alternatively, you have the option to set ‘View=Auto’, which
+   * that location. Alternatively, you have the option to set 'View=Auto', which
    * will return the map data based on the IP address of the request. The View
    * parameter in Azure Maps must be used in compliance with applicable laws,
    * including those regarding mapping, of the country/region where maps, images
@@ -114,7 +114,7 @@ struct AzureMapsParameters {
   std::string view{"US"};
 
   /**
-   * @brief Whether or not the @ref GoogleMapTilesRasterOverlay should show the
+   * @brief Whether or not the @ref AzureMapsRasterOverlay should show the
    * Google Maps logo.
    *
    * Google requires the logo to be shown, so setting this to false is only
@@ -138,12 +138,12 @@ public:
    * @brief Creates a new instance.
    *
    * @param name The user-given name of this overlay layer.
-   * @param parameters The parameters for this overlay.
+   * @param sessionParameters The session parameters for this overlay.
    * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   AzureMapsRasterOverlay(
       const std::string& name,
-      const AzureMapsParameters& parameters,
+      const AzureMapsSessionParameters& sessionParameters,
       const RasterOverlayOptions& overlayOptions = {});
   virtual ~AzureMapsRasterOverlay() override;
 
@@ -174,7 +174,7 @@ public:
 private:
   static const std::string AZURE_MAPS_LOGO_HTML;
 
-  AzureMapsParameters _parameters;
+  AzureMapsSessionParameters _sessionParameters;
 };
 
 } // namespace CesiumRasterOverlays

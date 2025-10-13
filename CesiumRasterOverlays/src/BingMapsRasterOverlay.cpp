@@ -94,6 +94,7 @@ const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
     "OXfbBoeDOo8wHpy8lKpvoafRoG6YgXFYKP4GSj63gtwWfhHzl7Skq9JTshAAAAAElFTkSuQmCC"
     "\" title=\"Bing Imagery\"/></a>";
 
+namespace {
 Rectangle createRectangle(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
   return WebMercatorProjection::computeMaximumProjectedRectangle(
@@ -104,6 +105,7 @@ QuadtreeTilingScheme createTilingScheme(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
   return QuadtreeTilingScheme(createRectangle(pOwner), 2, 2);
 }
+} // namespace
 
 class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:

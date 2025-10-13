@@ -6,6 +6,8 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumJsonReader/JsonObjectJsonHandler.h>
+#include <CesiumJsonReader/JsonReader.h>
 #include <CesiumRasterOverlays/AzureMapsRasterOverlay.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -37,6 +39,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
 namespace {
@@ -82,6 +85,7 @@ const std::string AzureMapsRasterOverlay::AZURE_MAPS_LOGO_HTML =
     "OXfbBoeDOo8wHpy8lKpvoafRoG6YgXFYKP4GSj63gtwWfhHzl7Skq9JTshAAAAAElFTkSuQmCC"
     "\" title=\"Bing Imagery\"/></a>";
 
+namespace {
 Rectangle createRectangle(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
   return WebMercatorProjection::computeMaximumProjectedRectangle(
@@ -92,6 +96,7 @@ QuadtreeTilingScheme createTilingScheme(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
   return QuadtreeTilingScheme(createRectangle(pOwner), 1, 1);
 }
+} // namespace
 
 class AzureMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
@@ -101,15 +106,14 @@ public:
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CreditSystem>& pCreditSystem,
       std::optional<CesiumUtility::Credit> credit,
-      const std::vector<CreditAndCoverageAreas>& perTileCredits,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& endpoint,
       const std::string& key,
-      uint32_t minimumLevel,
-      uint32_t maximumLevel,
-      uint32_t imageSize)
+      int32_t minimumLevel,
+      int32_t maximumLevel,
+      int32_t imageSize)
       : QuadtreeRasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -125,14 +129,12 @@ public:
             maximumLevel,
             imageSize,
             imageSize),
-        _credits(perTileCredits),
         _endpoint(endpoint),
         _key(key) {}
 
   virtual ~AzureMapsTileProvider() = default;
 
   void update(const AzureMapsTileProvider& newProvider) {
-    this->_credits = newProvider._credits;
     this->_endpoint = newProvider._endpoint;
     this->_key = newProvider._key;
   }
@@ -194,107 +196,12 @@ private:
 
 AzureMapsRasterOverlay::AzureMapsRasterOverlay(
     const std::string& name,
-    const AzureMapsParameters& parameters,
+    const AzureMapsSessionParameters& sessionParameters,
     const RasterOverlayOptions& overlayOptions)
-    : RasterOverlay(name, overlayOptions), _parameters(parameters) {}
+    : RasterOverlay(name, overlayOptions),
+      _sessionParameters(sessionParameters) {}
 
 AzureMapsRasterOverlay::~AzureMapsRasterOverlay() = default;
-
-namespace {
-
-/**
- * @brief Collects credit information from an imagery metadata response.
- *
- * The imagery metadata response contains a `resourceSets` array,
- * each containing an `resources` array, where each resource has
- * the following structure:
- * \code
- * {
- *   "imageryProviders": [
- *     {
- *       "attribution": "© 2021 Microsoft Corporation",
- *       "coverageAreas": [
- *         { "bbox": [-90, -180, 90, 180], "zoomMax": 21, "zoomMin": 1 }
- *       ]
- *     },
- *     ...
- *   ],
- *   ...
- * }
- * \endcode
- *
- * @param pResource The JSON value for the resource
- * @param pCreditSystem The `CreditSystem` that will create one credit for
- * each attribution
- * @return The `CreditAndCoverageAreas` objects that have been parsed, or an
- * empty vector if pCreditSystem is nullptr.
- */
-std::vector<CreditAndCoverageAreas> collectCredits(
-    const rapidjson::Value* pResource,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
-    bool showCreditsOnScreen) {
-  std::vector<CreditAndCoverageAreas> credits;
-  if (!pCreditSystem) {
-    return credits;
-  }
-
-  const auto attributionsIt = pResource->FindMember("imageryProviders");
-  if (attributionsIt != pResource->MemberEnd() &&
-      attributionsIt->value.IsArray()) {
-
-    for (const rapidjson::Value& attribution :
-         attributionsIt->value.GetArray()) {
-
-      std::vector<CoverageArea> coverageAreas;
-      const auto coverageAreasIt = attribution.FindMember("coverageAreas");
-      if (coverageAreasIt != attribution.MemberEnd() &&
-          coverageAreasIt->value.IsArray()) {
-
-        for (const rapidjson::Value& area : coverageAreasIt->value.GetArray()) {
-
-          const auto bboxIt = area.FindMember("bbox");
-          if (bboxIt != area.MemberEnd() && bboxIt->value.IsArray() &&
-              bboxIt->value.Size() == 4) {
-
-            const auto zoomMinIt = area.FindMember("zoomMin");
-            const auto zoomMaxIt = area.FindMember("zoomMax");
-            const auto bboxArrayIt = bboxIt->value.GetArray();
-            if (zoomMinIt != area.MemberEnd() &&
-                zoomMaxIt != area.MemberEnd() && zoomMinIt->value.IsUint() &&
-                zoomMaxIt->value.IsUint() && bboxArrayIt[0].IsNumber() &&
-                bboxArrayIt[1].IsNumber() && bboxArrayIt[2].IsNumber() &&
-                bboxArrayIt[3].IsNumber()) {
-              CoverageArea coverageArea{
-
-                  CesiumGeospatial::GlobeRectangle::fromDegrees(
-                      bboxArrayIt[1].GetDouble(),
-                      bboxArrayIt[0].GetDouble(),
-                      bboxArrayIt[3].GetDouble(),
-                      bboxArrayIt[2].GetDouble()),
-                  zoomMinIt->value.GetUint(),
-                  zoomMaxIt->value.GetUint()};
-
-              coverageAreas.push_back(coverageArea);
-            }
-          }
-        }
-      }
-
-      const auto creditString = attribution.FindMember("attribution");
-      if (creditString != attribution.MemberEnd() &&
-          creditString->value.IsString()) {
-        credits.push_back(
-            {pCreditSystem->createCredit(
-                 creditString->value.GetString(),
-                 showCreditsOnScreen),
-             coverageAreas});
-      }
-    }
-  }
-  return credits;
-}
-
-} // namespace
 
 Future<RasterOverlay::CreateTileProviderResult>
 AzureMapsRasterOverlay::createTileProvider(
@@ -305,14 +212,14 @@ AzureMapsRasterOverlay::createTileProvider(
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     IntrusivePointer<const RasterOverlay> pOwner) const {
-  Uri tilesetUri(this->_parameters.apiBaseUrl, "tileset");
+  Uri tilesetUri(this->_sessionParameters.apiBaseUrl, "tileset");
 
   UriQuery tilesetQuery(tilesetUri);
-  tilesetQuery.setValue("api-version", this->_parameters.apiVersion);
-  tilesetQuery.setValue("tilesetId", this->_parameters.tilesetId);
-  tilesetQuery.setValue("subscription-key", this->_parameters.key);
-  tilesetQuery.setValue("language", this->_parameters.language);
-  tilesetQuery.setValue("view", this->_parameters.view);
+  tilesetQuery.setValue("api-version", this->_sessionParameters.apiVersion);
+  tilesetQuery.setValue("tilesetId", this->_sessionParameters.tilesetId);
+  tilesetQuery.setValue("subscription-key", this->_sessionParameters.key);
+  tilesetQuery.setValue("language", this->_sessionParameters.language);
+  tilesetQuery.setValue("view", this->_sessionParameters.view);
 
   tilesetUri.setQuery(tilesetQuery.toQueryString());
 
@@ -329,70 +236,102 @@ AzureMapsRasterOverlay::createTileProvider(
        pCreditSystem,
        pPrepareRendererResources,
        pLogger,
-       &key = this->_parameters.key,
+       &key = this->_sessionParameters.key,
        ellipsoid](
           const std::shared_ptr<IAssetRequest>& pRequest,
           const std::span<const std::byte>& data) -> CreateTileProviderResult {
-    const IAssetResponse* pResponse = pRequest->response();
+    JsonObjectJsonHandler handler{};
+    ReadJsonResult<JsonValue> response = JsonReader::readJson(data, handler);
 
-    rapidjson::Document response;
-    response.Parse(reinterpret_cast<const char*>(data.data()), data.size());
+    if (!response.value) {
+      ErrorList errorList{};
+      errorList.errors = std::move(response.errors);
+      errorList.warnings = std::move(response.warnings);
 
-    if (response.HasParseError()) {
       return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-          RasterOverlayLoadType::TileProvider,
-          pRequest,
-          fmt::format(
-              "Error while parsing Azure Maps tileset metadata, error code "
-              "{} at byte offset {}",
-              response.GetParseError(),
-              response.GetErrorOffset())});
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = errorList.format("Failed to parse response from Azure "
+                                      "Maps tileset API service:")});
     }
 
-    rapidjson::Value* pError =
-        rapidjson::Pointer("/errorDetails/0").Get(response);
-    if (pError && pError->IsString()) {
+    if (!response.value->isObject()) {
       return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-          RasterOverlayLoadType::TileProvider,
-          pRequest,
-          fmt::format(
-              "Received an error from the Azure Maps tileset metadata "
-              "service: "
-              "{}",
-              pError->GetString())});
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = "Response from Azure Maps tileset API service was not a "
+                     "JSON object."});
     }
 
-    rapidjson::Value* pResource =
-        rapidjson::Pointer("/resourceSets/0/resources/0").Get(response);
-    if (!pResource) {
+    const JsonValue::Object& responseObject = response.value->getObject();
+    auto it = responseObject.find("tileSize");
+    if (it == responseObject.end() || !it->second.isNumber()) {
       return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-          RasterOverlayLoadType::TileProvider,
-          pRequest,
-          "Resources were not found in the Bing Maps imagery metadata "
-          "response."});
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = "Response from Azure Maps tileset API service did not "
+                     "contain a valid "
+                     "'tileSize' property."});
+    }
+    int32_t tileSize = it->second.getSafeNumberOrDefault<int32_t>(256);
+
+    it = responseObject.find("minzoom");
+    if (it == responseObject.end() || !it->second.isNumber()) {
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = "Response from Azure Maps tileset API service did not "
+                     "contain a valid "
+                     "'minzoom' property."});
+    }
+    int32_t minimumLevel = it->second.getSafeNumberOrDefault<int32_t>(0);
+
+    it = responseObject.find("maxzoom");
+    if (it == responseObject.end() || !it->second.isNumber()) {
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = "Response from Azure Maps tileset API service did not "
+                     "contain a valid "
+                     "'maxzoom' property."});
+    }
+    int32_t maximumLevel = it->second.getSafeNumberOrDefault<int32_t>(0);
+
+    std::vector<std::string> tiles;
+    it = responseObject.find("tiles");
+    if (it != responseObject.end()) {
+      tiles = it->second.getArrayOfStrings(std::string());
     }
 
-    uint32_t tileSize =
-        JsonHelpers::getUint32OrDefault(*pResource, "tileSize", 256U);
-    uint32_t minimumLevel =
-        JsonHelpers::getUint32OrDefault(*pResource, "minzoom", 0U);
-    uint32_t maximumLevel =
-        JsonHelpers::getUint32OrDefault(*pResource, "maxzoom", 30U);
-
-    std::vector<std::string> tiles =
-        JsonHelpers::getStrings(*pResource, "tiles");
     if (tiles.empty()) {
       return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-          RasterOverlayLoadType::TileProvider,
-          pRequest,
-          "Azure Maps returned no endpoints for given tilesetId."});
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = "Response from Azure Maps tileset API service did not "
+                     "contain a valid "
+                     "'tiles' property."});
     }
 
-    const std::string& tileEndpoint = tiles.front();
+    std::string tileEndpoint;
+    for (size_t i = 0; i < tiles.size(); i++) {
+      // To quote the Azure Maps documentation: "If multiple endpoints are
+      // specified, clients may use any combination of endpoints. All endpoints
+      // MUST return the same content for the same URL."
+      // Therefore, this just picks the first non-empty string endpoint.
+      if (!tiles[i].empty()) {
+        tileEndpoint = tiles[i];
+        break;
+      }
+    }
+
+    if (tileEndpoint.empty()) {
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          RasterOverlayLoadType::TileProvider,
+          pRequest,
+          "Azure Maps returned no valid endpoint for given tilesetId."});
+    }
 
     bool showCredits = pOwner->getOptions().showCreditsOnScreen;
-    std::vector<CreditAndCoverageAreas> credits =
-        collectCredits(pResource, pCreditSystem, showCredits);
     Credit azureMapsCredit =
         pCreditSystem->createCredit(AZURE_MAPS_LOGO_HTML, showCredits);
 
@@ -402,7 +341,6 @@ AzureMapsRasterOverlay::createTileProvider(
         pAssetAccessor,
         pCreditSystem,
         azureMapsCredit,
-        credits,
         pPrepareRendererResources,
         pLogger,
         tileEndpoint,
@@ -433,6 +371,17 @@ AzureMapsRasterOverlay::createTileProvider(
                   "service."});
             }
 
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  .type = RasterOverlayLoadType::TileProvider,
+                  .pRequest = pRequest,
+                  .message = fmt::format(
+                      "Azure Maps API tileset request service returned "
+                      "HTTP status code {}.",
+                      pResponse->statusCode())});
+            }
+
             CreateTileProviderResult handleResponseResult =
                 handleResponse(pRequest, pResponse->data());
 
@@ -450,7 +399,7 @@ AzureMapsRasterOverlay::createTileProvider(
 Future<void> AzureMapsRasterOverlay::refreshTileProviderWithNewKey(
     const IntrusivePointer<RasterOverlayTileProvider>& pProvider,
     const std::string& newKey) {
-  this->_parameters.key = newKey;
+  this->_sessionParameters.key = newKey;
 
   return this
       ->createTileProvider(
