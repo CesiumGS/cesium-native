@@ -23,6 +23,11 @@ struct CESIUMGLTF_API ImageAssetMipPosition {
    * @brief The size in bytes of this mip.
    */
   size_t byteSize;
+
+  /**
+   * @brief The pitch (or stride) between rows of this mip in bytes.
+   */
+  size_t rowPitch;
 };
 
 /**
