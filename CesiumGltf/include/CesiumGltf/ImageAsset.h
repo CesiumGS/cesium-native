@@ -25,8 +25,7 @@ struct CESIUMGLTF_API ImageAssetMipPosition {
   size_t byteSize;
 
   /**
-   * @brief The pitch (or stride) between rows of a texture image level in
-   * bytes.
+   * @brief The pitch (or stride) between rows of this mip in bytes.
    */
   size_t rowPitch;
 };
