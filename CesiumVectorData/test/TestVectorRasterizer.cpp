@@ -252,8 +252,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
       int32_t height = 256 >> i;
       asset->mipPositions[i] = {
           totalSize,
-          (size_t)(width * height * 4),
-          (size_t)(width * 4)};
+          size_t(width * height * 4),
+          size_t(width * 4)};
       totalSize += asset->mipPositions[i].byteSize;
     }
 
