@@ -262,10 +262,20 @@ AzureMapsRasterOverlay::createTileProvider(
           .message = "Response from Azure Maps tileset API service was not a "
                      "JSON object."});
     }
-
     const JsonValue::Object& responseObject = response.value->getObject();
+
+    // "tileSize" is an enum and is thus expected as a string.
+    std::string tileSizeEnum = "256";
+    int32_t tileSize = 256;
+
     auto it = responseObject.find("tileSize");
-    if (it == responseObject.end() || !it->second.isNumber()) {
+    if (it != responseObject.end() && it->second.isString()) {
+      tileSizeEnum = it->second.getString();
+    }
+
+    try {
+      tileSize = std::stoi(tileSizeEnum);
+    } catch (std::exception) {
       return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
           .type = RasterOverlayLoadType::TileProvider,
           .pRequest = pRequest,
@@ -273,7 +283,6 @@ AzureMapsRasterOverlay::createTileProvider(
                      "contain a valid "
                      "'tileSize' property."});
     }
-    int32_t tileSize = it->second.getSafeNumberOrDefault<int32_t>(256);
 
     it = responseObject.find("minzoom");
     if (it == responseObject.end() || !it->second.isNumber()) {
