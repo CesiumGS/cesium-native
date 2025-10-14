@@ -6,6 +6,10 @@
 
 - Restored vcpkg commit update to `2025.09.17`.
 
+##### Additions :tada:
+
+- Added `AzureMapsRasterOverlay`.
+
 ##### Fixes :wrench:
 
 - Fixed a bug in `GoogleMapTilesRasterOverlay` that tried to parse credits from an erroneous viewport service response.

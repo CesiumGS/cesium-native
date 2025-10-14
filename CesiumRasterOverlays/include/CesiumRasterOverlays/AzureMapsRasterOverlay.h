@@ -92,7 +92,7 @@ struct AzureMapsTilesetId {
   /**
    * @brief Delay traffic tiles in Azure Maps' main style.
    */
-  inline static const std::string trafficeDelay =
+  inline static const std::string trafficDelay =
       "microsoft.traffic.delay.main";
 
   /**
