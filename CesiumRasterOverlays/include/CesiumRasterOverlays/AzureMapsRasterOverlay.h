@@ -49,7 +49,33 @@ struct AzureMapsTilesetId {
    * @brief Shaded relief and terra layers.
    */
   inline static const std::string terra = "microsoft.terra.main";
-  // todo weather / traffic?
+
+  /**
+   * @brief Weather radar tiles. Latest weather radar images including areas of
+   * rain, snow, ice and mixed conditions. For more information on the Azure
+   * Maps Weather service coverage, see [Azure Maps weather services
+   * coverage](https://learn.microsoft.com/en-us/azure/azure-maps/weather-coverage).
+   * For more information on Radar data, see [Weather services in Azure
+   * Maps](https://learn.microsoft.com/en-us/azure/azure-maps/weather-services-concepts#radar-images).
+   */
+  inline static const std::string weatherRadar = "microsoft.weather.radar.main";
+
+  /**
+   * @brief Weather infrared tiles. Latest Infrared Satellite images shows
+   * clouds by their temperature. For more information on the Azure Maps Weather
+   * service coverage, see [Azure Maps weather services
+   * coverage](https://learn.microsoft.com/en-us/azure/azure-maps/weather-coverage).
+   * For more information on Radar data, see [Weather services in Azure
+   * Maps](https://learn.microsoft.com/en-us/azure/azure-maps/weather-services-concepts#radar-images).
+   */
+  inline static const std::string weatherInfrared =
+      "microsoft.weather.infrared.main";
+
+  /**
+   * @brief Absolute traffic tiles in raster in Azure Maps' main style.
+   */
+  inline static const std::string trafficAbsolute =
+      "microsoft.traffic.absolute.main";
 };
 
 /**
