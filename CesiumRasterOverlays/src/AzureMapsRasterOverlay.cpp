@@ -145,7 +145,7 @@ protected:
     Uri uri(CesiumUtility::Uri::substituteTemplateParameters(
         this->_endpoint,
         [this, &tileID](const std::string& key) {
-          if (key == "zoom") {
+          if (key == "z") {
             return std::to_string(tileID.level);
           }
           if (key == "x") {
