@@ -462,7 +462,7 @@ IonRasterOverlay::getEndpointCache() {
                       "externalType",
                       "unknown");
 
-                  if (endpoint.externalType == "AZURE_2D") {
+                  if (endpoint.externalType == "AZURE_MAPS") {
                     endpoint.parseAzure2DOptions(response);
 
                     if (!std::holds_alternative<ExternalAssetEndpoint::Azure2D>(
@@ -583,7 +583,7 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
   }
 
   IntrusivePointer<RasterOverlay> pOverlay = nullptr;
-  if (pEndpoint->externalType == "AZURE_2D") {
+  if (pEndpoint->externalType == "AZURE_MAPS") {
     CESIUM_ASSERT(std::holds_alternative<ExternalAssetEndpoint::Azure2D>(
         pEndpoint->options));
     ExternalAssetEndpoint::Azure2D& azure2D =

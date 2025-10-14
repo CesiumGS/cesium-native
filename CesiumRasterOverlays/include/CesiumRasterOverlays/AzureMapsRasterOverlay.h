@@ -61,7 +61,7 @@ struct AzureMapsTilesetId {
   inline static const std::string weatherRadar = "microsoft.weather.radar.main";
 
   /**
-   * @brief Weather infrared tiles. Latest Infrared Satellite images shows
+   * @brief Weather infrared tiles. Latest Infrared Satellite images show
    * clouds by their temperature. For more information on the Azure Maps Weather
    * service coverage, see [Azure Maps weather services
    * coverage](https://learn.microsoft.com/en-us/azure/azure-maps/weather-coverage).
@@ -72,10 +72,34 @@ struct AzureMapsTilesetId {
       "microsoft.weather.infrared.main";
 
   /**
-   * @brief Absolute traffic tiles in raster in Azure Maps' main style.
+   * @brief Absolute traffic tiles in Azure Maps' main style.
    */
   inline static const std::string trafficAbsolute =
       "microsoft.traffic.absolute.main";
+
+  /**
+   * @brief Relative traffic tiles in Azure Maps' main style.
+   */
+  inline static const std::string trafficRelativeMain =
+      "microsoft.traffic.relative.main";
+
+  /**
+   * @brief Relative traffic tiles in Azure Maps' dark style.
+   */
+  inline static const std::string trafficRelativeDark =
+      "microsoft.traffic.relative.dark";
+
+  /**
+   * @brief Delay traffic tiles in Azure Maps' main style.
+   */
+  inline static const std::string trafficeDelay =
+      "microsoft.traffic.delay.main";
+
+  /**
+   * @brief Reduced traffic tiles in Azure Maps' main style.
+   */
+  inline static const std::string trafficReduced =
+      "microsoft.traffic.reduced.main";
 };
 
 /**
