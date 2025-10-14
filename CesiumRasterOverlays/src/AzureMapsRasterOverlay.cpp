@@ -152,7 +152,9 @@ protected:
             return std::to_string(tileID.x);
           }
           if (key == "y") {
-            return std::to_string(tileID.y);
+            uint32_t invertedY =
+                tileID.computeInvertedY(this->getTilingScheme());
+            return std::to_string(invertedY);
           }
           return key;
         }));
