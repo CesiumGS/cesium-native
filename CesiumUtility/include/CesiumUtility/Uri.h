@@ -356,6 +356,14 @@ public:
   static std::string
   setPath(const std::string& uri, const std::string& newPath);
 
+  /**
+   * @brief Ensures that the given string URL ends with a slash, modifying
+   * in-place if necessary. Useful when the string is used as a base URL.
+   *
+   * @param url The URL to which to append a trailing slash.
+   */
+  static void ensureTrailingSlash(std::string& url);
+
 private:
   std::optional<ada::url_aggregator> _url = std::nullopt;
   bool _hasScheme = false;

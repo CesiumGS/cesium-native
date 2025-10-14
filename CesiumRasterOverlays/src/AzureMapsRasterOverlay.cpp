@@ -202,7 +202,9 @@ AzureMapsRasterOverlay::AzureMapsRasterOverlay(
     const AzureMapsSessionParameters& sessionParameters,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
-      _sessionParameters(sessionParameters) {}
+      _sessionParameters(sessionParameters) {
+  Uri::ensureTrailingSlash(this->_sessionParameters.apiBaseUrl);
+}
 
 AzureMapsRasterOverlay::~AzureMapsRasterOverlay() = default;
 

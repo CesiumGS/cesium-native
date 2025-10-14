@@ -181,15 +181,6 @@ private:
   mutable QuadtreeRectangleAvailability _availableAvailability;
 };
 
-void ensureTrailingSlash(std::string& url) {
-  Uri uri(url);
-  std::string_view path = uri.getPath();
-  if (path.empty() || path.back() != '/') {
-    uri.setPath(std::string(path) + '/');
-    url = uri.toString();
-  }
-}
-
 } // namespace
 
 namespace CesiumRasterOverlays {
@@ -201,7 +192,7 @@ GoogleMapTilesRasterOverlay::GoogleMapTilesRasterOverlay(
     : RasterOverlay(name, overlayOptions),
       _newSessionParameters(newSessionParameters),
       _existingSession(std::nullopt) {
-  ensureTrailingSlash(this->_newSessionParameters->apiBaseUrl);
+  Uri::ensureTrailingSlash(this->_newSessionParameters->apiBaseUrl);
 }
 
 GoogleMapTilesRasterOverlay::GoogleMapTilesRasterOverlay(
@@ -211,7 +202,7 @@ GoogleMapTilesRasterOverlay::GoogleMapTilesRasterOverlay(
     : RasterOverlay(name, overlayOptions),
       _newSessionParameters(std::nullopt),
       _existingSession(existingSession) {
-  ensureTrailingSlash(this->_existingSession->apiBaseUrl);
+  Uri::ensureTrailingSlash(this->_existingSession->apiBaseUrl);
 }
 
 Future<RasterOverlay::CreateTileProviderResult>
