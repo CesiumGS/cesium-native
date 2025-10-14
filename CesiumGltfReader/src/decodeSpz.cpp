@@ -10,6 +10,7 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonValue.h>
 #include <CesiumUtility/Tracing.h>
 
@@ -42,7 +43,7 @@ std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
     CesiumGltf::MeshPrimitive& /* primitive */,
     const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& spz) {
   CESIUM_TRACE("CesiumGltfReader::decodeBufferViewToGaussianCloud");
-  CESIUM_ASSERT(readGltf.model.has_value());
+  CESIUM_ASSERT(readGltf.model);
   CesiumGltf::Model& model = readGltf.model.value();
 
   CesiumGltf::BufferView* pBufferView =

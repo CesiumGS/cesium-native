@@ -835,13 +835,15 @@ TEST_CASE("SPZ decoding works properly") {
     AccessorView<glm::vec3> positionView(model, attributes.at("POSITION"));
     REQUIRE(positionView.status() == AccessorViewStatus::Valid);
     REQUIRE(positionView.size() == 1);
-    CHECK(positionView[0] == glm::vec3(-1.0, 2.0, -3.0));
+    CHECK(positionView[0] == glm::vec3(1.0, 2.0, 3.0));
 
     REQUIRE(attributes.contains("COLOR_0"));
-    AccessorView<glm::u8vec4> colorView(model, attributes.at("COLOR_0"));
+    AccessorView<glm::vec4> colorView(model, attributes.at("COLOR_0"));
     REQUIRE(colorView.status() == AccessorViewStatus::Valid);
     REQUIRE(colorView.size() == 1);
-    CHECK(colorView[0] == glm::u8vec4(145, 164, 181, 128));
+    CHECK(
+        colorView[0] ==
+        glm::vec4(0.570062876, 0.643813193, 0.710188448, 0.501960814));
 
     REQUIRE(attributes.contains("KHR_gaussian_splatting:ROTATION"));
     AccessorView<glm::vec4> rotationView(
@@ -851,7 +853,7 @@ TEST_CASE("SPZ decoding works properly") {
     REQUIRE(rotationView.size() == 1);
     CHECK(
         rotationView[0] ==
-        glm::vec4(-0.003921628, -0.709803939, -0.709804058, 0.0));
+        glm::vec4(0.003921628, -0.709803939, 0.709804058, 0.0));
 
     REQUIRE(attributes.contains("KHR_gaussian_splatting:SCALE"));
     AccessorView<glm::vec3> scaleView(
