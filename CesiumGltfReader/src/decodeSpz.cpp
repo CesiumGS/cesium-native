@@ -1,13 +1,12 @@
 #include "decodeSpz.h"
 
-#include "CesiumGltf/BufferView.h"
-#include "CesiumGltf/MeshPrimitive.h"
-
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
 #include <CesiumGltf/Mesh.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
