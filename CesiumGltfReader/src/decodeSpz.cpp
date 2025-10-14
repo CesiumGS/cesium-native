@@ -4,12 +4,14 @@
 #include "CesiumGltf/MeshPrimitive.h"
 
 #include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
+#include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
-#include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/JsonValue.h>
+#include <CesiumUtility/Tracing.h>
 
 #include <fmt/format.h>
 #include <glm/fwd.hpp>
@@ -17,7 +19,14 @@
 #include <splat-types.h>
 
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
+#include <cstring>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace CesiumGltfReader {
 namespace {
@@ -84,6 +93,8 @@ CesiumGltf::Accessor* findAccessor(
     return nullptr;
   }
 
+  CESIUM_ASSERT(readGltf.model);
+
   CesiumGltf::Accessor* pAccessor = CesiumGltf::Model::getSafe(
       &readGltf.model->accessors,
       attributeIt->second);
@@ -127,6 +138,8 @@ void copyShCoeff(
     return;
   }
 
+  CESIUM_ASSERT(readGltf.model);
+
   // Some gaussian splats seem to set this value as VEC4, even though the spec
   // requires VEC3.
   pAccessor->type = CesiumGltf::Accessor::Type::VEC3;
@@ -144,7 +157,7 @@ void copyShCoeff(
   buffer.cesium.data.resize(start + static_cast<size_t>(bufferView.byteLength));
   for (size_t i = 0; i < static_cast<size_t>(pGaussian->numPoints); i++) {
     const size_t idx = i * stride + base + static_cast<size_t>(coeffIndex) * 3;
-    memcpy(
+    std::memcpy(
         buffer.cesium.data.data() + start,
         pGaussian->sh.data() + idx,
         sizeof(float) * 3);
@@ -157,7 +170,7 @@ void decodePrimitive(
     CesiumGltf::MeshPrimitive& primitive,
     CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& spz) {
   CESIUM_TRACE("CesiumGltfReader::decodePrimitive");
-  CESIUM_ASSERT(readGltf.model.has_value());
+  CESIUM_ASSERT(readGltf.model);
 
   // TODO: handle different accessor component types
 
@@ -449,6 +462,8 @@ void decodeSpz(CesiumGltfReader::GltfReaderResult& readGltf) {
 }
 
 bool hasSpzExtension(GltfReaderResult& readGltf) {
+  CESIUM_ASSERT(readGltf.model);
+
   if (readGltf.model->isExtensionUsed(
           CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2::
               ExtensionName)) {
