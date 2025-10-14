@@ -159,6 +159,7 @@ protected:
 
     UriQuery query(uri);
     query.setValue("subscription-key", this->_key);
+    uri.setQuery(query.toQueryString());
 
     std::string url = std::string(uri.toString());
 
