@@ -126,11 +126,10 @@ private:
     };
 
     /** @private */
-    struct Bing {
-      std::string key;
+    struct Azure2D {
       std::string url;
-      std::string mapStyle;
-      std::string culture;
+      std::string tilesetId;
+      std::string key;
     };
 
     /** @private */
@@ -144,7 +143,21 @@ private:
       uint32_t tileHeight;
     };
 
-    std::variant<std::monostate, TileMapService, Bing, Google2D> options{};
+    /** @private */
+    struct Bing {
+      std::string key;
+      std::string url;
+      std::string mapStyle;
+      std::string culture;
+    };
+
+    std::variant<std::monostate, TileMapService, Azure2D, Google2D, Bing>
+        options{};
+
+    void parseAzure2DOptions(const rapidjson::Document& ionResponse);
+    void parseGoogle2DOptions(const rapidjson::Document& ionResponse);
+    void parseBingOptions(const rapidjson::Document& ionResponse);
+    void parseTileMapServiceOptions(const rapidjson::Document& ionResponse);
   };
 
   static std::unordered_map<std::string, ExternalAssetEndpoint> endpointCache;
