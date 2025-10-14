@@ -6,6 +6,11 @@
 
 - Restored vcpkg commit update to `2025.09.17`.
 
+##### Additions :tada:
+
+- Added support for the `KHR_gaussian_splatting` extension.
+  - SPZ payloads for `KHR_guassian_splatting` using the `KHR_gaussian_splatting_compression_spz_2` extension will now be decoded.
+
 ##### Fixes :wrench:
 
 - Fixed a bug in `GoogleMapTilesRasterOverlay` that tried to parse credits from an erroneous viewport service response.
