@@ -85,7 +85,7 @@ CesiumGltf::Accessor* findAccessor(
     GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& primitive,
     const std::string& attributeName) {
-  const std::unordered_map<const std::string, int32_t>::iterator attributeIt =
+  const std::unordered_map<std::string, int32_t>::iterator attributeIt =
       primitive.attributes.find(attributeName);
   if (attributeIt == primitive.attributes.end()) {
     readGltf.warnings.emplace_back(
