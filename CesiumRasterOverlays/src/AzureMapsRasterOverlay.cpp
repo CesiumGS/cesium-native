@@ -14,6 +14,7 @@
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
@@ -132,6 +133,7 @@ public:
 
   void update(const AzureMapsRasterOverlayTileProvider& newProvider) {
     this->_baseUrl = newProvider._baseUrl;
+    this->_apiVersion = newProvider._apiVersion;
     this->_tilesetId = newProvider._tilesetId;
     this->_key = newProvider._key;
     this->_tileEndpoint = newProvider._tileEndpoint;
@@ -139,48 +141,16 @@ public:
 
   CesiumAsync::Future<void> loadCredits();
 
+  virtual void addCredits(
+      CesiumUtility::CreditReferencer& creditReferencer) noexcept override;
+
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
-      const CesiumGeometry::QuadtreeTileID& tileID) const override {
-    Uri uri(CesiumUtility::Uri::substituteTemplateParameters(
-        this->_tileEndpoint,
-        [this, &tileID](const std::string& key) {
-          if (key == "z") {
-            return std::to_string(tileID.level);
-          }
-          if (key == "x") {
-            return std::to_string(tileID.x);
-          }
-          if (key == "y") {
-            uint32_t invertedY =
-                tileID.computeInvertedY(this->getTilingScheme());
-            return std::to_string(invertedY);
-          }
-          return key;
-        }));
-
-    UriQuery query(uri);
-    query.setValue("subscription-key", this->_key);
-    uri.setQuery(query.toQueryString());
-
-    std::string url = std::string(uri.toString());
-
-    LoadTileImageFromUrlOptions options;
-    options.allowEmptyImages = true;
-    options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
-    options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
-
-    const CesiumGeospatial::GlobeRectangle tileRectangle =
-        CesiumGeospatial::unprojectRectangleSimple(
-            this->getProjection(),
-            options.rectangle);
-
-    return this->loadTileImageFromUrl(url, {}, std::move(options));
-  }
+      const CesiumGeometry::QuadtreeTileID& tileID) const override;
 
 private:
-  std::string _apiVersion;
   std::string _baseUrl;
+  std::string _apiVersion;
   std::string _tilesetId;
   std::string _key;
   std::string _tileEndpoint;
@@ -582,6 +552,44 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
   }
 }
 
+CesiumAsync::Future<LoadedRasterOverlayImage>
+AzureMapsRasterOverlayTileProvider::loadQuadtreeTileImage(
+    const CesiumGeometry::QuadtreeTileID& tileID) const {
+  Uri uri(CesiumUtility::Uri::substituteTemplateParameters(
+      this->_tileEndpoint,
+      [this, &tileID](const std::string& key) {
+        if (key == "z") {
+          return std::to_string(tileID.level);
+        }
+        if (key == "x") {
+          return std::to_string(tileID.x);
+        }
+        if (key == "y") {
+          uint32_t invertedY = tileID.computeInvertedY(this->getTilingScheme());
+          return std::to_string(invertedY);
+        }
+        return key;
+      }));
+
+  UriQuery query(uri);
+  query.setValue("subscription-key", this->_key);
+  uri.setQuery(query.toQueryString());
+
+  std::string url = std::string(uri.toString());
+
+  LoadTileImageFromUrlOptions options;
+  options.allowEmptyImages = true;
+  options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
+  options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
+
+  const CesiumGeospatial::GlobeRectangle tileRectangle =
+      CesiumGeospatial::unprojectRectangleSimple(
+          this->getProjection(),
+          options.rectangle);
+
+  return this->loadTileImageFromUrl(url, {}, std::move(options));
+}
+
 Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
   const uint32_t maximumZoomLevel = this->getMaximumLevel();
 
@@ -625,6 +633,19 @@ Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
         // Create a single credit from this giant string.
         thiz->_credits = thiz->getCreditSystem()->createCredit(joined, false);
       });
+}
+
+void AzureMapsRasterOverlayTileProvider::addCredits(
+    CesiumUtility::CreditReferencer& creditReferencer) noexcept {
+  QuadtreeRasterOverlayTileProvider::addCredits(creditReferencer);
+
+  if (this->_azureCredit) {
+    creditReferencer.addCreditReference(*this->_azureCredit);
+  }
+
+  if (this->_credits) {
+    creditReferencer.addCreditReference(*this->_credits);
+  }
 }
 
 } // namespace CesiumRasterOverlays
