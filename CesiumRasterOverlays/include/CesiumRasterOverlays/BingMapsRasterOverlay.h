@@ -1,7 +1,6 @@
 #pragma once
 
 #include <CesiumAsync/IAssetRequest.h>
-#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 

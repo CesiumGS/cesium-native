@@ -252,8 +252,8 @@ struct GoogleMapTilesNewSessionParameters {
 };
 
 /**
- * @brief A @ref RasterOverlay that retrieves imagery from the [Google Maps Tiles
- * API](https://developers.google.com/maps/documentation/tile).
+ * @brief A @ref RasterOverlay that retrieves imagery from the [Google Maps
+ * Tiles API](https://developers.google.com/maps/documentation/tile).
  */
 class CESIUMRASTEROVERLAYS_API GoogleMapTilesRasterOverlay
     : public RasterOverlay {

@@ -2,7 +2,6 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
-#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
@@ -16,15 +15,16 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/JsonValue.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumUtility/joinToString.h>
 
 #include <fmt/format.h>
 #include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
-#include <rapidjson/pointer.h>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 
@@ -148,9 +148,9 @@ public:
       const std::string& tilesetId,
       const std::string& key,
       const std::string& tileEndpoint,
-      int32_t minimumLevel,
-      int32_t maximumLevel,
-      int32_t imageSize,
+      uint32_t minimumLevel,
+      uint32_t maximumLevel,
+      uint32_t imageSize,
       bool showLogo);
 
   virtual ~AzureMapsRasterOverlayTileProvider() = default;
@@ -211,14 +211,11 @@ AzureMapsRasterOverlay::createTileProvider(
   tilesetQuery.setValue("subscription-key", this->_sessionParameters.key);
   tilesetQuery.setValue("language", this->_sessionParameters.language);
   tilesetQuery.setValue("view", this->_sessionParameters.view);
-
   tilesetUri.setQuery(tilesetQuery.toQueryString());
 
   std::string tilesetUrl = std::string(tilesetUri.toString());
 
   pOwner = pOwner ? pOwner : this;
-
-  const CesiumGeospatial::Ellipsoid& ellipsoid = this->getOptions().ellipsoid;
 
   auto handleResponse =
       [pOwner,
@@ -227,8 +224,7 @@ AzureMapsRasterOverlay::createTileProvider(
        pCreditSystem,
        pPrepareRendererResources,
        pLogger,
-       &sessionParameters = this->_sessionParameters,
-       ellipsoid](
+       &sessionParameters = this->_sessionParameters](
           const std::shared_ptr<IAssetRequest>& pRequest,
           const std::span<const std::byte>& data) -> CreateTileProviderResult {
     JsonObjectJsonHandler handler{};
@@ -255,10 +251,12 @@ AzureMapsRasterOverlay::createTileProvider(
     }
     const JsonValue::Object& responseObject = response.value->getObject();
 
+    uint32_t tileSize = 256u;
+    uint32_t minimumLevel = 0u;
+    uint32_t maximumLevel = 22u;
+
     // "tileSize" is an optional enum property that is delivered as a string.
     std::string tileSizeEnum = "256";
-    int32_t tileSize = 256;
-
     auto it = responseObject.find("tileSize");
     if (it != responseObject.end() && it->second.isString()) {
       tileSizeEnum = it->second.getString();
@@ -276,7 +274,9 @@ AzureMapsRasterOverlay::createTileProvider(
     }
 
     it = responseObject.find("minzoom");
-    if (it == responseObject.end() || !it->second.isNumber()) {
+    if (it != responseObject.end() && it->second.isNumber()) {
+      minimumLevel = it->second.getSafeNumberOrDefault<uint32_t>(0);
+    } else if (it != responseObject.end()) {
       return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
           .type = RasterOverlayLoadType::TileProvider,
           .pRequest = pRequest,
@@ -284,10 +284,11 @@ AzureMapsRasterOverlay::createTileProvider(
                      "contain a valid "
                      "'minzoom' property."});
     }
-    int32_t minimumLevel = it->second.getSafeNumberOrDefault<int32_t>(0);
 
     it = responseObject.find("maxzoom");
-    if (it == responseObject.end() || !it->second.isNumber()) {
+    if (it != responseObject.end() && it->second.isNumber()) {
+      maximumLevel = it->second.getSafeNumberOrDefault<uint32_t>(0);
+    } else if (it != responseObject.end()) {
       return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
           .type = RasterOverlayLoadType::TileProvider,
           .pRequest = pRequest,
@@ -295,7 +296,6 @@ AzureMapsRasterOverlay::createTileProvider(
                      "contain a valid "
                      "'maxzoom' property."});
     }
-    int32_t maximumLevel = it->second.getSafeNumberOrDefault<int32_t>(0);
 
     std::vector<std::string> tiles;
     it = responseObject.find("tiles");
@@ -313,13 +313,13 @@ AzureMapsRasterOverlay::createTileProvider(
     }
 
     std::string tileEndpoint;
-    for (size_t i = 0; i < tiles.size(); i++) {
-      // To quote the Azure Maps documentation: "If multiple endpoints are
-      // specified, clients may use any combination of endpoints. All endpoints
-      // MUST return the same content for the same URL."
+    for (const std::string& endpoint : tiles) {
+      // Azure Maps documentation: "If multiple endpoints are specified, clients
+      // may use any combination of endpoints. All endpoints MUST return the
+      // same content for the same URL."
       // This just picks the first non-empty string endpoint.
-      if (!tiles[i].empty()) {
-        tileEndpoint = tiles[i];
+      if (!endpoint.empty()) {
+        tileEndpoint = endpoint;
         break;
       }
     }
@@ -328,7 +328,7 @@ AzureMapsRasterOverlay::createTileProvider(
       return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
           RasterOverlayLoadType::TileProvider,
           pRequest,
-          "Azure Maps returned no valid endpoint for given tilesetId."});
+          "Azure Maps returned no valid endpoints for the given tilesetId."});
     }
 
     std::optional<Credit> topLevelCredit;
@@ -548,9 +548,9 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
     const std::string& tilesetId,
     const std::string& key,
     const std::string& tileEndpoint,
-    int32_t minimumLevel,
-    int32_t maximumLevel,
-    int32_t imageSize,
+    uint32_t minimumLevel,
+    uint32_t maximumLevel,
+    uint32_t imageSize,
     bool showLogo)
     : QuadtreeRasterOverlayTileProvider(
           pOwner,
@@ -594,8 +594,8 @@ AzureMapsRasterOverlayTileProvider::loadQuadtreeTileImage(
           return std::to_string(tileID.x);
         }
         if (key == "y") {
-          uint32_t invertedY = tileID.computeInvertedY(this->getTilingScheme());
-          return std::to_string(invertedY);
+          return std::to_string(
+              tileID.computeInvertedY(this->getTilingScheme()));
         }
         return key;
       }));
@@ -610,11 +610,6 @@ AzureMapsRasterOverlayTileProvider::loadQuadtreeTileImage(
   options.allowEmptyImages = true;
   options.moreDetailAvailable = tileID.level < this->getMaximumLevel();
   options.rectangle = this->getTilingScheme().tileToRectangle(tileID);
-
-  const CesiumGeospatial::GlobeRectangle tileRectangle =
-      CesiumGeospatial::unprojectRectangleSimple(
-          this->getProjection(),
-          options.rectangle);
 
   return this->loadTileImageFromUrl(url, {}, std::move(options));
 }
@@ -653,7 +648,7 @@ Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
           [thiz](std::vector<std::vector<std::string>>&& results) {
             std::set<std::string> uniqueCredits;
             for (size_t i = 0; i < results.size(); i++) {
-              std::vector<std::string> credits = results[i];
+              const std::vector<std::string>& credits = results[i];
               for (size_t j = 0; j < credits.size(); j++) {
                 if (!credits[j].empty()) {
                   uniqueCredits.insert(credits[j]);
