@@ -633,7 +633,7 @@ Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
             for (size_t i = 0; i < results.size(); i++) {
               std::vector<std::string> credits = results[i];
               for (size_t j = 0; j < credits.size(); j++) {
-                uniqueCredits.insert(credits[i]);
+                uniqueCredits.insert(credits[j]);
               }
             }
 
