@@ -296,7 +296,6 @@ TEST_CASE("Uri::getExtension") {
   CHECK(Uri("http://example.com/a/b/c/..").getExtension() == "");
 }
 
-
 TEST_CASE("Uri::getStem") {
   CHECK(Uri("test.txt").getStem() == "test");
   CHECK(Uri("http://example.com/test.txt").getStem() == "test");
