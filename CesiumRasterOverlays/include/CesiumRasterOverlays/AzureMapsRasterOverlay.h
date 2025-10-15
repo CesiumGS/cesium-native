@@ -40,12 +40,12 @@ struct AzureMapsTilesetId {
       "microsoft.base.labels.darkgrey";
 
   /**
-   * @brief Road, boundary and label  data in Azure Maps' main style.
+   * @brief Road, boundary and label data in Azure Maps' main style.
    */
   inline static const std::string baseHybridRoad = "microsoft.base.hybrid.road";
 
   /**
-   * @brief Road, boundary and label  data in Azure Maps' dark grey style.
+   * @brief Road, boundary and label data in Azure Maps' dark grey style.
    */
   inline static const std::string baseHybridDarkGrey =
       "microsoft.base.hybrid.darkgrey";
@@ -134,10 +134,10 @@ struct AzureMapsSessionParameters {
    * the [Tileset Create
    * API](https://learn.microsoft.com/en-us/rest/api/maps-creator/tileset).
    *
-   * The supported ready-to-use tilesets supplied by Azure Maps are listed in
-   * below. For example, microsoft.base.road.
+   * The supported ready-to-use tilesets supplied by Azure Maps are listed
+   * [here](https://learn.microsoft.com/en-us/rest/api/maps/render/get-map-tile?view=rest-maps-2025-01-01&tabs=HTTP#tilesetid).
    */
-  std::string tilesetId{AzureMapsTilesetId::imagery};
+  std::string tilesetId{AzureMapsTilesetId::baseRoad};
 
   /**
    * @brief The language in which search results should be returned. Should be
@@ -153,20 +153,21 @@ struct AzureMapsSessionParameters {
   std::string language{"en-US"};
 
   /**
-   * @brief The View parameter (also called the "user region" parameter) allows
-   * you to show the correct maps for a certain country/region for
-   * geopolitically disputed regions. Different countries/regions have different
-   * views of such regions, and the View parameter allows your application to
-   * comply with the view required by the country/region your application will
-   * be serving. By default, the View parameter is set to "Unified" even if you
-   * haven't defined it in the request. It is your responsibility to determine
-   * the location of your users, and then set the View parameter correctly for
-   * that location. Alternatively, you have the option to set 'View=Auto', which
-   * will return the map data based on the IP address of the request. The View
-   * parameter in Azure Maps must be used in compliance with applicable laws,
-   * including those regarding mapping, of the country/region where maps, images
-   * and other data and third party content that you are authorized to access
-   * via Azure Maps is made available. Example: view=IN.
+   * @brief The view (also called the "user region") of a certain country/region
+   * for which to show the correct maps. Quoting the Azure Maps' documentation:
+   *
+   * "Different countries/regions have different views of such regions, and the
+   * View parameter allows your application to comply with the view required by
+   * the country/region your application will be serving. By default, the View
+   * parameter is set to "Unified" even if you haven't defined it in the
+   * request. It is your responsibility to determine the location of your users,
+   * and then set the View parameter correctly for that location. Alternatively,
+   * you have the option to set 'View=Auto', which will return the map data
+   * based on the IP address of the request. The View parameter in Azure Maps
+   * must be used in compliance with applicable laws, including those regarding
+   * mapping, of the country/region where maps, images and other data and third
+   * party content that you are authorized to access via Azure Maps is made
+   * available. Example: view=IN."
    *
    * Refer to [Supported Views](https://aka.ms/AzureMapsLocalizationViews) for
    * details and to see the available Views.

@@ -295,3 +295,27 @@ TEST_CASE("Uri::getExtension") {
   CHECK(Uri("http://example.com/a/b/c/.").getExtension() == "");
   CHECK(Uri("http://example.com/a/b/c/..").getExtension() == "");
 }
+
+
+TEST_CASE("Uri::getStem") {
+  CHECK(Uri("test.txt").getStem() == "test");
+  CHECK(Uri("http://example.com/test.txt").getStem() == "test");
+  CHECK(Uri("http://example.com/a/b/c/test.txt").getStem() == "test");
+  CHECK(Uri("http://example.com/a/b/c/test.").getStem() == "test");
+  CHECK(Uri("http://example.com/a/b/c/test").getStem() == "test");
+  CHECK(Uri("file:///C:\\Example\\Directory\\test.txt").getStem() == "test");
+  CHECK(Uri("http://example.com/").getStem() == "");
+  CHECK(Uri("http://example.com/a/b/c/").getStem() == "");
+  CHECK(Uri("http://example.com/a/b/c").getStem() == "c");
+  CHECK(Uri("http://example.com/a/b/c/.txt").getStem() == "");
+}
+
+TEST_CASE("Uri::ensureTrailingSlash") {
+  std::string url = "noslash.com";
+  Uri::ensureTrailingSlash(url);
+  CHECK_EQ(url, "noslash.com/");
+
+  url = "slash.com/";
+  Uri::ensureTrailingSlash(url);
+  CHECK_EQ(url, "slash.com/");
+}

@@ -2,6 +2,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumJsonReader/JsonObjectJsonHandler.h>
