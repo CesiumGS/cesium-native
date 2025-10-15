@@ -32,6 +32,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <set>
 #include <span>
 #include <string>
 #include <unordered_map>
@@ -615,12 +616,9 @@ Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
                 return std::string();
               }
 
+              // TODO do we need to do more parsing?
               std::vector<std::string> copyrights =
                   JsonHelpers::getStrings(document, "copyrights");
-
-              if (copyrights.empty()) {
-                return std::string();
-              }
 
               return joinToString(copyrights, ", ");
             }));
@@ -629,7 +627,19 @@ Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
   return this->getAsyncSystem()
       .all(std::move(creditFutures))
       .thenInMainThread([thiz](std::vector<std::string>&& results) {
-        std::string joined = joinToString(results, ", ");
+        std::set<std::string> uniqueCredits;
+        std::vector<std::string> credits;
+
+        for (size_t i = 0; i < results.size(); i++) {
+          std::string credit = results[i];
+          // `uniqueCredits` ensures uniqueness, `credits` maintains
+          // order.
+          if (uniqueCredits.insert(credit).second) {
+            credits.emplace_back(std::move(credit));
+          }
+        }
+
+        std::string joined = joinToString(credits, ", ");
         // Create a single credit from this giant string.
         thiz->_credits = thiz->getCreditSystem()->createCredit(joined, false);
       });
