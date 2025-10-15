@@ -144,7 +144,6 @@ public:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      std::optional<CesiumUtility::Credit> credit,
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
@@ -177,6 +176,8 @@ private:
   std::string _key;
   std::optional<Credit> _googleCredit;
   std::optional<Credit> _credits;
+  bool _showCreditsOnScreen;
+
   mutable QuadtreeRectangleAvailability _availableTiles;
   mutable QuadtreeRectangleAvailability _availableAvailability;
 };
@@ -233,7 +234,6 @@ GoogleMapTilesRasterOverlay::createTileProvider(
             asyncSystem,
             pAssetAccessor,
             pCreditSystem,
-            std::nullopt,
             pPrepareRendererResources,
             pLogger,
             session.apiBaseUrl,
@@ -444,7 +444,6 @@ GoogleMapTilesRasterOverlay::createNewSession(
                     asyncSystem,
                     pAssetAccessor,
                     pCreditSystem,
-                    std::nullopt,
                     pPrepareRendererResources,
                     pLogger,
                     this->_newSessionParameters->apiBaseUrl,
@@ -489,7 +488,6 @@ GoogleMapTilesRasterOverlayTileProvider::
         const CesiumAsync::AsyncSystem& asyncSystem,
         const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
         const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-        std::optional<CesiumUtility::Credit> credit,
         const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
             pPrepareRendererResources,
         const std::shared_ptr<spdlog::logger>& pLogger,
@@ -505,7 +503,7 @@ GoogleMapTilesRasterOverlayTileProvider::
           asyncSystem,
           pAssetAccessor,
           pCreditSystem,
-          credit,
+          std::nullopt,
           pPrepareRendererResources,
           pLogger,
           WebMercatorProjection(pOwner->getOptions().ellipsoid),
@@ -520,6 +518,7 @@ GoogleMapTilesRasterOverlayTileProvider::
       _key(key),
       _googleCredit(),
       _credits(),
+      _showCreditsOnScreen(pOwner->getOptions().showCreditsOnScreen),
       _availableTiles(createTilingScheme(pOwner), maximumLevel),
       _availableAvailability(createTilingScheme(pOwner), maximumLevel) {
   if (pCreditSystem && showLogo) {
@@ -968,7 +967,9 @@ Future<void> GoogleMapTilesRasterOverlayTileProvider::loadCredits() {
         }
 
         // Create a single credit from this giant string.
-        thiz->_credits = thiz->getCreditSystem()->createCredit(joined, false);
+        thiz->_credits = thiz->getCreditSystem()->createCredit(
+            joined,
+            thiz->_showCreditsOnScreen);
       });
 }
 

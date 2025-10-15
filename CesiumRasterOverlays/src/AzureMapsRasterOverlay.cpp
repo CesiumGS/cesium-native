@@ -156,7 +156,8 @@ private:
   std::string _key;
   std::string _tileEndpoint;
   std::optional<Credit> _azureCredit;
-  std::optional<Credit> _credits;
+  std::vector<Credit> _credits;
+  bool _showCreditsOnScreen;
 };
 
 AzureMapsRasterOverlay::AzureMapsRasterOverlay(
@@ -231,7 +232,7 @@ AzureMapsRasterOverlay::createTileProvider(
     }
     const JsonValue::Object& responseObject = response.value->getObject();
 
-    // "tileSize" is an enum and is thus expected as a string.
+    // "tileSize" is an optional enum property that is delivered as a string.
     std::string tileSizeEnum = "256";
     int32_t tileSize = 256;
 
@@ -293,7 +294,7 @@ AzureMapsRasterOverlay::createTileProvider(
       // To quote the Azure Maps documentation: "If multiple endpoints are
       // specified, clients may use any combination of endpoints. All endpoints
       // MUST return the same content for the same URL."
-      // Therefore, this just picks the first non-empty string endpoint.
+      // This just picks the first non-empty string endpoint.
       if (!tiles[i].empty()) {
         tileEndpoint = tiles[i];
         break;
@@ -307,18 +308,21 @@ AzureMapsRasterOverlay::createTileProvider(
           "Azure Maps returned no valid endpoint for given tilesetId."});
     }
 
-    // it = responseObject.find("attribution");
+    std::optional<Credit> topLevelCredit;
 
-    bool showCredits = pOwner->getOptions().showCreditsOnScreen;
-    Credit azureMapsCredit =
-        pCreditSystem->createCredit(AZURE_MAPS_LOGO_HTML, showCredits);
+    it = responseObject.find("attribution");
+    if (it != responseObject.end() && it->second.isString()) {
+      topLevelCredit = pCreditSystem->createCredit(
+          it->second.getString(),
+          pOwner->getOptions().showCreditsOnScreen);
+    }
 
     auto* pProvider = new AzureMapsRasterOverlayTileProvider(
         pOwner,
         asyncSystem,
         pAssetAccessor,
         pCreditSystem,
-        azureMapsCredit,
+        topLevelCredit,
         pPrepareRendererResources,
         pLogger,
         sessionParameters.apiBaseUrl,
@@ -546,7 +550,8 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
       _key(key),
       _tileEndpoint(tileEndpoint),
       _azureCredit(),
-      _credits() {
+      _credits(),
+      _showCreditsOnScreen(pOwner->getOptions().showCreditsOnScreen) {
   if (pCreditSystem && showLogo) {
     this->_azureCredit =
         pCreditSystem->createCredit(AZURE_MAPS_LOGO_HTML, true);
@@ -596,7 +601,7 @@ Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
 
   IntrusivePointer thiz = this;
 
-  std::vector<Future<std::string>> creditFutures;
+  std::vector<Future<std::vector<std::string>>> creditFutures;
   creditFutures.reserve(maximumZoomLevel + 1);
 
   for (size_t i = 0; i <= maximumZoomLevel; ++i) {
@@ -613,36 +618,31 @@ Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
             Rectangle(-180.0, -90.0, 180.0, 90.0))
             .thenInMainThread([](rapidjson::Document&& document) {
               if (document.HasParseError() || !document.IsObject()) {
-                return std::string();
+                return std::vector<std::string>();
               }
-
-              // TODO do we need to do more parsing?
-              std::vector<std::string> copyrights =
-                  JsonHelpers::getStrings(document, "copyrights");
-
-              return joinToString(copyrights, ", ");
+              return JsonHelpers::getStrings(document, "copyrights");
             }));
   }
 
   return this->getAsyncSystem()
       .all(std::move(creditFutures))
-      .thenInMainThread([thiz](std::vector<std::string>&& results) {
-        std::set<std::string> uniqueCredits;
-        std::vector<std::string> credits;
+      .thenInMainThread(
+          [thiz](std::vector<std::vector<std::string>>&& results) {
+            std::set<std::string> uniqueCredits;
 
-        for (size_t i = 0; i < results.size(); i++) {
-          std::string credit = results[i];
-          // `uniqueCredits` ensures uniqueness, `credits` maintains
-          // order.
-          if (uniqueCredits.insert(credit).second) {
-            credits.emplace_back(std::move(credit));
-          }
-        }
+            for (size_t i = 0; i < results.size(); i++) {
+              std::vector<std::string> credits = results[i];
+              for (size_t j = 0; j < credits.size(); j++) {
+                uniqueCredits.insert(credits[i]);
+              }
+            }
 
-        std::string joined = joinToString(credits, ", ");
-        // Create a single credit from this giant string.
-        thiz->_credits = thiz->getCreditSystem()->createCredit(joined, false);
-      });
+            for (const std::string& credit : uniqueCredits) {
+              thiz->_credits.emplace_back(thiz->getCreditSystem()->createCredit(
+                  credit,
+                  thiz->_showCreditsOnScreen));
+            }
+          });
 }
 
 void AzureMapsRasterOverlayTileProvider::addCredits(
@@ -653,8 +653,8 @@ void AzureMapsRasterOverlayTileProvider::addCredits(
     creditReferencer.addCreditReference(*this->_azureCredit);
   }
 
-  if (this->_credits) {
-    creditReferencer.addCreditReference(*this->_credits);
+  for (const Credit& credit : this->_credits) {
+    creditReferencer.addCreditReference(credit);
   }
 }
 

@@ -13,6 +13,7 @@
 ##### Fixes :wrench:
 
 - Fixed a bug in `GoogleMapTilesRasterOverlay` that tried to parse credits from an erroneous viewport service response.
+- Fixed a bug with credits not showing on-screen when `showCreditsOnScreen` was enabled on `GoogleMapTilesRasterOverlay`.
 
 ### v0.52.1 - 2025-10-01
 
