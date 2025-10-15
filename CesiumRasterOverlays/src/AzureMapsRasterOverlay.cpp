@@ -18,6 +18,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumUtility/joinToString.h>
 
 #include <fmt/format.h>
 #include <nonstd/expected.hpp>
@@ -43,47 +44,54 @@ using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
 namespace {
-struct CoverageArea {
-  GlobeRectangle rectangle;
-  uint32_t zoomMin;
-  uint32_t zoomMax;
-};
-
-struct CreditAndCoverageAreas {
-  Credit credit;
-  std::vector<CoverageArea> coverageAreas;
-};
-
 std::unordered_map<std::string, std::vector<std::byte>> sessionCache;
 } // namespace
 
 namespace CesiumRasterOverlays {
-// TODO replace with Azure Maps
-const std::string AzureMapsRasterOverlay::AZURE_MAPS_LOGO_HTML =
-    "<a href=\"http://www.bing.com\"><img "
+const std::string AZURE_MAPS_LOGO_HTML =
+    "<img alt=\"Microsoft Azure\" "
     "src=\"data:image/"
-    "png;base64,iVBORw0KGgoAAAANSUhEUgAAAFgAAAATCAMAAAAj1DqpAAAAq1BMVEUAAAD////"
-    "//////////////////////////////////////////////////////////////////////////"
-    "//////////////////////////////////////////////////////////////////////////"
-    "////////////////////////////////////////////////////////////////////////"
-    "Nr6iZAAAAOHRSTlMABRRJ0xkgCix/"
-    "uOGFYTMmHQh7EANWTQ2s5ZSLaURBzZB0blE6MPLav6SfiD81tJpl68kW98NauovCUzcAAAJxSU"
-    "RBVDjLtdTpcpswEADgFQiQzCnAYAMGzGUw+I6P93+yStC0djudZKaJ/"
-    "kjaXb7RrADAsazAd4zH4xR7fP4G+HEXR/"
-    "4OePYKozQog5oBqKb6pbCUbTKMcwUCXH4tvOxVizYJeJX3nzApZM9/"
-    "gtcAl02PUIhAY8gho48UchERsWTMtjxAan0R29DeOXxiSLMtRzheTaQRVqPmTAfpGd7pJqT7iu"
-    "WR0eLrwKNGdm6NdhAVpHfjPLKSPN6mAHac910AUCTr3OhMBHUUx3SEpbLhb93e3bER1hemO4sU"
-    "kPFKWyzztMz2IdBNUd3Ob7KoqDMT+cd27UEQe0AqBlXngXtPGZBuQIYJSBnhy6V9iLEsJ1g/"
-    "42VHJvjsABRLR8UGT82bEbYWPEhmBECJHBFgDi+nvVgeKYrnvy+vbN+"
-    "EfJxaQUNFvu7DEd5q3NNVGctC1Ce4D0UHuClFKqAhcfu7Be5N5IYI0oOpvMPgGA1fmb96DMfGH"
-    "uHDBJc4fYINARvKCPuJMR92Ww6PB01z8Il7kH/"
-    "C6nrzeIWL0wtcbUQuaP6G1S2fw8UOaDK2QjyM5PsI2+bUCX01wb1DTLzQnlsRXlvC7P3bn/"
-    "BBtTsJ/"
-    "PnVAjpzANTtDjQfnL2AN20j2NOhRu9fXoY7G1bXgW1zBhBkKqzOeDbbTq2oqcYJV8C5g6hRJvR"
-    "Qg9vFt1tkIlQUJaUcnsbbPtCe/hU7vpHSi2/"
-    "VPoCy4jvbTKr0VIkKjyCAkDAAxuu8eRFIxOOXVydFxTPkWAQenCY3MyX4eFCs/jPnu/"
-    "OXfbBoeDOo8wHpy8lKpvoafRoG6YgXFYKP4GSj63gtwWfhHzl7Skq9JTshAAAAAElFTkSuQmCC"
-    "\" title=\"Bing Imagery\"/></a>";
+    "png;base64,"
+    "iVBORw0KGgoAAAANSUhEUgAAAGkAAAAUCAMAAAC54OMXAAAAAXNSR0IB2cksfwAAAAlwSFlzAA"
+    "ALEwAACxMBAJqcGAAAAsRQTFRFAAAA81Ai81Ai2GsZf7oAf7oA81Ai81Ai2GsZf7oAf7oAc3Nz"
+    "c3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3"
+    "Nzc3Nzc3NzdHR0c3Nzc3Nzc3Nzc3Nzc3Nzc3NzdHR0c3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nz"
+    "c3Nzc3Nzc3NzdHR0dHR0c3Nzc3Nzc3Nzc3Nzc3Nzc3NzdHR0c3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3"
+    "Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nz"
+    "c3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3"
+    "Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nz8lIi8lIi12wYgbkAgbkAc3Nzc3Nzc3Nzc3Nzc3Nzc3Nz"
+    "c3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3"
+    "Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzAKXvAKXvO6e1/bYA/"
+    "bYAc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzdHR0c3Nzc3Nzc3N"
+    "zc3Nzc3Nzc3Nzc3Nzc3Nzc3NzAKXvAKXvPKi1/7gA/"
+    "7gAc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3N"
+    "zc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc"
+    "3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzjUES/gAAAOx0Uk5TABUrEisbgP9p/"
+    "6UDBhRTTgkNSE/n8AFEPv/"
+    "+QV3dCM3LAQTxrT0rewcp7Bj2mAq6EwIRDgIEDBIZY4zZDX7pcQsHD5LfH0Xzop6aNrbi3l9mw"
+    "KjhG43Ha9uXRsjglS/"
+    "Y7vnaFdJ8ab90fRqQVNW9JlKkRKRqO+htmbuLtdHXVniKahw8UePCSndzW7TmYCRY1M+"
+    "Ikx7TaPc4xqlUqUanbCWjxWIqWeogr0vrSVzDCaQjOoD4N1qF+oD/av+l/Iks/"
+    "XIWM+"
+    "R5QJSCmyJD7xfyV8xsLQU17dC4psQh9UJu9MmwUjFNcHodTChQNGe2vnIEAAAC5klEQVR4nN3R"
+    "eyzVYRgH8OdbR2lYiYlUOClxIqVOpnKZM13oakUpUSbNrThhVnRhVlFoK02mUksZRosuM93MZS"
+    "4pOpaG0NL10Kg4R6f355TNH2zWWOv7z/P953k/794XNF7BeEpQan+GbOykSUOlb/"
+    "+opIbuv5E0AHQSafbzelXlXSOtawEff1edfp7iw2glXSa9JZrVz2MFzcNv8zGQBq6bdmqifvSS"
+    "Fl6QBbr7IJ37jBYDbXMgb5GSEHU9RBYTvjaR2kJFhdGMN4ZyFXYr7jKrJGZ4REbarCqgqKRlis"
+    "/anwxamxwgrRlBMgMeOAH1EKDAGYMpE06saXRrn40bO4CvU4H7MpN5wJ33RHuBdp3nNfoiotcC"
+    "IIU266LWMn9jlWAKkKSUDgyV4jlpJ3AyAsiApgsnfcn1SbVWMc3wPOPyY1Fzqz0SxMxNDi4t19"
+    "7FSk8U+7HJ4qNqGq+sXx5jjJUwiFztEXsYGZ4deoCvUkodKnlzUhyQaLRJwkmmh+"
+    "I9iKJNsD1R151mTEjEu5nn/"
+    "QOnSSg73K5AHBr5KHQL28tN34OQsxuITpni+"
+    "Pzf0iXnArEbX111rVK6O1QSDUghWXieb81Jt7p/sseJbiuvd/"
+    "1WSM7VvdkJ4uRgd71qymxrGJQsdy6V0AnXrbZPgBVCTlrvhNhsm9KL+"
+    "yqJAkeQDtqX51hHctLqdD9H/"
+    "nwBk1y0eNUJPY0rhaUldj0qAWHz5KlMSq44yA7LEMCN9p8qCDmbldTt0Bfod0G9hZNqRUUWL6S"
+    "2I0hevrLQhQNSbLLjukJZDpP0DY2/"
+    "R38K148JOy27nvZUdI93kkk3l1zxMiYP28xicthvceb2LgNac3V3hOxICSdVTT8S05sXNpz0uC"
+    "xOapnnVdxqLq/9YMM3jq7NfVNk3kmXRdfO6TRGpS3oeuhQJfHvKJsTYC/"
+    "kB3bum2kUNMWPLTtd8bFjoy7buz0F2LbO0Yo0mvqW65cPJ41JxlUap/"
+    "yP0i9eZhskyycglQAAAABJRU5ErkJggg==\"/>";
 
 namespace {
 Rectangle createRectangle(
@@ -98,9 +106,10 @@ QuadtreeTilingScheme createTilingScheme(
 }
 } // namespace
 
-class AzureMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
+class AzureMapsRasterOverlayTileProvider final
+    : public QuadtreeRasterOverlayTileProvider {
 public:
-  AzureMapsTileProvider(
+  AzureMapsRasterOverlayTileProvider(
       const IntrusivePointer<const RasterOverlay>& pOwner,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
@@ -109,41 +118,31 @@ public:
       const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::string& endpoint,
+      const std::string& baseUrl,
+      const std::string& tilesetId,
       const std::string& key,
+      const std::string& tileEndpoint,
       int32_t minimumLevel,
       int32_t maximumLevel,
-      int32_t imageSize)
-      : QuadtreeRasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            pCreditSystem,
-            credit,
-            pPrepareRendererResources,
-            pLogger,
-            WebMercatorProjection(pOwner->getOptions().ellipsoid),
-            createTilingScheme(pOwner),
-            createRectangle(pOwner),
-            minimumLevel,
-            maximumLevel,
-            imageSize,
-            imageSize),
-        _endpoint(endpoint),
-        _key(key) {}
+      int32_t imageSize,
+      bool showLogo);
 
-  virtual ~AzureMapsTileProvider() = default;
+  virtual ~AzureMapsRasterOverlayTileProvider() = default;
 
-  void update(const AzureMapsTileProvider& newProvider) {
-    this->_endpoint = newProvider._endpoint;
+  void update(const AzureMapsRasterOverlayTileProvider& newProvider) {
+    this->_baseUrl = newProvider._baseUrl;
+    this->_tilesetId = newProvider._tilesetId;
     this->_key = newProvider._key;
+    this->_tileEndpoint = newProvider._tileEndpoint;
   }
+
+  CesiumAsync::Future<void> loadCredits();
 
 protected:
   virtual CesiumAsync::Future<LoadedRasterOverlayImage> loadQuadtreeTileImage(
       const CesiumGeometry::QuadtreeTileID& tileID) const override {
     Uri uri(CesiumUtility::Uri::substituteTemplateParameters(
-        this->_endpoint,
+        this->_tileEndpoint,
         [this, &tileID](const std::string& key) {
           if (key == "z") {
             return std::to_string(tileID.level);
@@ -175,26 +174,16 @@ protected:
             this->getProjection(),
             options.rectangle);
 
-    for (const CreditAndCoverageAreas& creditAndCoverageAreas : _credits) {
-      for (const CoverageArea& coverageArea :
-           creditAndCoverageAreas.coverageAreas) {
-        if (coverageArea.zoomMin <= tileID.level &&
-            tileID.level <= coverageArea.zoomMax &&
-            coverageArea.rectangle.computeIntersection(tileRectangle)
-                .has_value()) {
-          options.credits.push_back(creditAndCoverageAreas.credit);
-          break;
-        }
-      }
-    }
-
     return this->loadTileImageFromUrl(url, {}, std::move(options));
   }
 
 private:
-  std::vector<CreditAndCoverageAreas> _credits;
-  std::string _endpoint;
+  std::string _baseUrl;
+  std::string _tilesetId;
   std::string _key;
+  std::string _tileEndpoint;
+  std::optional<Credit> _azureCredit;
+  std::optional<Credit> _credits;
 };
 
 AzureMapsRasterOverlay::AzureMapsRasterOverlay(
@@ -241,7 +230,7 @@ AzureMapsRasterOverlay::createTileProvider(
        pCreditSystem,
        pPrepareRendererResources,
        pLogger,
-       &key = this->_sessionParameters.key,
+       &sessionParameters = this->_sessionParameters,
        ellipsoid](
           const std::shared_ptr<IAssetRequest>& pRequest,
           const std::span<const std::byte>& data) -> CreateTileProviderResult {
@@ -345,11 +334,13 @@ AzureMapsRasterOverlay::createTileProvider(
           "Azure Maps returned no valid endpoint for given tilesetId."});
     }
 
+    // it = responseObject.find("attribution");
+
     bool showCredits = pOwner->getOptions().showCreditsOnScreen;
     Credit azureMapsCredit =
         pCreditSystem->createCredit(AZURE_MAPS_LOGO_HTML, showCredits);
 
-    return new AzureMapsTileProvider(
+    auto* pProvider = new AzureMapsRasterOverlayTileProvider(
         pOwner,
         asyncSystem,
         pAssetAccessor,
@@ -357,11 +348,19 @@ AzureMapsRasterOverlay::createTileProvider(
         azureMapsCredit,
         pPrepareRendererResources,
         pLogger,
+        sessionParameters.apiBaseUrl,
+        sessionParameters.tilesetId,
+        sessionParameters.key,
         tileEndpoint,
-        key,
         minimumLevel,
         maximumLevel,
-        tileSize);
+        tileSize,
+        sessionParameters.showLogo);
+
+    // Start loading credits, but don't wait for the load to finish.
+    pProvider->loadCredits();
+
+    return pProvider;
   };
 
   auto cacheResultIt = sessionCache.find(tilesetUrl);
@@ -435,10 +434,10 @@ Future<void> AzureMapsRasterOverlay::refreshTileProviderWithNewKey(
         // Use static_cast instead of dynamic_cast here to avoid the need for
         // RTTI, and because we are certain of the type.
         // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
-        AzureMapsTileProvider* pOld =
-            static_cast<AzureMapsTileProvider*>(pProvider.get());
-        AzureMapsTileProvider* pNew =
-            static_cast<AzureMapsTileProvider*>(result->get());
+        AzureMapsRasterOverlayTileProvider* pOld =
+            static_cast<AzureMapsRasterOverlayTileProvider*>(pProvider.get());
+        AzureMapsRasterOverlayTileProvider* pNew =
+            static_cast<AzureMapsRasterOverlayTileProvider*>(result->get());
         // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
         if (pOld->getCoverageRectangle().getLowerLeft() !=
                 pNew->getCoverageRectangle().getLowerLeft() ||
@@ -458,6 +457,165 @@ Future<void> AzureMapsRasterOverlay::refreshTileProviderWithNewKey(
         }
 
         pOld->update(*pNew);
+      });
+}
+
+namespace {
+CesiumAsync::Future<rapidjson::Document> fetchAttributionData(
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& apiBaseUrl,
+    const std::string& tilesetId,
+    const std::string& key,
+    uint32_t zoom,
+    const Rectangle& rectangleDegrees) {
+  std::vector<std::string> bounds(4);
+  bounds[0] = std::to_string(rectangleDegrees.minimumX); // west
+  bounds[1] = std::to_string(rectangleDegrees.minimumY); // south
+  bounds[2] = std::to_string(rectangleDegrees.maximumX); // east
+  bounds[3] = std::to_string(rectangleDegrees.maximumY); // north
+
+  Uri attributionUri(apiBaseUrl, "map/attribution", true);
+
+  UriQuery query(attributionUri);
+  query.setValue("subscription-key", key);
+  query.setValue("tilesetId", tilesetId);
+  query.setValue("zoom", std::to_string(zoom));
+  query.setValue("bounds", joinToString(bounds, ","));
+  attributionUri.setQuery(query.toQueryString());
+
+  return pAssetAccessor
+      ->get(asyncSystem, std::string(attributionUri.toString()))
+      .thenInMainThread(
+          [pLogger](const std::shared_ptr<IAssetRequest>& pRequest)
+              -> rapidjson::Document {
+            const IAssetResponse* pResponse = pRequest->response();
+            rapidjson::Document document;
+
+            if (!pResponse) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "No response received from Azure Maps API attribution "
+                  "service.");
+              return document;
+            }
+
+            if (pResponse->statusCode() < 200 ||
+                pResponse->statusCode() >= 300) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Error response {} received from Azure Maps API attribution "
+                  "service URL {}.",
+                  pResponse->statusCode(),
+                  pRequest->url());
+              return document;
+            }
+
+            document.Parse(
+                reinterpret_cast<const char*>(pResponse->data().data()),
+                pResponse->data().size());
+
+            if (document.HasParseError()) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Error when parsing Azure Maps API attribution service JSON "
+                  "from URL {}, error code {} at byte offset {}.",
+                  pRequest->url(),
+                  document.GetParseError(),
+                  document.GetErrorOffset());
+            }
+
+            return document;
+          });
+}
+} // namespace
+
+AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
+    const IntrusivePointer<const RasterOverlay>& pOwner,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
+    std::optional<CesiumUtility::Credit> credit,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& baseUrl,
+    const std::string& tilesetId,
+    const std::string& key,
+    const std::string& tileEndpoint,
+    int32_t minimumLevel,
+    int32_t maximumLevel,
+    int32_t imageSize,
+    bool showLogo)
+    : QuadtreeRasterOverlayTileProvider(
+          pOwner,
+          asyncSystem,
+          pAssetAccessor,
+          pCreditSystem,
+          credit,
+          pPrepareRendererResources,
+          pLogger,
+          WebMercatorProjection(pOwner->getOptions().ellipsoid),
+          createTilingScheme(pOwner),
+          createRectangle(pOwner),
+          minimumLevel,
+          maximumLevel,
+          imageSize,
+          imageSize),
+      _baseUrl(baseUrl),
+      _tilesetId(tilesetId),
+      _key(key),
+      _tileEndpoint(tileEndpoint),
+      _azureCredit(),
+      _credits() {
+  if (pCreditSystem && showLogo) {
+    this->_azureCredit =
+        pCreditSystem->createCredit(AZURE_MAPS_LOGO_HTML, true);
+  }
+}
+
+Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
+  const uint32_t maximumZoomLevel = this->getMaximumLevel();
+
+  IntrusivePointer thiz = this;
+
+  std::vector<Future<std::string>> creditFutures;
+  creditFutures.reserve(maximumZoomLevel + 1);
+
+  for (size_t i = 0; i <= maximumZoomLevel; ++i) {
+    creditFutures.emplace_back(
+        fetchAttributionData(
+            this->getAssetAccessor(),
+            this->getAsyncSystem(),
+            this->getLogger(),
+            this->_baseUrl,
+            this->_tilesetId,
+            this->_key,
+            uint32_t(i),
+            Rectangle(-180.0, -90.0, 180.0, 90.0))
+            .thenInMainThread([](rapidjson::Document&& document) {
+              if (document.HasParseError() || !document.IsObject()) {
+                return std::string();
+              }
+
+              std::vector<std::string> copyrights =
+                  JsonHelpers::getStrings(document, "copyrights");
+
+              if (copyrights.empty()) {
+                return std::string();
+              }
+
+              return joinToString(copyrights, ", ");
+            }));
+  }
+
+  return this->getAsyncSystem()
+      .all(std::move(creditFutures))
+      .thenInMainThread([thiz](std::vector<std::string>&& results) {
+        std::string joined = joinToString(results, ", ");
+        // Create a single credit from this giant string.
+        thiz->_credits = thiz->getCreditSystem()->createCredit(joined, false);
       });
 }
 

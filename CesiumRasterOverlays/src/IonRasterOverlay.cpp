@@ -593,6 +593,7 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
         AzureMapsSessionParameters{
             .key = azure2D.key,
             .tilesetId = azure2D.tilesetId,
+            .showLogo = false,
             .apiBaseUrl = azure2D.url,
         },
         this->pOwner->getOptions());

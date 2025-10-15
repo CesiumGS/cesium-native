@@ -40,6 +40,17 @@ struct AzureMapsTilesetId {
       "microsoft.base.labels.darkgrey";
 
   /**
+   * @brief Road, boundary and label  data in Azure Maps' main style.
+   */
+  inline static const std::string baseHybridRoad = "microsoft.base.hybrid.road";
+
+  /**
+   * @brief Road, boundary and label  data in Azure Maps' dark grey style.
+   */
+  inline static const std::string baseHybridDarkGrey =
+      "microsoft.base.hybrid.darkgrey";
+
+  /**
    * @brief A combination of satellite or aerial imagery. Only available in S1
    * and G2 pricing SKU.
    */
@@ -92,8 +103,7 @@ struct AzureMapsTilesetId {
   /**
    * @brief Delay traffic tiles in Azure Maps' main style.
    */
-  inline static const std::string trafficDelay =
-      "microsoft.traffic.delay.main";
+  inline static const std::string trafficDelay = "microsoft.traffic.delay.main";
 
   /**
    * @brief Reduced traffic tiles in Azure Maps' main style.
@@ -165,9 +175,9 @@ struct AzureMapsSessionParameters {
 
   /**
    * @brief Whether or not the @ref AzureMapsRasterOverlay should show the
-   * Google Maps logo.
+   * Azure Maps logo.
    *
-   * Google requires the logo to be shown, so setting this to false is only
+   * Azure requires the logo to be shown, so setting this to false is only
    * valid when something else is already showing the logo.
    */
   bool showLogo = true;
@@ -210,8 +220,8 @@ public:
   /**
    * @brief Refresh a previously-created tile provider using a new key.
    *
-   * Calling this method on a tile provider that was not created by this \ref
-   * BingMapsRasterOverlay will lead to undefined behavior.
+   * Calling this method on a tile provider that was not created by this @ref
+   * AzureMapsRasterOverlay will lead to undefined behavior.
    *
    * @param pProvider The previously-created tile provider.
    * @param newKey The new key to use.
@@ -222,8 +232,6 @@ public:
       const std::string& newKey);
 
 private:
-  static const std::string AZURE_MAPS_LOGO_HTML;
-
   AzureMapsSessionParameters _sessionParameters;
 };
 
