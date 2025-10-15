@@ -119,6 +119,7 @@ public:
           pPrepareRendererResources,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& baseUrl,
+      const std::string& apiVersion,
       const std::string& tilesetId,
       const std::string& key,
       const std::string& tileEndpoint,
@@ -178,6 +179,7 @@ protected:
   }
 
 private:
+  std::string _apiVersion;
   std::string _baseUrl;
   std::string _tilesetId;
   std::string _key;
@@ -349,6 +351,7 @@ AzureMapsRasterOverlay::createTileProvider(
         pPrepareRendererResources,
         pLogger,
         sessionParameters.apiBaseUrl,
+        sessionParameters.apiVersion,
         sessionParameters.tilesetId,
         sessionParameters.key,
         tileEndpoint,
@@ -466,6 +469,7 @@ CesiumAsync::Future<rapidjson::Document> fetchAttributionData(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& apiBaseUrl,
+    const std::string& apiVersion,
     const std::string& tilesetId,
     const std::string& key,
     uint32_t zoom,
@@ -479,6 +483,7 @@ CesiumAsync::Future<rapidjson::Document> fetchAttributionData(
   Uri attributionUri(apiBaseUrl, "map/attribution", true);
 
   UriQuery query(attributionUri);
+  query.setValue("api-version", apiVersion);
   query.setValue("subscription-key", key);
   query.setValue("tilesetId", tilesetId);
   query.setValue("zoom", std::to_string(zoom));
@@ -541,6 +546,7 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
         pPrepareRendererResources,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
+    const std::string& apiVersion,
     const std::string& tilesetId,
     const std::string& key,
     const std::string& tileEndpoint,
@@ -564,6 +570,7 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
           imageSize,
           imageSize),
       _baseUrl(baseUrl),
+      _apiVersion(apiVersion),
       _tilesetId(tilesetId),
       _key(key),
       _tileEndpoint(tileEndpoint),
@@ -590,6 +597,7 @@ Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
             this->getAsyncSystem(),
             this->getLogger(),
             this->_baseUrl,
+            this->_apiVersion,
             this->_tilesetId,
             this->_key,
             uint32_t(i),
