@@ -11,8 +11,8 @@
 namespace CesiumRasterOverlays {
 
 /**
- * @brief Supported values for @ref AzureMapsParameters::tilesetId. See the
- * [official
+ * @brief Supported values for @ref AzureMapsSessionParameters::tilesetId. See
+ * the [official
  * documentation](https://learn.microsoft.com/en-us/rest/api/maps/render/get-map-tile?tabs=HTTP#tilesetid)
  * for all standard values. Note that some tileset IDs return vector data, which
  * is currently unsupported.

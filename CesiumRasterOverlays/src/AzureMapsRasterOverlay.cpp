@@ -2,7 +2,6 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
-#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumJsonReader/JsonObjectJsonHandler.h>
@@ -30,6 +29,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <memory>
 #include <optional>
 #include <set>
@@ -263,8 +263,8 @@ AzureMapsRasterOverlay::createTileProvider(
     }
 
     try {
-      tileSize = std::stoi(tileSizeEnum);
-    } catch (std::exception) {
+      tileSize = static_cast<uint32_t>(std::stoul(tileSizeEnum));
+    } catch (std::exception&) {
       return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
           .type = RasterOverlayLoadType::TileProvider,
           .pRequest = pRequest,
