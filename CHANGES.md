@@ -2,13 +2,23 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Restored vcpkg commit update to `2025.09.17`.
+
 ##### Additions :tada:
 
 - Added `GltfModifier` class. It can be used to modify tile glTFs during load, as well as apply new modifications to them later.
-- 
+
 ##### Fixes :wrench:
 
 - Fixed a bug in `GoogleMapTilesRasterOverlay` that tried to parse credits from an erroneous viewport service response.
+
+### v0.52.1 - 2025-10-01
+
+##### Breaking Changes :mega:
+
+- Reverted vcpkg update that could interfere with builds on headless MacOS.
 
 ### v0.52.0 - 2025-10-01
 
@@ -29,6 +39,7 @@
 - Removed `getOverlays`, `getTileProviders`, and `getPlaceholderTileProviders` from `RasterOverlayCollection`. Use `getActivatedOverlays` instead.
 - `SharedAssetDepot` now uses a templatized "context" instead of separate `AsyncSystem` and `IAssetAccessor` parameters. It defaults to `SharedAssetContext`.
 - Removed `RasterOverlay::getCredits`, which was not actually used anywhere. Use `RasterOverlayTileProvider::addCredits` instead.
+- Upgraded vcpkg to `2025.09.17`.
 
 ##### Additions :tada:
 
