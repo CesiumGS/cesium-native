@@ -49,6 +49,15 @@ struct GoogleMapTilesExistingSession {
   std::string imageFormat;
 
   /**
+   * @brief Whether or not the @ref GoogleMapTilesRasterOverlay should show the
+   * Google Maps logo.
+   *
+   * Google requires the logo to be shown, so setting this to false is only
+   * valid when something else is already showing the logo.
+   */
+  bool showLogo = true;
+
+  /**
    * @brief The base URL for the Google Maps Tiles API.
    */
   std::string apiBaseUrl{"https://tile.googleapis.com/"};

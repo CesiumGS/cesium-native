@@ -575,6 +575,7 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
             .tileWidth = google2D.tileWidth,
             .tileHeight = google2D.tileHeight,
             .imageFormat = google2D.imageFormat,
+            .showLogo = false,
             .apiBaseUrl = google2D.url,
         },
         this->pOwner->getOptions());
