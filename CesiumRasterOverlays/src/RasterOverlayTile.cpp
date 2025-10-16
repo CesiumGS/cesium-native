@@ -1,3 +1,4 @@
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -10,8 +11,8 @@ using namespace CesiumAsync;
 namespace CesiumRasterOverlays {
 
 RasterOverlayTile::RasterOverlayTile(
-    RasterOverlayTileProvider& tileProvider) noexcept
-    : _pTileProvider(&tileProvider),
+    ActivatedRasterOverlay& activatedOverlay) noexcept
+    : _pActivatedOverlay(&activatedOverlay),
       _targetScreenPixels(0.0),
       _rectangle(CesiumGeometry::Rectangle(0.0, 0.0, 0.0, 0.0)),
       _tileCredits(),
@@ -21,10 +22,10 @@ RasterOverlayTile::RasterOverlayTile(
       _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
 
 RasterOverlayTile::RasterOverlayTile(
-    RasterOverlayTileProvider& tileProvider,
+    ActivatedRasterOverlay& activatedOverlay,
     const glm::dvec2& targetScreenPixels,
     const CesiumGeometry::Rectangle& rectangle) noexcept
-    : _pTileProvider(&tileProvider),
+    : _pActivatedOverlay(&activatedOverlay),
       _targetScreenPixels(targetScreenPixels),
       _rectangle(rectangle),
       _tileCredits(),
@@ -34,9 +35,10 @@ RasterOverlayTile::RasterOverlayTile(
       _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
 
 RasterOverlayTile::~RasterOverlayTile() {
-  RasterOverlayTileProvider& tileProvider = *this->_pTileProvider;
+  this->_pActivatedOverlay->removeTile(this);
 
-  tileProvider.removeTile(this);
+  RasterOverlayTileProvider& tileProvider =
+      *this->_pActivatedOverlay->getTileProvider();
 
   const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
       pPrepareRendererResources = tileProvider.getPrepareRendererResources();
@@ -58,15 +60,26 @@ RasterOverlayTile::~RasterOverlayTile() {
   }
 }
 
-RasterOverlay& RasterOverlayTile::getOverlay() noexcept {
-  return this->_pTileProvider->getOwner();
+ActivatedRasterOverlay& RasterOverlayTile::getActivatedOverlay() noexcept {
+  return *this->_pActivatedOverlay;
 }
 
-/**
- * @brief Returns the {@link RasterOverlay} that created this instance.
- */
+const ActivatedRasterOverlay&
+RasterOverlayTile::getActivatedOverlay() const noexcept {
+  return *this->_pActivatedOverlay;
+}
+
+RasterOverlayTileProvider& RasterOverlayTile::getTileProvider() noexcept {
+  return *this->_pActivatedOverlay->getTileProvider();
+}
+
+const RasterOverlayTileProvider&
+RasterOverlayTile::getTileProvider() const noexcept {
+  return *this->_pActivatedOverlay->getTileProvider();
+}
+
 const RasterOverlay& RasterOverlayTile::getOverlay() const noexcept {
-  return this->_pTileProvider->getOwner();
+  return this->_pActivatedOverlay->getOverlay();
 }
 
 void RasterOverlayTile::loadInMainThread() {
@@ -75,7 +88,7 @@ void RasterOverlayTile::loadInMainThread() {
   }
 
   // Do the final main thread raster loading
-  RasterOverlayTileProvider& tileProvider = *this->_pTileProvider;
+  RasterOverlayTileProvider& tileProvider = this->getTileProvider();
   this->_pRendererResources =
       tileProvider.getPrepareRendererResources()->prepareRasterInMainThread(
           *this,

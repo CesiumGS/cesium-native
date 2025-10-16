@@ -24,15 +24,38 @@ template <typename T> class SharedAsset;
 namespace CesiumAsync {
 
 /**
+ * @brief The default context passed to \ref SharedAssetDepot factory functions.
+ */
+struct SharedAssetContext {
+  /**
+   * @brief The async system.
+   */
+  AsyncSystem asyncSystem;
+
+  /**
+   * @brief The asset accessor.
+   */
+  std::shared_ptr<IAssetAccessor> pAssetAccessor;
+};
+
+/**
  * @brief A depot for {@link CesiumUtility::SharedAsset} instances, which are potentially shared between multiple objects.
  *
  * @tparam TAssetType The type of asset stored in this depot. This should
  * be derived from {@link CesiumUtility::SharedAsset}.
+ * @tparam TAssetKey The key type used to uniquely identify assets in this
+ * depot.
+ * @tparam TContext The type of context passed to the factory function when
+ * creating a new asset. This defaults to \ref SharedAssetContext. This type
+ * must contain a field named `asyncSystem` of type \ref AsyncSystem.
  */
-template <typename TAssetType, typename TAssetKey>
+template <
+    typename TAssetType,
+    typename TAssetKey,
+    typename TContext = SharedAssetContext>
 class CESIUMASYNC_API SharedAssetDepot
     : public CesiumUtility::ReferenceCountedThreadSafe<
-          SharedAssetDepot<TAssetType, TAssetKey>>,
+          SharedAssetDepot<TAssetType, TAssetKey, TContext>>,
       public CesiumUtility::IDepotOwningAsset<TAssetType> {
 public:
   /**
@@ -47,7 +70,8 @@ public:
    *
    * Default is 16MiB.
    */
-  int64_t inactiveAssetSizeLimitBytes = static_cast<int64_t>(16 * 1024 * 1024);
+  std::atomic<int64_t> inactiveAssetSizeLimitBytes =
+      static_cast<int64_t>(16 * 1024 * 1024);
 
   /**
    * @brief Signature for the callback function that will be called to fetch and
@@ -65,8 +89,7 @@ public:
    */
   using FactorySignature =
       CesiumAsync::Future<CesiumUtility::ResultPointer<TAssetType>>(
-          const AsyncSystem& asyncSystem,
-          const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+          const TContext& context,
           const TAssetKey& key);
 
   /**
@@ -84,16 +107,45 @@ public:
    * @brief Gets an asset from the depot if it already exists, or creates it
    * using the depot's factory if it does not.
    *
-   * @param asyncSystem The async system.
-   * @param pAssetAccessor The asset accessor to use to download assets, if
-   * necessary.
+   * @param context The context to pass to the factory function.
    * @param assetKey The key uniquely identifying the asset to get or create.
    * @return A shared future that resolves when the asset is ready or fails.
    */
-  SharedFuture<CesiumUtility::ResultPointer<TAssetType>> getOrCreate(
-      const AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-      const TAssetKey& assetKey);
+  SharedFuture<CesiumUtility::ResultPointer<TAssetType>>
+  getOrCreate(const TContext& context, const TAssetKey& assetKey);
+
+  /**
+   * @brief Invalidates the previously-cached asset with the given key, so that
+   * the next call to {@link getOrCreate} will create the asset instead of
+   * returning the existing one.
+   *
+   * Anyone already using the existing asset may continue to do so.
+   *
+   * If an asset with the given key does not exist in the depot, this method
+   * does nothing.
+   *
+   * @param assetKey The asset key to invalidate.
+   * @returns True if the asset was invalidated; false if the asset key does not
+   * exist in the depot or was already invalidated.
+   */
+  bool invalidate(const TAssetKey& assetKey);
+
+  /**
+   * @brief Invalidates the previously-cached asset, so that the next call to
+   * {@link getOrCreate} will create the asset instead of returning the existing
+   * one.
+   *
+   * Anyone already using the existing asset may continue to do so.
+   *
+   * If the asset is not associated with the depot, or if it has already been
+   * invalidated, this method does nothing. If another asset with the same key
+   * already exists in the depot, invalidating this one will not affect it.
+   *
+   * @param asset The asset to invalidate.
+   * @returns True if the asset was invalidated; false if the asset is not owned
+   * by the depot or was already invalidated.
+   */
+  bool invalidate(TAssetType& asset);
 
   /**
    * @brief Returns the total number of distinct assets contained in this depot,
@@ -120,7 +172,8 @@ public:
   int64_t getInactiveAssetTotalSizeBytes() const;
 
   // Disable copy
-  void operator=(const SharedAssetDepot<TAssetType, TAssetKey>& other) = delete;
+  void operator=(
+      const SharedAssetDepot<TAssetType, TAssetKey, TContext>& other) = delete;
 
 private:
   struct LockHolder;
@@ -158,6 +211,14 @@ private:
       bool threadOwnsDepotLock) override;
 
   void unmarkDeletionCandidateUnderLock(const TAssetType& asset);
+
+  /**
+   * @brief Invalidates the asset with the given key.
+   *
+   * The depot lock must be held when this is called, and it will be released by
+   * the time this method returns.
+   */
+  bool invalidateUnderLock(LockHolder&& lock, const TAssetKey& assetKey);
 
   /**
    * @brief An entry for an asset owned by this depot. This is reference counted
@@ -254,6 +315,11 @@ private:
   // list.
   int64_t _totalDeletionCandidateMemoryUsage;
 
+  // The number of assets that have been invalidated but that have not been
+  // deleted yet. Such assets hold a pointer to the depot, so the depot must be
+  // kept alive for their entire lifetime.
+  int64_t _liveInvalidatedAssets;
+
   // Mutex serializing access to _assets, _assetsByPointer, _deletionCandidates,
   // and any AssetEntry owned by this depot.
   mutable std::mutex _mutex;
@@ -264,23 +330,25 @@ private:
   // This instance keeps a reference to itself whenever it is managing active
   // assets, preventing it from being destroyed even if all other references to
   // it are dropped.
-  CesiumUtility::IntrusivePointer<SharedAssetDepot<TAssetType, TAssetKey>>
+  CesiumUtility::IntrusivePointer<
+      SharedAssetDepot<TAssetType, TAssetKey, TContext>>
       _pKeepAlive;
 };
 
-template <typename TAssetType, typename TAssetKey>
-SharedAssetDepot<TAssetType, TAssetKey>::SharedAssetDepot(
+template <typename TAssetType, typename TAssetKey, typename TContext>
+SharedAssetDepot<TAssetType, TAssetKey, TContext>::SharedAssetDepot(
     std::function<FactorySignature> factory)
     : _assets(),
       _assetsByPointer(),
       _deletionCandidates(),
       _totalDeletionCandidateMemoryUsage(0),
+      _liveInvalidatedAssets(0),
       _mutex(),
       _factory(std::move(factory)),
       _pKeepAlive(nullptr) {}
 
-template <typename TAssetType, typename TAssetKey>
-SharedAssetDepot<TAssetType, TAssetKey>::~SharedAssetDepot() {
+template <typename TAssetType, typename TAssetKey, typename TContext>
+SharedAssetDepot<TAssetType, TAssetKey, TContext>::~SharedAssetDepot() {
   // Ideally, when the depot is destroyed, all the assets it owns would become
   // independent assets. But this is extremely difficult to manage in a
   // thread-safe manner.
@@ -302,14 +370,14 @@ SharedAssetDepot<TAssetType, TAssetKey>::~SharedAssetDepot() {
   // this destructor from being called except when all of its assets are also
   // in the _deletionCandidates list.
 
+  CESIUM_ASSERT(this->_liveInvalidatedAssets == 0);
   CESIUM_ASSERT(this->_assets.size() == this->_deletionCandidates.size());
 }
 
-template <typename TAssetType, typename TAssetKey>
+template <typename TAssetType, typename TAssetKey, typename TContext>
 SharedFuture<CesiumUtility::ResultPointer<TAssetType>>
-SharedAssetDepot<TAssetType, TAssetKey>::getOrCreate(
-    const AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+SharedAssetDepot<TAssetType, TAssetKey, TContext>::getOrCreate(
+    const TContext& context,
     const TAssetKey& assetKey) {
   // We need to take care here to avoid two assets starting to load before the
   // first asset has added an entry and set its maybePendingAsset field.
@@ -324,7 +392,7 @@ SharedAssetDepot<TAssetType, TAssetKey>::getOrCreate(
       // Asset is currently loading.
       return *entry.maybePendingAsset;
     } else {
-      return asyncSystem.createResolvedFuture(entry.toResultUnderLock())
+      return context.asyncSystem.createResolvedFuture(entry.toResultUnderLock())
           .share();
     }
   }
@@ -338,18 +406,19 @@ SharedAssetDepot<TAssetType, TAssetKey>::getOrCreate(
   // So we jump through some hoops here to publish "this thread is working
   // on it", then unlock the mutex, and _then_ actually call the factory
   // function.
-  Promise<void> promise = asyncSystem.createPromise<void>();
+  Promise<void> promise = context.asyncSystem.template createPromise<void>();
 
   // We haven't loaded or started to load this asset yet.
   // Let's do that now.
-  CesiumUtility::IntrusivePointer<SharedAssetDepot<TAssetType, TAssetKey>>
+  CesiumUtility::IntrusivePointer<
+      SharedAssetDepot<TAssetType, TAssetKey, TContext>>
       pDepot = this;
   CesiumUtility::IntrusivePointer<AssetEntry> pEntry = new AssetEntry(assetKey);
 
   auto future =
       promise.getFuture()
-          .thenImmediately([pDepot, pEntry, asyncSystem, pAssetAccessor]() {
-            return pDepot->_factory(asyncSystem, pAssetAccessor, pEntry->key);
+          .thenImmediately([pDepot, pEntry, context]() {
+            return pDepot->_factory(context, pEntry->key);
           })
           .catchImmediately([](std::exception&& e) {
             return CesiumUtility::Result<
@@ -401,40 +470,65 @@ SharedAssetDepot<TAssetType, TAssetKey>::getOrCreate(
   return sharedFuture;
 }
 
-template <typename TAssetType, typename TAssetKey>
-size_t SharedAssetDepot<TAssetType, TAssetKey>::getAssetCount() const {
+template <typename TAssetType, typename TAssetKey, typename TContext>
+bool SharedAssetDepot<TAssetType, TAssetKey, TContext>::invalidate(
+    const TAssetKey& assetKey) {
+  LockHolder lock = this->lock();
+  return this->invalidateUnderLock(std::move(lock), assetKey);
+}
+
+template <typename TAssetType, typename TAssetKey, typename TContext>
+bool SharedAssetDepot<TAssetType, TAssetKey, TContext>::invalidate(
+    TAssetType& asset) {
+  LockHolder lock = this->lock();
+
+  auto it = this->_assetsByPointer.find(&asset);
+  if (it == this->_assetsByPointer.end())
+    return false;
+
+  AssetEntry* pEntry = it->second;
+  CESIUM_ASSERT(pEntry);
+
+  return this->invalidateUnderLock(std::move(lock), pEntry->key);
+}
+
+template <typename TAssetType, typename TAssetKey, typename TContext>
+size_t
+SharedAssetDepot<TAssetType, TAssetKey, TContext>::getAssetCount() const {
   LockHolder lock = this->lock();
   return this->_assets.size();
 }
 
-template <typename TAssetType, typename TAssetKey>
-size_t SharedAssetDepot<TAssetType, TAssetKey>::getActiveAssetCount() const {
+template <typename TAssetType, typename TAssetKey, typename TContext>
+size_t
+SharedAssetDepot<TAssetType, TAssetKey, TContext>::getActiveAssetCount() const {
   LockHolder lock = this->lock();
   return this->_assets.size() - this->_deletionCandidates.size();
 }
 
-template <typename TAssetType, typename TAssetKey>
-size_t SharedAssetDepot<TAssetType, TAssetKey>::getInactiveAssetCount() const {
+template <typename TAssetType, typename TAssetKey, typename TContext>
+size_t
+SharedAssetDepot<TAssetType, TAssetKey, TContext>::getInactiveAssetCount()
+    const {
   LockHolder lock = this->lock();
   return this->_deletionCandidates.size();
 }
 
-template <typename TAssetType, typename TAssetKey>
-int64_t
-SharedAssetDepot<TAssetType, TAssetKey>::getInactiveAssetTotalSizeBytes()
-    const {
+template <typename TAssetType, typename TAssetKey, typename TContext>
+int64_t SharedAssetDepot<TAssetType, TAssetKey, TContext>::
+    getInactiveAssetTotalSizeBytes() const {
   LockHolder lock = this->lock();
   return this->_totalDeletionCandidateMemoryUsage;
 }
 
-template <typename TAssetType, typename TAssetKey>
-typename SharedAssetDepot<TAssetType, TAssetKey>::LockHolder
-SharedAssetDepot<TAssetType, TAssetKey>::lock() const {
+template <typename TAssetType, typename TAssetKey, typename TContext>
+typename SharedAssetDepot<TAssetType, TAssetKey, TContext>::LockHolder
+SharedAssetDepot<TAssetType, TAssetKey, TContext>::lock() const {
   return LockHolder{this};
 }
 
-template <typename TAssetType, typename TAssetKey>
-void SharedAssetDepot<TAssetType, TAssetKey>::markDeletionCandidate(
+template <typename TAssetType, typename TAssetKey, typename TContext>
+void SharedAssetDepot<TAssetType, TAssetKey, TContext>::markDeletionCandidate(
     const TAssetType& asset,
     bool threadOwnsDepotLock) {
   if (threadOwnsDepotLock) {
@@ -445,9 +539,24 @@ void SharedAssetDepot<TAssetType, TAssetKey>::markDeletionCandidate(
   }
 }
 
-template <typename TAssetType, typename TAssetKey>
-void SharedAssetDepot<TAssetType, TAssetKey>::markDeletionCandidateUnderLock(
-    const TAssetType& asset) {
+template <typename TAssetType, typename TAssetKey, typename TContext>
+void SharedAssetDepot<TAssetType, TAssetKey, TContext>::
+    markDeletionCandidateUnderLock(const TAssetType& asset) {
+  if (asset._isInvalidated) {
+    // This asset is no longer tracked by the depot, so delete it.
+    --this->_liveInvalidatedAssets;
+    delete &asset;
+
+    // If this depot is not managing any live assets, then we no longer need to
+    // keep it alive.
+    if (this->_assets.size() == this->_deletionCandidates.size() &&
+        this->_liveInvalidatedAssets == 0) {
+      this->_pKeepAlive.reset();
+    }
+
+    return;
+  }
+
   // Verify that the reference count is still zero.
   // See: https://github.com/CesiumGS/cesium-native/issues/1073
   if (asset._referenceCount != 0) {
@@ -494,13 +603,14 @@ void SharedAssetDepot<TAssetType, TAssetKey>::markDeletionCandidateUnderLock(
 
   // If this depot is not managing any live assets, then we no longer need to
   // keep it alive.
-  if (this->_assets.size() == this->_deletionCandidates.size()) {
+  if (this->_assets.size() == this->_deletionCandidates.size() &&
+      this->_liveInvalidatedAssets == 0) {
     this->_pKeepAlive.reset();
   }
 }
 
-template <typename TAssetType, typename TAssetKey>
-void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidate(
+template <typename TAssetType, typename TAssetKey, typename TContext>
+void SharedAssetDepot<TAssetType, TAssetKey, TContext>::unmarkDeletionCandidate(
     const TAssetType& asset,
     bool threadOwnsDepotLock) {
   if (threadOwnsDepotLock) {
@@ -511,9 +621,15 @@ void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidate(
   }
 }
 
-template <typename TAssetType, typename TAssetKey>
-void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidateUnderLock(
-    const TAssetType& asset) {
+template <typename TAssetType, typename TAssetKey, typename TContext>
+void SharedAssetDepot<TAssetType, TAssetKey, TContext>::
+    unmarkDeletionCandidateUnderLock(const TAssetType& asset) {
+  // This asset better not already be invalidated. That would imply this asset
+  // was resurrected after its reference count hit zero. This should only be
+  // possible if the asset depot returned a pointer to the asset, which it
+  // will not do for one that is invalidated.
+  CESIUM_ASSERT(!asset._isInvalidated);
+
   auto it = this->_assetsByPointer.find(const_cast<TAssetType*>(&asset));
   CESIUM_ASSERT(it != this->_assetsByPointer.end());
   if (it == this->_assetsByPointer.end()) {
@@ -536,9 +652,54 @@ void SharedAssetDepot<TAssetType, TAssetKey>::unmarkDeletionCandidateUnderLock(
   this->_pKeepAlive = this;
 }
 
-template <typename TAssetType, typename TAssetKey>
+template <typename TAssetType, typename TAssetKey, typename TContext>
+bool SharedAssetDepot<TAssetType, TAssetKey, TContext>::invalidateUnderLock(
+    LockHolder&& lock,
+    const TAssetKey& assetKey) {
+  auto it = this->_assets.find(assetKey);
+  if (it == this->_assets.end())
+    return false;
+
+  AssetEntry* pEntry = it->second.get();
+  CESIUM_ASSERT(pEntry);
+
+  // This will remove the asset from the deletion candidates list, if it's
+  // there.
+  CesiumUtility::ResultPointer<TAssetType> assetResult =
+      pEntry->toResultUnderLock();
+
+  bool wasInvalidated = false;
+
+  if (assetResult.pValue) {
+    if (!assetResult.pValue->_isInvalidated) {
+      wasInvalidated = true;
+      assetResult.pValue->_isInvalidated = true;
+      ++this->_liveInvalidatedAssets;
+    }
+    this->_assetsByPointer.erase(assetResult.pValue.get());
+  }
+
+  // Detach the asset from the AssetEntry, so that its lifetime is controlled by
+  // reference counting.
+  pEntry->pAsset.release();
+
+  // Remove the asset entry. This won't immediately delete the asset, because
+  // `assetResult` above still holds a reference to it. But once that goes out
+  // of scope, too, the asset _may_ be destroyed.
+  this->_assets.erase(it);
+
+  // Unlock the mutex before allowing `assetResult` to go out of scope. When it
+  // goes out of scope, the asset may be destroyed. If it is, that would cause
+  // us to try to re-enter the lock, which is not allowed.
+  lock.unlock();
+
+  return wasInvalidated;
+}
+
+template <typename TAssetType, typename TAssetKey, typename TContext>
 CesiumUtility::ResultPointer<TAssetType>
-SharedAssetDepot<TAssetType, TAssetKey>::AssetEntry::toResultUnderLock() const {
+SharedAssetDepot<TAssetType, TAssetKey, TContext>::AssetEntry::
+    toResultUnderLock() const {
   // This method is called while the calling thread already owns the depot
   // mutex. So we must take care not to lock it again, which could happen if
   // the asset is currently unreferenced and we naively create an
@@ -552,16 +713,17 @@ SharedAssetDepot<TAssetType, TAssetKey>::AssetEntry::toResultUnderLock() const {
   return CesiumUtility::ResultPointer<TAssetType>(p, errorsAndWarnings);
 }
 
-template <typename TAssetType, typename TAssetKey>
-SharedAssetDepot<TAssetType, TAssetKey>::LockHolder::LockHolder(
+template <typename TAssetType, typename TAssetKey, typename TContext>
+SharedAssetDepot<TAssetType, TAssetKey, TContext>::LockHolder::LockHolder(
     const CesiumUtility::IntrusivePointer<const SharedAssetDepot>& pDepot_)
     : pDepot(pDepot_), lock(pDepot_->_mutex) {}
 
-template <typename TAssetType, typename TAssetKey>
-SharedAssetDepot<TAssetType, TAssetKey>::LockHolder::~LockHolder() = default;
+template <typename TAssetType, typename TAssetKey, typename TContext>
+SharedAssetDepot<TAssetType, TAssetKey, TContext>::LockHolder::~LockHolder() =
+    default;
 
-template <typename TAssetType, typename TAssetKey>
-void SharedAssetDepot<TAssetType, TAssetKey>::LockHolder::unlock() {
+template <typename TAssetType, typename TAssetKey, typename TContext>
+void SharedAssetDepot<TAssetType, TAssetKey, TContext>::LockHolder::unlock() {
   this->lock.unlock();
 }
 

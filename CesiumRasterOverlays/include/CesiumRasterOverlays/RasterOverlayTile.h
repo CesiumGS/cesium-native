@@ -15,6 +15,7 @@ struct Credit;
 
 namespace CesiumRasterOverlays {
 
+class ActivatedRasterOverlay;
 class RasterOverlay;
 class RasterOverlayTileProvider;
 
@@ -25,7 +26,7 @@ class RasterOverlayTileProvider;
  * an associated image, which us used as an imagery overlay
  * for tile geometry. The connection between the imagery data
  * and the actual tile geometry is established via the
- * {@link Cesium3DTilesSelection::RasterMappedTo3DTile} class, which combines a
+ * @ref Cesium3DTilesSelection::RasterMappedTo3DTile class, which combines a
  * raster overlay tile with texture coordinates, to map the
  * image on the geometry of a {@link Cesium3DTilesSelection::Tile}.
  */
@@ -95,22 +96,22 @@ public:
    * The {@link getState} of this instance will always be
    * {@link LoadState::Placeholder}.
    *
-   * @param tileProvider The {@link RasterOverlayTileProvider}. This object
-   * _must_ remain valid for the entire lifetime of the tile. If the tile
-   * provider is destroyed before the tile, undefined behavior will result.
+   * @param activatedOverlay The {@link ActivatedRasterOverlay}. This object
+   * _must_ remain valid for the entire lifetime of the tile. If the activated
+   * overlay is destroyed before the tile, undefined behavior will result.
    */
-  RasterOverlayTile(RasterOverlayTileProvider& tileProvider) noexcept;
+  RasterOverlayTile(ActivatedRasterOverlay& activatedOverlay) noexcept;
 
   /**
    * @brief Creates a new instance.
    *
    * The tile will start in the `Unloaded` state, and will not begin loading
-   * until {@link RasterOverlayTileProvider::loadTile} or
-   * {@link RasterOverlayTileProvider::loadTileThrottled} is called.
+   * until {@link ActivatedRasterOverlay::loadTile} or
+   * {@link ActivatedRasterOverlay::loadTileThrottled} is called.
    *
-   * @param tileProvider The {@link RasterOverlayTileProvider}. This object
-   * _must_ remain valid for the entire lifetime of the tile. If the tile
-   * provider is destroyed before the tile, undefined behavior may result.
+   * @param activatedOverlay The {@link ActivatedRasterOverlay}. This object
+   * _must_ remain valid for the entire lifetime of the tile. If the activated
+   * overlay is destroyed before the tile, undefined behavior will result.
    * @param targetScreenPixels The maximum number of pixels on the screen that
    * this tile is meant to cover. The overlay image should be approximately this
    * many pixels divided by the
@@ -122,7 +123,7 @@ public:
    * itself does not cover the entire rectangle.
    */
   RasterOverlayTile(
-      RasterOverlayTileProvider& tileProvider,
+      ActivatedRasterOverlay& activatedOverlay,
       const glm::dvec2& targetScreenPixels,
       const CesiumGeometry::Rectangle& imageryRectangle) noexcept;
 
@@ -130,26 +131,24 @@ public:
   ~RasterOverlayTile();
 
   /**
-   * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
+   * @brief Gets the activated overlay that created this instance.
    */
-  RasterOverlayTileProvider& getTileProvider() noexcept {
-    return *this->_pTileProvider;
-  }
+  ActivatedRasterOverlay& getActivatedOverlay() noexcept;
+
+  /** @copydoc getActivatedOverlay */
+  const ActivatedRasterOverlay& getActivatedOverlay() const noexcept;
 
   /**
-   * @brief Returns the {@link RasterOverlayTileProvider} that created this instance.
+   * @brief Returns the {@link RasterOverlayTileProvider} that is responsible
+   * for loading this tile's image.
    */
-  const RasterOverlayTileProvider& getTileProvider() const noexcept {
-    return *this->_pTileProvider;
-  }
+  RasterOverlayTileProvider& getTileProvider() noexcept;
+
+  /** @copydoc getTileProvider */
+  const RasterOverlayTileProvider& getTileProvider() const noexcept;
 
   /**
-   * @brief Returns the {@link RasterOverlay} that created this instance.
-   */
-  RasterOverlay& getOverlay() noexcept;
-
-  /**
-   * @brief Returns the {@link RasterOverlay} that created this instance.
+   * @brief Gets the {@link RasterOverlay} associated with this instance.
    */
   const RasterOverlay& getOverlay() const noexcept;
 
@@ -245,17 +244,24 @@ public:
     return this->_moreDetailAvailable;
   }
 
-private:
-  friend class RasterOverlayTileProvider;
-
+  /**
+   * @brief Sets the load state of this tile.
+   *
+   * This function is not supposed to be called by clients.
+   *
+   * @private
+   */
   void setState(LoadState newState) noexcept;
+
+private:
+  friend class ActivatedRasterOverlay;
 
   // This is a raw pointer instead of an IntrusivePointer in order to avoid
   // circular references, particularly among a placeholder tile provider and
   // placeholder tile. However, to avoid undefined behavior, the tile provider
   // is required to outlive the tile. In normal use, the RasterOverlayCollection
   // ensures that this is true.
-  RasterOverlayTileProvider* _pTileProvider;
+  ActivatedRasterOverlay* _pActivatedOverlay;
   glm::dvec2 _targetScreenPixels;
   CesiumGeometry::Rectangle _rectangle;
   std::vector<CesiumUtility::Credit> _tileCredits;

@@ -6,9 +6,11 @@
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
+#include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/StringHelpers.h>
@@ -71,25 +73,27 @@ TEST_CASE("TileMapServiceRasterOverlay") {
       new TileMapServiceRasterOverlay("test", tmr);
 
   SUBCASE("can load images") {
-    RasterOverlay::CreateTileProviderResult result = waitForFuture(
+    IntrusivePointer<ActivatedRasterOverlay> pActivated =
+        pRasterOverlay->activate(
+            RasterOverlayExternals{
+                pMockAssetAccessor,
+                nullptr,
+                asyncSystem,
+                nullptr,
+                spdlog::default_logger()},
+            CesiumGeospatial::Ellipsoid::WGS84);
+
+    waitForFuture(
         asyncSystem,
-        pRasterOverlay->createTileProvider(
-            asyncSystem,
-            pMockAssetAccessor,
-            nullptr,
-            nullptr,
-            spdlog::default_logger(),
-            nullptr));
+        pActivated->getReadyEvent().thenImmediately([]() {}));
 
-    REQUIRE(result);
+    REQUIRE(pActivated->getTileProvider());
 
-    CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
-        *result;
-    IntrusivePointer<RasterOverlayTile> pTile = pTileProvider->getTile(
-        pTileProvider->getCoverageRectangle(),
+    IntrusivePointer<RasterOverlayTile> pTile = pActivated->getTile(
+        pActivated->getTileProvider()->getCoverageRectangle(),
         glm::dvec2(256.0, 256.0));
     REQUIRE(pTile);
-    waitForFuture(asyncSystem, pTileProvider->loadTile(*pTile));
+    waitForFuture(asyncSystem, pActivated->loadTile(*pTile));
 
     REQUIRE(pTile->getImage());
 
@@ -244,10 +248,13 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
     CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
         *result;
-    std::optional<Credit> maybeCredit = pTileProvider->getCredit();
 
-    REQUIRE(maybeCredit);
-    CHECK(pCreditSystem->getHtml(*maybeCredit) == "test credit");
+    CreditReferencer referencer(pCreditSystem);
+    pTileProvider->addCredits(referencer);
+
+    const CreditsSnapshot& snapshot = pCreditSystem->getSnapshot();
+    REQUIRE(snapshot.currentCredits.size() == 1);
+    CHECK(pCreditSystem->getHtml(snapshot.currentCredits[0]) == "test credit");
   }
 
   SUBCASE("loads with credit and null credit system") {
@@ -270,6 +277,8 @@ TEST_CASE("TileMapServiceRasterOverlay") {
 
     CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider =
         *result;
-    CHECK(!pTileProvider->getCredit());
+
+    CreditReferencer referencer(nullptr);
+    pTileProvider->addCredits(referencer);
   }
 }
