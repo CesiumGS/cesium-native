@@ -93,7 +93,7 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 set(PACKAGES_PRIVATE
     abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp cpp-httplib[core] libmorton zstd spz zlib
+    earcut-hpp cpp-httplib[core] libmorton zstd spz
 )
 
 # asmjit needed by blend2d on non-iOS platforms (iOS doesn't support JIT)
@@ -302,8 +302,7 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 # find_package, which resolve to our own modules that provide
 # targets. If needed, they can be installed with CMake config files
 # etc.
-find_package(zlib-ng REQUIRED)
-find_package(ZLIB REQUIRED)
+find_package(zlib-ng CONFIG REQUIRED)
 find_package(modp_b64 REQUIRED)
 
 find_package(ada CONFIG REQUIRED)
@@ -388,7 +387,6 @@ if(CESIUM_INSTALL_STATIC_LIBS AND CESIUM_INSTALL_HEADERS)
     DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
 
   install(FILES
-    "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findzlib-ng.cmake"
     "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findmodp_b64.cmake"
     DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
 

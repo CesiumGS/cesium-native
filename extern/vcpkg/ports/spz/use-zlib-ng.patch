@@ -1,0 +1,22 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8a92969..254f763 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -10,7 +10,7 @@ include(GNUInstallDirs)
+ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+ 
+ # zlib is required to build the project
+-find_package(ZLIB REQUIRED)
++find_package(zlib-ng CONFIG REQUIRED)
+ 
+ set(spz_sources
+   "${CMAKE_CURRENT_SOURCE_DIR}/src/cc/load-spz.cc"
+@@ -28,7 +28,7 @@ set(spz_headers
+ add_library(spz ${spz_sources})
+ add_library(spz::spz ALIAS spz)
+ 
+-target_link_libraries(spz PRIVATE ZLIB::ZLIB)
++target_link_libraries(spz PRIVATE zlib-ng::zlib)
+ 
+ target_include_directories(spz
+   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/cc>
