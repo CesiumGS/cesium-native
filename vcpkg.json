@@ -40,7 +40,8 @@
     {
       "name": "asmjit",
       "platform": "!ios"
-    }
+    },
+    "spz"
   ]
 }
 
