@@ -385,12 +385,10 @@ std::string Uri::setPath(const std::string& uri, const std::string& newPath) {
   return std::string(parsedUri.toString());
 }
 
-/*static*/ void Uri::ensureTrailingSlash(std::string& url) {
-  Uri uri(url);
-  std::string_view path = uri.getPath();
+void Uri::ensureTrailingSlash() {
+  std::string_view path = this->getPath();
   if (path.empty() || path.back() != '/') {
-    uri.setPath(std::string(path) + '/');
-    url = uri.toString();
+    this->setPath(std::string(path) + '/');
   }
 }
 

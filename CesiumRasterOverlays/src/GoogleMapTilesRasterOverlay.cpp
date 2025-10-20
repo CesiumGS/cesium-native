@@ -193,7 +193,9 @@ GoogleMapTilesRasterOverlay::GoogleMapTilesRasterOverlay(
     : RasterOverlay(name, overlayOptions),
       _newSessionParameters(newSessionParameters),
       _existingSession(std::nullopt) {
-  Uri::ensureTrailingSlash(this->_newSessionParameters->apiBaseUrl);
+  Uri baseUrl(this->_newSessionParameters->apiBaseUrl);
+  baseUrl.ensureTrailingSlash();
+  this->_newSessionParameters->apiBaseUrl = baseUrl.toString();
 }
 
 GoogleMapTilesRasterOverlay::GoogleMapTilesRasterOverlay(
@@ -203,7 +205,9 @@ GoogleMapTilesRasterOverlay::GoogleMapTilesRasterOverlay(
     : RasterOverlay(name, overlayOptions),
       _newSessionParameters(std::nullopt),
       _existingSession(existingSession) {
-  Uri::ensureTrailingSlash(this->_existingSession->apiBaseUrl);
+  Uri baseUrl(this->_existingSession->apiBaseUrl);
+  baseUrl.ensureTrailingSlash();
+  this->_existingSession->apiBaseUrl = baseUrl.toString();
 }
 
 Future<RasterOverlay::CreateTileProviderResult>

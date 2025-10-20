@@ -297,11 +297,11 @@ TEST_CASE("Uri::getExtension") {
 }
 
 TEST_CASE("Uri::ensureTrailingSlash") {
-  std::string url = "noslash.com";
-  Uri::ensureTrailingSlash(url);
-  CHECK_EQ(url, "noslash.com/");
+  Uri uri("http://www.example.com");
+  uri.ensureTrailingSlash();
+  CHECK_EQ(uri.toString(), "http://www.example.com/");
 
-  url = "slash.com/";
-  Uri::ensureTrailingSlash(url);
-  CHECK_EQ(url, "slash.com/");
+  // Ensure nothing changes when a trailing slash is present.
+  uri.ensureTrailingSlash();
+  CHECK_EQ(uri.toString(), "http://www.example.com/");
 }
