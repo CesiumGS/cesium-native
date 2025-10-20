@@ -411,57 +411,6 @@ AzureMapsRasterOverlay::createTileProvider(
           });
 }
 
-Future<void> AzureMapsRasterOverlay::refreshTileProviderWithNewKey(
-    const IntrusivePointer<RasterOverlayTileProvider>& pProvider,
-    const std::string& newKey) {
-  this->_sessionParameters.key = newKey;
-
-  return this
-      ->createTileProvider(
-          pProvider->getAsyncSystem(),
-          pProvider->getAssetAccessor(),
-          pProvider->getCreditSystem(),
-          pProvider->getPrepareRendererResources(),
-          pProvider->getLogger(),
-          &pProvider->getOwner())
-      .thenInMainThread([pProvider](CreateTileProviderResult&& result) {
-        if (!result) {
-          SPDLOG_LOGGER_WARN(
-              pProvider->getLogger(),
-              "Could not refresh Azure Maps raster overlay with a new key: {}.",
-              result.error().message);
-          return;
-        }
-
-        // Use static_cast instead of dynamic_cast here to avoid the need for
-        // RTTI, and because we are certain of the type.
-        // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
-        AzureMapsRasterOverlayTileProvider* pOld =
-            static_cast<AzureMapsRasterOverlayTileProvider*>(pProvider.get());
-        AzureMapsRasterOverlayTileProvider* pNew =
-            static_cast<AzureMapsRasterOverlayTileProvider*>(result->get());
-        // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
-        if (pOld->getCoverageRectangle().getLowerLeft() !=
-                pNew->getCoverageRectangle().getLowerLeft() ||
-            pOld->getCoverageRectangle().getUpperRight() !=
-                pNew->getCoverageRectangle().getUpperRight() ||
-            pOld->getHeight() != pNew->getHeight() ||
-            pOld->getWidth() != pNew->getWidth() ||
-            pOld->getMinimumLevel() != pNew->getMinimumLevel() ||
-            pOld->getMaximumLevel() != pNew->getMaximumLevel() ||
-            pOld->getProjection() != pNew->getProjection()) {
-          SPDLOG_LOGGER_WARN(
-              pProvider->getLogger(),
-              "Could not refresh Azure Maps raster overlay with a new key "
-              "because some metadata properties changed unexpectedly upon "
-              "refresh.");
-          return;
-        }
-
-        pOld->update(*pNew);
-      });
-}
-
 namespace {
 CesiumAsync::Future<rapidjson::Document> fetchAttributionData(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,

@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - Restored vcpkg commit update to `2025.09.17`.
+- Removed `refreshTileProviderWithNewKey` from `BingMapsRasterOverlay` and `refreshTileProviderWithNewUrlAndHeaders` from `TileMapServiceRasterOverlay`. These were no longer used after the raster overlay refactor in `v0.52.0`.
 
 ##### Additions :tada:
 
