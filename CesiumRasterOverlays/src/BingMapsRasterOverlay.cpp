@@ -22,7 +22,6 @@
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
 #include <spdlog/logger.h>
-#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <cstdint>
