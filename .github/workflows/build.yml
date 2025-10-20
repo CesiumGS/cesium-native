@@ -217,3 +217,39 @@ jobs:
         run: |
           cd build
           ctest -V
+  EmscriptenBuild:
+    name: v3.1.39
+    env:
+      CACHE_KEY: "emscripten-3.1.39"
+    runs-on: windows-2022
+    steps:
+      - name: Install latest CMake 3 and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
+      - name: Install nasm
+        uses: ilammy/setup-nasm@v1
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup emsdk
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.39
+      - name: Verify
+        run: emcc -v
+      # - name: sccache
+      #   uses: hendrikmuhs/ccache-action@v1.2.9
+      #   with:
+      #     key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}-1
+      #     variant: sccache
+      - name: Compile Debug Configuration
+        run: |
+          $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
+          emcmake cmake -B build-wasm -S . -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build-wasm --config debug --target cesium-native-tests -j4
+      # - name: Test Debug Configuration
+      #   run: |
+      #     cd build
+      #     ctest -V
