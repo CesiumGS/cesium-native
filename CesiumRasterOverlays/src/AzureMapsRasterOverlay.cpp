@@ -227,7 +227,7 @@ AzureMapsRasterOverlay::createTileProvider(
        pCreditSystem,
        pPrepareRendererResources,
        pLogger,
-       &sessionParameters = this->_sessionParameters](
+       sessionParameters = this->_sessionParameters](
           const std::shared_ptr<IAssetRequest>& pRequest,
           const std::span<const std::byte>& data) -> CreateTileProviderResult {
     JsonObjectJsonHandler handler{};

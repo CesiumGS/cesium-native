@@ -337,13 +337,14 @@ GoogleMapTilesRasterOverlay::createNewSession(
           {{"Content-Type", "application/json"}},
           requestPayloadBytes)
       .thenInMainThread(
-          [this,
-           asyncSystem,
+          [asyncSystem,
            pAssetAccessor,
            pCreditSystem,
            pPrepareRendererResources,
            pLogger,
-           pOwner](std::shared_ptr<IAssetRequest>&& pRequest)
+           pOwner,
+           newSessionParameters = this->_newSessionParameters](
+              std::shared_ptr<IAssetRequest>&& pRequest)
               -> Future<CreateTileProviderResult> {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
@@ -450,9 +451,9 @@ GoogleMapTilesRasterOverlay::createNewSession(
                     pCreditSystem,
                     pPrepareRendererResources,
                     pLogger,
-                    this->_newSessionParameters->apiBaseUrl,
+                    newSessionParameters->apiBaseUrl,
                     session,
-                    this->_newSessionParameters->key,
+                    newSessionParameters->key,
                     maximumZoomLevel,
                     static_cast<uint32_t>(tileWidth),
                     static_cast<uint32_t>(tileHeight),
