@@ -356,6 +356,12 @@ public:
   static std::string
   setPath(const std::string& uri, const std::string& newPath);
 
+  /**
+   * @brief Ensures that the Uri's path ends with a slash, modifying itself if
+   * necessary. Useful when the Uri is used as a base URL.
+   */
+  void ensureTrailingSlash();
+
 private:
   std::optional<ada::url_aggregator> _url = std::nullopt;
   bool _hasScheme = false;

@@ -295,3 +295,13 @@ TEST_CASE("Uri::getExtension") {
   CHECK(Uri("http://example.com/a/b/c/.").getExtension() == "");
   CHECK(Uri("http://example.com/a/b/c/..").getExtension() == "");
 }
+
+TEST_CASE("Uri::ensureTrailingSlash") {
+  Uri uri("http://www.example.com");
+  uri.ensureTrailingSlash();
+  CHECK_EQ(uri.toString(), "http://www.example.com/");
+
+  // Ensure nothing changes when a trailing slash is present.
+  uri.ensureTrailingSlash();
+  CHECK_EQ(uri.toString(), "http://www.example.com/");
+}
