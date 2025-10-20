@@ -10,6 +10,7 @@
 ##### Additions :tada:
 
 - Added `AzureMapsRasterOverlay`.
+- Added `Uri::ensureTrailingSlash`, which is helpful when the `Uri` represents a base URL.
 
 ##### Fixes :wrench:
 
