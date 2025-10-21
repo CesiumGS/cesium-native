@@ -16,6 +16,12 @@ file(REMOVE "${SOURCE_PATH}/other_include/zstd_errors.h")
 file(REMOVE_RECURSE "${SOURCE_PATH}/external/basisu/zstd")
 file(REMOVE_RECURSE "${SOURCE_PATH}/lib/basisu/zstd")
 
+# Local patches to get things compiled with Emscripten 3.1.39
+vcpkg_replace_string("${SOURCE_PATH}/interface/js_binding/ktx_wrapper.cpp" "/* -*- tab-width: 4; -*- */" "#if 0\n/* -*- tab-width: 4; -*- */")
+vcpkg_replace_string("${SOURCE_PATH}/interface/js_binding/ktx_wrapper.cpp" "#endif\n}" "#endif\n}\n#endif//0")
+vcpkg_replace_string("${SOURCE_PATH}/CMakeLists.txt" "\"SHELL:-s GL_ENABLE_GET_PROC_ADDRESS=1\" # For Emscripten 3.1.51+" "#\"SHELL:-s GL_ENABLE_GET_PROC_ADDRESS=1\" # For Emscripten 3.1.51+")
+
+
 vcpkg_list(SET OPTIONS)
 if(VCPKG_TARGET_IS_WINDOWS)
     vcpkg_acquire_msys(MSYS_ROOT
