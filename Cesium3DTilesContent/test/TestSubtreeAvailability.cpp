@@ -139,8 +139,8 @@ SubtreeContent createSubtreeContent(
                 std::ceil(static_cast<double>(maxSubtreeTiles) / 8.0))
           : 0;
 
-  std::vector<std::byte> availabilityBuffer((size_t)(
-      bufferSize + bufferSize + subtreeBufferSize));
+  std::vector<std::byte> availabilityBuffer(
+      (size_t)(bufferSize + bufferSize + subtreeBufferSize));
 
   std::span<std::byte> contentAvailabilityBuffer(
       availabilityBuffer.data(),
