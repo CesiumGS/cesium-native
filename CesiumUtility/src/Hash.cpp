@@ -1,6 +1,7 @@
 #include <CesiumUtility/Hash.h>
 
 #include <cstddef>
+#include <cstdint>
 
 namespace CesiumUtility {
 
