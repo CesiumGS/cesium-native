@@ -346,26 +346,26 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 # they won't be visible in this scope nor any of the subdirectories for the actual libraries.
 #
 # However, for some of the vcpkg built libraries where they don't provide a prope cmake config file, we have to declare
-# and imporeted library target ourselves. This is the case for modp_b64::modp_b64, picosha2::picosha2 and earcut. In
+# an imported library target ourselves. This is the case for modp_b64::modp_b64, picosha2::picosha2 and earcut. In
 # these cases, we *do* have the somewhat ugly and verbose details in the extern/CMakeLists.txt file.
 #
 # XXX Above comment should be obsoleted by these first calls to
 # find_package, which resolve to our own modules that provide
 # targets. If needed, they can be installed with CMake config files
 # etc.
-find_package(zlib-ng REQUIRED)
 find_package(modp_b64 REQUIRED)
 
 find_package(ada CONFIG REQUIRED)
 find_package(Async++ CONFIG REQUIRED)
+find_package(blend2d CONFIG REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(httplib CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
-find_package(libmorton CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
+find_package(libmorton CONFIG REQUIRED)
 find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
@@ -373,7 +373,8 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
-find_package(blend2d CONFIG REQUIRED)
+find_package(zlib-ng CONFIG REQUIRED)
+
 # asmjit should not be included with iOS or Wasm builds as they don't support JIT compilation.
 if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     find_package(asmjit CONFIG REQUIRED)
@@ -432,7 +433,6 @@ if(CESIUM_INSTALL_STATIC_LIBS AND CESIUM_INSTALL_HEADERS)
     DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
 
   install(FILES
-    "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findzlib-ng.cmake"
     "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findmodp_b64.cmake"
     DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
 

@@ -43,7 +43,7 @@ if (CESIUM_TARGET_WASM)
     target_link_libraries(
         CesiumUtility
         PUBLIC
-            zlib-ng::zlib-ng
+            zlib-ng::zlib
             spdlog::spdlog_header_only
             glm::glm
             ada::ada
@@ -52,7 +52,7 @@ else()
     target_link_libraries(
         CesiumUtility
         PUBLIC
-            zlib-ng::zlib-ng
+            zlib-ng::zlib
             spdlog::spdlog
             glm::glm
             ada::ada
