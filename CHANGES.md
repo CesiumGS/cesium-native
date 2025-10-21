@@ -11,10 +11,7 @@
 
 - Added `AzureMapsRasterOverlay`.
 - Added `Uri::ensureTrailingSlash`, which is helpful when the `Uri` represents a base URL.
-
-##### Additions :tada:
-
-- Added `GltfModifier` class. It can be used to modify tile glTFs during load, as well as apply new modifications to them later.
+- Added `GltfModifier`, which can be used to modify tile glTFs as they load, as well as apply new modifications to them later.
 
 ##### Fixes :wrench:
 
