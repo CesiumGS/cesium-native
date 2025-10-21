@@ -385,4 +385,11 @@ std::string Uri::setPath(const std::string& uri, const std::string& newPath) {
   return std::string(parsedUri.toString());
 }
 
+void Uri::ensureTrailingSlash() {
+  std::string_view path = this->getPath();
+  if (path.empty() || path.back() != '/') {
+    this->setPath(std::string(path) + '/');
+  }
+}
+
 } // namespace CesiumUtility
