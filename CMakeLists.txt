@@ -94,6 +94,10 @@ if (NOT VCPKG_OVERLAY_TRIPLETS)
     endif()
 endif()
 
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
+    list(APPEND VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
+endif()
+
 message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
 
 # These packages are used in the public headers of Cesium libraries, so we need to distribute the headers and binaries
