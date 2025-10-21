@@ -211,21 +211,21 @@ public:
   void setGltfModifierState(GltfModifierState modifierState) noexcept;
 
   /**
-   * @brief Gets the modified model produced by the {@link GltfModifier} but
+   * @brief Gets the modified model produced by the {@link GltfModifier} that is
    * not yet available for rendering.
    * */
   const std::optional<CesiumGltf::Model>& getModifiedModel() const noexcept;
 
   /**
    * @brief Gets the renderer resources for the modified model produced by the
-   * {@link GltfModifier} but not yet available for rendering. These resources
+   * {@link GltfModifier} that is not yet available for rendering. These resources
    * are created by {@link IPrepareRendererResources::prepareInLoadThread}.
    */
   void* getModifiedRenderResources() const noexcept;
 
   /**
    * @brief Stores the modified model and associated renderer resources produced
-   * by the {@link GltfModifier} but not yet available for rendering. The
+   * by the {@link GltfModifier} that are not yet available for rendering. The
    * renderer resources are created by
    * {@link IPrepareRendererResources::prepareInLoadThread}.
    */

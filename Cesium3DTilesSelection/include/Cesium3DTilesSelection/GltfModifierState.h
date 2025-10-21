@@ -2,7 +2,7 @@
 
 namespace Cesium3DTilesSelection {
 
-/** The state of the glTF modifier process for a given tile content's model.
+/** The state of the @ref GltfModifier process for a given tile content's model.
  */
 enum class GltfModifierState {
   /** Modifier is not currently processing this tile. */

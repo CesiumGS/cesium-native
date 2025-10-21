@@ -26,7 +26,7 @@ GltfModifier::GltfModifier()
     : _currentVersion(),
       _pRootTile(nullptr),
       _workerThreadQueue(),
-      _mainThreadQueue(){};
+      _mainThreadQueue() {};
 
 GltfModifier::~GltfModifier() = default;
 
@@ -42,14 +42,14 @@ void GltfModifier::trigger() {
   if (!this->_currentVersion) {
     this->_currentVersion = 0;
   } else {
-    ++*this->_currentVersion;
+    ++(*this->_currentVersion);
   }
 
   if (!this->isRegistered()) {
     return;
   }
 
-  // Add all already-loaded tiles to this requester worker thread load queue.
+  // Add all already-loaded tiles to this requester's worker thread load queue.
   // Tiles that are in ContentLoading will be added to this queue when they
   // finish.
   LoadedConstTileEnumerator enumerator(this->_pRootTile);
