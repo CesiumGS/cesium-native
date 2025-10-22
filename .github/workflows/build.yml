@@ -242,9 +242,10 @@ jobs:
       - name: Compile Debug Configuration
         run: |
           $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
-          cp doc/cmake-presets/CMakeUserPresets.json .
-          emcmake cmake --preset=vcpkg -DCMAKE_BUILD_TYPE:STRING=Debug
-          cmake --build build --parallel
+          # cp doc/cmake-presets/CMakeUserPresets.json .
+          # emcmake cmake --preset=vcpkg -DCMAKE_BUILD_TYPE:STRING=Debug -G Ninja
+          emcmake cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build --config Debug --parallel
       - name: Test Debug Configuration
         run: |
           node build/CesiumNativeTests/cesium-native-tests.js
