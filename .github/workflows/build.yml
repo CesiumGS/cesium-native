@@ -239,17 +239,12 @@ jobs:
           version: 3.1.39
       - name: Verify
         run: emcc -v
-      # - name: sccache
-      #   uses: hendrikmuhs/ccache-action@v1.2.9
-      #   with:
-      #     key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}-1
-      #     variant: sccache
       - name: Compile Debug Configuration
         run: |
           $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
-          emcmake cmake -B build-wasm -S . -DCMAKE_BUILD_TYPE=Debug
-          cmake --build build-wasm --config debug --target cesium-native-tests -j4
-      # - name: Test Debug Configuration
-      #   run: |
-      #     cd build
-      #     ctest -V
+          cp doc/cmake-presets/CMakeUserPresets.json .
+          emcmake cmake --preset=vcpkg -DCMAKE_BUILD_TYPE:STRING=Debug
+          cmake --build build --parallel
+      - name: Test Debug Configuration
+        run: |
+          node build/CesiumNativeTests/cesium-native-tests.js
