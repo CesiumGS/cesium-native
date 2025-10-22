@@ -26,7 +26,7 @@ GltfModifier::GltfModifier()
     : _currentVersion(),
       _pRootTile(nullptr),
       _workerThreadQueue(),
-      _mainThreadQueue() {};
+      _mainThreadQueue(){};
 
 GltfModifier::~GltfModifier() = default;
 
