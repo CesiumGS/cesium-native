@@ -1247,9 +1247,8 @@ void TilesetContentManager::loadTileContent(
     const TilesetOptions& tilesetOptions) {
   CESIUM_TRACE("TilesetContentManager::loadTileContent");
 
-  if (GltfModifier::needsWorkerThreadModification(
-          this->_externals.pGltfModifier.get(),
-          tile)) {
+  if (this->_externals.pGltfModifier &&
+      this->_externals.pGltfModifier->needsWorkerThreadModification(tile)) {
     TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
     CESIUM_ASSERT(pRenderContent != nullptr);
     this->reapplyGltfModifier(tile, tilesetOptions, pRenderContent);
@@ -1674,9 +1673,8 @@ void TilesetContentManager::finishLoading(
   if (pRenderContent == nullptr)
     return;
 
-  if (GltfModifier::needsMainThreadModification(
-          this->_externals.pGltfModifier.get(),
-          tile)) {
+  if (this->_externals.pGltfModifier &&
+      this->_externals.pGltfModifier->needsMainThreadModification(tile)) {
     // Free outdated render resources before replacing them.
     if (this->_externals.pPrepareRendererResources) {
       this->_externals.pPrepareRendererResources->free(

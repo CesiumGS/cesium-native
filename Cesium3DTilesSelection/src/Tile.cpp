@@ -276,17 +276,32 @@ bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
 
 bool Tile::needsWorkerThreadLoading(
     const GltfModifier* pModifier) const noexcept {
-  return this->getState() == TileLoadState::Unloaded ||
-         this->getState() == TileLoadState::FailedTemporarily ||
-         GltfModifier::needsWorkerThreadModification(pModifier, *this) ||
-         anyRasterOverlaysNeedLoading(*this);
+  if (this->getState() == TileLoadState::Unloaded ||
+      this->getState() == TileLoadState::FailedTemporarily)
+    return true;
+
+  if (pModifier && pModifier->needsWorkerThreadModification(*this))
+    return true;
+
+  if (anyRasterOverlaysNeedLoading(*this))
+    return true;
+
+  return false;
 }
 
 bool Tile::needsMainThreadLoading(
     const GltfModifier* pModifier) const noexcept {
-  return this->isRenderContent() &&
-         (this->getState() == TileLoadState::ContentLoaded ||
-          GltfModifier::needsMainThreadModification(pModifier, *this));
+  // Only render content needs main thread loading.
+  if (!this->isRenderContent())
+    return false;
+
+  if (this->getState() == TileLoadState::ContentLoaded)
+    return true;
+
+  if (pModifier && pModifier->needsMainThreadModification(*this))
+    return true;
+
+  return false;
 }
 
 void Tile::setParent(Tile* pParent) noexcept {

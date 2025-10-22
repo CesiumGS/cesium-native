@@ -104,7 +104,7 @@ public:
    */
   void addToLoadQueue(
       const TileLoadTask& task,
-      const std::shared_ptr<GltfModifier>& pModifier);
+      const std::shared_ptr<GltfModifier>& pModifier = nullptr);
 
   /**
    * @brief A checkpoint within this view group's load queue.

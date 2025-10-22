@@ -7,9 +7,16 @@ namespace Cesium3DTilesSelection {
 enum class GltfModifierState {
   /** Modifier is not currently processing this tile. */
   Idle,
+
   /** Worker-thread phase is in progress. */
   WorkerRunning,
-  /** Worker-thread phase is complete, main-thread phase is not done yet. */
+
+  /**
+   * The worker-thread phase is complete, but the main-thread phase is not done
+   * yet. When the main thread phase eventually runs, it will call @ref
+   * TileRenderContent::replaceWithModifiedModel and then transition the @ref
+   * GltfModifier back to the `Idle` state.
+   */
   WorkerDone,
 };
 

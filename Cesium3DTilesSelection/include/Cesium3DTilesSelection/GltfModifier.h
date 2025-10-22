@@ -149,27 +149,24 @@ public:
   apply(GltfModifierInput&& input) = 0;
 
   /**
-   * @brief Checks if the given tile needs to be processed by the given
+   * @brief Checks if the given tile needs to be processed by this
    * `GltfModifier` in a worker thread.
-   * @param pModifier The `GltfModifier` to check.
+   *
    * @param tile The tile to check.
    * @returns `true` if the tile needs to be processed by the `GltfModifier` in
    * a worker thread, or `false` otherwise.
    */
-  static bool needsWorkerThreadModification(
-      const GltfModifier* pModifier,
-      const Tile& tile);
+  bool needsWorkerThreadModification(const Tile& tile) const;
 
   /**
-   * @brief Checks if the given tile needs to be processed by the given
+   * @brief Checks if the given tile needs to be processed by this
    * `GltfModifier` in the main thread.
-   * @param pModifier The `GltfModifier` to check.
+
    * @param tile The tile to check.
    * @returns `true` if the tile needs to be processed by the `GltfModifier` in
    * the main thread, or `false` otherwise.
    */
-  static bool
-  needsMainThreadModification(const GltfModifier* pModifier, const Tile& tile);
+  bool needsMainThreadModification(const Tile& tile) const;
 
 protected:
   GltfModifier();

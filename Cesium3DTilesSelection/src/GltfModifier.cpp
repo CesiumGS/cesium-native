@@ -54,19 +54,14 @@ void GltfModifier::trigger() {
   // finish.
   LoadedConstTileEnumerator enumerator(this->_pRootTile);
   for (const Tile& tile : enumerator) {
-    if (GltfModifier::needsWorkerThreadModification(this, tile)) {
+    if (this->needsWorkerThreadModification(tile)) {
       this->_workerThreadQueue.emplace_back(&tile);
     }
   }
 }
 
-/*static*/ bool GltfModifier::needsWorkerThreadModification(
-    const GltfModifier* pModifier,
-    const Tile& tile) {
-  if (!pModifier)
-    return false;
-
-  std::optional<int64_t> modelVersion = pModifier->getCurrentVersion();
+bool GltfModifier::needsWorkerThreadModification(const Tile& tile) const {
+  std::optional<int64_t> modelVersion = this->getCurrentVersion();
   if (!modelVersion)
     return false;
 
@@ -110,13 +105,8 @@ void GltfModifier::trigger() {
   }
 }
 
-/*static*/ bool GltfModifier::needsMainThreadModification(
-    const GltfModifier* pModifier,
-    const Tile& tile) {
-  if (!pModifier)
-    return false;
-
-  std::optional<int64_t> modelVersion = pModifier->getCurrentVersion();
+bool GltfModifier::needsMainThreadModification(const Tile& tile) const {
+  std::optional<int64_t> modelVersion = this->getCurrentVersion();
   if (!modelVersion)
     return false;
 
@@ -195,8 +185,7 @@ void GltfModifier::onOldVersionContentLoadingComplete(const Tile& tile) {
     // Tile just transitioned from ContentLoading -> ContentLoaded, but it did
     // so based on the load version. Add it to the worker thread queue in order
     // to re-run the GltfModifier on it.
-    if (this->isRegistered() &&
-        GltfModifier::needsWorkerThreadModification(this, tile)) {
+    if (this->isRegistered() && this->needsWorkerThreadModification(tile)) {
       this->_workerThreadQueue.emplace_back(&tile);
     }
   }
