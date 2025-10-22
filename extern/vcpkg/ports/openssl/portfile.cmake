@@ -32,6 +32,11 @@ vcpkg_list(SET CONFIGURE_OPTIONS
     no-docs
 )
 
+# Don't let OpenSSL try to use dlopen on Emscripten.
+if(VCPKG_TARGET_IS_EMSCRIPTEN)
+    vcpkg_list(APPEND CONFIGURE_OPTIONS no-dso)
+endif()
+
 # https://github.com/openssl/openssl/blob/master/INSTALL.md#enable-ec_nistp_64_gcc_128
 vcpkg_cmake_get_vars(cmake_vars_file)
 include("${cmake_vars_file}")
