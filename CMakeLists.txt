@@ -64,6 +64,15 @@ if (NOT VCPKG_TRIPLET)
     elseif(DETECTED_VCPKG_TRIPLET STREQUAL "x64-windows")
         # cesium-native requires static linking on Windows
         set(VCPKG_TRIPLET "x64-windows-static-md")
+    elseif(DETECTED_VCPKG_TRIPLET STREQUAL "wasm32-emscripten")
+        # Use our custom triplet for wasm builds. Most importantly, this
+        # enables multithreading support. Also switch to 64-bit wasm if
+        # requested.
+        if (CESIUM_WASM64)
+            set(VCPKG_TRIPLET "wasm64-emscripten-cesium")
+        else()
+            set(VCPKG_TRIPLET "wasm32-emscripten-cesium")
+        endif()
     else()
         set(VCPKG_TRIPLET "${DETECTED_VCPKG_TRIPLET}")
     endif()
@@ -162,15 +171,6 @@ if(CESIUM_USE_EZVCPKG)
         # Force the installation of each package one at a time, or the Travis CI build will time out waiting for output
         SERIALIZE
     )
-
-    if(CESIUM_TARGET_WASM)
-        # vcpkg will attempt to make this wasm32-emscripten if we don't declare it
-        if(CESIUM_WASM64)
-            set(VCPKG_TARGET_TRIPLET wasm64-emscripten)
-        else()
-            set(VCPKG_TARGET_TRIPLET wasm32-emscripten)
-        endif()
-    endif()
 endif()
 
 if (NOT CMAKE_TOOLCHAIN_FILE)
