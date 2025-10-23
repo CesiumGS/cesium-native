@@ -309,7 +309,6 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 # find_package, which resolve to our own modules that provide
 # targets. If needed, they can be installed with CMake config files
 # etc.
-find_package(ZLIB REQUIRED)
 find_package(modp_b64 REQUIRED)
 
 find_package(ada CONFIG REQUIRED)

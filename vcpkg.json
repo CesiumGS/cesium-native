@@ -41,7 +41,8 @@
       "name": "asmjit",
       "platform": "!ios"
     },
-    "spz"
+    "spz",
+    "zlib"
   ]
 }
 
