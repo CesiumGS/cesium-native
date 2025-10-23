@@ -38,6 +38,14 @@ cesium_glob_files(test_headers
 )
 set(test_include_directories ${CMAKE_CURRENT_LIST_DIR}/include)
 
+if(CESIUM_TARGET_WASM)
+    target_link_options(
+        cesium-native-tests
+        PRIVATE
+        "-sEXIT_RUNTIME=1" 
+    )
+endif()
+
 # Iterate through all targets, extracting their private sources and test sources / test headers
 foreach(target ${cesium_native_targets})
     get_target_property(target_test_sources ${target} TEST_SOURCES)
