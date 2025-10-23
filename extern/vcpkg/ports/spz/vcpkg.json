@@ -1,10 +1,8 @@
 {
   "name": "spz",
   "version": "2.0.0",
-  "description": [
-    "A 3D Gaussians format"
-  ],
-  "homepage": "https://github.com/nianticlabs/spz",
+  "description": "File format for 3D Gaussian splats.",
+  "homepage": "https://scaniverse.com/spz",
   "license": "MIT",
   "dependencies": [
     {
