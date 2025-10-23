@@ -2,7 +2,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
-#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
@@ -22,7 +22,6 @@
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
 #include <spdlog/logger.h>
-#include <spdlog/spdlog.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -94,6 +93,19 @@ const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
     "OXfbBoeDOo8wHpy8lKpvoafRoG6YgXFYKP4GSj63gtwWfhHzl7Skq9JTshAAAAAElFTkSuQmCC"
     "\" title=\"Bing Imagery\"/></a>";
 
+namespace {
+Rectangle createRectangle(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
+  return WebMercatorProjection::computeMaximumProjectedRectangle(
+      pOwner->getOptions().ellipsoid);
+}
+
+QuadtreeTilingScheme createTilingScheme(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
+  return QuadtreeTilingScheme(createRectangle(pOwner), 2, 2);
+}
+} // namespace
+
 class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
@@ -113,8 +125,7 @@ public:
       uint32_t height,
       uint32_t minimumLevel,
       uint32_t maximumLevel,
-      const std::string& culture,
-      const CesiumGeospatial::Ellipsoid& ellipsoid)
+      const std::string& culture)
       : QuadtreeRasterOverlayTileProvider(
             pOwner,
             asyncSystem,
@@ -123,13 +134,9 @@ public:
             bingCredit,
             pPrepareRendererResources,
             pLogger,
-            WebMercatorProjection(ellipsoid),
-            QuadtreeTilingScheme(
-                WebMercatorProjection::computeMaximumProjectedRectangle(
-                    ellipsoid),
-                2,
-                2),
-            WebMercatorProjection::computeMaximumProjectedRectangle(ellipsoid),
+            WebMercatorProjection(pOwner->getOptions().ellipsoid),
+            createTilingScheme(pOwner),
+            createRectangle(pOwner),
             minimumLevel,
             maximumLevel,
             width,
@@ -379,8 +386,6 @@ BingMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
-  const CesiumGeospatial::Ellipsoid& ellipsoid = this->getOptions().ellipsoid;
-
   auto handleResponse =
       [pOwner,
        asyncSystem,
@@ -388,7 +393,6 @@ BingMapsRasterOverlay::createTileProvider(
        pCreditSystem,
        pPrepareRendererResources,
        pLogger,
-       ellipsoid,
        baseUrl = this->_url,
        culture = this->_culture](
           const std::shared_ptr<IAssetRequest>& pRequest,
@@ -470,8 +474,7 @@ BingMapsRasterOverlay::createTileProvider(
         height,
         0,
         maximumLevel,
-        culture,
-        ellipsoid);
+        culture);
   };
 
   auto cacheResultIt = sessionCache.find(metadataUrl);
@@ -507,57 +510,6 @@ BingMapsRasterOverlay::createTileProvider(
 
             return handleResponseResult;
           });
-}
-
-Future<void> BingMapsRasterOverlay::refreshTileProviderWithNewKey(
-    const IntrusivePointer<RasterOverlayTileProvider>& pProvider,
-    const std::string& newKey) {
-  this->_key = newKey;
-
-  return this
-      ->createTileProvider(
-          pProvider->getAsyncSystem(),
-          pProvider->getAssetAccessor(),
-          pProvider->getCreditSystem(),
-          pProvider->getPrepareRendererResources(),
-          pProvider->getLogger(),
-          &pProvider->getOwner())
-      .thenInMainThread([pProvider](CreateTileProviderResult&& result) {
-        if (!result) {
-          SPDLOG_LOGGER_WARN(
-              pProvider->getLogger(),
-              "Could not refresh Bing Maps raster overlay with a new key: {}.",
-              result.error().message);
-          return;
-        }
-
-        // Use static_cast instead of dynamic_cast here to avoid the need for
-        // RTTI, and because we are certain of the type.
-        // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
-        BingMapsTileProvider* pOldBing =
-            static_cast<BingMapsTileProvider*>(pProvider.get());
-        BingMapsTileProvider* pNewBing =
-            static_cast<BingMapsTileProvider*>(result->get());
-        // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
-        if (pOldBing->getCoverageRectangle().getLowerLeft() !=
-                pNewBing->getCoverageRectangle().getLowerLeft() ||
-            pOldBing->getCoverageRectangle().getUpperRight() !=
-                pNewBing->getCoverageRectangle().getUpperRight() ||
-            pOldBing->getHeight() != pNewBing->getHeight() ||
-            pOldBing->getWidth() != pNewBing->getWidth() ||
-            pOldBing->getMinimumLevel() != pNewBing->getMinimumLevel() ||
-            pOldBing->getMaximumLevel() != pNewBing->getMaximumLevel() ||
-            pOldBing->getProjection() != pNewBing->getProjection()) {
-          SPDLOG_LOGGER_WARN(
-              pProvider->getLogger(),
-              "Could not refresh Bing Maps raster overlay with a new key "
-              "because some metadata properties changed unexpectedly upon "
-              "refresh.");
-          return;
-        }
-
-        pOldBing->update(*pNewBing);
-      });
 }
 
 } // namespace CesiumRasterOverlays
