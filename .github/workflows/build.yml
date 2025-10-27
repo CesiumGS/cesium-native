@@ -238,10 +238,15 @@ jobs:
           repository: microsoft/vcpkg
           clean: false
           ref: 2025.02.14
-          path: extern/vcpkg
+          path: extern/vcpkg/temp
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             ports/ada-url
+      - name: Move overlay ports to the correct location
+        if: ${{ matrix.version == '3.1.39' }}
+        run: |
+          mv extern/vcpkg/temp/ports/* extern/vcpkg/ports/
+          rmdir extern/vcpkg/temp
       - name: TEST!
         run: |
           dir extern/vcpkg
