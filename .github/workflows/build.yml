@@ -246,7 +246,6 @@ jobs:
         if: ${{ matrix.version == '3.1.39' }}
         run: |
           mv extern/vcpkg/temp/ports/* extern/vcpkg/ports/
-          rmdir extern/vcpkg/temp
       - name: TEST!
         run: |
           dir extern/vcpkg
