@@ -7,6 +7,7 @@
 #include <vector>
 
 namespace CesiumGeometry {
+class OrientedBoundingBox;
 
 /**
  * @brief An Axis-Aligned Bounding Box (AABB), where the axes of the box are
@@ -132,5 +133,13 @@ struct CESIUMGEOMETRY_API AxisAlignedBox final {
    */
   static AxisAlignedBox fromPositions(const std::vector<glm::dvec3>& positions);
 };
+
+/**
+ * @brief Test if two axis aligned boxes intersect.
+ */
+bool CESIUMGEOMETRY_API
+intersects(const AxisAlignedBox& b0, const AxisAlignedBox& b1);
+
+OrientedBoundingBox toOrientedBoundingBox(const AxisAlignedBox& box);
 
 } // namespace CesiumGeometry
