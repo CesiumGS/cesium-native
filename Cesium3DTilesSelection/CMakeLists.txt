@@ -52,7 +52,7 @@ target_link_libraries(Cesium3DTilesSelection
         CesiumQuantizedMeshTerrain
         CesiumRasterOverlays
         CesiumUtility
-        spdlog::spdlog_header_only
+        spdlog::spdlog
 # PRIVATE
         libmorton::libmorton
         draco::draco

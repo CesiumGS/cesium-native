@@ -32,7 +32,6 @@ function(configure_cesium_library targetName)
         PUBLIC 
             GLM_FORCE_INTRINSICS # Force SIMD code paths
             GLM_ENABLE_EXPERIMENTAL # Allow use of experimental extensions
-            SPDLOG_HEADER_ONLY # Use header-only spdlog implementation
     )
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CESIUM_CLANG_TIME_TRACE)
