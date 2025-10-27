@@ -227,6 +227,10 @@ jobs:
       CACHE_KEY: "emscripten-${{matrix.version}}"
     runs-on: windows-2022
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Checkout vcpkg 2025.02.14 packages for use with Emscripten 3.1.39
         if: ${{ matrix.version == '3.1.39' }}
         uses: actions/checkout@v4
@@ -235,6 +239,7 @@ jobs:
           clean: false
           ref: 2025.02.14
           path: extern/vcpkg
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
             ports/ada-url
       - name: TEST!
@@ -248,10 +253,6 @@ jobs:
           cmakeVersion: "3.31.6"
       - name: Install nasm
         uses: ilammy/setup-nasm@v1
-      - name: Check out repository code
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - name: Setup emsdk
         uses: mymindstorm/setup-emsdk@v14
         with:
