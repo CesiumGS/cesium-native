@@ -227,6 +227,21 @@ jobs:
       CACHE_KEY: "emscripten-${{matrix.version}}"
     runs-on: windows-2022
     steps:
+      - name: Checkout vcpkg 2025.02.14 packages for use with Emscripten 3.1.39
+        if: ${{ matrix.version == '3.1.39' }}
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          clean: false
+          ref: 2025.02.14
+          path: extern/vcpkg
+          sparse-checkout: |
+            ports/ada-url
+      - name: TEST!
+        run: |
+          dir extern/vcpkg
+          dir extern/vcpkg/triplets
+          dir extern/vcpkg/ports
       - name: Install latest CMake 3 and Ninja
         uses: lukka/get-cmake@latest
         with:
@@ -243,16 +258,6 @@ jobs:
           version: ${{matrix.version}}
       - name: Verify
         run: emcc -v
-      - name: Checkout vcpkg 2025.02.14 packages for use with Emscripten 3.1.39
-        if: ${{ matrix.version == '3.1.39' }}
-        uses: actions/checkout@v4
-        with:
-          repository: microsoft/vcpkg
-          clean: false
-          ref: 2025.02.14
-          path: extern/vcpkg
-          sparse-checkout: |
-            ports/ada-url
       - name: Compile Debug Configuration
         run: |
           $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
