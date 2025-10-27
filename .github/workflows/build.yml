@@ -218,9 +218,13 @@ jobs:
           cd build
           ctest -V
   EmscriptenBuild:
-    name: Emscripten v3.1.39
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [ "3.1.39", "4.0.13" ]
+    name: Emscripten v${{matrix.version}}
     env:
-      CACHE_KEY: "emscripten-3.1.39"
+      CACHE_KEY: "emscripten-${{matrix.version}}"
     runs-on: windows-2022
     steps:
       - name: Install latest CMake 3 and Ninja
@@ -236,7 +240,7 @@ jobs:
       - name: Setup emsdk
         uses: mymindstorm/setup-emsdk@v14
         with:
-          version: 3.1.39
+          version: ${{matrix.version}}
       - name: Verify
         run: emcc -v
       - name: Compile Debug Configuration
