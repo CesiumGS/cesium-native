@@ -1131,9 +1131,7 @@ void TilesetContentManager::reapplyGltfModifier(
           const CesiumGltf::Model& model =
               modified ? modified->modifiedModel : previousModel;
           const auto it = model.extras.find("gltfUpAxis");
-          if (it == model.extras.end()) {
-            tileLoadResult.glTFUpAxis = CesiumGeometry::Axis::Y;
-          } else {
+          if (it != model.extras.end()) {
             tileLoadResult.glTFUpAxis = static_cast<CesiumGeometry::Axis>(
                 it->second.getSafeNumberOrDefault(1));
           }
