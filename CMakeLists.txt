@@ -53,9 +53,16 @@ if (NOT VCPKG_TRIPLET)
     else()
         set(VCPKG_TRIPLET "${DETECTED_VCPKG_TRIPLET}")
     endif()
-    if (NOT CESIUM_USE_EZVCPKG)
-        set(VCPKG_TARGET_TRIPLET "${VCPKG_TRIPLET}")
-    endif()
+
+    # If we're using ezvcpkg, ezvcpkg will update CMAKE_TOOLCHAIN_FILE to point to the vcpkg toolchain.
+    # Which means that when we hit the `project` function call below, cmake will load the vcpkg
+    # toolchain file. If VCPKG_TARGET_TRIPLET isn't set by that time, vcpkg will set it itself, and
+    # maybe not to what we want. So set VCPKG_TARGET_TRIPLET explicit here so that we're sure to get
+    # the right one.
+    #
+    # If we're _not_ using ezvcpkg, then we also must set VCPKG_TARGET_TRIPLET, but for a different reason.
+    # VCPKG_TRIPLET is only an ezvcpkg thing, vcpkg itself only knows about VCPKG_TARGET_TRIPLET.
+    set(VCPKG_TARGET_TRIPLET "${VCPKG_TRIPLET}")
 endif()
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
