@@ -246,11 +246,6 @@ jobs:
         if: ${{ matrix.version == '3.1.39' }}
         run: |
           mv extern/vcpkg/temp/ports/* extern/vcpkg/ports/
-      - name: TEST!
-        run: |
-          dir extern/vcpkg
-          dir extern/vcpkg/triplets
-          dir extern/vcpkg/ports
       - name: Install latest CMake 3 and Ninja
         uses: lukka/get-cmake@latest
         with:
