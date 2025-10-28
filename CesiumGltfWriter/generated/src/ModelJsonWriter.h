@@ -36,7 +36,6 @@ struct ExtensionExtImplicitCylinderRegion;
 struct ExtensionExtPrimitiveVoxels;
 struct ExtensionKhrGaussianSplatting;
 struct ExtensionKhrGaussianSplattingCompressionSpz2;
-struct ExtensionKhrGaussianSplattingHintsValue;
 struct Padding;
 struct Shape;
 struct Cylinder;
@@ -428,15 +427,6 @@ struct ExtensionKhrGaussianSplattingCompressionSpz2JsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
-struct ExtensionKhrGaussianSplattingHintsValueJsonWriter {
-  using ValueType = CesiumGltf::ExtensionKhrGaussianSplattingHintsValue;
-
-  static void write(
-      const CesiumGltf::ExtensionKhrGaussianSplattingHintsValue& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
