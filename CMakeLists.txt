@@ -127,7 +127,7 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 set(PACKAGES_PRIVATE
     abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp cpp-httplib[core] libmorton zstd
+    earcut-hpp libmorton zstd
 )
 
 # asmjit needed by blend2d on non-iOS platforms (iOS and Wasm don't support JIT)
@@ -140,6 +140,13 @@ endif()
 
 if(NOT CESIUM_DISABLE_CURL)
     list(APPEND PACKAGES_PRIVATE curl)
+endif()
+
+# We use cpp-httplib to host a local web server for OAuth2 authorization. That's not
+# going to work at all on the web, and the latest versions of cpp-httplib only support
+# 64-bit platforms anyway, so skip it entirely for WebAssembly builds.
+if(NOT CESIUM_TARGET_WASM)
+    list(APPEND PACKAGES_PRIVATE "cpp-httplib[core]")
 endif()
 
 # Packages only used for testing

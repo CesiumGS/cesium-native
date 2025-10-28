@@ -13,7 +13,6 @@
 #include <CesiumUtility/joinToString.h>
 
 #include <fmt/format.h>
-#include <httplib.h>
 #include <modp_b64.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
@@ -33,6 +32,13 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+// Using httplib for the internal HTTP server to receive the OAuth2 redirect URI
+// is certainly not going to work on the web. And cpp-httplib only supports
+// 64-bit platforms, so we can't even build it for 32-bit emscripten targets.
+#ifndef __EMSCRIPTEN__
+#include <httplib.h>
+#endif
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -59,6 +65,7 @@ using namespace CesiumUtility;
 namespace CesiumClientCommon {
 
 namespace {
+#ifndef __EMSCRIPTEN__
 std::string encodeBase64(const std::vector<uint8_t>& bytes) {
   const size_t count = modp_b64_encode_len(bytes.size());
   std::string result(count, 0);
@@ -170,17 +177,28 @@ std::string createAuthorizationErrorHtml(
       exception.what(),
       applicationName);
 }
+#endif // #ifndef __EMSCRIPTEN__
 } // namespace
 
 CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKCE::authorize(
     const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::string& friendlyApplicationName,
-    const OAuth2ClientOptions& clientOptions,
-    const std::vector<std::string>& scopes,
-    std::function<void(const std::string&)>&& openUrlCallback,
-    const std::string& tokenEndpointUrl,
-    const std::string& authorizeBaseUrl) {
+    [[maybe_unused]] const std::shared_ptr<CesiumAsync::IAssetAccessor>&
+        pAssetAccessor,
+    [[maybe_unused]] const std::string& friendlyApplicationName,
+    [[maybe_unused]] const OAuth2ClientOptions& clientOptions,
+    [[maybe_unused]] const std::vector<std::string>& scopes,
+    [[maybe_unused]] std::function<void(const std::string&)>&& openUrlCallback,
+    [[maybe_unused]] const std::string& tokenEndpointUrl,
+    [[maybe_unused]] const std::string& authorizeBaseUrl) {
+#ifdef __EMSCRIPTEN__
+  // Currently we just fail the authorization attempt in Emscripten / web
+  // builds. In theory, we can do a more web-oriented authorization flow here
+  // instead.
+  return asyncSystem.createResolvedFuture<Result<OAuth2TokenResponse>>(
+      Result<OAuth2TokenResponse>(
+          ErrorList::error("OAuth2 PKCE authorization is not supported in "
+                           "Emscripten / WebAssembly builds.")));
+#else  // #ifdef __EMSCRIPTEN__
   auto promise = asyncSystem.createPromise<Result<OAuth2TokenResponse>>();
 
   std::shared_ptr<httplib::Server> pServer =
@@ -332,6 +350,7 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKCE::authorize(
   openUrlCallback(authorizeUrl);
 
   return promise.getFuture();
+#endif // #ifdef __EMSCRIPTEN__ #else
 }
 
 CesiumAsync::Future<Result<OAuth2TokenResponse>>
