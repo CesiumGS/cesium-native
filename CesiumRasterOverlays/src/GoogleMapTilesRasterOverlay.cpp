@@ -153,7 +153,8 @@ public:
       const std::string& key,
       uint32_t maximumLevel,
       uint32_t imageWidth,
-      uint32_t imageHeight);
+      uint32_t imageHeight,
+      bool showLogo);
 
   CesiumAsync::Future<void>
   loadAvailability(const CesiumGeometry::QuadtreeTileID& tileID) const;
@@ -249,7 +250,8 @@ GoogleMapTilesRasterOverlay::createTileProvider(
             session.key,
             maximumZoomLevel,
             session.tileWidth,
-            session.tileHeight);
+            session.tileHeight,
+            session.showLogo);
 
     // Start loading credits, but don't wait for the load to finish.
     pTileProvider->loadCredits();
@@ -459,7 +461,8 @@ GoogleMapTilesRasterOverlay::createNewSession(
                     this->_newSessionParameters->key,
                     maximumZoomLevel,
                     static_cast<uint32_t>(tileWidth),
-                    static_cast<uint32_t>(tileHeight));
+                    static_cast<uint32_t>(tileHeight),
+                    true);
 
             // Start loading credits, but don't wait for the load to finish.
             pTileProvider->loadCredits();
@@ -504,7 +507,8 @@ GoogleMapTilesRasterOverlayTileProvider::
         const std::string& key,
         uint32_t maximumLevel,
         uint32_t imageWidth,
-        uint32_t imageHeight)
+        uint32_t imageHeight,
+        bool showLogo)
     : QuadtreeRasterOverlayTileProvider(
           pOwner,
           asyncSystem,
@@ -527,7 +531,7 @@ GoogleMapTilesRasterOverlayTileProvider::
       _credits(),
       _availableTiles(createTilingScheme(pOwner), maximumLevel),
       _availableAvailability(createTilingScheme(pOwner), maximumLevel) {
-  if (pCreditSystem) {
+  if (pCreditSystem && showLogo) {
     this->_googleCredit =
         pCreditSystem->createCredit(GOOGLE_MAPS_LOGO_HTML, true);
   }
@@ -707,7 +711,6 @@ CesiumAsync::Future<rapidjson::Document> fetchViewportData(
                   pRequest->url(),
                   document.GetParseError(),
                   document.GetErrorOffset());
-              return document;
             }
 
             return document;
@@ -885,7 +888,7 @@ Future<void> GoogleMapTilesRasterOverlayTileProvider::loadCredits() {
             uint32_t(i),
             Rectangle(-180.0, -90.0, 180.0, 90.0))
             .thenInMainThread([](rapidjson::Document&& document) {
-              if (document.HasParseError()) {
+              if (document.HasParseError() || !document.IsObject()) {
                 return std::string();
               }
 
