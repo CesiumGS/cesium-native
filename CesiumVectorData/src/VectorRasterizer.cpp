@@ -174,7 +174,9 @@ void VectorRasterizer::drawPolygon(
   }
 
   if (style.fill) {
-    this->_context.fillPath(path, BLRgba32(style.fill->getColor().toRgba32()));
+    this->_context.fillPath(
+        path,
+        BLRgba32(style.fill->getColor(seedForObject(polygon, 13)).toRgba32()));
   }
 
   if (style.outline) {
@@ -186,7 +188,8 @@ void VectorRasterizer::drawPolygon(
 
     this->_context.strokePath(
         path,
-        BLRgba32(style.outline->getColor().toRgba32()));
+        BLRgba32(
+            style.outline->getColor(seedForObject(polygon, 31)).toRgba32()));
   }
 }
 
