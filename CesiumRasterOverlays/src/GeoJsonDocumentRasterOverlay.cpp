@@ -145,10 +145,21 @@ struct Quadtree {
    * dataNodeIndicesBegin[i + 1] ]`.
    */
   std::vector<uint32_t> dataNodeIndicesBegin;
+  /**
+   * @brief The maximum line width for all line and outline styles set to
+   * LineWidthMode::Pixels.
+   *
+   * We keep track of this as a way to approximate how the bounding rectangle
+   * changes depending on zoom level when taking line width into account.
+   */
+  double maxLinePixels = 0.0;
 };
 
 struct GlobeRectangleFromObjectVisitor {
   BoundingRegionBuilder& builder;
+  const VectorStyle& style;
+  const Ellipsoid& ellipsoid;
+
   void operator()(const GeoJsonPoint& point) {
     builder.expandToIncludePosition(
         Cartographic::fromDegrees(point.coordinates.x, point.coordinates.y));
@@ -159,36 +170,46 @@ struct GlobeRectangleFromObjectVisitor {
           Cartographic::fromDegrees(point.x, point.y));
     }
   }
-  void operator()(const GeoJsonLineString& line) {
-    for (const glm::dvec3& point : line.coordinates) {
-      builder.expandToIncludePosition(
-          Cartographic::fromDegrees(point.x, point.y));
-    }
-  }
-  void operator()(const GeoJsonMultiLineString& lines) {
-    for (const std::vector<glm::dvec3>& line : lines.coordinates) {
-      for (const glm::dvec3& point : line) {
+  void visitWithLineWidth(
+      const std::vector<glm::dvec3>& coordinates,
+      const std::optional<LineStyle>& lineStyle) {
+    if (lineStyle && lineStyle->widthMode == LineWidthMode::Meters) {
+      const double halfWidth =
+          (lineStyle->width / ellipsoid.getRadii().x) / 2.0;
+      for (const glm::dvec3& point : coordinates) {
+        // Include the width of the line in the bounding region calculation
+        builder.expandToIncludePosition(Cartographic::fromDegrees(
+            point.x - halfWidth,
+            point.y - halfWidth));
+        builder.expandToIncludePosition(Cartographic::fromDegrees(
+            point.x + halfWidth,
+            point.y + halfWidth));
+      }
+    } else {
+      for (const glm::dvec3& point : coordinates) {
         builder.expandToIncludePosition(
             Cartographic::fromDegrees(point.x, point.y));
       }
+    }
+  }
+  void operator()(const GeoJsonLineString& line) {
+    visitWithLineWidth(line.coordinates, style.line);
+  }
+  void operator()(const GeoJsonMultiLineString& lines) {
+    for (const std::vector<glm::dvec3>& line : lines.coordinates) {
+      visitWithLineWidth(line, style.line);
     }
   }
   void operator()(const GeoJsonPolygon& polygon) {
     for (const std::vector<glm::dvec3>& ring : polygon.coordinates) {
-      for (const glm::dvec3& point : ring) {
-        builder.expandToIncludePosition(
-            Cartographic::fromDegrees(point.x, point.y));
-      }
+      visitWithLineWidth(ring, style.polygon.outline);
     }
   }
   void operator()(const GeoJsonMultiPolygon& polygons) {
     for (const std::vector<std::vector<glm::dvec3>>& polygon :
          polygons.coordinates) {
       for (const std::vector<glm::dvec3>& ring : polygon) {
-        for (const glm::dvec3& point : ring) {
-          builder.expandToIncludePosition(
-              Cartographic::fromDegrees(point.x, point.y));
-        }
+        visitWithLineWidth(ring, style.polygon.outline);
       }
     }
   }
@@ -201,12 +222,16 @@ void addPrimitivesToData(
     const GeoJsonObject* pGeoJsonObject,
     std::vector<QuadtreeGeometryData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
-    const VectorStyle& style);
+    double& maxLinePixels,
+    const VectorStyle& style,
+    const Ellipsoid& ellipsoid);
 
 struct GeoJsonChildVisitor {
   std::vector<QuadtreeGeometryData>& data;
   BoundingRegionBuilder& documentRegionBuilder;
+  double& maxLinePixels;
   const VectorStyle& style;
+  const Ellipsoid& ellipsoid;
 
   void operator()(const GeoJsonFeature& feature) {
     if (feature.geometry) {
@@ -218,7 +243,9 @@ struct GeoJsonChildVisitor {
           feature.geometry.get(),
           data,
           documentRegionBuilder,
-          featureStyle ? *featureStyle : style);
+          maxLinePixels,
+          featureStyle ? *featureStyle : style,
+          ellipsoid);
     }
   }
 
@@ -235,7 +262,9 @@ struct GeoJsonChildVisitor {
             pFeature->geometry.get(),
             data,
             documentRegionBuilder,
-            collectionStyle ? *collectionStyle : style);
+            maxLinePixels,
+            collectionStyle ? *collectionStyle : style,
+            ellipsoid);
       }
     }
   }
@@ -249,7 +278,9 @@ struct GeoJsonChildVisitor {
           &geometry,
           data,
           documentRegionBuilder,
-          useStyle ? *useStyle : style);
+          maxLinePixels,
+          useStyle ? *useStyle : style,
+          ellipsoid);
     }
   }
 
@@ -260,18 +291,34 @@ void addPrimitivesToData(
     const GeoJsonObject* geoJsonObject,
     std::vector<QuadtreeGeometryData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
-    const VectorStyle& style) {
+    double& maxLinePixels,
+    const VectorStyle& style,
+    const Ellipsoid& ellipsoid) {
   BoundingRegionBuilder thisBuilder;
   std::visit(
-      GlobeRectangleFromObjectVisitor{thisBuilder},
+      GlobeRectangleFromObjectVisitor{thisBuilder, style, ellipsoid},
       geoJsonObject->value);
   GlobeRectangle rect = thisBuilder.toGlobeRectangle();
   documentRegionBuilder.expandToIncludeGlobeRectangle(rect);
   data.emplace_back(
       QuadtreeGeometryData{geoJsonObject, &style, std::move(rect)});
 
+  if (style.line.widthMode == LineWidthMode::Pixels) {
+    maxLinePixels = std::max(maxLinePixels, style.line.width);
+  }
+
+  if (style.polygon.outline &&
+      style.polygon.outline->widthMode == LineWidthMode::Pixels) {
+    maxLinePixels = std::max(maxLinePixels, style.polygon.outline->width);
+  }
+
   std::visit(
-      GeoJsonChildVisitor{data, documentRegionBuilder, style},
+      GeoJsonChildVisitor{
+          data,
+          documentRegionBuilder,
+          maxLinePixels,
+          style,
+          ellipsoid},
       geoJsonObject->value);
 }
 
@@ -390,8 +437,10 @@ uint32_t buildQuadtreeNode(
 
 Quadtree buildQuadtree(
     const std::shared_ptr<GeoJsonDocument>& document,
-    const VectorStyle& defaultStyle) {
+    const VectorStyle& defaultStyle,
+    const Ellipsoid& ellipsoid) {
   BoundingRegionBuilder builder;
+  double maxLinePixels = 0.0;
   std::vector<QuadtreeGeometryData> data;
   const std::optional<VectorStyle>& rootObjectStyle =
       document->rootObject.getStyle();
@@ -399,7 +448,9 @@ Quadtree buildQuadtree(
       &document->rootObject,
       data,
       builder,
-      rootObjectStyle ? *rootObjectStyle : defaultStyle);
+      maxLinePixels,
+      rootObjectStyle ? *rootObjectStyle : defaultStyle,
+      ellipsoid);
 
   Quadtree tree{
       builder.toGlobeRectangle(),
@@ -407,7 +458,8 @@ Quadtree buildQuadtree(
       std::vector<QuadtreeNode>(),
       std::move(data),
       std::vector<uint32_t>(),
-      std::vector<uint32_t>()};
+      std::vector<uint32_t>(),
+      maxLinePixels};
 
   std::vector<uint32_t> dataIndices;
   dataIndices.reserve(tree.data.size());
@@ -541,7 +593,8 @@ public:
         _ellipsoid(options.ellipsoid),
         _mipLevels(options.mipLevels) {
     CESIUM_ASSERT(this->_pDocument);
-    this->_tree = buildQuadtree(this->_pDocument, this->_defaultStyle);
+    this->_tree =
+        buildQuadtree(this->_pDocument, this->_defaultStyle, this->_ellipsoid);
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
@@ -557,7 +610,7 @@ public:
 
     return this->getAsyncSystem().runInWorkerThread(
         [&tree = this->_tree,
-         _ellipsoid = this->_ellipsoid,
+         ellipsoid = this->_ellipsoid,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
          textureSize,
@@ -568,7 +621,20 @@ public:
           LoadedRasterOverlayImage result;
           result.rectangle = rectangle;
 
-          if (!tileRectangle.computeIntersection(tree.rectangle)) {
+          // Extend tree rectangle edges by the width of any
+          // LineWidthMode::Pixels lines.
+          const double scaledLinePixels =
+              (tree.maxLinePixels / (double)textureSize.x) *
+              tileRectangle.computeWidth();
+          GlobeRectangle scaledRectangle = tree.rectangle;
+          scaledRectangle.setNorth(
+              scaledRectangle.getNorth() + scaledLinePixels);
+          scaledRectangle.setEast(scaledRectangle.getEast() + scaledLinePixels);
+          scaledRectangle.setSouth(
+              scaledRectangle.getSouth() - scaledLinePixels);
+          scaledRectangle.setWest(scaledRectangle.getWest() - scaledLinePixels);
+
+          if (!tileRectangle.computeIntersection(scaledRectangle)) {
             // Transparent square if this is outside of the contents of this
             // vector document.
             result.moreDetailAvailable = false;
@@ -610,7 +676,7 @@ public:
               }
               result.pImage->pixelData.resize(totalSize, std::byte{0});
             }
-            rasterizeVectorData(result, tileRectangle, tree, _ellipsoid);
+            rasterizeVectorData(result, tileRectangle, tree, ellipsoid);
           }
 
           return result;
