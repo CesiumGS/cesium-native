@@ -380,7 +380,6 @@ find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(httplib CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
 find_package(libmorton CONFIG REQUIRED)
@@ -400,6 +399,10 @@ endif()
 
 if(NOT CESIUM_DISABLE_CURL)
     find_package(CURL REQUIRED)
+endif()
+
+if(NOT CESIUM_TARGET_WASM)
+    find_package(httplib CONFIG REQUIRED)
 endif()
 
 # Private Library (s2geometry)

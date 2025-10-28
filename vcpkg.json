@@ -27,7 +27,10 @@
     "zlib-ng",
     "picosha2",
     "earcut-hpp",
-    "cpp-httplib",
+    {
+      "name": "cpp-httplib",
+      "platform": "!wasm32"
+    },
     "libmorton",
     "zstd",
     {
