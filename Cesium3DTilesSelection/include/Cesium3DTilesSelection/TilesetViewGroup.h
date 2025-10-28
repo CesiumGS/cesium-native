@@ -9,11 +9,13 @@
 #include <CesiumUtility/TreeTraversalState.h>
 
 #include <cstddef>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
 
+class GltfModifier;
 class Tile;
 class Tileset;
 class TilesetContentManager;
@@ -96,8 +98,13 @@ public:
    * undefined behavior in release builds.
    *
    * @param task The tile load task to add to the queue.
+   * @param pModifier The optional glTF modifier. If not `nullptr`, this method
+   * will also add the tile to load queue if it needs glTF modification. See
+   * {@link TilesetExternals::pGltfModifier}.
    */
-  void addToLoadQueue(const TileLoadTask& task);
+  void addToLoadQueue(
+      const TileLoadTask& task,
+      const std::shared_ptr<GltfModifier>& pModifier = nullptr);
 
   /**
    * @brief A checkpoint within this view group's load queue.
