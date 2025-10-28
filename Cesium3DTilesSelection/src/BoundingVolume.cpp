@@ -320,6 +320,14 @@ bool intersectsImpl(const BoundingRegion& br, const BV& bv) {
 
 } // namespace
 
+// This function produces a lot of "unreachable code" on Windows, but it should
+// be ok.
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4702)
+#endif
+
 bool testIntersection(
     const BoundingVolume& volume0,
     const BoundingVolume& volume1) {
@@ -381,4 +389,7 @@ bool testIntersection(
       volume0,
       volume1);
 }
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 } // namespace Cesium3DTilesSelection

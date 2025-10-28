@@ -85,6 +85,7 @@ public:
           .pCompletedRequest = nullptr,
           .tileInitializer = {},
           .state = TileLoadResultState::Success,
+          .tileUid = 0,
           .ellipsoid = CesiumGeospatial::Ellipsoid::WGS84};
     });
   }

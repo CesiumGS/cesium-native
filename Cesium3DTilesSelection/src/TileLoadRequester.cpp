@@ -3,6 +3,7 @@
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <CesiumUtility/Assert.h>
 
+#include <string>
 #include <utility>
 
 namespace Cesium3DTilesSelection {
