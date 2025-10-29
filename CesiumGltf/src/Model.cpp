@@ -44,6 +44,7 @@
 #include <glm/ext/quaternion_double.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/geometric.hpp>
+#include <glm/gtc/quaternion.hpp> // NOLINT(misc-include-cleaner)
 #include <glm/gtx/norm.hpp>
 
 #include <algorithm>
@@ -408,7 +409,7 @@ ErrorList Model::merge(Model&& rhs) {
     std::copy(
         pRhsDefaultScene->nodes.begin(),
         pRhsDefaultScene->nodes.end(),
-        newScene.nodes.begin() + int64_t(originalNodeCount));
+        newScene.nodes.begin() + ptrdiff_t(originalNodeCount));
 
     // No need to update indices because they've already been updated when
     // we copied them from rhs to this.

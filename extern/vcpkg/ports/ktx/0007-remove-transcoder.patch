@@ -1,0 +1,62 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2f141ac9..3927a565 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1054,49 +1054,6 @@ if(EMSCRIPTEN)
+         DESTINATION .
+         COMPONENT ktx_js_read
+     )
+-
+-    add_executable( msc_basis_transcoder_js interface/js_binding/transcoder_wrapper.cpp )
+-    target_link_libraries( msc_basis_transcoder_js ktx_read )
+-    target_include_directories( msc_basis_transcoder_js
+-        PRIVATE
+-        lib
+-        external
+-        external/basisu/transcoder
+-    )
+-
+-    # Re-use ktx's compile options
+-    target_compile_options(msc_basis_transcoder_js
+-    PRIVATE
+-       $<TARGET_PROPERTY:ktx_read,INTERFACE_COMPILE_OPTIONS>
+-       )
+-
+-    target_link_options(
+-        msc_basis_transcoder_js
+-    PUBLIC
+-        ${KTX_EM_COMMON_LINK_FLAGS}
+-        "SHELL:-s EXPORT_NAME=MSC_TRANSCODER"
+-        # Re-use ktx's link options
+-        $<TARGET_PROPERTY:ktx_read,INTERFACE_LINK_OPTIONS>
+-    )
+-    set_target_properties( msc_basis_transcoder_js PROPERTIES OUTPUT_NAME "msc_basis_transcoder")
+-
+-    add_custom_command(
+-        TARGET msc_basis_transcoder_js
+-        POST_BUILD
+-        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE_DIR:msc_basis_transcoder_js>/$<TARGET_FILE_PREFIX:msc_basis_transcoder_js>$<TARGET_FILE_BASE_NAME:msc_basis_transcoder_js>.js" "${PROJECT_SOURCE_DIR}/tests/webgl"
+-        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE_DIR:msc_basis_transcoder_js>/$<TARGET_FILE_PREFIX:msc_basis_transcoder_js>$<TARGET_FILE_BASE_NAME:msc_basis_transcoder_js>.wasm" "${PROJECT_SOURCE_DIR}/tests/webgl"
+-        COMMENT "Copy msc_basis_transcoder.js and msc_basis_transcoder.wasm to tests/webgl"
+-    )
+-
+-    install(TARGETS msc_basis_transcoder_js
+-        RUNTIME
+-            DESTINATION .
+-            COMPONENT msc_basis_transcoder_js
+-    )
+-    install(FILES ${CMAKE_BINARY_DIR}/msc_basis_transcoder.wasm
+-        DESTINATION .
+-        COMPONENT msc_basis_transcoder_js
+-    )
+ endif()
+ 
+ add_library( objUtil STATIC
+@@ -1564,7 +1521,6 @@ if(EMSCRIPTEN)
+     set(CPACK_COMPONENTS_ALL
+         ktx_js
+         ktx_js_read
+-        msc_basis_transcoder_js
+     )
+ else()
+     set(CPACK_COMPONENTS_ALL

@@ -51,6 +51,7 @@ target_link_libraries(CesiumRasterOverlays
         CesiumUtility
         CesiumVectorData
         nonstd::expected-lite
+        spdlog::spdlog
     PRIVATE
         tinyxml2::tinyxml2
 )

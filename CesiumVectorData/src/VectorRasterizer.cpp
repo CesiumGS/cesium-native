@@ -93,7 +93,7 @@ VectorRasterizer::VectorRasterizer(
       imageHeight,
       BL_FORMAT_PRGB32,
       reinterpret_cast<void*>(pData),
-      (int64_t)imageWidth * (int64_t)this->_imageAsset->channels);
+      (intptr_t)(imageWidth * this->_imageAsset->channels));
 
   this->_context.begin(this->_image);
   // Initialize the image as all transparent.

@@ -287,6 +287,7 @@ ImageReaderResult ImageDecoder::readImage(
   }
 
   {
+#ifndef __EMSCRIPTEN__ // Conflict between turbojpeg and Unity
     tjhandle tjInstance = tjInitDecompress();
     int inSubsamp, inColorspace;
     if (!tjDecompressHeader3(
@@ -316,7 +317,9 @@ ImageReaderResult ImageDecoder::readImage(
         result.errors.emplace_back("Unable to decode JPEG");
         result.pImage = nullptr;
       }
-    } else {
+    } else
+#endif // __EMSCRIPTEN__
+    {
       CESIUM_TRACE("Decode PNG");
       image.bytesPerChannel = 1;
       image.channels = 4;
@@ -349,7 +352,9 @@ ImageReaderResult ImageDecoder::readImage(
         result.errors.emplace_back(stbi_failure_reason());
       }
     }
+#ifndef __EMSCRIPTEN__
     tjDestroy(tjInstance);
+#endif // __EMSCRIPTEN__
   }
   return result;
 }

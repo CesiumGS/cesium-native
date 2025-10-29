@@ -2823,7 +2823,7 @@ private:
     }
 
     uint64_t totalLength = stringOffsets.back();
-    result.data.resize(totalLength);
+    result.data.resize((size_t)totalLength);
     for (size_t i = 0; i < strings.size(); ++i) {
       std::memcpy(
           result.data.data() + stringOffsets[i],
