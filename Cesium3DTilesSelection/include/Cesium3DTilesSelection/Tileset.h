@@ -446,7 +446,18 @@ public:
    */
   void registerLoadRequester(TileLoadRequester& requester);
 
+  /**
+   * @brief Register a tileset that will be used for dependent content.
+   *
+   * @param secondaryTileset the tileset
+   */
   void registerSecondaryTileset(std::shared_ptr<Tileset> secondaryTileset);
+
+  /**
+   * @brief Unregister a secondary tileset.
+   *
+   * @param secondaryTileset the tileset
+   */
   void unregisterSecondaryTileset(const Tileset* secondaryTileset);
 
   Tileset(const Tileset& rhs) = delete;

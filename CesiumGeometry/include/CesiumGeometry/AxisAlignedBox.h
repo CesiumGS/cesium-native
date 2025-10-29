@@ -140,6 +140,14 @@ struct CESIUMGEOMETRY_API AxisAlignedBox final {
 bool CESIUMGEOMETRY_API
 intersects(const AxisAlignedBox& b0, const AxisAlignedBox& b1);
 
+/**
+ * @brief Return the equivalent OrientedBoundingBox for an AxisAlignedBox. The
+ * axes will be the principal axes.
+ *
+ * @param box the source bounding box
+ *
+ * @returns An oriented bounding box
+ */
 OrientedBoundingBox toOrientedBoundingBox(const AxisAlignedBox& box);
 
 } // namespace CesiumGeometry
