@@ -100,7 +100,7 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 set(PACKAGES_PRIVATE
     abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp cpp-httplib[core] libmorton zstd
+    earcut-hpp cpp-httplib[core] libmorton zstd spz zlib
 )
 
 # asmjit needed by blend2d on non-iOS platforms (iOS doesn't support JIT)
@@ -124,7 +124,7 @@ if(CESIUM_USE_EZVCPKG)
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
     ezvcpkg_fetch(
-        COMMIT 2025.09.17
+        COMMIT d80785c4ee1df22a4119a3451452f59e978e06aa
         PACKAGES ${PACKAGES_ALL}
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
@@ -326,6 +326,7 @@ find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(spz CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
