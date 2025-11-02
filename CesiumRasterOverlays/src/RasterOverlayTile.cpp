@@ -37,11 +37,14 @@ RasterOverlayTile::RasterOverlayTile(
 RasterOverlayTile::~RasterOverlayTile() {
   this->_pActivatedOverlay->removeTile(this);
 
-  RasterOverlayTileProvider& tileProvider =
-      *this->_pActivatedOverlay->getTileProvider();
+  RasterOverlayTileProvider* pTileProvider =
+      this->_pActivatedOverlay->getTileProvider();
+
+  if (!pTileProvider)
+    return;
 
   const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-      pPrepareRendererResources = tileProvider.getPrepareRendererResources();
+      pPrepareRendererResources = pTileProvider->getPrepareRendererResources();
 
   if (pPrepareRendererResources) {
     void* pLoadThreadResult =

@@ -26,6 +26,7 @@
 
 namespace Cesium3DTilesSelection {
 class TilesetContentLoader;
+class GltfModifier;
 
 #ifdef CESIUM_DEBUG_TILE_UNLOADING
 class TileReferenceCountTracker {
@@ -538,18 +539,24 @@ public:
   /**
    * @brief Determines if this tile requires worker-thread loading.
    *
+   * @param pModifier The optional glTF modifier. If not `nullptr`, this method
+   * will return true if the tile needs worker thread glTF modification. See
+   * {@link TilesetExternals::pGltfModifier}.
    * @return true if this Tile needs further work done in a worker thread to
    * load it; otherwise, false.
    */
-  bool needsWorkerThreadLoading() const noexcept;
+  bool needsWorkerThreadLoading(const GltfModifier* pModifier) const noexcept;
 
   /**
    * @brief Determines if this tile requires main-thread loading.
    *
+   * @param pModifier The optional glTF modifier. If not `nullptr`, this method
+   * will return true if the tile needs worker thread glTF modification. See
+   * {@link TilesetExternals::pGltfModifier}.
    * @return true if this Tile needs further work done in the main thread to
    * load it; otherwise, false.
    */
-  bool needsMainThreadLoading() const noexcept;
+  bool needsMainThreadLoading(const GltfModifier* pModifier) const noexcept;
 
   /**
    * @brief Adds a reference to this tile. A live reference will keep this tile

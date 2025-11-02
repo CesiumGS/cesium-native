@@ -1,8 +1,11 @@
+#include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
 
 #include <memory>
+#include <optional>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -14,22 +17,69 @@ namespace Cesium3DTilesSelection {
 TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
     : _model{std::move(model)},
       _pRenderResources{nullptr},
+      _modifierState{GltfModifierState::Idle},
+      _modifiedModel{},
+      _pModifiedRenderResources(nullptr),
       _rasterOverlayDetails{},
       _credits{},
       _lodTransitionFadePercentage{0.0f} {}
 
 const CesiumGltf::Model& TileRenderContent::getModel() const noexcept {
-  return _model;
+  return this->_model;
 }
 
-CesiumGltf::Model& TileRenderContent::getModel() noexcept { return _model; }
+CesiumGltf::Model& TileRenderContent::getModel() noexcept {
+  return this->_model;
+}
 
 void TileRenderContent::setModel(const CesiumGltf::Model& model) {
-  _model = model;
+  this->_model = model;
 }
 
 void TileRenderContent::setModel(CesiumGltf::Model&& model) {
-  _model = std::move(model);
+  this->_model = std::move(model);
+}
+
+GltfModifierState TileRenderContent::getGltfModifierState() const noexcept {
+  return this->_modifierState;
+}
+
+void TileRenderContent::setGltfModifierState(
+    GltfModifierState modifierState) noexcept {
+  this->_modifierState = modifierState;
+}
+
+const std::optional<CesiumGltf::Model>&
+TileRenderContent::getModifiedModel() const noexcept {
+  return this->_modifiedModel;
+}
+
+void TileRenderContent::setModifiedModelAndRenderResources(
+    CesiumGltf::Model&& modifiedModel,
+    void* pModifiedRenderResources) noexcept {
+  this->_modifiedModel = std::move(modifiedModel);
+  this->_pModifiedRenderResources = pModifiedRenderResources;
+}
+
+void* TileRenderContent::getModifiedRenderResources() const noexcept {
+  return this->_pModifiedRenderResources;
+}
+
+void TileRenderContent::resetModifiedModelAndRenderResources() noexcept {
+  this->_pModifiedRenderResources = nullptr;
+  this->_modifiedModel.reset();
+}
+
+void TileRenderContent::replaceWithModifiedModel() noexcept {
+  CESIUM_ASSERT(this->_modifiedModel);
+  if (this->_modifiedModel) {
+    this->_model = std::move(*this->_modifiedModel);
+    // reset after move because this is tested for nullopt in
+    // Tile::needsWorkerThreadLoading:
+    this->_modifiedModel.reset();
+    this->_pRenderResources = this->_pModifiedRenderResources;
+    this->_pModifiedRenderResources = nullptr;
+  }
 }
 
 const RasterOverlayDetails&
@@ -92,20 +142,20 @@ TileContent::TileContent(std::unique_ptr<TileExternalContent>&& content)
     : _contentKind{std::move(content)} {}
 
 void TileContent::setContentKind(TileUnknownContent content) {
-  _contentKind = content;
+  this->_contentKind = content;
 }
 
 void TileContent::setContentKind(TileEmptyContent content) {
-  _contentKind = content;
+  this->_contentKind = content;
 }
 
 void TileContent::setContentKind(
     std::unique_ptr<TileExternalContent>&& content) {
-  _contentKind = std::move(content);
+  this->_contentKind = std::move(content);
 }
 
 void TileContent::setContentKind(std::unique_ptr<TileRenderContent>&& content) {
-  _contentKind = std::move(content);
+  this->_contentKind = std::move(content);
 }
 
 bool TileContent::isUnknownContent() const noexcept {
