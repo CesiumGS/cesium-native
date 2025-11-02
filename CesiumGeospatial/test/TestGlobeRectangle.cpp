@@ -245,4 +245,12 @@ TEST_CASE("GlobeRectangle::computeNormalizedCoordinates") {
       tile.computeNormalizedCoordinates(Cartographic::fromDegrees(0.75, 0.25)),
       glm::dvec2(0.5, 0.5),
       Math::Epsilon6));
+
+  GlobeRectangle bigWrapping =
+      GlobeRectangle::fromDegrees(179.0, -10.0, 10.0, 10.0);
+  CHECK(Math::equalsEpsilon(
+      bigWrapping.computeNormalizedCoordinates(Cartographic::fromDegrees(5.0, 0.0)),
+      // Rectangle width is 191 degrees, position is 5 degrees west of east edge.
+      glm::dvec2(186.0 / 191.0, 0.5),
+      Math::Epsilon6));
 }

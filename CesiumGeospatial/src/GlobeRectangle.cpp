@@ -149,7 +149,7 @@ glm::dvec2 GlobeRectangle::computeNormalizedCoordinates(
   double cartoLong = cartographic.longitude;
   if (east < this->_west) {
     east += CesiumUtility::Math::TwoPi;
-    if (cartographic.longitude < 0) {
+    if (cartoLong < this->_west) {
       cartoLong += CesiumUtility::Math::TwoPi;
     }
   }
