@@ -17,7 +17,7 @@
 
 - Fixed a bug in `GoogleMapTilesRasterOverlay` that tried to parse credits from an erroneous viewport service response.
 - Fixed issues with GeoJsonRasterOverlay with certain types of data.
-  - Polygons with holes hould now display correctly.
+  - Polygons with holes should now display correctly.
   - Using a GeoJSON file with data on either side of the antimeridian should now display correctly instead of causing the entire overlay to disappear.
 - Fixed a bug with credits not showing on-screen when `showCreditsOnScreen` was enabled on `GoogleMapTilesRasterOverlay`.
 
