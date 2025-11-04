@@ -2,7 +2,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO kring/KTX-Software # KhronosGroup/KTX-Software
     REF "v${VERSION}"
-    SHA512 78fc05a6527d8aad08f284a82ebc3b49acd270fec4f70fa6ccd8df135ebcc995858eb203200d30468a5afc635ea67cf274a291c87ec88b58563ef1fed2ef05d4
+    SHA512 fa20457fc0f0b117f4d6b406baa338091a85bcc46f60ca440dcd483388c67c550c81da3618d70d748e12850e32e0c1d82e9e8dc8522849074f40cc455723ac97
     HEAD_REF master
 )
 file(REMOVE "${SOURCE_PATH}/other_include/zstd_errors.h")
@@ -29,7 +29,7 @@ endif()
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         tools   KTX_FEATURE_TOOLS
-        vulkan  KTX_FEATURE_VK_UPLOAD
+        vulkan  LIBKTX_FEATURE_VK_UPLOAD
         js      KTX_FEATURE_JS
 )
 
