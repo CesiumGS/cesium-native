@@ -1,6 +1,6 @@
 {
   "name": "ktx",
-  "version-semver": "4.4.0",
+  "version-semver": "4.4.2-plus-vcpkg-patches",
   "description": [
     "The Khronos KTX library and tools.",
     "Functions for writing and reading KTX files, and instantiating OpenGL®, OpenGL ES™️ and Vulkan® textures from them."
@@ -31,6 +31,16 @@
     "vulkan": {
       "description": "Build Vulkan support",
       "supports": "!emscripten"
+    },
+    "js": {
+      "description": "Build JavaScript interface wrappers",
+      "supports": "emscripten"
     }
-  }
+  },
+  "default-features": [
+    {
+      "name": "js",
+      "platform": "emscripten"
+    }
+  ]
 }
