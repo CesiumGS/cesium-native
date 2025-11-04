@@ -125,7 +125,7 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
 set(PACKAGES_PRIVATE
-    abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
+    abseil draco ktx[core] modp-base64 meshoptimizer openssl s2geometry
     libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
     earcut-hpp libmorton zstd
 )
