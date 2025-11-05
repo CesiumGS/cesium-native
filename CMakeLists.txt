@@ -176,8 +176,8 @@ if(CESIUM_USE_EZVCPKG)
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
     ezvcpkg_fetch(
-        COMMIT 270cede112611a669763d92915cf0b50a7c3c2ab
-        REPO kring/vcpkg
+        COMMIT afc0a2e01ae104a2474216a2df0e8d78516fd5af
+        REPO microsoft/vcpkg
         PACKAGES ${PACKAGES_ALL}
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
