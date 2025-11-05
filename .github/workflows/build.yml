@@ -246,6 +246,14 @@ jobs:
         if: ${{ matrix.version == '3.1.39' }}
         run: |
           mv extern/vcpkg/temp/ports/* extern/vcpkg/ports/
+      - name: Add OpenSSL "no-dso" option on older Emscripten versions
+        if: ${{ matrix.version == '3.1.39' }}
+        run: |
+          echo "
+            if(PORT MATCHES "openssl")
+              set(VCPKG_CONFIGURE_MAKE_OPTIONS "no-dso")
+            endif()
+            " >> extern/vcpkg/triplets/wasm32-emscripten-cesium.cmake
       - name: Install latest CMake 3 and Ninja
         uses: lukka/get-cmake@latest
         with:
