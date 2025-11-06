@@ -1,27 +1,31 @@
 # Change Log
 
-### ? - ?
+### v0.53.0 - 2025-11-03
 
 ##### Breaking Changes :mega:
 
-- Restored vcpkg commit update to `2025.09.17`.
+- Upgraded vcpkg to `2025.09.17`. This was previously done in v0.52.0 and reverted in v0.52.1.
 - Removed `refreshTileProviderWithNewKey` from `BingMapsRasterOverlay` and `refreshTileProviderWithNewUrlAndHeaders` from `TileMapServiceRasterOverlay`. These were no longer used after the raster overlay refactor in `v0.52.0`.
 
 ##### Additions :tada:
 
 - Added `AzureMapsRasterOverlay`.
 - Added `Uri::ensureTrailingSlash`, which is helpful when the `Uri` represents a base URL.
+- Added `GltfModifier`, which can be used to modify tile glTFs as they load, as well as apply new modifications to them later.
 
 ##### Fixes :wrench:
 
 - Fixed a bug in `GoogleMapTilesRasterOverlay` that tried to parse credits from an erroneous viewport service response.
+- Fixed issues with `GeoJsonRasterOverlay` with certain types of data.
+  - Polygons with holes should now display correctly.
+  - Using a GeoJSON file with data on either side of the antimeridian should now display correctly instead of causing the entire overlay to disappear.
 - Fixed a bug with credits not showing on-screen when `showCreditsOnScreen` was enabled on `GoogleMapTilesRasterOverlay`.
 
 ### v0.52.1 - 2025-10-01
 
 ##### Breaking Changes :mega:
 
-- Reverted vcpkg update that could interfere with builds on headless MacOS.
+- Reverted vcpkg update that could interfere with builds on headless macOS.
 
 ### v0.52.0 - 2025-10-01
 
