@@ -67,9 +67,9 @@ void markTileAvailableForQuadtree(
   uint64_t availabilityBitIndex =
       numOfTilesFromRootToParentLevel +
       libmorton::morton2D_64_encode(tileID.x, tileID.y);
-  const uint64_t byteIndex = availabilityBitIndex / 8;
-  const uint64_t bitIndex = availabilityBitIndex % 8;
-  available[(size_t)byteIndex] |= std::byte(1 << bitIndex);
+  const size_t byteIndex = size_t(availabilityBitIndex / 8);
+  const size_t bitIndex = size_t(availabilityBitIndex % 8);
+  available[byteIndex] |= std::byte(1 << bitIndex);
 }
 
 void markSubtreeAvailableForQuadtree(
@@ -140,17 +140,17 @@ SubtreeContent createSubtreeContent(
           : 0;
 
   std::vector<std::byte> availabilityBuffer(
-      (size_t)(bufferSize + bufferSize + subtreeBufferSize));
+      size_t(bufferSize + bufferSize + subtreeBufferSize));
 
   std::span<std::byte> contentAvailabilityBuffer(
       availabilityBuffer.data(),
-      (size_t)bufferSize);
+      size_t(bufferSize));
   std::span<std::byte> tileAvailabilityBuffer(
       availabilityBuffer.data() + bufferSize,
-      (size_t)bufferSize);
+      size_t(bufferSize));
   std::span<std::byte> subtreeAvailabilityBuffer(
       availabilityBuffer.data() + bufferSize + bufferSize,
-      (size_t)subtreeBufferSize);
+      size_t(subtreeBufferSize));
 
   SubtreeAvailability::AvailabilityView tileAvailability = std::visit(
       GetAvailabilityView{tileAvailabilityBuffer, false},
@@ -486,9 +486,9 @@ TEST_CASE("Test SubtreeAvailability methods") {
     subtree.bufferViews[1].buffer = 1;
     subtree.bufferViews[2].buffer = 2;
 
-    contentAvailabilityBuffer.resize((size_t)bufferSize);
-    tileAvailabilityBuffer.resize((size_t)bufferSize);
-    subtreeAvailabilityBuffer.resize((size_t)subtreeBufferSize);
+    contentAvailabilityBuffer.resize(size_t(bufferSize));
+    tileAvailabilityBuffer.resize(size_t(bufferSize));
+    subtreeAvailabilityBuffer.resize(size_t(subtreeBufferSize));
 
     subtree.buffers[0].byteLength = subtree.bufferViews[0].byteLength =
         int64_t(bufferSize);
@@ -622,18 +622,18 @@ TEST_CASE("Test parsing subtree format") {
     subtreeHeader.jsonByteLength = subtreeJsonBuffer.GetSize();
     subtreeHeader.binaryByteLength = subtreeBuffers.buffers.size();
 
-    std::vector<std::byte> buffer((size_t)(
+    std::vector<std::byte> buffer(size_t(
         sizeof(subtreeHeader) + subtreeHeader.jsonByteLength +
         subtreeHeader.binaryByteLength));
     std::memcpy(buffer.data(), &subtreeHeader, sizeof(subtreeHeader));
     std::memcpy(
         buffer.data() + sizeof(subtreeHeader),
         subtreeJsonBuffer.GetString(),
-        (size_t)subtreeHeader.jsonByteLength);
+        size_t(subtreeHeader.jsonByteLength));
     std::memcpy(
         buffer.data() + sizeof(subtreeHeader) + subtreeHeader.jsonByteLength,
         subtreeBuffers.buffers.data(),
-        (size_t)subtreeHeader.binaryByteLength);
+        size_t(subtreeHeader.binaryByteLength));
 
     // mock the request
     auto pMockResponse = std::make_unique<SimpleAssetResponse>(
@@ -711,18 +711,18 @@ TEST_CASE("Test parsing subtree format") {
     subtreeHeader.jsonByteLength = subtreeJsonBuffer.GetSize();
     subtreeHeader.binaryByteLength = subtreeContent.buffers.size();
 
-    std::vector<std::byte> buffer((size_t)(
+    std::vector<std::byte> buffer(size_t(
         sizeof(subtreeHeader) + subtreeHeader.jsonByteLength +
         subtreeHeader.binaryByteLength));
     std::memcpy(buffer.data(), &subtreeHeader, sizeof(subtreeHeader));
     std::memcpy(
         buffer.data() + sizeof(subtreeHeader),
         subtreeJsonBuffer.GetString(),
-        (size_t)subtreeHeader.jsonByteLength);
+        size_t(subtreeHeader.jsonByteLength));
     std::memcpy(
         buffer.data() + sizeof(subtreeHeader) + subtreeHeader.jsonByteLength,
         subtreeContent.buffers.data(),
-        (size_t)subtreeHeader.binaryByteLength);
+        size_t(subtreeHeader.binaryByteLength));
 
     // mock the request
     auto pMockResponse = std::make_unique<SimpleAssetResponse>(
@@ -799,14 +799,14 @@ TEST_CASE("Test parsing subtree format") {
     subtreeHeader.jsonByteLength = subtreeJsonBuffer.GetSize();
     subtreeHeader.binaryByteLength = 0;
 
-    std::vector<std::byte> buffer((size_t)(
+    std::vector<std::byte> buffer(size_t(
         sizeof(subtreeHeader) + subtreeHeader.jsonByteLength +
         subtreeHeader.binaryByteLength));
     std::memcpy(buffer.data(), &subtreeHeader, sizeof(subtreeHeader));
     std::memcpy(
         buffer.data() + sizeof(subtreeHeader),
         subtreeJsonBuffer.GetString(),
-        (size_t)subtreeHeader.jsonByteLength);
+        size_t(subtreeHeader.jsonByteLength));
 
     // mock the request
     auto pMockResponse = std::make_unique<SimpleAssetResponse>(

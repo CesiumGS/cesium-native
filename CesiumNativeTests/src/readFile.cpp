@@ -12,11 +12,11 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);
   REQUIRE(file);
 
-  std::streamsize size = static_cast<std::streamsize>(file.tellg());
+  std::streampos size = file.tellg();
   file.seekg(0, std::ios::beg);
 
-  std::vector<std::byte> buffer(static_cast<size_t>(size));
-  file.read(reinterpret_cast<char*>(buffer.data()), size);
+  std::vector<std::byte> buffer{size_t(size)};
+  file.read(reinterpret_cast<char*>(buffer.data()), std::streamsize(size));
 
   return buffer;
 }

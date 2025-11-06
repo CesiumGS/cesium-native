@@ -518,7 +518,7 @@ bool SubtreeAvailability::isAvailableUsingBufferView(
   const SubtreeBufferViewAvailability* bufferViewAvailability =
       std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
 
-  const size_t byteIndex = static_cast<size_t>(availabilityBitIndex / 8);
+  const size_t byteIndex = size_t(availabilityBitIndex / 8);
   if (byteIndex >= bufferViewAvailability->view.size()) {
     return false;
   }
@@ -541,7 +541,7 @@ void SubtreeAvailability::setAvailableUsingBufferView(
   const SubtreeBufferViewAvailability* pBufferViewAvailability =
       std::get_if<SubtreeBufferViewAvailability>(&availabilityView);
 
-  const size_t byteIndex = static_cast<size_t>(availabilityBitIndex / 8);
+  const size_t byteIndex = size_t(availabilityBitIndex / 8);
   if (byteIndex >= pBufferViewAvailability->view.size()) {
     // Attempting to set an invalid tile. Assert, but otherwise ignore it.
     CESIUM_ASSERT(false);

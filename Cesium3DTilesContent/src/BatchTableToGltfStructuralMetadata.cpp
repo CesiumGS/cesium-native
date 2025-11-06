@@ -1017,7 +1017,7 @@ void copyStringsToBuffers(
       std::memcpy(
           valueBuffer.data() + offset,
           str.GetString(),
-          (size_t)byteLength);
+          size_t(byteLength));
       std::memcpy(
           offsetBuffer.data() + offsetIndex * sizeof(OffsetType),
           &offset,
