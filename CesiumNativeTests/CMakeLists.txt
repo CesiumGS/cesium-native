@@ -85,29 +85,30 @@ endforeach()
 
 if(CESIUM_TARGET_WASM)
   file(GLOB directories_list LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/Cesium*")
+  set(FILE_PACKAGER_ARGS "")
+  set(TEST_DATA_FILES "")
   foreach(dir ${directories_list})
     if(IS_DIRECTORY ${dir}/test/data)
-      list(APPEND CESIUM_TEST_DATA_DIRS --embed)
-      list(APPEND CESIUM_TEST_DATA_DIRS "${dir}/test/data")
+      list(APPEND FILE_PACKAGER_ARGS "--embed" "${dir}/test/data")
+
+      file(GLOB_RECURSE data_files "${dir}/test/data/*")
+      list(APPEND TEST_DATA_FILES ${data_files})
     endif()
   endforeach()
 
-  list(APPEND CESIUM_TEST_DATA_DIRS --embed)
-  list(APPEND CESIUM_TEST_DATA_DIRS "${CMAKE_SOURCE_DIR}/data")
-
-  message("${CESIUM_TEST_DATA_DIRS}")
+  list(APPEND FILE_PACKAGER_ARGS "--embed" "${CMAKE_SOURCE_DIR}/data")
 
   set(CESIUM_NATIVE_TESTS_DATA_OBJ ${CMAKE_CURRENT_BINARY_DIR}/cesium-native-tests-data.o)
-  add_custom_target(
-    cesium-native-tests-data
-    COMMAND ${EMSCRIPTEN_ROOT_PATH}/tools/file_packager none.data ${CESIUM_TEST_DATA_DIRS} --obj-output=${CESIUM_NATIVE_TESTS_DATA_OBJ})
   
-  add_library(cesium-native-tests-data-lib OBJECT IMPORTED)
-  add_dependencies(cesium-native-tests-data-lib cesium-native-tests-data)
-  set_property(TARGET cesium-native-tests-data-lib PROPERTY IMPORTED_OBJECTS
-    "${CESIUM_NATIVE_TESTS_DATA_OBJ}")
+  add_custom_command(
+    COMMENT "Generating test data object file"
+    OUTPUT ${CESIUM_NATIVE_TESTS_DATA_OBJ}
+    COMMAND ${EMSCRIPTEN_ROOT_PATH}/tools/file_packager none.data ${FILE_PACKAGER_ARGS} --obj-output=${CESIUM_NATIVE_TESTS_DATA_OBJ}
+    VERBATIM
+    DEPENDS ${TEST_DATA_FILES}
+  )
 
-  list(APPEND cesium_native_targets cesium-native-tests-data-lib)
+  list(APPEND cesium_native_targets "${CESIUM_NATIVE_TESTS_DATA_OBJ}")
 endif()
 
 target_sources(
