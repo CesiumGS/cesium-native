@@ -106,11 +106,12 @@ if(CESIUM_TARGET_WASM)
     VERBATIM
     DEPENDS ${TEST_DATA_FILES}
   )
-  add_custom_target(
-    cesium-native-tests-data
-    DEPENDS ${CESIUM_NATIVE_TESTS_DATA_OBJ})
-  
-  list(APPEND cesium_native_targets "${CESIUM_NATIVE_TESTS_DATA_OBJ}")
+
+  target_sources(
+    cesium-native-tests
+    PRIVATE
+      ${CESIUM_NATIVE_TESTS_DATA_OBJ}
+  )
 endif()
 
 target_sources(
