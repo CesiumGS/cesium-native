@@ -46,14 +46,6 @@ function(configure_cesium_library targetName)
         )
     endif()
 
-    if(CESIUM_TARGET_WASM)
-        # Emscripten 3.1.39 doesn't like <sys/utime.h> from tidyhtml
-        target_compile_definitions(
-            ${targetName} 
-            PUBLIC 
-                HAS_FUTIME=0)
-    endif()
-
     if (BUILD_SHARED_LIBS)
         target_compile_definitions(
             ${targetName}
