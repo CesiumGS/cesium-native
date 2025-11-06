@@ -99,7 +99,6 @@ if(CESIUM_TARGET_WASM)
   list(APPEND FILE_PACKAGER_ARGS "--embed" "${CMAKE_SOURCE_DIR}/data")
 
   set(CESIUM_NATIVE_TESTS_DATA_OBJ ${CMAKE_CURRENT_BINARY_DIR}/cesium-native-tests-data.o)
-  
   add_custom_command(
     COMMENT "Generating test data object file"
     OUTPUT ${CESIUM_NATIVE_TESTS_DATA_OBJ}
@@ -107,7 +106,10 @@ if(CESIUM_TARGET_WASM)
     VERBATIM
     DEPENDS ${TEST_DATA_FILES}
   )
-
+  add_custom_target(
+    cesium-native-tests-data
+    DEPENDS ${CESIUM_NATIVE_TESTS_DATA_OBJ})
+  
   list(APPEND cesium_native_targets "${CESIUM_NATIVE_TESTS_DATA_OBJ}")
 endif()
 
