@@ -12,7 +12,7 @@ std::vector<std::byte> readFile(const std::filesystem::path& fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);
   REQUIRE(file);
 
-  std::streampos size = file.tellg();
+  std::streamoff size = file.tellg();
   file.seekg(0, std::ios::beg);
 
   std::vector<std::byte> buffer{size_t(size)};

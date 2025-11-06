@@ -43,7 +43,7 @@ std::unique_ptr<SimpleAssetResponse> readFileUri(const std::string& uri) {
   if (!file) {
     return response(404);
   }
-  std::streampos size = file.tellg();
+  std::streamoff size = file.tellg();
   file.seekg(0, std::ios::beg);
   result.resize(size_t(size));
   file.read(reinterpret_cast<char*>(result.data()), std::streamsize(size));
