@@ -159,15 +159,6 @@ if(CESIUM_TARGET_WASM)
     # Does this make sense? No. Does it work? Somehow. ¯\_(ツ)_/¯
     set(ENV{CC} ${CMAKE_C_COMPILER})
     set(ENV{CXX} ${CMAKE_CXX_COMPILER})
-
-    # Make sure all files are compiled with -pthread and other required flags.
-    if(CESIUM_WASM64)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -sMEMORY64=1 -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -sMEMORY64=1 -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
-    else()
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fwasm-exceptions -mbulk-memory -mnontrapping-fptoint -sSUPPORT_LONGJMP=wasm -pthread")
-    endif()
 endif()
 
 if(CESIUM_USE_EZVCPKG)

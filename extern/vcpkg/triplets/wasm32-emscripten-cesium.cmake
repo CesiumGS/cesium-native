@@ -25,5 +25,5 @@ set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${EMSCRIPTEN_ROOT}/cmake/Modules/Platform/Em
 
 # These lines are the key difference between this triplet and the wasm32-emscripten that comes with vcpkg.
 # They set specific compiler and linker flags needed to use cesium-native on the web, particularly as part of Unity.
-set(_configureFlags "-pthread -msimd128 -mnontrapping-fptoint -fwasm-exceptions -sSUPPORT_LONGJMP=wasm -DSIZEOF_SIZE_T=4")
+set(_configureFlags "-pthread -msimd128 -mnontrapping-fptoint -mbulk-memory -fwasm-exceptions -sSUPPORT_LONGJMP=wasm -DSIZEOF_SIZE_T=4")
 set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_C_FLAGS=${_configureFlags} -DCMAKE_CXX_FLAGS=${_configureFlags} -DCMAKE_EXE_LINKER_FLAGS=${_configureFlags})
