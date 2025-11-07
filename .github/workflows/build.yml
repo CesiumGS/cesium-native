@@ -273,7 +273,7 @@ jobs:
       - name: Compile Debug Configuration
         run: |
           $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
-          $MEMORYPROPERTY="${{matrix.memory}}" -eq "64" ? "-DCESIUM_WASM6=ON" : ""
+          $MEMORYPROPERTY="${{matrix.memory}}" -eq "64" ? "-DCESIUM_WASM64=ON" : ""
           emcmake cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug $MEMORYPROPERTY
           cmake --build build --config Debug --parallel
       - name: Test Debug Configuration
