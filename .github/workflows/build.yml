@@ -222,9 +222,13 @@ jobs:
       fail-fast: false
       matrix:
         version: [ "3.1.39", "4.0.13" ]
-    name: Emscripten v${{matrix.version}}
+        memory: [ "32", "64" ]
+        exclude:
+          - version: "3.1.39"
+            memory: "64"
+    name: Emscripten v${{matrix.version}} ${{matrix.memory}}bit memory
     env:
-      CACHE_KEY: "emscripten-${{matrix.version}}"
+      CACHE_KEY: "emscripten-${{matrix.version}}-${{matrix.memory}}"
     runs-on: windows-2022
     steps:
       - name: Check out repository code
@@ -269,9 +273,8 @@ jobs:
       - name: Compile Debug Configuration
         run: |
           $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
-          # cp doc/cmake-presets/CMakeUserPresets.json .
-          # emcmake cmake --preset=vcpkg -DCMAKE_BUILD_TYPE:STRING=Debug -G Ninja
-          emcmake cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
+          $MEMORYPROPERTY="${{matrix.memory}}" -eq "64" ? "-DCESIUM_WASM6=ON" : ""
+          emcmake cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug $MEMORYPROPERTY
           cmake --build build --config Debug --parallel
       - name: Test Debug Configuration
         run: |
