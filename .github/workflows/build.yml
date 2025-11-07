@@ -235,6 +235,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Use NodeJS 24 for WebAssembly 64-bit memory support
+        if: ${{ matrix.memory == '64' }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: '>=24'
       - name: Checkout vcpkg 2025.02.14 packages for use with Emscripten 3.1.39
         if: ${{ matrix.version == '3.1.39' }}
         uses: actions/checkout@v4
@@ -276,11 +281,6 @@ jobs:
           $MEMORYPROPERTY="${{matrix.memory}}" -eq "64" ? "-DCESIUM_WASM64=ON" : ""
           emcmake cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug $MEMORYPROPERTY
           cmake --build build --config Debug --parallel
-      - name: Use NodeJS 24 for WebAssembly 64-bit memory support
-        if: ${{ matrix.memory == '64' }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
       - name: Test Debug Configuration
         run: |
           node build/CesiumNativeTests/cesium-native-tests.js
