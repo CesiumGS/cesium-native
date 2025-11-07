@@ -98,6 +98,10 @@ if(CESIUM_TARGET_WASM)
 
   list(APPEND FILE_PACKAGER_ARGS "--embed" "${CMAKE_SOURCE_DIR}/data")
 
+  if(CESIUM_WASM64)
+    list(APPEND FILE_PACKAGER_ARGS "--wasm64")
+  endif()
+
   set(CESIUM_NATIVE_TESTS_DATA_OBJ ${CMAKE_CURRENT_BINARY_DIR}/cesium-native-tests-data.o)
   add_custom_command(
     COMMENT "Generating test data object file"

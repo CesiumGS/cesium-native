@@ -11,6 +11,6 @@ if(CESIUM_TARGET_WASM)
 
   if (CESIUM_WASM64)
     add_compile_options(-sMEMORY64=1)
-    add_link_options(-mwasm64)
+    add_link_options(-sMEMORY64=1)
   endif()
 endif()
