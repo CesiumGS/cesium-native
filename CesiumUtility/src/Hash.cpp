@@ -72,12 +72,31 @@ inline uint64_t mix(uint64_t x) {
   return x;
 }
 
+// This function is adapted from Boost v1.86.0, `hash_mix_impl<32>` function.
+//
+// hash_mix for 32 bit size_t
+//
+// We use the "best xmxmx" implementation from
+// https://github.com/skeeto/hash-prospector/issues/19
+inline uint32_t mix(uint32_t x) {
+  uint32_t const m1 = 0x21f0aaad;
+  uint32_t const m2 = 0x735a2d97;
+
+  x ^= x >> 16;
+  x *= m1;
+  x ^= x >> 15;
+  x *= m2;
+  x ^= x >> 15;
+
+  return x;
+}
+
 } // namespace
 
 // This function is adapted from Boost's `hash_combine`.
-std::size_t Hash::combine(uint64_t first, uint64_t second) {
+size_t Hash::combine(size_t first, size_t second) {
   // This will truncate bits on 32-bit builds.
-  return static_cast<std::size_t>(mix(first + 0x9e3779b9 + second));
+  return mix(first + 0x9e3779b9 + second);
 }
 
 } // namespace CesiumUtility
