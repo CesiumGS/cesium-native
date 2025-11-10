@@ -5,7 +5,6 @@
 #include <CesiumUtility/Tracing.h>
 
 #include <ktx.h>
-#include <turbojpeg.h>
 #include <webp/decode.h>
 
 #include <algorithm>
@@ -27,6 +26,10 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_STATIC
 #include <stb_image_resize2.h>
+
+#ifndef CESIUM_DISABLE_LIBJPEG_TURBO
+#include <turbojpeg.h>
+#endif
 
 namespace CesiumGltfReader {
 
@@ -287,7 +290,7 @@ ImageReaderResult ImageDecoder::readImage(
   }
 
   {
-#ifndef __EMSCRIPTEN__ // Conflict between turbojpeg and Unity
+#ifndef CESIUM_DISABLE_LIBJPEG_TURBO
     tjhandle tjInstance = tjInitDecompress();
     int inSubsamp, inColorspace;
     if (!tjDecompressHeader3(
@@ -318,7 +321,7 @@ ImageReaderResult ImageDecoder::readImage(
         result.pImage = nullptr;
       }
     } else
-#endif // __EMSCRIPTEN__
+#endif // !CESIUM_DISABLE_LIBJPEG_TURBO
     {
       CESIUM_TRACE("Decode PNG");
       image.bytesPerChannel = 1;
@@ -352,9 +355,9 @@ ImageReaderResult ImageDecoder::readImage(
         result.errors.emplace_back(stbi_failure_reason());
       }
     }
-#ifndef __EMSCRIPTEN__
+#ifndef CESIUM_DISABLE_LIBJPEG_TURBO
     tjDestroy(tjInstance);
-#endif // __EMSCRIPTEN__
+#endif
   }
   return result;
 }

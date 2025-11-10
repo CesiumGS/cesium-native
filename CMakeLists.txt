@@ -32,6 +32,7 @@ endif()
 
 option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
 option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
+option(CESIUM_DISABLE_LIBJPEG_TURBO "Disable cesium-native's use of libjpeg-turbo. JPEG images will be decoded with STB instead." OFF)
 option(CESIUM_WASM64 "Enable 64-bit WebAssembly target" OFF)
 
 if (CESIUM_TARGET_WASM)
@@ -126,7 +127,7 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 # OpenSSL and abseil are both dependencies of s2geometry
 set(PACKAGES_PRIVATE
     abseil draco ktx[core] modp-base64 meshoptimizer openssl s2geometry
-    libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
+    sqlite3 tinyxml2 libwebp zlib-ng picosha2
     earcut-hpp libmorton zstd
 )
 
@@ -140,6 +141,10 @@ endif()
 
 if(NOT CESIUM_DISABLE_CURL)
     list(APPEND PACKAGES_PRIVATE curl)
+endif()
+
+if(NOT CESIUM_DISABLE_LIBJPEG_TURBO)
+    list(APPEND PACKAGES_PRIVATE libjpeg-turbo)
 endif()
 
 # We use cpp-httplib to host a local web server for OAuth2 authorization. That's not
@@ -373,7 +378,6 @@ find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
-find_package(libjpeg-turbo CONFIG REQUIRED)
 find_package(libmorton CONFIG REQUIRED)
 find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -391,6 +395,10 @@ endif()
 
 if(NOT CESIUM_DISABLE_CURL)
     find_package(CURL REQUIRED)
+endif()
+
+if(NOT CESIUM_DISABLE_LIBJPEG_TURBO)
+    find_package(libjpeg-turbo CONFIG REQUIRED)
 endif()
 
 if(NOT CESIUM_TARGET_WASM)
