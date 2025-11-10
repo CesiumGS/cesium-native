@@ -106,6 +106,13 @@ public:
    */
   void releaseAllReferences() noexcept;
 
+  /**
+   * @brief Tests if a credit is referenced by this referencer.
+   *
+   * @param credit The credit to test if it is referenced.
+   */
+  bool isCreditReferenced(Credit credit) const noexcept;
+
 private:
   std::shared_ptr<CreditSystem> _pCreditSystem;
   std::vector<int32_t> _references;
