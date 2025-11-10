@@ -1,5 +1,6 @@
 #include <CesiumUtility/Hash.h>
 
+#include <climits>
 #include <cstddef>
 #include <cstdint>
 
@@ -60,17 +61,21 @@ namespace CesiumUtility {
 // (https://mostlymangling.blogspot.com/2019/12/stronger-better-morer-moremur-better.html)
 namespace {
 
-inline uint64_t mix(uint64_t x) {
-  uint64_t const m = 0xe9846af9b1a615d;
+template <size_t Bits> struct hash_mix_impl;
 
-  x ^= x >> 32;
-  x *= m;
-  x ^= x >> 32;
-  x *= m;
-  x ^= x >> 28;
+template <> struct hash_mix_impl<64> {
+  inline static uint64_t fn(uint64_t x) {
+    uint64_t const m = 0xe9846af9b1a615d;
 
-  return x;
-}
+    x ^= x >> 32;
+    x *= m;
+    x ^= x >> 32;
+    x *= m;
+    x ^= x >> 28;
+
+    return x;
+  }
+};
 
 // This function is adapted from Boost v1.86.0, `hash_mix_impl<32>` function.
 //
@@ -78,25 +83,28 @@ inline uint64_t mix(uint64_t x) {
 //
 // We use the "best xmxmx" implementation from
 // https://github.com/skeeto/hash-prospector/issues/19
-inline uint32_t mix(uint32_t x) {
-  uint32_t const m1 = 0x21f0aaad;
-  uint32_t const m2 = 0x735a2d97;
+template <> struct hash_mix_impl<32> {
+  inline static uint32_t fn(uint32_t x) {
+    uint32_t const m1 = 0x21f0aaad;
+    uint32_t const m2 = 0x735a2d97;
 
-  x ^= x >> 16;
-  x *= m1;
-  x ^= x >> 15;
-  x *= m2;
-  x ^= x >> 15;
+    x ^= x >> 16;
+    x *= m1;
+    x ^= x >> 15;
+    x *= m2;
+    x ^= x >> 15;
 
-  return x;
-}
+    return x;
+  }
+};
 
 } // namespace
 
 // This function is adapted from Boost's `hash_combine`.
 size_t Hash::combine(size_t first, size_t second) {
   // This will truncate bits on 32-bit builds.
-  return mix(first + 0x9e3779b9 + second);
+  return hash_mix_impl<sizeof(size_t) * CHAR_BIT>::fn(
+      first + size_t(0x9e3779b9) + second);
 }
 
 } // namespace CesiumUtility
