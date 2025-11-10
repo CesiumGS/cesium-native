@@ -50,6 +50,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -1158,8 +1159,8 @@ void deleteBufferRange(
   // Actually remove the bytes from the buffer.
   pBuffer->byteLength -= bytesToRemove;
   pBuffer->cesium.data.erase(
-      pBuffer->cesium.data.begin() + start,
-      pBuffer->cesium.data.begin() + end);
+      pBuffer->cesium.data.begin() + ptrdiff_t(start),
+      pBuffer->cesium.data.begin() + ptrdiff_t(end));
 }
 
 } // namespace
