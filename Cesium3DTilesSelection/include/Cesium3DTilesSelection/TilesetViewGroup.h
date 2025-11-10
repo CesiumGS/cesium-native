@@ -225,6 +225,24 @@ public:
   /** @inheritdoc */
   const Tile* getNextTileToLoadInMainThread() override;
 
+  /**
+   * @brief Check if given credit is referenced in this view group's last frame.
+   *
+   * @param the credit to test.
+   * @return True if the credit is referenced in this view group's last frame.
+   */
+  bool isCreditReferenced(CesiumUtility::Credit credit) const noexcept;
+
+  /**
+   * @brief Check if given credit is referenced in raster overlays in this
+   * view group's last frame.
+   *
+   * @param the credit to test.
+   * @return True if the credit is referenced in raster overlays in this
+   * view group's last frame.
+   */
+  bool isCreditReferencedByRaster(CesiumUtility::Credit credit) const noexcept;
+
 private:
   double _weight = 1.0;
   std::vector<TileLoadTask> _mainThreadLoadQueue;
@@ -235,6 +253,8 @@ private:
   TraversalState _traversalState;
   CesiumUtility::CreditReferencer _previousFrameCredits;
   CesiumUtility::CreditReferencer _currentFrameCredits;
+  CesiumUtility::CreditReferencer _previousFrameRasterCredits;
+  CesiumUtility::CreditReferencer _currentFrameRasterCredits;
 };
 
 } // namespace Cesium3DTilesSelection
