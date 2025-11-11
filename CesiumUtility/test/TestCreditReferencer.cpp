@@ -130,7 +130,8 @@ TEST_CASE("CreditReferencer") {
       REQUIRE(pReferencer.isCreditReferenced(credit3) == false);
     }
 
-    SUBCASE("and checks credit references after duplicating via the copy constructor") {
+    SUBCASE("and checks credit references after duplicating via the copy "
+            "constructor") {
       CreditReferencer referencerCopy(*pReferencer);
       REQUIRE(referencerCopy.isCreditReferenced(credit1) == true);
       REQUIRE(referencerCopy.isCreditReferenced(credit2) == true);
@@ -145,7 +146,8 @@ TEST_CASE("CreditReferencer") {
       REQUIRE(referencerCopy.isCreditReferenced(credit3) == false);
     }
 
-    SUBCASE("and checks credit references after duplicating via the move constructor") {
+    SUBCASE("and checks credit references after duplicating via the move "
+            "constructor") {
       CreditReferencer referencerMove(std::move(*pReferencer));
       REQUIRE(referencerMove.isCreditReferenced(credit1) == true);
       REQUIRE(referencerMove.isCreditReferenced(credit2) == true);
