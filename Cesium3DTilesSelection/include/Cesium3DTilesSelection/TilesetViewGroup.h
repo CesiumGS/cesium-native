@@ -228,7 +228,7 @@ public:
   /**
    * @brief Check if given credit is referenced in this view group's last frame.
    *
-   * @param the credit to test.
+   * @param credit to test.
    * @return True if the credit is referenced in this view group's last frame.
    */
   bool isCreditReferenced(CesiumUtility::Credit credit) const noexcept;
@@ -237,7 +237,7 @@ public:
    * @brief Check if given credit is referenced in raster overlays in this
    * view group's last frame.
    *
-   * @param the credit to test.
+   * @param credit to test.
    * @return True if the credit is referenced in raster overlays in this
    * view group's last frame.
    */
