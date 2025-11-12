@@ -118,16 +118,16 @@ TEST_CASE("CreditReferencer") {
     }
 
     SUBCASE("and checks credit references") {
-      REQUIRE(pReferencer.isCreditReferenced(credit1) == true);
-      REQUIRE(pReferencer.isCreditReferenced(credit2) == true);
-      REQUIRE(pReferencer.isCreditReferenced(credit3) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit1) == true);
+      REQUIRE(pReferencer->isCreditReferenced(credit2) == true);
+      REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
     }
 
     SUBCASE("and checks credit references after releasing them") {
       pReferencer->releaseAllReferences();
-      REQUIRE(pReferencer.isCreditReferenced(credit1) == false);
-      REQUIRE(pReferencer.isCreditReferenced(credit2) == false);
-      REQUIRE(pReferencer.isCreditReferenced(credit3) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit1) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit2) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
     }
 
     SUBCASE("and checks credit references after duplicating via the copy "
@@ -138,9 +138,9 @@ TEST_CASE("CreditReferencer") {
       REQUIRE(referencerCopy.isCreditReferenced(credit3) == false);
 
       pReferencer.reset();
-      REQUIRE(pReferencer.isCreditReferenced(credit1) == false);
-      REQUIRE(pReferencer.isCreditReferenced(credit2) == false);
-      REQUIRE(pReferencer.isCreditReferenced(credit3) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit1) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit2) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
       REQUIRE(referencerCopy.isCreditReferenced(credit1) == true);
       REQUIRE(referencerCopy.isCreditReferenced(credit2) == true);
       REQUIRE(referencerCopy.isCreditReferenced(credit3) == false);
@@ -154,9 +154,9 @@ TEST_CASE("CreditReferencer") {
       REQUIRE(referencerMove.isCreditReferenced(credit3) == false);
 
       pReferencer.reset();
-      REQUIRE(pReferencer.isCreditReferenced(credit1) == false);
-      REQUIRE(pReferencer.isCreditReferenced(credit2) == false);
-      REQUIRE(pReferencer.isCreditReferenced(credit3) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit1) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit2) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
       REQUIRE(referencerMove.isCreditReferenced(credit1) == true);
       REQUIRE(referencerMove.isCreditReferenced(credit2) == true);
       REQUIRE(referencerMove.isCreditReferenced(credit3) == false);
