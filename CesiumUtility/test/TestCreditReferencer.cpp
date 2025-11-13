@@ -137,7 +137,7 @@ TEST_CASE("CreditReferencer") {
       REQUIRE(referencerCopy.isCreditReferenced(credit2) == true);
       REQUIRE(referencerCopy.isCreditReferenced(credit3) == false);
 
-      pReferencer.reset();
+      pReferencer->releaseAllReferences();
       REQUIRE(pReferencer->isCreditReferenced(credit1) == false);
       REQUIRE(pReferencer->isCreditReferenced(credit2) == false);
       REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
@@ -153,7 +153,7 @@ TEST_CASE("CreditReferencer") {
       REQUIRE(referencerMove.isCreditReferenced(credit2) == true);
       REQUIRE(referencerMove.isCreditReferenced(credit3) == false);
 
-      pReferencer.reset();
+      pReferencer->releaseAllReferences();
       REQUIRE(pReferencer->isCreditReferenced(credit1) == false);
       REQUIRE(pReferencer->isCreditReferenced(credit2) == false);
       REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
