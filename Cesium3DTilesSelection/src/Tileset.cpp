@@ -186,6 +186,11 @@ TilesetSharedAssetSystem& Tileset::getSharedAssetSystem() noexcept {
   return *this->_pTilesetContentManager->getSharedAssetSystem();
 }
 
+TilesetContentManager& Tileset::getTilesetContentManager() noexcept {
+  return *this->_pTilesetContentManager;
+}
+
+
 const TilesetSharedAssetSystem& Tileset::getSharedAssetSystem() const noexcept {
   return *this->_pTilesetContentManager->getSharedAssetSystem();
 }

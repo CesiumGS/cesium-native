@@ -211,6 +211,8 @@ public:
   /** @copydoc Tileset::getSharedAssetSystem() */
   const TilesetSharedAssetSystem& getSharedAssetSystem() const noexcept;
 
+  TilesetContentManager& getTilesetContentManager() noexcept;
+
   /**
    * @brief Updates this view but waits for all tiles that meet sse to finish
    * loading and ready to be rendered before returning the function. This method
