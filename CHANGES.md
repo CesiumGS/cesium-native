@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.54.0 - 2025-11-17
+
+##### Additions :tada:
+
+- Cesium Native can now be built with Emscripten.
+
 ### v0.53.0 - 2025-11-03
 
 ##### Breaking Changes :mega:
