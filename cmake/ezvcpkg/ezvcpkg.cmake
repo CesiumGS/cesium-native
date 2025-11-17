@@ -161,7 +161,7 @@ macro(EZVCPKG_BOOTSTRAP)
 endmacro()
 
 macro(EZVCPKG_BUILD)
-    set(INSTALL_COMMAND "${EZVCPKG_EXE}" --vcpkg-root "${EZVCPKG_DIR}" install --triplet ${VCPKG_TRIPLET})
+    set(INSTALL_COMMAND "${EZVCPKG_EXE}" --allow-unsupported --vcpkg-root "${EZVCPKG_DIR}" install --triplet ${VCPKG_TRIPLET})
 
     if (DEFINED VCPKG_OVERLAY_PORTS)
         if (CMAKE_HOST_WIN32)

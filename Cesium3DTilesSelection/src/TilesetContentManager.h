@@ -180,6 +180,9 @@ public:
   void markTilesetDestroyed() noexcept;
   void releaseReference() const;
 
+  TilesetExternals& getExternals() { return this->_externals; }
+  const TilesetExternals& getExternals() const { return this->_externals; }
+
 private:
   static void setTileContent(
       Tile& tile,
@@ -201,12 +204,19 @@ private:
 
   void notifyTileUnloading(const Tile* pTile) noexcept;
 
+  void reapplyGltfModifier(
+      Tile& tile,
+      const TilesetOptions& tilesetOptions,
+      TileRenderContent* pRenderContent) noexcept;
+
   template <class TilesetContentLoaderType>
   void propagateTilesetContentLoaderResult(
       TilesetLoadType type,
       const std::function<void(const TilesetLoadFailureDetails&)>&
           loadErrorCallback,
       TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
+
+  CesiumAsync::Future<void> registerGltfModifier(const Tile* pRootTile);
 
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;

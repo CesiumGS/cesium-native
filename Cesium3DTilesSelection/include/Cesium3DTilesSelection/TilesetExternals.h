@@ -18,7 +18,9 @@ class CreditSystem;
 }
 
 namespace Cesium3DTilesSelection {
+
 class IPrepareRendererResources;
+class GltfModifier;
 
 /**
  * @brief External interfaces used by a {@link Tileset}.
@@ -76,6 +78,14 @@ public:
    */
   CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> pSharedAssetSystem =
       TilesetSharedAssetSystem::getDefault();
+
+  /**
+   * Optional user-controlled tile loading post-processing stage that can modify
+   * the glTF meshes (e.g., split or merge them).
+   *
+   * @see Cesium3DTilesSelection::GltfModifier
+   */
+  std::shared_ptr<GltfModifier> pGltfModifier = {};
 };
 
 } // namespace Cesium3DTilesSelection

@@ -591,7 +591,7 @@ RasterOverlayUtilities::upsampleGltfForRasterOverlays(
       // We're assuming here that nothing references primitives by index, so we
       // can remove them without any drama.
       if (!keep) {
-        mesh.primitives.erase(mesh.primitives.begin() + int64_t(i));
+        mesh.primitives.erase(mesh.primitives.begin() + ptrdiff_t(i));
         --i;
       }
       containsPrimitives |= !mesh.primitives.empty();
