@@ -527,8 +527,10 @@ GoogleMapTilesRasterOverlayTileProvider::
       _availableTiles(createTilingScheme(pOwner), maximumLevel),
       _availableAvailability(createTilingScheme(pOwner), maximumLevel) {
   if (pCreditSystem && showLogo) {
-    this->_googleCredit =
-        pCreditSystem->createCredit(GOOGLE_MAPS_LOGO_HTML, true);
+    this->_googleCredit = pCreditSystem->createCredit(
+        this->getCreditSource(),
+        GOOGLE_MAPS_LOGO_HTML,
+        true);
   }
 }
 
@@ -973,6 +975,7 @@ Future<void> GoogleMapTilesRasterOverlayTileProvider::loadCredits() {
 
         // Create a single credit from this giant string.
         thiz->_credits = thiz->getCreditSystem()->createCredit(
+            thiz->getCreditSource(),
             joined,
             thiz->_showCreditsOnScreen);
       });
