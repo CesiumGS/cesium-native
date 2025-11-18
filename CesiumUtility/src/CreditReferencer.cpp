@@ -82,4 +82,15 @@ void CreditReferencer::releaseAllReferences() noexcept {
   this->_references.clear();
 }
 
+bool CreditReferencer::isCreditReferenced(Credit credit) const noexcept {
+  if (!this->_pCreditSystem)
+    return false;
+
+  if (this->_references.size() <= credit.id) {
+    return false;
+  }
+
+  return this->_references[credit.id] > 0;
+}
+
 } // namespace CesiumUtility
