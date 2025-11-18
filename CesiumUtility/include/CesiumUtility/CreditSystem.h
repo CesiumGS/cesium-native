@@ -171,16 +171,22 @@ public:
    * zero.
    *
    * @param credit The credit to reference.
+   * @returns `true` if the credit was valid and the reference was added.
+   * `false` if the credit was created by a \ref CreditSource that has been
+   * destroyed and so the reference could not be added.
    */
-  void addCreditReference(Credit credit);
+  bool addCreditReference(Credit credit);
 
   /**
    * @brief Removes a reference from a credit, decrementing its reference count.
    * When the reference count goes to zero, this credit will no longer be shown.
    *
    * @param credit The credit from which to remove a reference.
+   * @returns `true` if the credit was valid and the reference was removed.
+   * `false` if the credit was created by a \ref CreditSource that has been
+   * destroyed and so the reference could not be removed.
    */
-  void removeCreditReference(Credit credit);
+  bool removeCreditReference(Credit credit);
 
   /**
    * @brief Gets a snapshot of the credits. The returned instance is only valid
@@ -202,8 +208,12 @@ public:
   const CreditSource& getDefaultCreditSource() const noexcept;
 
 private:
-  void addBulkReferences(const std::vector<int32_t>& references) noexcept;
-  void releaseBulkReferences(const std::vector<int32_t>& references) noexcept;
+  void addBulkReferences(
+      const std::vector<int32_t>& references,
+      const std::vector<int32_t>& generations) noexcept;
+  void releaseBulkReferences(
+      const std::vector<int32_t>& references,
+      const std::vector<int32_t>& generations) noexcept;
 
   void createCreditSource(CreditSource& creditSource) noexcept;
   void destroyCreditSource(CreditSource& creditSource) noexcept;

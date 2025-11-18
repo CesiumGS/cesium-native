@@ -119,13 +119,13 @@ CreditSystem::getCreditSource(Credit credit) const noexcept {
   return nullptr;
 }
 
-void CreditSystem::addCreditReference(Credit credit) {
+bool CreditSystem::addCreditReference(Credit credit) {
   CreditRecord& record = this->_credits[credit._id];
 
   // If the Credit is from a previous generation (a deleted credit source),
   // ignore it.
   if (credit._generation != record.generation) {
-    return;
+    return false;
   }
 
   ++record.referenceCount;
@@ -142,14 +142,16 @@ void CreditSystem::addCreditReference(Credit credit) {
             }),
         this->_creditsToNoLongerShowThisSnapshot.end());
   }
+
+  return true;
 }
 
-void CreditSystem::removeCreditReference(Credit credit) {
+bool CreditSystem::removeCreditReference(Credit credit) {
   CreditRecord& record = this->_credits[credit._id];
   // If the Credit is from a previous generation (a deleted credit source),
   // ignore it.
   if (credit._generation != record.generation) {
-    return;
+    return false;
   }
 
   CESIUM_ASSERT(record.referenceCount > 0);
@@ -160,6 +162,8 @@ void CreditSystem::removeCreditReference(Credit credit) {
   if (record.shownLastSnapshot && record.referenceCount == 0) {
     this->_creditsToNoLongerShowThisSnapshot.emplace_back(credit);
   }
+
+  return true;
 }
 
 const CreditsSnapshot& CreditSystem::getSnapshot() noexcept {
@@ -204,15 +208,19 @@ const CreditSource& CreditSystem::getDefaultCreditSource() const noexcept {
 }
 
 void CreditSystem::addBulkReferences(
-    const std::vector<int32_t>& references) noexcept {
+    const std::vector<int32_t>& references,
+    const std::vector<int32_t>& generations) noexcept {
   for (size_t i = 0; i < references.size(); ++i) {
     CreditRecord& record = this->_credits[i];
+    if (record.generation != generations[i]) {
+      // The generations do not match, so these references are to a credit
+      // created by a CreditSource that has since been destroyed. Ignore them.
+      continue;
+    }
+
     int32_t referencesToAdd = references[i];
 
     record.referenceCount += referencesToAdd;
-
-    // TODO: this method needs to receive a list of generations, too, and only
-    // adjust reference counts when the generations match.
 
     // If this is the first reference to this credit, and it was shown last
     // frame, make sure this credit doesn't exist in
@@ -231,9 +239,16 @@ void CreditSystem::addBulkReferences(
 }
 
 void CreditSystem::releaseBulkReferences(
-    const std::vector<int32_t>& references) noexcept {
+    const std::vector<int32_t>& references,
+    const std::vector<int32_t>& generations) noexcept {
   for (size_t i = 0; i < references.size(); ++i) {
     CreditRecord& record = this->_credits[i];
+    if (record.generation != generations[i]) {
+      // The generations do not match, so these references are to a credit
+      // created by a CreditSource that has since been destroyed. Ignore them.
+      continue;
+    }
+
     int32_t referencesToRemove = references[i];
 
     CESIUM_ASSERT(record.referenceCount >= referencesToRemove);
