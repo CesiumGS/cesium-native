@@ -46,7 +46,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
       _credit(),
       _projection(projection),
       _coverageRectangle(coverageRectangle),
-      _destructionCompleteDetails() {}
+      _destructionCompleteDetails(),
+      _creditSource(externals.pCreditSystem) {}
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
@@ -69,7 +70,7 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
               .pLogger = pLogger},
           projection,
           coverageRectangle) {
-  this->_credit = credit;
+  this->setCredit(credit);
 }
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
@@ -139,9 +140,30 @@ RasterOverlayTileProvider::getCoverageRectangle() const noexcept {
   return this->_coverageRectangle;
 }
 
+const CesiumUtility::CreditSource&
+RasterOverlayTileProvider::getCreditSource() const noexcept {
+  return this->_creditSource;
+}
+
 const std::optional<CesiumUtility::Credit>&
 RasterOverlayTileProvider::getCredit() const noexcept {
   return _credit;
+}
+
+void RasterOverlayTileProvider::setCredit(
+    const std::optional<Credit>& maybeCredit) noexcept {
+  this->_credit = maybeCredit;
+
+  // Reassociate the passed-in credit with our CreditSource. This is hacky, but
+  // hey, this whole thing is deprecated.
+  const std::shared_ptr<CreditSystem>& pCreditSystem = this->getCreditSystem();
+  if (maybeCredit && pCreditSystem &&
+      pCreditSystem->getCreditSource(*maybeCredit) != &this->_creditSource) {
+    const std::string& html = pCreditSystem->getHtml(*maybeCredit);
+    bool showOnScreen = pCreditSystem->shouldBeShownOnScreen(*maybeCredit);
+    this->_credit =
+        pCreditSystem->createCredit(this->_creditSource, html, showOnScreen);
+  }
 }
 
 void RasterOverlayTileProvider::addCredits(

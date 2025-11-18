@@ -137,13 +137,8 @@ class AzureMapsRasterOverlayTileProvider final
 public:
   AzureMapsRasterOverlayTileProvider(
       const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      std::optional<CesiumUtility::Credit> credit,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const RasterOverlayExternals& externals,
+      const std::string& credit,
       const std::string& baseUrl,
       const std::string& apiVersion,
       const std::string& tilesetId,
@@ -179,9 +174,7 @@ private:
   std::string _tilesetId;
   std::string _key;
   std::string _tileEndpoint;
-  std::optional<Credit> _azureCredit;
   std::vector<Credit> _credits;
-  bool _showCreditsOnScreen;
 };
 
 AzureMapsRasterOverlay::AzureMapsRasterOverlay(
@@ -334,23 +327,22 @@ AzureMapsRasterOverlay::createTileProvider(
           "Azure Maps returned no valid endpoints for the given tilesetId."});
     }
 
-    std::optional<Credit> topLevelCredit;
+    std::string topLevelCredit;
 
     it = responseObject.find("attribution");
     if (it != responseObject.end() && it->second.isString()) {
-      topLevelCredit = pCreditSystem->createCredit(
-          it->second.getString(),
-          pOwner->getOptions().showCreditsOnScreen);
+      topLevelCredit = it->second.getString();
     }
 
     auto* pProvider = new AzureMapsRasterOverlayTileProvider(
         pOwner,
-        asyncSystem,
-        pAssetAccessor,
-        pCreditSystem,
+        RasterOverlayExternals{
+            .pAssetAccessor = pAssetAccessor,
+            .pPrepareRendererResources = pPrepareRendererResources,
+            .asyncSystem = asyncSystem,
+            .pCreditSystem = pCreditSystem,
+            .pLogger = pLogger},
         topLevelCredit,
-        pPrepareRendererResources,
-        pLogger,
         sessionParameters.apiBaseUrl,
         sessionParameters.apiVersion,
         sessionParameters.tilesetId,
@@ -488,13 +480,8 @@ CesiumAsync::Future<rapidjson::Document> fetchAttributionData(
 
 AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
     const IntrusivePointer<const RasterOverlay>& pOwner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
-    std::optional<CesiumUtility::Credit> credit,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
+    const RasterOverlayExternals& externals,
+    const std::string& credit,
     const std::string& baseUrl,
     const std::string& apiVersion,
     const std::string& tilesetId,
@@ -506,12 +493,7 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
     bool showLogo)
     : QuadtreeRasterOverlayTileProvider(
           pOwner,
-          asyncSystem,
-          pAssetAccessor,
-          pCreditSystem,
-          credit,
-          pPrepareRendererResources,
-          pLogger,
+          externals,
           WebMercatorProjection(pOwner->getOptions().ellipsoid),
           createTilingScheme(pOwner),
           createRectangle(pOwner),
@@ -524,12 +506,19 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
       _tilesetId(tilesetId),
       _key(key),
       _tileEndpoint(tileEndpoint),
-      _azureCredit(),
-      _credits(),
-      _showCreditsOnScreen(pOwner->getOptions().showCreditsOnScreen) {
-  if (pCreditSystem && showLogo) {
-    this->_azureCredit =
-        pCreditSystem->createCredit(AZURE_MAPS_LOGO_HTML, true);
+      _credits() {
+  if (externals.pCreditSystem) {
+    this->_credits.emplace_back(externals.pCreditSystem->createCredit(
+        this->getCreditSource(),
+        credit,
+        pOwner->getOptions().showCreditsOnScreen));
+
+    if (showLogo) {
+      this->_credits.emplace_back(externals.pCreditSystem->createCredit(
+          this->getCreditSource(),
+          AZURE_MAPS_LOGO_HTML,
+          true));
+    }
   }
 }
 
@@ -610,8 +599,9 @@ Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
 
             for (const std::string& credit : uniqueCredits) {
               thiz->_credits.emplace_back(thiz->getCreditSystem()->createCredit(
+                  thiz->getCreditSource(),
                   credit,
-                  thiz->_showCreditsOnScreen));
+                  thiz->getOwner().getOptions().showCreditsOnScreen));
             }
           });
 }
@@ -619,10 +609,6 @@ Future<void> AzureMapsRasterOverlayTileProvider::loadCredits() {
 void AzureMapsRasterOverlayTileProvider::addCredits(
     CesiumUtility::CreditReferencer& creditReferencer) noexcept {
   QuadtreeRasterOverlayTileProvider::addCredits(creditReferencer);
-
-  if (this->_azureCredit) {
-    creditReferencer.addCreditReference(*this->_azureCredit);
-  }
 
   for (const Credit& credit : this->_credits) {
     creditReferencer.addCreditReference(credit);

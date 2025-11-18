@@ -233,12 +233,25 @@ public:
   const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept;
 
   /**
-   * @brief Get the per-TileProvider {@link CesiumUtility::Credit} if one exists.
-   * @deprecated Implement {@link addCredits} instead.
+   * @brief Gets the \ref CesiumUtility::CreditSource that identifies this
+   * raster overlay's credits with the \ref CesiumUtility::CreditSystem.
+   */
+  const CesiumUtility::CreditSource& getCreditSource() const noexcept;
+
+  /**
+   * @brief Get the per-TileProvider \ref CesiumUtility::Credit if one exists.
+   * @deprecated Implement \ref addCredits instead.
    */
   [[deprecated(
       "Use addCredits instead.")]] const std::optional<CesiumUtility::Credit>&
   getCredit() const noexcept;
+
+  /**
+   * @brief Set the per-TileProvider \ref CesiumUtility::Credit.
+   * @deprecated Implement \ref addCredits instead.
+   */
+  void
+  setCredit(const std::optional<CesiumUtility::Credit>& maybeCredit) noexcept;
 
   /**
    * @brief Loads the image for a tile.
@@ -290,5 +303,6 @@ private:
   CesiumGeospatial::Projection _projection;
   CesiumGeometry::Rectangle _coverageRectangle;
   std::optional<DestructionCompleteDetails> _destructionCompleteDetails;
+  CesiumUtility::CreditSource _creditSource;
 };
 } // namespace CesiumRasterOverlays

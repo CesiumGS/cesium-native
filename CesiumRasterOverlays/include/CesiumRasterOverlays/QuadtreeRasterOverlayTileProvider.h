@@ -30,8 +30,18 @@ namespace CesiumRasterOverlays {
  */
 class CESIUMRASTEROVERLAYS_API QuadtreeRasterOverlayTileProvider
     : public RasterOverlayTileProvider {
-
 public:
+  QuadtreeRasterOverlayTileProvider(
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
+      const RasterOverlayExternals& externals,
+      const CesiumGeospatial::Projection& projection,
+      const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
+      const CesiumGeometry::Rectangle& coverageRectangle,
+      uint32_t minimumLevel,
+      uint32_t maximumLevel,
+      uint32_t imageWidth,
+      uint32_t imageHeight) noexcept;
+
   /**
    * @brief Creates a new instance.
    *

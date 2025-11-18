@@ -57,7 +57,7 @@ public:
   /**
    * @brief Constructs a new credit source associated with a given credit
    * system.
-   * 
+   *
    * @param creditSystem The credit system to associate with this source.
    */
   CreditSource(CreditSystem& creditSystem) noexcept;

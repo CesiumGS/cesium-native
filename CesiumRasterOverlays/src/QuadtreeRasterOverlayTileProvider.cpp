@@ -52,14 +52,8 @@ constexpr double pixelTolerance = 0.01;
 namespace CesiumRasterOverlays {
 
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
-    const IntrusivePointer<const RasterOverlay>& pOwner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
-    std::optional<Credit> credit,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
+    const RasterOverlayExternals& externals,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
     const CesiumGeometry::Rectangle& coverageRectangle,
@@ -69,12 +63,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     uint32_t imageHeight) noexcept
     : RasterOverlayTileProvider(
           pOwner,
-          asyncSystem,
-          pAssetAccessor,
-          pCreditSystem,
-          credit,
-          pPrepareRendererResources,
-          pLogger,
+          externals,
           projection,
           coverageRectangle),
       _minimumLevel(minimumLevel),
@@ -163,6 +152,40 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
                   }
                 });
       }));
+}
+
+QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
+    const IntrusivePointer<const RasterOverlay>& pOwner,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
+    std::optional<Credit> credit,
+    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
+        pPrepareRendererResources,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const CesiumGeospatial::Projection& projection,
+    const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
+    const CesiumGeometry::Rectangle& coverageRectangle,
+    uint32_t minimumLevel,
+    uint32_t maximumLevel,
+    uint32_t imageWidth,
+    uint32_t imageHeight) noexcept
+    : QuadtreeRasterOverlayTileProvider(
+          pOwner,
+          RasterOverlayExternals{
+              .pAssetAccessor = pAssetAccessor,
+              .pPrepareRendererResources = pPrepareRendererResources,
+              .asyncSystem = asyncSystem,
+              .pCreditSystem = pCreditSystem,
+              .pLogger = pLogger},
+          projection,
+          tilingScheme,
+          coverageRectangle,
+          minimumLevel,
+          maximumLevel,
+          imageWidth,
+          imageHeight) {
+  this->setCredit(credit);
 }
 
 uint32_t QuadtreeRasterOverlayTileProvider::computeLevelFromTargetScreenPixels(
