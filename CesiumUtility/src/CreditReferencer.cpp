@@ -65,11 +65,11 @@ void CreditReferencer::addCreditReference(Credit credit) noexcept {
   if (!this->_pCreditSystem)
     return;
 
-  if (this->_references.size() <= credit.id) {
-    this->_references.resize(credit.id + 1);
+  if (this->_references.size() <= credit._id) {
+    this->_references.resize(credit._id + 1);
   }
 
-  ++this->_references[credit.id];
+  ++this->_references[credit._id];
   this->_pCreditSystem->addCreditReference(credit);
 }
 
@@ -86,11 +86,11 @@ bool CreditReferencer::isCreditReferenced(Credit credit) const noexcept {
   if (!this->_pCreditSystem)
     return false;
 
-  if (this->_references.size() <= credit.id) {
+  if (this->_references.size() <= credit._id) {
     return false;
   }
 
-  return this->_references[credit.id] > 0;
+  return this->_references[credit._id] > 0;
 }
 
 } // namespace CesiumUtility

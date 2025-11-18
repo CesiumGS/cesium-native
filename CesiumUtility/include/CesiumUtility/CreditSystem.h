@@ -1,14 +1,19 @@
 #pragma once
 
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Library.h>
+#include <CesiumUtility/ReferenceCounted.h>
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace CesiumUtility {
+
+class CreditSystem;
 
 /**
  * @brief Represents an HTML string that should be shown on screen to attribute
@@ -21,16 +26,43 @@ public:
    * @brief Returns `true` if two credit objects have the same ID.
    */
   bool operator==(const Credit& rhs) const noexcept {
-    return this->id == rhs.id;
+    return this->_id == rhs._id && this->_generation == rhs._generation;
   }
 
 private:
-  size_t id;
+  int32_t _id;
+  int32_t _generation;
 
-  Credit(size_t id_) noexcept : id(id_) {}
+  Credit(int32_t id, int32_t generation) noexcept
+      : _id(id), _generation(generation) {}
 
   friend class CreditSystem;
   friend class CreditReferencer;
+};
+
+/**
+ * @brief Represents a source of credits, such as a tileset or raster overlay,
+ * provided to a \ref CreditSystem.
+ *
+ * While the \ref CreditSystem does not directly map credit source instances to
+ * tilesets or raster overlays (or vice-versa), a tileset or raster overlay can
+ * be queried for its credit source instance and that instance can be compared
+ * against one known to the credit system.
+ *
+ * When the last reference to a credit source is released, all credits
+ * associated with that source are invalidated as well.
+ */
+class CESIUMUTILITY_API CreditSource {
+public:
+  CreditSource(CreditSystem& creditSystem) noexcept;
+  ~CreditSource() noexcept;
+
+private:
+  void notifyCreditSystemDestroyed() noexcept;
+
+  CreditSystem* _pCreditSystem;
+
+  friend class CreditSystem;
 };
 
 /**
@@ -56,19 +88,57 @@ struct CreditsSnapshot {
  */
 class CESIUMUTILITY_API CreditSystem final {
 public:
+  ~CreditSystem() noexcept;
+
   /**
-   * @brief Inserts a credit string
+   * @brief Inserts a credit string.
+   *
+   * @param pSource The source of the credit. This should be an instance created
+   * and owned by a tileset, raster overlay, or other data source.
+   * @param html The HTML string for the credit.
+   * @param showOnScreen Whether or not the credit should be shown on screen.
+   * Credits not shown on the screen should be shown in a separate popup window.
+   * @return If this string already exists, returns a Credit handle to the
+   * existing entry. Otherwise returns a Credit handle to a new entry.
+   */
+  Credit createCredit(
+      const CreditSource& source,
+      std::string&& html,
+      bool showOnScreen = false);
+
+  /**
+   * @brief Inserts a credit string.
+   *
+   * @param pSource The source of the credit. This should be an instance created
+   * and owned by a tileset, raster overlay, or other data source.
+   * @param html The HTML string for the credit.
+   * @param showOnScreen Whether or not the credit should be shown on screen.
+   * Credits not shown on the screen should be shown in a separate popup window.
+   * @return If this string already exists, returns a Credit handle to the
+   * existing entry. Otherwise returns a Credit handle to a new entry.
+   */
+  Credit createCredit(
+      const CreditSource& source,
+      const std::string& html,
+      bool showOnScreen = false);
+
+  /**
+   * @brief Inserts a credit string.
    *
    * @return If this string already exists, returns a Credit handle to the
    * existing entry. Otherwise returns a Credit handle to a new entry.
+   *
+   * @deprecated Use the overload that takes a CreditSource pointer.
    */
   Credit createCredit(std::string&& html, bool showOnScreen = false);
 
   /**
-   * @brief Inserts a credit string
+   * @brief Inserts a credit string.
    *
    * @return If this string already exists, returns a Credit handle to the
    * existing entry. Otherwise returns a Credit handle to a new entry.
+   *
+   * @deprecated Use the overload that takes a CreditSource pointer.
    */
   Credit createCredit(const std::string& html, bool showOnScreen = false);
 
@@ -83,9 +153,17 @@ public:
   void setShowOnScreen(Credit credit, bool showOnScreen) noexcept;
 
   /**
-   * @brief Get the HTML string for this credit
+   * @brief Get the HTML string for this credit.
    */
   const std::string& getHtml(Credit credit) const noexcept;
+
+  /**
+   * @brief Gets the source of this credit.
+   *
+   * @return The source of this credit, or nullptr if the credit is invalid or
+   * was created by a \ref CreditSource that has been destroyed.
+   */
+  const CreditSource* getCreditSource(Credit credit) const noexcept;
 
   /**
    * @brief Adds a reference to a credit, incrementing its reference count. The
@@ -114,24 +192,46 @@ public:
    */
   const CreditsSnapshot& getSnapshot() noexcept;
 
+  /**
+   * @brief Gets the default credit source used when no other source is
+   * specified.
+   *
+   * @deprecated Instead of using the default, create a CreditSource instance
+   * for each tileset, raster overlay, or other data source.
+   */
+  const CreditSource& getDefaultCreditSource() const noexcept;
+
 private:
   void addBulkReferences(const std::vector<int32_t>& references) noexcept;
   void releaseBulkReferences(const std::vector<int32_t>& references) noexcept;
+
+  void createCreditSource(CreditSource& creditSource) noexcept;
+  void destroyCreditSource(CreditSource& creditSource) noexcept;
 
   const std::string INVALID_CREDIT_MESSAGE =
       "Error: Invalid Credit, cannot get HTML string.";
 
   struct CreditRecord {
-    std::string html;
-    bool showOnScreen;
-    int32_t referenceCount;
-    bool shownLastSnapshot;
+    std::string html{};
+    bool showOnScreen{false};
+    int32_t referenceCount{0};
+    bool shownLastSnapshot{0};
+    int32_t generation{0};
+    const CreditSource* pSource{nullptr};
   };
 
+  std::vector<CreditSource*> _creditSources;
   std::vector<CreditRecord> _credits;
   std::vector<Credit> _creditsToNoLongerShowThisSnapshot;
   CreditsSnapshot _snapshot;
 
+  // Each entry in this vector is an index into _credits that is unused and can
+  // be reused for a new credit.
+  std::vector<size_t> _unusedCreditRecords;
+
+  CreditSource _defaultCreditSource{*this};
+
   friend class CreditReferencer;
+  friend class CreditSource;
 };
 } // namespace CesiumUtility
