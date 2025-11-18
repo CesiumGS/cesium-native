@@ -142,6 +142,12 @@ public:
   void setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept;
 
   /**
+   * @brief Gets the \ref CesiumUtility::CreditSource that identifies this
+   * tileset's credits with the \ref CesiumUtility::CreditSystem.
+   */
+  const CesiumUtility::CreditSource& getCreditSource() const noexcept;
+
+  /**
    * @brief Gets the {@link TilesetExternals} that summarize the external
    * interfaces used by this tileset.
    */

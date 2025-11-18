@@ -54,7 +54,24 @@ private:
  */
 class CESIUMUTILITY_API CreditSource {
 public:
+  /**
+   * @brief Constructs a new credit source associated with a given credit
+   * system.
+   * 
+   * @param creditSystem The credit system to associate with this source.
+   */
   CreditSource(CreditSystem& creditSystem) noexcept;
+
+  /**
+   * @brief Constructs a new credit source associated with a given credit
+   * system.
+   *
+   * @param pCreditSystem The credit system to associate with this source. This
+   * is allowed to be nullptr in order to enable simpler client code when
+   * working with an optional credit system.
+   */
+  CreditSource(const std::shared_ptr<CreditSystem>& pCreditSystem) noexcept;
+
   ~CreditSource() noexcept;
 
 private:

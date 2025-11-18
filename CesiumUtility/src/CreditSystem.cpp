@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -13,6 +14,14 @@ namespace CesiumUtility {
 CreditSource::CreditSource(CreditSystem& creditSystem) noexcept
     : _pCreditSystem(&creditSystem) {
   this->_pCreditSystem->createCreditSource(*this);
+}
+
+CreditSource::CreditSource(
+    const std::shared_ptr<CreditSystem>& pCreditSystem) noexcept
+    : _pCreditSystem(pCreditSystem.get()) {
+  if (this->_pCreditSystem) {
+    this->_pCreditSystem->createCreditSource(*this);
+  }
 }
 
 CreditSource::~CreditSource() noexcept {
