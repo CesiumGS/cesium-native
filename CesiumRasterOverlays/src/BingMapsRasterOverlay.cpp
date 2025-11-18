@@ -45,6 +45,11 @@ struct CoverageArea {
   uint32_t zoomMax;
 };
 
+struct CreditStringAndCoverageAreas {
+  std::string credit;
+  std::vector<CoverageArea> coverageAreas;
+};
+
 struct CreditAndCoverageAreas {
   Credit credit;
   std::vector<CoverageArea> coverageAreas;
@@ -67,7 +72,9 @@ const std::string BingMapsStyle::CANVAS_GRAY = "CanvasGray";
 const std::string BingMapsStyle::ORDNANCE_SURVEY = "OrdnanceSurvey";
 const std::string BingMapsStyle::COLLINS_BART = "CollinsBart";
 
-const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
+namespace {
+
+const std::string BING_LOGO_HTML =
     "<a href=\"http://www.bing.com\"><img "
     "src=\"data:image/"
     "png;base64,iVBORw0KGgoAAAANSUhEUgAAAFgAAAATCAMAAAAj1DqpAAAAq1BMVEUAAAD////"
@@ -93,7 +100,6 @@ const std::string BingMapsRasterOverlay::BING_LOGO_HTML =
     "OXfbBoeDOo8wHpy8lKpvoafRoG6YgXFYKP4GSj63gtwWfhHzl7Skq9JTshAAAAAElFTkSuQmCC"
     "\" title=\"Bing Imagery\"/></a>";
 
-namespace {
 Rectangle createRectangle(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
   return WebMercatorProjection::computeMaximumProjectedRectangle(
@@ -110,14 +116,8 @@ class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
       const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      Credit bingCredit,
-      const std::vector<CreditAndCoverageAreas>& perTileCredits,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const RasterOverlayExternals& externals,
+      const std::vector<CreditStringAndCoverageAreas>& perTileCredits,
       const std::string& baseUrl,
       const std::string& urlTemplate,
       const std::vector<std::string>& subdomains,
@@ -128,12 +128,7 @@ public:
       const std::string& culture)
       : QuadtreeRasterOverlayTileProvider(
             pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            pCreditSystem,
-            bingCredit,
-            pPrepareRendererResources,
-            pLogger,
+            externals,
             WebMercatorProjection(pOwner->getOptions().ellipsoid),
             createTilingScheme(pOwner),
             createRectangle(pOwner),
@@ -141,11 +136,29 @@ public:
             maximumLevel,
             width,
             height),
-        _credits(perTileCredits),
+        _credits(),
         _baseUrl(baseUrl),
         _urlTemplate(urlTemplate),
         _culture(culture),
-        _subdomains(subdomains) {}
+        _subdomains(subdomains) {
+    if (externals.pCreditSystem) {
+      this->setCredit(externals.pCreditSystem->createCredit(
+          this->getCreditSource(),
+          BING_LOGO_HTML,
+          pOwner->getOptions().showCreditsOnScreen));
+
+      this->_credits.reserve(perTileCredits.size());
+      for (const CreditStringAndCoverageAreas& creditStringAndCoverageAreas :
+           perTileCredits) {
+        this->_credits.emplace_back(CreditAndCoverageAreas{
+            externals.pCreditSystem->createCredit(
+                this->getCreditSource(),
+                creditStringAndCoverageAreas.credit,
+                pOwner->getOptions().showCreditsOnScreen),
+            creditStringAndCoverageAreas.coverageAreas});
+      }
+    }
+  }
 
   virtual ~BingMapsTileProvider() = default;
 
@@ -287,19 +300,11 @@ namespace {
  * \endcode
  *
  * @param pResource The JSON value for the resource
- * @param pCreditSystem The `CreditSystem` that will create one credit for
- * each attribution
- * @return The `CreditAndCoverageAreas` objects that have been parsed, or an
- * empty vector if pCreditSystem is nullptr.
+ * @return The `CreditStringAndCoverageAreas` objects that have been parsed.
  */
-std::vector<CreditAndCoverageAreas> collectCredits(
-    const rapidjson::Value* pResource,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
-    bool showCreditsOnScreen) {
-  std::vector<CreditAndCoverageAreas> credits;
-  if (!pCreditSystem) {
-    return credits;
-  }
+std::vector<CreditStringAndCoverageAreas>
+collectCredits(const rapidjson::Value* pResource) {
+  std::vector<CreditStringAndCoverageAreas> credits;
 
   const auto attributionsIt = pResource->FindMember("imageryProviders");
   if (attributionsIt != pResource->MemberEnd() &&
@@ -346,11 +351,9 @@ std::vector<CreditAndCoverageAreas> collectCredits(
       const auto creditString = attribution.FindMember("attribution");
       if (creditString != attribution.MemberEnd() &&
           creditString->value.IsString()) {
-        credits.push_back(
-            {pCreditSystem->createCredit(
-                 creditString->value.GetString(),
-                 showCreditsOnScreen),
-             coverageAreas});
+        credits.emplace_back(CreditStringAndCoverageAreas{
+            creditString->value.GetString(),
+            coverageAreas});
       }
     }
   }
@@ -386,13 +389,16 @@ BingMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
+  RasterOverlayExternals externals{
+      .pAssetAccessor = pAssetAccessor,
+      .pPrepareRendererResources = pPrepareRendererResources,
+      .asyncSystem = asyncSystem,
+      .pCreditSystem = pCreditSystem,
+      .pLogger = pLogger};
+
   auto handleResponse =
       [pOwner,
-       asyncSystem,
-       pAssetAccessor,
-       pCreditSystem,
-       pPrepareRendererResources,
-       pLogger,
+       externals = std::move(externals),
        baseUrl = this->_url,
        culture = this->_culture](
           const std::shared_ptr<IAssetRequest>& pRequest,
@@ -452,21 +458,13 @@ BingMapsRasterOverlay::createTileProvider(
           "Bing Maps tile imageUrl is missing or empty."});
     }
 
-    bool showCredits = pOwner->getOptions().showCreditsOnScreen;
-    std::vector<CreditAndCoverageAreas> credits =
-        collectCredits(pResource, pCreditSystem, showCredits);
-    Credit bingCredit =
-        pCreditSystem->createCredit(BING_LOGO_HTML, showCredits);
+    std::vector<CreditStringAndCoverageAreas> credits =
+        collectCredits(pResource);
 
     return new BingMapsTileProvider(
         pOwner,
-        asyncSystem,
-        pAssetAccessor,
-        pCreditSystem,
-        bingCredit,
+        externals,
         credits,
-        pPrepareRendererResources,
-        pLogger,
         baseUrl,
         urlTemplate,
         subdomains,
