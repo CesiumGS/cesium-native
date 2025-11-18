@@ -161,5 +161,31 @@ TEST_CASE("CreditReferencer") {
       REQUIRE(referencerMove.isCreditReferenced(credit2) == true);
       REQUIRE(referencerMove.isCreditReferenced(credit3) == false);
     }
+
+    SUBCASE("unless the CreditSource has been destroyed") {
+      std::unique_ptr<CreditSource> pSource =
+          std::make_unique<CreditSource>(*pCreditSystem);
+
+      Credit credit = pCreditSystem->createCredit(*pSource, "source credit");
+      pReferencer->addCreditReference(credit);
+
+      CHECK(pCreditSystem->getSnapshot().currentCredits.size() == 3);
+
+      pSource.reset();
+
+      // The credit from the destroyed source should be gone.
+      CHECK(pCreditSystem->getSnapshot().currentCredits.size() == 2);
+
+      SUBCASE("and attempting to re-add it should have no effect") {
+        pReferencer->addCreditReference(credit);
+        CHECK(pCreditSystem->getSnapshot().currentCredits.size() == 2);
+      }
+
+      SUBCASE("and releasing all references should not cause problems even "
+              "though some references are stale") {
+        pReferencer->releaseAllReferences();
+        CHECK(pCreditSystem->getSnapshot().currentCredits.size() == 0);
+      }
+    }
   }
 }
