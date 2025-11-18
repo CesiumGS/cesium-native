@@ -213,13 +213,16 @@ AzureMapsRasterOverlay::createTileProvider(
 
   pOwner = pOwner ? pOwner : this;
 
+  RasterOverlayExternals externals{
+      .pAssetAccessor = pAssetAccessor,
+      .pPrepareRendererResources = pPrepareRendererResources,
+      .asyncSystem = asyncSystem,
+      .pCreditSystem = pCreditSystem,
+      .pLogger = pLogger};
+
   auto handleResponse =
       [pOwner,
-       asyncSystem,
-       pAssetAccessor,
-       pCreditSystem,
-       pPrepareRendererResources,
-       pLogger,
+       externals = std::move(externals),
        sessionParameters = this->_sessionParameters](
           const std::shared_ptr<IAssetRequest>& pRequest,
           const std::span<const std::byte>& data) -> CreateTileProviderResult {
@@ -336,12 +339,7 @@ AzureMapsRasterOverlay::createTileProvider(
 
     auto* pProvider = new AzureMapsRasterOverlayTileProvider(
         pOwner,
-        RasterOverlayExternals{
-            .pAssetAccessor = pAssetAccessor,
-            .pPrepareRendererResources = pPrepareRendererResources,
-            .asyncSystem = asyncSystem,
-            .pCreditSystem = pCreditSystem,
-            .pLogger = pLogger},
+        externals,
         topLevelCredit,
         sessionParameters.apiBaseUrl,
         sessionParameters.apiVersion,
