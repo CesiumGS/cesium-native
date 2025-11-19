@@ -8,6 +8,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
@@ -39,14 +40,9 @@ class UrlTemplateRasterOverlayTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
   UrlTemplateRasterOverlayTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      std::optional<Credit> credit,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderOptions& options,
+      std::optional<std::string> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,
@@ -57,13 +53,8 @@ public:
       uint32_t minimumLevel,
       uint32_t maximumLevel)
       : QuadtreeRasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            pCreditSystem,
-            credit,
-            pPrepareRendererResources,
-            pLogger,
+            pCreator,
+            options,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -72,7 +63,15 @@ public:
             width,
             height),
         _url(url),
-        _headers(headers) {}
+        _headers(headers) {
+    if (options.externals.pCreditSystem && credit) {
+      this->getCredits().emplace_back(
+          options.externals.pCreditSystem->createCredit(
+              this->getCreditSource(),
+              *credit,
+              pCreator->getOptions().showCreditsOnScreen));
+    }
+  }
 
   virtual ~UrlTemplateRasterOverlayTileProvider() = default;
 
@@ -137,24 +136,9 @@ private:
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 UrlTemplateRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
-  pOwner = pOwner ? pOwner : this;
-
-  std::optional<Credit> credit = std::nullopt;
-  if (pCreditSystem && this->_options.credit) {
-    credit = pCreditSystem->createCredit(
-        *this->_options.credit,
-        pOwner->getOptions().showCreditsOnScreen);
-  }
-
+    const CreateRasterOverlayTileProviderOptions& options) const {
   CesiumGeospatial::Projection projection = _options.projection.value_or(
-      CesiumGeospatial::WebMercatorProjection(pOwner->getOptions().ellipsoid));
+      CesiumGeospatial::WebMercatorProjection(this->getOptions().ellipsoid));
   CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
       CesiumGeospatial::WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
 
@@ -174,16 +158,12 @@ UrlTemplateRasterOverlay::createTileProvider(
           rootTilesX,
           1));
 
-  return asyncSystem
+  return options.externals.asyncSystem
       .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
           new UrlTemplateRasterOverlayTileProvider(
-              pOwner,
-              asyncSystem,
-              pAssetAccessor,
-              pCreditSystem,
-              credit,
-              pPrepareRendererResources,
-              pLogger,
+              this,
+              options,
+              this->_options.credit,
               projection,
               tilingScheme,
               coverageRectangle,

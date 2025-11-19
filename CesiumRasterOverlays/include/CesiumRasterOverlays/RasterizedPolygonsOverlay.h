@@ -50,14 +50,7 @@ public:
   virtual ~RasterizedPolygonsOverlay() override;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
-      const override;
+      const CreateRasterOverlayTileProviderOptions& options) const override;
 
   /**
    * @brief Gets the polygons that are being rasterized to create this overlay.

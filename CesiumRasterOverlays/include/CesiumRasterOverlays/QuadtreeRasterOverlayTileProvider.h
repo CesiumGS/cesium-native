@@ -31,48 +31,25 @@ namespace CesiumRasterOverlays {
 class CESIUMRASTEROVERLAYS_API QuadtreeRasterOverlayTileProvider
     : public RasterOverlayTileProvider {
 public:
-  QuadtreeRasterOverlayTileProvider(
-      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-      const RasterOverlayExternals& externals,
-      const CesiumGeospatial::Projection& projection,
-      const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
-      const CesiumGeometry::Rectangle& coverageRectangle,
-      uint32_t minimumLevel,
-      uint32_t maximumLevel,
-      uint32_t imageWidth,
-      uint32_t imageHeight) noexcept;
-
   /**
    * @brief Creates a new instance.
    *
-   * @param pOwner The raster overlay that created this tile provider.
-   * @param asyncSystem The async system used to do work in threads.
-   * @param pAssetAccessor The interface used to obtain assets (tiles, etc.) for
-   * this raster overlay.
-   * @param pCreditSystem The credit system that receives this tile provider's
-   * credits.
-   * @param credit The {@link CesiumUtility::Credit} for this tile provider, if it exists.
-   * @param pPrepareRendererResources The interface used to prepare raster
-   * images for rendering.
-   * @param pLogger The logger to which to send messages about the tile provider
-   * and tiles.
+   * @param pCreator The \ref RasterOverlay that directly created this instance.
+   * This will become the owner of this instance if another owner is not
+   * specified in \ref CreateRasterOverlayTileProviderOptions::pOwner.
+   * @param options The options for creating the tile provider.
    * @param projection The {@link CesiumGeospatial::Projection}.
    * @param tilingScheme The tiling scheme to be used by this {@link QuadtreeRasterOverlayTileProvider}.
-   * @param coverageRectangle The {@link CesiumGeometry::Rectangle}.
+   * @param coverageRectangle The rectangle that bounds all the area covered by
+   * this overlay, expressed in projected coordinates.
    * @param minimumLevel The minimum quadtree tile level.
    * @param maximumLevel The maximum quadtree tile level.
    * @param imageWidth The image width.
    * @param imageHeight The image height.
    */
   QuadtreeRasterOverlayTileProvider(
-      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      std::optional<CesiumUtility::Credit> credit,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderOptions& options,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,

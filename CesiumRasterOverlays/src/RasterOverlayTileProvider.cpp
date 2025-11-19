@@ -6,11 +6,13 @@
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/ImageDecoder.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -37,40 +39,24 @@ using namespace CesiumUtility;
 namespace CesiumRasterOverlays {
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
-    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-    const RasterOverlayExternals& externals,
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
+    const CreateRasterOverlayTileProviderOptions& options,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::Rectangle& coverageRectangle) noexcept
-    : _pOwner(const_intrusive_cast<RasterOverlay>(pOwner)),
-      _externals(externals),
-      _credit(),
+    : _pOwner(const_intrusive_cast<RasterOverlay>(
+          options.pOwner ? options.pOwner : pCreator)),
+      _externals(options.externals),
+      _credits(),
       _projection(projection),
       _coverageRectangle(coverageRectangle),
       _destructionCompleteDetails(),
-      _creditSource(externals.pCreditSystem) {}
-
-RasterOverlayTileProvider::RasterOverlayTileProvider(
-    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-    std::optional<Credit> credit,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const CesiumGeospatial::Projection& projection,
-    const Rectangle& coverageRectangle) noexcept
-    : RasterOverlayTileProvider(
-          pOwner,
-          RasterOverlayExternals{
-              .pAssetAccessor = pAssetAccessor,
-              .pPrepareRendererResources = pPrepareRendererResources,
-              .asyncSystem = asyncSystem,
-              .pCreditSystem = pCreditSystem,
-              .pLogger = pLogger},
-          projection,
-          coverageRectangle) {
-  this->setCredit(credit);
+      _pCreditSource(
+          options.pCreditSource ? options.pCreditSource
+                                : std::make_shared<CreditSource>(
+                                      options.externals.pCreditSystem)) {
+  CESIUM_ASSERT(
+      this->_pCreditSource->getCreditSystem() ==
+      options.externals.pCreditSystem.get());
 }
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {
@@ -142,34 +128,39 @@ RasterOverlayTileProvider::getCoverageRectangle() const noexcept {
 
 const CesiumUtility::CreditSource&
 RasterOverlayTileProvider::getCreditSource() const noexcept {
-  return this->_creditSource;
+  return *this->_pCreditSource;
 }
 
-const std::optional<CesiumUtility::Credit>&
-RasterOverlayTileProvider::getCredit() const noexcept {
-  return _credit;
+std::vector<CesiumUtility::Credit>&
+RasterOverlayTileProvider::getCredits() noexcept {
+  return this->_credits;
 }
 
-void RasterOverlayTileProvider::setCredit(
-    const std::optional<Credit>& maybeCredit) noexcept {
-  this->_credit = maybeCredit;
-
-  // Reassociate the passed-in credit with our CreditSource. This is hacky, but
-  // hey, this whole thing is deprecated.
-  const std::shared_ptr<CreditSystem>& pCreditSystem = this->getCreditSystem();
-  if (maybeCredit && pCreditSystem &&
-      pCreditSystem->getCreditSource(*maybeCredit) != &this->_creditSource) {
-    const std::string& html = pCreditSystem->getHtml(*maybeCredit);
-    bool showOnScreen = pCreditSystem->shouldBeShownOnScreen(*maybeCredit);
-    this->_credit =
-        pCreditSystem->createCredit(this->_creditSource, html, showOnScreen);
-  }
+const std::vector<CesiumUtility::Credit>&
+RasterOverlayTileProvider::getCredits() const noexcept {
+  return this->_credits;
 }
 
 void RasterOverlayTileProvider::addCredits(
     CreditReferencer& creditReferencer) noexcept {
-  if (this->_credit) {
-    creditReferencer.addCreditReference(*this->_credit);
+  CESIUM_ASSERT(
+      creditReferencer.getCreditSystem().get() ==
+      this->_pCreditSource->getCreditSystem());
+  for (const CesiumUtility::Credit& credit : this->_credits) {
+    CESIUM_ASSERT(
+        this->getCreditSystem()->getCreditSource(credit) ==
+        this->_pCreditSource.get());
+    creditReferencer.addCreditReference(credit);
+  }
+}
+
+/*static*/ const RasterOverlay& RasterOverlayTileProvider::getOwner(
+    const RasterOverlay& creator,
+    const CreateRasterOverlayTileProviderOptions& options) noexcept {
+  if (options.pOwner) {
+    return *options.pOwner;
+  } else {
+    return creator;
   }
 }
 

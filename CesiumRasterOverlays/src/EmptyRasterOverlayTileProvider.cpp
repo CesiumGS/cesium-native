@@ -10,16 +10,11 @@
 namespace CesiumRasterOverlays {
 
 EmptyRasterOverlayTileProvider::EmptyRasterOverlayTileProvider(
-    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-    const CesiumAsync::AsyncSystem& asyncSystem) noexcept
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
+    const CreateRasterOverlayTileProviderOptions& options) noexcept
     : RasterOverlayTileProvider(
-          pOwner,
-          asyncSystem,
-          nullptr,
-          nullptr,
-          std::nullopt,
-          nullptr,
-          nullptr,
+          pCreator,
+          options,
           CesiumGeospatial::GeographicProjection(),
           CesiumGeometry::Rectangle()) {}
 

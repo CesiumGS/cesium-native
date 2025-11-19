@@ -7,6 +7,7 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -100,23 +101,21 @@ const std::string BING_LOGO_HTML =
     "OXfbBoeDOo8wHpy8lKpvoafRoG6YgXFYKP4GSj63gtwWfhHzl7Skq9JTshAAAAAElFTkSuQmCC"
     "\" title=\"Bing Imagery\"/></a>";
 
-Rectangle createRectangle(
-    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
+Rectangle createRectangle(const RasterOverlay& owner) {
   return WebMercatorProjection::computeMaximumProjectedRectangle(
-      pOwner->getOptions().ellipsoid);
+      owner.getOptions().ellipsoid);
 }
 
-QuadtreeTilingScheme createTilingScheme(
-    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
-  return QuadtreeTilingScheme(createRectangle(pOwner), 2, 2);
+QuadtreeTilingScheme createTilingScheme(const RasterOverlay& owner) {
+  return QuadtreeTilingScheme(createRectangle(owner), 2, 2);
 }
 } // namespace
 
 class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const RasterOverlayExternals& externals,
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderOptions& options,
       const std::vector<CreditStringAndCoverageAreas>& perTileCredits,
       const std::string& baseUrl,
       const std::string& urlTemplate,
@@ -127,11 +126,12 @@ public:
       uint32_t maximumLevel,
       const std::string& culture)
       : QuadtreeRasterOverlayTileProvider(
-            pOwner,
-            externals,
-            WebMercatorProjection(pOwner->getOptions().ellipsoid),
-            createTilingScheme(pOwner),
-            createRectangle(pOwner),
+            pCreator,
+            options,
+            WebMercatorProjection(
+                getOwner(*pCreator, options).getOptions().ellipsoid),
+            createTilingScheme(getOwner(*pCreator, options)),
+            createRectangle(getOwner(*pCreator, options)),
             minimumLevel,
             maximumLevel,
             width,
@@ -141,20 +141,21 @@ public:
         _urlTemplate(urlTemplate),
         _culture(culture),
         _subdomains(subdomains) {
-    if (externals.pCreditSystem) {
-      this->setCredit(externals.pCreditSystem->createCredit(
+    if (options.externals.pCreditSystem) {
+      const RasterOverlay& owner = getOwner(*pCreator, options);
+      this->setCredit(options.externals.pCreditSystem->createCredit(
           this->getCreditSource(),
           BING_LOGO_HTML,
-          pOwner->getOptions().showCreditsOnScreen));
+          owner.getOptions().showCreditsOnScreen));
 
       this->_credits.reserve(perTileCredits.size());
       for (const CreditStringAndCoverageAreas& creditStringAndCoverageAreas :
            perTileCredits) {
         this->_credits.emplace_back(CreditAndCoverageAreas{
-            externals.pCreditSystem->createCredit(
+            options.externals.pCreditSystem->createCredit(
                 this->getCreditSource(),
                 creditStringAndCoverageAreas.credit,
-                pOwner->getOptions().showCreditsOnScreen),
+                owner.getOptions().showCreditsOnScreen),
             creditStringAndCoverageAreas.coverageAreas});
       }
     }
@@ -364,13 +365,7 @@ collectCredits(const rapidjson::Value* pResource) {
 
 Future<RasterOverlay::CreateTileProviderResult>
 BingMapsRasterOverlay::createTileProvider(
-    const AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    IntrusivePointer<const RasterOverlay> pOwner) const {
+    const CreateRasterOverlayTileProviderOptions& options) const {
   Uri metadataUri(
       this->_url,
       "REST/v1/Imagery/Metadata/" + this->_mapStyle,
@@ -387,20 +382,10 @@ BingMapsRasterOverlay::createTileProvider(
 
   std::string metadataUrl = std::string(metadataUri.toString());
 
-  pOwner = pOwner ? pOwner : this;
-
-  RasterOverlayExternals externals{
-      .pAssetAccessor = pAssetAccessor,
-      .pPrepareRendererResources = pPrepareRendererResources,
-      .asyncSystem = asyncSystem,
-      .pCreditSystem = pCreditSystem,
-      .pLogger = pLogger};
+  IntrusivePointer<const BingMapsRasterOverlay> thiz = this;
 
   auto handleResponse =
-      [pOwner,
-       externals = std::move(externals),
-       baseUrl = this->_url,
-       culture = this->_culture](
+      [thiz, options](
           const std::shared_ptr<IAssetRequest>& pRequest,
           const std::span<const std::byte>& data) -> CreateTileProviderResult {
     rapidjson::Document response;
@@ -462,26 +447,27 @@ BingMapsRasterOverlay::createTileProvider(
         collectCredits(pResource);
 
     return new BingMapsTileProvider(
-        pOwner,
-        externals,
+        thiz,
+        options,
         credits,
-        baseUrl,
+        thiz->_url,
         urlTemplate,
         subdomains,
         width,
         height,
         0,
         maximumLevel,
-        culture);
+        thiz->_culture);
   };
 
   auto cacheResultIt = sessionCache.find(metadataUrl);
   if (cacheResultIt != sessionCache.end()) {
-    return asyncSystem.createResolvedFuture(
+    return options.externals.asyncSystem.createResolvedFuture(
         handleResponse(nullptr, std::span<std::byte>(cacheResultIt->second)));
   }
 
-  return pAssetAccessor->get(asyncSystem, metadataUrl)
+  return options.externals.pAssetAccessor
+      ->get(options.externals.asyncSystem, metadataUrl)
       .thenInMainThread(
           [metadataUrl,
            handleResponse](std::shared_ptr<IAssetRequest>&& pRequest)

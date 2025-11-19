@@ -286,24 +286,11 @@ public:
 
   /** @inheritdoc */
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
-      const override;
+      const CreateRasterOverlayTileProviderOptions& options) const override;
 
 private:
-  CesiumAsync::Future<CreateTileProviderResult> createNewSession(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) const;
+  CesiumAsync::Future<CreateTileProviderResult>
+  createNewSession(const CreateRasterOverlayTileProviderOptions& options) const;
 
   std::optional<GoogleMapTilesNewSessionParameters> _newSessionParameters;
   std::optional<GoogleMapTilesExistingSession> _existingSession;

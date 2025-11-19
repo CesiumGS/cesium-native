@@ -28,8 +28,9 @@ namespace CesiumRasterOverlays {
 
 class ActivatedRasterOverlay;
 class IPrepareRasterOverlayRendererResources;
-class RasterOverlayTileProvider;
 class RasterOverlayExternals;
+class RasterOverlayTileProvider;
+struct CreateRasterOverlayTileProviderOptions;
 
 /**
  * @brief Options for loading raster overlays.
@@ -219,28 +220,12 @@ public:
    * @brief Begins asynchronous creation of a tile provider for this overlay
    * and eventually returns it via a Future.
    *
-   * @param asyncSystem The async system used to do work in threads.
-   * @param pAssetAccessor The interface used to download assets like overlay
-   * metadata and tiles.
-   * @param pCreditSystem The {@link CesiumUtility::CreditSystem} to use when creating a
-   * per-TileProvider {@link CesiumUtility::Credit}.
-   * @param pPrepareRendererResources The interface used to prepare raster
-   * images for rendering.
-   * @param pLogger The logger to which to send messages about the tile provider
-   * and tiles.
-   * @param pOwner The overlay that owns this overlay, or nullptr if this
-   * overlay is not aggregated.
+   * @param options The options for creating the tile provider.
    * @return The future that resolves to the tile provider when it is ready, or
    * to error details in the case of an error.
    */
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const = 0;
+      const CreateRasterOverlayTileProviderOptions& options) const = 0;
 
 private:
   struct DestructionCompleteDetails {

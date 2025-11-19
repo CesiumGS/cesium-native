@@ -9,6 +9,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -87,14 +88,9 @@ class TileMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
   TileMapServiceTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      std::optional<Credit> credit,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderOptions& options,
+      std::optional<std::string> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,
@@ -107,13 +103,8 @@ public:
       uint32_t maximumLevel,
       const std::vector<TileMapServiceTileset>& tileSets)
       : QuadtreeRasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            pCreditSystem,
-            credit,
-            pPrepareRendererResources,
-            pLogger,
+            pCreator,
+            options,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -124,7 +115,15 @@ public:
         _url(url),
         _headers(headers),
         _fileExtension(fileExtension),
-        _tileSets(tileSets) {}
+        _tileSets(tileSets) {
+    if (options.externals.pCreditSystem && credit) {
+      this->getCredits().emplace_back(
+          options.externals.pCreditSystem->createCredit(
+              this->getCreditSource(),
+              *credit,
+              pCreator->getOptions().showCreditsOnScreen));
+    }
+  }
 
   virtual ~TileMapServiceTileProvider() = default;
 
@@ -300,37 +299,19 @@ Future<GetXmlDocumentResult> getXmlDocument(
 
 Future<RasterOverlay::CreateTileProviderResult>
 TileMapServiceRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
+    const CreateRasterOverlayTileProviderOptions& options) const {
   std::string xmlUrl = this->_url;
 
-  pOwner = pOwner ? pOwner : this;
+  IntrusivePointer<const TileMapServiceRasterOverlay> thiz = this;
 
-  std::optional<Credit> credit = std::nullopt;
-  if (pCreditSystem && this->_options.credit) {
-    credit = pCreditSystem->createCredit(
-        *this->_options.credit,
-        pOwner->getOptions().showCreditsOnScreen);
-  }
-
-  return getXmlDocument(asyncSystem, pAssetAccessor, xmlUrl, this->_headers)
+  return getXmlDocument(
+             options.externals.asyncSystem,
+             options.externals.pAssetAccessor,
+             xmlUrl,
+             this->_headers)
       .thenInMainThread(
-          [pOwner,
-           asyncSystem,
-           pAssetAccessor,
-           pCreditSystem,
-           credit,
-           pPrepareRendererResources,
-           pLogger,
-           options = this->_options,
-           url = this->_url,
-           headers = this->_headers](
-              GetXmlDocumentResult&& xml) -> CreateTileProviderResult {
+          [thiz,
+           options](GetXmlDocumentResult&& xml) -> CreateTileProviderResult {
             if (!xml) {
               return nonstd::make_unexpected(std::move(xml).error());
             }
@@ -340,11 +321,11 @@ TileMapServiceRasterOverlay::createTileProvider(
 
             tinyxml2::XMLElement* pTileFormat =
                 pRoot->FirstChildElement("TileFormat");
-            std::string fileExtension = options.fileExtension.value_or(
+            std::string fileExtension = thiz->_options.fileExtension.value_or(
                 getAttributeString(pTileFormat, "extension").value_or("png"));
-            uint32_t tileWidth = options.tileWidth.value_or(
+            uint32_t tileWidth = thiz->_options.tileWidth.value_or(
                 getAttributeUint32(pTileFormat, "width").value_or(256));
-            uint32_t tileHeight = options.tileHeight.value_or(
+            uint32_t tileHeight = thiz->_options.tileHeight.value_or(
                 getAttributeUint32(pTileFormat, "height").value_or(256));
 
             uint32_t minimumLevel = std::numeric_limits<uint32_t>::max();
@@ -376,7 +357,7 @@ TileMapServiceRasterOverlay::createTileProvider(
             }
 
             const CesiumGeospatial::Ellipsoid& ellipsoid =
-                pOwner->getOptions().ellipsoid;
+                thiz->getOptions().ellipsoid;
 
             CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
                 CesiumGeospatial::GeographicProjection::MAXIMUM_GLOBE_RECTANGLE;
@@ -385,8 +366,8 @@ TileMapServiceRasterOverlay::createTileProvider(
             uint32_t rootTilesX = 1;
             bool isRectangleInDegrees = false;
 
-            if (options.projection) {
-              projection = options.projection.value();
+            if (thiz->_options.projection) {
+              projection = thiz->_options.projection.value();
             } else {
               std::string projectionName =
                   getAttributeString(pTilesets, "profile").value_or("mercator");
@@ -440,14 +421,14 @@ TileMapServiceRasterOverlay::createTileProvider(
 
             minimumLevel = glm::min(minimumLevel, maximumLevel);
 
-            minimumLevel = options.minimumLevel.value_or(minimumLevel);
-            maximumLevel = options.maximumLevel.value_or(maximumLevel);
+            minimumLevel = thiz->_options.minimumLevel.value_or(minimumLevel);
+            maximumLevel = thiz->_options.maximumLevel.value_or(maximumLevel);
 
             CesiumGeometry::Rectangle coverageRectangle =
                 projectRectangleSimple(projection, tilingSchemeRectangle);
 
-            if (options.coverageRectangle) {
-              coverageRectangle = options.coverageRectangle.value();
+            if (thiz->_options.coverageRectangle) {
+              coverageRectangle = thiz->_options.coverageRectangle.value();
             } else {
               tinyxml2::XMLElement* pBoundingBox =
                   pRoot->FirstChildElement("BoundingBox");
@@ -485,31 +466,27 @@ TileMapServiceRasterOverlay::createTileProvider(
                 rootTilesX,
                 1);
 
-            std::string updatedUrl = url;
+            std::string updatedUrl = thiz->_url;
 
-            std::string urlPath = Uri::getPath(url);
+            std::string urlPath = Uri::getPath(thiz->_url);
             if (!(urlPath.size() < 4)) {
               if (urlPath.substr(urlPath.size() - 4, 4) != ".xml") {
                 if (urlPath[urlPath.size() - 1] != '/') {
                   urlPath += "/";
-                  updatedUrl = Uri::setPath(url, urlPath);
+                  updatedUrl = Uri::setPath(thiz->_url, urlPath);
                 }
               }
             }
 
             return new TileMapServiceTileProvider(
-                pOwner,
-                asyncSystem,
-                pAssetAccessor,
-                pCreditSystem,
-                credit,
-                pPrepareRendererResources,
-                pLogger,
+                thiz,
+                options,
+                thiz->_options.credit,
                 projection,
                 tilingScheme,
                 coverageRectangle,
                 updatedUrl,
-                headers,
+                thiz->_headers,
                 !fileExtension.empty() ? "." + fileExtension : fileExtension,
                 tileWidth,
                 tileHeight,

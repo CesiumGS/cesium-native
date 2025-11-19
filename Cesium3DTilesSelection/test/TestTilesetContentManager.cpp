@@ -40,6 +40,7 @@
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
 #include <CesiumRasterOverlays/DebugColorizeTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -1329,24 +1330,13 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     class AlwaysMoreDetailProvider : public RasterOverlayTileProvider {
     public:
       AlwaysMoreDetailProvider(
-          const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-          const CesiumAsync::AsyncSystem& asyncSystem,
-          const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-          const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-          std::optional<CesiumUtility::Credit> credit,
-          const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-              pPrepareRendererResources,
-          const std::shared_ptr<spdlog::logger>& pLogger,
+          const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
+          const CreateRasterOverlayTileProviderOptions& options,
           const CesiumGeospatial::Projection& projection,
           const CesiumGeometry::Rectangle& coverageRectangle)
           : RasterOverlayTileProvider(
-                pOwner,
-                asyncSystem,
-                pAssetAccessor,
-                pCreditSystem,
-                credit,
-                pPrepareRendererResources,
-                pLogger,
+                pCreator,
+                options,
                 projection,
                 coverageRectangle) {}
 
@@ -1374,30 +1364,19 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     public:
       AlwaysMoreDetailRasterOverlay() : RasterOverlay("AlwaysMoreDetail") {}
 
-      CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-          const CesiumAsync::AsyncSystem& asyncSystem,
-          const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-          const std::shared_ptr<
-              CesiumUtility::CreditSystem>& /* pCreditSystem */,
-          const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-              pPrepareRendererResources,
-          const std::shared_ptr<spdlog::logger>& pLogger,
-          CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+      CesiumAsync::Future<CreateTileProviderResult>
+      createTileProvider(const CreateRasterOverlayTileProviderOptions& options)
           const override {
-        return asyncSystem.createResolvedFuture(CreateTileProviderResult(
-            CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>(
-                new AlwaysMoreDetailProvider(
-                    pOwner ? pOwner : this,
-                    asyncSystem,
-                    pAssetAccessor,
-                    nullptr,
-                    std::nullopt,
-                    pPrepareRendererResources,
-                    pLogger,
-                    CesiumGeospatial::GeographicProjection(),
-                    projectRectangleSimple(
+        return options.externals.asyncSystem.createResolvedFuture(
+            CreateTileProviderResult(
+                CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>(
+                    new AlwaysMoreDetailProvider(
+                        this,
+                        options,
                         CesiumGeospatial::GeographicProjection(),
-                        GlobeRectangle::MAXIMUM)))));
+                        projectRectangleSimple(
+                            CesiumGeospatial::GeographicProjection(),
+                            GlobeRectangle::MAXIMUM)))));
       }
     };
 

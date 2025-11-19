@@ -30,6 +30,14 @@ CreditSource::~CreditSource() noexcept {
   }
 }
 
+CreditSystem* CreditSource::getCreditSystem() noexcept {
+  return this->_pCreditSystem;
+}
+
+const CreditSystem* CreditSource::getCreditSystem() const noexcept {
+  return this->_pCreditSystem;
+}
+
 void CreditSource::notifyCreditSystemDestroyed() noexcept {
   this->_pCreditSystem = nullptr;
 }

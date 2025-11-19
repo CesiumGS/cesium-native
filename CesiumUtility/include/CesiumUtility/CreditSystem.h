@@ -74,6 +74,19 @@ public:
 
   ~CreditSource() noexcept;
 
+  /**
+   * @brief Gets the \ref CreditSystem associated with this source.
+   *
+   * This may be nullptr if this source was never associated with a credit
+   * system, or if the credit system has been destroyed.
+   */
+  CreditSystem* getCreditSystem() noexcept;
+
+  /**
+   * @copydoc getCreditSystem
+   */
+  const CreditSystem* getCreditSystem() const noexcept;
+
 private:
   void notifyCreditSystemDestroyed() noexcept;
 

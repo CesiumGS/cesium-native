@@ -4,6 +4,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
 #include <CesiumRasterOverlays/DebugColorizeTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -32,24 +33,14 @@ namespace {
 class DebugTileProvider : public RasterOverlayTileProvider {
 public:
   DebugTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const Ellipsoid& ellipsoid)
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderOptions& options)
       : RasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            nullptr,
-            std::nullopt,
-            pPrepareRendererResources,
-            pLogger,
-            GeographicProjection(ellipsoid),
-            GeographicProjection::computeMaximumProjectedRectangle(ellipsoid)) {
-  }
+            pCreator,
+            options,
+            GeographicProjection(pCreator->getOptions().ellipsoid),
+            GeographicProjection::computeMaximumProjectedRectangle(
+                pCreator->getOptions().ellipsoid)) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(const RasterOverlayTile& overlayTile) override {
@@ -91,21 +82,9 @@ DebugColorizeTilesRasterOverlay::DebugColorizeTilesRasterOverlay(
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 DebugColorizeTilesRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& /* pCreditSystem */,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
-  pOwner = pOwner ? pOwner : this;
-
-  return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
-      IntrusivePointer<RasterOverlayTileProvider>(new DebugTileProvider(
-          pOwner,
-          asyncSystem,
-          pAssetAccessor,
-          pPrepareRendererResources,
-          pLogger,
-          this->getOptions().ellipsoid)));
+    const CreateRasterOverlayTileProviderOptions& options) const {
+  return options.externals.asyncSystem
+      .createResolvedFuture<CreateTileProviderResult>(
+          IntrusivePointer<RasterOverlayTileProvider>(
+              new DebugTileProvider(this, options)));
 }

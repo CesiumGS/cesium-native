@@ -12,6 +12,7 @@
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -47,14 +48,8 @@ namespace {
 class TestTileProvider : public QuadtreeRasterOverlayTileProvider {
 public:
   TestTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      std::optional<Credit> credit,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderOptions& options,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,
@@ -63,13 +58,8 @@ public:
       uint32_t imageWidth,
       uint32_t imageHeight) noexcept
       : QuadtreeRasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            pCreditSystem,
-            credit,
-            pPrepareRendererResources,
-            pLogger,
+            pCreator,
+            options,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -114,27 +104,11 @@ public:
       : RasterOverlay(name, options) {}
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& /* pCreditSystem */,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
-      const override {
-    if (!pOwner) {
-      pOwner = this;
-    }
-
-    return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
-        new TestTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            nullptr,
-            std::nullopt,
-            pPrepareRendererResources,
-            pLogger,
+      const CreateRasterOverlayTileProviderOptions& options) const override {
+    return options.externals.asyncSystem
+        .createResolvedFuture<CreateTileProviderResult>(new TestTileProvider(
+            this,
+            options,
             WebMercatorProjection(Ellipsoid::WGS84),
             QuadtreeTilingScheme(
                 WebMercatorProjection::computeMaximumProjectedRectangle(

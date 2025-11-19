@@ -8,6 +8,7 @@
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -149,14 +150,9 @@ class WebMapServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
   WebMapServiceTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      std::optional<Credit> credit,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderOptions& options,
+      std::optional<std::string> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,
@@ -170,13 +166,8 @@ public:
       uint32_t minimumLevel,
       uint32_t maximumLevel)
       : QuadtreeRasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            pCreditSystem,
-            credit,
-            pPrepareRendererResources,
-            pLogger,
+            pCreator,
+            options,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -188,7 +179,15 @@ public:
         _headers(headers),
         _version(version),
         _layers(layers),
-        _format(format) {}
+        _format(format) {
+    if (options.externals.pCreditSystem && credit) {
+      this->getCredits().emplace_back(
+          options.externals.pCreditSystem->createCredit(
+              this->getCreditSource(),
+              *credit,
+              pCreator->getOptions().showCreditsOnScreen));
+    }
+  }
 
   virtual ~WebMapServiceTileProvider() = default;
 
@@ -268,13 +267,7 @@ WebMapServiceRasterOverlay::~WebMapServiceRasterOverlay() = default;
 
 Future<RasterOverlay::CreateTileProviderResult>
 WebMapServiceRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
+    const CreateRasterOverlayTileProviderOptions& options) const {
 
   std::string xmlUrlGetcapabilities =
       CesiumUtility::Uri::substituteTemplateParameters(
@@ -295,27 +288,15 @@ WebMapServiceRasterOverlay::createTileProvider(
             return "{" + placeholder + "}";
           });
 
-  pOwner = pOwner ? pOwner : this;
+  IntrusivePointer<const WebMapServiceRasterOverlay> thiz = this;
 
-  std::optional<Credit> credit = std::nullopt;
-  if (pCreditSystem && this->_options.credit) {
-    credit = pCreditSystem->createCredit(
-        *this->_options.credit,
-        pOwner->getOptions().showCreditsOnScreen);
-  }
-
-  return pAssetAccessor->get(asyncSystem, xmlUrlGetcapabilities, this->_headers)
+  return options.externals.pAssetAccessor
+      ->get(
+          options.externals.asyncSystem,
+          xmlUrlGetcapabilities,
+          this->_headers)
       .thenInMainThread(
-          [pOwner,
-           asyncSystem,
-           pAssetAccessor,
-           pCreditSystem,
-           credit,
-           pPrepareRendererResources,
-           pLogger,
-           options = this->_options,
-           url = this->_baseUrl,
-           headers = this->_headers](std::shared_ptr<IAssetRequest>&& pRequest)
+          [thiz, options](std::shared_ptr<IAssetRequest>&& pRequest)
               -> CreateTileProviderResult {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
@@ -347,15 +328,18 @@ WebMapServiceRasterOverlay::createTileProvider(
                   "element."});
             }
 
+            const WebMapServiceRasterOverlayOptions& wmsOptions =
+                thiz->_options;
+
             std::string validationError;
-            if (!validateCapabilities(pRoot, options, validationError)) {
+            if (!validateCapabilities(pRoot, wmsOptions, validationError)) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                   RasterOverlayLoadType::TileProvider,
                   std::move(pRequest),
                   validationError});
             }
 
-            const Ellipsoid& ellipsoid = pOwner->getOptions().ellipsoid;
+            const Ellipsoid& ellipsoid = thiz->getOptions().ellipsoid;
 
             const auto projection =
                 CesiumGeospatial::GeographicProjection(ellipsoid);
@@ -374,25 +358,24 @@ WebMapServiceRasterOverlay::createTileProvider(
                 rootTilesY);
 
             return new WebMapServiceTileProvider(
-                pOwner,
-                asyncSystem,
-                pAssetAccessor,
-                pCreditSystem,
-                credit,
-                pPrepareRendererResources,
-                pLogger,
+                thiz,
+                options,
+                wmsOptions.credit,
                 projection,
                 tilingScheme,
                 coverageRectangle,
-                url,
-                headers,
-                options.version,
-                options.layers,
-                options.format,
-                options.tileWidth < 1 ? 1 : uint32_t(options.tileWidth),
-                options.tileHeight < 1 ? 1 : uint32_t(options.tileHeight),
-                options.minimumLevel < 0 ? 0 : uint32_t(options.minimumLevel),
-                options.maximumLevel < 0 ? 0 : uint32_t(options.maximumLevel));
+                thiz->_baseUrl,
+                thiz->_headers,
+                wmsOptions.version,
+                wmsOptions.layers,
+                wmsOptions.format,
+                wmsOptions.tileWidth < 1 ? 1 : uint32_t(wmsOptions.tileWidth),
+                wmsOptions.tileHeight < 1 ? 1 : uint32_t(wmsOptions.tileHeight),
+                wmsOptions.minimumLevel < 0 ? 0
+                                            : uint32_t(wmsOptions.minimumLevel),
+                wmsOptions.maximumLevel < 0
+                    ? 0
+                    : uint32_t(wmsOptions.maximumLevel));
           });
 }
 

@@ -1,3 +1,4 @@
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/UrlTemplateRasterOverlay.h>
 
@@ -12,31 +13,18 @@ public:
   MyRasterOverlay() : RasterOverlay("name", {}) {}
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
-      const override;
+      const CreateRasterOverlayTileProviderOptions& options) const override;
 };
 
 //! [use-url-template]
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 MyRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
+    const CreateRasterOverlayTileProviderOptions& options) const {
   // Create a new raster overlay with a URL template.
   CesiumGeometry::Rectangle coverageRectangle = CesiumGeospatial::
       WebMercatorProjection::computeMaximumProjectedRectangle();
 
-  UrlTemplateRasterOverlayOptions options{
+  UrlTemplateRasterOverlayOptions urlTemplateOptions{
       .credit = "Copyright (c) Some Amazing Source",
       .projection = CesiumGeospatial::WebMercatorProjection(),
       .tilingScheme =
@@ -53,16 +41,15 @@ MyRasterOverlay::createTileProvider(
           this->getName(),
           "https://example.com/level-{z}/column-{x}/row-{y}.png",
           {},
-          options);
+          urlTemplateOptions);
+
+  CreateRasterOverlayTileProviderOptions optionsCopy = options;
+  if (!optionsCopy.pOwner) {
+    optionsCopy.pOwner = this;
+  }
 
   // Get that raster overlay's tile provider.
-  return pUrlTemplate->createTileProvider(
-      asyncSystem,
-      pAssetAccessor,
-      pCreditSystem,
-      pPrepareRendererResources,
-      pLogger,
-      pOwner != nullptr ? pOwner : this);
+  return pUrlTemplate->createTileProvider(optionsCopy);
 }
 //! [use-url-template]
 

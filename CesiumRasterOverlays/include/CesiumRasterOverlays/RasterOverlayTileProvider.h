@@ -25,6 +25,7 @@ namespace CesiumRasterOverlays {
 class RasterOverlay;
 class RasterOverlayTile;
 class IPrepareRasterOverlayRendererResources;
+struct CreateRasterOverlayTileProviderOptions;
 
 /**
  * @brief Summarizes the result of loading an image of a {@link RasterOverlay}.
@@ -139,32 +140,17 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param pOwner The raster overlay that created this tile provider.
-   * @param externals The external interfaces for use by the raster overlay.
+   * @param pCreator The \ref RasterOverlay that directly created this instance.
+   * This will become the owner of this instance if another owner is not
+   * specified in \ref CreateRasterOverlayTileProviderOptions::pOwner.
+   * @param options The options for creating the tile provider.
    * @param projection The {@link CesiumGeospatial::Projection}.
    * @param coverageRectangle The rectangle that bounds all the area covered by
    * this overlay, expressed in projected coordinates.
    */
   RasterOverlayTileProvider(
-      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-      const RasterOverlayExternals& externals,
-      const CesiumGeospatial::Projection& projection,
-      const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
-
-  /**
-   * @brief Creates a new instance.
-   * @deprecated Use the overload that takes a \ref RasterOverlayExternals
-   * instead.
-   */
-  RasterOverlayTileProvider(
-      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      std::optional<CesiumUtility::Credit> credit,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderOptions& options,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
 
@@ -239,12 +225,21 @@ public:
   const CesiumUtility::CreditSource& getCreditSource() const noexcept;
 
   /**
-   * @brief Get the per-TileProvider \ref CesiumUtility::Credit if one exists.
-   * @deprecated Implement \ref addCredits instead.
+   * @brief Gets the collection of credits that should be shown whenever this
+   * tile provider is shown.
+   *
+   * If called on a non-const instance, the returned collection may be modified
+   * to add or remove credits.
+   *
+   * The credits in this collection will be added to the \ref CreditReferencer
+   * in \ref addCredits.
    */
-  [[deprecated(
-      "Use addCredits instead.")]] const std::optional<CesiumUtility::Credit>&
-  getCredit() const noexcept;
+  std::vector<CesiumUtility::Credit>& getCredits() noexcept;
+
+  /**
+   * @copydoc getCredits
+   */
+  const std::vector<CesiumUtility::Credit>& getCredits() const noexcept;
 
   /**
    * @brief Set the per-TileProvider \ref CesiumUtility::Credit.
@@ -275,6 +270,18 @@ public:
   virtual void
   addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
 
+  /**
+   * @brief Gets the effective owner raster overlay of a tile provider, given
+   * the raster overlay that directly created it and creation options that may
+   * or may not specify a different owner.
+   *
+   * @param creator The raster overlay that directly created the tile provider.
+   * @param options The creation options that may specify a different owner.
+   */
+  static const RasterOverlay& getOwner(
+      const RasterOverlay& creator,
+      const CreateRasterOverlayTileProviderOptions& options) noexcept;
+
 protected:
   /**
    * @brief Loads an image from a URL and optionally some request headers.
@@ -299,10 +306,10 @@ private:
 
   CesiumUtility::IntrusivePointer<RasterOverlay> _pOwner;
   RasterOverlayExternals _externals;
-  std::optional<CesiumUtility::Credit> _credit;
+  std::vector<CesiumUtility::Credit> _credits;
   CesiumGeospatial::Projection _projection;
   CesiumGeometry::Rectangle _coverageRectangle;
   std::optional<DestructionCompleteDetails> _destructionCompleteDetails;
-  CesiumUtility::CreditSource _creditSource;
+  std::shared_ptr<CesiumUtility::CreditSource> _pCreditSource;
 };
 } // namespace CesiumRasterOverlays
