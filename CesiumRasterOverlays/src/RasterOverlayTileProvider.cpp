@@ -154,16 +154,6 @@ void RasterOverlayTileProvider::addCredits(
   }
 }
 
-/*static*/ const RasterOverlay& RasterOverlayTileProvider::getOwner(
-    const RasterOverlay& creator,
-    const CreateRasterOverlayTileProviderOptions& options) noexcept {
-  if (options.pOwner) {
-    return *options.pOwner;
-  } else {
-    return creator;
-  }
-}
-
 CesiumAsync::Future<LoadedRasterOverlayImage>
 RasterOverlayTileProvider::loadTileImageFromUrl(
     const std::string& url,

@@ -5,8 +5,6 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
-#include <optional>
-
 namespace CesiumRasterOverlays {
 
 EmptyRasterOverlayTileProvider::EmptyRasterOverlayTileProvider(

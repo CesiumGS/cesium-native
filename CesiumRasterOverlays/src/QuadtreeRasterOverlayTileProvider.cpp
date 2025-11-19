@@ -20,7 +20,6 @@
 #include <glm/common.hpp>
 #include <glm/exponential.hpp>
 #include <glm/ext/vector_double2.hpp>
-#include <spdlog/logger.h>
 
 #include <algorithm>
 #include <cstddef>

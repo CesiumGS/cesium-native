@@ -15,12 +15,10 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/WebMapTileServiceRasterOverlay.h>
-#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Uri.h>
 
 #include <nonstd/expected.hpp>
-#include <spdlog/logger.h>
 
 #include <algorithm>
 #include <cstdint>

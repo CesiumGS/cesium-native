@@ -270,18 +270,6 @@ public:
   virtual void
   addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
 
-  /**
-   * @brief Gets the effective owner raster overlay of a tile provider, given
-   * the raster overlay that directly created it and creation options that may
-   * or may not specify a different owner.
-   *
-   * @param creator The raster overlay that directly created the tile provider.
-   * @param options The creation options that may specify a different owner.
-   */
-  static const RasterOverlay& getOwner(
-      const RasterOverlay& creator,
-      const CreateRasterOverlayTileProviderOptions& options) noexcept;
-
 protected:
   /**
    * @brief Loads an image from a URL and optionally some request headers.

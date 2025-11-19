@@ -21,7 +21,6 @@
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Assert.h>
-#include <CesiumUtility/CreditReferencer.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
@@ -464,10 +463,9 @@ GoogleMapTilesRasterOverlayTileProvider::
     : QuadtreeRasterOverlayTileProvider(
           pCreator,
           options,
-          WebMercatorProjection(
-              getOwner(*pCreator, options).getOptions().ellipsoid),
-          createTilingScheme(getOwner(*pCreator, options)),
-          createRectangle(getOwner(*pCreator, options)),
+          WebMercatorProjection(pCreator->getOptions().ellipsoid),
+          createTilingScheme(*pCreator),
+          createRectangle(*pCreator),
           0,
           maximumLevel,
           imageWidth,
@@ -475,12 +473,8 @@ GoogleMapTilesRasterOverlayTileProvider::
       _apiBaseUrl(apiBaseUrl),
       _session(session),
       _key(key),
-      _availableTiles(
-          createTilingScheme(getOwner(*pCreator, options)),
-          maximumLevel),
-      _availableAvailability(
-          createTilingScheme(getOwner(*pCreator, options)),
-          maximumLevel) {
+      _availableTiles(createTilingScheme(*pCreator), maximumLevel),
+      _availableAvailability(createTilingScheme(*pCreator), maximumLevel) {
   if (options.externals.pCreditSystem && showLogo) {
     this->getCredits().emplace_back(
         options.externals.pCreditSystem->createCredit(

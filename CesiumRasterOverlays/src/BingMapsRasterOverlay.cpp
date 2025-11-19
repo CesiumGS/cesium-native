@@ -22,7 +22,6 @@
 #include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/pointer.h>
-#include <spdlog/logger.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -128,10 +127,9 @@ public:
       : QuadtreeRasterOverlayTileProvider(
             pCreator,
             options,
-            WebMercatorProjection(
-                getOwner(*pCreator, options).getOptions().ellipsoid),
-            createTilingScheme(getOwner(*pCreator, options)),
-            createRectangle(getOwner(*pCreator, options)),
+            WebMercatorProjection(pCreator->getOptions().ellipsoid),
+            createTilingScheme(*pCreator),
+            createRectangle(*pCreator),
             minimumLevel,
             maximumLevel,
             width,
@@ -142,11 +140,10 @@ public:
         _culture(culture),
         _subdomains(subdomains) {
     if (options.externals.pCreditSystem) {
-      const RasterOverlay& owner = getOwner(*pCreator, options);
       this->setCredit(options.externals.pCreditSystem->createCredit(
           this->getCreditSource(),
           BING_LOGO_HTML,
-          owner.getOptions().showCreditsOnScreen));
+          pCreator->getOptions().showCreditsOnScreen));
 
       this->_credits.reserve(perTileCredits.size());
       for (const CreditStringAndCoverageAreas& creditStringAndCoverageAreas :
@@ -155,7 +152,7 @@ public:
             options.externals.pCreditSystem->createCredit(
                 this->getCreditSource(),
                 creditStringAndCoverageAreas.credit,
-                owner.getOptions().showCreditsOnScreen),
+                pCreator->getOptions().showCreditsOnScreen),
             creditStringAndCoverageAreas.coverageAreas});
       }
     }

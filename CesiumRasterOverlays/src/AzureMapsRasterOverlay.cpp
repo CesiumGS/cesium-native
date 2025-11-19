@@ -14,8 +14,6 @@
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
-#include <CesiumUtility/CreditReferencer.h>
-#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
@@ -473,10 +471,9 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
     : QuadtreeRasterOverlayTileProvider(
           pCreator,
           options,
-          WebMercatorProjection(
-              getOwner(*pCreator, options).getOptions().ellipsoid),
-          createTilingScheme(getOwner(*pCreator, options)),
-          createRectangle(getOwner(*pCreator, options)),
+          WebMercatorProjection(pCreator->getOptions().ellipsoid),
+          createTilingScheme(*pCreator),
+          createRectangle(*pCreator),
           minimumLevel,
           maximumLevel,
           imageSize,
@@ -491,7 +488,7 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
         options.externals.pCreditSystem->createCredit(
             this->getCreditSource(),
             credit,
-            getOwner(*pCreator, options).getOptions().showCreditsOnScreen));
+            pCreator->getOptions().showCreditsOnScreen));
 
     if (showLogo) {
       this->getCredits().emplace_back(

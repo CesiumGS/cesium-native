@@ -11,17 +11,14 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterizedPolygonsOverlay.h>
-#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/geometric.hpp>
-#include <spdlog/fwd.h>
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>

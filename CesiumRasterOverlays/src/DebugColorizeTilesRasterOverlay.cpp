@@ -1,7 +1,6 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
@@ -9,16 +8,11 @@
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
-#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/SpanHelper.h>
 
-#include <spdlog/logger.h>
-
 #include <cstdint>
 #include <cstdlib>
-#include <memory>
-#include <optional>
 #include <span>
 #include <string>
 #include <utility>

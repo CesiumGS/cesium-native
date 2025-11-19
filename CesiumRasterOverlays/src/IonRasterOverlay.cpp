@@ -25,7 +25,6 @@
 #include <fmt/format.h>
 #include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
-#include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 
 #include <chrono>
