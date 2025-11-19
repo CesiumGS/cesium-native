@@ -30,10 +30,10 @@ public:
   }
 
 private:
-  int32_t _id;
-  int32_t _generation;
+  uint32_t _id;
+  uint32_t _generation;
 
-  Credit(int32_t id, int32_t generation) noexcept
+  Credit(uint32_t id, uint32_t generation) noexcept
       : _id(id), _generation(generation) {}
 
   friend class CreditSystem;
@@ -240,10 +240,10 @@ public:
 private:
   void addBulkReferences(
       const std::vector<int32_t>& references,
-      const std::vector<int32_t>& generations) noexcept;
+      const std::vector<uint32_t>& generations) noexcept;
   void releaseBulkReferences(
       const std::vector<int32_t>& references,
-      const std::vector<int32_t>& generations) noexcept;
+      const std::vector<uint32_t>& generations) noexcept;
 
   void createCreditSource(CreditSource& creditSource) noexcept;
   void destroyCreditSource(CreditSource& creditSource) noexcept;
@@ -256,7 +256,7 @@ private:
     bool showOnScreen{false};
     int32_t referenceCount{0};
     bool shownLastSnapshot{0};
-    int32_t generation{0};
+    uint32_t generation{0};
     const CreditSource* pSource{nullptr};
   };
 

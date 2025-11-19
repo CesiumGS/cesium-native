@@ -116,7 +116,7 @@ public:
 private:
   std::shared_ptr<CreditSystem> _pCreditSystem;
   std::vector<int32_t> _references;
-  std::vector<int32_t> _generations;
+  std::vector<uint32_t> _generations;
 };
 
 } // namespace CesiumUtility

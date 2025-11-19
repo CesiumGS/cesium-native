@@ -66,7 +66,7 @@ Credit CreditSystem::createCredit(
     if (record.pSource == &source && record.html == html) {
       // Override the existing credit's showOnScreen value.
       record.showOnScreen = showOnScreen;
-      return Credit(int32_t(id), record.generation);
+      return Credit(uint32_t(id), record.generation);
     }
   }
 
@@ -90,7 +90,7 @@ Credit CreditSystem::createCredit(
   // slot was destroyed.
   record.pSource = &source;
 
-  return Credit(int32_t(creditIndex), record.generation);
+  return Credit(uint32_t(creditIndex), record.generation);
 }
 
 Credit CreditSystem::createCredit(std::string&& html, bool showOnScreen) {
@@ -194,7 +194,7 @@ const CreditsSnapshot& CreditSystem::getSnapshot() noexcept {
     // count of zero.
     if (record.referenceCount > 0) {
       CESIUM_ASSERT(record.pSource != nullptr);
-      currentCredits.emplace_back(Credit(int32_t(i), record.generation));
+      currentCredits.emplace_back(Credit(uint32_t(i), record.generation));
       record.shownLastSnapshot = true;
     } else {
       record.shownLastSnapshot = false;
@@ -226,7 +226,7 @@ const CreditSource& CreditSystem::getDefaultCreditSource() const noexcept {
 
 void CreditSystem::addBulkReferences(
     const std::vector<int32_t>& references,
-    const std::vector<int32_t>& generations) noexcept {
+    const std::vector<uint32_t>& generations) noexcept {
   for (size_t i = 0; i < references.size(); ++i) {
     CreditRecord& record = this->_credits[i];
     if (record.generation != generations[i]) {
@@ -247,7 +247,7 @@ void CreditSystem::addBulkReferences(
           std::remove_if(
               this->_creditsToNoLongerShowThisSnapshot.begin(),
               this->_creditsToNoLongerShowThisSnapshot.end(),
-              [i = int32_t(i)](const Credit& candidate) {
+              [i = uint32_t(i)](const Credit& candidate) {
                 return candidate._id == i;
               }),
           this->_creditsToNoLongerShowThisSnapshot.end());
@@ -257,7 +257,7 @@ void CreditSystem::addBulkReferences(
 
 void CreditSystem::releaseBulkReferences(
     const std::vector<int32_t>& references,
-    const std::vector<int32_t>& generations) noexcept {
+    const std::vector<uint32_t>& generations) noexcept {
   for (size_t i = 0; i < references.size(); ++i) {
     CreditRecord& record = this->_credits[i];
     if (record.generation != generations[i]) {
@@ -275,7 +275,7 @@ void CreditSystem::releaseBulkReferences(
     // frame, add this credit to _creditsToNoLongerShowThisSnapshot.
     if (record.shownLastSnapshot && record.referenceCount == 0) {
       this->_creditsToNoLongerShowThisSnapshot.emplace_back(
-          Credit(int32_t(i), record.generation));
+          Credit(uint32_t(i), record.generation));
     }
   }
 }
