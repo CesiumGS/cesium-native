@@ -91,7 +91,7 @@ public:
         _credits() {}
 
   static CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> create(
-      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const IntrusivePointer<const IonRasterOverlay>& pCreator,
       const CreateRasterOverlayTileProviderOptions& options,
       const NetworkAssetDescriptor& descriptor) {
     CreateRasterOverlayTileProviderOptions optionsCopy = options;
@@ -100,8 +100,9 @@ public:
     }
 
     auto pFactory = std::make_unique<TileProvider::TileProviderFactoryType>(
-        TileProvider::TileProviderFactoryType(
-            TileProvider::CreateTileProvider{.options = optionsCopy}));
+        TileProvider::TileProviderFactoryType(TileProvider::CreateTileProvider{
+            .pCreator = pCreator,
+            .options = optionsCopy}));
 
     return TileProvider::getTileProvider(
                options.externals,
