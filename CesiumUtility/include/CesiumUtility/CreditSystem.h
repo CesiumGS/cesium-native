@@ -123,7 +123,7 @@ public:
   /**
    * @brief Inserts a credit string.
    *
-   * @param pSource The source of the credit. This should be an instance created
+   * @param source The source of the credit. This should be an instance created
    * and owned by a tileset, raster overlay, or other data source.
    * @param html The HTML string for the credit.
    * @param showOnScreen Whether or not the credit should be shown on screen.
@@ -139,7 +139,7 @@ public:
   /**
    * @brief Inserts a credit string.
    *
-   * @param pSource The source of the credit. This should be an instance created
+   * @param source The source of the credit. This should be an instance created
    * and owned by a tileset, raster overlay, or other data source.
    * @param html The HTML string for the credit.
    * @param showOnScreen Whether or not the credit should be shown on screen.

@@ -231,8 +231,8 @@ public:
    * If called on a non-const instance, the returned collection may be modified
    * to add or remove credits.
    *
-   * The credits in this collection will be added to the \ref CreditReferencer
-   * in \ref addCredits.
+   * The credits in this collection will be added to the \ref
+   * CesiumUtility::CreditReferencer in \ref addCredits.
    */
   std::vector<CesiumUtility::Credit>& getCredits() noexcept;
 

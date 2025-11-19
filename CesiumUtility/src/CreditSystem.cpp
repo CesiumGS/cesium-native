@@ -298,7 +298,7 @@ void CreditSystem::destroyCreditSource(CreditSource& creditSource) noexcept {
             std::remove_if(
                 this->_creditsToNoLongerShowThisSnapshot.begin(),
                 this->_creditsToNoLongerShowThisSnapshot.end(),
-                [id = &record - this->_credits.data()](
+                [id = uint32_t(&record - this->_credits.data())](
                     const Credit& candidate) { return candidate._id == id; }),
             this->_creditsToNoLongerShowThisSnapshot.end());
       }
