@@ -19,7 +19,7 @@ struct CESIUMRASTEROVERLAYS_API CreateRasterOverlayTileProviderOptions {
   /**
    * @brief The external interfaces for use by the raster overlay tile provider.
    */
-  RasterOverlayExternals externals;
+  RasterOverlayExternals externals{};
 
   /**
    * @brief The overlay that owns this overlay.
@@ -27,7 +27,7 @@ struct CESIUMRASTEROVERLAYS_API CreateRasterOverlayTileProviderOptions {
    * If nullptr, this overlay is not aggregated, and the owner of the tile
    * provider is the overlay that created it.
    */
-  CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner;
+  CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner{nullptr};
 
   /**
    * @brief The credit source that the new tile provider should use for its
@@ -35,7 +35,7 @@ struct CESIUMRASTEROVERLAYS_API CreateRasterOverlayTileProviderOptions {
    *
    * If nullptr, a new credit source will be created for the tile provider.
    */
-  std::shared_ptr<CesiumUtility::CreditSource> pCreditSource;
+  std::shared_ptr<CesiumUtility::CreditSource> pCreditSource{nullptr};
 };
 
 } // namespace CesiumRasterOverlays
