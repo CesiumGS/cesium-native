@@ -219,8 +219,8 @@ public:
   const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept;
 
   /**
-   * @brief Gets the \ref CesiumUtility::CreditSource that identifies this
-   * raster overlay's credits with the \ref CesiumUtility::CreditSystem.
+   * @brief Gets the @ref CesiumUtility::CreditSource that identifies this
+   * raster overlay's credits with the @ref CesiumUtility::CreditSystem.
    */
   const CesiumUtility::CreditSource& getCreditSource() const noexcept;
 
@@ -231,8 +231,8 @@ public:
    * If called on a non-const instance, the returned collection may be modified
    * to add or remove credits.
    *
-   * The credits in this collection will be added to the \ref
-   * CesiumUtility::CreditReferencer in \ref addCredits.
+   * The credits in this collection will be added to the @ref
+   * CesiumUtility::CreditReferencer in @ref addCredits.
    */
   std::vector<CesiumUtility::Credit>& getCredits() noexcept;
 
@@ -240,13 +240,6 @@ public:
    * @copydoc getCredits
    */
   const std::vector<CesiumUtility::Credit>& getCredits() const noexcept;
-
-  /**
-   * @brief Set the per-TileProvider \ref CesiumUtility::Credit.
-   * @deprecated Implement \ref addCredits instead.
-   */
-  void
-  setCredit(const std::optional<CesiumUtility::Credit>& maybeCredit) noexcept;
 
   /**
    * @brief Loads the image for a tile.
