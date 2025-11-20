@@ -37,7 +37,7 @@ public:
    * @param pCreator The \ref RasterOverlay that directly created this instance.
    * This will become the owner of this instance if another owner is not
    * specified in \ref CreateRasterOverlayTileProviderParameters::pOwner.
-   * @param options The options for creating the tile provider.
+   * @param parameters The parameters for creating the tile provider.
    * @param projection The {@link CesiumGeospatial::Projection}.
    * @param tilingScheme The tiling scheme to be used by this {@link QuadtreeRasterOverlayTileProvider}.
    * @param coverageRectangle The rectangle that bounds all the area covered by
