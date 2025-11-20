@@ -93,15 +93,10 @@ public:
       const IntrusivePointer<const IonRasterOverlay>& pCreator,
       const CreateRasterOverlayTileProviderParameters& parameters,
       const NetworkAssetDescriptor& descriptor) {
-    CreateRasterOverlayTileProviderParameters parametersCopy = parameters;
-    if (parametersCopy.pOwner == nullptr) {
-      parametersCopy.pOwner = pCreator;
-    }
-
     auto pFactory = std::make_unique<TileProvider::TileProviderFactoryType>(
         TileProvider::TileProviderFactoryType(TileProvider::CreateTileProvider{
             .pCreator = pCreator,
-            .parameters = parametersCopy}));
+            .parameters = parameters}));
 
     return TileProvider::getTileProvider(
                parameters.externals,
@@ -310,7 +305,16 @@ IonRasterOverlay::createTileProvider(
     descriptor.url = uri.toString();
   }
 
-  return TileProvider::create(this, parameters, descriptor);
+  CreateRasterOverlayTileProviderParameters parametersCopy = parameters;
+  if (parametersCopy.pOwner == nullptr) {
+    // The aggregated tile provider should be owned by this overlay and use a
+    // common credit source.
+    parametersCopy.pOwner = this;
+    parametersCopy.pCreditSource =
+        std::make_shared<CreditSource>(parameters.externals.pCreditSystem);
+  }
+
+  return TileProvider::create(this, parametersCopy, descriptor);
 }
 
 void IonRasterOverlay::ExternalAssetEndpoint::parseAzure2DOptions(
@@ -653,12 +657,7 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
     }
   }
 
-  CreateRasterOverlayTileProviderParameters parametersCopy = this->parameters;
-  if (parametersCopy.pOwner == nullptr) {
-    parametersCopy.pOwner = this->pCreator;
-  }
-
-  return pOverlay->createTileProvider(parametersCopy)
+  return pOverlay->createTileProvider(parameters)
       .thenImmediately([credits = std::move(credits)](
                            CreateTileProviderResult&& result) mutable {
         if (result) {
