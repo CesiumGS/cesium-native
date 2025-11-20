@@ -129,7 +129,9 @@ TEST_CASE("TileMapServiceRasterOverlay") {
             CreateRasterOverlayTileProviderOptions{
                 .externals =
                     {.pAssetAccessor = pMockAssetAccessor,
+                     .pPrepareRendererResources = nullptr,
                      .asyncSystem = asyncSystem,
+                     .pCreditSystem = nullptr,
                      .pLogger = spdlog::default_logger()},
             }));
 
@@ -164,7 +166,9 @@ TEST_CASE("TileMapServiceRasterOverlay") {
             CreateRasterOverlayTileProviderOptions{
                 .externals =
                     {.pAssetAccessor = pMockAssetAccessor,
+                     .pPrepareRendererResources = nullptr,
                      .asyncSystem = asyncSystem,
+                     .pCreditSystem = nullptr,
                      .pLogger = spdlog::default_logger()},
             }));
 
@@ -219,7 +223,9 @@ TEST_CASE("TileMapServiceRasterOverlay") {
             CreateRasterOverlayTileProviderOptions{
                 .externals =
                     {.pAssetAccessor = pMockAssetAccessor,
+                     .pPrepareRendererResources = nullptr,
                      .asyncSystem = asyncSystem,
+                     .pCreditSystem = nullptr,
                      .pLogger = spdlog::default_logger()},
             }));
 
@@ -241,6 +247,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
             CreateRasterOverlayTileProviderOptions{
                 .externals =
                     {.pAssetAccessor = pMockAssetAccessor,
+                     .pPrepareRendererResources = nullptr,
                      .asyncSystem = asyncSystem,
                      .pCreditSystem = pCreditSystem,
                      .pLogger = spdlog::default_logger()},
@@ -271,7 +278,9 @@ TEST_CASE("TileMapServiceRasterOverlay") {
             CreateRasterOverlayTileProviderOptions{
                 .externals =
                     {.pAssetAccessor = pMockAssetAccessor,
+                     .pPrepareRendererResources = nullptr,
                      .asyncSystem = asyncSystem,
+                     .pCreditSystem = nullptr,
                      .pLogger = spdlog::default_logger()},
             }));
 
