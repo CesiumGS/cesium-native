@@ -305,11 +305,14 @@ IonRasterOverlay::createTileProvider(
     descriptor.url = uri.toString();
   }
 
+  // The aggregated tile provider should be owned by this overlay and use a
+  // common credit source. But the conditions account for the possibility that
+  // the IonRasterOverlay itself is aggregated by some other overlay.
   CreateRasterOverlayTileProviderParameters parametersCopy = parameters;
   if (parametersCopy.pOwner == nullptr) {
-    // The aggregated tile provider should be owned by this overlay and use a
-    // common credit source.
     parametersCopy.pOwner = this;
+  }
+  if (parametersCopy.pCreditSource == nullptr) {
     parametersCopy.pCreditSource =
         std::make_shared<CreditSource>(parameters.externals.pCreditSystem);
   }
