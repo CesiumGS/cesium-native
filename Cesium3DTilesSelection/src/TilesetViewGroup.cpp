@@ -202,7 +202,6 @@ void TilesetViewGroup::finishFrame(
         if (pRasterOverlayTile != nullptr) {
           for (const Credit& credit : pRasterOverlayTile->getCredits()) {
             this->_currentFrameCredits.addCreditReference(credit);
-            this->_currentFrameRasterCredits.addCreditReference(credit);
           }
         }
       }
@@ -219,11 +218,6 @@ void TilesetViewGroup::finishFrame(
 
     this->_previousFrameCredits.releaseAllReferences();
     std::swap(this->_previousFrameCredits, this->_currentFrameCredits);
-
-    this->_previousFrameRasterCredits.releaseAllReferences();
-    std::swap(
-        this->_previousFrameRasterCredits,
-        this->_currentFrameRasterCredits);
   }
 }
 
@@ -268,11 +262,6 @@ const Tile* TilesetViewGroup::getNextTileToLoadInMainThread() {
 bool TilesetViewGroup::isCreditReferenced(
     CesiumUtility::Credit credit) const noexcept {
   return this->_previousFrameCredits.isCreditReferenced(credit);
-}
-
-bool TilesetViewGroup::isCreditReferencedByRaster(
-    CesiumUtility::Credit credit) const noexcept {
-  return this->_previousFrameRasterCredits.isCreditReferenced(credit);
 }
 
 } // namespace Cesium3DTilesSelection
