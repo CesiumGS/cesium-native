@@ -1,5 +1,21 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- `RasterOverlay::createTileProvider` now receives a reference to `CreateRasterOverlayTileProviderParameters` instead of a large number of individual parameters.
+- The constructor parameters for `RasterOverlayTileProvider` and `QuadtreeRasterOverlayTileProvider` have changed.
+- The `getCredit` method has been removed from `RasterOverlayCreditProvider`. Use `getCredits` instead.
+- Removed unused property `RasterOverlayOptions::subTileCacheBytes`.
+- The `CreditSystem` would previously treat credits with identical text as the same credit, even if they came from different sources. Now, credits from different `CreditSource` instances are treated as different credits.
+
+##### Additions :tada:
+
+- Added the concept of a `CreditSource`. Every `Credit` in a `CreditSystem` has a source, and these can be mapped back to `Tileset` and `RasterOverlayTileProvider` (via their `getCreditSource` methods) in order to determine which dataset created which credits.
+- Added `TilesetViewGroup::isCreditReferenced`, which can be used to determine if a particular view group references a particular `Credit`.
+- Added `CreditReferencer::isCreditReferenced`, which can be used to determine if the referencer is currently referencing a particular `Credit`.
+
 ### v0.54.0 - 2025-11-17
 
 ##### Additions :tada:
