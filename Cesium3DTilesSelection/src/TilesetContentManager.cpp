@@ -713,6 +713,19 @@ postProcessContentInWorkerThread(
       });
 }
 
+std::optional<Credit> createUserCredit(
+    const TilesetOptions& tilesetOptions,
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
+    const CreditSource& creditSource) {
+  if (!tilesetOptions.credit || !pCreditSystem)
+    return std::nullopt;
+
+  return pCreditSystem->createCredit(
+      creditSource,
+      *tilesetOptions.credit,
+      tilesetOptions.showCreditsOnScreen);
+}
+
 } // namespace
 
 TilesetContentManager::TilesetContentManager(
@@ -750,13 +763,10 @@ TilesetContentManager::TilesetContentManager(
       _creditSource(externals.pCreditSystem) {
   CESIUM_ASSERT(this->_pLoader != nullptr);
 
-  if (tilesetOptions.credit && externals.pCreditSystem) {
-    this->_userCredit = externals.pCreditSystem->createCredit(
-        this->_creditSource,
-        tilesetOptions.credit.value(),
-        tilesetOptions.showCreditsOnScreen);
-  }
-
+  this->_userCredit = createUserCredit(
+      tilesetOptions,
+      externals.pCreditSystem,
+      this->_creditSource);
   this->_upsampler.setOwner(*this);
 
   this->notifyTileStartLoading(nullptr);
@@ -804,12 +814,10 @@ TilesetContentManager::TilesetContentManager(
       _requesterFractions(),
       _requestersWithRequests(),
       _creditSource(externals.pCreditSystem) {
-  if (tilesetOptions.credit && externals.pCreditSystem) {
-    this->_userCredit = externals.pCreditSystem->createCredit(
-        this->_creditSource,
-        tilesetOptions.credit.value(),
-        tilesetOptions.showCreditsOnScreen);
-  }
+  this->_userCredit = createUserCredit(
+      tilesetOptions,
+      externals.pCreditSystem,
+      this->_creditSource);
 
   this->_upsampler.setOwner(*this);
 
@@ -975,12 +983,10 @@ TilesetContentManager::TilesetContentManager(
       _requesterFractions(),
       _requestersWithRequests(),
       _creditSource(externals.pCreditSystem) {
-  if (tilesetOptions.credit && externals.pCreditSystem) {
-    this->_userCredit = externals.pCreditSystem->createCredit(
-        this->_creditSource,
-        tilesetOptions.credit.value(),
-        tilesetOptions.showCreditsOnScreen);
-  }
+  this->_userCredit = createUserCredit(
+      tilesetOptions,
+      externals.pCreditSystem,
+      this->_creditSource);
 
   this->_upsampler.setOwner(*this);
 
