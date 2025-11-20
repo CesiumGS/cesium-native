@@ -62,7 +62,8 @@ public:
   void setAssetOptions(const std::optional<std::string>& options) noexcept;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CreateRasterOverlayTileProviderOptions& options) const override;
+      const CreateRasterOverlayTileProviderParameters& parameters)
+      const override;
 
 protected:
   /**

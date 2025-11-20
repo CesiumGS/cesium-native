@@ -12,7 +12,7 @@
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -49,7 +49,7 @@ class TestTileProvider : public QuadtreeRasterOverlayTileProvider {
 public:
   TestTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,
@@ -59,7 +59,7 @@ public:
       uint32_t imageHeight) noexcept
       : QuadtreeRasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -104,11 +104,12 @@ public:
       : RasterOverlay(name, options) {}
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CreateRasterOverlayTileProviderOptions& options) const override {
-    return options.externals.asyncSystem
+      const CreateRasterOverlayTileProviderParameters& parameters)
+      const override {
+    return parameters.externals.asyncSystem
         .createResolvedFuture<CreateTileProviderResult>(new TestTileProvider(
             this,
-            options,
+            parameters,
             WebMercatorProjection(Ellipsoid::WGS84),
             QuadtreeTilingScheme(
                 WebMercatorProjection::computeMaximumProjectedRectangle(

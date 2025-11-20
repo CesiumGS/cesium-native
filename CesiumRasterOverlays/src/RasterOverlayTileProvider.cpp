@@ -6,7 +6,7 @@
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/ImageDecoder.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayExternals.h>
@@ -40,23 +40,23 @@ namespace CesiumRasterOverlays {
 
 RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
-    const CreateRasterOverlayTileProviderOptions& options,
+    const CreateRasterOverlayTileProviderParameters& parameters,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::Rectangle& coverageRectangle) noexcept
     : _pOwner(const_intrusive_cast<RasterOverlay>(
-          options.pOwner ? options.pOwner : pCreator)),
-      _externals(options.externals),
+          parameters.pOwner ? parameters.pOwner : pCreator)),
+      _externals(parameters.externals),
       _credits(),
       _projection(projection),
       _coverageRectangle(coverageRectangle),
       _destructionCompleteDetails(),
       _pCreditSource(
-          options.pCreditSource ? options.pCreditSource
-                                : std::make_shared<CreditSource>(
-                                      options.externals.pCreditSystem)) {
+          parameters.pCreditSource ? parameters.pCreditSource
+                                   : std::make_shared<CreditSource>(
+                                         parameters.externals.pCreditSystem)) {
   CESIUM_ASSERT(
       this->_pCreditSource->getCreditSystem() ==
-      options.externals.pCreditSystem.get());
+      parameters.externals.pCreditSystem.get());
 }
 
 RasterOverlayTileProvider::~RasterOverlayTileProvider() noexcept {

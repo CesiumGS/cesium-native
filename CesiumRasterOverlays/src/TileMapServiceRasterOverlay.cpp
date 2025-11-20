@@ -9,7 +9,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -86,7 +86,7 @@ class TileMapServiceTileProvider final
 public:
   TileMapServiceTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       std::optional<std::string> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -101,7 +101,7 @@ public:
       const std::vector<TileMapServiceTileset>& tileSets)
       : QuadtreeRasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -113,9 +113,9 @@ public:
         _headers(headers),
         _fileExtension(fileExtension),
         _tileSets(tileSets) {
-    if (options.externals.pCreditSystem && credit) {
+    if (parameters.externals.pCreditSystem && credit) {
       this->getCredits().emplace_back(
-          options.externals.pCreditSystem->createCredit(
+          parameters.externals.pCreditSystem->createCredit(
               this->getCreditSource(),
               *credit,
               pCreator->getOptions().showCreditsOnScreen));
@@ -296,19 +296,19 @@ Future<GetXmlDocumentResult> getXmlDocument(
 
 Future<RasterOverlay::CreateTileProviderResult>
 TileMapServiceRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
   std::string xmlUrl = this->_url;
 
   IntrusivePointer<const TileMapServiceRasterOverlay> thiz = this;
 
   return getXmlDocument(
-             options.externals.asyncSystem,
-             options.externals.pAssetAccessor,
+             parameters.externals.asyncSystem,
+             parameters.externals.pAssetAccessor,
              xmlUrl,
              this->_headers)
       .thenInMainThread(
           [thiz,
-           options](GetXmlDocumentResult&& xml) -> CreateTileProviderResult {
+           parameters](GetXmlDocumentResult&& xml) -> CreateTileProviderResult {
             if (!xml) {
               return nonstd::make_unexpected(std::move(xml).error());
             }
@@ -477,7 +477,7 @@ TileMapServiceRasterOverlay::createTileProvider(
 
             return new TileMapServiceTileProvider(
                 thiz,
-                options,
+                parameters,
                 thiz->_options.credit,
                 projection,
                 tilingScheme,

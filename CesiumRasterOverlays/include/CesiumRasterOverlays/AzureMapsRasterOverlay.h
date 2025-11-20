@@ -209,7 +209,8 @@ public:
   virtual ~AzureMapsRasterOverlay() override;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CreateRasterOverlayTileProviderOptions& options) const override;
+      const CreateRasterOverlayTileProviderParameters& parameters)
+      const override;
 
 private:
   AzureMapsSessionParameters _sessionParameters;

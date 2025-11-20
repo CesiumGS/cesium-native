@@ -40,7 +40,7 @@
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/DebugColorizeTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -1331,12 +1331,12 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     public:
       AlwaysMoreDetailProvider(
           const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
-          const CreateRasterOverlayTileProviderOptions& options,
+          const CreateRasterOverlayTileProviderParameters& parameters,
           const CesiumGeospatial::Projection& projection,
           const CesiumGeometry::Rectangle& coverageRectangle)
           : RasterOverlayTileProvider(
                 pCreator,
-                options,
+                parameters,
                 projection,
                 coverageRectangle) {}
 
@@ -1364,15 +1364,15 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     public:
       AlwaysMoreDetailRasterOverlay() : RasterOverlay("AlwaysMoreDetail") {}
 
-      CesiumAsync::Future<CreateTileProviderResult>
-      createTileProvider(const CreateRasterOverlayTileProviderOptions& options)
+      CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
+          const CreateRasterOverlayTileProviderParameters& parameters)
           const override {
-        return options.externals.asyncSystem.createResolvedFuture(
+        return parameters.externals.asyncSystem.createResolvedFuture(
             CreateTileProviderResult(
                 CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>(
                     new AlwaysMoreDetailProvider(
                         this,
-                        options,
+                        parameters,
                         CesiumGeospatial::GeographicProjection(),
                         projectRectangleSimple(
                             CesiumGeospatial::GeographicProjection(),

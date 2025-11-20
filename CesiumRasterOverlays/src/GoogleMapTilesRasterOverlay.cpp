@@ -13,7 +13,7 @@
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonWriter/JsonObjectWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/GoogleMapTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -140,7 +140,7 @@ class GoogleMapTilesRasterOverlayTileProvider
 public:
   GoogleMapTilesRasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const std::string& apiBaseUrl,
       const std::string& session,
       const std::string& key,
@@ -200,16 +200,16 @@ GoogleMapTilesRasterOverlay::GoogleMapTilesRasterOverlay(
 
 Future<RasterOverlay::CreateTileProviderResult>
 GoogleMapTilesRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
   if (this->_newSessionParameters) {
-    return this->createNewSession(options);
+    return this->createNewSession(parameters);
   } else if (this->_existingSession) {
     const GoogleMapTilesExistingSession& session = *this->_existingSession;
 
     IntrusivePointer pTileProvider =
         new GoogleMapTilesRasterOverlayTileProvider(
             this,
-            options,
+            parameters,
             session.apiBaseUrl,
             session.session,
             session.key,
@@ -229,7 +229,7 @@ GoogleMapTilesRasterOverlay::createTileProvider(
           return CreateTileProviderResult(pTileProvider);
         });
   } else {
-    return options.externals.asyncSystem
+    return parameters.externals.asyncSystem
         .createResolvedFuture<CreateTileProviderResult>(
             nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                 .type = RasterOverlayLoadType::TileProvider,
@@ -242,7 +242,7 @@ GoogleMapTilesRasterOverlay::createTileProvider(
 
 Future<RasterOverlay::CreateTileProviderResult>
 GoogleMapTilesRasterOverlay::createNewSession(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
   CESIUM_ASSERT(this->_newSessionParameters);
 
   Uri createSessionUri(
@@ -296,19 +296,19 @@ GoogleMapTilesRasterOverlay::createNewSession(
 
   IntrusivePointer<const GoogleMapTilesRasterOverlay> thiz = this;
 
-  return options.externals.pAssetAccessor
+  return parameters.externals.pAssetAccessor
       ->request(
-          options.externals.asyncSystem,
+          parameters.externals.asyncSystem,
           "POST",
           std::string(createSessionUri.toString()),
           {{"Content-Type", "application/json"}},
           requestPayloadBytes)
       .thenInMainThread(
-          [thiz, options](std::shared_ptr<IAssetRequest>&& pRequest)
+          [thiz, parameters](std::shared_ptr<IAssetRequest>&& pRequest)
               -> Future<CreateTileProviderResult> {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-              return options.externals.asyncSystem
+              return parameters.externals.asyncSystem
                   .createResolvedFuture<CreateTileProviderResult>(
                       nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                           .type = RasterOverlayLoadType::TileProvider,
@@ -320,7 +320,7 @@ GoogleMapTilesRasterOverlay::createNewSession(
 
             if (pResponse->statusCode() < 200 ||
                 pResponse->statusCode() >= 300) {
-              return options.externals.asyncSystem.createResolvedFuture<
+              return parameters.externals.asyncSystem.createResolvedFuture<
                   CreateTileProviderResult>(
                   nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                       .type = RasterOverlayLoadType::TileProvider,
@@ -340,7 +340,7 @@ GoogleMapTilesRasterOverlay::createNewSession(
               errorList.errors = std::move(response.errors);
               errorList.warnings = std::move(response.warnings);
 
-              return options.externals.asyncSystem.createResolvedFuture<
+              return parameters.externals.asyncSystem.createResolvedFuture<
                   CreateTileProviderResult>(
                   nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                       .type = RasterOverlayLoadType::TileProvider,
@@ -351,7 +351,7 @@ GoogleMapTilesRasterOverlay::createNewSession(
             }
 
             if (!response.value->isObject()) {
-              return options.externals.asyncSystem
+              return parameters.externals.asyncSystem
                   .createResolvedFuture<CreateTileProviderResult>(
                       nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                           .type = RasterOverlayLoadType::TileProvider,
@@ -366,7 +366,7 @@ GoogleMapTilesRasterOverlay::createNewSession(
 
             auto it = responseObject.find("session");
             if (it == responseObject.end() || !it->second.isString()) {
-              return options.externals.asyncSystem
+              return parameters.externals.asyncSystem
                   .createResolvedFuture<CreateTileProviderResult>(
                       nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                           .type = RasterOverlayLoadType::TileProvider,
@@ -381,7 +381,7 @@ GoogleMapTilesRasterOverlay::createNewSession(
 
             it = responseObject.find("tileWidth");
             if (it == responseObject.end() || !it->second.isNumber()) {
-              return options.externals.asyncSystem
+              return parameters.externals.asyncSystem
                   .createResolvedFuture<CreateTileProviderResult>(
                       nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                           .type = RasterOverlayLoadType::TileProvider,
@@ -396,7 +396,7 @@ GoogleMapTilesRasterOverlay::createNewSession(
 
             it = responseObject.find("tileHeight");
             if (it == responseObject.end() || !it->second.isNumber()) {
-              return options.externals.asyncSystem
+              return parameters.externals.asyncSystem
                   .createResolvedFuture<CreateTileProviderResult>(
                       nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                           .type = RasterOverlayLoadType::TileProvider,
@@ -413,7 +413,7 @@ GoogleMapTilesRasterOverlay::createNewSession(
             IntrusivePointer pTileProvider =
                 new GoogleMapTilesRasterOverlayTileProvider(
                     thiz,
-                    options,
+                    parameters,
                     thiz->_newSessionParameters->apiBaseUrl,
                     session,
                     thiz->_newSessionParameters->key,
@@ -451,7 +451,7 @@ QuadtreeTilingScheme createTilingScheme(const RasterOverlay& owner) {
 GoogleMapTilesRasterOverlayTileProvider::
     GoogleMapTilesRasterOverlayTileProvider(
         const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
-        const CreateRasterOverlayTileProviderOptions& options,
+        const CreateRasterOverlayTileProviderParameters& parameters,
         const std::string& apiBaseUrl,
         const std::string& session,
         const std::string& key,
@@ -461,7 +461,7 @@ GoogleMapTilesRasterOverlayTileProvider::
         bool showLogo)
     : QuadtreeRasterOverlayTileProvider(
           pCreator,
-          options,
+          parameters,
           WebMercatorProjection(pCreator->getOptions().ellipsoid),
           createTilingScheme(*pCreator),
           createRectangle(*pCreator),
@@ -474,9 +474,9 @@ GoogleMapTilesRasterOverlayTileProvider::
       _key(key),
       _availableTiles(createTilingScheme(*pCreator), maximumLevel),
       _availableAvailability(createTilingScheme(*pCreator), maximumLevel) {
-  if (options.externals.pCreditSystem && showLogo) {
+  if (parameters.externals.pCreditSystem && showLogo) {
     this->getCredits().emplace_back(
-        options.externals.pCreditSystem->createCredit(
+        parameters.externals.pCreditSystem->createCredit(
             this->getCreditSource(),
             GOOGLE_MAPS_LOGO_HTML,
             true));

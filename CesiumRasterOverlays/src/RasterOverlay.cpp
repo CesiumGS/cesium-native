@@ -7,7 +7,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -33,11 +33,11 @@ class PlaceholderTileProvider : public RasterOverlayTileProvider {
 public:
   PlaceholderTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
       : RasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             CesiumGeospatial::GeographicProjection(ellipsoid),
             CesiumGeometry::Rectangle()) {}
 
@@ -86,13 +86,13 @@ CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> RasterOverlay::activate(
   IntrusivePointer<ActivatedRasterOverlay> pResult =
       new ActivatedRasterOverlay(externals, this, ellipsoid);
 
-  CreateRasterOverlayTileProviderOptions options{
+  CreateRasterOverlayTileProviderParameters parameters{
       .externals = externals,
       .pOwner = nullptr,
       .pCreditSource = nullptr};
 
   CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> future =
-      this->createTileProvider(options);
+      this->createTileProvider(parameters);
 
   // This continuation, by capturing pResult, keeps the instance from being
   // destroyed. But it does not keep the RasterOverlayCollection itself alive.
@@ -107,32 +107,32 @@ CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> RasterOverlay::activate(
                     "Error while creating tile provider: {0}",
                     e.what())});
           })
-      .thenInMainThread(
-          [pResult, options](RasterOverlay::CreateTileProviderResult&& result) {
-            IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
-            if (result) {
-              pProvider = *result;
-            } else {
-              // Report error creating the tile provider.
-              const RasterOverlayLoadFailureDetails& failureDetails =
-                  result.error();
-              SPDLOG_LOGGER_ERROR(
-                  options.externals.pLogger,
-                  failureDetails.message);
-              if (pResult->getOverlay().getOptions().loadErrorCallback) {
-                pResult->getOverlay().getOptions().loadErrorCallback(
-                    failureDetails);
-              }
+      .thenInMainThread([pResult, parameters](
+                            RasterOverlay::CreateTileProviderResult&& result) {
+        IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
+        if (result) {
+          pProvider = *result;
+        } else {
+          // Report error creating the tile provider.
+          const RasterOverlayLoadFailureDetails& failureDetails =
+              result.error();
+          SPDLOG_LOGGER_ERROR(
+              parameters.externals.pLogger,
+              failureDetails.message);
+          if (pResult->getOverlay().getOptions().loadErrorCallback) {
+            pResult->getOverlay().getOptions().loadErrorCallback(
+                failureDetails);
+          }
 
-              // Create a tile provider that does not provide any tiles at
-              // all.
-              pProvider = new EmptyRasterOverlayTileProvider(
-                  &pResult->getOverlay(),
-                  options);
-            }
+          // Create a tile provider that does not provide any tiles at
+          // all.
+          pProvider = new EmptyRasterOverlayTileProvider(
+              &pResult->getOverlay(),
+              parameters);
+        }
 
-            pResult->setTileProvider(pProvider);
-          });
+        pResult->setTileProvider(pProvider);
+      });
 
   return pResult;
 }
@@ -143,7 +143,7 @@ RasterOverlay::createPlaceholder(
     const CesiumGeospatial::Ellipsoid& ellipsoid) const {
   return new PlaceholderTileProvider(
       this,
-      CreateRasterOverlayTileProviderOptions{
+      CreateRasterOverlayTileProviderParameters{
           .externals = externals,
           .pOwner = nullptr,
           .pCreditSource = nullptr},

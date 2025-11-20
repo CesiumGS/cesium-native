@@ -13,9 +13,9 @@ namespace CesiumRasterOverlays {
 class RasterOverlay;
 
 /**
- * @brief Options passed to \ref RasterOverlay::createTileProvider.
+ * @brief Parameters passed to \ref RasterOverlay::createTileProvider.
  */
-struct CESIUMRASTEROVERLAYS_API CreateRasterOverlayTileProviderOptions {
+struct CESIUMRASTEROVERLAYS_API CreateRasterOverlayTileProviderParameters {
   /**
    * @brief The external interfaces for use by the raster overlay tile provider.
    */

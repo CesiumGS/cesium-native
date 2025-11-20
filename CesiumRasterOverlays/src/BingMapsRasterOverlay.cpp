@@ -7,7 +7,7 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -114,7 +114,7 @@ class BingMapsTileProvider final : public QuadtreeRasterOverlayTileProvider {
 public:
   BingMapsTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const std::vector<CreditStringAndCoverageAreas>& perTileCredits,
       const std::string& baseUrl,
       const std::string& urlTemplate,
@@ -126,7 +126,7 @@ public:
       const std::string& culture)
       : QuadtreeRasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             WebMercatorProjection(pCreator->getOptions().ellipsoid),
             createTilingScheme(*pCreator),
             createRectangle(*pCreator),
@@ -139,8 +139,8 @@ public:
         _urlTemplate(urlTemplate),
         _culture(culture),
         _subdomains(subdomains) {
-    if (options.externals.pCreditSystem) {
-      this->setCredit(options.externals.pCreditSystem->createCredit(
+    if (parameters.externals.pCreditSystem) {
+      this->setCredit(parameters.externals.pCreditSystem->createCredit(
           this->getCreditSource(),
           BING_LOGO_HTML,
           pCreator->getOptions().showCreditsOnScreen));
@@ -149,7 +149,7 @@ public:
       for (const CreditStringAndCoverageAreas& creditStringAndCoverageAreas :
            perTileCredits) {
         this->_credits.emplace_back(CreditAndCoverageAreas{
-            options.externals.pCreditSystem->createCredit(
+            parameters.externals.pCreditSystem->createCredit(
                 this->getCreditSource(),
                 creditStringAndCoverageAreas.credit,
                 pCreator->getOptions().showCreditsOnScreen),
@@ -362,7 +362,7 @@ collectCredits(const rapidjson::Value* pResource) {
 
 Future<RasterOverlay::CreateTileProviderResult>
 BingMapsRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
   Uri metadataUri(
       this->_url,
       "REST/v1/Imagery/Metadata/" + this->_mapStyle,
@@ -382,7 +382,7 @@ BingMapsRasterOverlay::createTileProvider(
   IntrusivePointer<const BingMapsRasterOverlay> thiz = this;
 
   auto handleResponse =
-      [thiz, options](
+      [thiz, parameters](
           const std::shared_ptr<IAssetRequest>& pRequest,
           const std::span<const std::byte>& data) -> CreateTileProviderResult {
     rapidjson::Document response;
@@ -445,7 +445,7 @@ BingMapsRasterOverlay::createTileProvider(
 
     return new BingMapsTileProvider(
         thiz,
-        options,
+        parameters,
         credits,
         thiz->_url,
         urlTemplate,
@@ -459,12 +459,12 @@ BingMapsRasterOverlay::createTileProvider(
 
   auto cacheResultIt = sessionCache.find(metadataUrl);
   if (cacheResultIt != sessionCache.end()) {
-    return options.externals.asyncSystem.createResolvedFuture(
+    return parameters.externals.asyncSystem.createResolvedFuture(
         handleResponse(nullptr, std::span<std::byte>(cacheResultIt->second)));
   }
 
-  return options.externals.pAssetAccessor
-      ->get(options.externals.asyncSystem, metadataUrl)
+  return parameters.externals.pAssetAccessor
+      ->get(parameters.externals.asyncSystem, metadataUrl)
       .thenInMainThread(
           [metadataUrl,
            handleResponse](std::shared_ptr<IAssetRequest>&& pRequest)

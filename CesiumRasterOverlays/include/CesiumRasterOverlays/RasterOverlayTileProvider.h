@@ -25,7 +25,7 @@ namespace CesiumRasterOverlays {
 class RasterOverlay;
 class RasterOverlayTile;
 class IPrepareRasterOverlayRendererResources;
-struct CreateRasterOverlayTileProviderOptions;
+struct CreateRasterOverlayTileProviderParameters;
 
 /**
  * @brief Summarizes the result of loading an image of a {@link RasterOverlay}.
@@ -142,7 +142,7 @@ public:
    *
    * @param pCreator The \ref RasterOverlay that directly created this instance.
    * This will become the owner of this instance if another owner is not
-   * specified in \ref CreateRasterOverlayTileProviderOptions::pOwner.
+   * specified in \ref CreateRasterOverlayTileProviderParameters::pOwner.
    * @param options The options for creating the tile provider.
    * @param projection The {@link CesiumGeospatial::Projection}.
    * @param coverageRectangle The rectangle that bounds all the area covered by
@@ -150,7 +150,7 @@ public:
    */
   RasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::Rectangle& coverageRectangle) noexcept;
 

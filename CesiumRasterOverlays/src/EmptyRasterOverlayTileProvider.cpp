@@ -9,10 +9,10 @@ namespace CesiumRasterOverlays {
 
 EmptyRasterOverlayTileProvider::EmptyRasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
-    const CreateRasterOverlayTileProviderOptions& options) noexcept
+    const CreateRasterOverlayTileProviderParameters& parameters) noexcept
     : RasterOverlayTileProvider(
           pCreator,
-          options,
+          parameters,
           CesiumGeospatial::GeographicProjection(),
           CesiumGeometry::Rectangle()) {}
 

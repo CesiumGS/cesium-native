@@ -11,7 +11,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/ImageAsset.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/GeoJsonDocumentRasterOverlay.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -513,12 +513,12 @@ private:
 public:
   GeoJsonDocumentRasterOverlayTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const GeoJsonDocumentRasterOverlayOptions& geoJsonOptions,
       std::shared_ptr<CesiumVectorData::GeoJsonDocument>&& pDocument)
       : RasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             GeographicProjection(geoJsonOptions.ellipsoid),
             projectRectangleSimple(
                 GeographicProjection(geoJsonOptions.ellipsoid),
@@ -631,14 +631,14 @@ GeoJsonDocumentRasterOverlay::~GeoJsonDocumentRasterOverlay() = default;
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 GeoJsonDocumentRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
 
   IntrusivePointer<const GeoJsonDocumentRasterOverlay> thiz = this;
 
   return std::move(
              const_cast<GeoJsonDocumentRasterOverlay*>(this)->_documentFuture)
       .thenInMainThread(
-          [thiz, options](std::shared_ptr<GeoJsonDocument>&& pDocument)
+          [thiz, parameters](std::shared_ptr<GeoJsonDocument>&& pDocument)
               -> CreateTileProviderResult {
             if (!pDocument) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
@@ -650,7 +650,7 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
             return IntrusivePointer<RasterOverlayTileProvider>(
                 new GeoJsonDocumentRasterOverlayTileProvider(
                     thiz,
-                    options,
+                    parameters,
                     thiz->_options,
                     std::move(pDocument)));
           });

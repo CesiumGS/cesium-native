@@ -8,7 +8,7 @@
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -148,7 +148,7 @@ class WebMapServiceTileProvider final
 public:
   WebMapServiceTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       std::optional<std::string> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -164,7 +164,7 @@ public:
       uint32_t maximumLevel)
       : QuadtreeRasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -177,9 +177,9 @@ public:
         _version(version),
         _layers(layers),
         _format(format) {
-    if (options.externals.pCreditSystem && credit) {
+    if (parameters.externals.pCreditSystem && credit) {
       this->getCredits().emplace_back(
-          options.externals.pCreditSystem->createCredit(
+          parameters.externals.pCreditSystem->createCredit(
               this->getCreditSource(),
               *credit,
               pCreator->getOptions().showCreditsOnScreen));
@@ -264,7 +264,7 @@ WebMapServiceRasterOverlay::~WebMapServiceRasterOverlay() = default;
 
 Future<RasterOverlay::CreateTileProviderResult>
 WebMapServiceRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
 
   std::string xmlUrlGetcapabilities =
       CesiumUtility::Uri::substituteTemplateParameters(
@@ -287,13 +287,13 @@ WebMapServiceRasterOverlay::createTileProvider(
 
   IntrusivePointer<const WebMapServiceRasterOverlay> thiz = this;
 
-  return options.externals.pAssetAccessor
+  return parameters.externals.pAssetAccessor
       ->get(
-          options.externals.asyncSystem,
+          parameters.externals.asyncSystem,
           xmlUrlGetcapabilities,
           this->_headers)
       .thenInMainThread(
-          [thiz, options](std::shared_ptr<IAssetRequest>&& pRequest)
+          [thiz, parameters](std::shared_ptr<IAssetRequest>&& pRequest)
               -> CreateTileProviderResult {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
@@ -356,7 +356,7 @@ WebMapServiceRasterOverlay::createTileProvider(
 
             return new WebMapServiceTileProvider(
                 thiz,
-                options,
+                parameters,
                 wmsOptions.credit,
                 projection,
                 tilingScheme,

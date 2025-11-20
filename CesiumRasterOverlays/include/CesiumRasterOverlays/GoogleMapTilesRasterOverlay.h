@@ -286,11 +286,12 @@ public:
 
   /** @inheritdoc */
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CreateRasterOverlayTileProviderOptions& options) const override;
+      const CreateRasterOverlayTileProviderParameters& parameters)
+      const override;
 
 private:
-  CesiumAsync::Future<CreateTileProviderResult>
-  createNewSession(const CreateRasterOverlayTileProviderOptions& options) const;
+  CesiumAsync::Future<CreateTileProviderResult> createNewSession(
+      const CreateRasterOverlayTileProviderParameters& parameters) const;
 
   std::optional<GoogleMapTilesNewSessionParameters> _newSessionParameters;
   std::optional<GoogleMapTilesExistingSession> _existingSession;

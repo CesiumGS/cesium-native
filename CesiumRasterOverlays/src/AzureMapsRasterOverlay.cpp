@@ -8,7 +8,7 @@
 #include <CesiumJsonReader/JsonObjectJsonHandler.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumRasterOverlays/AzureMapsRasterOverlay.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -134,7 +134,7 @@ class AzureMapsRasterOverlayTileProvider final
 public:
   AzureMapsRasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const std::string& credit,
       const std::string& baseUrl,
       const std::string& apiVersion,
@@ -185,7 +185,7 @@ AzureMapsRasterOverlay::~AzureMapsRasterOverlay() = default;
 
 Future<RasterOverlay::CreateTileProviderResult>
 AzureMapsRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
   Uri tilesetUri(this->_sessionParameters.apiBaseUrl, "map/tileset");
 
   UriQuery tilesetQuery(tilesetUri);
@@ -201,7 +201,7 @@ AzureMapsRasterOverlay::createTileProvider(
   IntrusivePointer<const AzureMapsRasterOverlay> thiz = this;
 
   auto handleResponse =
-      [options, thiz](
+      [parameters, thiz](
           const std::shared_ptr<IAssetRequest>& pRequest,
           const std::span<const std::byte>& data) -> CreateTileProviderResult {
     JsonObjectJsonHandler handler{};
@@ -317,7 +317,7 @@ AzureMapsRasterOverlay::createTileProvider(
 
     auto* pProvider = new AzureMapsRasterOverlayTileProvider(
         thiz,
-        options,
+        parameters,
         topLevelCredit,
         thiz->_sessionParameters.apiBaseUrl,
         thiz->_sessionParameters.apiVersion,
@@ -337,12 +337,12 @@ AzureMapsRasterOverlay::createTileProvider(
 
   auto cacheResultIt = sessionCache.find(tilesetUrl);
   if (cacheResultIt != sessionCache.end()) {
-    return options.externals.asyncSystem.createResolvedFuture(
+    return parameters.externals.asyncSystem.createResolvedFuture(
         handleResponse(nullptr, std::span<std::byte>(cacheResultIt->second)));
   }
 
-  return options.externals.pAssetAccessor
-      ->get(options.externals.asyncSystem, tilesetUrl)
+  return parameters.externals.pAssetAccessor
+      ->get(parameters.externals.asyncSystem, tilesetUrl)
       .thenInMainThread(
           [tilesetUrl,
            handleResponse](std::shared_ptr<IAssetRequest>&& pRequest)
@@ -457,7 +457,7 @@ CesiumAsync::Future<rapidjson::Document> fetchAttributionData(
 
 AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
     const IntrusivePointer<const RasterOverlay>& pCreator,
-    const CreateRasterOverlayTileProviderOptions& options,
+    const CreateRasterOverlayTileProviderParameters& parameters,
     const std::string& credit,
     const std::string& baseUrl,
     const std::string& apiVersion,
@@ -470,7 +470,7 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
     bool showLogo)
     : QuadtreeRasterOverlayTileProvider(
           pCreator,
-          options,
+          parameters,
           WebMercatorProjection(pCreator->getOptions().ellipsoid),
           createTilingScheme(*pCreator),
           createRectangle(*pCreator),
@@ -483,16 +483,16 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
       _tilesetId(tilesetId),
       _key(key),
       _tileEndpoint(tileEndpoint) {
-  if (options.externals.pCreditSystem) {
+  if (parameters.externals.pCreditSystem) {
     this->getCredits().emplace_back(
-        options.externals.pCreditSystem->createCredit(
+        parameters.externals.pCreditSystem->createCredit(
             this->getCreditSource(),
             credit,
             pCreator->getOptions().showCreditsOnScreen));
 
     if (showLogo) {
       this->getCredits().emplace_back(
-          options.externals.pCreditSystem->createCredit(
+          parameters.externals.pCreditSystem->createCredit(
               this->getCreditSource(),
               AZURE_MAPS_LOGO_HTML,
               true));

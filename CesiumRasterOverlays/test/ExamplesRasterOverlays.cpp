@@ -1,4 +1,4 @@
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/UrlTemplateRasterOverlay.h>
 
@@ -13,13 +13,14 @@ public:
   MyRasterOverlay() : RasterOverlay("name", {}) {}
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CreateRasterOverlayTileProviderOptions& options) const override;
+      const CreateRasterOverlayTileProviderParameters& parameters)
+      const override;
 };
 
 //! [use-url-template]
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 MyRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
   // Create a new raster overlay with a URL template.
   CesiumGeometry::Rectangle coverageRectangle = CesiumGeospatial::
       WebMercatorProjection::computeMaximumProjectedRectangle();
@@ -43,13 +44,13 @@ MyRasterOverlay::createTileProvider(
           {},
           urlTemplateOptions);
 
-  CreateRasterOverlayTileProviderOptions optionsCopy = options;
-  if (!optionsCopy.pOwner) {
-    optionsCopy.pOwner = this;
+  CreateRasterOverlayTileProviderParameters parametersCopy = parameters;
+  if (!parametersCopy.pOwner) {
+    parametersCopy.pOwner = this;
   }
 
   // Get that raster overlay's tile provider.
-  return pUrlTemplate->createTileProvider(optionsCopy);
+  return pUrlTemplate->createTileProvider(parametersCopy);
 }
 //! [use-url-template]
 

@@ -86,7 +86,8 @@ public:
   virtual ~GeoJsonDocumentRasterOverlay() override;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CreateRasterOverlayTileProviderOptions& options) const override;
+      const CreateRasterOverlayTileProviderParameters& parameters)
+      const override;
 
 private:
   CesiumAsync::Future<std::shared_ptr<CesiumVectorData::GeoJsonDocument>>

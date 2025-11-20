@@ -8,7 +8,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/UrlTemplateRasterOverlay.h>
@@ -36,7 +36,7 @@ class UrlTemplateRasterOverlayTileProvider final
 public:
   UrlTemplateRasterOverlayTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       std::optional<std::string> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -49,7 +49,7 @@ public:
       uint32_t maximumLevel)
       : QuadtreeRasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -59,9 +59,9 @@ public:
             height),
         _url(url),
         _headers(headers) {
-    if (options.externals.pCreditSystem && credit) {
+    if (parameters.externals.pCreditSystem && credit) {
       this->getCredits().emplace_back(
-          options.externals.pCreditSystem->createCredit(
+          parameters.externals.pCreditSystem->createCredit(
               this->getCreditSource(),
               *credit,
               pCreator->getOptions().showCreditsOnScreen));
@@ -131,8 +131,8 @@ private:
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 UrlTemplateRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
-  CesiumGeospatial::Projection projection = _options.projection.value_or(
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
+  CesiumGeospatial::Projection projection = this->_options.projection.value_or(
       CesiumGeospatial::WebMercatorProjection(this->getOptions().ellipsoid));
   CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
       CesiumGeospatial::WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
@@ -144,30 +144,30 @@ UrlTemplateRasterOverlay::createTileProvider(
     rootTilesX = 2;
   }
   CesiumGeometry::Rectangle coverageRectangle =
-      _options.coverageRectangle.value_or(
+      this->_options.coverageRectangle.value_or(
           projectRectangleSimple(projection, tilingSchemeRectangle));
 
   CesiumGeometry::QuadtreeTilingScheme tilingScheme =
-      _options.tilingScheme.value_or(CesiumGeometry::QuadtreeTilingScheme(
+      this->_options.tilingScheme.value_or(CesiumGeometry::QuadtreeTilingScheme(
           coverageRectangle,
           rootTilesX,
           1));
 
-  return options.externals.asyncSystem
+  return parameters.externals.asyncSystem
       .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
           new UrlTemplateRasterOverlayTileProvider(
               this,
-              options,
+              parameters,
               this->_options.credit,
               projection,
               tilingScheme,
               coverageRectangle,
-              _url,
-              _headers,
-              _options.tileWidth,
-              _options.tileHeight,
-              _options.minimumLevel,
-              _options.maximumLevel));
+              this->_url,
+              this->_headers,
+              this->_options.tileWidth,
+              this->_options.tileHeight,
+              this->_options.minimumLevel,
+              this->_options.maximumLevel));
 }
 
 } // namespace CesiumRasterOverlays

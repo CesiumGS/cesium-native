@@ -10,7 +10,7 @@ public:
   EmptyRasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<
           const CesiumRasterOverlays::RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options) noexcept;
+      const CreateRasterOverlayTileProviderParameters& parameters) noexcept;
 
 protected:
   virtual CesiumAsync::Future<CesiumRasterOverlays::LoadedRasterOverlayImage>

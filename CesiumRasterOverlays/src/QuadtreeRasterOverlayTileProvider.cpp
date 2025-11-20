@@ -52,7 +52,7 @@ namespace CesiumRasterOverlays {
 
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
-    const CreateRasterOverlayTileProviderOptions& options,
+    const CreateRasterOverlayTileProviderParameters& parameters,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
     const CesiumGeometry::Rectangle& coverageRectangle,
@@ -62,7 +62,7 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     uint32_t imageHeight) noexcept
     : RasterOverlayTileProvider(
           pCreator,
-          options,
+          parameters,
           projection,
           coverageRectangle),
       _minimumLevel(minimumLevel),

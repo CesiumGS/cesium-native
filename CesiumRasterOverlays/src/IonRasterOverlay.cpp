@@ -5,7 +5,7 @@
 #include <CesiumAsync/SharedAssetDepot.h>
 #include <CesiumRasterOverlays/AzureMapsRasterOverlay.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/GoogleMapTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/IonRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -65,7 +65,7 @@ public:
 
   struct CreateTileProvider {
     IntrusivePointer<const IonRasterOverlay> pCreator;
-    CreateRasterOverlayTileProviderOptions options;
+    CreateRasterOverlayTileProviderParameters parameters;
 
     SharedFuture<AggregatedTileProviderResult>
     operator()(const IntrusivePointer<ExternalAssetEndpoint>& pEndpoint);
@@ -76,13 +76,13 @@ public:
 
   TileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const IntrusivePointer<RasterOverlayTileProvider>& pInitialProvider,
       const NetworkAssetDescriptor& descriptor,
       TileProviderFactoryType&& tileProviderFactory)
       : RasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             pInitialProvider->getProjection(),
             pInitialProvider->getCoverageRectangle()),
         _descriptor(descriptor),
@@ -91,30 +91,30 @@ public:
 
   static CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> create(
       const IntrusivePointer<const IonRasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const NetworkAssetDescriptor& descriptor) {
-    CreateRasterOverlayTileProviderOptions optionsCopy = options;
-    if (optionsCopy.pOwner == nullptr) {
-      optionsCopy.pOwner = pCreator;
+    CreateRasterOverlayTileProviderParameters parametersCopy = parameters;
+    if (parametersCopy.pOwner == nullptr) {
+      parametersCopy.pOwner = pCreator;
     }
 
     auto pFactory = std::make_unique<TileProvider::TileProviderFactoryType>(
         TileProvider::TileProviderFactoryType(TileProvider::CreateTileProvider{
             .pCreator = pCreator,
-            .options = optionsCopy}));
+            .parameters = parametersCopy}));
 
     return TileProvider::getTileProvider(
-               options.externals,
+               parameters.externals,
                descriptor,
                *pFactory)
         .thenInMainThread(
-            [descriptor, pFactory = std::move(pFactory), pCreator, options](
+            [descriptor, pFactory = std::move(pFactory), pCreator, parameters](
                 AggregatedTileProviderResult&& result) mutable
             -> CreateTileProviderResult {
               if (result) {
                 IntrusivePointer p = new TileProvider(
                     pCreator,
-                    options,
+                    parameters,
                     result.value().pAggregated,
                     descriptor,
                     std::move(*pFactory));
@@ -292,7 +292,7 @@ void IonRasterOverlay::setAssetOptions(
 
 Future<RasterOverlay::CreateTileProviderResult>
 IonRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
   NetworkAssetDescriptor descriptor;
   descriptor.url = this->_overlayUrl;
 
@@ -310,7 +310,7 @@ IonRasterOverlay::createTileProvider(
     descriptor.url = uri.toString();
   }
 
-  return TileProvider::create(this, options, descriptor);
+  return TileProvider::create(this, parameters, descriptor);
 }
 
 void IonRasterOverlay::ExternalAssetEndpoint::parseAzure2DOptions(
@@ -570,7 +570,7 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
     const IntrusivePointer<ExternalAssetEndpoint>& pEndpoint) {
   if (pEndpoint == nullptr ||
       std::holds_alternative<std::monostate>(pEndpoint->options)) {
-    return this->options.externals.asyncSystem
+    return this->parameters.externals.asyncSystem
         .createResolvedFuture<AggregatedTileProviderResult>(
             nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                 RasterOverlayLoadType::CesiumIon,
@@ -641,23 +641,24 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
 
   std::vector<Credit> credits;
 
-  if (this->options.externals.pCreditSystem) {
+  if (this->parameters.externals.pCreditSystem) {
     credits.reserve(pEndpoint->attributions.size());
     for (const AssetEndpointAttribution& attribution :
          pEndpoint->attributions) {
-      credits.emplace_back(this->options.externals.pCreditSystem->createCredit(
-          attribution.html,
-          !attribution.collapsible ||
-              this->pCreator->getOptions().showCreditsOnScreen));
+      credits.emplace_back(
+          this->parameters.externals.pCreditSystem->createCredit(
+              attribution.html,
+              !attribution.collapsible ||
+                  this->pCreator->getOptions().showCreditsOnScreen));
     }
   }
 
-  CreateRasterOverlayTileProviderOptions optionsCopy = this->options;
-  if (optionsCopy.pOwner == nullptr) {
-    optionsCopy.pOwner = this->pCreator;
+  CreateRasterOverlayTileProviderParameters parametersCopy = this->parameters;
+  if (parametersCopy.pOwner == nullptr) {
+    parametersCopy.pOwner = this->pCreator;
   }
 
-  return pOverlay->createTileProvider(optionsCopy)
+  return pOverlay->createTileProvider(parametersCopy)
       .thenImmediately([credits = std::move(credits)](
                            CreateTileProviderResult&& result) mutable {
         if (result) {

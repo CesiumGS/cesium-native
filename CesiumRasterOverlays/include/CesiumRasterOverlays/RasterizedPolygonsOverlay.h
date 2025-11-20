@@ -50,7 +50,8 @@ public:
   virtual ~RasterizedPolygonsOverlay() override;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CreateRasterOverlayTileProviderOptions& options) const override;
+      const CreateRasterOverlayTileProviderParameters& parameters)
+      const override;
 
   /**
    * @brief Gets the polygons that are being rasterized to create this overlay.

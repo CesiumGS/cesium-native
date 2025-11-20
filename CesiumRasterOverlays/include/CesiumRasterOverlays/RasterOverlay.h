@@ -30,7 +30,7 @@ class ActivatedRasterOverlay;
 class IPrepareRasterOverlayRendererResources;
 class RasterOverlayExternals;
 class RasterOverlayTileProvider;
-struct CreateRasterOverlayTileProviderOptions;
+struct CreateRasterOverlayTileProviderParameters;
 
 /**
  * @brief Options for loading raster overlays.
@@ -220,12 +220,12 @@ public:
    * @brief Begins asynchronous creation of a tile provider for this overlay
    * and eventually returns it via a Future.
    *
-   * @param options The options for creating the tile provider.
+   * @param parameters The parameters for creating the tile provider.
    * @return The future that resolves to the tile provider when it is ready, or
    * to error details in the case of an error.
    */
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CreateRasterOverlayTileProviderOptions& options) const = 0;
+      const CreateRasterOverlayTileProviderParameters& parameters) const = 0;
 
 private:
   struct DestructionCompleteDetails {

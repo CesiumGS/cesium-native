@@ -119,7 +119,8 @@ public:
         _options(urlTemplateOptions) {}
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CreateRasterOverlayTileProviderOptions& options) const override;
+      const CreateRasterOverlayTileProviderParameters& parameters)
+      const override;
 
 private:
   std::string _url;

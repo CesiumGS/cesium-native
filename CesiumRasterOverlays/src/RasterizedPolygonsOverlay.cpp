@@ -5,7 +5,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/ImageAsset.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -176,13 +176,13 @@ private:
 public:
   RasterizedPolygonsTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const CesiumGeospatial::Projection& projection,
       const std::vector<CartographicPolygon>& polygons,
       bool invertSelection)
       : RasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             projection,
             // computeCoverageRectangle(projection, polygons)),
             projectRectangleSimple(
@@ -241,14 +241,14 @@ RasterizedPolygonsOverlay::~RasterizedPolygonsOverlay() = default;
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 RasterizedPolygonsOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
 
-  return options.externals.asyncSystem
+  return parameters.externals.asyncSystem
       .createResolvedFuture<CreateTileProviderResult>(
           IntrusivePointer<RasterOverlayTileProvider>(
               new RasterizedPolygonsTileProvider(
                   this,
-                  options,
+                  parameters,
                   this->_projection,
                   this->_polygons,
                   this->_invertSelection)));

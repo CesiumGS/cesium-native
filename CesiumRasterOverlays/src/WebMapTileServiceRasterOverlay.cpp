@@ -7,7 +7,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -38,7 +38,7 @@ class WebMapTileServiceTileProvider final
 public:
   WebMapTileServiceTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       std::optional<std::string> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
@@ -59,7 +59,7 @@ public:
       const std::vector<std::string>& subdomains)
       : QuadtreeRasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -77,9 +77,9 @@ public:
         _labels(tileMatrixLabels),
         _staticDimensions(dimensions),
         _subdomains(subdomains) {
-    if (options.externals.pCreditSystem && credit) {
+    if (parameters.externals.pCreditSystem && credit) {
       this->getCredits().emplace_back(
-          options.externals.pCreditSystem->createCredit(
+          parameters.externals.pCreditSystem->createCredit(
               this->getCreditSource(),
               *credit,
               pCreator->getOptions().showCreditsOnScreen));
@@ -199,7 +199,7 @@ WebMapTileServiceRasterOverlay::~WebMapTileServiceRasterOverlay() = default;
 
 Future<RasterOverlay::CreateTileProviderResult>
 WebMapTileServiceRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
 
   bool hasError = false;
   std::string errorMessage;
@@ -245,36 +245,36 @@ WebMapTileServiceRasterOverlay::createTileProvider(
           1));
 
   if (hasError) {
-    return options.externals.asyncSystem
+    return parameters.externals.asyncSystem
         .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
             nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                 RasterOverlayLoadType::TileProvider,
                 nullptr,
                 errorMessage}));
   }
-  return options.externals.asyncSystem
+  return parameters.externals.asyncSystem
       .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
           new WebMapTileServiceTileProvider(
               this,
-              options,
+              parameters,
               this->_options.credit,
               projection,
               tilingScheme,
               coverageRectangle,
-              _url,
-              _headers,
+              this->_url,
+              this->_headers,
               useKVP,
               format,
               tileWidth,
               tileHeight,
               minimumLevel,
               maximumLevel,
-              _options.layer,
-              _options.style,
-              _options.tileMatrixSetID,
-              _options.tileMatrixLabels,
-              _options.dimensions,
-              _options.subdomains));
+              this->_options.layer,
+              this->_options.style,
+              this->_options.tileMatrixSetID,
+              this->_options.tileMatrixLabels,
+              this->_options.dimensions,
+              this->_options.subdomains));
 }
 
 } // namespace CesiumRasterOverlays

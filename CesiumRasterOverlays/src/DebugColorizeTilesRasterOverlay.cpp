@@ -3,7 +3,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGltf/ImageAsset.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/DebugColorizeTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -28,10 +28,10 @@ class DebugTileProvider : public RasterOverlayTileProvider {
 public:
   DebugTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
-      const CreateRasterOverlayTileProviderOptions& options)
+      const CreateRasterOverlayTileProviderParameters& parameters)
       : RasterOverlayTileProvider(
             pCreator,
-            options,
+            parameters,
             GeographicProjection(pCreator->getOptions().ellipsoid),
             GeographicProjection::computeMaximumProjectedRectangle(
                 pCreator->getOptions().ellipsoid)) {}
@@ -76,9 +76,9 @@ DebugColorizeTilesRasterOverlay::DebugColorizeTilesRasterOverlay(
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 DebugColorizeTilesRasterOverlay::createTileProvider(
-    const CreateRasterOverlayTileProviderOptions& options) const {
-  return options.externals.asyncSystem
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
+  return parameters.externals.asyncSystem
       .createResolvedFuture<CreateTileProviderResult>(
           IntrusivePointer<RasterOverlayTileProvider>(
-              new DebugTileProvider(this, options)));
+              new DebugTileProvider(this, parameters)));
 }

@@ -7,7 +7,7 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
-#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
@@ -126,7 +126,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlay->createTileProvider(
-            CreateRasterOverlayTileProviderOptions{
+            CreateRasterOverlayTileProviderParameters{
                 .externals =
                     {.pAssetAccessor = pMockAssetAccessor,
                      .asyncSystem = asyncSystem,
@@ -161,7 +161,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlay->createTileProvider(
-            CreateRasterOverlayTileProviderOptions{
+            CreateRasterOverlayTileProviderParameters{
                 .externals =
                     {.pAssetAccessor = pMockAssetAccessor,
                      .asyncSystem = asyncSystem,
@@ -216,7 +216,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlay->createTileProvider(
-            CreateRasterOverlayTileProviderOptions{
+            CreateRasterOverlayTileProviderParameters{
                 .externals =
                     {.pAssetAccessor = pMockAssetAccessor,
                      .asyncSystem = asyncSystem,
@@ -238,7 +238,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlayWithCredit->createTileProvider(
-            CreateRasterOverlayTileProviderOptions{
+            CreateRasterOverlayTileProviderParameters{
                 .externals =
                     {.pAssetAccessor = pMockAssetAccessor,
                      .asyncSystem = asyncSystem,
@@ -268,7 +268,7 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlayWithCredit->createTileProvider(
-            CreateRasterOverlayTileProviderOptions{
+            CreateRasterOverlayTileProviderParameters{
                 .externals =
                     {.pAssetAccessor = pMockAssetAccessor,
                      .asyncSystem = asyncSystem,
