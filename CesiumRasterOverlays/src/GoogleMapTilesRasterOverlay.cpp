@@ -15,7 +15,6 @@
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
 #include <CesiumRasterOverlays/GoogleMapTilesRasterOverlay.h>
-#include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>

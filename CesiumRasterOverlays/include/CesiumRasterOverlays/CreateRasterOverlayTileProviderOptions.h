@@ -19,7 +19,7 @@ struct CESIUMRASTEROVERLAYS_API CreateRasterOverlayTileProviderOptions {
   /**
    * @brief The external interfaces for use by the raster overlay tile provider.
    */
-  RasterOverlayExternals externals{};
+  RasterOverlayExternals externals;
 
   /**
    * @brief The overlay that owns this overlay.

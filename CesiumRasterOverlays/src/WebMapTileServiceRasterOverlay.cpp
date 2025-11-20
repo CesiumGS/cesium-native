@@ -8,7 +8,6 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderOptions.h>
-#include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -23,7 +22,6 @@
 #include <algorithm>
 #include <cstdint>
 #include <map>
-#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
