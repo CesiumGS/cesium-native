@@ -105,7 +105,7 @@ Credit CreditSystem::createCredit(const std::string& html, bool showOnScreen) {
 }
 
 bool CreditSystem::shouldBeShownOnScreen(Credit credit) const noexcept {
-  if (credit._id < this->_credits.size() ||
+  if (credit._id < this->_credits.size() &&
       credit._generation == this->_credits[credit._id].generation) {
     return this->_credits[credit._id].showOnScreen;
   }
