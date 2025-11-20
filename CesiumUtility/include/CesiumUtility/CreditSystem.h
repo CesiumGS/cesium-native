@@ -1,8 +1,6 @@
 #pragma once
 
-#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Library.h>
-#include <CesiumUtility/ReferenceCounted.h>
 
 #include <cstdint>
 #include <memory>
