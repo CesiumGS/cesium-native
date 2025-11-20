@@ -43,19 +43,6 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
   int32_t maximumSimultaneousTileLoads = 20;
 
   /**
-   * @brief The maximum number of bytes to use to cache sub-tiles in memory.
-   *
-   * This is used by provider types, such as
-   * {@link QuadtreeRasterOverlayTileProvider}, that have an underlying tiling
-   * scheme that may not align with the tiling scheme of the geometry tiles on
-   * which the raster overlay tiles are draped. Because a single sub-tile may
-   * overlap multiple geometry tiles, it is useful to cache loaded sub-tiles
-   * in memory in case they're needed again soon. This property controls the
-   * maximum size of that cache.
-   */
-  int64_t subTileCacheBytes = static_cast<int64_t>(16 * 1024 * 1024);
-
-  /**
    * @brief The maximum pixel size of raster overlay textures, in either
    * direction.
    *
