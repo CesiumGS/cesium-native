@@ -140,10 +140,11 @@ public:
         _culture(culture),
         _subdomains(subdomains) {
     if (parameters.externals.pCreditSystem) {
-      this->setCredit(parameters.externals.pCreditSystem->createCredit(
-          this->getCreditSource(),
-          BING_LOGO_HTML,
-          pCreator->getOptions().showCreditsOnScreen));
+      this->getCredits().emplace_back(
+          parameters.externals.pCreditSystem->createCredit(
+              this->getCreditSource(),
+              BING_LOGO_HTML,
+              pCreator->getOptions().showCreditsOnScreen));
 
       this->_credits.reserve(perTileCredits.size());
       for (const CreditStringAndCoverageAreas& creditStringAndCoverageAreas :
