@@ -119,13 +119,15 @@ const std::string AZURE_MAPS_LOGO_HTML =
     "U/URjRT3IrAAAAAElFTkSuQmCC\"/>";
 
 namespace {
-Rectangle createRectangle(const RasterOverlay& owner) {
+Rectangle createRectangle(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
   return WebMercatorProjection::computeMaximumProjectedRectangle(
-      owner.getOptions().ellipsoid);
+      pOwner->getOptions().ellipsoid);
 }
 
-QuadtreeTilingScheme createTilingScheme(const RasterOverlay& owner) {
-  return QuadtreeTilingScheme(createRectangle(owner), 1, 1);
+QuadtreeTilingScheme createTilingScheme(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
+  return QuadtreeTilingScheme(createRectangle(pOwner), 1, 1);
 }
 } // namespace
 
@@ -472,8 +474,8 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
           pCreator,
           parameters,
           WebMercatorProjection(pCreator->getOptions().ellipsoid),
-          createTilingScheme(*pCreator),
-          createRectangle(*pCreator),
+          createTilingScheme(pCreator),
+          createRectangle(pCreator),
           minimumLevel,
           maximumLevel,
           imageSize,

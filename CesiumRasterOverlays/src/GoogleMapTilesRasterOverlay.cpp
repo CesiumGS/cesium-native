@@ -439,13 +439,15 @@ GoogleMapTilesRasterOverlay::createNewSession(
 
 namespace {
 
-Rectangle createRectangle(const RasterOverlay& owner) {
+Rectangle createRectangle(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
   return WebMercatorProjection::computeMaximumProjectedRectangle(
-      owner.getOptions().ellipsoid);
+      pOwner->getOptions().ellipsoid);
 }
 
-QuadtreeTilingScheme createTilingScheme(const RasterOverlay& owner) {
-  return QuadtreeTilingScheme(createRectangle(owner), 1, 1);
+QuadtreeTilingScheme createTilingScheme(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
+  return QuadtreeTilingScheme(createRectangle(pOwner), 1, 1);
 }
 
 GoogleMapTilesRasterOverlayTileProvider::
@@ -463,8 +465,8 @@ GoogleMapTilesRasterOverlayTileProvider::
           pCreator,
           parameters,
           WebMercatorProjection(pCreator->getOptions().ellipsoid),
-          createTilingScheme(*pCreator),
-          createRectangle(*pCreator),
+          createTilingScheme(pCreator),
+          createRectangle(pCreator),
           0,
           maximumLevel,
           imageWidth,
@@ -472,8 +474,8 @@ GoogleMapTilesRasterOverlayTileProvider::
       _apiBaseUrl(apiBaseUrl),
       _session(session),
       _key(key),
-      _availableTiles(createTilingScheme(*pCreator), maximumLevel),
-      _availableAvailability(createTilingScheme(*pCreator), maximumLevel) {
+      _availableTiles(createTilingScheme(pCreator), maximumLevel),
+      _availableAvailability(createTilingScheme(pCreator), maximumLevel) {
   if (parameters.externals.pCreditSystem && showLogo) {
     this->getCredits().emplace_back(
         parameters.externals.pCreditSystem->createCredit(

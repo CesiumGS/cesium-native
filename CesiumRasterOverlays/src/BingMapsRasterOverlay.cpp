@@ -100,13 +100,15 @@ const std::string BING_LOGO_HTML =
     "OXfbBoeDOo8wHpy8lKpvoafRoG6YgXFYKP4GSj63gtwWfhHzl7Skq9JTshAAAAAElFTkSuQmCC"
     "\" title=\"Bing Imagery\"/></a>";
 
-Rectangle createRectangle(const RasterOverlay& owner) {
+Rectangle createRectangle(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
   return WebMercatorProjection::computeMaximumProjectedRectangle(
-      owner.getOptions().ellipsoid);
+      pOwner->getOptions().ellipsoid);
 }
 
-QuadtreeTilingScheme createTilingScheme(const RasterOverlay& owner) {
-  return QuadtreeTilingScheme(createRectangle(owner), 2, 2);
+QuadtreeTilingScheme createTilingScheme(
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) {
+  return QuadtreeTilingScheme(createRectangle(pOwner), 2, 2);
 }
 } // namespace
 
@@ -128,8 +130,8 @@ public:
             pCreator,
             parameters,
             WebMercatorProjection(pCreator->getOptions().ellipsoid),
-            createTilingScheme(*pCreator),
-            createRectangle(*pCreator),
+            createTilingScheme(pCreator),
+            createRectangle(pCreator),
             minimumLevel,
             maximumLevel,
             width,
