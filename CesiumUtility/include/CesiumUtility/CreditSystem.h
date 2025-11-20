@@ -40,9 +40,9 @@ private:
 
 /**
  * @brief Represents a source of credits, such as a tileset or raster overlay,
- * provided to a \ref CreditSystem.
+ * provided to a @ref CreditSystem.
  *
- * While the \ref CreditSystem does not directly map credit source instances to
+ * While the @ref CreditSystem does not directly map credit source instances to
  * tilesets or raster overlays (or vice-versa), a tileset or raster overlay can
  * be queried for its credit source instance and that instance can be compared
  * against one known to the credit system.
@@ -73,7 +73,7 @@ public:
   ~CreditSource() noexcept;
 
   /**
-   * @brief Gets the \ref CreditSystem associated with this source.
+   * @brief Gets the @ref CreditSystem associated with this source.
    *
    * This may be nullptr if this source was never associated with a credit
    * system, or if the credit system has been destroyed.
@@ -126,8 +126,9 @@ public:
    * @param html The HTML string for the credit.
    * @param showOnScreen Whether or not the credit should be shown on screen.
    * Credits not shown on the screen should be shown in a separate popup window.
-   * @return If this string already exists, returns a Credit handle to the
-   * existing entry. Otherwise returns a Credit handle to a new entry.
+   * @return If this string already exists from the same source, returns a
+   * Credit handle to the existing entry. Otherwise returns a Credit handle to a
+   * new entry.
    */
   Credit createCredit(
       const CreditSource& source,
@@ -142,8 +143,9 @@ public:
    * @param html The HTML string for the credit.
    * @param showOnScreen Whether or not the credit should be shown on screen.
    * Credits not shown on the screen should be shown in a separate popup window.
-   * @return If this string already exists, returns a Credit handle to the
-   * existing entry. Otherwise returns a Credit handle to a new entry.
+   * @return If this string already exists from the same source, returns a
+   * Credit handle to the existing entry. Otherwise returns a Credit handle to a
+   * new entry.
    */
   Credit createCredit(
       const CreditSource& source,
@@ -151,22 +153,24 @@ public:
       bool showOnScreen = false);
 
   /**
-   * @brief Inserts a credit string.
+   * @brief Inserts a credit string associated with the @ref
+   * getDefaultCreditSource.
    *
    * @return If this string already exists, returns a Credit handle to the
    * existing entry. Otherwise returns a Credit handle to a new entry.
    *
-   * @deprecated Use the overload that takes a CreditSource pointer.
+   * @deprecated Use the overload that takes a @ref CreditSource.
    */
   Credit createCredit(std::string&& html, bool showOnScreen = false);
 
   /**
-   * @brief Inserts a credit string.
+   * @brief Inserts a credit string associated with the @ref
+   * getDefaultCreditSource.
    *
    * @return If this string already exists, returns a Credit handle to the
    * existing entry. Otherwise returns a Credit handle to a new entry.
    *
-   * @deprecated Use the overload that takes a CreditSource pointer.
+   * @deprecated Use the overload that takes a @ref CreditSource.
    */
   Credit createCredit(const std::string& html, bool showOnScreen = false);
 
@@ -200,7 +204,7 @@ public:
    *
    * @param credit The credit to reference.
    * @returns `true` if the credit was valid and the reference was added.
-   * `false` if the credit was created by a \ref CreditSource that has been
+   * `false` if the credit was created by a @ref CreditSource that has been
    * destroyed and so the reference could not be added.
    */
   bool addCreditReference(Credit credit);
@@ -211,7 +215,7 @@ public:
    *
    * @param credit The credit from which to remove a reference.
    * @returns `true` if the credit was valid and the reference was removed.
-   * `false` if the credit was created by a \ref CreditSource that has been
+   * `false` if the credit was created by a @ref CreditSource that has been
    * destroyed and so the reference could not be removed.
    */
   bool removeCreditReference(Credit credit);
