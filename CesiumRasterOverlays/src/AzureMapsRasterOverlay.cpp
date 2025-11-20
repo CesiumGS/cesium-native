@@ -486,11 +486,13 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
       _key(key),
       _tileEndpoint(tileEndpoint) {
   if (parameters.externals.pCreditSystem) {
-    this->getCredits().emplace_back(
-        parameters.externals.pCreditSystem->createCredit(
-            this->getCreditSource(),
-            credit,
-            pCreator->getOptions().showCreditsOnScreen));
+    if (!credit.empty()) {
+      this->getCredits().emplace_back(
+          parameters.externals.pCreditSystem->createCredit(
+              this->getCreditSource(),
+              credit,
+              pCreator->getOptions().showCreditsOnScreen));
+    }
 
     if (showLogo) {
       this->getCredits().emplace_back(
