@@ -15,7 +15,7 @@ namespace CesiumUtility {
 class CreditSystem;
 
 /**
- * @brief Specifies how @ref CreditSystem::getSnapshot should handle multiple
+ * @brief Specifies how credit system snapshots should handle multiple
  * credits with the same HTML string.
  */
 enum class CreditFilteringMode : uint8_t {
