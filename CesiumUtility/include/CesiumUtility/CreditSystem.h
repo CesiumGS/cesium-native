@@ -3,6 +3,7 @@
 #include <CesiumUtility/Library.h>
 
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -12,6 +13,43 @@
 namespace CesiumUtility {
 
 class CreditSystem;
+
+/**
+ * @brief Specifies how @ref CreditSystem::getSnapshot should handle multiple
+ * credits with the same HTML string.
+ */
+enum class CreditFilteringMode : uint8_t {
+  /**
+   * @brief No filtering is performed. Each unique @ref Credit is reported.
+   */
+  None = 0,
+
+  /**
+   * @brief Credits are filtered so that each reported credit has a combination
+   * of HTML string and @ref CreditSystem::shouldBeShownOnScreen value that is
+   * unique from all the other reported credits.
+   *
+   * If multiple credits have the same HTML string but different
+   * @ref CreditSystem::shouldBeShownOnScreen values, they will be reported as
+   * separate credits.
+   *
+   * It is unspecified which of the multiple credits with the same properties
+   * will be reported.
+   */
+  UniqueHtmlAndShowOnScreen = 1,
+
+  /**
+   * @brief Credits with identical HTML strings are reported as one Credit even
+   * if they have a different @ref CreditSource or @ref
+   * CreditSystem::shouldBeShownOnScreen value.
+   *
+   * It is unspecified which of the multiple credits with the same source will
+   * be reported. However, it is guaranteed that if any of the multiple credits
+   * has @ref CreditSystem::shouldBeShownOnScreen set to `true`, the reported
+   * credit will also have it set to `true`.
+   */
+  UniqueHtml = 2
+};
 
 /**
  * @brief Represents an HTML string that should be shown on screen to attribute
@@ -227,8 +265,13 @@ public:
    * The snapshot will include a sorted list of credits that are currently
    * active, as well as a list of credits that have been removed since the last
    * snapshot.
+   *
+   * @param filteringMode Specifies how multiple credits with the same HTML
+   * string should be reported in the snapshot.
    */
-  const CreditsSnapshot& getSnapshot() noexcept;
+  const CreditsSnapshot& getSnapshot(
+      CreditFilteringMode filteringMode =
+          CreditFilteringMode::UniqueHtml) noexcept;
 
   /**
    * @brief Gets the default credit source used when no other source is
@@ -240,6 +283,17 @@ public:
   const CreditSource& getDefaultCreditSource() const noexcept;
 
 private:
+  struct CreditRecord {
+    std::string html{};
+    bool showOnScreen{false};
+    int32_t referenceCount{0};
+    bool shownLastSnapshot{0};
+    uint32_t generation{0};
+    const CreditSource* pSource{nullptr};
+    uint32_t previousCreditWithSameHtml{INVALID_CREDIT_INDEX};
+    uint32_t nextCreditWithSameHtml{INVALID_CREDIT_INDEX};
+  };
+
   void addBulkReferences(
       const std::vector<int32_t>& references,
       const std::vector<uint32_t>& generations) noexcept;
@@ -250,22 +304,21 @@ private:
   void createCreditSource(CreditSource& creditSource) noexcept;
   void destroyCreditSource(CreditSource& creditSource) noexcept;
 
+  uint32_t filterCreditForSnapshot(
+      CreditFilteringMode filteringMode,
+      const CreditRecord& record) noexcept;
+
   const std::string INVALID_CREDIT_MESSAGE =
       "Error: Invalid Credit, cannot get HTML string.";
 
-  struct CreditRecord {
-    std::string html{};
-    bool showOnScreen{false};
-    int32_t referenceCount{0};
-    bool shownLastSnapshot{0};
-    uint32_t generation{0};
-    const CreditSource* pSource{nullptr};
-  };
+  static const uint32_t INVALID_CREDIT_INDEX{
+      std::numeric_limits<uint32_t>::max()};
 
   std::vector<CreditSource*> _creditSources;
   std::vector<CreditRecord> _credits;
   std::vector<Credit> _creditsToNoLongerShowThisSnapshot;
   CreditsSnapshot _snapshot;
+  std::vector<int32_t> _referenceCountScratch;
 
   // Each entry in this vector is an index into _credits that is unused and can
   // be reused for a new credit.

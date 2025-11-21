@@ -61,12 +61,18 @@ Credit CreditSystem::createCredit(
     std::string&& html,
     bool showOnScreen) {
   // If this credit already exists, return a Credit handle to it
+  uint32_t lastCreditWithSameHtml = INVALID_CREDIT_INDEX;
   for (size_t id = 0; id < this->_credits.size(); ++id) {
     CreditRecord& record = this->_credits[id];
-    if (record.pSource == &source && record.html == html) {
-      // Override the existing credit's showOnScreen value.
-      record.showOnScreen = showOnScreen;
-      return Credit(uint32_t(id), record.generation);
+    if (record.html == html) {
+      if (record.pSource == &source) {
+        // Override the existing credit's showOnScreen value.
+        record.showOnScreen = showOnScreen;
+        return Credit(uint32_t(id), record.generation);
+      } else if (record.pSource != nullptr) {
+        // Same HTML, but different source.
+        lastCreditWithSameHtml = uint32_t(id);
+      }
     }
   }
 
@@ -89,6 +95,14 @@ Credit CreditSystem::createCredit(
   // Credit slot, or incremented when the previous CreditSource that used this
   // slot was destroyed.
   record.pSource = &source;
+
+  if (lastCreditWithSameHtml != INVALID_CREDIT_INDEX) {
+    record.previousCreditWithSameHtml = lastCreditWithSameHtml;
+    record.nextCreditWithSameHtml = INVALID_CREDIT_INDEX;
+    CreditRecord& lastRecord = this->_credits[size_t(lastCreditWithSameHtml)];
+    CESIUM_ASSERT(lastRecord.nextCreditWithSameHtml == INVALID_CREDIT_INDEX);
+    lastRecord.nextCreditWithSameHtml = uint32_t(creditIndex);
+  }
 
   return Credit(uint32_t(creditIndex), record.generation);
 }
@@ -183,9 +197,13 @@ bool CreditSystem::removeCreditReference(Credit credit) {
   return true;
 }
 
-const CreditsSnapshot& CreditSystem::getSnapshot() noexcept {
+const CreditsSnapshot&
+CreditSystem::getSnapshot(CreditFilteringMode filteringMode) noexcept {
   std::vector<Credit>& currentCredits = this->_snapshot.currentCredits;
   currentCredits.clear();
+
+  std::vector<int32_t>& effectiveReferenceCounts = this->_referenceCountScratch;
+  effectiveReferenceCounts.assign(this->_credits.size(), 0);
 
   for (size_t i = 0; i < this->_credits.size(); ++i) {
     CreditRecord& record = this->_credits[i];
@@ -194,8 +212,22 @@ const CreditsSnapshot& CreditSystem::getSnapshot() noexcept {
     // count of zero.
     if (record.referenceCount > 0) {
       CESIUM_ASSERT(record.pSource != nullptr);
-      currentCredits.emplace_back(Credit(uint32_t(i), record.generation));
-      record.shownLastSnapshot = true;
+
+      // This credit is active, but it may be filtered out in favor of another
+      // credit with the same HTML.
+      uint32_t filteredInFavorOf =
+          this->filterCreditForSnapshot(filteringMode, record);
+      if (filteredInFavorOf != INVALID_CREDIT_INDEX) {
+        // Credit filtered out in favor of another credit.
+        // That other credit inherits this credit's reference count.
+        effectiveReferenceCounts[filteredInFavorOf] += record.referenceCount;
+        record.shownLastSnapshot = false;
+      } else {
+        // This credit is not filtered.
+        currentCredits.emplace_back(Credit(uint32_t(i), record.generation));
+        effectiveReferenceCounts[i] += record.referenceCount;
+        record.shownLastSnapshot = true;
+      }
     } else {
       record.shownLastSnapshot = false;
     }
@@ -291,6 +323,22 @@ void CreditSystem::destroyCreditSource(CreditSource& creditSource) noexcept {
       ++record.generation;
       this->_unusedCreditRecords.emplace_back(&record - this->_credits.data());
 
+      // Delete this record from the linked list of credits with the same HTML.
+      if (record.nextCreditWithSameHtml != INVALID_CREDIT_INDEX) {
+        CreditRecord& nextRecord =
+            this->_credits[record.nextCreditWithSameHtml];
+        nextRecord.previousCreditWithSameHtml =
+            record.previousCreditWithSameHtml;
+        record.nextCreditWithSameHtml = INVALID_CREDIT_INDEX;
+      }
+
+      if (record.previousCreditWithSameHtml != INVALID_CREDIT_INDEX) {
+        CreditRecord& previousRecord =
+            this->_credits[record.previousCreditWithSameHtml];
+        previousRecord.nextCreditWithSameHtml = record.nextCreditWithSameHtml;
+        record.previousCreditWithSameHtml = INVALID_CREDIT_INDEX;
+      }
+
       if (record.referenceCount > 0) {
         record.referenceCount = 0;
       } else {
@@ -311,6 +359,74 @@ void CreditSystem::destroyCreditSource(CreditSource& creditSource) noexcept {
           this->_creditSources.end(),
           &creditSource),
       this->_creditSources.end());
+}
+
+uint32_t CreditSystem::filterCreditForSnapshot(
+    CreditFilteringMode filteringMode,
+    const CreditRecord& record) noexcept {
+  if (filteringMode == CreditFilteringMode::None) {
+    return CreditSystem::INVALID_CREDIT_INDEX;
+  } else if (filteringMode == CreditFilteringMode::UniqueHtmlAndShowOnScreen) {
+    uint32_t currentCreditIndex = record.previousCreditWithSameHtml;
+
+    while (currentCreditIndex != INVALID_CREDIT_INDEX) {
+      const CreditRecord& otherRecord =
+          this->_credits[size_t(currentCreditIndex)];
+
+      // If the other credit has the same showOnScreen value, filter this one
+      // out in favor of it.
+      if (otherRecord.showOnScreen == record.showOnScreen) {
+        return currentCreditIndex;
+      }
+
+      currentCreditIndex = otherRecord.previousCreditWithSameHtml;
+    }
+
+    return CreditSystem::INVALID_CREDIT_INDEX;
+  } else {
+    CESIUM_ASSERT(filteringMode == CreditFilteringMode::UniqueHtml);
+
+    // In this filtering mode, we need to find the first credit in the linked
+    // list with showOnScreen=true. Or if they're all showOnScreen=false, return
+    // the first one. Unlike `UniqueHtmlAndShowOnScreen`, the Credit we want may
+    // occur after the current one.
+
+    // Walk backwards to find the first credit in the linked list.
+    uint32_t previousCreditIndex = uint32_t(&record - this->_credits.data());
+    uint32_t firstCreditIndex;
+    do {
+      firstCreditIndex = previousCreditIndex;
+      const CreditRecord& otherRecord =
+          this->_credits[size_t(firstCreditIndex)];
+      previousCreditIndex = otherRecord.previousCreditWithSameHtml;
+    } while (previousCreditIndex != INVALID_CREDIT_INDEX);
+
+    // Walk forward from the first credit to find one with showOnScreen=true (if
+    // any).
+    uint32_t currentCreditIndex = firstCreditIndex;
+    while (currentCreditIndex != INVALID_CREDIT_INDEX) {
+      const CreditRecord& otherRecord =
+          this->_credits[size_t(currentCreditIndex)];
+
+      if (otherRecord.showOnScreen) {
+        // Found the first credit with showOnScreen=true. Filter this credit out
+        // in favor of it. Unless the currentCreditIndex points to the same
+        // credit we started with!
+        return currentCreditIndex == uint32_t(&record - this->_credits.data())
+                   ? CreditSystem::INVALID_CREDIT_INDEX
+                   : currentCreditIndex;
+      }
+
+      currentCreditIndex = otherRecord.nextCreditWithSameHtml;
+    }
+
+    // Reached the end of the linked list without finding any credit with
+    // showOnScreen=true. So return the first credit in the list. Unless the
+    // firstCreditIndex points to the same credit we started with!
+    return firstCreditIndex == uint32_t(&record - this->_credits.data())
+               ? CreditSystem::INVALID_CREDIT_INDEX
+               : firstCreditIndex;
+  }
 }
 
 } // namespace CesiumUtility
