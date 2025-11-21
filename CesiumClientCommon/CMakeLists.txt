@@ -44,6 +44,12 @@ target_link_libraries(CesiumClientCommon
     PRIVATE
         picosha2::picosha2
         modp_b64::modp_b64
-        httplib::httplib
         OpenSSL::Crypto
 )
+
+if (NOT CESIUM_TARGET_WASM)
+    target_link_libraries(CesiumClientCommon
+        PRIVATE
+            httplib::httplib
+    )
+endif()

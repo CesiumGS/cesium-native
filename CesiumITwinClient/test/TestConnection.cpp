@@ -23,7 +23,7 @@ using namespace CesiumNativeTests;
 using namespace CesiumUtility;
 
 namespace {
-const std::string& REDIRECT_PATH = "/dummy/auth/path";
+const std::string REDIRECT_PATH = "/dummy/auth/path";
 const int REDIRECT_PORT = 49013;
 
 std::shared_ptr<Connection>

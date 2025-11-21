@@ -63,6 +63,20 @@ target_link_libraries(CesiumGltfReader
         modp_b64::modp_b64
         KTX::ktx
         spz::spz
-        WebP::webp WebP::webpdecoder
-        $<IF:$<TARGET_EXISTS:libjpeg-turbo::turbojpeg>,libjpeg-turbo::turbojpeg,libjpeg-turbo::turbojpeg-static>
+        WebP::webp
+        WebP::webpdecoder
 )
+
+if(CESIUM_DISABLE_LIBJPEG_TURBO)
+    target_compile_definitions(
+        CesiumGltfReader
+        PRIVATE
+            CESIUM_DISABLE_LIBJPEG_TURBO
+    )
+else()
+    target_link_libraries(
+        CesiumGltfReader
+        PRIVATE
+            $<IF:$<TARGET_EXISTS:libjpeg-turbo::turbojpeg>,libjpeg-turbo::turbojpeg,libjpeg-turbo::turbojpeg-static>
+    )
+endif()

@@ -217,3 +217,70 @@ jobs:
         run: |
           cd build
           ctest -V
+  EmscriptenBuild:
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [ "3.1.39", "4.0.13" ]
+        memory: [ "32", "64" ]
+        exclude:
+          - version: "3.1.39"
+            memory: "64"
+    name: Emscripten v${{matrix.version}} ${{matrix.memory}}bit memory
+    env:
+      CACHE_KEY: "emscripten-${{matrix.version}}-${{matrix.memory}}"
+    runs-on: windows-2022
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Use NodeJS 24 for WebAssembly 64-bit memory support
+        if: ${{ matrix.memory == '64' }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: '>=24'
+      - name: Checkout vcpkg 2025.02.14 packages for use with Emscripten 3.1.39
+        if: ${{ matrix.version == '3.1.39' }}
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          clean: false
+          ref: 2025.02.14
+          path: extern/vcpkg/temp
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            ports/ada-url
+      - name: Move overlay ports to the correct location
+        if: ${{ matrix.version == '3.1.39' }}
+        run: |
+          mv extern/vcpkg/temp/ports/* extern/vcpkg/ports/
+      - name: Add OpenSSL "no-dso" option on older Emscripten versions
+        if: ${{ matrix.version == '3.1.39' }}
+        run: |
+          echo "
+            if(PORT MATCHES "openssl")
+              set(VCPKG_CONFIGURE_MAKE_OPTIONS "no-dso")
+            endif()
+            " >> extern/vcpkg/triplets/wasm32-emscripten-cesium.cmake
+      - name: Install latest CMake 3 and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
+      - name: Install nasm
+        uses: ilammy/setup-nasm@v1
+      - name: Setup emsdk
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: ${{matrix.version}}
+      - name: Verify
+        run: emcc -v
+      - name: Compile Debug Configuration
+        run: |
+          $env:VCPKG_ROOT="$env:VCPKG_INSTALLATION_ROOT"
+          $MEMORYPROPERTY="${{matrix.memory}}" -eq "64" ? "-DCESIUM_WASM64=ON" : ""
+          emcmake cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug $MEMORYPROPERTY
+          cmake --build build --config Debug --parallel
+      - name: Test Debug Configuration
+        run: |
+          node build/CesiumNativeTests/cesium-native-tests.js
