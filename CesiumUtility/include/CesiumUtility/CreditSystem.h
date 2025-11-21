@@ -316,7 +316,6 @@ private:
 
   std::vector<CreditSource*> _creditSources;
   std::vector<CreditRecord> _credits;
-  std::vector<Credit> _creditsToNoLongerShowThisSnapshot;
   CreditsSnapshot _snapshot;
   std::vector<int32_t> _referenceCountScratch;
 

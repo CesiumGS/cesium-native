@@ -161,19 +161,6 @@ bool CreditSystem::addCreditReference(Credit credit) {
 
   ++record.referenceCount;
 
-  // If this is the first reference to this credit, and it was shown last frame,
-  // make sure this credit doesn't exist in _creditsToNoLongerShowThisSnapshot.
-  if (record.shownLastSnapshot && record.referenceCount == 1) {
-    this->_creditsToNoLongerShowThisSnapshot.erase(
-        std::remove_if(
-            this->_creditsToNoLongerShowThisSnapshot.begin(),
-            this->_creditsToNoLongerShowThisSnapshot.end(),
-            [id = credit._id](const Credit& candidate) {
-              return candidate._id == id;
-            }),
-        this->_creditsToNoLongerShowThisSnapshot.end());
-  }
-
   return true;
 }
 
@@ -188,19 +175,15 @@ bool CreditSystem::removeCreditReference(Credit credit) {
   CESIUM_ASSERT(record.referenceCount > 0);
   --record.referenceCount;
 
-  // If this was the last reference to this credit, and it was shown last frame,
-  // add this credit to _creditsToNoLongerShowThisSnapshot.
-  if (record.shownLastSnapshot && record.referenceCount == 0) {
-    this->_creditsToNoLongerShowThisSnapshot.emplace_back(credit);
-  }
-
   return true;
 }
 
 const CreditsSnapshot&
 CreditSystem::getSnapshot(CreditFilteringMode filteringMode) noexcept {
   std::vector<Credit>& currentCredits = this->_snapshot.currentCredits;
+  std::vector<Credit>& removedCredits = this->_snapshot.removedCredits;
   currentCredits.clear();
+  removedCredits.clear();
 
   std::vector<int32_t>& effectiveReferenceCounts = this->_referenceCountScratch;
   effectiveReferenceCounts.assign(this->_credits.size(), 0);
@@ -221,28 +204,29 @@ CreditSystem::getSnapshot(CreditFilteringMode filteringMode) noexcept {
         // Credit filtered out in favor of another credit.
         // That other credit inherits this credit's reference count.
         effectiveReferenceCounts[filteredInFavorOf] += record.referenceCount;
-        record.shownLastSnapshot = false;
+        if (record.shownLastSnapshot) {
+          removedCredits.emplace_back(Credit(uint32_t(i), record.generation));
+          record.shownLastSnapshot = false;
+        }
       } else {
         // This credit is not filtered.
         currentCredits.emplace_back(Credit(uint32_t(i), record.generation));
         effectiveReferenceCounts[i] += record.referenceCount;
         record.shownLastSnapshot = true;
       }
-    } else {
+    } else if (record.shownLastSnapshot) {
+      removedCredits.emplace_back(Credit(uint32_t(i), record.generation));
       record.shownLastSnapshot = false;
     }
   }
-
-  this->_creditsToNoLongerShowThisSnapshot.swap(this->_snapshot.removedCredits);
-  this->_creditsToNoLongerShowThisSnapshot.clear();
 
   // sort credits based on the number of occurrences
   std::sort(
       currentCredits.begin(),
       currentCredits.end(),
-      [this](const Credit& a, const Credit& b) {
-        int32_t aCounts = this->_credits[a._id].referenceCount;
-        int32_t bCounts = this->_credits[b._id].referenceCount;
+      [&](const Credit& a, const Credit& b) {
+        int32_t aCounts = effectiveReferenceCounts[a._id];
+        int32_t bCounts = effectiveReferenceCounts[b._id];
         if (aCounts == bCounts)
           return a._id < b._id;
         else
@@ -270,20 +254,6 @@ void CreditSystem::addBulkReferences(
     int32_t referencesToAdd = references[i];
 
     record.referenceCount += referencesToAdd;
-
-    // If this is the first reference to this credit, and it was shown last
-    // frame, make sure this credit doesn't exist in
-    // _creditsToNoLongerShowThisSnapshot.
-    if (record.shownLastSnapshot && record.referenceCount == referencesToAdd) {
-      this->_creditsToNoLongerShowThisSnapshot.erase(
-          std::remove_if(
-              this->_creditsToNoLongerShowThisSnapshot.begin(),
-              this->_creditsToNoLongerShowThisSnapshot.end(),
-              [i = uint32_t(i)](const Credit& candidate) {
-                return candidate._id == i;
-              }),
-          this->_creditsToNoLongerShowThisSnapshot.end());
-    }
   }
 }
 
@@ -302,13 +272,6 @@ void CreditSystem::releaseBulkReferences(
 
     CESIUM_ASSERT(record.referenceCount >= referencesToRemove);
     record.referenceCount -= referencesToRemove;
-
-    // If this was the last reference to this credit, and it was shown last
-    // frame, add this credit to _creditsToNoLongerShowThisSnapshot.
-    if (record.shownLastSnapshot && record.referenceCount == 0) {
-      this->_creditsToNoLongerShowThisSnapshot.emplace_back(
-          Credit(uint32_t(i), record.generation));
-    }
   }
 }
 
@@ -339,17 +302,8 @@ void CreditSystem::destroyCreditSource(CreditSource& creditSource) noexcept {
         record.previousCreditWithSameHtml = INVALID_CREDIT_INDEX;
       }
 
-      if (record.referenceCount > 0) {
-        record.referenceCount = 0;
-      } else {
-        this->_creditsToNoLongerShowThisSnapshot.erase(
-            std::remove_if(
-                this->_creditsToNoLongerShowThisSnapshot.begin(),
-                this->_creditsToNoLongerShowThisSnapshot.end(),
-                [id = uint32_t(&record - this->_credits.data())](
-                    const Credit& candidate) { return candidate._id == id; }),
-            this->_creditsToNoLongerShowThisSnapshot.end());
-      }
+      record.referenceCount = 0;
+      record.shownLastSnapshot = false;
     }
   }
 
