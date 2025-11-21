@@ -326,4 +326,158 @@ TEST_CASE("Test CreditSystem with CreditSources") {
     CHECK(snapshot.currentCredits[0] == credit1);
     CHECK(snapshot.removedCredits.empty());
   }
+
+  SUBCASE("getSnapshot") {
+    SUBCASE("None filtering mode") {
+      SUBCASE("includes all Credits from all sources") {
+        CreditSource sourceC(creditSystem);
+        Credit credit0 = creditSystem.createCredit(sourceA, html0);
+        Credit credit1 = creditSystem.createCredit(sourceB, html0);
+        Credit credit2 = creditSystem.createCredit(sourceC, html0);
+
+        creditSystem.addCreditReference(credit0);
+        creditSystem.addCreditReference(credit1);
+        creditSystem.addCreditReference(credit2);
+
+        const CreditsSnapshot& snapshot =
+            creditSystem.getSnapshot(CreditFilteringMode::None);
+
+        REQUIRE(snapshot.currentCredits.size() == 3);
+        CHECK(snapshot.currentCredits[0] == credit0);
+        CHECK(snapshot.currentCredits[1] == credit1);
+        CHECK(snapshot.currentCredits[2] == credit2);
+        CHECK(snapshot.removedCredits.empty());
+      }
+    }
+
+    SUBCASE("UniqueHtmlAndShowOnScreen filtering mode") {
+      SUBCASE(
+          "filters out credits with identical HTML and showOnScreen values") {
+        CreditSource sourceC(creditSystem);
+        Credit credit0 = creditSystem.createCredit(sourceA, html0, true);
+        Credit credit1 = creditSystem.createCredit(sourceB, html0, true);
+        Credit credit2 = creditSystem.createCredit(sourceC, html0, false);
+
+        creditSystem.addCreditReference(credit0);
+        creditSystem.addCreditReference(credit1);
+        creditSystem.addCreditReference(credit2);
+
+        const CreditsSnapshot& snapshot = creditSystem.getSnapshot(
+            CreditFilteringMode::UniqueHtmlAndShowOnScreen);
+
+        REQUIRE(snapshot.currentCredits.size() == 2);
+        CHECK(snapshot.currentCredits[0] == credit0);
+        CHECK(snapshot.currentCredits[1] == credit2);
+        CHECK(snapshot.removedCredits.empty());
+      }
+
+      SUBCASE("reference count is the sum of collapsed credits") {
+        CreditSource sourceC(creditSystem);
+        Credit credit0 = creditSystem.createCredit(sourceA, html0, false);
+        Credit credit1 = creditSystem.createCredit(sourceB, html0, true);
+        Credit credit2 = creditSystem.createCredit(sourceC, html0, true);
+
+        creditSystem.addCreditReference(credit0);
+        creditSystem.addCreditReference(credit0);
+        creditSystem.addCreditReference(credit1);
+        creditSystem.addCreditReference(credit2);
+        creditSystem.addCreditReference(credit2);
+
+        const CreditsSnapshot& snapshot = creditSystem.getSnapshot(
+            CreditFilteringMode::UniqueHtmlAndShowOnScreen);
+
+        // credit0 has a reference count of 2. credit1 and credit2 are collapsed
+        // into one credit with a reference count of 3 and represented by
+        // credit1. So credit1 should be shown before credit0.
+        REQUIRE(snapshot.currentCredits.size() == 2);
+        CHECK(snapshot.currentCredits[0] == credit1);
+        CHECK(snapshot.currentCredits[1] == credit0);
+        CHECK(snapshot.removedCredits.empty());
+      }
+    }
+
+    SUBCASE("UniqueHtml filtering mode") {
+      SUBCASE(
+          "filters out credits with identical HTML from different sources") {
+        CreditSource sourceC(creditSystem);
+        Credit credit0 = creditSystem.createCredit(sourceA, html0);
+        Credit credit1 = creditSystem.createCredit(sourceB, html0);
+        Credit credit2 = creditSystem.createCredit(sourceC, html0);
+
+        creditSystem.addCreditReference(credit0);
+        creditSystem.addCreditReference(credit1);
+        creditSystem.addCreditReference(credit2);
+
+        const CreditsSnapshot& snapshot =
+            creditSystem.getSnapshot(CreditFilteringMode::UniqueHtml);
+
+        REQUIRE(snapshot.currentCredits.size() == 1);
+        CHECK(snapshot.currentCredits[0] == credit0);
+        CHECK(snapshot.removedCredits.empty());
+      }
+
+      SUBCASE("includes the Credit with showOnScreen=true if one exists.") {
+        CreditSource sourceC(creditSystem);
+        Credit credit0 = creditSystem.createCredit(sourceA, html0, false);
+        Credit credit1 = creditSystem.createCredit(sourceB, html0, true);
+        Credit credit2 = creditSystem.createCredit(sourceC, html0, false);
+
+        creditSystem.addCreditReference(credit0);
+        creditSystem.addCreditReference(credit1);
+        creditSystem.addCreditReference(credit2);
+
+        const CreditsSnapshot& snapshot =
+            creditSystem.getSnapshot(CreditFilteringMode::UniqueHtml);
+
+        REQUIRE(snapshot.currentCredits.size() == 1);
+        CHECK(snapshot.currentCredits[0] == credit1);
+        CHECK(snapshot.removedCredits.empty());
+      }
+
+      SUBCASE("includes the first of multiple Credits with showOnScreen=true") {
+        CreditSource sourceC(creditSystem);
+        Credit credit0 = creditSystem.createCredit(sourceA, html0, true);
+        Credit credit1 = creditSystem.createCredit(sourceB, html0, true);
+        Credit credit2 = creditSystem.createCredit(sourceC, html0, false);
+
+        creditSystem.addCreditReference(credit0);
+        creditSystem.addCreditReference(credit1);
+        creditSystem.addCreditReference(credit2);
+
+        const CreditsSnapshot& snapshot =
+            creditSystem.getSnapshot(CreditFilteringMode::UniqueHtml);
+
+        REQUIRE(snapshot.currentCredits.size() == 1);
+        CHECK(snapshot.currentCredits[0] == credit0);
+        CHECK(snapshot.removedCredits.empty());
+      }
+
+      SUBCASE("reference count is the sum of collapsed credits") {
+        CreditSource sourceC(creditSystem);
+        Credit credit0 = creditSystem.createCredit(sourceA, html0);
+        Credit credit1 = creditSystem.createCredit(sourceB, html1);
+        Credit credit2 = creditSystem.createCredit(sourceC, html1);
+
+        creditSystem.addCreditReference(credit0);
+        creditSystem.addCreditReference(credit0);
+        creditSystem.addCreditReference(credit1);
+        creditSystem.addCreditReference(credit2);
+        creditSystem.addCreditReference(credit2);
+
+        const CreditsSnapshot& snapshot =
+            creditSystem.getSnapshot(CreditFilteringMode::UniqueHtml);
+
+        // credit0 has a reference count of 2. credit1 and credit2 are collapsed
+        // into one credit with a reference count of 3 and represented by
+        // credit1. So credit1 should be shown before credit0.
+        REQUIRE(snapshot.currentCredits.size() == 2);
+        CHECK(snapshot.currentCredits[0] == credit1);
+        CHECK(snapshot.currentCredits[1] == credit0);
+        CHECK(snapshot.removedCredits.empty());
+      }
+    }
+  }
+
+  // Refeference count for sorting is the sum of collapsed credit reference
+  // counts.
 }

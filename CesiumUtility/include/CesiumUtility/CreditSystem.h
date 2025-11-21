@@ -154,7 +154,14 @@ struct CreditsSnapshot {
  */
 class CESIUMUTILITY_API CreditSystem final {
 public:
+  /**
+   * @brief Constructs a new instance.
+   */
+  CreditSystem() noexcept = default;
   ~CreditSystem() noexcept;
+
+  CreditSystem(const CreditSystem&) = delete;
+  CreditSystem& operator=(const CreditSystem&) = delete;
 
   /**
    * @brief Inserts a credit string.
