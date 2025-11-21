@@ -813,3 +813,54 @@ TEST_CASE("GltfReader::postprocessGltf") {
     CHECK(s == "test");
   }
 }
+
+TEST_CASE("SPZ decoding works properly") {
+  SUBCASE("Basic model with one vertex no spherical harmonics") {
+    GltfReader reader;
+    GltfReaderResult result = reader.readGltf(readFile(
+        std::filesystem::path(CesiumGltfReader_TEST_DATA_DIR) / "SpzSplat" /
+        "basic.glb"));
+    REQUIRE(result.model);
+    const Model& model = result.model.value();
+
+    REQUIRE(model.meshes.size() == 1);
+    REQUIRE(model.meshes[0].primitives.size() == 1);
+
+    const std::unordered_map<std::string, int32_t>& attributes =
+        model.meshes[0].primitives[0].attributes;
+
+    CHECK(attributes.size() == 4);
+
+    REQUIRE(attributes.contains("POSITION"));
+    AccessorView<glm::vec3> positionView(model, attributes.at("POSITION"));
+    REQUIRE(positionView.status() == AccessorViewStatus::Valid);
+    REQUIRE(positionView.size() == 1);
+    CHECK(positionView[0] == glm::vec3(1.0, 2.0, 3.0));
+
+    REQUIRE(attributes.contains("COLOR_0"));
+    AccessorView<glm::vec4> colorView(model, attributes.at("COLOR_0"));
+    REQUIRE(colorView.status() == AccessorViewStatus::Valid);
+    REQUIRE(colorView.size() == 1);
+    CHECK(
+        colorView[0] ==
+        glm::vec4(0.570062876, 0.643813193, 0.710188448, 0.501960814));
+
+    REQUIRE(attributes.contains("KHR_gaussian_splatting:ROTATION"));
+    AccessorView<glm::vec4> rotationView(
+        model,
+        attributes.at("KHR_gaussian_splatting:ROTATION"));
+    REQUIRE(rotationView.status() == AccessorViewStatus::Valid);
+    REQUIRE(rotationView.size() == 1);
+    CHECK(
+        rotationView[0] ==
+        glm::vec4(0.003921628, -0.709803939, 0.709804058, 0.0));
+
+    REQUIRE(attributes.contains("KHR_gaussian_splatting:SCALE"));
+    AccessorView<glm::vec3> scaleView(
+        model,
+        attributes.at("KHR_gaussian_splatting:SCALE"));
+    REQUIRE(scaleView.status() == AccessorViewStatus::Valid);
+    REQUIRE(scaleView.size() == 1);
+    CHECK(scaleView[0] == glm::vec3(20.085537, 7.38905621, 2.71828175));
+  }
+}

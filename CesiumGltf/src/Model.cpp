@@ -46,6 +46,10 @@
 #include <glm/geometric.hpp>
 #include <glm/gtc/quaternion.hpp> // NOLINT(misc-include-cleaner)
 #include <glm/gtx/norm.hpp>
+// Despite what clang-tidy will say, we *do* actually need this include or we'll
+// get a "missing mat4_cast" error.
+// NOLINTNEXTLINE
+#include <glm/gtc/quaternion.hpp>
 
 #include <algorithm>
 #include <array>
