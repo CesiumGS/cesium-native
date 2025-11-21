@@ -170,6 +170,10 @@ void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
   }
 }
 
+const CesiumUtility::CreditSource& Tileset::getCreditSource() const noexcept {
+  return this->_pTilesetContentManager->getCreditSource();
+}
+
 const Tile* Tileset::getRootTile() const noexcept {
   return this->_pTilesetContentManager->getRootTile();
 }

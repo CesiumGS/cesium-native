@@ -7,24 +7,21 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
-#include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/WebMapTileServiceRasterOverlay.h>
-#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Uri.h>
 
 #include <nonstd/expected.hpp>
-#include <spdlog/logger.h>
 
 #include <algorithm>
 #include <cstdint>
 #include <map>
-#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
@@ -40,14 +37,9 @@ class WebMapTileServiceTileProvider final
     : public QuadtreeRasterOverlayTileProvider {
 public:
   WebMapTileServiceTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
-      std::optional<Credit> credit,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters,
+      std::optional<std::string> credit,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,
@@ -66,13 +58,8 @@ public:
       const std::optional<std::map<std::string, std::string>>& dimensions,
       const std::vector<std::string>& subdomains)
       : QuadtreeRasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            pCreditSystem,
-            credit,
-            pPrepareRendererResources,
-            pLogger,
+            pCreator,
+            parameters,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -89,7 +76,15 @@ public:
         _tileMatrixSetID(std::move(_tileMatrixSetID)),
         _labels(tileMatrixLabels),
         _staticDimensions(dimensions),
-        _subdomains(subdomains) {}
+        _subdomains(subdomains) {
+    if (parameters.externals.pCreditSystem && credit) {
+      this->getCredits().emplace_back(
+          parameters.externals.pCreditSystem->createCredit(
+              this->getCreditSource(),
+              *credit,
+              pCreator->getOptions().showCreditsOnScreen));
+    }
+  }
 
   virtual ~WebMapTileServiceTileProvider() = default;
 
@@ -204,22 +199,7 @@ WebMapTileServiceRasterOverlay::~WebMapTileServiceRasterOverlay() = default;
 
 Future<RasterOverlay::CreateTileProviderResult>
 WebMapTileServiceRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
-
-  pOwner = pOwner ? pOwner : this;
-
-  std::optional<Credit> credit = std::nullopt;
-  if (pCreditSystem && this->_options.credit) {
-    credit = pCreditSystem->createCredit(
-        *this->_options.credit,
-        pOwner->getOptions().showCreditsOnScreen);
-  }
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
 
   bool hasError = false;
   std::string errorMessage;
@@ -245,7 +225,7 @@ WebMapTileServiceRasterOverlay::createTileProvider(
   }
 
   CesiumGeospatial::Projection projection = _options.projection.value_or(
-      CesiumGeospatial::WebMercatorProjection(pOwner->getOptions().ellipsoid));
+      CesiumGeospatial::WebMercatorProjection(this->getOptions().ellipsoid));
   CesiumGeospatial::GlobeRectangle tilingSchemeRectangle =
       CesiumGeospatial::WebMercatorProjection::MAXIMUM_GLOBE_RECTANGLE;
   uint32_t rootTilesX = 1;
@@ -265,40 +245,36 @@ WebMapTileServiceRasterOverlay::createTileProvider(
           1));
 
   if (hasError) {
-    return asyncSystem
+    return parameters.externals.asyncSystem
         .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
             nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                 RasterOverlayLoadType::TileProvider,
                 nullptr,
                 errorMessage}));
   }
-  return asyncSystem
+  return parameters.externals.asyncSystem
       .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
           new WebMapTileServiceTileProvider(
-              pOwner,
-              asyncSystem,
-              pAssetAccessor,
-              pCreditSystem,
-              credit,
-              pPrepareRendererResources,
-              pLogger,
+              this,
+              parameters,
+              this->_options.credit,
               projection,
               tilingScheme,
               coverageRectangle,
-              _url,
-              _headers,
+              this->_url,
+              this->_headers,
               useKVP,
               format,
               tileWidth,
               tileHeight,
               minimumLevel,
               maximumLevel,
-              _options.layer,
-              _options.style,
-              _options.tileMatrixSetID,
-              _options.tileMatrixLabels,
-              _options.dimensions,
-              _options.subdomains));
+              this->_options.layer,
+              this->_options.style,
+              this->_options.tileMatrixSetID,
+              this->_options.tileMatrixLabels,
+              this->_options.dimensions,
+              this->_options.subdomains));
 }
 
 } // namespace CesiumRasterOverlays

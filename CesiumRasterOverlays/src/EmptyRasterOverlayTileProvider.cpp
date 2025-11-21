@@ -5,21 +5,14 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
-#include <optional>
-
 namespace CesiumRasterOverlays {
 
 EmptyRasterOverlayTileProvider::EmptyRasterOverlayTileProvider(
-    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-    const CesiumAsync::AsyncSystem& asyncSystem) noexcept
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
+    const CreateRasterOverlayTileProviderParameters& parameters) noexcept
     : RasterOverlayTileProvider(
-          pOwner,
-          asyncSystem,
-          nullptr,
-          nullptr,
-          std::nullopt,
-          nullptr,
-          nullptr,
+          pCreator,
+          parameters,
           CesiumGeospatial::GeographicProjection(),
           CesiumGeometry::Rectangle()) {}
 

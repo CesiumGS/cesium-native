@@ -9,8 +9,8 @@ class EmptyRasterOverlayTileProvider
 public:
   EmptyRasterOverlayTileProvider(
       const CesiumUtility::IntrusivePointer<
-          const CesiumRasterOverlays::RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem) noexcept;
+          const CesiumRasterOverlays::RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters) noexcept;
 
 protected:
   virtual CesiumAsync::Future<CesiumRasterOverlays::LoadedRasterOverlayImage>
