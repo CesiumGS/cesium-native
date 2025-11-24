@@ -253,12 +253,12 @@ TEST_CASE("Test CreditSystem with CreditSources") {
     CHECK(snapshot0.currentCredits.size() == 1);
     CHECK(snapshot0.currentCredits[0] == credit0);
 
-    // Remove the credit reference, which will add it to the list of "no longer
-    // shown" credits.
+    // Remove the credit reference. If we were to ask for a snapshot after this,
+    // this credit would show up in the `removedCredits`.
     creditSystem.removeCreditReference(credit0);
 
-    // Destroy the source.
-    // The credit should no longer be reported in the next snapshot.
+    // Destroy the source. Now, the removed credit should no longer be reported
+    // in the next snapshot.
     pTempSourceA.reset();
 
     const CreditsSnapshot& snapshot1 = creditSystem.getSnapshot();
