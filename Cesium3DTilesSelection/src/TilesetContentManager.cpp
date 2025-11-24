@@ -48,6 +48,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/ReferenceCounted.h>
@@ -713,6 +714,19 @@ postProcessContentInWorkerThread(
       });
 }
 
+std::optional<Credit> createUserCredit(
+    const TilesetOptions& tilesetOptions,
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
+    const CreditSource& creditSource) {
+  if (!tilesetOptions.credit || !pCreditSystem)
+    return std::nullopt;
+
+  return pCreditSystem->createCredit(
+      creditSource,
+      *tilesetOptions.credit,
+      tilesetOptions.showCreditsOnScreen);
+}
+
 } // namespace
 
 TilesetContentManager::TilesetContentManager(
@@ -724,12 +738,7 @@ TilesetContentManager::TilesetContentManager(
       _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{std::move(pLoader)},
       _pRootTile{nullptr},
-      _userCredit(
-          (tilesetOptions.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    tilesetOptions.credit.value(),
-                    tilesetOptions.showCreditsOnScreen))
-              : std::nullopt),
+      _userCredit(),
       _tilesetCredits{},
       _overlayCollection(
           LoadedTileEnumerator(pRootTile.get()),
@@ -751,8 +760,14 @@ TilesetContentManager::TilesetContentManager(
       _roundRobinValueWorker(0.0),
       _roundRobinValueMain(0.0),
       _requesterFractions(),
-      _requestersWithRequests() {
+      _requestersWithRequests(),
+      _creditSource(externals.pCreditSystem) {
   CESIUM_ASSERT(this->_pLoader != nullptr);
+
+  this->_userCredit = createUserCredit(
+      tilesetOptions,
+      externals.pCreditSystem,
+      this->_creditSource);
   this->_upsampler.setOwner(*this);
 
   this->notifyTileStartLoading(nullptr);
@@ -776,12 +791,7 @@ TilesetContentManager::TilesetContentManager(
       _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{},
       _pRootTile{},
-      _userCredit(
-          (tilesetOptions.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    tilesetOptions.credit.value(),
-                    tilesetOptions.showCreditsOnScreen))
-              : std::nullopt),
+      _userCredit(),
       _tilesetCredits{},
       _overlayCollection(
           LoadedTileEnumerator(nullptr),
@@ -803,7 +813,13 @@ TilesetContentManager::TilesetContentManager(
       _roundRobinValueWorker(0.0),
       _roundRobinValueMain(0.0),
       _requesterFractions(),
-      _requestersWithRequests() {
+      _requestersWithRequests(),
+      _creditSource(externals.pCreditSystem) {
+  this->_userCredit = createUserCredit(
+      tilesetOptions,
+      externals.pCreditSystem,
+      this->_creditSource);
+
   this->_upsampler.setOwner(*this);
 
   if (!url.empty()) {
@@ -944,12 +960,7 @@ TilesetContentManager::TilesetContentManager(
       _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{},
       _pRootTile{},
-      _userCredit(
-          (tilesetOptions.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    tilesetOptions.credit.value(),
-                    tilesetOptions.showCreditsOnScreen))
-              : std::nullopt),
+      _userCredit(),
       _tilesetCredits{},
       _overlayCollection(
           LoadedTileEnumerator(nullptr),
@@ -971,7 +982,13 @@ TilesetContentManager::TilesetContentManager(
       _roundRobinValueWorker(0.0),
       _roundRobinValueMain(0.0),
       _requesterFractions(),
-      _requestersWithRequests() {
+      _requestersWithRequests(),
+      _creditSource(externals.pCreditSystem) {
+  this->_userCredit = createUserCredit(
+      tilesetOptions,
+      externals.pCreditSystem,
+      this->_creditSource);
+
   this->_upsampler.setOwner(*this);
 
   if (loaderFactory.isValid()) {
@@ -1715,6 +1732,7 @@ void TilesetContentManager::finishLoading(
 
     for (const std::string_view& creditString : creditStrings) {
       credits.emplace_back(pCreditSystem->createCredit(
+          this->_creditSource,
           std::string(creditString),
           tilesetOptions.showCreditsOnScreen));
     }
@@ -2062,6 +2080,17 @@ void TilesetContentManager::releaseReference() const {
   }
 }
 
+TilesetExternals& TilesetContentManager::getExternals() {
+  return this->_externals;
+}
+const TilesetExternals& TilesetContentManager::getExternals() const {
+  return this->_externals;
+}
+
+const CreditSource& TilesetContentManager::getCreditSource() const noexcept {
+  return this->_creditSource;
+}
+
 void TilesetContentManager::setTileContent(
     Tile& tile,
     TileLoadResult&& result,
@@ -2306,9 +2335,11 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
   this->_tilesetCredits.reserve(
       this->_tilesetCredits.size() + result.credits.size());
   for (const auto& creditResult : result.credits) {
-    this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
-        creditResult.creditText,
-        creditResult.showOnScreen));
+    this->_tilesetCredits.emplace_back(
+        this->_externals.pCreditSystem->createCredit(
+            this->_creditSource,
+            creditResult.creditText,
+            creditResult.showOnScreen));
   }
 
   this->_requestHeaders = std::move(result.requestHeaders);
