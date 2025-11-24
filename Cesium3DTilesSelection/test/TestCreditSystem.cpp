@@ -371,6 +371,25 @@ TEST_CASE("Test CreditSystem with CreditSources") {
         CHECK(snapshot.removedCredits.empty());
       }
 
+      SUBCASE("does not filter in favor of unreferenced credits") {
+        CreditSource sourceC(creditSystem);
+        Credit credit0 = creditSystem.createCredit(sourceA, html0, true);
+        Credit credit1 = creditSystem.createCredit(sourceB, html0, true);
+        Credit credit2 = creditSystem.createCredit(sourceC, html0, false);
+
+        creditSystem.addCreditReference(credit1);
+        creditSystem.addCreditReference(credit2);
+        // Note: credit0 is not referenced.
+
+        const CreditsSnapshot& snapshot = creditSystem.getSnapshot(
+            CreditFilteringMode::UniqueHtmlAndShowOnScreen);
+
+        REQUIRE(snapshot.currentCredits.size() == 2);
+        CHECK(snapshot.currentCredits[0] == credit1);
+        CHECK(snapshot.currentCredits[1] == credit2);
+        CHECK(snapshot.removedCredits.empty());
+      }
+
       SUBCASE("reference count is the sum of collapsed credits") {
         CreditSource sourceC(creditSystem);
         Credit credit0 = creditSystem.createCredit(sourceA, html0, false);
@@ -443,6 +462,24 @@ TEST_CASE("Test CreditSystem with CreditSources") {
         creditSystem.addCreditReference(credit0);
         creditSystem.addCreditReference(credit1);
         creditSystem.addCreditReference(credit2);
+
+        const CreditsSnapshot& snapshot =
+            creditSystem.getSnapshot(CreditFilteringMode::UniqueHtml);
+
+        REQUIRE(snapshot.currentCredits.size() == 1);
+        CHECK(snapshot.currentCredits[0] == credit0);
+        CHECK(snapshot.removedCredits.empty());
+      }
+
+      SUBCASE("does not filter in favor of unreferenced credits") {
+        CreditSource sourceC(creditSystem);
+        Credit credit0 = creditSystem.createCredit(sourceA, html0, false);
+        Credit credit1 = creditSystem.createCredit(sourceB, html0, false);
+        Credit credit2 = creditSystem.createCredit(sourceC, html0, true);
+
+        creditSystem.addCreditReference(credit0);
+        creditSystem.addCreditReference(credit1);
+        // Note: credit2 is not referenced.
 
         const CreditsSnapshot& snapshot =
             creditSystem.getSnapshot(CreditFilteringMode::UniqueHtml);
