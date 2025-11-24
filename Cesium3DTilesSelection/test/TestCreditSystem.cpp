@@ -373,7 +373,8 @@ TEST_CASE("Test CreditSystem with CreditSources") {
 
       SUBCASE("does not filter in favor of unreferenced credits") {
         CreditSource sourceC(creditSystem);
-        Credit credit0 = creditSystem.createCredit(sourceA, html0, true);
+        [[maybe_unused]] Credit credit0 =
+            creditSystem.createCredit(sourceA, html0, true);
         Credit credit1 = creditSystem.createCredit(sourceB, html0, true);
         Credit credit2 = creditSystem.createCredit(sourceC, html0, false);
 
@@ -475,7 +476,8 @@ TEST_CASE("Test CreditSystem with CreditSources") {
         CreditSource sourceC(creditSystem);
         Credit credit0 = creditSystem.createCredit(sourceA, html0, false);
         Credit credit1 = creditSystem.createCredit(sourceB, html0, false);
-        Credit credit2 = creditSystem.createCredit(sourceC, html0, true);
+        [[maybe_unused]] Credit credit2 =
+            creditSystem.createCredit(sourceC, html0, true);
 
         creditSystem.addCreditReference(credit0);
         creditSystem.addCreditReference(credit1);
