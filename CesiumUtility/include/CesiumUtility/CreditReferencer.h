@@ -109,7 +109,7 @@ public:
   /**
    * @brief Tests if a credit is referenced by this referencer.
    *
-   * @param credit to test if it is referenced.
+   * @param credit The credit to test if it is referenced.
    */
   bool isCreditReferenced(Credit credit) const noexcept;
 
