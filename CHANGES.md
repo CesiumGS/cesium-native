@@ -7,7 +7,6 @@
 - `RasterOverlay::createTileProvider` now receives a reference to `CreateRasterOverlayTileProviderParameters` instead of a large number of individual parameters.
 - The constructor parameters for `RasterOverlayTileProvider` and `QuadtreeRasterOverlayTileProvider` have changed.
 - The `getCredit` method has been removed from `RasterOverlayCreditProvider`. Use `getCredits` instead.
-- Removed unused property `RasterOverlayOptions::subTileCacheBytes`.
 
 ##### Additions :tada:
 
