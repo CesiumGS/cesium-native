@@ -271,7 +271,10 @@ public:
       this->_storage[byteIndex] = std::byte(byte);
     }
 
-    this->_view = PropertyArrayView<bool>(this->_storage, 0, numberOfElements);
+    this->_view = PropertyArrayView<bool>(
+        this->_storage,
+        0,
+        static_cast<int64_t>(numberOfElements));
   }
 
   /** @brief Default move constructor */
@@ -485,17 +488,17 @@ public:
     this->_storage.resize(stringData.size() + offsetData.size());
     std::memcpy(this->_storage.data(), stringData.data(), stringData.size());
     std::memcpy(
-        this->_storage.data() + stringData.size(),
+        this->_storage.data() + static_cast<int64_t>(stringData.size()),
         offsetData.data(),
         offsetData.size());
 
     this->_view = PropertyArrayView<std::string_view>(
         std::span<const std::byte>(this->_storage.begin(), stringData.size()),
         std::span<const std::byte>(
-            this->_storage.begin() + stringData.size(),
+            this->_storage.begin() + static_cast<int64_t>(stringData.size()),
             offsetData.size()),
         offsetType,
-        numberOfElements);
+        static_cast<int64_t>(numberOfElements));
   }
 
   /** @brief Default move constructor */
@@ -511,7 +514,7 @@ public:
     this->_view = PropertyArrayView<std::string_view>(
         std::span<const std::byte>(this->_storage.begin(), valueSpanSize),
         std::span<const std::byte>(
-            this->_storage.begin() + valueSpanSize,
+            this->_storage.begin() + static_cast<int64_t>(valueSpanSize),
             this->_storage.end()),
         rhs._view._stringOffsetType,
         rhs._view.size());
