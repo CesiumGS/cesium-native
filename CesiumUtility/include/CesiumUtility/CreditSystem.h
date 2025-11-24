@@ -180,18 +180,7 @@ public:
       std::string&& html,
       bool showOnScreen = false);
 
-  /**
-   * @brief Inserts a credit string.
-   *
-   * @param source The source of the credit. This should be an instance created
-   * and owned by a tileset, raster overlay, or other data source.
-   * @param html The HTML string for the credit.
-   * @param showOnScreen Whether or not the credit should be shown on screen.
-   * Credits not shown on the screen should be shown in a separate popup window.
-   * @return If this string already exists from the same source, returns a
-   * Credit handle to the existing entry. Otherwise returns a Credit handle to a
-   * new entry.
-   */
+  /** @copydoc createCredit */
   Credit createCredit(
       const CreditSource& source,
       const std::string& html,
