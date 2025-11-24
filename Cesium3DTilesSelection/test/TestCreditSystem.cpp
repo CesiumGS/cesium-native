@@ -517,6 +517,6 @@ TEST_CASE("Test CreditSystem with CreditSources") {
     }
   }
 
-  // Refeference count for sorting is the sum of collapsed credit reference
+  // Reference count for sorting is the sum of collapsed credit reference
   // counts.
 }
