@@ -22,7 +22,8 @@ struct CESIUMRASTEROVERLAYS_API CreateRasterOverlayTileProviderParameters {
   RasterOverlayExternals externals;
 
   /**
-   * @brief The overlay that owns this overlay.
+   * @brief The overlay that owns the overlay that is creating the tile
+   * provider.
    *
    * If nullptr, this overlay is not aggregated, and the owner of the tile
    * provider is the overlay that created it.
