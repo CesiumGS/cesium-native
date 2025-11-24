@@ -510,11 +510,11 @@ public:
   PropertyArrayCopy(const PropertyArrayCopy& rhs)
       : _storage(rhs._storage), _view() {
     // Reconstruct spans so they point to this copy's data.
-    size_t valueSpanSize = rhs._view._values.size();
+    int64_t valueSpanSize = static_cast<int64_t>(rhs._view._values.size());
     this->_view = PropertyArrayView<std::string_view>(
         std::span<const std::byte>(this->_storage.begin(), valueSpanSize),
         std::span<const std::byte>(
-            this->_storage.begin() + static_cast<int64_t>(valueSpanSize),
+            this->_storage.begin() + valueSpanSize,
             this->_storage.end()),
         rhs._view._stringOffsetType,
         rhs._view.size());
@@ -524,7 +524,7 @@ public:
   PropertyArrayCopy& operator=(const PropertyArrayCopy& rhs) {
     this->_storage = rhs._storage;
     // Reconstruct spans so they point to this copy's data.
-    size_t valueSpanSize = rhs._view._values.size();
+    int64_t valueSpanSize = static_cast<int64_t>(rhs._view._values.size());
     this->_view = PropertyArrayView<std::string_view>(
         std::span<const std::byte>(this->_storage.begin(), valueSpanSize),
         std::span<const std::byte>(
