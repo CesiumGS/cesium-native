@@ -140,7 +140,7 @@ else()
 endif()
 
 if(NOT CESIUM_DISABLE_CURL)
-    list(APPEND PACKAGES_PRIVATE curl)
+    list(APPEND PACKAGES_PRIVATE curl zlib)
 endif()
 
 if(NOT CESIUM_DISABLE_LIBJPEG_TURBO)
