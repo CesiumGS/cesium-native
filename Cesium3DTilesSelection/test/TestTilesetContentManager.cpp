@@ -897,8 +897,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   SUBCASE("Resolve external buffers") {
     // create mock loader
     CesiumGltfReader::GltfReader gltfReader;
-    std::vector<std::byte> gltfBoxFile =
-        readFile(testDataPath / "gltf" / "box" / "Box.gltf");
+    std::filesystem::path boxPath = testDataPath / "gltf" / "box";
+    std::string fileName = boxPath / "Box.gltf";
+    std::vector<std::byte> gltfBoxFile = readFile(fileName);
     auto modelReadResult = gltfReader.readGltf(gltfBoxFile);
 
     // check that this model has external buffer and it's not loaded
@@ -915,9 +916,36 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       CHECK(buffer.cesium.data.size() == 0);
     }
 
+    // add external buffer to the completed request
+    std::filesystem::path binPath = boxPath / "Box0.bin";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {binPath.string(), createMockRequest(binPath)});
+
+    // Load the model and resolve external content
+    CesiumGltf::Model tileModel;
+    {
+      auto future =
+          gltfReader
+              .readGltfAndExternalData(
+                  gltfBoxFile,
+                  asyncSystem,
+                  CesiumAsync::HttpHeaders(),
+                  pMockedAssetAccessor,
+                  fileName)
+              .thenInMainThread(
+                  [&tileModel](
+                      CesiumGltfReader::GltfReaderResult&& externalReadResult) {
+                    CHECK(externalReadResult.errors.empty());
+                    CHECK(externalReadResult.warnings.empty());
+                    CHECK(externalReadResult.model);
+                    tileModel = std::move(*externalReadResult.model);
+                    return externalReadResult;
+                  });
+      future.waitInMainThread();
+    }
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->mockLoadTileContent = {
-        std::move(*modelReadResult.model),
+        std::move(tileModel),
         CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
@@ -928,11 +956,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         TileLoadResultState::Success,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
-
-    // add external buffer to the completed request
-    pMockedAssetAccessor->mockCompletedRequests.insert(
-        {"Box0.bin",
-         createMockRequest(testDataPath / "gltf" / "box" / "Box0.bin")});
 
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());

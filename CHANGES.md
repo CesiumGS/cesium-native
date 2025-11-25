@@ -1,5 +1,15 @@
 # Change Log
 
+### v0.54.0 - 2025-??-??
+
+##### Breaking Changes :mega:
+
+- Changed the converters in Cesium3DTilesContent to call `GltfReader::readGltfAndExternalData`. The `TilesetContentManger` does not call `resolveExternalData` anymore.
+
+##### Additions :tada:
+
+- Added `CesiumGltfReader::readGltfAndExternalData`, which reads any external data before postprocessing, which includes draco and meshopt decompression.
+
 ### v0.53.0 - 2025-11-03
 
 ##### Breaking Changes :mega:
