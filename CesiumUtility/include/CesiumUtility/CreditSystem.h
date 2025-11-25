@@ -315,6 +315,11 @@ private:
   CreditsSnapshot _snapshot;
   std::vector<int32_t> _referenceCountScratch;
 
+  // These are credits that were shown in the last snapshot but whose
+  // CreditSources have since been destroyed. They need to be reported in
+  // removedCredits in the next snapshot.
+  std::vector<Credit> _shownCreditsDestroyed;
+
   // Each entry in this vector is an index into _credits that is unused and can
   // be reused for a new credit.
   std::vector<size_t> _unusedCreditRecords;

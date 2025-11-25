@@ -243,7 +243,7 @@ TEST_CASE("Test CreditSystem with CreditSources") {
   }
 
   SUBCASE("when the source of a credit last frame is destroyed, that credit is "
-          "not reported") {
+          "reported in removedCredits") {
     std::unique_ptr<CreditSource> pTempSourceA =
         std::make_unique<CreditSource>(creditSystem);
     Credit credit0 = creditSystem.createCredit(*pTempSourceA, html0);
@@ -257,13 +257,14 @@ TEST_CASE("Test CreditSystem with CreditSources") {
     // this credit would show up in the `removedCredits`.
     creditSystem.removeCreditReference(credit0);
 
-    // Destroy the source. Now, the removed credit should no longer be reported
-    // in the next snapshot.
+    // Destroy the source. The removed credit should still be reported in the
+    // next snapshot.
     pTempSourceA.reset();
 
     const CreditsSnapshot& snapshot1 = creditSystem.getSnapshot();
     CHECK(snapshot1.currentCredits.empty());
-    CHECK(snapshot1.removedCredits.empty());
+    CHECK(snapshot1.removedCredits.size() == 1);
+    CHECK(snapshot1.removedCredits[0] == credit0);
   }
 
   SUBCASE("CreditSystem may be destroyed before CreditSource") {

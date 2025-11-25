@@ -191,7 +191,11 @@ CreditSystem::getSnapshot(CreditFilteringMode filteringMode) noexcept {
   std::vector<Credit>& currentCredits = this->_snapshot.currentCredits;
   std::vector<Credit>& removedCredits = this->_snapshot.removedCredits;
   currentCredits.clear();
-  removedCredits.clear();
+
+  // Any credits that were shown last snapshot and whose sources have since been
+  // destroyed need to be reported in removedCredits.
+  removedCredits = this->_shownCreditsDestroyed;
+  this->_shownCreditsDestroyed.clear();
 
   std::vector<int32_t>& effectiveReferenceCounts = this->_referenceCountScratch;
   effectiveReferenceCounts.assign(this->_credits.size(), 0);
@@ -290,6 +294,12 @@ void CreditSystem::createCreditSource(CreditSource& creditSource) noexcept {
 void CreditSystem::destroyCreditSource(CreditSource& creditSource) noexcept {
   for (CreditRecord& record : this->_credits) {
     if (record.pSource == &creditSource) {
+      if (record.shownLastSnapshot) {
+        this->_shownCreditsDestroyed.emplace_back(Credit(
+            uint32_t(&record - this->_credits.data()),
+            record.generation));
+      }
+
       record.pSource = nullptr;
       ++record.generation;
       this->_unusedCreditRecords.emplace_back(&record - this->_credits.data());
