@@ -15,6 +15,10 @@
 - Added `CreditReferencer::isCreditReferenced`, which can be used to determine if the referencer is currently referencing a particular `Credit`.
 - `CreditSystem::getSnapshot` now takes an optional parameter specifying if and how to filter `Credits` with identical HTML strings.
 
+##### Fixes :wrench:
+
+- The cmake install process previously didn't install `zlib`, which is required by `libcurl`.
+
 ### v0.54.0 - 2025-11-17
 
 ##### Additions :tada:
