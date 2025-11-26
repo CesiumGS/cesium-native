@@ -2333,7 +2333,7 @@ public:
       }
 
       if (this->_defaultValue.size() == 0 ||
-          this->_count > 0 && this->_defaultValue.size() != this->_count) {
+          (this->_count > 0 && this->_defaultValue.size() != this->_count)) {
         this->_status = PropertyViewStatus::ErrorInvalidDefaultValue;
         return;
       }
