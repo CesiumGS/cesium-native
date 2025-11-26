@@ -38,6 +38,11 @@
 - Added `Uri::ensureTrailingSlash`, which is helpful when the `Uri` represents a base URL.
 - Added `GltfModifier`, which can be used to modify tile glTFs as they load, as well as apply new modifications to them later.
 
+##### Additions :tada:
+
+- Added support for the `KHR_gaussian_splatting` extension.
+  - SPZ payloads for `KHR_guassian_splatting` using the `KHR_gaussian_splatting_compression_spz_2` extension will now be decoded.
+
 ##### Fixes :wrench:
 
 - Fixed a bug in `GoogleMapTilesRasterOverlay` that tried to parse credits from an erroneous viewport service response.

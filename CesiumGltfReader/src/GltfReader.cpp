@@ -3,6 +3,7 @@
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
+#include "decodeSpz.h"
 #include "dequantizeMeshData.h"
 #include "registerReaderExtensions.h"
 
@@ -357,6 +358,10 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
           model.extensionsUsed.end(),
           "EXT_meshopt_compression") != model.extensionsUsed.end()) {
     decodeMeshOpt(model, readGltf);
+  }
+
+  if (options.decodeSpz && hasSpzExtension(readGltf)) {
+    decodeSpz(readGltf);
   }
 
   if (options.dequantizeMeshData &&
