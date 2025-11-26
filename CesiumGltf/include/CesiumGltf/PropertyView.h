@@ -2005,6 +2005,7 @@ public:
       }
 
       if (this->_noData.size() == 0) {
+        // The value was specified but something went wrong.
         this->_status = PropertyViewStatus::ErrorInvalidNoDataValue;
         return;
       }
@@ -2017,6 +2018,7 @@ public:
       }
 
       if (this->_defaultValue.size() == 0) {
+        // The value was specified but something went wrong.
         this->_status = PropertyViewStatus::ErrorInvalidDefaultValue;
         return;
       }
