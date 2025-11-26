@@ -19,6 +19,7 @@ TEST_CASE("CreditReferencer") {
 
     referencer.addCreditReference(credit1);
     referencer.releaseAllReferences();
+    REQUIRE(referencer.isCreditReferenced(credit1) == false);
   }
 
   SUBCASE("adds references to the underlying credit system") {
@@ -114,6 +115,77 @@ TEST_CASE("CreditReferencer") {
       pReferencer->setCreditSystem(std::make_shared<CreditSystem>());
       const CreditsSnapshot& snapshot2 = pCreditSystem->getSnapshot();
       REQUIRE(snapshot2.currentCredits.size() == 0);
+    }
+
+    SUBCASE("and checks credit references") {
+      REQUIRE(pReferencer->isCreditReferenced(credit1) == true);
+      REQUIRE(pReferencer->isCreditReferenced(credit2) == true);
+      REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
+    }
+
+    SUBCASE("and checks credit references after releasing them") {
+      pReferencer->releaseAllReferences();
+      REQUIRE(pReferencer->isCreditReferenced(credit1) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit2) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
+    }
+
+    SUBCASE("and checks credit references after duplicating via the copy "
+            "constructor") {
+      CreditReferencer referencerCopy(*pReferencer);
+      REQUIRE(referencerCopy.isCreditReferenced(credit1) == true);
+      REQUIRE(referencerCopy.isCreditReferenced(credit2) == true);
+      REQUIRE(referencerCopy.isCreditReferenced(credit3) == false);
+
+      pReferencer->releaseAllReferences();
+      REQUIRE(pReferencer->isCreditReferenced(credit1) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit2) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
+      REQUIRE(referencerCopy.isCreditReferenced(credit1) == true);
+      REQUIRE(referencerCopy.isCreditReferenced(credit2) == true);
+      REQUIRE(referencerCopy.isCreditReferenced(credit3) == false);
+    }
+
+    SUBCASE("and checks credit references after duplicating via the move "
+            "constructor") {
+      CreditReferencer referencerMove(std::move(*pReferencer));
+      REQUIRE(referencerMove.isCreditReferenced(credit1) == true);
+      REQUIRE(referencerMove.isCreditReferenced(credit2) == true);
+      REQUIRE(referencerMove.isCreditReferenced(credit3) == false);
+
+      pReferencer->releaseAllReferences();
+      REQUIRE(pReferencer->isCreditReferenced(credit1) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit2) == false);
+      REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
+      REQUIRE(referencerMove.isCreditReferenced(credit1) == true);
+      REQUIRE(referencerMove.isCreditReferenced(credit2) == true);
+      REQUIRE(referencerMove.isCreditReferenced(credit3) == false);
+    }
+
+    SUBCASE("unless the CreditSource has been destroyed") {
+      std::unique_ptr<CreditSource> pSource =
+          std::make_unique<CreditSource>(*pCreditSystem);
+
+      Credit credit = pCreditSystem->createCredit(*pSource, "source credit");
+      pReferencer->addCreditReference(credit);
+
+      CHECK(pCreditSystem->getSnapshot().currentCredits.size() == 3);
+
+      pSource.reset();
+
+      // The credit from the destroyed source should be gone.
+      CHECK(pCreditSystem->getSnapshot().currentCredits.size() == 2);
+
+      SUBCASE("and attempting to re-add it should have no effect") {
+        pReferencer->addCreditReference(credit);
+        CHECK(pCreditSystem->getSnapshot().currentCredits.size() == 2);
+      }
+
+      SUBCASE("and releasing all references should not cause problems even "
+              "though some references are stale") {
+        pReferencer->releaseAllReferences();
+        CHECK(pCreditSystem->getSnapshot().currentCredits.size() == 0);
+      }
     }
   }
 }

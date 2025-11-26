@@ -245,7 +245,7 @@ GltfReaderResult readBinaryGltf(
 
     buffer.cesium.data = std::vector<std::byte>(
         binaryChunk.begin(),
-        binaryChunk.begin() + buffer.byteLength);
+        binaryChunk.begin() + (ptrdiff_t)buffer.byteLength);
   }
 
   return result;

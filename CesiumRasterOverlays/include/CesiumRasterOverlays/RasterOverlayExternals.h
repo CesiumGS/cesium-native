@@ -24,7 +24,7 @@ public:
    * This may only be `nullptr` if the raster overlay does not attempt to
    * download any resources.
    */
-  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
+  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor = nullptr;
 
   /**
    * @brief The @ref IPrepareRasterOverlayRendererResources that is used to
@@ -34,7 +34,7 @@ public:
    * for raster overlays.
    */
   std::shared_ptr<IPrepareRasterOverlayRendererResources>
-      pPrepareRendererResources;
+      pPrepareRendererResources = nullptr;
 
   /**
    * @brief The async system to use to do work in threads.
@@ -49,7 +49,7 @@ public:
    * While not recommended, this may be `nullptr` if the client does not need to
    * receive credits.
    */
-  std::shared_ptr<CesiumUtility::CreditSystem> pCreditSystem;
+  std::shared_ptr<CesiumUtility::CreditSystem> pCreditSystem = nullptr;
 
   /**
    * @brief A spdlog logger that will receive log messages.

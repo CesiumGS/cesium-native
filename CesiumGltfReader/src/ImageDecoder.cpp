@@ -5,7 +5,6 @@
 #include <CesiumUtility/Tracing.h>
 
 #include <ktx.h>
-#include <turbojpeg.h>
 #include <webp/decode.h>
 
 #include <algorithm>
@@ -27,6 +26,10 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_STATIC
 #include <stb_image_resize2.h>
+
+#ifndef CESIUM_DISABLE_LIBJPEG_TURBO
+#include <turbojpeg.h>
+#endif
 
 namespace CesiumGltfReader {
 
@@ -287,6 +290,7 @@ ImageReaderResult ImageDecoder::readImage(
   }
 
   {
+#ifndef CESIUM_DISABLE_LIBJPEG_TURBO
     tjhandle tjInstance = tjInitDecompress();
     int inSubsamp, inColorspace;
     if (!tjDecompressHeader3(
@@ -316,7 +320,9 @@ ImageReaderResult ImageDecoder::readImage(
         result.errors.emplace_back("Unable to decode JPEG");
         result.pImage = nullptr;
       }
-    } else {
+    } else
+#endif // !CESIUM_DISABLE_LIBJPEG_TURBO
+    {
       CESIUM_TRACE("Decode PNG");
       image.bytesPerChannel = 1;
       image.channels = 4;
@@ -349,7 +355,9 @@ ImageReaderResult ImageDecoder::readImage(
         result.errors.emplace_back(stbi_failure_reason());
       }
     }
+#ifndef CESIUM_DISABLE_LIBJPEG_TURBO
     tjDestroy(tjInstance);
+#endif
   }
   return result;
 }

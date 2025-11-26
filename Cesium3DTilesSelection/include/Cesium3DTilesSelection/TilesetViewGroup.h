@@ -164,8 +164,11 @@ public:
   size_t getMainThreadLoadQueueLength() const;
 
   /**
-   * @brief Starts a new frame, clearing the set of tiles to be loaded so that a
-   * new set can be selected.
+   * @brief Starts a new frame.
+   *
+   * This method clears the set of tiles to be loaded so that a new set can be
+   * selected. It also makes the current tile selection state the previous one
+   * and releases references to tiles in the old previous one.
    *
    * @param tileset The tileset that is starting the new frame.
    * @param frameState The state of the new frame.
@@ -174,11 +177,9 @@ public:
   startNewFrame(const Tileset& tileset, const TilesetFrameState& frameState);
 
   /**
-   * @brief Finishes the current frame by making the current tile selection
-   * state the previous one and releasing references to tiles in the old
-   * previous one.
+   * @brief Finishes the current frame.
    *
-   * This method also updates the load progress percentage returned by
+   * This method updates the load progress percentage returned by
    * {@link getPreviousLoadProgressPercentage} and makes sure credits used by
    * this view group have been referenced on the
    * {@link CesiumUtility::CreditSystem}.
@@ -224,6 +225,24 @@ public:
   bool hasMoreTilesToLoadInMainThread() const override;
   /** @inheritdoc */
   const Tile* getNextTileToLoadInMainThread() override;
+
+  /**
+   * @brief Checks if a given credit is referenced in the most recently
+   * completed frame.
+   *
+   * Note that this method checks the most recently _completed_ frame. So, after
+   * a call to @ref finishFrame (the common case), this method will check the
+   * frame that was just finished. If called in between calls to @ref
+   * startNewFrame and @ref finishFrame (i.e., during the course of a call to
+   * @ref Tileset::updateViewGroup), it will check the frame prior to the
+   * current, in-progress one, because the current one has not yet been
+   * completed.
+   *
+   * @param credit The credit to test.
+   * @return True if the credit was referenced in this view group's most
+   * recently completed frame.
+   */
+  bool isCreditReferenced(CesiumUtility::Credit credit) const noexcept;
 
 private:
   double _weight = 1.0;

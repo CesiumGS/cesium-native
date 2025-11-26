@@ -1,6 +1,6 @@
 {
   "name": "cesium-native",
-  "version": "0.53.0",
+  "version": "0.54.0",
   "description": "Cesium 3D Geospatial for C++",
   "main": "index.js",
   "directories": {
@@ -12,7 +12,8 @@
     "generate-gltf": "cd tools/generate-classes && npm run generate-gltf && cd ../.. && npm run format",
     "generate-3d-tiles": "cd tools/generate-classes && npm run generate-3d-tiles && cd ../.. && npm run format",
     "generate-quantized-mesh-terrain": "cd tools/generate-classes && npm run generate-quantized-mesh-terrain && cd ../.. && npm run format",
-    "conform-includes": "node tools/conform-includes.js"
+    "conform-includes": "node tools/conform-includes.js",
+    "test-wasm": "node tools/test-wasm-server"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,7 @@
   "homepage": "https://github.com/CesiumGS/cesium-native#readme",
   "devDependencies": {
     "clang-format": "^1.5.0",
-    "doxygen-awesome-css": "https://github.com/jothepro/doxygen-awesome-css#v2.3.4"
+    "doxygen-awesome-css": "https://github.com/jothepro/doxygen-awesome-css#v2.3.4",
+    "express": "^5.1.0"
   }
 }
