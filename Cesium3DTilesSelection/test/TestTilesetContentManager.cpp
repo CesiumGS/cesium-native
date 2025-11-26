@@ -898,7 +898,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // create mock loader
     CesiumGltfReader::GltfReader gltfReader;
     std::filesystem::path boxPath = testDataPath / "gltf" / "box";
-    std::string fileName = boxPath / "Box.gltf";
+    std::string fileName = (boxPath / "Box.gltf").string();
     std::vector<std::byte> gltfBoxFile = readFile(fileName);
     auto modelReadResult = gltfReader.readGltf(gltfBoxFile);
 

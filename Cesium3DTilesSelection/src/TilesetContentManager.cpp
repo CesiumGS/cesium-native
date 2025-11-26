@@ -40,7 +40,6 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltfContent/GltfUtilities.h>
-#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>

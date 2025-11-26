@@ -7,7 +7,6 @@
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesContent/I3dmToGltfConverter.h>
 #include <CesiumAsync/Future.h>
-#include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorUtility.h>
