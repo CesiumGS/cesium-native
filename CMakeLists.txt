@@ -140,7 +140,7 @@ else()
 endif()
 
 if(NOT CESIUM_DISABLE_CURL)
-    list(APPEND PACKAGES_PRIVATE curl)
+    list(APPEND PACKAGES_PRIVATE curl zlib)
 endif()
 
 if(NOT CESIUM_DISABLE_LIBJPEG_TURBO)
@@ -350,10 +350,16 @@ endif()
 
 # On the CI builds, I have to do this explicitly for some reason or it fails to find the vcpkg packages.
 # The toolchain is supposed to manage this, but I haven't figured out why it isn't yet.
-
+# One reason the toolchain won't manage this: it's not being run at all. That happens when this CMakeLists.txt
+# is invoked from another one via add_subdirectory, and the parent project has already loaded the toolchain
+# before ezvcpkg sets it.
 list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}/share/s2")
 list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}/share")
 list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
+if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
+    list(APPEND CMAKE_FIND_ROOT_PATH "${PACKAGE_BUILD_DIR}/debug")
+endif()
+list(APPEND CMAKE_FIND_ROOT_PATH "${PACKAGE_BUILD_DIR}")
 
 # Find the VCPKG dependnecies
 # Note that while we could push these into the extern/CMakeLists.txt as an organization tidy-up, that would require

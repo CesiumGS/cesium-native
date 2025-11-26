@@ -259,4 +259,9 @@ const Tile* TilesetViewGroup::getNextTileToLoadInMainThread() {
   return pResult;
 }
 
+bool TilesetViewGroup::isCreditReferenced(
+    CesiumUtility::Credit credit) const noexcept {
+  return this->_previousFrameCredits.isCreditReferenced(credit);
+}
+
 } // namespace Cesium3DTilesSelection
