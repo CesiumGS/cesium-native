@@ -162,7 +162,7 @@ public:
    * @param headers http headers needed to make the request.
    * @param pAssetAccessor The asset accessor to use to make the necessary
    * requests.
-   * @param base The url to which all external urls are relative
+   * @param baseUrl The url to which all external urls are relative
    * @param options Options for how to read the glTF.
    */
   CesiumAsync::Future<GltfReaderResult> readGltfAndExternalData(
@@ -182,7 +182,7 @@ public:
    * @param headers http headers needed to make the request.
    * @param pAssetAccessor The asset accessor to use to make the necessary
    * requests.
-   * @param base The url to which all external urls are relative
+   * @param baseUrl The url to which all external urls are relative
    * @param options Options for how to read the glTF.
    */
   CesiumAsync::Future<GltfReaderResult> readGltfAndExternalData(
