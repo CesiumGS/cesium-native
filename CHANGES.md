@@ -7,6 +7,7 @@
 - `RasterOverlay::createTileProvider` now receives a reference to `CreateRasterOverlayTileProviderParameters` instead of a large number of individual parameters.
 - The constructor parameters for `RasterOverlayTileProvider` and `QuadtreeRasterOverlayTileProvider` have changed.
 - The `getCredit` method has been removed from `RasterOverlayCreditProvider`. Use `getCredits` instead.
+- Renamed `CesiumRasterOverlays::TileProviderAndTile` to `RasterOverlayTileLoadResult`. It now holds a pointer to the `ActivatedRasterOverlay` instead of the `RasterOverlayTileProvider`.
 
 ##### Additions :tada:
 
@@ -14,6 +15,7 @@
 - Added `TilesetViewGroup::isCreditReferenced`, which can be used to determine if a particular view group references a particular `Credit`.
 - Added `CreditReferencer::isCreditReferenced`, which can be used to determine if the referencer is currently referencing a particular `Credit`.
 - `CreditSystem::getSnapshot` now takes an optional parameter specifying if and how to filter `Credits` with identical HTML strings.
+- Added `Cesium3DTilesSelection::Tileset::waitForAllLoadsToComplete`.
 
 ##### Fixes :wrench:
 
