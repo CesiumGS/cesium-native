@@ -452,7 +452,18 @@ public:
    */
   void registerLoadRequester(TileLoadRequester& requester);
 
-  void waitForAllLoadsToComplete();
+  /**
+   * @brief Waits until no tile loads are in progress. This function must be
+   * called from the main thread, and it blocks the caller (does not return)
+   * until all tile loads are complete.
+   *
+   * @param maximumWaitTimeInMilliseconds The maximum time to wait for tile
+   * loads to complete, in milliseconds. If this time is exceeded, the function
+   * will return even if some tile loads are still in progress.
+   * @param true if all tile loads completed before the maximum wait time was
+   * exceeded; otherwise, false.
+   */
+  bool waitForAllLoadsToComplete(double maximumWaitTimeInMilliseconds);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;

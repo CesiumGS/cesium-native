@@ -133,12 +133,12 @@ void ActivatedRasterOverlay::removeTile(RasterOverlayTile* pTile) noexcept {
   }
 }
 
-CesiumAsync::Future<TileProviderAndTile>
+CesiumAsync::Future<RasterOverlayTileLoadResult>
 ActivatedRasterOverlay::loadTile(RasterOverlayTile& tile) {
   if (!this->_pTileProvider) {
     // Refuse to load if the tile provider isn't ready yet.
     return this->_pPlaceholderTileProvider->getAsyncSystem()
-        .createResolvedFuture(TileProviderAndTile{this, nullptr});
+        .createResolvedFuture(RasterOverlayTileLoadResult{this, nullptr});
   }
 
   return this->doLoad(tile, false);
@@ -253,12 +253,12 @@ LoadResult createLoadResultFromLoadedImage(
 
 } // namespace
 
-CesiumAsync::Future<TileProviderAndTile>
+CesiumAsync::Future<RasterOverlayTileLoadResult>
 ActivatedRasterOverlay::doLoad(RasterOverlayTile& tile, bool isThrottledLoad) {
   if (tile.getState() != RasterOverlayTile::LoadState::Unloaded) {
     // Already loading or loaded, do nothing.
     return this->_pTileProvider->getAsyncSystem().createResolvedFuture(
-        TileProviderAndTile{this, nullptr});
+        RasterOverlayTileLoadResult{this, nullptr});
   }
 
   // Don't let this tile be destroyed while it's loading.
@@ -312,7 +312,7 @@ ActivatedRasterOverlay::doLoad(RasterOverlayTile& tile, bool isThrottledLoad) {
 
             thiz->finalizeTileLoad(isThrottledLoad);
 
-            return TileProviderAndTile{thiz, pTile};
+            return RasterOverlayTileLoadResult{thiz, pTile};
           })
       .catchInMainThread(
           [thiz, pTile, isThrottledLoad](const std::exception& /*e*/) {
@@ -325,7 +325,7 @@ ActivatedRasterOverlay::doLoad(RasterOverlayTile& tile, bool isThrottledLoad) {
 
             thiz->finalizeTileLoad(isThrottledLoad);
 
-            return TileProviderAndTile{thiz, pTile};
+            return RasterOverlayTileLoadResult{thiz, pTile};
           });
 }
 
@@ -343,27 +343,27 @@ void ActivatedRasterOverlay::finalizeTileLoad(bool isThrottledLoad) noexcept {
   }
 }
 
-TileProviderAndTile::TileProviderAndTile(
+RasterOverlayTileLoadResult::RasterOverlayTileLoadResult(
     const CesiumUtility::IntrusivePointer<ActivatedRasterOverlay>& pActivated_,
     const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pTile_) noexcept
     : pActivated(pActivated_), pTile(pTile_) {}
 
-TileProviderAndTile::~TileProviderAndTile() noexcept {
+RasterOverlayTileLoadResult::~RasterOverlayTileLoadResult() noexcept {
   // Ensure the tile is released before the activated overlay.
   pTile = nullptr;
   pActivated = nullptr;
 }
 
-TileProviderAndTile::TileProviderAndTile(const TileProviderAndTile&) noexcept =
-    default;
+RasterOverlayTileLoadResult::RasterOverlayTileLoadResult(
+    const RasterOverlayTileLoadResult&) noexcept = default;
 
-TileProviderAndTile&
-TileProviderAndTile::operator=(const TileProviderAndTile&) noexcept = default;
+RasterOverlayTileLoadResult& RasterOverlayTileLoadResult::operator=(
+    const RasterOverlayTileLoadResult&) noexcept = default;
 
-TileProviderAndTile::TileProviderAndTile(TileProviderAndTile&&) noexcept =
-    default;
+RasterOverlayTileLoadResult::RasterOverlayTileLoadResult(
+    RasterOverlayTileLoadResult&&) noexcept = default;
 
-TileProviderAndTile&
-TileProviderAndTile::operator=(TileProviderAndTile&&) noexcept = default;
+RasterOverlayTileLoadResult& RasterOverlayTileLoadResult::operator=(
+    RasterOverlayTileLoadResult&&) noexcept = default;
 
 } // namespace CesiumRasterOverlays

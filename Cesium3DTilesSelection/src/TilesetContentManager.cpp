@@ -1590,13 +1590,25 @@ void TilesetContentManager::unloadAll() {
   }
 }
 
-void TilesetContentManager::waitUntilIdle() {
+bool TilesetContentManager::waitUntilIdle(
+    double maximumWaitTimeInMilliseconds) {
+  auto start = std::chrono::system_clock::now();
+  auto end = (maximumWaitTimeInMilliseconds <= 0.0)
+                 ? std::chrono::time_point<std::chrono::system_clock>::max()
+                 : (start + std::chrono::microseconds(static_cast<int64_t>(
+                                1000.0 * maximumWaitTimeInMilliseconds)));
+
   // Wait for all asynchronous loading to terminate.
   // If you're hanging here, it's most likely caused by _tileLoadsInProgress not
   // being decremented correctly when an async load ends.
   while (this->_tileLoadsInProgress > 0) {
     this->_externals.pAssetAccessor->tick();
     this->_externals.asyncSystem.dispatchMainThreadTasks();
+
+    auto time = std::chrono::system_clock::now();
+    if (time >= end) {
+      break;
+    }
   }
 
   // Wait for all overlays to wrap up their loading, too.
@@ -1610,7 +1622,14 @@ void TilesetContentManager::waitUntilIdle() {
          this->_overlayCollection.getActivatedOverlays()) {
       rasterOverlayTilesLoading += pActivated->getNumberOfTilesLoading();
     }
+
+    auto time = std::chrono::system_clock::now();
+    if (time >= end) {
+      break;
+    }
   }
+
+  return this->_tileLoadsInProgress == 0 && rasterOverlayTilesLoading == 0;
 }
 
 const Tile* TilesetContentManager::getRootTile() const noexcept {

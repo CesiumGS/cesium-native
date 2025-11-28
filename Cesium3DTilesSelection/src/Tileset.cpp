@@ -475,8 +475,9 @@ void Tileset::registerLoadRequester(TileLoadRequester& requester) {
   this->_pTilesetContentManager->registerTileRequester(requester);
 }
 
-void Tileset::waitForAllLoadsToComplete() {
-  this->_pTilesetContentManager->waitUntilIdle();
+bool Tileset::waitForAllLoadsToComplete(double maximumWaitTimeInMilliseconds) {
+  return this->_pTilesetContentManager->waitUntilIdle(
+      maximumWaitTimeInMilliseconds);
 }
 
 int32_t Tileset::getNumberOfTilesLoaded() const {
