@@ -452,6 +452,8 @@ public:
    */
   void registerLoadRequester(TileLoadRequester& requester);
 
+  void waitForAllLoadsToComplete();
+
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;
 
