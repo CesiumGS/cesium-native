@@ -17,6 +17,7 @@ class RasterOverlay;
 class RasterOverlayExternals;
 class RasterOverlayTile;
 class RasterOverlayTileProvider;
+class ActivatedRasterOverlay;
 struct TileProviderAndTile;
 
 } // namespace CesiumRasterOverlays
@@ -29,20 +30,20 @@ namespace CesiumRasterOverlays {
  */
 struct TileProviderAndTile {
   /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
-   * RasterOverlayTileProvider used for this tile. */
-  CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider;
+   * ActivatedRasterOverlay used for this tile. */
+  CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> pActivated;
   /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
    * RasterOverlayTile used for this tile. */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
 
   /**
    * @brief Constructs an instance.
-   * @param pTileProvider_ The tile provider used for this tile.
+   * @param pActivated_ The activated overlay used for this tile.
    * @param pTile_ The tile.
    */
   TileProviderAndTile(
-      const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
-          pTileProvider_,
+      const CesiumUtility::IntrusivePointer<ActivatedRasterOverlay>&
+          pActivated_,
       const CesiumUtility::IntrusivePointer<RasterOverlayTile>&
           pTile_) noexcept;
 
