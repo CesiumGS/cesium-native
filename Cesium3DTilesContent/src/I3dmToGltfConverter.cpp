@@ -7,7 +7,6 @@
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesContent/I3dmToGltfConverter.h>
 #include <CesiumAsync/Future.h>
-#include <CesiumAsync/HttpHeaders.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorUtility.h>
@@ -642,42 +641,17 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
     }
   };
 
-  return getGltf()
-      .thenImmediately([options, assetFetcher, baseUri](
-                           GltfConverterResult&& converterResult) {
-        if (converterResult.model.has_value()) {
-          CesiumGltfReader::GltfReaderResult readerResult{
-              std::move(converterResult.model),
-              {},
-              {}};
-          CesiumAsync::HttpHeaders externalRequestHeaders(
-              assetFetcher.requestHeaders.begin(),
-              assetFetcher.requestHeaders.end());
-          return CesiumGltfReader::GltfReader::resolveExternalData(
-              assetFetcher.asyncSystem,
-              baseUri,
-              externalRequestHeaders,
-              assetFetcher.pAssetAccessor,
-              options,
-              std::move(readerResult));
-        }
-        return assetFetcher.asyncSystem.createResolvedFuture(
-            CesiumGltfReader::GltfReaderResult{
-                std::nullopt,
-                std::move(converterResult.errors.errors),
-                {}});
-      })
-      .thenImmediately(
-          [convertedI3dm = std::move(convertedI3dm)](
-              CesiumGltfReader::GltfReaderResult&& readerResult) mutable {
-            if (readerResult.model)
-              convertedI3dm.gltfResult.model = std::move(readerResult.model);
-            CesiumUtility::ErrorList resolvedExternalErrors{
-                std::move(readerResult.errors),
-                {}};
-            convertedI3dm.gltfResult.errors.merge(resolvedExternalErrors);
-            return std::move(convertedI3dm);
-          });
+  return getGltf().thenImmediately(
+      [convertedI3dm = std::move(convertedI3dm)](
+          GltfConverterResult&& converterResult) mutable {
+        if (converterResult.model)
+          convertedI3dm.gltfResult.model = std::move(converterResult.model);
+        CesiumUtility::ErrorList converterErrors{
+            std::move(converterResult.errors.errors),
+            std::move(converterResult.errors.warnings)};
+        convertedI3dm.gltfResult.errors.merge(converterErrors);
+        return std::move(convertedI3dm);
+      });
 }
 
 glm::dmat4
