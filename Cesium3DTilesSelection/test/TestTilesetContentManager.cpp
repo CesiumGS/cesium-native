@@ -50,6 +50,7 @@
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
+#include <CesiumUtility/Uri.h>
 
 #include <doctest/doctest.h>
 #include <glm/common.hpp>
@@ -920,7 +921,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     // add external buffer to the completed request
     std::filesystem::path binPath = boxPath / "Box0.bin";
     pMockedAssetAccessor->mockCompletedRequests.insert(
-        {binPath.string(), createMockRequest(binPath)});
+        {Uri::nativePathToUriPath(binPath.string()),
+         createMockRequest(binPath)});
 
     // Load the model and resolve external content
     CesiumGltf::Model tileModel;
@@ -932,7 +934,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
                   asyncSystem,
                   CesiumAsync::HttpHeaders(),
                   pMockedAssetAccessor,
-                  fileName)
+                  Uri::nativePathToUriPath(fileName))
               .thenInMainThread(
                   [&tileModel](
                       CesiumGltfReader::GltfReaderResult&& externalReadResult) {
