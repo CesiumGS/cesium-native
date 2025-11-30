@@ -412,8 +412,7 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::readGltfAndExternalData(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& baseUrl,
     const GltfReaderOptions& options) const {
-  CesiumAsync::HttpHeaders httpHeaders;
-  httpHeaders.insert(headers.begin(), headers.end());
+  CesiumAsync::HttpHeaders httpHeaders(headers.begin(), headers.end());
   return readGltfAndExternalData(
       data,
       asyncSystem,
