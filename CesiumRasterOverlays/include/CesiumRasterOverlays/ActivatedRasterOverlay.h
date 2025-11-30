@@ -25,7 +25,7 @@ struct RasterOverlayTileLoadResult;
 namespace CesiumRasterOverlays {
 
 /**
- * @brief Holds a tile and its corresponding tile provider. Used as the return
+ * @brief Holds a tile and its corresponding activated raster overlay. Used as the return
  * value of @ref ActivatedRasterOverlay::loadTile.
  */
 struct RasterOverlayTileLoadResult {
