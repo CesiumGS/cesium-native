@@ -25,6 +25,7 @@ namespace Cesium3DTilesSelection {
 class Tile;
 class ITilesetHeightSampler;
 class TilesetContentManager;
+class TilesetSharedAssetSystem;
 
 /**
  * @brief Store the parameters that are needed to load a tile
@@ -50,6 +51,9 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+  ~TileLoadInput() noexcept;
+  TileLoadInput(const TileLoadInput&) noexcept;
+  TileLoadInput(TileLoadInput&&) noexcept;
 
   /**
    * @brief The tile that the {@link TilesetContentLoader} will request the server for the content.
@@ -81,6 +85,12 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    * @brief The request headers that will be attached to the request.
    */
   const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders;
+
+  /**
+   * @brief The shared asset system that will be used to resolve external assets
+   * associated with the tile.
+   */
+  CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> pSharedAssetSystem;
 
   /**
    * @brief The ellipsoid that this tileset uses.

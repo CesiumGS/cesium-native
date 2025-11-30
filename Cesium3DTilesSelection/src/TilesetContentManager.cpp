@@ -1279,6 +1279,7 @@ void TilesetContentManager::loadTileContent(
       this->_externals.pLogger,
       this->_requestHeaders,
       tilesetOptions.ellipsoid};
+  loadInput.pSharedAssetSystem = tileLoadInfo.pSharedAssetSystem;
 
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
