@@ -23,7 +23,6 @@
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
-#include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>

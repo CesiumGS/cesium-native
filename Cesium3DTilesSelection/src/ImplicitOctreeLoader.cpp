@@ -23,6 +23,7 @@
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <glm/ext/matrix_double4x4.hpp>
 #include <spdlog/logger.h>
