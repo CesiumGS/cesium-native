@@ -7,7 +7,7 @@
 - `RasterOverlay::createTileProvider` now receives a reference to `CreateRasterOverlayTileProviderParameters` instead of a large number of individual parameters.
 - The constructor parameters for `RasterOverlayTileProvider` and `QuadtreeRasterOverlayTileProvider` have changed.
 - The `getCredit` method has been removed from `RasterOverlayCreditProvider`. Use `getCredits` instead.
-- Changed the converters in Cesium3DTilesContent to call `GltfReader::readGltfAndExternalData`. The `TilesetContentManger` does not call `resolveExternalData` anymore.
+- Custom functions registered with `GltfConverter` can no longer expect that external data in the glTF will be automatically loaded by the caller. If they want external data in the glTF to be loaded as well, they should use `GltfReader::readGltfAndExternalData`.
 
 ##### Additions :tada:
 
