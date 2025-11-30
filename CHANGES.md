@@ -15,7 +15,7 @@
 - Added `TilesetViewGroup::isCreditReferenced`, which can be used to determine if a particular view group references a particular `Credit`.
 - Added `CreditReferencer::isCreditReferenced`, which can be used to determine if the referencer is currently referencing a particular `Credit`.
 - `CreditSystem::getSnapshot` now takes an optional parameter specifying if and how to filter `Credits` with identical HTML strings.
-- Added `CesiumGltfReader::readGltfAndExternalData`, which reads any external data before postprocessing, which includes draco and meshopt decompression.
+- Added `CesiumGltfReader::readGltfAndExternalData`. It reads any external data before doing any postprocessing, such as decoding Draco and meshopt.
 
 ##### Fixes :wrench:
 
