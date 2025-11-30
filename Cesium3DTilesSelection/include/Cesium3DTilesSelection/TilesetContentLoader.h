@@ -52,8 +52,16 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
   ~TileLoadInput() noexcept;
-  TileLoadInput(const TileLoadInput&) noexcept;
-  TileLoadInput(TileLoadInput&&) noexcept;
+
+  /**
+   * @brief Copy constructor.
+   */
+  TileLoadInput(const TileLoadInput& rhs) noexcept;
+
+  /**
+   * @brief Move constructor.
+   */
+  TileLoadInput(TileLoadInput&& rhs) noexcept;
 
   /**
    * @brief The tile that the {@link TilesetContentLoader} will request the server for the content.
