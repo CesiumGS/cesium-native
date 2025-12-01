@@ -1,12 +1,12 @@
 # Change Log
 
-### v0.55.0 - 2025-12-01
+### ? - ?
 
 ##### Additions :tada:
 
 - Added `bool` and `std::string_view` overloads for `PropertyArrayCopy`.
 
-### ? - ?
+### v0.55.0 - 2025-12-01
 
 ##### Breaking Changes :mega:
 
