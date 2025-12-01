@@ -283,7 +283,7 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
       }
 
       // Image has already been decoded
-      if (image.pAsset && !image.pAsset->pixelData.empty()) {
+      if (image.pAsset) {
         continue;
       }
 
