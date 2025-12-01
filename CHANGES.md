@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.55.0 - 2025-12-01
 
 ##### Breaking Changes :mega:
 
@@ -22,6 +22,7 @@
 ##### Fixes :wrench:
 
 - The cmake install process previously didn't install `zlib`, which is required by `libcurl`.
+- Fixed a bug that could cause an `ActivatedRasterOverlay` to be destroyed before the last `RasterOverlayTile` it created, leading to a crash.
 
 ### v0.54.0 - 2025-11-17
 
