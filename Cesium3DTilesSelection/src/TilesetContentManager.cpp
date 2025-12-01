@@ -40,7 +40,6 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltfContent/GltfUtilities.h>
-#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
@@ -566,137 +565,59 @@ postProcessContentInWorkerThread(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
 
-  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
-
-  // Download any external image or buffer urls in the gltf if there are any
-  CesiumGltfReader::GltfReaderResult gltfResult{std::move(model), {}, {}};
-
-  CesiumAsync::HttpHeaders requestHeaders;
-  std::string baseUrl;
-  if (result.pCompletedRequest) {
-    requestHeaders = result.pCompletedRequest->headers();
-    baseUrl = result.pCompletedRequest->url();
-  }
-
-  CesiumGltfReader::GltfReaderOptions gltfOptions;
-  gltfOptions.ktx2TranscodeTargets =
-      tileLoadInfo.contentOptions.ktx2TranscodeTargets;
-  gltfOptions.applyTextureTransform =
-      tileLoadInfo.contentOptions.applyTextureTransform;
-  if (tileLoadInfo.pSharedAssetSystem) {
-    gltfOptions.pSharedAssetSystem = tileLoadInfo.pSharedAssetSystem;
-  }
-
   std::optional<int64_t> version =
       pGltfModifier ? pGltfModifier->getCurrentVersion() : std::nullopt;
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
-  auto pAssetAccessor = result.pAssetAccessor;
-  return CesiumGltfReader::GltfReader::resolveExternalData(
-             asyncSystem,
-             baseUrl,
-             requestHeaders,
-             pAssetAccessor,
-             gltfOptions,
-             std::move(gltfResult))
-      .thenInWorkerThread([result = std::move(result),
-                           projections = std::move(projections),
-                           tileLoadInfo = std::move(tileLoadInfo),
-                           version,
-                           pGltfModifier](CesiumGltfReader::GltfReaderResult&&
-                                              gltfResult) mutable {
-        if (!gltfResult.errors.empty()) {
-          if (result.pCompletedRequest) {
-            SPDLOG_LOGGER_ERROR(
-                tileLoadInfo.pLogger,
-                "Failed resolving external glTF buffers from {}:\n- {}",
-                result.pCompletedRequest->url(),
-                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-          } else {
-            SPDLOG_LOGGER_ERROR(
-                tileLoadInfo.pLogger,
-                "Failed resolving external glTF buffers:\n- {}",
-                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-          }
-        }
 
-        if (!gltfResult.warnings.empty()) {
-          if (result.pCompletedRequest) {
-            SPDLOG_LOGGER_WARN(
-                tileLoadInfo.pLogger,
-                "Warning when resolving external gltf buffers from "
-                "{}:\n- {}",
-                result.pCompletedRequest->url(),
-                CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
-          } else {
-            SPDLOG_LOGGER_ERROR(
-                tileLoadInfo.pLogger,
-                "Warning resolving external glTF buffers:\n- {}",
-                CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
-          }
-        }
+  result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
+  result.initialContentBoundingVolume = tileLoadInfo.tileContentBoundingVolume;
 
-        if (!gltfResult.model) {
-          return tileLoadInfo.asyncSystem
-              .createResolvedFuture(TileLoadResult::createFailedResult(
-                  result.pAssetAccessor,
-                  nullptr))
-              .thenPassThrough(std::move(tileLoadInfo));
-        }
+  postProcessGltfInWorkerThread(result, std::move(projections), tileLoadInfo);
 
-        result.contentKind = std::move(*gltfResult.model);
-        result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
-        result.initialContentBoundingVolume =
-            tileLoadInfo.tileContentBoundingVolume;
+  auto applyGltfModifier = [&]() {
+    // Apply the glTF modifier right away, otherwise it will be
+    // triggered immediately after the renderer-side resources
+    // have been created, which is both inefficient and a cause
+    // of visual glitches (the model will appear briefly in its
+    // unmodified state before stabilizing)
+    const CesiumGltf::Model& model =
+        std::get<CesiumGltf::Model>(result.contentKind);
+    return pGltfModifier
+        ->apply(GltfModifierInput{
+            .version = *version,
+            .asyncSystem = tileLoadInfo.asyncSystem,
+            .pAssetAccessor = tileLoadInfo.pAssetAccessor,
+            .pLogger = tileLoadInfo.pLogger,
+            .previousModel = model,
+            .tileTransform = tileLoadInfo.tileTransform})
+        .thenInWorkerThread(
+            [result = std::move(result),
+             version](std::optional<GltfModifierOutput>&& modified) mutable {
+              if (modified) {
+                result.contentKind = std::move(modified->modifiedModel);
+              }
 
-        postProcessGltfInWorkerThread(
-            result,
-            std::move(projections),
-            tileLoadInfo);
+              CesiumGltf::Model* pModel =
+                  std::get_if<CesiumGltf::Model>(&result.contentKind);
+              if (pModel) {
+                GltfModifierVersionExtension::setVersion(*pModel, *version);
+              }
 
-        if (pGltfModifier && version) {
-          // Apply the glTF modifier right away, otherwise it will be
-          // triggered immediately after the renderer-side resources
-          // have been created, which is both inefficient and a cause
-          // of visual glitches (the model will appear briefly in its
-          // unmodified state before stabilizing)
-          const CesiumGltf::Model& model =
-              std::get<CesiumGltf::Model>(result.contentKind);
-          return pGltfModifier
-              ->apply(GltfModifierInput{
-                  .version = *version,
-                  .asyncSystem = tileLoadInfo.asyncSystem,
-                  .pAssetAccessor = tileLoadInfo.pAssetAccessor,
-                  .pLogger = tileLoadInfo.pLogger,
-                  .previousModel = model,
-                  .tileTransform = tileLoadInfo.tileTransform})
-              .thenInWorkerThread(
-                  [result = std::move(result), version](
-                      std::optional<GltfModifierOutput>&& modified) mutable {
-                    if (modified) {
-                      result.contentKind = std::move(modified->modifiedModel);
-                    }
+              return result;
+            })
+        .thenPassThrough(std::move(tileLoadInfo));
+  };
 
-                    CesiumGltf::Model* pModel =
-                        std::get_if<CesiumGltf::Model>(&result.contentKind);
-                    if (pModel) {
-                      GltfModifierVersionExtension::setVersion(
-                          *pModel,
-                          *version);
-                    }
+  CesiumAsync::Future<std::tuple<TileContentLoadInfo, TileLoadResult>> future =
+      pGltfModifier && version
+          ? applyGltfModifier()
+          : tileLoadInfo.asyncSystem.createResolvedFuture(std::move(result))
+                .thenPassThrough(std::move(tileLoadInfo));
 
-                    return result;
-                  })
-              .thenPassThrough(std::move(tileLoadInfo));
-        } else {
-          return tileLoadInfo.asyncSystem
-              .createResolvedFuture(std::move(result))
-              .thenPassThrough(std::move(tileLoadInfo));
-        }
-      })
-      .thenInWorkerThread([rendererOptions](
-                              std::tuple<TileContentLoadInfo, TileLoadResult>&&
-                                  tuple) {
+  return std::move(future).thenInWorkerThread(
+      [rendererOptions](
+          std::tuple<TileContentLoadInfo, TileLoadResult>&& tuple) {
         auto& [tileLoadInfo, result] = tuple;
 
         // create render resources
@@ -1358,6 +1279,7 @@ void TilesetContentManager::loadTileContent(
       this->_externals.pLogger,
       this->_requestHeaders,
       tilesetOptions.ellipsoid};
+  loadInput.pSharedAssetSystem = tileLoadInfo.pSharedAssetSystem;
 
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;

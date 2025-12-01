@@ -7,6 +7,7 @@
 - `RasterOverlay::createTileProvider` now receives a reference to `CreateRasterOverlayTileProviderParameters` instead of a large number of individual parameters.
 - The constructor parameters for `RasterOverlayTileProvider` and `QuadtreeRasterOverlayTileProvider` have changed.
 - The `getCredit` method has been removed from `RasterOverlayCreditProvider`. Use `getCredits` instead.
+- Custom functions registered with `GltfConverter` can no longer expect that external data in the glTF will be automatically loaded by the caller. If they want external data in the glTF to be loaded as well, they should use `GltfReader::readGltfAndExternalData`.
 
 ##### Additions :tada:
 
@@ -14,6 +15,7 @@
 - Added `TilesetViewGroup::isCreditReferenced`, which can be used to determine if a particular view group references a particular `Credit`.
 - Added `CreditReferencer::isCreditReferenced`, which can be used to determine if the referencer is currently referencing a particular `Credit`.
 - `CreditSystem::getSnapshot` now takes an optional parameter specifying if and how to filter `Credits` with identical HTML strings.
+- Added `CesiumGltfReader::readGltfAndExternalData`. It reads any external data before doing any postprocessing, such as decoding Draco and meshopt.
 
 ##### Fixes :wrench:
 
