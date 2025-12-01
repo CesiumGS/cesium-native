@@ -376,7 +376,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
-    manager.waitUntilIdle();
+    manager.waitUntilIdle(5000.0);
     CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(manager.getNumberOfTilesLoaded() == 1);
 
@@ -404,7 +404,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
-    manager.waitUntilIdle();
+    manager.waitUntilIdle(5000.0);
     CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(manager.getNumberOfTilesLoaded() == 1);
 
@@ -435,7 +435,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
-    manager.waitUntilIdle();
+    manager.waitUntilIdle(5000.0);
     CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(manager.getNumberOfTilesLoaded() == 1);
 
@@ -500,7 +500,7 @@ TEST_CASE("Test tile state machine") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // test manager loading
     Tile& tile = *pManager->getRootTile();
@@ -520,7 +520,7 @@ TEST_CASE("Test tile state machine") {
 
       // ContentLoading -> ContentLoaded
       // check the state of the tile after main thread get called
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
       CHECK(pManager->getNumberOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
@@ -556,7 +556,7 @@ TEST_CASE("Test tile state machine") {
       CHECK(!tile.getContent().isEmptyContent());
       CHECK(!tile.getContent().getRenderContent());
 
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
       CHECK(pManager->getNumberOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
@@ -609,7 +609,7 @@ TEST_CASE("Test tile state machine") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // test manager loading
     Tile& tile = *pManager->getRootTile();
@@ -624,7 +624,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
 
     // ContentLoading -> FailedTemporarily
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
@@ -689,7 +689,7 @@ TEST_CASE("Test tile state machine") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // test manager loading
     Tile& tile = *pManager->getRootTile();
@@ -704,7 +704,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
 
     // ContentLoading -> Failed
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::Failed);
@@ -791,7 +791,7 @@ TEST_CASE("Test tile state machine") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     Tile& tile = *pManager->getRootTile();
     Tile& upsampledTile = tile.getChildren().back();
@@ -805,7 +805,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.getState() == TileLoadState::ContentLoading);
 
     // parent moves from ContentLoading -> ContentLoaded
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     CHECK(tile.getState() == TileLoadState::ContentLoaded);
     CHECK(tile.isRenderContent());
     CHECK(initializerCall);
@@ -858,7 +858,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.getState() == TileLoadState::Unloading);
 
     // upsampled tile: ContentLoading -> ContentLoaded
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     CHECK(upsampledTile.getState() == TileLoadState::ContentLoaded);
     CHECK(upsampledTile.isRenderContent());
 
@@ -974,12 +974,12 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // test the gltf model
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, {});
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // check the buffer is already loaded
     {
@@ -1046,12 +1046,12 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // test the gltf model
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, options);
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // check that normal is generated
     CHECK(tile.getState() == TileLoadState::ContentLoaded);
@@ -1114,11 +1114,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, {});
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     const auto& renderContent = tile.getContent().getRenderContent();
     CHECK(renderContent);
@@ -1165,14 +1165,14 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pManager->getRasterOverlayCollection().add(
         new DebugColorizeTilesRasterOverlay("DebugOverlay"));
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     SUBCASE(
         "Generate raster overlay details when tile doesn't have loose region") {
       // test the gltf model
       Tile& tile = *pManager->getRootTile();
       pManager->loadTileContent(tile, {});
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       const TileContent& tileContent = tile.getContent();
@@ -1236,7 +1236,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       tile.setBoundingVolume(originalLooseRegion);
 
       pManager->loadTileContent(tile, {});
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       const TileContent& tileContent = tile.getContent();
@@ -1331,7 +1331,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       tile.setBoundingVolume(originalLooseRegion);
 
       pManager->loadTileContent(tile, {});
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
 
@@ -1439,7 +1439,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pManager->getRasterOverlayCollection().add(
         new AlwaysMoreDetailRasterOverlay());
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     SUBCASE(
         "Generate raster overlay details when tile doesn't have loose region") {
@@ -1662,11 +1662,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pManager->getRasterOverlayCollection().add(
         new DebugColorizeTilesRasterOverlay("DebugOverlay"));
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, {});
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     const auto& renderContent = tile.getContent().getRenderContent();
     CHECK(renderContent);
@@ -1733,7 +1733,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     for (auto& child : containerTile.getChildren()) {
       pManager->loadTileContent(child, {});
       externals.asyncSystem.dispatchMainThreadTasks();
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
 
       CHECK(child.getState() == TileLoadState::ContentLoaded);
       CHECK(child.isRenderContent());
@@ -1850,11 +1850,11 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, options);
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     pManager->unloadTileContent(tile);
   }
 }
@@ -1932,14 +1932,14 @@ TEST_CASE("Test glTF modifier state machine") {
       std::move(pMockedLoader),
       std::move(pRootTile)};
 
-  pManager->waitUntilIdle();
+  pManager->waitUntilIdle(5000.0);
 
   CHECK(pGltfModifier->onRegisterCallCount == 1);
 
   // test manager loading
   Tile& tile = *pManager->getRootTile();
   pManager->loadTileContent(tile, options);
-  pManager->waitUntilIdle();
+  pManager->waitUntilIdle(5000.0);
   pManager->updateTileContent(tile, options);
   CHECK(tile.getState() == TileLoadState::Done);
   CHECK(tile.getContent().isRenderContent());
@@ -1956,7 +1956,7 @@ TEST_CASE("Test glTF modifier state machine") {
     // Unloading should be refused while worker-thread is running.
     CHECK(pManager->unloadTileContent(tile) == UnloadTileContentResult::Keep);
     // Wait completion of worker-thread phase.
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     CHECK(!tile.needsWorkerThreadLoading(pGltfModifier.get()));
     CHECK(tile.needsMainThreadLoading(pGltfModifier.get()));
     CHECK(pGltfModifier->applyCallCount == expectedCallCount);
@@ -1985,7 +1985,7 @@ TEST_CASE("Test glTF modifier state machine") {
   ++expectedCallCount;
   // loaded tile below will be already processed by the glTF modifier
   pManager->loadTileContent(tile, options);
-  pManager->waitUntilIdle();
+  pManager->waitUntilIdle(5000.0);
   pManager->updateTileContent(tile, options);
   CHECK(tile.getState() == TileLoadState::Done);
   CHECK(tile.getContent().isRenderContent());
