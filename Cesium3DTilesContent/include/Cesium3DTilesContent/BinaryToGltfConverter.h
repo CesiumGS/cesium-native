@@ -30,10 +30,6 @@ public:
       const AssetFetcher& assetFetcher);
 
 private:
-  static GltfConverterResult convertImmediate(
-      const std::span<const std::byte>& gltfBinary,
-      const CesiumGltfReader::GltfReaderOptions& options,
-      const AssetFetcher& assetFetcher);
   static CesiumGltfReader::GltfReader _gltfReader;
 };
 } // namespace Cesium3DTilesContent

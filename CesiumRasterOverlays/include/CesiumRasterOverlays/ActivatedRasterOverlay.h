@@ -17,56 +17,59 @@ class RasterOverlay;
 class RasterOverlayExternals;
 class RasterOverlayTile;
 class RasterOverlayTileProvider;
-struct TileProviderAndTile;
+class ActivatedRasterOverlay;
+struct RasterOverlayTileLoadResult;
 
 } // namespace CesiumRasterOverlays
 
 namespace CesiumRasterOverlays {
 
 /**
- * @brief Holds a tile and its corresponding tile provider. Used as the return
- * value of @ref ActivatedRasterOverlay::loadTile.
+ * @brief Holds a tile and its corresponding activated raster overlay. Used as
+ * the return value of @ref ActivatedRasterOverlay::loadTile.
  */
-struct TileProviderAndTile {
+struct RasterOverlayTileLoadResult {
   /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
-   * RasterOverlayTileProvider used for this tile. */
-  CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> pTileProvider;
+   * ActivatedRasterOverlay used for this tile. */
+  CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> pActivated;
   /** @brief A \ref CesiumUtility::IntrusivePointer to the \ref
    * RasterOverlayTile used for this tile. */
   CesiumUtility::IntrusivePointer<RasterOverlayTile> pTile;
 
   /**
    * @brief Constructs an instance.
-   * @param pTileProvider_ The tile provider used for this tile.
+   * @param pActivated_ The activated overlay used for this tile.
    * @param pTile_ The tile.
    */
-  TileProviderAndTile(
-      const CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>&
-          pTileProvider_,
+  RasterOverlayTileLoadResult(
+      const CesiumUtility::IntrusivePointer<ActivatedRasterOverlay>&
+          pActivated_,
       const CesiumUtility::IntrusivePointer<RasterOverlayTile>&
           pTile_) noexcept;
 
-  ~TileProviderAndTile() noexcept;
+  ~RasterOverlayTileLoadResult() noexcept;
 
   /**
    * @brief Copy constructor.
    */
-  TileProviderAndTile(const TileProviderAndTile&) noexcept;
+  RasterOverlayTileLoadResult(const RasterOverlayTileLoadResult&) noexcept;
 
   /**
    * @brief Copy assignment operator.
    */
-  TileProviderAndTile& operator=(const TileProviderAndTile&) noexcept;
+  RasterOverlayTileLoadResult&
+  operator=(const RasterOverlayTileLoadResult&) noexcept;
 
   /**
    * @brief Move constructor.
    */
-  TileProviderAndTile(TileProviderAndTile&&) noexcept;
+  RasterOverlayTileLoadResult(RasterOverlayTileLoadResult&&) noexcept;
 
   /**
    * @brief Move assignment operator.
    */
-  TileProviderAndTile& operator=(TileProviderAndTile&&) noexcept;
+  RasterOverlayTileLoadResult&
+  operator=(RasterOverlayTileLoadResult&&) noexcept;
 };
 
 /**
@@ -229,7 +232,8 @@ public:
    * @return A future that, when the tile is loaded, resolves to the loaded tile
    * and the tile provider that loaded it.
    */
-  CesiumAsync::Future<TileProviderAndTile> loadTile(RasterOverlayTile& tile);
+  CesiumAsync::Future<RasterOverlayTileLoadResult>
+  loadTile(RasterOverlayTile& tile);
 
   /**
    * @brief Loads a tile, unless there are too many tile loads already in
@@ -256,7 +260,7 @@ public:
   bool loadTileThrottled(RasterOverlayTile& tile);
 
 private:
-  CesiumAsync::Future<TileProviderAndTile>
+  CesiumAsync::Future<RasterOverlayTileLoadResult>
   doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
 
   /**

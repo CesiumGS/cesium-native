@@ -113,7 +113,7 @@ public:
 
   UnloadTileContentResult unloadTileContent(Tile& tile);
 
-  void waitUntilIdle();
+  bool waitUntilIdle(double maximumWaitTimeInMilliseconds);
 
   /**
    * @brief Unload every tile that is safe to unload.

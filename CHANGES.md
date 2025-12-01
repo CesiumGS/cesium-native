@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.55.0 - 2025-12-01
 
 ##### Additions :tada:
 
@@ -13,6 +13,8 @@
 - `RasterOverlay::createTileProvider` now receives a reference to `CreateRasterOverlayTileProviderParameters` instead of a large number of individual parameters.
 - The constructor parameters for `RasterOverlayTileProvider` and `QuadtreeRasterOverlayTileProvider` have changed.
 - The `getCredit` method has been removed from `RasterOverlayCreditProvider`. Use `getCredits` instead.
+- Renamed `CesiumRasterOverlays::TileProviderAndTile` to `RasterOverlayTileLoadResult`. It now holds a pointer to the `ActivatedRasterOverlay` instead of the `RasterOverlayTileProvider`.
+- Custom functions registered with `GltfConverter` can no longer expect that external data in the glTF will be automatically loaded by the caller. If they want external data in the glTF to be loaded as well, they should use `GltfReader::readGltfAndExternalData`.
 
 ##### Additions :tada:
 
@@ -20,10 +22,13 @@
 - Added `TilesetViewGroup::isCreditReferenced`, which can be used to determine if a particular view group references a particular `Credit`.
 - Added `CreditReferencer::isCreditReferenced`, which can be used to determine if the referencer is currently referencing a particular `Credit`.
 - `CreditSystem::getSnapshot` now takes an optional parameter specifying if and how to filter `Credits` with identical HTML strings.
+- Added `Cesium3DTilesSelection::Tileset::waitForAllLoadsToComplete`.
+- Added `CesiumGltfReader::readGltfAndExternalData`. It reads any external data before doing any postprocessing, such as decoding Draco and meshopt.
 
 ##### Fixes :wrench:
 
 - The cmake install process previously didn't install `zlib`, which is required by `libcurl`.
+- Fixed a bug that could cause an `ActivatedRasterOverlay` to be destroyed before the last `RasterOverlayTile` it created, leading to a crash.
 
 ### v0.54.0 - 2025-11-17
 
