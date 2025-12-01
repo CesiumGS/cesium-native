@@ -213,19 +213,6 @@ public:
    */
   int64_t size() const noexcept { return _size; }
 
-  /**
-   * @brief The `begin` iterator.
-   */
-  auto begin() { return this->_values.begin(); }
-  /**
-   * @brief The `end` iterator.
-   */
-  auto end() { return this->_values.end(); }
-  /** @copydoc begin */
-  auto begin() const { return this->_values.begin(); }
-  /** @copydoc end */
-  auto end() const { return this->_values.end(); }
-
 private:
   std::span<const std::byte> _values;
   int64_t _bitOffset;
@@ -303,15 +290,6 @@ public:
 
   /** @copydoc PropertyArrayView::size */
   int64_t size() const noexcept { return this->_view.size(); }
-
-  /** @copydoc PropertyArrayView::begin */
-  auto begin() { return this->_view.begin(); }
-  /** @copydoc PropertyArrayView::end */
-  auto end() { return this->_view.end(); }
-  /** @copydoc PropertyArrayView::begin */
-  auto begin() const { return this->_view.begin(); }
-  /** @copydoc PropertyArrayView::end */
-  auto end() const { return this->_view.end(); }
 
   /**
    * @brief Obtains a \ref PropertyArrayView over the contents of this copy.
@@ -395,19 +373,6 @@ public:
    * @brief The number of elements in this array.
    */
   int64_t size() const noexcept { return _size; }
-
-  /**
-   * @brief The `begin` iterator.
-   */
-  auto begin() { return this->_values.begin(); }
-  /**
-   * @brief The `end` iterator.
-   */
-  auto end() { return this->_values.end(); }
-  /** @copydoc begin */
-  auto begin() const { return this->_values.begin(); }
-  /** @copydoc end */
-  auto end() const { return this->_values.end(); }
 
 private:
   std::span<const std::byte> _values;
@@ -547,15 +512,6 @@ public:
 
   /** @copydoc PropertyArrayView::size */
   int64_t size() const noexcept { return this->_view.size(); }
-
-  /** @copydoc PropertyArrayView::begin */
-  auto begin() { return this->_view.begin(); }
-  /** @copydoc PropertyArrayView::end */
-  auto end() { return this->_view.end(); }
-  /** @copydoc PropertyArrayView::begin */
-  auto begin() const { return this->_view.begin(); }
-  /** @copydoc PropertyArrayView::end */
-  auto end() const { return this->_view.end(); }
 
   /**
    * @brief Obtains a \ref PropertyArrayView over the contents of this copy.
