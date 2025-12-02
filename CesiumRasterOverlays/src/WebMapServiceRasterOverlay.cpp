@@ -26,7 +26,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <map>
 #include <memory>
 #include <optional>
 #include <span>
@@ -201,44 +200,51 @@ protected:
             this->getProjection(),
             options.rectangle);
 
-    std::string queryString = "?";
+    Uri uri(this->_url);
+    if (!uri.isValid()) {
+      return this->getAsyncSystem().createResolvedFuture(
+          LoadedRasterOverlayImage{
+              nullptr,
+              {},
+              {},
+              ErrorList::error(fmt::format("Failed to parse URL {}", this->_url))});
+    }
 
-    if (this->_url.find(queryString) != std::string::npos)
-      queryString = "&";
+    UriQuery query(uri);
+    // Constants
+    query.setValue("request", "GetMap");
+    query.setValue("TRANSPARENT", "TRUE");
+    query.setValue("crs", "EPSG:4326");
+    query.setValue("service", "WMS");
 
-    const std::string urlTemplate =
-        this->_url + queryString +
-        "request=GetMap&TRANSPARENT=TRUE&version={version}&service="
-        "WMS&"
-        "format={format}&styles="
-        "&width={width}&height={height}&bbox={minx},{miny},{maxx},{maxy}"
-        "&layers={layers}&crs=EPSG:4326";
+    // We need to provide this, but we don't want to override a value passed in
+    // by the user if there is one.
+    if (!query.hasValue("styles")) {
+      query.setValue("styles", "");
+    }
 
-    const auto radiansToDegrees = [](double rad) {
-      return std::to_string(CesiumUtility::Math::radiansToDegrees(rad));
-    };
+    query.setValue("version", this->_version);
+    query.setValue(
+        "bbox",
+        fmt::format(
+            "{},{},{},{}",
+            Math::radiansToDegrees(tileRectangle.getNorth()),
+            Math::radiansToDegrees(tileRectangle.getEast()),
+            Math::radiansToDegrees(tileRectangle.getSouth()),
+            Math::radiansToDegrees(tileRectangle.getWest())));
+    query.setValue("layers", this->_layers);
+    query.setValue("format", this->_format);
+    query.setValue("width", std::to_string(this->getWidth()));
+    query.setValue("height", std::to_string(this->getHeight()));
 
-    const std::map<std::string, std::string> urlTemplateMap = {
-        {"baseUrl", this->_url},
-        {"version", this->_version},
-        {"maxx", radiansToDegrees(tileRectangle.getNorth())},
-        {"maxy", radiansToDegrees(tileRectangle.getEast())},
-        {"minx", radiansToDegrees(tileRectangle.getSouth())},
-        {"miny", radiansToDegrees(tileRectangle.getWest())},
-        {"layers", this->_layers},
-        {"format", this->_format},
-        {"width", std::to_string(this->getWidth())},
-        {"height", std::to_string(this->getHeight())}};
+    uri.setQuery(query.toQueryString());
 
-    std::string url = CesiumUtility::Uri::substituteTemplateParameters(
-        urlTemplate,
-        [&map = urlTemplateMap](const std::string& placeholder) {
-          auto it = map.find(placeholder);
-          return it == map.end() ? "{" + placeholder + "}"
-                                 : Uri::escape(it->second);
-        });
+    const std::string uriStr(uri.toString());
 
-    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
+    return this->loadTileImageFromUrl(
+        uriStr,
+        this->_headers,
+        std::move(options));
   }
 
 private:
