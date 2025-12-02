@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- `CesiumRasterOverlays::WebMapServiceRasterOverlay` will no longer attempt to add a default `styles` parameter to the URL if the user has already specified one.
+
 ### v0.55.0 - 2025-12-01
 
 ##### Breaking Changes :mega:
