@@ -228,10 +228,10 @@ protected:
         "bbox",
         fmt::format(
             "{},{},{},{}",
-            Math::radiansToDegrees(tileRectangle.getSouth()),
             Math::radiansToDegrees(tileRectangle.getWest()),
-            Math::radiansToDegrees(tileRectangle.getNorth()),
-            Math::radiansToDegrees(tileRectangle.getEast())));
+            Math::radiansToDegrees(tileRectangle.getSouth()),
+            Math::radiansToDegrees(tileRectangle.getEast()),
+            Math::radiansToDegrees(tileRectangle.getNorth())));
     query.setValue("layers", this->_layers);
     query.setValue("format", this->_format);
     query.setValue("width", std::to_string(this->getWidth()));
