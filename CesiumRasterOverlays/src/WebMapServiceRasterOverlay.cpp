@@ -207,7 +207,8 @@ protected:
               nullptr,
               {},
               {},
-              ErrorList::error(fmt::format("Failed to parse URL {}", this->_url))});
+              ErrorList::error(
+                  fmt::format("Failed to parse URL {}", this->_url))});
     }
 
     UriQuery query(uri);
