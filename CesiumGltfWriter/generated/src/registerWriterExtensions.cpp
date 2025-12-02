@@ -7,6 +7,7 @@
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
@@ -34,6 +35,8 @@
 #include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
 #include <CesiumGltf/ExtensionKhrImplicitShapes.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
@@ -87,6 +90,9 @@ void registerWriterExtensions(
       CesiumGltf::MeshPrimitive,
       ExtensionExtPrimitiveVoxelsJsonWriter>();
   context.registerExtension<
+      CesiumGltf::MeshPrimitive,
+      ExtensionKhrGaussianSplattingJsonWriter>();
+  context.registerExtension<
       CesiumGltf::Node,
       ExtensionExtInstanceFeaturesJsonWriter>();
   context.registerExtension<
@@ -136,5 +142,8 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Shape,
       ExtensionExtImplicitCylinderRegionJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::ExtensionKhrGaussianSplatting,
+      ExtensionKhrGaussianSplattingCompressionSpz2JsonWriter>();
 }
 } // namespace CesiumGltfWriter

@@ -128,7 +128,7 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 set(PACKAGES_PRIVATE
     abseil draco ktx[core] modp-base64 meshoptimizer openssl s2geometry
     sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp libmorton zstd
+    earcut-hpp libmorton zstd spz zlib
 )
 
 # asmjit needed by blend2d on non-iOS platforms (iOS and Wasm don't support JIT)
@@ -140,7 +140,7 @@ else()
 endif()
 
 if(NOT CESIUM_DISABLE_CURL)
-    list(APPEND PACKAGES_PRIVATE curl zlib)
+    list(APPEND PACKAGES_PRIVATE curl)
 endif()
 
 if(NOT CESIUM_DISABLE_LIBJPEG_TURBO)
@@ -389,6 +389,7 @@ find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(spz CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)

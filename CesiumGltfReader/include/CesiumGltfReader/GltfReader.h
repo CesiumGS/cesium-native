@@ -90,6 +90,13 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool decodeMeshOptData = true;
 
   /**
+   * @brief Whether gaussian splatting data are decompressed as part of the load
+   * process, or left in the compressed format according to the
+   * KHR_gaussian_splatting_compression_spz extension.
+   */
+  bool decodeSpz = true;
+
+  /**
    * @brief Whether the quantized mesh data are dequantized and converted to
    * floating-point values when loading, according to the KHR_mesh_quantization
    * extension.

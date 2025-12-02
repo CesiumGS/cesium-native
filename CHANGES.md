@@ -1,5 +1,12 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added support for the `KHR_gaussian_splatting` extension.
+  - SPZ payloads for `KHR_guassian_splatting` using the `KHR_gaussian_splatting_compression_spz_2` extension will now be decoded.
+
 ### v0.55.0 - 2025-12-01
 
 ##### Breaking Changes :mega:
