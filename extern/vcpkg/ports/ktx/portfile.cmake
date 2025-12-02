@@ -2,7 +2,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO kring/KTX-Software # KhronosGroup/KTX-Software
     REF "v${VERSION}"
-    SHA512 fa20457fc0f0b117f4d6b406baa338091a85bcc46f60ca440dcd483388c67c550c81da3618d70d748e12850e32e0c1d82e9e8dc8522849074f40cc455723ac97
+    SHA512 9986aa911b5bd52d5aabe465578a0bd3906fb07b846bace3ebd0c72bd3d021a71abd307c3089674833dc695e87ec4cd136ee67881a38939bc5f42d731253234b
     HEAD_REF master
 )
 file(REMOVE "${SOURCE_PATH}/other_include/zstd_errors.h")
