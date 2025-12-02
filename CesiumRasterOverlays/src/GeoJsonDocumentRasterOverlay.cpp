@@ -1,10 +1,9 @@
-#include "CesiumGeometry/Rectangle.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -12,6 +11,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/GeoJsonDocumentRasterOverlay.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -19,7 +19,6 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Assert.h>
-#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
@@ -30,7 +29,6 @@
 #include <glm/common.hpp>
 #include <glm/ext/vector_int2.hpp>
 #include <nonstd/expected.hpp>
-#include <spdlog/logger.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -514,32 +512,22 @@ private:
 
 public:
   GeoJsonDocumentRasterOverlayTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const GeoJsonDocumentRasterOverlayOptions& options,
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters,
+      const GeoJsonDocumentRasterOverlayOptions& geoJsonOptions,
       std::shared_ptr<CesiumVectorData::GeoJsonDocument>&& pDocument)
       : RasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            pCreditSystem,
-            std::nullopt,
-            pPrepareRendererResources,
-            pLogger,
-            GeographicProjection(options.ellipsoid),
+            pCreator,
+            parameters,
+            GeographicProjection(geoJsonOptions.ellipsoid),
             projectRectangleSimple(
-                GeographicProjection(options.ellipsoid),
+                GeographicProjection(geoJsonOptions.ellipsoid),
                 GlobeRectangle::MAXIMUM)),
         _pDocument(std::move(pDocument)),
-        _defaultStyle(options.defaultStyle),
+        _defaultStyle(geoJsonOptions.defaultStyle),
         _tree(),
-        _ellipsoid(options.ellipsoid),
-        _mipLevels(options.mipLevels) {
+        _ellipsoid(geoJsonOptions.ellipsoid),
+        _mipLevels(geoJsonOptions.mipLevels) {
     CESIUM_ASSERT(this->_pDocument);
     this->_tree = buildQuadtree(this->_pDocument, this->_defaultStyle);
   }
@@ -643,27 +631,14 @@ GeoJsonDocumentRasterOverlay::~GeoJsonDocumentRasterOverlay() = default;
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 GeoJsonDocumentRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
 
-  pOwner = pOwner ? pOwner : this;
+  IntrusivePointer<const GeoJsonDocumentRasterOverlay> thiz = this;
 
   return std::move(
              const_cast<GeoJsonDocumentRasterOverlay*>(this)->_documentFuture)
       .thenInMainThread(
-          [pOwner,
-           asyncSystem,
-           pAssetAccessor,
-           pCreditSystem,
-           pPrepareRendererResources,
-           pLogger,
-           options =
-               this->_options](std::shared_ptr<GeoJsonDocument>&& pDocument)
+          [thiz, parameters](std::shared_ptr<GeoJsonDocument>&& pDocument)
               -> CreateTileProviderResult {
             if (!pDocument) {
               return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
@@ -674,13 +649,9 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
 
             return IntrusivePointer<RasterOverlayTileProvider>(
                 new GeoJsonDocumentRasterOverlayTileProvider(
-                    pOwner,
-                    asyncSystem,
-                    pAssetAccessor,
-                    pCreditSystem,
-                    pPrepareRendererResources,
-                    pLogger,
-                    options,
+                    thiz,
+                    parameters,
+                    thiz->_options,
                     std::move(pDocument)));
           });
 }

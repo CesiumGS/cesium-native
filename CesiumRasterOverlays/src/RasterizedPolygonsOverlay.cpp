@@ -5,22 +5,20 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterizedPolygonsOverlay.h>
-#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/geometric.hpp>
-#include <spdlog/fwd.h>
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -177,23 +175,14 @@ private:
 
 public:
   RasterizedPolygonsTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const CesiumGeospatial::Projection& projection,
       const std::vector<CartographicPolygon>& polygons,
       bool invertSelection)
       : RasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            nullptr,
-            std::nullopt,
-            pPrepareRendererResources,
-            pLogger,
+            pCreator,
+            parameters,
             projection,
             // computeCoverageRectangle(projection, polygons)),
             projectRectangleSimple(
@@ -252,27 +241,17 @@ RasterizedPolygonsOverlay::~RasterizedPolygonsOverlay() = default;
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 RasterizedPolygonsOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& /*pCreditSystem*/,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
 
-  pOwner = pOwner ? pOwner : this;
-
-  return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
-      IntrusivePointer<RasterOverlayTileProvider>(
-          new RasterizedPolygonsTileProvider(
-              pOwner,
-              asyncSystem,
-              pAssetAccessor,
-              pPrepareRendererResources,
-              pLogger,
-              this->_projection,
-              this->_polygons,
-              this->_invertSelection)));
+  return parameters.externals.asyncSystem
+      .createResolvedFuture<CreateTileProviderResult>(
+          IntrusivePointer<RasterOverlayTileProvider>(
+              new RasterizedPolygonsTileProvider(
+                  this,
+                  parameters,
+                  this->_projection,
+                  this->_polygons,
+                  this->_invertSelection)));
 }
 
 } // namespace CesiumRasterOverlays

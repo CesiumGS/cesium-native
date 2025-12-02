@@ -21,6 +21,7 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/Image.h>
+#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltf/Texture.h>
@@ -284,7 +285,7 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
       }
 
       // Image has already been decoded
-      if (image.pAsset && !image.pAsset->pixelData.empty()) {
+      if (image.pAsset) {
         continue;
       }
 
@@ -408,6 +409,52 @@ GltfReaderResult GltfReader::readGltf(
   }
 
   return result;
+}
+
+CesiumAsync::Future<GltfReaderResult> GltfReader::readGltfAndExternalData(
+    const std::span<const std::byte>& data,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::string& baseUrl,
+    const GltfReaderOptions& options) const {
+  CesiumAsync::HttpHeaders httpHeaders(headers.begin(), headers.end());
+  return readGltfAndExternalData(
+      data,
+      asyncSystem,
+      httpHeaders,
+      pAssetAccessor,
+      baseUrl,
+      options);
+}
+
+CesiumAsync::Future<GltfReaderResult> GltfReader::readGltfAndExternalData(
+    const std::span<const std::byte>& data,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const CesiumAsync::HttpHeaders& headers,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::string& baseUrl,
+    const GltfReaderOptions& options) const {
+
+  const CesiumJsonReader::JsonReaderOptions& context = this->getExtensions();
+  GltfReaderResult result = isBinaryGltf(data) ? readBinaryGltf(context, data)
+                                               : readJsonGltf(context, data);
+
+  if (!result.model) {
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
+
+  return resolveExternalData(
+             asyncSystem,
+             baseUrl,
+             headers,
+             pAssetAccessor,
+             options,
+             std::move(result))
+      .thenInWorkerThread([options](GltfReaderResult&& result) {
+        postprocess(result, options);
+        return std::move(result);
+      });
 }
 
 CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(

@@ -62,13 +62,7 @@ public:
   void setAssetOptions(const std::optional<std::string>& options) noexcept;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+      const CreateRasterOverlayTileProviderParameters& parameters)
       const override;
 
 protected:

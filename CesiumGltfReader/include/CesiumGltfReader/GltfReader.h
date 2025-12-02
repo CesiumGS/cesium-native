@@ -161,6 +161,46 @@ public:
       const GltfReaderOptions& options = GltfReaderOptions()) const;
 
   /**
+   * @brief Read a glTF or binary glTF (GLB) from a buffer and then resolve
+   * external references.
+   *
+   * @param data The data bytes of the glTF file
+   * @param asyncSystem The async system to use for resolving external data.
+   * @param headers http headers needed to make the request.
+   * @param pAssetAccessor The asset accessor to use to make the necessary
+   * requests.
+   * @param baseUrl The url to which all external urls are relative
+   * @param options Options for how to read the glTF.
+   */
+  CesiumAsync::Future<GltfReaderResult> readGltfAndExternalData(
+      const std::span<const std::byte>& data,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const CesiumAsync::HttpHeaders& headers,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& baseUrl = {},
+      const GltfReaderOptions& options = GltfReaderOptions()) const;
+
+  /**
+   * @brief Read a glTF or binary glTF (GLB) from a buffer and then resolve
+   * external references.
+   *
+   * @param data The data bytes of the glTF file
+   * @param asyncSystem The async system to use for resolving external data.
+   * @param headers http headers needed to make the request.
+   * @param pAssetAccessor The asset accessor to use to make the necessary
+   * requests.
+   * @param baseUrl The url to which all external urls are relative
+   * @param options Options for how to read the glTF.
+   */
+  CesiumAsync::Future<GltfReaderResult> readGltfAndExternalData(
+      const std::span<const std::byte>& data,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& baseUrl = {},
+      const GltfReaderOptions& options = GltfReaderOptions()) const;
+
+  /**
    * @brief Reads a glTF or binary glTF file from a URL and resolves external
    * buffers and images.
    *

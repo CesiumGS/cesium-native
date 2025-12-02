@@ -40,6 +40,7 @@
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/DebugColorizeTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -49,6 +50,7 @@
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
+#include <CesiumUtility/Uri.h>
 
 #include <doctest/doctest.h>
 #include <glm/common.hpp>
@@ -374,7 +376,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
-    manager.waitUntilIdle();
+    manager.waitUntilIdle(5000.0);
     CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(manager.getNumberOfTilesLoaded() == 1);
 
@@ -402,7 +404,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
-    manager.waitUntilIdle();
+    manager.waitUntilIdle(5000.0);
     CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(manager.getNumberOfTilesLoaded() == 1);
 
@@ -433,7 +435,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
-    manager.waitUntilIdle();
+    manager.waitUntilIdle(5000.0);
     CHECK(manager.getNumberOfTilesLoading() == 0);
     CHECK(manager.getNumberOfTilesLoaded() == 1);
 
@@ -498,7 +500,7 @@ TEST_CASE("Test tile state machine") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // test manager loading
     Tile& tile = *pManager->getRootTile();
@@ -518,7 +520,7 @@ TEST_CASE("Test tile state machine") {
 
       // ContentLoading -> ContentLoaded
       // check the state of the tile after main thread get called
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
       CHECK(pManager->getNumberOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
@@ -554,7 +556,7 @@ TEST_CASE("Test tile state machine") {
       CHECK(!tile.getContent().isEmptyContent());
       CHECK(!tile.getContent().getRenderContent());
 
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
       CHECK(pManager->getNumberOfTilesLoading() == 0);
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       CHECK(tile.getContent().isRenderContent());
@@ -607,7 +609,7 @@ TEST_CASE("Test tile state machine") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // test manager loading
     Tile& tile = *pManager->getRootTile();
@@ -622,7 +624,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
 
     // ContentLoading -> FailedTemporarily
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::FailedTemporarily);
@@ -687,7 +689,7 @@ TEST_CASE("Test tile state machine") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // test manager loading
     Tile& tile = *pManager->getRootTile();
@@ -702,7 +704,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
 
     // ContentLoading -> Failed
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     CHECK(pManager->getNumberOfTilesLoading() == 0);
     CHECK(tile.getChildren().empty());
     CHECK(tile.getState() == TileLoadState::Failed);
@@ -789,7 +791,7 @@ TEST_CASE("Test tile state machine") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     Tile& tile = *pManager->getRootTile();
     Tile& upsampledTile = tile.getChildren().back();
@@ -803,7 +805,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.getState() == TileLoadState::ContentLoading);
 
     // parent moves from ContentLoading -> ContentLoaded
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     CHECK(tile.getState() == TileLoadState::ContentLoaded);
     CHECK(tile.isRenderContent());
     CHECK(initializerCall);
@@ -856,7 +858,7 @@ TEST_CASE("Test tile state machine") {
     CHECK(tile.getState() == TileLoadState::Unloading);
 
     // upsampled tile: ContentLoading -> ContentLoaded
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     CHECK(upsampledTile.getState() == TileLoadState::ContentLoaded);
     CHECK(upsampledTile.isRenderContent());
 
@@ -897,8 +899,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   SUBCASE("Resolve external buffers") {
     // create mock loader
     CesiumGltfReader::GltfReader gltfReader;
-    std::vector<std::byte> gltfBoxFile =
-        readFile(testDataPath / "gltf" / "box" / "Box.gltf");
+    std::filesystem::path boxPath = testDataPath / "gltf" / "box";
+    std::string fileName = (boxPath / "Box.gltf").string();
+    std::vector<std::byte> gltfBoxFile = readFile(fileName);
     auto modelReadResult = gltfReader.readGltf(gltfBoxFile);
 
     // check that this model has external buffer and it's not loaded
@@ -915,9 +918,37 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       CHECK(buffer.cesium.data.size() == 0);
     }
 
+    // add external buffer to the completed request
+    std::filesystem::path binPath = boxPath / "Box0.bin";
+    pMockedAssetAccessor->mockCompletedRequests.insert(
+        {Uri::nativePathToUriPath(binPath.string()),
+         createMockRequest(binPath)});
+
+    // Load the model and resolve external content
+    CesiumGltf::Model tileModel;
+    {
+      auto future =
+          gltfReader
+              .readGltfAndExternalData(
+                  gltfBoxFile,
+                  asyncSystem,
+                  CesiumAsync::HttpHeaders(),
+                  pMockedAssetAccessor,
+                  Uri::nativePathToUriPath(fileName))
+              .thenInMainThread(
+                  [&tileModel](
+                      CesiumGltfReader::GltfReaderResult&& externalReadResult) {
+                    CHECK(externalReadResult.errors.empty());
+                    CHECK(externalReadResult.warnings.empty());
+                    CHECK(externalReadResult.model);
+                    tileModel = std::move(*externalReadResult.model);
+                    return externalReadResult;
+                  });
+      future.waitInMainThread();
+    }
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
     pMockedLoader->mockLoadTileContent = {
-        std::move(*modelReadResult.model),
+        std::move(tileModel),
         CesiumGeometry::Axis::Y,
         std::nullopt,
         std::nullopt,
@@ -928,11 +959,6 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
         TileLoadResultState::Success,
         Ellipsoid::WGS84};
     pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
-
-    // add external buffer to the completed request
-    pMockedAssetAccessor->mockCompletedRequests.insert(
-        {"Box0.bin",
-         createMockRequest(testDataPath / "gltf" / "box" / "Box0.bin")});
 
     // create tile
     auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
@@ -948,12 +974,12 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // test the gltf model
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, {});
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // check the buffer is already loaded
     {
@@ -1020,12 +1046,12 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // test the gltf model
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, options);
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     // check that normal is generated
     CHECK(tile.getState() == TileLoadState::ContentLoaded);
@@ -1088,11 +1114,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, {});
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     const auto& renderContent = tile.getContent().getRenderContent();
     CHECK(renderContent);
@@ -1139,14 +1165,14 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pManager->getRasterOverlayCollection().add(
         new DebugColorizeTilesRasterOverlay("DebugOverlay"));
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     SUBCASE(
         "Generate raster overlay details when tile doesn't have loose region") {
       // test the gltf model
       Tile& tile = *pManager->getRootTile();
       pManager->loadTileContent(tile, {});
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       const TileContent& tileContent = tile.getContent();
@@ -1210,7 +1236,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       tile.setBoundingVolume(originalLooseRegion);
 
       pManager->loadTileContent(tile, {});
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
       const TileContent& tileContent = tile.getContent();
@@ -1305,7 +1331,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       tile.setBoundingVolume(originalLooseRegion);
 
       pManager->loadTileContent(tile, {});
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
 
       CHECK(tile.getState() == TileLoadState::ContentLoaded);
 
@@ -1329,24 +1355,13 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     class AlwaysMoreDetailProvider : public RasterOverlayTileProvider {
     public:
       AlwaysMoreDetailProvider(
-          const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner,
-          const CesiumAsync::AsyncSystem& asyncSystem,
-          const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-          const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-          std::optional<CesiumUtility::Credit> credit,
-          const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-              pPrepareRendererResources,
-          const std::shared_ptr<spdlog::logger>& pLogger,
+          const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
+          const CreateRasterOverlayTileProviderParameters& parameters,
           const CesiumGeospatial::Projection& projection,
           const CesiumGeometry::Rectangle& coverageRectangle)
           : RasterOverlayTileProvider(
-                pOwner,
-                asyncSystem,
-                pAssetAccessor,
-                pCreditSystem,
-                credit,
-                pPrepareRendererResources,
-                pLogger,
+                pCreator,
+                parameters,
                 projection,
                 coverageRectangle) {}
 
@@ -1375,29 +1390,18 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       AlwaysMoreDetailRasterOverlay() : RasterOverlay("AlwaysMoreDetail") {}
 
       CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-          const CesiumAsync::AsyncSystem& asyncSystem,
-          const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-          const std::shared_ptr<
-              CesiumUtility::CreditSystem>& /* pCreditSystem */,
-          const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-              pPrepareRendererResources,
-          const std::shared_ptr<spdlog::logger>& pLogger,
-          CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+          const CreateRasterOverlayTileProviderParameters& parameters)
           const override {
-        return asyncSystem.createResolvedFuture(CreateTileProviderResult(
-            CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>(
-                new AlwaysMoreDetailProvider(
-                    pOwner ? pOwner : this,
-                    asyncSystem,
-                    pAssetAccessor,
-                    nullptr,
-                    std::nullopt,
-                    pPrepareRendererResources,
-                    pLogger,
-                    CesiumGeospatial::GeographicProjection(),
-                    projectRectangleSimple(
+        return parameters.externals.asyncSystem.createResolvedFuture(
+            CreateTileProviderResult(
+                CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>(
+                    new AlwaysMoreDetailProvider(
+                        this,
+                        parameters,
                         CesiumGeospatial::GeographicProjection(),
-                        GlobeRectangle::MAXIMUM)))));
+                        projectRectangleSimple(
+                            CesiumGeospatial::GeographicProjection(),
+                            GlobeRectangle::MAXIMUM)))));
       }
     };
 
@@ -1435,7 +1439,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pManager->getRasterOverlayCollection().add(
         new AlwaysMoreDetailRasterOverlay());
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     SUBCASE(
         "Generate raster overlay details when tile doesn't have loose region") {
@@ -1658,11 +1662,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pManager->getRasterOverlayCollection().add(
         new DebugColorizeTilesRasterOverlay("DebugOverlay"));
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, {});
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     const auto& renderContent = tile.getContent().getRenderContent();
     CHECK(renderContent);
@@ -1729,7 +1733,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     for (auto& child : containerTile.getChildren()) {
       pManager->loadTileContent(child, {});
       externals.asyncSystem.dispatchMainThreadTasks();
-      pManager->waitUntilIdle();
+      pManager->waitUntilIdle(5000.0);
 
       CHECK(child.getState() == TileLoadState::ContentLoaded);
       CHECK(child.isRenderContent());
@@ -1846,11 +1850,11 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
             std::move(pMockedLoader),
             std::move(pRootTile)};
 
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
 
     Tile& tile = *pManager->getRootTile();
     pManager->loadTileContent(tile, options);
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     pManager->unloadTileContent(tile);
   }
 }
@@ -1928,14 +1932,14 @@ TEST_CASE("Test glTF modifier state machine") {
       std::move(pMockedLoader),
       std::move(pRootTile)};
 
-  pManager->waitUntilIdle();
+  pManager->waitUntilIdle(5000.0);
 
   CHECK(pGltfModifier->onRegisterCallCount == 1);
 
   // test manager loading
   Tile& tile = *pManager->getRootTile();
   pManager->loadTileContent(tile, options);
-  pManager->waitUntilIdle();
+  pManager->waitUntilIdle(5000.0);
   pManager->updateTileContent(tile, options);
   CHECK(tile.getState() == TileLoadState::Done);
   CHECK(tile.getContent().isRenderContent());
@@ -1952,7 +1956,7 @@ TEST_CASE("Test glTF modifier state machine") {
     // Unloading should be refused while worker-thread is running.
     CHECK(pManager->unloadTileContent(tile) == UnloadTileContentResult::Keep);
     // Wait completion of worker-thread phase.
-    pManager->waitUntilIdle();
+    pManager->waitUntilIdle(5000.0);
     CHECK(!tile.needsWorkerThreadLoading(pGltfModifier.get()));
     CHECK(tile.needsMainThreadLoading(pGltfModifier.get()));
     CHECK(pGltfModifier->applyCallCount == expectedCallCount);
@@ -1981,7 +1985,7 @@ TEST_CASE("Test glTF modifier state machine") {
   ++expectedCallCount;
   // loaded tile below will be already processed by the glTF modifier
   pManager->loadTileContent(tile, options);
-  pManager->waitUntilIdle();
+  pManager->waitUntilIdle(5000.0);
   pManager->updateTileContent(tile, options);
   CHECK(tile.getState() == TileLoadState::Done);
   CHECK(tile.getContent().isRenderContent());

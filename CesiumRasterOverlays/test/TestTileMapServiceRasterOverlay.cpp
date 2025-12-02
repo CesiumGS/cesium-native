@@ -7,6 +7,7 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/TileMapServiceRasterOverlay.h>
@@ -125,12 +126,12 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlay->createTileProvider(
-            asyncSystem,
-            pMockAssetAccessor,
-            nullptr,
-            nullptr,
-            spdlog::default_logger(),
-            nullptr));
+            CreateRasterOverlayTileProviderParameters{
+                .externals =
+                    {.pAssetAccessor = pMockAssetAccessor,
+                     .asyncSystem = asyncSystem,
+                     .pLogger = spdlog::default_logger()},
+            }));
 
     REQUIRE(result);
   }
@@ -160,12 +161,12 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlay->createTileProvider(
-            asyncSystem,
-            pMockAssetAccessor,
-            nullptr,
-            nullptr,
-            spdlog::default_logger(),
-            nullptr));
+            CreateRasterOverlayTileProviderParameters{
+                .externals =
+                    {.pAssetAccessor = pMockAssetAccessor,
+                     .asyncSystem = asyncSystem,
+                     .pLogger = spdlog::default_logger()},
+            }));
 
     REQUIRE(result);
   }
@@ -215,12 +216,12 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlay->createTileProvider(
-            asyncSystem,
-            pMockAssetAccessor,
-            nullptr,
-            nullptr,
-            spdlog::default_logger(),
-            nullptr));
+            CreateRasterOverlayTileProviderParameters{
+                .externals =
+                    {.pAssetAccessor = pMockAssetAccessor,
+                     .asyncSystem = asyncSystem,
+                     .pLogger = spdlog::default_logger()},
+            }));
 
     REQUIRE(result);
   }
@@ -237,12 +238,13 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlayWithCredit->createTileProvider(
-            asyncSystem,
-            pMockAssetAccessor,
-            pCreditSystem,
-            nullptr,
-            spdlog::default_logger(),
-            nullptr));
+            CreateRasterOverlayTileProviderParameters{
+                .externals =
+                    {.pAssetAccessor = pMockAssetAccessor,
+                     .asyncSystem = asyncSystem,
+                     .pCreditSystem = pCreditSystem,
+                     .pLogger = spdlog::default_logger()},
+            }));
 
     REQUIRE(result);
 
@@ -266,12 +268,12 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     RasterOverlay::CreateTileProviderResult result = waitForFuture(
         asyncSystem,
         pRasterOverlayWithCredit->createTileProvider(
-            asyncSystem,
-            pMockAssetAccessor,
-            nullptr,
-            nullptr,
-            spdlog::default_logger(),
-            nullptr));
+            CreateRasterOverlayTileProviderParameters{
+                .externals =
+                    {.pAssetAccessor = pMockAssetAccessor,
+                     .asyncSystem = asyncSystem,
+                     .pLogger = spdlog::default_logger()},
+            }));
 
     REQUIRE(result);
 

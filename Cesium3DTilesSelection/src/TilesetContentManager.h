@@ -113,7 +113,7 @@ public:
 
   UnloadTileContentResult unloadTileContent(Tile& tile);
 
-  void waitUntilIdle();
+  bool waitUntilIdle(double maximumWaitTimeInMilliseconds);
 
   /**
    * @brief Unload every tile that is safe to unload.
@@ -180,8 +180,10 @@ public:
   void markTilesetDestroyed() noexcept;
   void releaseReference() const;
 
-  TilesetExternals& getExternals() { return this->_externals; }
-  const TilesetExternals& getExternals() const { return this->_externals; }
+  TilesetExternals& getExternals();
+  const TilesetExternals& getExternals() const;
+
+  const CesiumUtility::CreditSource& getCreditSource() const noexcept;
 
 private:
   static void setTileContent(
@@ -252,5 +254,7 @@ private:
   // These are scratch space, stored here to avoid heap allocations.
   std::vector<double> _requesterFractions;
   std::vector<TileLoadRequester*> _requestersWithRequests;
+
+  CesiumUtility::CreditSource _creditSource;
 };
 } // namespace Cesium3DTilesSelection

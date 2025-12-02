@@ -170,6 +170,10 @@ void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
   }
 }
 
+const CesiumUtility::CreditSource& Tileset::getCreditSource() const noexcept {
+  return this->_pTilesetContentManager->getCreditSource();
+}
+
 const Tile* Tileset::getRootTile() const noexcept {
   return this->_pTilesetContentManager->getRootTile();
 }
@@ -469,6 +473,11 @@ void Tileset::loadTiles() {
 
 void Tileset::registerLoadRequester(TileLoadRequester& requester) {
   this->_pTilesetContentManager->registerTileRequester(requester);
+}
+
+bool Tileset::waitForAllLoadsToComplete(double maximumWaitTimeInMilliseconds) {
+  return this->_pTilesetContentManager->waitUntilIdle(
+      maximumWaitTimeInMilliseconds);
 }
 
 int32_t Tileset::getNumberOfTilesLoaded() const {
