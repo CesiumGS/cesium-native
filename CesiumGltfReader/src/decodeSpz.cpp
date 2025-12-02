@@ -1,5 +1,7 @@
 #include "decodeSpz.h"
 
+#include "CesiumGltf/PropertyType.h"
+
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -22,7 +24,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -37,7 +39,7 @@ const std::string ALTERNATE_EXT_NAME1 = "KHR_spz_gaussian_splats_compression";
 const std::string ALTERNATE_EXT_NAME2 =
     "KHR_gaussian_splatting_compression_spz";
 
-std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
+std::optional<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
     GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& /* primitive */,
     const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& spz) {
@@ -49,7 +51,7 @@ std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
       CesiumGltf::Model::getSafe(&model.bufferViews, spz.bufferView);
   if (!pBufferView) {
     readGltf.warnings.emplace_back("SPZ bufferView index is invalid.");
-    return nullptr;
+    return std::nullopt;
   }
 
   const CesiumGltf::BufferView& bufferView = *pBufferView;
@@ -59,7 +61,7 @@ std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
   if (!pBuffer) {
     readGltf.warnings.emplace_back(
         "SPZ bufferView has an invalid buffer index.");
-    return nullptr;
+    return std::nullopt;
   }
 
   CesiumGltf::Buffer& buffer = *pBuffer;
@@ -68,7 +70,7 @@ std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
       bufferView.byteOffset + bufferView.byteLength >
           static_cast<int64_t>(buffer.cesium.data.size())) {
     readGltf.warnings.emplace_back("SPZ bufferView extends beyond its buffer.");
-    return nullptr;
+    return std::nullopt;
   }
 
   spz::GaussianCloud gaussians = spz::loadSpz(
@@ -77,7 +79,7 @@ std::unique_ptr<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
       static_cast<int32_t>(bufferView.byteLength),
       spz::UnpackOptions{spz::CoordinateSystem::UNSPECIFIED});
 
-  return std::make_unique<spz::GaussianCloud>(std::move(gaussians));
+  return gaussians;
 }
 
 CesiumGltf::Accessor* findAccessor(
@@ -112,7 +114,7 @@ void copyShCoeff(
     GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& primitive,
     CesiumGltf::Buffer& buffer,
-    spz::GaussianCloud* pGaussian,
+    const spz::GaussianCloud& gaussian,
     int degree,
     int coeffIndex) {
   size_t base = 0;
@@ -150,16 +152,16 @@ void copyShCoeff(
       readGltf.model->bufferViews.emplace_back();
   bufferView.buffer = static_cast<int32_t>(readGltf.model->buffers.size() - 1);
   bufferView.byteLength = static_cast<int64_t>(
-      sizeof(float) * static_cast<size_t>(pGaussian->numPoints) * 3);
+      sizeof(float) * static_cast<size_t>(gaussian.numPoints) * 3);
 
   size_t start = buffer.cesium.data.size();
   bufferView.byteOffset = static_cast<int64_t>(start);
   buffer.cesium.data.resize(start + static_cast<size_t>(bufferView.byteLength));
-  for (size_t i = 0; i < static_cast<size_t>(pGaussian->numPoints); i++) {
+  for (size_t i = 0; i < static_cast<size_t>(gaussian.numPoints); i++) {
     const size_t idx = i * stride + base + static_cast<size_t>(coeffIndex) * 3;
     std::memcpy(
         buffer.cesium.data.data() + start,
-        pGaussian->sh.data() + idx,
+        gaussian.sh.data() + idx,
         sizeof(float) * 3);
     start += sizeof(float) * 3;
   }
@@ -172,19 +174,17 @@ void decodePrimitive(
   CESIUM_TRACE("CesiumGltfReader::decodePrimitive");
   CESIUM_ASSERT(readGltf.model);
 
-  // TODO: handle different accessor component types
-
-  std::unique_ptr<spz::GaussianCloud> pGaussian =
+  const std::optional<spz::GaussianCloud> gaussian =
       decodeBufferViewToGaussianCloud(readGltf, primitive, spz);
-  if (!pGaussian) {
+  if (!gaussian) {
     return;
   }
 
   const size_t bufferLength =
-      sizeof(float) * (pGaussian->positions.size() + pGaussian->scales.size() +
-                       pGaussian->scales.size() + pGaussian->rotations.size() +
-                       pGaussian->alphas.size() + pGaussian->colors.size() +
-                       pGaussian->sh.size());
+      sizeof(float) *
+      (gaussian->positions.size() + gaussian->scales.size() +
+       gaussian->scales.size() + gaussian->rotations.size() +
+       gaussian->alphas.size() + gaussian->colors.size() + gaussian->sh.size());
 
   CesiumGltf::Buffer& buffer = readGltf.model->buffers.emplace_back();
   buffer.byteLength = static_cast<int64_t>(bufferLength);
@@ -202,7 +202,7 @@ void decodePrimitive(
     bufferView.buffer =
         static_cast<int32_t>(readGltf.model->buffers.size() - 1);
     bufferView.byteLength =
-        static_cast<int64_t>(sizeof(float) * pGaussian->positions.size());
+        static_cast<int64_t>(sizeof(float) * gaussian->positions.size());
 
     size_t start = buffer.cesium.data.size();
     bufferView.byteOffset = static_cast<int64_t>(start);
@@ -210,8 +210,8 @@ void decodePrimitive(
         start + static_cast<size_t>(bufferView.byteLength));
     memcpy(
         buffer.cesium.data.data() + start,
-        pGaussian->positions.data(),
-        sizeof(float) * pGaussian->positions.size());
+        gaussian->positions.data(),
+        sizeof(float) * gaussian->positions.size());
   }
 
   CesiumGltf::Accessor* pRotAccessor =
@@ -225,7 +225,7 @@ void decodePrimitive(
     bufferView.buffer =
         static_cast<int32_t>(readGltf.model->buffers.size() - 1);
     bufferView.byteLength =
-        static_cast<int64_t>(sizeof(float) * pGaussian->rotations.size());
+        static_cast<int64_t>(sizeof(float) * gaussian->rotations.size());
 
     size_t start = buffer.cesium.data.size();
     bufferView.byteOffset = static_cast<int64_t>(start);
@@ -233,15 +233,27 @@ void decodePrimitive(
         start + static_cast<size_t>(bufferView.byteLength));
     memcpy(
         buffer.cesium.data.data() + start,
-        pGaussian->rotations.data(),
-        sizeof(float) * pGaussian->rotations.size());
+        gaussian->rotations.data(),
+        sizeof(float) * gaussian->rotations.size());
   }
 
-  // Color needs to be interleaved with alphas and have its values converted
+  // Color needs to be interleaved with alphas
   CesiumGltf::Accessor* pColorAccessor =
       findAccessor(readGltf, primitive, "COLOR_0");
   if (pColorAccessor) {
     pColorAccessor->type = CesiumGltf::Accessor::Type::VEC4;
+    if (pColorAccessor->componentType !=
+        CesiumGltf::Accessor::ComponentType::FLOAT) {
+      // Since the data returned from spz is float, it makes more sense to
+      // return the exact values instead of converting it to a byte or short.
+      const std::string prevComponentTypeName =
+          CesiumGltf::convertPropertyComponentTypeToString(
+              CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
+                  pColorAccessor->componentType));
+      readGltf.warnings.push_back(fmt::format(
+          "SPZ glTF COLOR_0 accessor is type {} - changing type to FLOAT",
+          prevComponentTypeName));
+    }
     pColorAccessor->componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
     pColorAccessor->bufferView =
         static_cast<int32_t>(readGltf.model->bufferViews.size());
@@ -250,18 +262,18 @@ void decodePrimitive(
     bufferView.buffer =
         static_cast<int32_t>(readGltf.model->buffers.size() - 1);
     bufferView.byteLength = static_cast<int64_t>(
-        (pGaussian->colors.size() + pGaussian->alphas.size()) * sizeof(float));
+        (gaussian->colors.size() + gaussian->alphas.size()) * sizeof(float));
 
     size_t start = buffer.cesium.data.size();
     buffer.cesium.data.resize(
         start + static_cast<size_t>(bufferView.byteLength));
     bufferView.byteOffset = static_cast<int64_t>(start);
-    for (size_t i = 0; i < pGaussian->alphas.size(); i++) {
+    for (size_t i = 0; i < gaussian->alphas.size(); i++) {
       glm::fvec4 color(
-          0.5 + pGaussian->colors[i * 3] * SH_C0,
-          0.5 + pGaussian->colors[i * 3 + 1] * SH_C0,
-          0.5 + pGaussian->colors[i * 3 + 2] * SH_C0,
-          1.0 / (1.0 + exp(-pGaussian->alphas[i])));
+          0.5 + gaussian->colors[i * 3] * SH_C0,
+          0.5 + gaussian->colors[i * 3 + 1] * SH_C0,
+          0.5 + gaussian->colors[i * 3 + 2] * SH_C0,
+          1.0 / (1.0 + exp(-gaussian->alphas[i])));
       memcpy(
           buffer.cesium.data.data() + start + i * sizeof(glm::fvec4),
           &color,
@@ -281,14 +293,14 @@ void decodePrimitive(
     bufferView.buffer =
         static_cast<int32_t>(readGltf.model->buffers.size() - 1);
     bufferView.byteLength =
-        static_cast<int64_t>(sizeof(float) * pGaussian->scales.size());
+        static_cast<int64_t>(sizeof(float) * gaussian->scales.size());
 
     size_t start = buffer.cesium.data.size();
     buffer.cesium.data.resize(
         start + static_cast<size_t>(bufferView.byteLength));
     bufferView.byteOffset = static_cast<int64_t>(start);
-    for (size_t i = 0; i < pGaussian->scales.size(); i++) {
-      float scale = exp(pGaussian->scales[i]);
+    for (size_t i = 0; i < gaussian->scales.size(); i++) {
+      float scale = exp(gaussian->scales[i]);
       memcpy(
           buffer.cesium.data.data() + start + i * sizeof(float),
           &scale,
@@ -296,21 +308,21 @@ void decodePrimitive(
     }
   }
 
-  if (pGaussian->shDegree > 0) {
+  if (gaussian->shDegree > 0) {
     for (int i = 0; i < 3; i++) {
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 1, i);
+      copyShCoeff(readGltf, primitive, buffer, *gaussian, 1, i);
     }
   }
 
-  if (pGaussian->shDegree > 1) {
+  if (gaussian->shDegree > 1) {
     for (int i = 0; i < 5; i++) {
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 2, i);
+      copyShCoeff(readGltf, primitive, buffer, *gaussian, 2, i);
     }
   }
 
-  if (pGaussian->shDegree > 2) {
+  if (gaussian->shDegree > 2) {
     for (int i = 0; i < 7; i++) {
-      copyShCoeff(readGltf, primitive, buffer, pGaussian.get(), 3, i);
+      copyShCoeff(readGltf, primitive, buffer, *gaussian, 3, i);
     }
   }
 }
@@ -320,15 +332,15 @@ addExtensionFromJsonValue(
     const std::string& extName,
     CesiumGltfReader::GltfReaderResult& readGltf,
     CesiumGltf::ExtensionKhrGaussianSplatting& splatting,
-    CesiumUtility::JsonValue* pKhrJson) {
-  if (!pKhrJson->isObject()) {
+    const CesiumUtility::JsonValue& khrJson) {
+  if (!khrJson.isObject()) {
     readGltf.errors.push_back(fmt::format("Invalid {} extension", extName));
     return nullptr;
   }
 
   const CesiumUtility::JsonValue::Object::const_iterator it =
-      pKhrJson->getObject().find("bufferView");
-  if (it == pKhrJson->getObject().end()) {
+      khrJson.getObject().find("bufferView");
+  if (it == khrJson.getObject().end()) {
     readGltf.errors.push_back(
         fmt::format("No `bufferView` property found on {} extension", extName));
     return nullptr;
@@ -355,7 +367,7 @@ addExtensionFromJsonValue(
 void fixAttributeNames(CesiumGltf::MeshPrimitive& primitive) {
   std::vector<std::string> attributesToConvert;
   attributesToConvert.reserve(primitive.attributes.size());
-  for (std::pair<const std::string, int32_t>& attribute :
+  for (const std::pair<const std::string, int32_t>& attribute :
        primitive.attributes) {
     if (attribute.first == "_SCALE" || attribute.first == "_ROTATION" ||
         attribute.first.starts_with("_SH_DEGREE_")) {
@@ -387,7 +399,7 @@ getAndMaybeConvertSpzExtension(
   }
 
   // Check for the old versions.
-  CesiumUtility::JsonValue* pKhrSpz =
+  const CesiumUtility::JsonValue* pKhrSpz =
       primitive.getGenericExtension(ALTERNATE_EXT_NAME1);
   if (pKhrSpz != nullptr) {
     CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* pResult =
@@ -395,12 +407,12 @@ getAndMaybeConvertSpzExtension(
             ALTERNATE_EXT_NAME1,
             readGltf,
             splatting,
-            pKhrSpz);
+            *pKhrSpz);
     primitive.extensions.erase(ALTERNATE_EXT_NAME1);
     return pResult;
   }
 
-  CesiumUtility::JsonValue* pSpzNoVersion =
+  const CesiumUtility::JsonValue* pSpzNoVersion =
       splatting.getGenericExtension(ALTERNATE_EXT_NAME2);
   if (pSpzNoVersion != nullptr) {
     CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2* pResult =
@@ -408,7 +420,7 @@ getAndMaybeConvertSpzExtension(
             ALTERNATE_EXT_NAME2,
             readGltf,
             splatting,
-            pSpzNoVersion);
+            *pSpzNoVersion);
     primitive.extensions.erase(ALTERNATE_EXT_NAME2);
     return pResult;
   }
