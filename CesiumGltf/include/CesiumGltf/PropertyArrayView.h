@@ -244,7 +244,7 @@ public:
   PropertyArrayCopy(const std::vector<bool>& values) noexcept
       : _storage(), _view() {
     size_t numberOfElements = values.size();
-    size_t sizeInBytes = (numberOfElements / 8) + 1;
+    size_t sizeInBytes = (numberOfElements + 7) / 8;
     this->_storage.resize(sizeInBytes);
 
     for (size_t byteIndex = 0, valueIndex = 0; byteIndex < sizeInBytes;
