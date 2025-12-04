@@ -77,14 +77,14 @@ private:
 template <typename ElementType> class PropertyArrayCopy {
 public:
   /**
-   * @brief Constructs an empty array view.
+   * @brief Constructs an empty array copy.
    */
   PropertyArrayCopy() : _storage{}, _view() {}
 
   /**
-   * @brief Constructs an array view from a buffer.
+   * @brief Constructs an array copy from a vector.
    *
-   * @param values The buffer containing the values.
+   * @param values The vector containing the values.
    */
   PropertyArrayCopy(const std::vector<ElementType>& values) noexcept
       : _storage(), _view() {
@@ -220,6 +220,103 @@ private:
 };
 
 /**
+ * @brief A copy of a bool array element of a {@link PropertyTableProperty} or
+ * {@link PropertyTextureProperty}.
+ *
+ * Whereas {@link PropertyArrayView} is a pointer to data stored in a separate
+ * place, a PropertyArrayCopy owns the data that it's viewing.
+ *
+ * Provides utility to retrieve the data stored in the array of elements via the
+ * array index operator.
+ */
+template <> class PropertyArrayCopy<bool> {
+public:
+  /**
+   * @brief Constructs an empty array copy.
+   */
+  PropertyArrayCopy() : _storage{}, _view() {}
+
+  /**
+   * @brief Constructs a bool array copy from a vector.
+   *
+   * @param values The vector containing the values.
+   */
+  PropertyArrayCopy(const std::vector<bool>& values) noexcept
+      : _storage(), _view() {
+    size_t numberOfElements = values.size();
+    size_t sizeInBytes = (numberOfElements + 7) / 8;
+    this->_storage.resize(sizeInBytes);
+
+    for (size_t byteIndex = 0, valueIndex = 0; byteIndex < sizeInBytes;
+         byteIndex++) {
+      uint8_t byte = 0;
+      for (size_t bitIndex = 0; bitIndex < 8 && valueIndex < numberOfElements;
+           bitIndex++, valueIndex++) {
+        uint8_t bit = uint8_t(values[valueIndex]);
+        byte |= bit << bitIndex;
+      }
+      this->_storage[byteIndex] = std::byte(byte);
+    }
+
+    this->_view = PropertyArrayView<bool>(
+        this->_storage,
+        0,
+        static_cast<int64_t>(numberOfElements));
+  }
+
+  /** @brief Default move constructor */
+  PropertyArrayCopy(PropertyArrayCopy&&) = default;
+  /** @brief Default move assignment operator */
+  PropertyArrayCopy& operator=(PropertyArrayCopy&&) = default;
+
+  /** @brief Copy constructor */
+  PropertyArrayCopy(const PropertyArrayCopy& rhs)
+      : _storage(rhs._storage), _view(this->_storage, 0, rhs.size()) {}
+
+  /** @brief Copy assignment operator */
+  PropertyArrayCopy& operator=(const PropertyArrayCopy& rhs) {
+    this->_storage = rhs._storage;
+    this->_view = PropertyArrayView<bool>(this->_storage, 0, rhs.size());
+    return *this;
+  }
+
+  /**
+   * @brief Returns the `ElementType` at the given index from this copy.
+   *
+   * @param index The index to obtain.
+   * @returns The `ElementType` at that index from the internal view.
+   */
+  bool operator[](int64_t index) const noexcept { return this->_view[index]; }
+
+  /** @copydoc PropertyArrayView::size */
+  int64_t size() const noexcept { return this->_view.size(); }
+
+  /**
+   * @brief Obtains a \ref PropertyArrayView over the contents of this copy.
+   */
+  const PropertyArrayView<bool>& view() const { return this->_view; }
+
+  /**
+   * @brief Obtains a buffer and view from the copied data, leaving this \ref
+   * PropertyArrayCopy empty.
+   *
+   * @param outBuffer The destination where this copy's internal buffer will be
+   * moved to.
+   */
+  PropertyArrayView<bool>
+  toViewAndExternalBuffer(std::vector<std::byte>& outBuffer) && {
+    outBuffer = std::move(this->_storage);
+    PropertyArrayView<bool> result = std::move(this->_view);
+    this->_view = PropertyArrayView<bool>();
+    return result;
+  }
+
+private:
+  std::vector<std::byte> _storage;
+  PropertyArrayView<bool> _view;
+};
+
+/**
  * @brief A view on a string array element of a {@link PropertyTableProperty}
  * or {@link PropertyTextureProperty}.
  *
@@ -282,6 +379,167 @@ private:
   std::span<const std::byte> _stringOffsets;
   PropertyComponentType _stringOffsetType;
   int64_t _size;
+
+  friend class PropertyArrayCopy<std::string_view>;
+};
+
+/**
+ * @brief A copy of a string array element of a {@link PropertyTableProperty}.
+ *
+ * Whereas {@link PropertyArrayView} is a pointer to data stored in a separate
+ * place, a PropertyArrayCopy owns the data that it's viewing.
+ *
+ * Provides utility to retrieve the data stored in the array of elements via the
+ * array index operator.
+ */
+template <> class PropertyArrayCopy<std::string_view> {
+public:
+  /**
+   * @brief Constructs an empty array copy.
+   */
+  PropertyArrayCopy() : _storage{}, _view() {}
+
+  /**
+   * @brief Constructs a string array copy from a vector.
+   *
+   * @param values The vector containing the values.
+   */
+  PropertyArrayCopy(const std::vector<std::string>& values) noexcept
+      : _storage(), _view() {
+    size_t numberOfElements = values.size();
+    size_t totalLength = 0;
+    for (const std::string& value : values) {
+      totalLength += value.size();
+    }
+
+    std::vector<std::byte> stringData(totalLength);
+    std::vector<std::byte> offsetData;
+
+    auto copyDataWithOffsetType = [&]<typename TOffsetType>() {
+      offsetData.resize(sizeof(TOffsetType) * numberOfElements + 1);
+      TOffsetType* pOffset = reinterpret_cast<TOffsetType*>(offsetData.data());
+
+      TOffsetType writeOffset = 0;
+      for (size_t i = 0; i < numberOfElements; i++) {
+        const std::string& value = values[i];
+        std::memcpy(
+            stringData.data() + writeOffset,
+            value.data(),
+            value.size());
+
+        *pOffset = writeOffset;
+        writeOffset += TOffsetType(value.size());
+        pOffset++;
+      }
+
+      *pOffset = writeOffset;
+    };
+
+    PropertyComponentType offsetType;
+    if (totalLength < size_t(std::numeric_limits<uint8_t>::max())) {
+      offsetType = PropertyComponentType::Uint8;
+      copyDataWithOffsetType.template operator()<uint8_t>();
+    } else if (totalLength < size_t(std::numeric_limits<uint16_t>::max())) {
+      offsetType = PropertyComponentType::Uint16;
+      copyDataWithOffsetType.template operator()<uint16_t>();
+    } else if (totalLength < size_t(std::numeric_limits<uint32_t>::max())) {
+      offsetType = PropertyComponentType::Uint32;
+      copyDataWithOffsetType.template operator()<uint32_t>();
+    } else {
+      offsetType = PropertyComponentType::Uint64;
+      copyDataWithOffsetType.template operator()<uint64_t>();
+    }
+
+    this->_storage.resize(stringData.size() + offsetData.size());
+    std::memcpy(this->_storage.data(), stringData.data(), stringData.size());
+    std::memcpy(
+        this->_storage.data() + static_cast<int32_t>(stringData.size()),
+        offsetData.data(),
+        offsetData.size());
+
+    this->_view = PropertyArrayView<std::string_view>(
+        std::span<const std::byte>(this->_storage.begin(), stringData.size()),
+        std::span<const std::byte>(
+            this->_storage.begin() + static_cast<int32_t>(stringData.size()),
+            offsetData.size()),
+        offsetType,
+        static_cast<int64_t>(numberOfElements));
+  }
+
+  /** @brief Default move constructor */
+  PropertyArrayCopy(PropertyArrayCopy&&) = default;
+  /** @brief Default move assignment operator */
+  PropertyArrayCopy& operator=(PropertyArrayCopy&&) = default;
+
+  /** @brief Copy constructor */
+  PropertyArrayCopy(const PropertyArrayCopy& rhs)
+      : _storage(rhs._storage), _view() {
+    // Reconstruct spans so they point to this copy's data.
+    size_t valueSpanSize = rhs._view._values.size();
+    this->_view = PropertyArrayView<std::string_view>(
+        std::span<const std::byte>(this->_storage.begin(), valueSpanSize),
+        std::span<const std::byte>(
+            this->_storage.begin() + static_cast<int32_t>(valueSpanSize),
+            this->_storage.end()),
+        rhs._view._stringOffsetType,
+        rhs._view.size());
+  }
+
+  /** @brief Copy assignment operator */
+  PropertyArrayCopy& operator=(const PropertyArrayCopy& rhs) {
+    this->_storage = rhs._storage;
+    // Reconstruct spans so they point to this copy's data.
+    size_t valueSpanSize = rhs._view._values.size();
+    this->_view = PropertyArrayView<std::string_view>(
+        std::span<const std::byte>(this->_storage.begin(), valueSpanSize),
+        std::span<const std::byte>(
+            this->_storage.begin() + static_cast<int32_t>(valueSpanSize),
+            this->_storage.end()),
+        rhs._view._stringOffsetType,
+        rhs._view.size());
+    return *this;
+  }
+
+  /**
+   * @brief Returns the `ElementType` at the given index from this copy.
+   *
+   * @param index The index to obtain.
+   * @returns The `ElementType` at that index from the internal view.
+   */
+  std::string_view operator[](int64_t index) const noexcept {
+    return this->_view[index];
+  }
+
+  /** @copydoc PropertyArrayView::size */
+  int64_t size() const noexcept { return this->_view.size(); }
+
+  /**
+   * @brief Obtains a \ref PropertyArrayView over the contents of this copy.
+   */
+  const PropertyArrayView<std::string_view>& view() const {
+    return this->_view;
+  }
+
+  /**
+   * @brief Obtains a buffer and view from the copied data, leaving this \ref
+   * PropertyArrayCopy empty.
+   *
+   * @param outBuffer The destination where this copy's internal buffer will be
+   * moved to.
+   */
+  PropertyArrayView<std::string_view>
+  toViewAndExternalBuffer(std::vector<std::byte>& outBuffer) && {
+    outBuffer = std::move(this->_storage);
+    // Moving a std::vector should not affect the memory addresses of the heap
+    // data, so the spans are still valid.
+    PropertyArrayView<std::string_view> result = std::move(this->_view);
+    this->_view = PropertyArrayView<std::string_view>();
+    return result;
+  }
+
+private:
+  std::vector<std::byte> _storage;
+  PropertyArrayView<std::string_view> _view;
 };
 
 /** @brief Compares two \ref PropertyArrayView instances by comparing their

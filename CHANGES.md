@@ -4,8 +4,9 @@
 
 ##### Additions :tada:
 
+- Added `bool` and `std::string_view` overloads for `PropertyArrayCopy`.
 - Added support for the `KHR_gaussian_splatting` extension.
-  - SPZ payloads for `KHR_guassian_splatting` using the `KHR_gaussian_splatting_compression_spz_2` extension will now be decoded.
+  - SPZ payloads for `KHR_gaussian_splatting` using the `KHR_gaussian_splatting_compression_spz_2` extension will now be decoded.
 
 ### v0.55.0 - 2025-12-01
 
