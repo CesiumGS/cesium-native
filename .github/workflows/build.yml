@@ -148,13 +148,13 @@ jobs:
       fail-fast: false
       matrix:
         compiler: [ gcc, clang ]
-        platform: [ ubuntu-24.04, ubuntu-22.04, macos-13 ]
+        platform: [ ubuntu-24.04, ubuntu-22.04, macos-14 ]
         build_type: [Debug, RelWithDebInfo]
         exclude:
           - compiler: clang
             platform: ubuntu-24.04
           - compiler: gcc
-            platform: macos-13
+            platform: macos-14
           - compiler: gcc
             platform: ubuntu-22.04
     name: "${{matrix.platform}} / ${{matrix.compiler}} / ${{matrix.build_type}}"
@@ -177,7 +177,7 @@ jobs:
         with:
           key: ccache-${{ env.CACHE_KEY}}-${{matrix.build_type}}
       - name: Set CC and CXX
-        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-13'}}
+        if: ${{ matrix.compiler == 'clang' && matrix.platform != 'macos-14'}}
         run: |
           echo "CC=clang" >> "$GITHUB_ENV"
           echo "CXX=clang++" >> "$GITHUB_ENV"
@@ -185,7 +185,7 @@ jobs:
         run: |
           echo "VCPKG_ROOT=${VCPKG_INSTALLATION_ROOT}" >> "$GITHUB_ENV"
       - name: Make more swap space available
-        if: ${{ matrix.platform != 'macos-13'}}
+        if: ${{ matrix.platform != 'macos-14'}}
         run: |
           sudo swapoff -a
           sudo fallocate -l 10G /mnt/swapfile
@@ -194,7 +194,7 @@ jobs:
           sudo swapon /mnt/swapfile
           sudo swapon --show
       - name: Set macOS cmake options
-        if: ${{ matrix.platform == 'macos-13' }}
+        if: ${{ matrix.platform == 'macos-14' }}
         run: |
           # Use a custom triplet to target macOS 10.15.
           mkdir -p vcpkg/triplets
