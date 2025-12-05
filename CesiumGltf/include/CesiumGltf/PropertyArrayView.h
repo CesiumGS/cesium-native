@@ -460,7 +460,7 @@ public:
     this->_view = PropertyArrayView<std::string_view>(
         std::span<const std::byte>(this->_storage.data(), stringData.size()),
         std::span<const std::byte>(
-            this->_storage.begin() + static_cast<int32_t>(stringData.size()),
+            this->_storage.data() + static_cast<int32_t>(stringData.size()),
             offsetData.size()),
         offsetType,
         static_cast<int64_t>(numberOfElements));
