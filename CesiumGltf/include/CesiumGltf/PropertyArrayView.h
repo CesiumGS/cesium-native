@@ -458,9 +458,9 @@ public:
         offsetData.size());
 
     this->_view = PropertyArrayView<std::string_view>(
-        std::span<const std::byte>(this->_storage.begin(), stringData.size()),
+        std::span<const std::byte>(this->_storage.data(), stringData.size()),
         std::span<const std::byte>(
-            this->_storage.begin() + static_cast<int32_t>(stringData.size()),
+            this->_storage.data() + static_cast<int32_t>(stringData.size()),
             offsetData.size()),
         offsetType,
         static_cast<int64_t>(numberOfElements));
@@ -476,11 +476,12 @@ public:
       : _storage(rhs._storage), _view() {
     // Reconstruct spans so they point to this copy's data.
     size_t valueSpanSize = rhs._view._values.size();
+    size_t offsetSpanSize = this->_storage.size() - valueSpanSize;
     this->_view = PropertyArrayView<std::string_view>(
-        std::span<const std::byte>(this->_storage.begin(), valueSpanSize),
+        std::span<const std::byte>(this->_storage.data(), valueSpanSize),
         std::span<const std::byte>(
-            this->_storage.begin() + static_cast<int32_t>(valueSpanSize),
-            this->_storage.end()),
+            this->_storage.data() + static_cast<int32_t>(valueSpanSize),
+            offsetSpanSize),
         rhs._view._stringOffsetType,
         rhs._view.size());
   }
@@ -490,11 +491,12 @@ public:
     this->_storage = rhs._storage;
     // Reconstruct spans so they point to this copy's data.
     size_t valueSpanSize = rhs._view._values.size();
+    size_t offsetSpanSize = this->_storage.size() - valueSpanSize;
     this->_view = PropertyArrayView<std::string_view>(
-        std::span<const std::byte>(this->_storage.begin(), valueSpanSize),
+        std::span<const std::byte>(this->_storage.data(), valueSpanSize),
         std::span<const std::byte>(
-            this->_storage.begin() + static_cast<int32_t>(valueSpanSize),
-            this->_storage.end()),
+            this->_storage.data() + static_cast<int32_t>(valueSpanSize),
+            offsetSpanSize),
         rhs._view._stringOffsetType,
         rhs._view.size());
     return *this;
