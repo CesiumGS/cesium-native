@@ -6,6 +6,12 @@
 
 - `CesiumRasterOverlays::WebMapServiceRasterOverlay` will no longer attempt to add a default `styles` parameter to the URL if the user has already specified one.
 
+##### Additions :tada:
+
+- Added `bool` and `std::string_view` overloads for `PropertyArrayCopy`.
+- Added support for the `KHR_gaussian_splatting` extension.
+  - SPZ payloads for `KHR_gaussian_splatting` using the `KHR_gaussian_splatting_compression_spz_2` extension will now be decoded.
+
 ### v0.55.0 - 2025-12-01
 
 ##### Breaking Changes :mega:
