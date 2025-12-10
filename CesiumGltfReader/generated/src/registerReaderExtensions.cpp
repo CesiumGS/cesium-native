@@ -16,6 +16,8 @@
 #include "ExtensionExtPrimitiveVoxelsJsonHandler.h"
 #include "ExtensionExtStructuralMetadataJsonHandler.h"
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
+#include "ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler.h"
+#include "ExtensionKhrGaussianSplattingJsonHandler.h"
 #include "ExtensionKhrImplicitShapesJsonHandler.h"
 #include "ExtensionKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionKhrTextureBasisuJsonHandler.h"
@@ -30,6 +32,7 @@
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
@@ -82,6 +85,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       CesiumGltf::MeshPrimitive,
       ExtensionExtPrimitiveVoxelsJsonHandler>();
   options.registerExtension<
+      CesiumGltf::MeshPrimitive,
+      ExtensionKhrGaussianSplattingJsonHandler>();
+  options.registerExtension<
       CesiumGltf::Node,
       ExtensionExtInstanceFeaturesJsonHandler>();
   options.registerExtension<
@@ -132,5 +138,8 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Shape,
       ExtensionExtImplicitCylinderRegionJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::ExtensionKhrGaussianSplatting,
+      ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler>();
 }
 } // namespace CesiumGltfReader

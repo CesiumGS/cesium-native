@@ -1,4 +1,6 @@
-if(ANDROID)
+if(CESIUM_TARGET_WASM OR "${CMAKE_SYSTEM_NAME}" STREQUAL "Emscripten")
+    set(DETECTED_VCPKG_TRIPLET "wasm32-emscripten")
+elseif(ANDROID)
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
         set(DETECTED_VCPKG_TRIPLET "x64-android")
     else()

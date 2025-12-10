@@ -252,8 +252,8 @@ struct GoogleMapTilesNewSessionParameters {
 };
 
 /**
- * @brief A `RasterOverlay` that retrieves imagery from the [Google Maps Tiles
- * API](https://developers.google.com/maps/documentation/tile).
+ * @brief A @ref RasterOverlay that retrieves imagery from the [Google Maps
+ * Tiles API](https://developers.google.com/maps/documentation/tile).
  */
 class CESIUMRASTEROVERLAYS_API GoogleMapTilesRasterOverlay
     : public RasterOverlay {
@@ -286,24 +286,12 @@ public:
 
   /** @inheritdoc */
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+      const CreateRasterOverlayTileProviderParameters& parameters)
       const override;
 
 private:
   CesiumAsync::Future<CreateTileProviderResult> createNewSession(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pOwner) const;
+      const CreateRasterOverlayTileProviderParameters& parameters) const;
 
   std::optional<GoogleMapTilesNewSessionParameters> _newSessionParameters;
   std::optional<GoogleMapTilesExistingSession> _existingSession;

@@ -3,6 +3,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
 
 #include <optional>
 #include <utility>
@@ -140,6 +141,22 @@ GlobeRectangle::computeUnion(const GlobeRectangle& other) const noexcept {
       glm::min(this->_south, other._south),
       east,
       glm::max(this->_north, other._north));
+}
+
+glm::dvec2 GlobeRectangle::computeNormalizedCoordinates(
+    const Cartographic& cartographic) const noexcept {
+  double east = this->_east;
+  double cartoLong = cartographic.longitude;
+  if (east < this->_west) {
+    east += CesiumUtility::Math::TwoPi;
+    if (cartoLong < this->_west) {
+      cartoLong += CesiumUtility::Math::TwoPi;
+    }
+  }
+
+  return glm::dvec2(
+      (cartoLong - this->_west) / (east - this->_west),
+      (cartographic.latitude - this->_south) / (this->_north - this->_south));
 }
 
 std::pair<GlobeRectangle, std::optional<GlobeRectangle>>

@@ -20,7 +20,6 @@
 #include <glm/common.hpp>
 #include <glm/exponential.hpp>
 #include <glm/ext/vector_double2.hpp>
-#include <spdlog/logger.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -52,14 +51,8 @@ constexpr double pixelTolerance = 0.01;
 namespace CesiumRasterOverlays {
 
 QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
-    const IntrusivePointer<const RasterOverlay>& pOwner,
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
-    std::optional<Credit> credit,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
+    const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
+    const CreateRasterOverlayTileProviderParameters& parameters,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
     const CesiumGeometry::Rectangle& coverageRectangle,
@@ -68,13 +61,8 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
     uint32_t imageWidth,
     uint32_t imageHeight) noexcept
     : RasterOverlayTileProvider(
-          pOwner,
-          asyncSystem,
-          pAssetAccessor,
-          pCreditSystem,
-          credit,
-          pPrepareRendererResources,
-          pLogger,
+          pCreator,
+          parameters,
           projection,
           coverageRectangle),
       _minimumLevel(minimumLevel),

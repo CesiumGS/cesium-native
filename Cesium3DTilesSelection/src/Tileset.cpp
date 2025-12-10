@@ -170,6 +170,10 @@ void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
   }
 }
 
+const CesiumUtility::CreditSource& Tileset::getCreditSource() const noexcept {
+  return this->_pTilesetContentManager->getCreditSource();
+}
+
 const Tile* Tileset::getRootTile() const noexcept {
   return this->_pTilesetContentManager->getRootTile();
 }
@@ -468,18 +472,12 @@ void Tileset::loadTiles() {
 }
 
 void Tileset::registerLoadRequester(TileLoadRequester& requester) {
-  if (requester._pTilesetContentManager == this->_pTilesetContentManager) {
-    return;
-  }
+  this->_pTilesetContentManager->registerTileRequester(requester);
+}
 
-  if (requester._pTilesetContentManager != nullptr) {
-    requester._pTilesetContentManager->unregisterTileRequester(requester);
-  }
-
-  requester._pTilesetContentManager = this->_pTilesetContentManager;
-  if (requester._pTilesetContentManager != nullptr) {
-    requester._pTilesetContentManager->registerTileRequester(requester);
-  }
+bool Tileset::waitForAllLoadsToComplete(double maximumWaitTimeInMilliseconds) {
+  return this->_pTilesetContentManager->waitUntilIdle(
+      maximumWaitTimeInMilliseconds);
 }
 
 int32_t Tileset::getNumberOfTilesLoaded() const {
@@ -1125,6 +1123,24 @@ bool Tileset::_kickDescendantsAndRenderTile(
         selectionState.kick();
       });
 
+  // If any kicked tiles were rendered last frame, add them to the
+  // tilesFadingOut. This is unlikely! It would imply that a tile rendered last
+  // frame has suddenly become unrenderable, and therefore eligible for kicking.
+  //
+  // In general, it's possible that a Tile previously traversed has been deleted
+  // completely, so we have to be careful about dereferencing the Tile pointers
+  // given to the callback below. However, we can be certain that a Tile that
+  // was rendered last frame has _not_ been deleted yet.
+  traversalState.forEachPreviousDescendant(
+      [&result](
+          const Tile::Pointer& pTile,
+          const TileSelectionState& previousState) {
+        addToTilesFadingOutIfPreviouslyRendered(
+            previousState.getResult(),
+            *pTile,
+            result);
+      });
+
   // Remove all descendants from the render list and add this tile.
   std::vector<Tile::ConstPointer>& renderList = result.tilesToRenderThisFrame;
   std::vector<double>& sseList = result.tileScreenSpaceErrorThisFrame;
@@ -1157,8 +1173,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
       getPreviousState(frameState.viewGroup, tile).getResult();
   const bool wasRenderedLastFrame =
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
-  const bool wasReallyRenderedLastFrame =
-      wasRenderedLastFrame && tile.isRenderable();
+  const bool isRenderable = tile.isRenderable();
+  const bool wasReallyRenderedLastFrame = wasRenderedLastFrame && isRenderable;
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1182,10 +1198,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
     queuedForLoad = true;
   }
 
-  bool isRenderable = tile.isRenderable();
   traversalDetails.allAreRenderable = isRenderable;
-  traversalDetails.anyWereRenderedLastFrame =
-      isRenderable && wasRenderedLastFrame;
+  traversalDetails.anyWereRenderedLastFrame = wasReallyRenderedLastFrame;
 
   return queuedForLoad;
 }
@@ -1535,7 +1549,8 @@ void Tileset::addTileToLoadQueue(
     TileLoadPriorityGroup priorityGroup,
     double priority) {
   frameState.viewGroup.addToLoadQueue(
-      TileLoadTask{&tile, priorityGroup, priority});
+      TileLoadTask{&tile, priorityGroup, priority},
+      this->_externals.pGltfModifier);
 }
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(

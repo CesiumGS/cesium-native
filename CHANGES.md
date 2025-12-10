@@ -2,19 +2,68 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added `bool` and `std::string_view` overloads for `PropertyArrayCopy`.
+- Added support for the `KHR_gaussian_splatting` extension.
+  - SPZ payloads for `KHR_gaussian_splatting` using the `KHR_gaussian_splatting_compression_spz_2` extension will now be decoded.
+
+### v0.55.0 - 2025-12-01
+
 ##### Breaking Changes :mega:
 
-- Restored vcpkg commit update to `2025.09.17`.
+- `RasterOverlay::createTileProvider` now receives a reference to `CreateRasterOverlayTileProviderParameters` instead of a large number of individual parameters.
+- The constructor parameters for `RasterOverlayTileProvider` and `QuadtreeRasterOverlayTileProvider` have changed.
+- The `getCredit` method has been removed from `RasterOverlayCreditProvider`. Use `getCredits` instead.
+- Renamed `CesiumRasterOverlays::TileProviderAndTile` to `RasterOverlayTileLoadResult`. It now holds a pointer to the `ActivatedRasterOverlay` instead of the `RasterOverlayTileProvider`.
+- Custom functions registered with `GltfConverter` can no longer expect that external data in the glTF will be automatically loaded by the caller. If they want external data in the glTF to be loaded as well, they should use `GltfReader::readGltfAndExternalData`.
+
+##### Additions :tada:
+
+- Added the concept of a `CreditSource`. Every `Credit` in a `CreditSystem` has a source, and these can be mapped back to `Tileset` and `RasterOverlayTileProvider` (via their `getCreditSource` methods) in order to determine which dataset created which credits.
+- Added `TilesetViewGroup::isCreditReferenced`, which can be used to determine if a particular view group references a particular `Credit`.
+- Added `CreditReferencer::isCreditReferenced`, which can be used to determine if the referencer is currently referencing a particular `Credit`.
+- `CreditSystem::getSnapshot` now takes an optional parameter specifying if and how to filter `Credits` with identical HTML strings.
+- Added `Cesium3DTilesSelection::Tileset::waitForAllLoadsToComplete`.
+- Added `CesiumGltfReader::readGltfAndExternalData`. It reads any external data before doing any postprocessing, such as decoding Draco and meshopt.
+
+##### Fixes :wrench:
+
+- The cmake install process previously didn't install `zlib`, which is required by `libcurl`.
+- Fixed a bug that could cause an `ActivatedRasterOverlay` to be destroyed before the last `RasterOverlayTile` it created, leading to a crash.
+
+### v0.54.0 - 2025-11-17
+
+##### Additions :tada:
+
+- Cesium Native can now be built with Emscripten.
+
+### v0.53.0 - 2025-11-03
+
+##### Breaking Changes :mega:
+
+- Upgraded vcpkg to `2025.09.17`. This was previously done in v0.52.0 and reverted in v0.52.1.
+- Removed `refreshTileProviderWithNewKey` from `BingMapsRasterOverlay` and `refreshTileProviderWithNewUrlAndHeaders` from `TileMapServiceRasterOverlay`. These were no longer used after the raster overlay refactor in `v0.52.0`.
+
+##### Additions :tada:
+
+- Added `AzureMapsRasterOverlay`.
+- Added `Uri::ensureTrailingSlash`, which is helpful when the `Uri` represents a base URL.
+- Added `GltfModifier`, which can be used to modify tile glTFs as they load, as well as apply new modifications to them later.
 
 ##### Fixes :wrench:
 
 - Fixed a bug in `GoogleMapTilesRasterOverlay` that tried to parse credits from an erroneous viewport service response.
+- Fixed issues with `GeoJsonRasterOverlay` with certain types of data.
+  - Polygons with holes should now display correctly.
+  - Using a GeoJSON file with data on either side of the antimeridian should now display correctly instead of causing the entire overlay to disappear.
+- Fixed a bug with credits not showing on-screen when `showCreditsOnScreen` was enabled on `GoogleMapTilesRasterOverlay`.
 
 ### v0.52.1 - 2025-10-01
 
 ##### Breaking Changes :mega:
 
-- Reverted vcpkg update that could interfere with builds on headless MacOS.
+- Reverted vcpkg update that could interfere with builds on headless macOS.
 
 ### v0.52.0 - 2025-10-01
 

@@ -4,6 +4,14 @@ if (NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
+get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
+if(toolchainFile STREQUAL "Emscripten.cmake")
+    set(CESIUM_TARGET_WASM ON)
+    # Include the toolchain directly as ezvcpkg will overwrite the 
+    # toolchain before it's loaded
+    include(${CMAKE_TOOLCHAIN_FILE})
+endif()
+
 # By default, Use ezvcpkg to install dependencies. But don't use
 # ezvcpkg if it appears that this configuration is using vcpkg
 # manifest mode already, either by building cesium-native directly,
@@ -24,6 +32,13 @@ endif()
 
 option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
 option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
+option(CESIUM_DISABLE_LIBJPEG_TURBO "Disable cesium-native's use of libjpeg-turbo. JPEG images will be decoded with STB instead." OFF)
+option(CESIUM_WASM64 "Enable 64-bit WebAssembly target" OFF)
+
+if (CESIUM_TARGET_WASM)
+    # Make sure curl is disabled on wasm builds, as it is not supported.
+    set(CESIUM_DISABLE_CURL ON)
+endif()
 
 if(CESIUM_USE_EZVCPKG)
   # Keep vcpkg from running in manifset mode. It will try to because
@@ -50,12 +65,28 @@ if (NOT VCPKG_TRIPLET)
     elseif(DETECTED_VCPKG_TRIPLET STREQUAL "x64-windows")
         # cesium-native requires static linking on Windows
         set(VCPKG_TRIPLET "x64-windows-static-md")
+    elseif(DETECTED_VCPKG_TRIPLET STREQUAL "wasm32-emscripten")
+        # Use our custom triplet for wasm builds. Most importantly, this
+        # enables multithreading support. Also switch to 64-bit wasm if
+        # requested.
+        if (CESIUM_WASM64)
+            set(VCPKG_TRIPLET "wasm64-emscripten-cesium")
+        else()
+            set(VCPKG_TRIPLET "wasm32-emscripten-cesium")
+        endif()
     else()
         set(VCPKG_TRIPLET "${DETECTED_VCPKG_TRIPLET}")
     endif()
-    if (NOT CESIUM_USE_EZVCPKG)
-        set(VCPKG_TARGET_TRIPLET "${VCPKG_TRIPLET}")
-    endif()
+
+    # If we're using ezvcpkg, ezvcpkg will update CMAKE_TOOLCHAIN_FILE to point to the vcpkg toolchain.
+    # Which means that when we hit the `project` function call below, cmake will load the vcpkg
+    # toolchain file. If VCPKG_TARGET_TRIPLET isn't set by that time, vcpkg will set it itself, and
+    # maybe not to what we want. So set VCPKG_TARGET_TRIPLET explicit here so that we're sure to get
+    # the right one.
+    #
+    # If we're _not_ using ezvcpkg, then we also must set VCPKG_TARGET_TRIPLET, but for a different reason.
+    # VCPKG_TRIPLET is only an ezvcpkg thing, vcpkg itself only knows about VCPKG_TARGET_TRIPLET.
+    set(VCPKG_TARGET_TRIPLET "${VCPKG_TRIPLET}")
 endif()
 
 message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
@@ -80,6 +111,10 @@ if (NOT VCPKG_OVERLAY_TRIPLETS)
     endif()
 endif()
 
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
+    list(APPEND VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
+endif()
+
 message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
 
 # These packages are used in the public headers of Cesium libraries, so we need to distribute the headers and binaries
@@ -91,13 +126,13 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
 set(PACKAGES_PRIVATE
-    abseil draco ktx modp-base64 meshoptimizer openssl s2geometry
-    libjpeg-turbo sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp cpp-httplib[core] libmorton zstd
+    abseil draco ktx[core] modp-base64 meshoptimizer openssl s2geometry
+    sqlite3 tinyxml2 libwebp zlib-ng picosha2
+    earcut-hpp libmorton zstd spz zlib
 )
 
-# asmjit needed by blend2d on non-iOS platforms (iOS doesn't support JIT)
-if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
+# asmjit needed by blend2d on non-iOS platforms (iOS and Wasm don't support JIT)
+if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     list(APPEND PACKAGES_PRIVATE blend2d asmjit)
 else()
     # Use [core] feature to disable default jit feature.
@@ -108,8 +143,28 @@ if(NOT CESIUM_DISABLE_CURL)
     list(APPEND PACKAGES_PRIVATE curl)
 endif()
 
+if(NOT CESIUM_DISABLE_LIBJPEG_TURBO)
+    list(APPEND PACKAGES_PRIVATE libjpeg-turbo)
+endif()
+
+# We use cpp-httplib to host a local web server for OAuth2 authorization. That's not
+# going to work at all on the web, and the latest versions of cpp-httplib only support
+# 64-bit platforms anyway, so skip it entirely for WebAssembly builds.
+if(NOT CESIUM_TARGET_WASM)
+    list(APPEND PACKAGES_PRIVATE "cpp-httplib[core]")
+endif()
+
 # Packages only used for testing
 set(PACKAGES_TEST doctest)
+
+if(CESIUM_TARGET_WASM)
+    # vcpkg will attempt to second-guess our CMAKE_C_COMPILER setting, choosing to go with the value of CC instead.
+    # While normally this is the correct value to go with, for wasm we need to be using emcc and em++.
+    # So we set CC and CXX to emcc and em++ here so vcpkg will pick them up properly.
+    # Does this make sense? No. Does it work? Somehow. ¯\_(ツ)_/¯
+    set(ENV{CC} ${CMAKE_C_COMPILER})
+    set(ENV{CXX} ${CMAKE_CXX_COMPILER})
+endif()
 
 if(CESIUM_USE_EZVCPKG)
     set(PACKAGES_ALL ${PACKAGES_PUBLIC})
@@ -117,7 +172,8 @@ if(CESIUM_USE_EZVCPKG)
     list(APPEND PACKAGES_ALL ${PACKAGES_TEST})
 
     ezvcpkg_fetch(
-        COMMIT 2025.09.17
+        COMMIT afc0a2e01ae104a2474216a2df0e8d78516fd5af
+        REPO microsoft/vcpkg
         PACKAGES ${PACKAGES_ALL}
         # Clean the build trees after building, so that we don't use a ton a disk space on the CI cache
         CLEAN_BUILDTREES
@@ -138,9 +194,19 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.52.0
+    VERSION 0.55.0
     LANGUAGES CXX C
 )
+
+if(CESIUM_TARGET_WASM)
+    if(CESIUM_WASM64)
+        set(CMAKE_SIZEOF_VOID_P 8)
+    else()
+        set(CMAKE_SIZEOF_VOID_P 4)
+    endif()
+    # Tells emscripten to output an HTML harness for the generated WASM
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+endif()
 
 include(GNUInstallDirs)
 include(CMakeDependentOption)
@@ -284,10 +350,16 @@ endif()
 
 # On the CI builds, I have to do this explicitly for some reason or it fails to find the vcpkg packages.
 # The toolchain is supposed to manage this, but I haven't figured out why it isn't yet.
-
+# One reason the toolchain won't manage this: it's not being run at all. That happens when this CMakeLists.txt
+# is invoked from another one via add_subdirectory, and the parent project has already loaded the toolchain
+# before ezvcpkg sets it.
 list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}/share/s2")
 list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}/share")
 list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
+if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE MATCHES "^[Dd][Ee][Bb][Uu][Gg]$")
+    list(APPEND CMAKE_FIND_ROOT_PATH "${PACKAGE_BUILD_DIR}/debug")
+endif()
+list(APPEND CMAKE_FIND_ROOT_PATH "${PACKAGE_BUILD_DIR}")
 
 # Find the VCPKG dependnecies
 # Note that while we could push these into the extern/CMakeLists.txt as an organization tidy-up, that would require
@@ -295,36 +367,36 @@ list(APPEND CMAKE_PREFIX_PATH "${PACKAGE_BUILD_DIR}")
 # they won't be visible in this scope nor any of the subdirectories for the actual libraries.
 #
 # However, for some of the vcpkg built libraries where they don't provide a prope cmake config file, we have to declare
-# and imporeted library target ourselves. This is the case for modp_b64::modp_b64, picosha2::picosha2 and earcut. In
+# an imported library target ourselves. This is the case for modp_b64::modp_b64, picosha2::picosha2 and earcut. In
 # these cases, we *do* have the somewhat ugly and verbose details in the extern/CMakeLists.txt file.
 #
 # XXX Above comment should be obsoleted by these first calls to
 # find_package, which resolve to our own modules that provide
 # targets. If needed, they can be installed with CMake config files
 # etc.
-find_package(zlib-ng REQUIRED)
 find_package(modp_b64 REQUIRED)
 
 find_package(ada CONFIG REQUIRED)
 find_package(Async++ CONFIG REQUIRED)
+find_package(blend2d CONFIG REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
 find_package(expected-lite CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(httplib CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(libmorton CONFIG REQUIRED)
-find_package(libjpeg-turbo CONFIG REQUIRED)
 find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(spz CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
-find_package(blend2d CONFIG REQUIRED)
-# asmjit should not be included with iOS builds as iOS doesn't support JIT compilation.
-if(NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
+find_package(zlib-ng CONFIG REQUIRED)
+
+# asmjit should not be included with iOS or Wasm builds as they don't support JIT compilation.
+if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
     find_package(asmjit CONFIG REQUIRED)
 endif()
 
@@ -332,9 +404,12 @@ if(NOT CESIUM_DISABLE_CURL)
     find_package(CURL REQUIRED)
 endif()
 
+if(NOT CESIUM_DISABLE_LIBJPEG_TURBO)
+    find_package(libjpeg-turbo CONFIG REQUIRED)
+endif()
 
-if(NOT CESIUM_DISABLE_CURL)
-    find_package(CURL REQUIRED)
+if(NOT CESIUM_TARGET_WASM)
+    find_package(httplib CONFIG REQUIRED)
 endif()
 
 # Private Library (s2geometry)
@@ -386,7 +461,6 @@ if(CESIUM_INSTALL_STATIC_LIBS AND CESIUM_INSTALL_HEADERS)
     DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
 
   install(FILES
-    "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findzlib-ng.cmake"
     "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findmodp_b64.cmake"
     DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
 

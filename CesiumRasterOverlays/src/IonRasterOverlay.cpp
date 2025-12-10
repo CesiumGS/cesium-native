@@ -3,7 +3,9 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumAsync/NetworkAssetDescriptor.h>
 #include <CesiumAsync/SharedAssetDepot.h>
+#include <CesiumRasterOverlays/AzureMapsRasterOverlay.h>
 #include <CesiumRasterOverlays/BingMapsRasterOverlay.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/GoogleMapTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/IonRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -23,7 +25,6 @@
 #include <fmt/format.h>
 #include <nonstd/expected.hpp>
 #include <rapidjson/document.h>
-#include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 
 #include <chrono>
@@ -63,8 +64,8 @@ public:
       expected<AggregatedTileProviderSuccess, RasterOverlayLoadFailureDetails>;
 
   struct CreateTileProvider {
-    IntrusivePointer<const RasterOverlay> pOwner;
-    RasterOverlayExternals externals;
+    IntrusivePointer<const IonRasterOverlay> pCreator;
+    CreateRasterOverlayTileProviderParameters parameters;
 
     SharedFuture<AggregatedTileProviderResult>
     operator()(const IntrusivePointer<ExternalAssetEndpoint>& pEndpoint);
@@ -74,12 +75,14 @@ public:
       DerivedValue<IntrusivePointer<ExternalAssetEndpoint>, CreateTileProvider>;
 
   TileProvider(
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const IntrusivePointer<RasterOverlayTileProvider>& pInitialProvider,
       const NetworkAssetDescriptor& descriptor,
       TileProviderFactoryType&& tileProviderFactory)
       : RasterOverlayTileProvider(
-            &pInitialProvider->getOwner(),
-            pInitialProvider->getExternals(),
+            pCreator,
+            parameters,
             pInitialProvider->getProjection(),
             pInitialProvider->getCoverageRectangle()),
         _descriptor(descriptor),
@@ -87,20 +90,26 @@ public:
         _credits() {}
 
   static CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> create(
-      const RasterOverlayExternals& externals,
-      const NetworkAssetDescriptor& descriptor,
-      const IntrusivePointer<const RasterOverlay>& pOwner) {
+      const IntrusivePointer<const IonRasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters,
+      const NetworkAssetDescriptor& descriptor) {
     auto pFactory = std::make_unique<TileProvider::TileProviderFactoryType>(
         TileProvider::TileProviderFactoryType(TileProvider::CreateTileProvider{
-            .pOwner = pOwner,
-            .externals = externals}));
-    return TileProvider::getTileProvider(externals, descriptor, *pFactory)
+            .pCreator = pCreator,
+            .parameters = parameters}));
+
+    return TileProvider::getTileProvider(
+               parameters.externals,
+               descriptor,
+               *pFactory)
         .thenInMainThread(
-            [descriptor, pFactory = std::move(pFactory)](
+            [descriptor, pFactory = std::move(pFactory), pCreator, parameters](
                 AggregatedTileProviderResult&& result) mutable
             -> CreateTileProviderResult {
               if (result) {
                 IntrusivePointer p = new TileProvider(
+                    pCreator,
+                    parameters,
                     result.value().pAggregated,
                     descriptor,
                     std::move(*pFactory));
@@ -278,15 +287,7 @@ void IonRasterOverlay::setAssetOptions(
 
 Future<RasterOverlay::CreateTileProviderResult>
 IonRasterOverlay::createTileProvider(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<CreditSystem>& pCreditSystem,
-    const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-        pPrepareRendererResources,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner) const {
-  pOwner = pOwner ? pOwner : this;
-
+    const CreateRasterOverlayTileProviderParameters& parameters) const {
   NetworkAssetDescriptor descriptor;
   descriptor.url = this->_overlayUrl;
 
@@ -304,15 +305,87 @@ IonRasterOverlay::createTileProvider(
     descriptor.url = uri.toString();
   }
 
-  RasterOverlayExternals externals{
-      .pAssetAccessor = pAssetAccessor,
-      .pPrepareRendererResources = pPrepareRendererResources,
-      .asyncSystem = asyncSystem,
-      .pCreditSystem = pCreditSystem,
-      .pLogger = pLogger,
-  };
+  // The aggregated tile provider should be owned by this overlay and use a
+  // common credit source. But the conditions account for the possibility that
+  // the IonRasterOverlay itself is aggregated by some other overlay.
+  CreateRasterOverlayTileProviderParameters parametersCopy = parameters;
+  if (parametersCopy.pOwner == nullptr) {
+    parametersCopy.pOwner = this;
+  }
+  if (parametersCopy.pCreditSource == nullptr) {
+    parametersCopy.pCreditSource =
+        std::make_shared<CreditSource>(parameters.externals.pCreditSystem);
+  }
 
-  return TileProvider::create(externals, descriptor, pOwner);
+  return TileProvider::create(this, parametersCopy, descriptor);
+}
+
+void IonRasterOverlay::ExternalAssetEndpoint::parseAzure2DOptions(
+    const rapidjson::Document& ionResponse) {
+  const auto optionsIt = ionResponse.FindMember("options");
+  if (optionsIt == ionResponse.MemberEnd() || !optionsIt->value.IsObject()) {
+    return;
+  }
+
+  const auto& ionOptions = optionsIt->value;
+  ExternalAssetEndpoint::Azure2D& azure2D =
+      this->options.emplace<ExternalAssetEndpoint::Azure2D>();
+  azure2D.url = JsonHelpers::getStringOrDefault(ionOptions, "url", "");
+  azure2D.tilesetId =
+      JsonHelpers::getStringOrDefault(ionOptions, "tilesetId", "");
+  azure2D.key =
+      JsonHelpers::getStringOrDefault(ionOptions, "subscription-key", "");
+}
+
+void IonRasterOverlay::ExternalAssetEndpoint::parseGoogle2DOptions(
+    const rapidjson::Document& ionResponse) {
+  const auto optionsIt = ionResponse.FindMember("options");
+  if (optionsIt == ionResponse.MemberEnd() || !optionsIt->value.IsObject()) {
+    return;
+  }
+
+  const auto& ionOptions = optionsIt->value;
+  ExternalAssetEndpoint::Google2D& google2D =
+      this->options.emplace<ExternalAssetEndpoint::Google2D>();
+  google2D.url =
+      JsonHelpers::getStringOrDefault(ionOptions, "url", google2D.url);
+  google2D.key = JsonHelpers::getStringOrDefault(ionOptions, "key", "");
+  google2D.session = JsonHelpers::getStringOrDefault(ionOptions, "session", "");
+  google2D.expiry = JsonHelpers::getStringOrDefault(ionOptions, "expiry", "");
+  google2D.tileWidth =
+      JsonHelpers::getUint32OrDefault(ionOptions, "tileWidth", 256);
+  google2D.tileHeight =
+      JsonHelpers::getUint32OrDefault(ionOptions, "tileHeight", 256);
+  google2D.imageFormat = JsonHelpers::getStringOrDefault(
+      ionOptions,
+      "imageFormat",
+      GoogleMapTilesImageFormat::jpeg);
+}
+
+void IonRasterOverlay::ExternalAssetEndpoint::parseBingOptions(
+    const rapidjson::Document& ionResponse) {
+  const auto optionsIt = ionResponse.FindMember("options");
+  if (optionsIt == ionResponse.MemberEnd() || !optionsIt->value.IsObject()) {
+    return;
+  }
+
+  const auto& ionOptions = optionsIt->value;
+  ExternalAssetEndpoint::Bing& bing =
+      this->options.emplace<ExternalAssetEndpoint::Bing>();
+  bing.url = JsonHelpers::getStringOrDefault(ionOptions, "url", "");
+  bing.key = JsonHelpers::getStringOrDefault(ionOptions, "key", "");
+  bing.mapStyle =
+      JsonHelpers::getStringOrDefault(ionOptions, "mapStyle", "AERIAL");
+  bing.culture = JsonHelpers::getStringOrDefault(ionOptions, "culture", "");
+}
+
+void IonRasterOverlay::ExternalAssetEndpoint::parseTileMapServiceOptions(
+    const rapidjson::Document& ionResponse) {
+  ExternalAssetEndpoint::TileMapService& tileMapService =
+      this->options.emplace<ExternalAssetEndpoint::TileMapService>();
+  tileMapService.url = JsonHelpers::getStringOrDefault(ionResponse, "url", "");
+  tileMapService.accessToken =
+      JsonHelpers::getStringOrDefault(ionResponse, "accessToken", "");
 }
 
 /* static */ CesiumUtility::IntrusivePointer<IonRasterOverlay::EndpointDepot>
@@ -393,36 +466,25 @@ IonRasterOverlay::getEndpointCache() {
                       "externalType",
                       "unknown");
 
-                  if (endpoint.externalType == "BING") {
-                    const auto optionsIt = response.FindMember("options");
-                    if (optionsIt == response.MemberEnd() ||
-                        !optionsIt->value.IsObject()) {
+                  if (endpoint.externalType == "AZURE_MAPS") {
+                    endpoint.parseAzure2DOptions(response);
+
+                    if (!std::holds_alternative<ExternalAssetEndpoint::Azure2D>(
+                            endpoint.options)) {
                       endpoint.pRequestThatFailed = std::move(pRequest);
                       return ResultPointer<ExternalAssetEndpoint>(
                           new ExternalAssetEndpoint(std::move(endpoint)),
                           ErrorList::error(fmt::format(
-                              "Cesium ion Bing Maps raster overlay metadata "
+                              "Cesium ion Azure Maps raster overlay metadata "
                               "response does not contain 'options' or it is "
                               "not an object.")));
                     }
-
-                    const auto& options = optionsIt->value;
-                    ExternalAssetEndpoint::Bing& bing =
-                        endpoint.options.emplace<ExternalAssetEndpoint::Bing>();
-                    bing.url =
-                        JsonHelpers::getStringOrDefault(options, "url", "");
-                    bing.key =
-                        JsonHelpers::getStringOrDefault(options, "key", "");
-                    bing.mapStyle = JsonHelpers::getStringOrDefault(
-                        options,
-                        "mapStyle",
-                        "AERIAL");
-                    bing.culture =
-                        JsonHelpers::getStringOrDefault(options, "culture", "");
                   } else if (endpoint.externalType == "GOOGLE_2D_MAPS") {
-                    const auto optionsIt = response.FindMember("options");
-                    if (optionsIt == response.MemberEnd() ||
-                        !optionsIt->value.IsObject()) {
+                    endpoint.parseGoogle2DOptions(response);
+
+                    if (!std::holds_alternative<
+                            ExternalAssetEndpoint::Google2D>(
+                            endpoint.options)) {
                       endpoint.pRequestThatFailed = std::move(pRequest);
                       return ResultPointer<ExternalAssetEndpoint>(
                           new ExternalAssetEndpoint(std::move(endpoint)),
@@ -431,45 +493,21 @@ IonRasterOverlay::getEndpointCache() {
                               "metadata response does not contain 'options' or "
                               "it is not an object.")));
                     }
+                  } else if (endpoint.externalType == "BING") {
+                    endpoint.parseBingOptions(response);
 
-                    const auto& options = optionsIt->value;
-                    ExternalAssetEndpoint::Google2D& google2D =
-                        endpoint.options
-                            .emplace<ExternalAssetEndpoint::Google2D>();
-                    google2D.url = JsonHelpers::getStringOrDefault(
-                        options,
-                        "url",
-                        google2D.url);
-                    google2D.key =
-                        JsonHelpers::getStringOrDefault(options, "key", "");
-                    google2D.session =
-                        JsonHelpers::getStringOrDefault(options, "session", "");
-                    google2D.expiry =
-                        JsonHelpers::getStringOrDefault(options, "expiry", "");
-                    google2D.tileWidth = JsonHelpers::getUint32OrDefault(
-                        options,
-                        "tileWidth",
-                        256);
-                    google2D.tileHeight = JsonHelpers::getUint32OrDefault(
-                        options,
-                        "tileHeight",
-                        256);
-                    google2D.imageFormat = JsonHelpers::getStringOrDefault(
-                        options,
-                        "imageFormat",
-                        GoogleMapTilesImageFormat::jpeg);
-
+                    if (!std::holds_alternative<ExternalAssetEndpoint::Bing>(
+                            endpoint.options)) {
+                      endpoint.pRequestThatFailed = std::move(pRequest);
+                      return ResultPointer<ExternalAssetEndpoint>(
+                          new ExternalAssetEndpoint(std::move(endpoint)),
+                          ErrorList::error(fmt::format(
+                              "Cesium ion Bing Maps raster overlay metadata "
+                              "response does not contain 'options' or it is "
+                              "not an object.")));
+                    }
                   } else {
-                    ExternalAssetEndpoint::TileMapService& tileMapService =
-                        endpoint.options
-                            .emplace<ExternalAssetEndpoint::TileMapService>();
-                    tileMapService.url =
-                        JsonHelpers::getStringOrDefault(response, "url", "");
-                    tileMapService.accessToken =
-                        JsonHelpers::getStringOrDefault(
-                            response,
-                            "accessToken",
-                            "");
+                    endpoint.parseTileMapServiceOptions(response);
                   }
 
                   const auto attributionsIt =
@@ -539,7 +577,7 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
     const IntrusivePointer<ExternalAssetEndpoint>& pEndpoint) {
   if (pEndpoint == nullptr ||
       std::holds_alternative<std::monostate>(pEndpoint->options)) {
-    return this->externals.asyncSystem
+    return this->parameters.externals.asyncSystem
         .createResolvedFuture<AggregatedTileProviderResult>(
             nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
                 RasterOverlayLoadType::CesiumIon,
@@ -549,25 +587,27 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
   }
 
   IntrusivePointer<RasterOverlay> pOverlay = nullptr;
-  if (pEndpoint->externalType == "BING") {
-    CESIUM_ASSERT(std::holds_alternative<ExternalAssetEndpoint::Bing>(
+  if (pEndpoint->externalType == "AZURE_MAPS") {
+    CESIUM_ASSERT(std::holds_alternative<ExternalAssetEndpoint::Azure2D>(
         pEndpoint->options));
-    ExternalAssetEndpoint::Bing& bing =
-        std::get<ExternalAssetEndpoint::Bing>(pEndpoint->options);
-    pOverlay = new BingMapsRasterOverlay(
-        this->pOwner->getName(),
-        bing.url,
-        bing.key,
-        bing.mapStyle,
-        bing.culture,
-        this->pOwner->getOptions());
+    ExternalAssetEndpoint::Azure2D& azure2D =
+        std::get<ExternalAssetEndpoint::Azure2D>(pEndpoint->options);
+    pOverlay = new AzureMapsRasterOverlay(
+        this->pCreator->getName(),
+        AzureMapsSessionParameters{
+            .key = azure2D.key,
+            .tilesetId = azure2D.tilesetId,
+            .showLogo = false,
+            .apiBaseUrl = azure2D.url,
+        },
+        this->pCreator->getOptions());
   } else if (pEndpoint->externalType == "GOOGLE_2D_MAPS") {
     CESIUM_ASSERT(std::holds_alternative<ExternalAssetEndpoint::Google2D>(
         pEndpoint->options));
     ExternalAssetEndpoint::Google2D& google2D =
         std::get<ExternalAssetEndpoint::Google2D>(pEndpoint->options);
     pOverlay = new GoogleMapTilesRasterOverlay(
-        this->pOwner->getName(),
+        this->pCreator->getName(),
         GoogleMapTilesExistingSession{
             .key = google2D.key,
             .session = google2D.session,
@@ -578,43 +618,49 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
             .showLogo = false,
             .apiBaseUrl = google2D.url,
         },
-        this->pOwner->getOptions());
+        this->pCreator->getOptions());
+  } else if (pEndpoint->externalType == "BING") {
+    CESIUM_ASSERT(std::holds_alternative<ExternalAssetEndpoint::Bing>(
+        pEndpoint->options));
+    ExternalAssetEndpoint::Bing& bing =
+        std::get<ExternalAssetEndpoint::Bing>(pEndpoint->options);
+    pOverlay = new BingMapsRasterOverlay(
+        this->pCreator->getName(),
+        bing.url,
+        bing.key,
+        bing.mapStyle,
+        bing.culture,
+        this->pCreator->getOptions());
   } else {
     CESIUM_ASSERT(std::holds_alternative<ExternalAssetEndpoint::TileMapService>(
         pEndpoint->options));
     ExternalAssetEndpoint::TileMapService& tileMapService =
         std::get<ExternalAssetEndpoint::TileMapService>(pEndpoint->options);
     pOverlay = new TileMapServiceRasterOverlay(
-        this->pOwner->getName(),
+        this->pCreator->getName(),
         tileMapService.url,
         std::vector<CesiumAsync::IAssetAccessor::THeader>{std::make_pair(
             "Authorization",
             "Bearer " + tileMapService.accessToken)},
         TileMapServiceRasterOverlayOptions(),
-        this->pOwner->getOptions());
+        this->pCreator->getOptions());
   }
 
   std::vector<Credit> credits;
 
-  if (this->externals.pCreditSystem) {
+  if (this->parameters.externals.pCreditSystem) {
     credits.reserve(pEndpoint->attributions.size());
     for (const AssetEndpointAttribution& attribution :
          pEndpoint->attributions) {
-      credits.emplace_back(this->externals.pCreditSystem->createCredit(
-          attribution.html,
-          !attribution.collapsible ||
-              this->pOwner->getOptions().showCreditsOnScreen));
+      credits.emplace_back(
+          this->parameters.externals.pCreditSystem->createCredit(
+              attribution.html,
+              !attribution.collapsible ||
+                  this->pCreator->getOptions().showCreditsOnScreen));
     }
   }
 
-  return pOverlay
-      ->createTileProvider(
-          this->externals.asyncSystem,
-          this->externals.pAssetAccessor,
-          this->externals.pCreditSystem,
-          this->externals.pPrepareRendererResources,
-          this->externals.pLogger,
-          this->pOwner)
+  return pOverlay->createTileProvider(parameters)
       .thenImmediately([credits = std::move(credits)](
                            CreateTileProviderResult&& result) mutable {
         if (result) {
@@ -629,5 +675,4 @@ IonRasterOverlay::TileProvider::CreateTileProvider::operator()(
       })
       .share();
 }
-
 } // namespace CesiumRasterOverlays

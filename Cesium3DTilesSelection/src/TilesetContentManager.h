@@ -113,7 +113,7 @@ public:
 
   UnloadTileContentResult unloadTileContent(Tile& tile);
 
-  void waitUntilIdle();
+  bool waitUntilIdle(double maximumWaitTimeInMilliseconds);
 
   /**
    * @brief Unload every tile that is safe to unload.
@@ -180,6 +180,11 @@ public:
   void markTilesetDestroyed() noexcept;
   void releaseReference() const;
 
+  TilesetExternals& getExternals();
+  const TilesetExternals& getExternals() const;
+
+  const CesiumUtility::CreditSource& getCreditSource() const noexcept;
+
 private:
   static void setTileContent(
       Tile& tile,
@@ -201,12 +206,19 @@ private:
 
   void notifyTileUnloading(const Tile* pTile) noexcept;
 
+  void reapplyGltfModifier(
+      Tile& tile,
+      const TilesetOptions& tilesetOptions,
+      TileRenderContent* pRenderContent) noexcept;
+
   template <class TilesetContentLoaderType>
   void propagateTilesetContentLoaderResult(
       TilesetLoadType type,
       const std::function<void(const TilesetLoadFailureDetails&)>&
           loadErrorCallback,
       TilesetContentLoaderResult<TilesetContentLoaderType>&& result);
+
+  CesiumAsync::Future<void> registerGltfModifier(const Tile* pRootTile);
 
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
@@ -242,5 +254,7 @@ private:
   // These are scratch space, stored here to avoid heap allocations.
   std::vector<double> _requesterFractions;
   std::vector<TileLoadRequester*> _requestersWithRequests;
+
+  CesiumUtility::CreditSource _creditSource;
 };
 } // namespace Cesium3DTilesSelection

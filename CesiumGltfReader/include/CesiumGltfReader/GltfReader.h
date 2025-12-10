@@ -90,6 +90,13 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool decodeMeshOptData = true;
 
   /**
+   * @brief Whether gaussian splatting data are decompressed as part of the load
+   * process, or left in the compressed format according to the
+   * KHR_gaussian_splatting_compression_spz extension.
+   */
+  bool decodeSpz = true;
+
+  /**
    * @brief Whether the quantized mesh data are dequantized and converted to
    * floating-point values when loading, according to the KHR_mesh_quantization
    * extension.
@@ -151,6 +158,46 @@ public:
    */
   GltfReaderResult readGltf(
       const std::span<const std::byte>& data,
+      const GltfReaderOptions& options = GltfReaderOptions()) const;
+
+  /**
+   * @brief Read a glTF or binary glTF (GLB) from a buffer and then resolve
+   * external references.
+   *
+   * @param data The data bytes of the glTF file
+   * @param asyncSystem The async system to use for resolving external data.
+   * @param headers http headers needed to make the request.
+   * @param pAssetAccessor The asset accessor to use to make the necessary
+   * requests.
+   * @param baseUrl The url to which all external urls are relative
+   * @param options Options for how to read the glTF.
+   */
+  CesiumAsync::Future<GltfReaderResult> readGltfAndExternalData(
+      const std::span<const std::byte>& data,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const CesiumAsync::HttpHeaders& headers,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& baseUrl = {},
+      const GltfReaderOptions& options = GltfReaderOptions()) const;
+
+  /**
+   * @brief Read a glTF or binary glTF (GLB) from a buffer and then resolve
+   * external references.
+   *
+   * @param data The data bytes of the glTF file
+   * @param asyncSystem The async system to use for resolving external data.
+   * @param headers http headers needed to make the request.
+   * @param pAssetAccessor The asset accessor to use to make the necessary
+   * requests.
+   * @param baseUrl The url to which all external urls are relative
+   * @param options Options for how to read the glTF.
+   */
+  CesiumAsync::Future<GltfReaderResult> readGltfAndExternalData(
+      const std::span<const std::byte>& data,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& headers,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& baseUrl = {},
       const GltfReaderOptions& options = GltfReaderOptions()) const;
 
   /**
