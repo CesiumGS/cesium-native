@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Fixes :wrench:
+
+- `CesiumRasterOverlays::WebMapServiceRasterOverlay` will no longer attempt to add a default `styles` parameter to the URL if the user has already specified one.
+
 ##### Additions :tada:
 
 - Added `bool` and `std::string_view` overloads for `PropertyArrayCopy`.
