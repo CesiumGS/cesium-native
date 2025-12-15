@@ -11,6 +11,7 @@
 - Added `bool` and `std::string_view` overloads for `PropertyArrayCopy`.
 - Added support for the `KHR_gaussian_splatting` extension.
   - SPZ payloads for `KHR_gaussian_splatting` using the `KHR_gaussian_splatting_compression_spz_2` extension will now be decoded.
+- CMAKE_COMPILE_WARNING_AS_ERROR is now used, defaults to ON.
 
 ### v0.55.0 - 2025-12-01
 
