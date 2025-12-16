@@ -5,6 +5,7 @@
 ##### Fixes :wrench:
 
 - `CesiumRasterOverlays::WebMapServiceRasterOverlay` will no longer attempt to add a default `styles` parameter to the URL if the user has already specified one.
+- `SharedAssetDepot` will no longer cache asset loads that fail with an exception / `Future` rejection, allowing them to be retried. Other types of load failures are cached as before.
 
 ##### Additions :tada:
 
