@@ -218,6 +218,13 @@ public:
   }
 
   /**
+   * @brief Gets the refresh token used by this connection.
+   */
+  const std::string& getRefreshToken() const noexcept {
+    return this->_refreshToken;
+  }
+
+  /**
    * @brief Gets the Cesium ion API base URL.
    */
   const std::string& getApiUrl() const noexcept { return this->_apiUrl; }
