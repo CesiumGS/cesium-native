@@ -129,17 +129,31 @@ Connection::Connection(
 
 Connection::Connection(
     const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const CesiumIonClient::LoginToken& accessToken,
+    const CesiumIonClient::ApplicationData& appData,
+    const std::string& apiUrl)
+    : Connection(
+          asyncSystem,
+          pAssetAccessor,
+          accessToken,
+          "",
+          0,
+          "",
+          appData,
+          apiUrl) {}
+
+Connection::Connection(
+    const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const CesiumIonClient::ApplicationData& appData,
     const std::string& apiUrl)
-    : _asyncSystem(asyncSystem),
-      _pAssetAccessor(pAssetAccessor),
-      _accessToken(LoginToken("", 0)),
-      _refreshToken(""),
-      _apiUrl(apiUrl),
-      _appData(appData),
-      _clientId(0),
-      _redirectPath("") {}
+    : Connection(
+          asyncSystem,
+          pAssetAccessor,
+          LoginToken("", 0),
+          appData,
+          apiUrl) {}
 
 namespace {
 

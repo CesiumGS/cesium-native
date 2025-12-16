@@ -151,6 +151,34 @@ public:
 
   /**
    * @brief Creates a connection to Cesium ion using the provided access token.
+   * This connection will *not* have the ability to refresh itself if the access
+   * token is invalid. This constructor is intended to be used with tokens that
+   * do not expire, rather than the Cesium ion OAuth2 login tokens.
+   *
+   * @param asyncSystem The async system used to do work in threads.
+   * @param pAssetAccessor The interface used to interact with the Cesium ion
+   * REST API.
+   * @param accessToken The access token.
+   * @param refreshToken The refresh token.
+   * @param clientId The OAuth2 client ID used to authorize the token for this
+   * connection. This will be used to refresh the token when it nears
+   * expiration.
+   * @param redirectPath The OAuth2 redirect path used to authorize this token
+   * for this connection. This will be used to refresh the token when it nears
+   * expiration.
+   * @param appData The app data retrieved from the Cesium ion server.
+   * @param apiUrl The base URL of the Cesium ion API.
+   */
+  Connection(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const CesiumIonClient::LoginToken& accessToken,
+      const CesiumIonClient::ApplicationData& appData,
+      const std::string& apiUrl = "https://api.cesium.com");
+
+  /**
+   * @brief Creates a connection to Cesium ion using the provided access and
+   * refresh tokens.
    *
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to interact with the Cesium ion
