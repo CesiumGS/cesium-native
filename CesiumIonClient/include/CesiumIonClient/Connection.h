@@ -177,6 +177,24 @@ public:
       const std::string& apiUrl = "https://api.cesium.com");
 
   /**
+   * @brief Creates a connection to a Cesium ion server without authentication.
+   *
+   * This is intended to be used with Cesium ion Self-Hosted instances that are
+   * set to Single User authentication.
+   *
+   * @param asyncSystem The async system used to do work in threads.
+   * @param pAssetAccessor The interface used to interact with the Cesium ion
+   * REST API.
+   * @param appData The app data retrieved from the Cesium ion server.
+   * @param apiUrl The base URL of the Cesium ion API.
+   */
+  Connection(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const CesiumIonClient::ApplicationData& appData,
+      const std::string& apiUrl);
+
+  /**
    * @brief Gets the async system used by this connection to do work in threads.
    */
   const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept {

@@ -127,6 +127,20 @@ Connection::Connection(
       _clientId(clientId),
       _redirectPath(redirectPath) {}
 
+Connection::Connection(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const CesiumIonClient::ApplicationData& appData,
+    const std::string& apiUrl)
+    : _asyncSystem(asyncSystem),
+      _pAssetAccessor(pAssetAccessor),
+      _accessToken(LoginToken("", 0)),
+      _refreshToken(""),
+      _apiUrl(apiUrl),
+      _appData(appData),
+      _clientId(0),
+      _redirectPath("") {}
+
 namespace {
 
 template <typename T> Response<T> createEmptyResponse() {
