@@ -1,3 +1,4 @@
+#include <CesiumClientCommon/JwtTokenUtility.h>
 #include <CesiumITwinClient/AuthenticationToken.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
@@ -9,10 +10,8 @@
 #include <rapidjson/error/en.h>
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <string>
-#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -22,48 +21,13 @@ using namespace CesiumUtility;
 namespace CesiumITwinClient {
 Result<AuthenticationToken>
 AuthenticationToken::parse(const std::string& tokenStr) {
-  const size_t firstPeriod = tokenStr.find('.');
-  if (firstPeriod == std::string::npos) {
-    return Result<AuthenticationToken>(ErrorList::error(
-        "Invalid JWT token, format must be `header.payload.signature`."));
+  CesiumUtility::Result<rapidjson::Document> payloadResult =
+      CesiumClientCommon::JwtTokenUtility::parseTokenPayload(tokenStr);
+  if (!payloadResult.value) {
+    return Result<AuthenticationToken>(std::move(payloadResult.errors));
   }
 
-  const size_t secondPeriod = tokenStr.find('.', firstPeriod + 1);
-  if (secondPeriod == std::string::npos) {
-    return Result<AuthenticationToken>(ErrorList::error(
-        "Invalid JWT token, format must be `header.payload.signature`."));
-  }
-
-  const std::string_view payloadSegment = std::string_view(tokenStr).substr(
-      firstPeriod + 1,
-      secondPeriod - firstPeriod - 1);
-
-  const size_t b64Len = modp_b64_decode_len(payloadSegment.length());
-  std::string decodedPayload;
-  decodedPayload.resize(b64Len);
-
-  if (modp_b64_decode(
-          decodedPayload.data(),
-          payloadSegment.data(),
-          payloadSegment.length()) == size_t(-1)) {
-    return Result<AuthenticationToken>(
-        ErrorList::error("Unable to decode base64 payload."));
-  }
-
-  rapidjson::Document json;
-  json.Parse(decodedPayload.data(), decodedPayload.size());
-
-  if (json.HasParseError()) {
-    return Result<AuthenticationToken>(ErrorList::error(fmt::format(
-        "Failed to parse payload JSON, parse error {} at byte offset {}.",
-        rapidjson::GetParseError_En(json.GetParseError()),
-        json.GetErrorOffset())));
-  }
-
-  if (!json.IsObject()) {
-    return Result<AuthenticationToken>(
-        ErrorList::error("Missing payload contents."));
-  }
+  rapidjson::Document& json = *payloadResult.value;
 
   int64_t expired = JsonHelpers::getInt64OrDefault(json, "exp", 0);
 

@@ -2,11 +2,18 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- The `CesiumIonClient::Connection` constructor now takes a refresh token, a `CesiumIonClient::LoginToken` instead of a string for the access token, as well as the client ID and redirect path passed to `CesiumIonClient::Connection::authorize`. This is to accommodate new Cesium ion token refresh requirements. Use `CesiumIonClient::LoginToken::parse` to obtain a `LoginToken` from the token string.
+- `CesiumIonClient::Connection::authorize` now returns a `CesiumUtility::Result<Connection>`. This removes the previous behavior of throwing an exception when authorization failed. 
+- API request methods on `CesiumIonClient::Connection` are no longer marked `const` as a token refresh may modify the connection.
+
 ##### Additions :tada:
 
 - Added `bool` and `std::string_view` overloads for `PropertyArrayCopy`.
 - Added support for the `KHR_gaussian_splatting` extension.
   - SPZ payloads for `KHR_gaussian_splatting` using the `KHR_gaussian_splatting_compression_spz_2` extension will now be decoded.
+- `CesiumIonClient::Connection` will now properly use refresh tokens, automatically refreshing the connection if the access token is expired and the refresh token is still valid.
 
 ### v0.55.0 - 2025-12-01
 

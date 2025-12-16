@@ -1,5 +1,7 @@
 #pragma once
 
+#include "CesiumClientCommon/OAuth2PKCE.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/Library.h>
@@ -7,12 +9,15 @@
 #include <CesiumIonClient/Assets.h>
 #include <CesiumIonClient/Defaults.h>
 #include <CesiumIonClient/Geocoder.h>
+#include <CesiumIonClient/LoginToken.h>
 #include <CesiumIonClient/Profile.h>
 #include <CesiumIonClient/Response.h>
 #include <CesiumIonClient/Token.h>
 #include <CesiumIonClient/TokenList.h>
+#include <CesiumUtility/Result.h>
 
 #include <cstdint>
+#include <string>
 
 namespace CesiumIonClient {
 
@@ -97,7 +102,7 @@ public:
    * @return A future that resolves to a Cesium ion {@link Connection} once the
    * user authorizes the application and the token handshake completes.
    */
-  static CesiumAsync::Future<Connection> authorize(
+  static CesiumAsync::Future<CesiumUtility::Result<Connection>> authorize(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& friendlyApplicationName,
@@ -150,14 +155,24 @@ public:
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to interact with the Cesium ion
    * REST API.
-   * @param accessToken The access token
+   * @param accessToken The access token.
+   * @param refreshToken The refresh token.
+   * @param clientId The OAuth2 client ID used to authorize the token for this
+   * connection. This will be used to refresh the token when it nears
+   * expiration.
+   * @param redirectPath The OAuth2 redirect path used to authorize this token
+   * for this connection. This will be used to refresh the token when it nears
+   * expiration.
    * @param appData The app data retrieved from the Cesium ion server.
    * @param apiUrl The base URL of the Cesium ion API.
    */
   Connection(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::string& accessToken,
+      const CesiumIonClient::LoginToken& accessToken,
+      const std::string& refreshToken,
+      int64_t clientId,
+      const std::string& redirectPath,
       const CesiumIonClient::ApplicationData& appData,
       const std::string& apiUrl = "https://api.cesium.com");
 
@@ -181,7 +196,7 @@ public:
    * @brief Gets the access token used by this connection.
    */
   const std::string& getAccessToken() const noexcept {
-    return this->_accessToken;
+    return this->_accessToken.getToken();
   }
 
   /**
@@ -198,7 +213,7 @@ public:
    *
    * @return A future that resolves to the profile information.
    */
-  CesiumAsync::Future<Response<Profile>> me() const;
+  CesiumAsync::Future<Response<Profile>> me();
 
   /**
    * @brief Retrieves default imagery, terrain and building assets along with
@@ -209,14 +224,14 @@ public:
    *
    * @return A future that resolves to the default information.
    */
-  CesiumAsync::Future<Response<Defaults>> defaults() const;
+  CesiumAsync::Future<Response<Defaults>> defaults();
 
   /**
    * @brief Gets the list of available assets.
    *
    * @return A future that resolves to the asset information.
    */
-  CesiumAsync::Future<Response<Assets>> assets() const;
+  CesiumAsync::Future<Response<Assets>> assets();
 
   /**
    * @brief Invokes the "List tokens" service to get the list of available
@@ -229,7 +244,7 @@ public:
    * @return A future that resolves to a page of token information.
    */
   CesiumAsync::Future<Response<TokenList>>
-  tokens(const ListTokensOptions& options = {}) const;
+  tokens(const ListTokensOptions& options = {});
 
   /**
    * @brief Gets details of the asset with the given ID.
@@ -237,7 +252,7 @@ public:
    * @param assetID The asset ID.
    * @return A future that resolves to the asset details.
    */
-  CesiumAsync::Future<Response<Asset>> asset(int64_t assetID) const;
+  CesiumAsync::Future<Response<Asset>> asset(int64_t assetID);
 
   /**
    * @brief Gets details of the token with the given ID.
@@ -245,7 +260,7 @@ public:
    * @param tokenID The token ID.
    * @return A future that resolves to the token details.
    */
-  CesiumAsync::Future<Response<Token>> token(const std::string& tokenID) const;
+  CesiumAsync::Future<Response<Token>> token(const std::string& tokenID);
 
   /**
    * @brief Gets the next page of results from the "List tokens" service.
@@ -258,7 +273,7 @@ public:
    * currentPage is the last one.
    */
   CesiumAsync::Future<Response<TokenList>>
-  nextPage(const Response<TokenList>& currentPage) const;
+  nextPage(const Response<TokenList>& currentPage);
 
   /**
    * @brief Gets the previous page of results from the "List tokens" service.
@@ -271,7 +286,7 @@ public:
    * currentPage is the first one.
    */
   CesiumAsync::Future<Response<TokenList>>
-  previousPage(const Response<TokenList>& currentPage) const;
+  previousPage(const Response<TokenList>& currentPage);
 
   /**
    * @brief Creates a new token.
@@ -289,7 +304,7 @@ public:
       const std::vector<std::string>& scopes,
       const std::optional<std::vector<int64_t>>& assetIds = std::nullopt,
       const std::optional<std::vector<std::string>>& allowedUrls =
-          std::nullopt) const;
+          std::nullopt);
 
   /**
    * @brief Modifies a token.
@@ -309,7 +324,7 @@ public:
       const std::string& newName,
       const std::optional<std::vector<int64_t>>& newAssetIDs,
       const std::vector<std::string>& newScopes,
-      const std::optional<std::vector<std::string>>& newAllowedUrls) const;
+      const std::optional<std::vector<std::string>>& newAllowedUrls);
 
   /**
    * @brief Makes a request to the ion geocoding service.
@@ -336,12 +351,16 @@ public:
   static std::optional<std::string> getIdFromToken(const std::string& token);
 
 private:
-  CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url) const;
+  CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url);
+  CesiumAsync::Future<CesiumUtility::Result<std::string>> ensureValidToken();
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
-  std::string _accessToken;
+  CesiumIonClient::LoginToken _accessToken;
+  std::string _refreshToken;
   std::string _apiUrl;
   CesiumIonClient::ApplicationData _appData;
+  int64_t _clientId;
+  std::string _redirectPath;
 };
 } // namespace CesiumIonClient
