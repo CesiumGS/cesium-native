@@ -159,13 +159,6 @@ public:
    * @param pAssetAccessor The interface used to interact with the Cesium ion
    * REST API.
    * @param accessToken The access token.
-   * @param refreshToken The refresh token.
-   * @param clientId The OAuth2 client ID used to authorize the token for this
-   * connection. This will be used to refresh the token when it nears
-   * expiration.
-   * @param redirectPath The OAuth2 redirect path used to authorize this token
-   * for this connection. This will be used to refresh the token when it nears
-   * expiration.
    * @param appData The app data retrieved from the Cesium ion server.
    * @param apiUrl The base URL of the Cesium ion API.
    */

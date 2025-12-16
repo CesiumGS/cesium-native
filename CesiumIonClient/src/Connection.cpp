@@ -19,13 +19,11 @@
 #include <CesiumIonClient/Response.h>
 #include <CesiumIonClient/Token.h>
 #include <CesiumIonClient/TokenList.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
-#include <CesiumUtility/joinToString.h>
 
-#include <fmt/format.h>
-#include <modp_b64.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/pointer.h>

@@ -1,5 +1,8 @@
 #include <CesiumClientCommon/JwtTokenUtility.h>
+#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/Result.h>
 
+#include <fmt/format.h>
 #include <modp_b64.h>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>

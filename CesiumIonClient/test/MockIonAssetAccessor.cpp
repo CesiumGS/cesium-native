@@ -88,11 +88,6 @@ MockIonAssetAccessor::request(
   CesiumUtility::Uri uri(url);
 
   return handleApiServer(asyncSystem, verb, uri, headers, bodyBuffer);
-
-  FAIL("Cannot find request for url " << url);
-
-  return asyncSystem.createResolvedFuture(
-      std::shared_ptr<CesiumAsync::IAssetRequest>(nullptr));
 }
 
 CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>

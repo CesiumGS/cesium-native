@@ -4,7 +4,12 @@
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 
+#include <rapidjson/document.h>
+
 #include <chrono>
+#include <cstdint>
+#include <string>
+#include <utility>
 
 using namespace CesiumUtility;
 
