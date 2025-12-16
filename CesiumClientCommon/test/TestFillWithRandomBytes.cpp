@@ -1,4 +1,4 @@
-#include "../src/fillWithRandomBytes.h"
+#include <CesiumClientCommon/fillWithRandomBytes.h>
 
 #include <doctest/doctest.h>
 

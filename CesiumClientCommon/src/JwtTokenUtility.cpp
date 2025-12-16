@@ -26,18 +26,27 @@ JwtTokenUtility::parseTokenPayload(const std::string_view& tokenStr) {
         "Invalid JWT token, format must be `header.payload.signature`."));
   }
 
-  const std::string_view payloadSegment = std::string_view(tokenStr).substr(
-      firstPeriod + 1,
-      secondPeriod - firstPeriod - 1);
+  std::string payloadSegment(
+      tokenStr.substr(firstPeriod + 1, secondPeriod - firstPeriod - 1));
+  size_t payloadLength = payloadSegment.length();
+  // modp_b64 requires padded base64 strings, which JWT tokens are not.
+  if (payloadLength % 4 != 0) {
+    const size_t newSize = (payloadLength / 4 + 1) * 4;
+    payloadSegment.resize(newSize);
+    for (size_t i = payloadLength; i != newSize; i++) {
+      payloadSegment[i] = '=';
+    }
+    payloadLength = newSize;
+  }
 
   const size_t b64Len = modp_b64_decode_len(payloadSegment.length());
   std::string decodedPayload;
-  decodedPayload.resize(b64Len);
+  decodedPayload.resize(b64Len, '\0');
 
   if (modp_b64_decode(
           decodedPayload.data(),
           payloadSegment.data(),
-          payloadSegment.length()) == size_t(-1)) {
+          payloadLength) == size_t(-1)) {
     return Result<rapidjson::Document>(
         ErrorList::error("Unable to decode base64 payload."));
   }

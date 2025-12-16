@@ -151,7 +151,7 @@ Connection::Connection(
     : Connection(
           asyncSystem,
           pAssetAccessor,
-          LoginToken("", 0),
+          LoginToken("", -1),
           appData,
           apiUrl) {}
 
