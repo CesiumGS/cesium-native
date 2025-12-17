@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <exception>
 #include <functional>
 #include <limits>
 #include <memory>
