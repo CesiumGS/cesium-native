@@ -535,14 +535,6 @@ IonRasterOverlay::getEndpointCache() {
                   return ResultPointer<ExternalAssetEndpoint>(
                       new ExternalAssetEndpoint(std::move(endpoint)));
                 })
-                .catchImmediately([](std::exception&& e) {
-                  return ResultPointer<ExternalAssetEndpoint>(
-                      new ExternalAssetEndpoint(),
-                      ErrorList::error(
-                          std::string(
-                              "Error while accessing Cesium ion asset: ") +
-                          e.what()));
-                })
                 .thenImmediately(
                     [pLogger = context.pLogger, url = key.url](
                         ResultPointer<ExternalAssetEndpoint>&& assetResult) {

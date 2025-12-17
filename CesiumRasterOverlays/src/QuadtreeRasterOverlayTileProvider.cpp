@@ -91,12 +91,6 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
           const QuadtreeTileID& key)
           -> Future<ResultPointer<LoadedQuadtreeImage>> {
         return pThis->loadQuadtreeTileImage(key)
-            .catchImmediately([](std::exception&& e) {
-              // Turn an exception into an error.
-              LoadedRasterOverlayImage result;
-              result.errorList.emplaceError(e.what());
-              return result;
-            })
             .thenImmediately(
                 [loadParentTile,
                  key,
@@ -485,7 +479,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
               // errors and warnings.
               ErrorList errors;
               for (ResultPointer<LoadedQuadtreeImage>& image : images) {
-                if (image.pValue->pLoaded) {
+                if (image.pValue && image.pValue->pLoaded) {
                   errors.merge(image.pValue->pLoaded->errorList);
                 }
                 errors.merge(image.errors);
