@@ -227,8 +227,6 @@ option(CESIUM_INSTALL_STATIC_LIBS "Whether to install the static libraries of ce
 option(CESIUM_INSTALL_HEADERS "Whether to install the header files of cesium-native and its public dependencies." ON)
 option(CESIUM_ENABLE_CLANG_TIDY "Enable clang-tidy targets for static code analysis." ON)
 
-option(CMAKE_COMPILE_WARNING_AS_ERROR "Treat warnings as errors" ON)
-
 cmake_dependent_option(
     CESIUM_ENABLE_CLANG_TIDY_ON_BUILD
     "Run clang-tidy while building. Will slow down the build process. Available only if CESIUM_ENABLE_CLANG_TIDY is ON."
