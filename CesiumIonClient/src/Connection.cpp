@@ -1278,6 +1278,10 @@ CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() const {
             .thenInMainThread(
                 [pDetails = this->_pTokenDetails](
                     Result<CesiumClientCommon::OAuth2TokenResponse>&& result) {
+                  std::lock_guard lock(pDetails->mutex);
+
+                  pDetails->refreshInProgress.reset();
+
                   ErrorList combinedList =
                       ErrorList::error("Token refresh failed:");
                   if (!result.value) {
@@ -1292,12 +1296,9 @@ CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() const {
                     return Result<std::string>(combinedList);
                   }
 
-                  std::lock_guard lock(pDetails->mutex);
-
                   pDetails->accessToken = std::move(*tokenResult.value);
                   pDetails->refreshToken =
                       result.value->refreshToken.value_or("");
-                  pDetails->refreshInProgress.reset();
 
                   return Result<std::string>(
                       "Bearer " + pDetails->accessToken.getToken());
