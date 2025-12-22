@@ -122,8 +122,8 @@ Connection::Connection(
       _appData(appData),
       _clientId(clientId),
       _redirectPath(redirectPath),
-      _pTokenDetails(std::make_shared<TokenDetails>(
-          TokenDetails{accessToken, refreshToken, std::nullopt})) {}
+      _pTokenDetails(
+          std::make_shared<TokenDetails>(accessToken, refreshToken)) {}
 
 Connection::Connection(
     const CesiumAsync::AsyncSystem& asyncSystem,
@@ -1248,6 +1248,8 @@ CesiumAsync::Future<Response<GeocoderResult>> Connection::geocode(
 }
 
 CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() const {
+  std::lock_guard lock(this->_pTokenDetails->mutex);
+
   if (this->_pTokenDetails->accessToken.isValid()) {
     return this->_asyncSystem.createResolvedFuture(
         Result<std::string>(this->_pTokenDetails->accessToken.getToken()));
@@ -1290,6 +1292,8 @@ CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() const {
                     return Result<std::string>(combinedList);
                   }
 
+                  std::lock_guard lock(pDetails->mutex);
+
                   pDetails->accessToken = std::move(*tokenResult.value);
                   pDetails->refreshToken =
                       result.value->refreshToken.value_or("");
@@ -1306,3 +1310,11 @@ CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() const {
   return this->_pTokenDetails->refreshInProgress->thenImmediately(
       [](auto&& value) { return std::move(value); });
 }
+
+Connection::TokenDetails::TokenDetails(
+    const CesiumIonClient::LoginToken& accessToken,
+    const std::string& refreshToken)
+    : accessToken(accessToken),
+      refreshToken(refreshToken),
+      refreshInProgress(),
+      mutex() {}

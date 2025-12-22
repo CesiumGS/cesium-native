@@ -17,6 +17,7 @@
 #include <CesiumUtility/Result.h>
 
 #include <cstdint>
+#include <mutex>
 #include <optional>
 #include <string>
 
@@ -394,10 +395,13 @@ private:
   // This is a separate structure so that it can outlive the Connection while an
   // async operation is in progress.
   struct TokenDetails {
+    TokenDetails(const CesiumIonClient::LoginToken& accessToken, const std::string& refreshToken);
+
     CesiumIonClient::LoginToken accessToken;
     std::string refreshToken;
     std::optional<CesiumAsync::SharedFuture<CesiumUtility::Result<std::string>>>
         refreshInProgress;
+    std::mutex mutex;
   };
 
   CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url) const;
