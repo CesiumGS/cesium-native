@@ -1,10 +1,9 @@
 #pragma once
 
-#include "CesiumClientCommon/OAuth2PKCE.h"
-
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/Library.h>
+#include <CesiumClientCommon/OAuth2PKCE.h>
 #include <CesiumIonClient/ApplicationData.h>
 #include <CesiumIonClient/Assets.h>
 #include <CesiumIonClient/Defaults.h>
@@ -151,6 +150,7 @@ public:
 
   /**
    * @brief Creates a connection to Cesium ion using the provided access token.
+   * 
    * This connection will *not* have the ability to refresh itself if the access
    * token is invalid. This constructor is intended to be used with tokens that
    * do not expire, rather than the Cesium ion OAuth2 login tokens.
