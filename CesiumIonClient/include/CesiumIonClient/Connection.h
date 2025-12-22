@@ -401,7 +401,8 @@ private:
   };
 
   CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url) const;
-  CesiumAsync::Future<CesiumUtility::Result<std::string>> ensureValidToken() const;
+  CesiumAsync::Future<CesiumUtility::Result<std::string>>
+  ensureValidToken() const;
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
