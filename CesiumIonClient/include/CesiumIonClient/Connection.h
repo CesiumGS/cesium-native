@@ -395,7 +395,9 @@ private:
   // This is a separate structure so that it can outlive the Connection while an
   // async operation is in progress.
   struct TokenDetails {
-    TokenDetails(const CesiumIonClient::LoginToken& accessToken, const std::string& refreshToken);
+    TokenDetails(
+        const CesiumIonClient::LoginToken& accessToken,
+        const std::string& refreshToken);
 
     CesiumIonClient::LoginToken accessToken;
     std::string refreshToken;
