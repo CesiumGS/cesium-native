@@ -253,7 +253,7 @@ public:
    *
    * @return A future that resolves to the profile information.
    */
-  CesiumAsync::Future<Response<Profile>> me();
+  CesiumAsync::Future<Response<Profile>> me() const;
 
   /**
    * @brief Retrieves default imagery, terrain and building assets along with
@@ -264,14 +264,14 @@ public:
    *
    * @return A future that resolves to the default information.
    */
-  CesiumAsync::Future<Response<Defaults>> defaults();
+  CesiumAsync::Future<Response<Defaults>> defaults() const;
 
   /**
    * @brief Gets the list of available assets.
    *
    * @return A future that resolves to the asset information.
    */
-  CesiumAsync::Future<Response<Assets>> assets();
+  CesiumAsync::Future<Response<Assets>> assets() const;
 
   /**
    * @brief Invokes the "List tokens" service to get the list of available
@@ -284,7 +284,7 @@ public:
    * @return A future that resolves to a page of token information.
    */
   CesiumAsync::Future<Response<TokenList>>
-  tokens(const ListTokensOptions& options = {});
+  tokens(const ListTokensOptions& options = {}) const;
 
   /**
    * @brief Gets details of the asset with the given ID.
@@ -292,7 +292,7 @@ public:
    * @param assetID The asset ID.
    * @return A future that resolves to the asset details.
    */
-  CesiumAsync::Future<Response<Asset>> asset(int64_t assetID);
+  CesiumAsync::Future<Response<Asset>> asset(int64_t assetID) const;
 
   /**
    * @brief Gets details of the token with the given ID.
@@ -300,7 +300,7 @@ public:
    * @param tokenID The token ID.
    * @return A future that resolves to the token details.
    */
-  CesiumAsync::Future<Response<Token>> token(const std::string& tokenID);
+  CesiumAsync::Future<Response<Token>> token(const std::string& tokenID) const;
 
   /**
    * @brief Gets the next page of results from the "List tokens" service.
@@ -313,7 +313,7 @@ public:
    * currentPage is the last one.
    */
   CesiumAsync::Future<Response<TokenList>>
-  nextPage(const Response<TokenList>& currentPage);
+  nextPage(const Response<TokenList>& currentPage) const;
 
   /**
    * @brief Gets the previous page of results from the "List tokens" service.
@@ -326,7 +326,7 @@ public:
    * currentPage is the first one.
    */
   CesiumAsync::Future<Response<TokenList>>
-  previousPage(const Response<TokenList>& currentPage);
+  previousPage(const Response<TokenList>& currentPage) const;
 
   /**
    * @brief Creates a new token.
@@ -344,7 +344,7 @@ public:
       const std::vector<std::string>& scopes,
       const std::optional<std::vector<int64_t>>& assetIds = std::nullopt,
       const std::optional<std::vector<std::string>>& allowedUrls =
-          std::nullopt);
+          std::nullopt) const;
 
   /**
    * @brief Modifies a token.
@@ -364,7 +364,7 @@ public:
       const std::string& newName,
       const std::optional<std::vector<int64_t>>& newAssetIDs,
       const std::vector<std::string>& newScopes,
-      const std::optional<std::vector<std::string>>& newAllowedUrls);
+      const std::optional<std::vector<std::string>>& newAllowedUrls) const;
 
   /**
    * @brief Makes a request to the ion geocoding service.
@@ -379,7 +379,7 @@ public:
   CesiumAsync::Future<Response<GeocoderResult>> geocode(
       GeocoderProviderType provider,
       GeocoderRequestType type,
-      const std::string& query);
+      const std::string& query) const;
 
   /**
    * @brief Decodes a token ID from a token.
@@ -400,8 +400,8 @@ private:
         refreshInProgress;
   };
 
-  CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url);
-  CesiumAsync::Future<CesiumUtility::Result<std::string>> ensureValidToken();
+  CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url) const;
+  CesiumAsync::Future<CesiumUtility::Result<std::string>> ensureValidToken() const;
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;

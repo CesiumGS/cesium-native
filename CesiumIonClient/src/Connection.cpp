@@ -233,7 +233,7 @@ bool parseJsonObject(const IAssetResponse* pResponse, rapidjson::Document& d) {
 
 } // namespace
 
-CesiumAsync::Future<Response<Profile>> Connection::me() {
+CesiumAsync::Future<Response<Profile>> Connection::me() const {
   // /v1/me endpoint doesn't exist when ion is running in single user mode
   if (this->_appData.authenticationMode == AuthenticationMode::SingleUser) {
     Profile profile;
@@ -593,7 +593,7 @@ GeocoderResult geocoderResultFromJson(const rapidjson::Document& json) {
 
 } // namespace
 
-Future<Response<Defaults>> Connection::defaults() {
+Future<Response<Defaults>> Connection::defaults() const {
   const std::string url =
       CesiumUtility::Uri::resolve(this->_apiUrl, "v1/defaults");
   return this->ensureValidToken().thenImmediately(
@@ -642,7 +642,7 @@ Future<Response<Defaults>> Connection::defaults() {
       });
 }
 
-CesiumAsync::Future<Response<Assets>> Connection::assets() {
+CesiumAsync::Future<Response<Assets>> Connection::assets() const {
   const std::string url = Uri::resolve(this->_apiUrl, "v1/assets");
 
   return this->ensureValidToken().thenImmediately(
@@ -761,7 +761,7 @@ TokenList tokenListFromJson(const rapidjson::Value& json) {
 } // namespace
 
 Future<Response<TokenList>>
-Connection::tokens(const ListTokensOptions& options) {
+Connection::tokens(const ListTokensOptions& options) const {
   if (this->_appData.authenticationMode == AuthenticationMode::SingleUser) {
     TokenList emptyList = TokenList{};
     return this->_asyncSystem.createResolvedFuture<Response<TokenList>>(
@@ -792,7 +792,7 @@ Connection::tokens(const ListTokensOptions& options) {
   return this->tokens(url);
 }
 
-CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) {
+CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) const {
   std::string assetsUrl =
       CesiumUtility::Uri::resolve(this->_apiUrl, "v1/assets/");
 
@@ -842,7 +842,7 @@ CesiumAsync::Future<Response<Asset>> Connection::asset(int64_t assetID) {
 }
 
 CesiumAsync::Future<Response<Token>>
-Connection::token(const std::string& tokenID) {
+Connection::token(const std::string& tokenID) const {
   std::string tokensUrl =
       CesiumUtility::Uri::resolve(this->_apiUrl, "v2/tokens/");
 
@@ -892,7 +892,7 @@ Connection::token(const std::string& tokenID) {
 }
 
 CesiumAsync::Future<Response<TokenList>>
-Connection::nextPage(const Response<TokenList>& currentPage) {
+Connection::nextPage(const Response<TokenList>& currentPage) const {
   if (!currentPage.nextPageUrl) {
     return this->_asyncSystem.createResolvedFuture(
         createNoMorePagesResponse<TokenList>());
@@ -902,7 +902,7 @@ Connection::nextPage(const Response<TokenList>& currentPage) {
 }
 
 CesiumAsync::Future<Response<TokenList>>
-Connection::previousPage(const Response<TokenList>& currentPage) {
+Connection::previousPage(const Response<TokenList>& currentPage) const {
   if (!currentPage.previousPageUrl) {
     return this->_asyncSystem.createResolvedFuture(
         createNoMorePagesResponse<TokenList>());
@@ -915,7 +915,7 @@ CesiumAsync::Future<Response<Token>> Connection::createToken(
     const std::string& name,
     const std::vector<std::string>& scopes,
     const std::optional<std::vector<int64_t>>& assetIds,
-    const std::optional<std::vector<std::string>>& allowedUrls) {
+    const std::optional<std::vector<std::string>>& allowedUrls) const {
   return this->ensureValidToken().thenImmediately(
       [pAssetAccessor = this->_pAssetAccessor,
        asyncSystem = this->_asyncSystem,
@@ -1020,7 +1020,7 @@ Future<Response<NoValue>> Connection::modifyToken(
     const std::string& newName,
     const std::optional<std::vector<int64_t>>& newAssetIDs,
     const std::vector<std::string>& newScopes,
-    const std::optional<std::vector<std::string>>& newAllowedUrls) {
+    const std::optional<std::vector<std::string>>& newAllowedUrls) const {
   return this->ensureValidToken().thenImmediately(
       [pAssetAccessor = this->_pAssetAccessor,
        asyncSystem = this->_asyncSystem,
@@ -1133,7 +1133,7 @@ Connection::getIdFromToken(const std::string& token) {
 }
 
 CesiumAsync::Future<Response<TokenList>>
-Connection::tokens(const std::string& url) {
+Connection::tokens(const std::string& url) const {
   return this->ensureValidToken().thenImmediately(
       [pAssetAccessor = this->_pAssetAccessor,
        asyncSystem = this->_asyncSystem,
@@ -1179,7 +1179,7 @@ Connection::tokens(const std::string& url) {
 CesiumAsync::Future<Response<GeocoderResult>> Connection::geocode(
     GeocoderProviderType provider,
     GeocoderRequestType type,
-    const std::string& query) {
+    const std::string& query) const {
   const std::string endpointUrl = type == GeocoderRequestType::Autocomplete
                                       ? "v1/geocode/autocomplete"
                                       : "v1/geocode/search";
@@ -1247,7 +1247,7 @@ CesiumAsync::Future<Response<GeocoderResult>> Connection::geocode(
       });
 }
 
-CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() {
+CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() const {
   if (this->_pTokenDetails->accessToken.isValid()) {
     return this->_asyncSystem.createResolvedFuture(
         Result<std::string>(this->_pTokenDetails->accessToken.getToken()));
