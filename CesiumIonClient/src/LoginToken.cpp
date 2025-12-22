@@ -15,9 +15,9 @@ using namespace CesiumUtility;
 
 namespace CesiumIonClient {
 CesiumUtility::Result<LoginToken>
-LoginToken::parse(const std::string& tokenStr) {
+LoginToken::parse(const std::string& tokenString) {
   CesiumUtility::Result<rapidjson::Document> payloadResult =
-      CesiumClientCommon::JwtTokenUtility::parseTokenPayload(tokenStr);
+      CesiumClientCommon::JwtTokenUtility::parseTokenPayload(tokenString);
   if (!payloadResult.value) {
     return Result<LoginToken>(std::move(payloadResult.errors));
   }
@@ -25,7 +25,7 @@ LoginToken::parse(const std::string& tokenStr) {
   rapidjson::Document& json = *payloadResult.value;
   int64_t expires = JsonHelpers::getInt64OrDefault(json, "exp", -1);
 
-  return Result<LoginToken>(LoginToken(tokenStr, expires));
+  return Result<LoginToken>(LoginToken(tokenString, expires));
 }
 
 bool LoginToken::isValid() const {

@@ -3,6 +3,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/Library.h>
+#include <CesiumAsync/SharedFuture.h>
 #include <CesiumClientCommon/OAuth2PKCE.h>
 #include <CesiumIonClient/ApplicationData.h>
 #include <CesiumIonClient/Assets.h>
@@ -16,6 +17,7 @@
 #include <CesiumUtility/Result.h>
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
 namespace CesiumIonClient {
@@ -150,7 +152,7 @@ public:
 
   /**
    * @brief Creates a connection to Cesium ion using the provided access token.
-   * 
+   *
    * This connection will *not* have the ability to refresh itself if the access
    * token is invalid. This constructor is intended to be used with tokens that
    * do not expire, rather than the Cesium ion OAuth2 login tokens.
@@ -218,37 +220,29 @@ public:
   /**
    * @brief Gets the async system used by this connection to do work in threads.
    */
-  const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept {
-    return this->_asyncSystem;
-  }
+  const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept;
 
   /**
    * @brief Gets the interface used by this connection to interact with the
    * Cesium ion REST API.
    */
   const std::shared_ptr<CesiumAsync::IAssetAccessor>&
-  getAssetAccessor() const noexcept {
-    return this->_pAssetAccessor;
-  }
+  getAssetAccessor() const noexcept;
 
   /**
    * @brief Gets the access token used by this connection.
    */
-  const std::string& getAccessToken() const noexcept {
-    return this->_accessToken.getToken();
-  }
+  const std::string& getAccessToken() const noexcept;
 
   /**
    * @brief Gets the refresh token used by this connection.
    */
-  const std::string& getRefreshToken() const noexcept {
-    return this->_refreshToken;
-  }
+  const std::string& getRefreshToken() const noexcept;
 
   /**
    * @brief Gets the Cesium ion API base URL.
    */
-  const std::string& getApiUrl() const noexcept { return this->_apiUrl; }
+  const std::string& getApiUrl() const noexcept;
 
   /**
    * @brief Retrieves profile information for the access token currently being
@@ -397,16 +391,24 @@ public:
   static std::optional<std::string> getIdFromToken(const std::string& token);
 
 private:
+  // This is a separate structure so that it can outlive the Connection while an
+  // async operation is in progress.
+  struct TokenDetails {
+    CesiumIonClient::LoginToken accessToken;
+    std::string refreshToken;
+    std::optional<CesiumAsync::SharedFuture<CesiumUtility::Result<std::string>>>
+        refreshInProgress;
+  };
+
   CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url);
   CesiumAsync::Future<CesiumUtility::Result<std::string>> ensureValidToken();
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
-  CesiumIonClient::LoginToken _accessToken;
-  std::string _refreshToken;
   std::string _apiUrl;
   CesiumIonClient::ApplicationData _appData;
   int64_t _clientId;
   std::string _redirectPath;
+  std::shared_ptr<TokenDetails> _pTokenDetails;
 };
 } // namespace CesiumIonClient

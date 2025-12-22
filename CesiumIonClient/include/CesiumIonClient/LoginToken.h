@@ -22,11 +22,12 @@ public:
    * @brief Creates a new \ref LoginToken by parsing the provided JWT
    * authentication token.
    *
-   * @param tokenStr The JWT authentication token.
+   * @param tokenString The JWT authentication token.
    * @returns A `Result` containing either the parsed \ref LoginToken
    * or error messages.
    */
-  static CesiumUtility::Result<LoginToken> parse(const std::string& tokenStr);
+  static CesiumUtility::Result<LoginToken>
+  parse(const std::string& tokenString);
 
   /**
    * @brief Is this token currently valid?
