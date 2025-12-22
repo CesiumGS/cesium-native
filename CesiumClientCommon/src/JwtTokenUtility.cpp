@@ -1,6 +1,7 @@
 #include <CesiumClientCommon/JwtTokenUtility.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/Result.h>
+#include <CesiumUtility/StringHelpers.h>
 
 #include <fmt/format.h>
 #include <modp_b64.h>
@@ -16,33 +17,28 @@ using namespace CesiumUtility;
 
 namespace CesiumClientCommon {
 CesiumUtility::Result<rapidjson::Document>
-JwtTokenUtility::parseTokenPayload(const std::string_view& tokenStr) {
-  const size_t firstPeriod = tokenStr.find('.');
-  if (firstPeriod == std::string::npos) {
+JwtTokenUtility::parseTokenPayload(const std::string_view& tokenString) {
+  std::vector<std::string_view> parts =
+      StringHelpers::splitOnCharacter(tokenString, '.');
+
+  if (parts.size() != 3) {
     return Result<rapidjson::Document>(ErrorList::error(
         "Invalid JWT token, format must be `header.payload.signature`."));
   }
 
-  const size_t secondPeriod = tokenStr.find('.', firstPeriod + 1);
-  if (secondPeriod == std::string::npos) {
-    return Result<rapidjson::Document>(ErrorList::error(
-        "Invalid JWT token, format must be `header.payload.signature`."));
-  }
-
-  std::string payloadSegment(
-      tokenStr.substr(firstPeriod + 1, secondPeriod - firstPeriod - 1));
+  std::string payloadSegment(parts[1]);
   size_t payloadLength = payloadSegment.length();
   // modp_b64 requires padded base64 strings, which JWT tokens are not.
   if (payloadLength % 4 != 0) {
     const size_t newSize = (payloadLength / 4 + 1) * 4;
-    payloadSegment.resize(newSize);
+    payloadSegment.resize(newSize, '=');
     for (size_t i = payloadLength; i != newSize; i++) {
       payloadSegment[i] = '=';
     }
     payloadLength = newSize;
   }
 
-  const size_t b64Len = modp_b64_decode_len(payloadSegment.length());
+  const size_t b64Len = modp_b64_decode_len(payloadLength);
   std::string decodedPayload;
   decodedPayload.resize(b64Len, '\0');
 

@@ -1,7 +1,9 @@
 #include <CesiumClientCommon/Library.h>
 #include <CesiumUtility/Result.h>
 
-#include <rapidjson/document.h>
+#include <rapidjson/fwd.h>
+
+#include <string_view>
 
 namespace CesiumClientCommon {
 /**
@@ -15,9 +17,9 @@ public:
    * `CesiumUtility::Result` containing either the `rapidjson::Document` of the
    * payload contents or an error.
    *
-   * @param tokenStr The JWT token string to parse.
+   * @param tokenString The JWT token string to parse.
    */
   static CesiumUtility::Result<rapidjson::Document>
-  parseTokenPayload(const std::string_view& tokenStr);
+  parseTokenPayload(const std::string_view& tokenString);
 };
 } // namespace CesiumClientCommon
