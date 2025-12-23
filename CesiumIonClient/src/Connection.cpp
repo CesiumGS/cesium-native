@@ -1308,8 +1308,10 @@ CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() const {
   // The thenImmediately only exists to turn the SharedFuture into a regular
   // Future.
   CESIUM_ASSERT(this->_pTokenDetails->refreshInProgress);
+  // NOLINTBEGIN(bugprone-unchecked-optional-access)
   return this->_pTokenDetails->refreshInProgress->thenImmediately(
       [](const Result<std::string>& value) { return value; });
+  // NOLINTEND(bugprone-unchecked-optional-access)
 }
 
 Connection::TokenDetails::TokenDetails(
