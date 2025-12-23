@@ -128,13 +128,13 @@ Connection::Connection(
 Connection::Connection(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const CesiumIonClient::LoginToken& accessToken,
+    const std::string& accessToken,
     const CesiumIonClient::ApplicationData& appData,
     const std::string& apiUrl)
     : Connection(
           asyncSystem,
           pAssetAccessor,
-          accessToken,
+          LoginToken(accessToken, -1),
           "",
           0,
           "",
@@ -149,7 +149,7 @@ Connection::Connection(
     : Connection(
           asyncSystem,
           pAssetAccessor,
-          LoginToken("", -1),
+          "",
           appData,
           apiUrl) {}
 

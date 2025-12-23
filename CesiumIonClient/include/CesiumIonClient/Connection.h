@@ -168,7 +168,7 @@ public:
   Connection(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const CesiumIonClient::LoginToken& accessToken,
+      const std::string& accessToken,
       const CesiumIonClient::ApplicationData& appData,
       const std::string& apiUrl = "https://api.cesium.com");
 
