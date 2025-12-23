@@ -1275,34 +1275,36 @@ CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() const {
                 true},
             tokenUrl,
             this->_pTokenDetails->refreshToken)
-            .thenInMainThread(
-                [pDetails = this->_pTokenDetails](
-                    Result<CesiumClientCommon::OAuth2TokenResponse>&& result) {
-                  std::lock_guard lock(pDetails->mutex);
+            .thenInMainThread([pDetails = this->_pTokenDetails](
+                                  Result<
+                                      CesiumClientCommon::OAuth2TokenResponse>&&
+                                      result) {
+              std::lock_guard lock(pDetails->mutex);
 
-                  pDetails->refreshInProgress.reset();
+              pDetails->accessToken = LoginToken("", -1);
+              pDetails->refreshToken.clear();
+              pDetails->refreshInProgress.reset();
 
-                  ErrorList combinedList =
-                      ErrorList::error("Token refresh failed:");
-                  if (!result.value) {
-                    combinedList.merge(result.errors);
-                    return Result<std::string>(combinedList);
-                  }
+              ErrorList combinedList = ErrorList::error(
+                  "Token refresh failed. Please sign into Cesium ion again.");
+              if (!result.value) {
+                combinedList.merge(result.errors);
+                return Result<std::string>(combinedList);
+              }
 
-                  Result<LoginToken> tokenResult =
-                      LoginToken::parse(result.value->accessToken);
-                  if (!tokenResult.value) {
-                    combinedList.merge(tokenResult.errors);
-                    return Result<std::string>(combinedList);
-                  }
+              Result<LoginToken> tokenResult =
+                  LoginToken::parse(result.value->accessToken);
+              if (!tokenResult.value) {
+                combinedList.merge(tokenResult.errors);
+                return Result<std::string>(combinedList);
+              }
 
-                  pDetails->accessToken = std::move(*tokenResult.value);
-                  pDetails->refreshToken =
-                      result.value->refreshToken.value_or("");
+              pDetails->accessToken = std::move(*tokenResult.value);
+              pDetails->refreshToken = result.value->refreshToken.value_or("");
 
-                  return Result<std::string>(
-                      "Bearer " + pDetails->accessToken.getToken());
-                })
+              return Result<std::string>(
+                  "Bearer " + pDetails->accessToken.getToken());
+            })
             .share();
   }
 
