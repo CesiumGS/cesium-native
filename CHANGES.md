@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - `CesiumIonClient::Connection::authorize` now returns a `CesiumUtility::Result<Connection>`. This removes the previous behavior of throwing an exception when authorization failed. 
+- `SharedAssetDepot` will no longer cache asset loads that fail with an exception / `Future` rejection, allowing them to be retried. Other types of load failures are cached as before.
 
 ##### Additions :tada:
 

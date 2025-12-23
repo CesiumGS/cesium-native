@@ -420,12 +420,6 @@ SharedAssetDepot<TAssetType, TAssetKey, TContext>::getOrCreate(
           .thenImmediately([pDepot, pEntry, context]() {
             return pDepot->_factory(context, pEntry->key);
           })
-          .catchImmediately([](std::exception&& e) {
-            return CesiumUtility::Result<
-                CesiumUtility::IntrusivePointer<TAssetType>>(
-                CesiumUtility::ErrorList::error(
-                    std::string("Error creating asset: ") + e.what()));
-          })
           .thenInWorkerThread(
               [pDepot,
                pEntry](CesiumUtility::Result<
@@ -450,7 +444,21 @@ SharedAssetDepot<TAssetType, TAssetKey, TContext>::getOrCreate(
                 pDepot->_pKeepAlive = pDepot;
 
                 return pEntry->toResultUnderLock();
-              });
+              })
+          .catchImmediately([pDepot, pEntry](std::exception&& e) {
+            // This asset has failed _with an exception_. We don't want to cache
+            // this type of error.
+            {
+              LockHolder lock = pDepot->lock();
+              pDepot->_assets.erase(pEntry->key);
+            }
+
+            return CesiumUtility::Result<
+                CesiumUtility::IntrusivePointer<TAssetType>>(
+                CesiumUtility::ErrorList::error(
+                    std::string("Exception while creating asset: ") +
+                    e.what()));
+          });
 
   SharedFuture<CesiumUtility::ResultPointer<TAssetType>> sharedFuture =
       std::move(future).share();
