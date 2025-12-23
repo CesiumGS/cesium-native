@@ -38,6 +38,7 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <span>
 #include <string>
@@ -1305,8 +1306,9 @@ CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() const {
 
   // The thenImmediately only exists to turn the SharedFuture into a regular
   // Future.
+  CESIUM_ASSERT(this->_pTokenDetails->refreshInProgress);
   return this->_pTokenDetails->refreshInProgress->thenImmediately(
-      [](auto&& value) { return std::move(value); });
+      [](const Result<std::string>& value) { return value; });
 }
 
 Connection::TokenDetails::TokenDetails(
