@@ -57,10 +57,7 @@ TEST_CASE("CesiumIonClient::Connection") {
   Connection connection(
       asyncSystem,
       pAssetAccessor,
-      LoginToken("my access token", -1),
-      "",
-      -1,
-      "",
+      "my access token",
       CesiumIonClient::ApplicationData(),
       "https://example.com/");
 
@@ -108,10 +105,7 @@ TEST_CASE("CesiumIonClient::Connection on single-user mode") {
   Connection connection(
       asyncSystem,
       pAssetAccessor,
-      LoginToken("my access token", -1),
-      "",
-      -1,
-      "",
+      "my access token",
       data,
       "https://example.com/");
 
@@ -152,10 +146,7 @@ TEST_CASE("CesiumIonClient::Connection::geocode") {
   Connection connection(
       asyncSystem,
       pAssetAccessor,
-      LoginToken("my access token", -1),
-      "",
-      -1,
-      "",
+      "my access token",
       CesiumIonClient::ApplicationData(),
       "https://example.com/");
 

@@ -84,7 +84,7 @@ MockIonAssetAccessor::request(
     const std::string& url,
     const std::vector<THeader>& headers,
     const std::span<const std::byte>& body) {
-  std::vector<std::byte> bodyBuffer(body.data(), body.data() + body.size());
+  std::vector<std::byte> bodyBuffer(body.begin(), body.end());
   CesiumUtility::Uri uri(url);
 
   return handleApiServer(asyncSystem, verb, uri, headers, bodyBuffer);
