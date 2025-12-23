@@ -146,12 +146,7 @@ Connection::Connection(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
     const CesiumIonClient::ApplicationData& appData,
     const std::string& apiUrl)
-    : Connection(
-          asyncSystem,
-          pAssetAccessor,
-          "",
-          appData,
-          apiUrl) {}
+    : Connection(asyncSystem, pAssetAccessor, "", appData, apiUrl) {}
 
 const CesiumAsync::AsyncSystem& Connection::getAsyncSystem() const noexcept {
   return this->_asyncSystem;
