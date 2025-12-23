@@ -19,6 +19,7 @@
 #include <CesiumIonClient/Response.h>
 #include <CesiumIonClient/Token.h>
 #include <CesiumIonClient/TokenList.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
