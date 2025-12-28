@@ -1,7 +1,6 @@
 #include <CesiumClientCommon/JwtTokenUtility.h>
 #include <CesiumIonClient/LoginToken.h>
 #include <CesiumUtility/ErrorList.h>
-#include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 
 #include <rapidjson/document.h>
