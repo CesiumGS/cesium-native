@@ -45,7 +45,7 @@ bool LoginToken::isValid() const {
 LoginToken::LoginToken(const std::string& token, int64_t expires)
     : _token(token), _expires(expires) {}
 
-int64_t LoginToken::getExpirationTime() const { return _expires; }
+int64_t LoginToken::getExpirationTime() const { return this->_expires; }
 
-const std::string& LoginToken::getToken() const { return _token; }
+const std::string& LoginToken::getToken() const { return this->_token; }
 } // namespace CesiumIonClient
