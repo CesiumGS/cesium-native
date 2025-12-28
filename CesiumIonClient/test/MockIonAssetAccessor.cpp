@@ -87,7 +87,7 @@ MockIonAssetAccessor::request(
   std::vector<std::byte> bodyBuffer(body.begin(), body.end());
   CesiumUtility::Uri uri(url);
 
-  return handleApiServer(asyncSystem, verb, uri, headers, bodyBuffer);
+  return this->handleApiServer(asyncSystem, verb, uri, headers, bodyBuffer);
 }
 
 CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
