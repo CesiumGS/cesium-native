@@ -37,8 +37,8 @@ public:
   bool isValid() const;
 
   /**
-   * @brief Returns the number of seconds since the Unix epoch representing the
-   * time that this token expires.
+   * @brief Returns the time that this token expires, represented as
+   * a number of seconds since the Unix epoch.
    */
   int64_t getExpirationTime() const;
 
