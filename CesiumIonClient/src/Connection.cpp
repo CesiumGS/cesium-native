@@ -136,7 +136,7 @@ Connection::Connection(
     : Connection(
           asyncSystem,
           pAssetAccessor,
-          LoginToken(accessToken, -1),
+          LoginToken(accessToken, std::nullopt),
           "",
           0,
           "",

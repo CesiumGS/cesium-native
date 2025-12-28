@@ -8,6 +8,8 @@
 
 #include <chrono>
 #include <cstdint>
+#include <ctime>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -23,15 +25,22 @@ LoginToken::parse(const std::string& tokenString) {
   }
 
   rapidjson::Document& json = *payloadResult.value;
-  int64_t expires = JsonHelpers::getInt64OrDefault(json, "exp", -1);
 
-  return Result<LoginToken>(LoginToken(tokenString, expires));
+  const auto it = json.FindMember("exp");
+  std::optional<std::time_t> expirationTime =
+      it != json.MemberEnd() && it->value.IsInt64()
+          ? std::make_optional<std::time_t>(std::time_t(it->value.GetInt64()))
+          : std::nullopt;
+
+  if (expirationTime == -1) {
+    expirationTime = std::nullopt;
+  }
+
+  return Result<LoginToken>(LoginToken(tokenString, expirationTime));
 }
 
 bool LoginToken::isValid() const {
-  if (this->_expirationTime == -1) {
-    // If the value is -1, that suggests we have no expiration date, so the
-    // token is always valid.
+  if (!this->_expirationTime) {
     return true;
   }
 
@@ -39,13 +48,17 @@ bool LoginToken::isValid() const {
       std::chrono::duration_cast<std::chrono::seconds>(
           std::chrono::system_clock::now().time_since_epoch())
           .count();
-  return currentTimeSinceEpoch < this->_expirationTime;
+  return currentTimeSinceEpoch < *this->_expirationTime;
 }
 
-LoginToken::LoginToken(const std::string& token, int64_t expirationTime)
+LoginToken::LoginToken(
+    const std::string& token,
+    const std::optional<std::time_t>& expirationTime)
     : _token(token), _expirationTime(expirationTime) {}
 
-int64_t LoginToken::getExpirationTime() const { return this->_expirationTime; }
+std::optional<std::time_t> LoginToken::getExpirationTime() const {
+  return this->_expirationTime;
+}
 
 const std::string& LoginToken::getToken() const { return this->_token; }
 } // namespace CesiumIonClient
