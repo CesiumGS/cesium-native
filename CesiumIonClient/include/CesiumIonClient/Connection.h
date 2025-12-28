@@ -175,8 +175,12 @@ public:
       const std::string& apiUrl = "https://api.cesium.com");
 
   /**
-   * @brief Creates a connection to Cesium ion using the provided access and
-   * refresh tokens.
+   * @brief Creates a "login" connection to Cesium ion.
+   *
+   * This type of connection is usually initiated with a call to @ref authorize.
+   * The parameters of the resulting connection can then be saved in a safe
+   * location, and the authorized login can be resumed later by passing them to
+   * this constructor.
    *
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to interact with the Cesium ion
