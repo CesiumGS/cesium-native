@@ -101,8 +101,10 @@ public:
    * @param appData The app data retrieved from the Cesium ion server.
    * @param ionApiUrl The base URL of the Cesium ion API.
    * @param ionAuthorizeUrl The URL of the Cesium ion OAuth authorization page.
-   * @return A future that resolves to a Cesium ion {@link Connection} once the
-   * user authorizes the application and the token handshake completes.
+   * @return A future that resolves to a Cesium ion @ref Connection once the
+   * user authorizes the application and the token handshake completes. If the
+   * authorization fails, the \ref Result::value will be `std::nullopt`, and
+   * \ref Result::errors will contain details about the failure.
    */
   static CesiumAsync::Future<CesiumUtility::Result<Connection>> authorize(
       const CesiumAsync::AsyncSystem& asyncSystem,

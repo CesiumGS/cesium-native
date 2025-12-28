@@ -29,7 +29,7 @@ LoginToken::parse(const std::string& tokenString) {
 }
 
 bool LoginToken::isValid() const {
-  if (this->_expires == -1) {
+  if (this->_expirationTime == -1) {
     // If the value is -1, that suggests we have no expiration date, so the
     // token is always valid.
     return true;
@@ -39,13 +39,13 @@ bool LoginToken::isValid() const {
       std::chrono::duration_cast<std::chrono::seconds>(
           std::chrono::system_clock::now().time_since_epoch())
           .count();
-  return currentTimeSinceEpoch < this->_expires;
+  return currentTimeSinceEpoch < this->_expirationTime;
 }
 
-LoginToken::LoginToken(const std::string& token, int64_t expires)
-    : _token(token), _expires(expires) {}
+LoginToken::LoginToken(const std::string& token, int64_t expirationTime)
+    : _token(token), _expirationTime(expirationTime) {}
 
-int64_t LoginToken::getExpirationTime() const { return this->_expires; }
+int64_t LoginToken::getExpirationTime() const { return this->_expirationTime; }
 
 const std::string& LoginToken::getToken() const { return this->_token; }
 } // namespace CesiumIonClient

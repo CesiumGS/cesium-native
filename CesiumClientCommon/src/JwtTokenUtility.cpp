@@ -33,9 +33,6 @@ JwtTokenUtility::parseTokenPayload(const std::string_view& tokenString) {
   if (payloadLength % 4 != 0) {
     const size_t newSize = (payloadLength / 4 + 1) * 4;
     payloadSegment.resize(newSize, '=');
-    for (size_t i = payloadLength; i != newSize; i++) {
-      payloadSegment[i] = '=';
-    }
     payloadLength = newSize;
   }
 

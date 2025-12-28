@@ -51,13 +51,13 @@ public:
    * @brief Creates a new `LoginToken`.
    *
    * @param token The full token string.
-   * @param expires A UNIX timestamp representing the point in time that this
-   * token stops being valid.
+   * @param expirationTime A UNIX timestamp representing the point in time that
+   * this token stops being valid.
    */
-  LoginToken(const std::string& token, int64_t expires);
+  LoginToken(const std::string& token, int64_t expirationTime);
 
 private:
   std::string _token;
-  int64_t _expires;
+  int64_t _expirationTime;
 };
 } // namespace CesiumIonClient
