@@ -107,7 +107,7 @@ TEST_CASE("JsonHelpers") {
     rapidjson::Document json;
     json.Parse(R"({"bigInt": 9223372036854775807})");
 
-    int32_t value =
+    uint32_t value =
         CesiumUtility::JsonHelpers::getUint32OrDefault(json, "bigInt", 0);
     CHECK(value == 0);
   }
