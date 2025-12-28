@@ -30,9 +30,9 @@ public:
   parse(const std::string& tokenString);
 
   /**
-   * @brief Is this token currently valid?
+   * @brief Returns whether this token is currently valid.
    *
-   * For the token to be valid, it must be before its expiration date.
+   * The token is valid up until its expiration date.
    */
   bool isValid() const;
 
