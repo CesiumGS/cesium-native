@@ -2,9 +2,9 @@
 
 ### ? - ?
 
-##### Fixes :wrench:
+##### Breaking Changes :mega:
 
-- `CesiumRasterOverlays::WebMapServiceRasterOverlay` will no longer attempt to add a default `styles` parameter to the URL if the user has already specified one.
+- `CesiumIonClient::Connection::authorize` now returns a `CesiumUtility::Result<Connection>`. This removes the previous behavior of throwing an exception when authorization failed. 
 - `SharedAssetDepot` will no longer cache asset loads that fail with an exception / `Future` rejection, allowing them to be retried. Other types of load failures are cached as before.
 - Fixed a bug in `JsonHelpers::GetInt64OrDefault` and `GetUint64OrDefault` that made them return the default for a value larger than the maximum value of a 32-bit integer.
 
@@ -13,7 +13,14 @@
 - Added `bool` and `std::string_view` overloads for `PropertyArrayCopy`.
 - Added support for the `KHR_gaussian_splatting` extension.
   - SPZ payloads for `KHR_gaussian_splatting` using the `KHR_gaussian_splatting_compression_spz_2` extension will now be decoded.
+- Added two new constructors to `CesiumIonClient::Connection` to:
+  - Accommodate new Cesium ion token refresh requirements. The extra parameters allow the login token to be refreshed when it expires and the refresh token is still valid.
+  - Access a self-hosted Cesium ion server configured for Single User authentication.
 - CMAKE_COMPILE_WARNING_AS_ERROR is now used, defaults to ON.
+
+##### Fixes :wrench:
+
+- `CesiumRasterOverlays::WebMapServiceRasterOverlay` will no longer attempt to add a default `styles` parameter to the URL if the user has already specified one.
 
 ### v0.55.0 - 2025-12-01
 

@@ -1,9 +1,12 @@
+#include "MockIonAssetAccessor.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/Cartographic.h>
 #include <CesiumIonClient/ApplicationData.h>
 #include <CesiumIonClient/Connection.h>
 #include <CesiumIonClient/Defaults.h>
 #include <CesiumIonClient/Geocoder.h>
+#include <CesiumIonClient/LoginToken.h>
 #include <CesiumIonClient/Profile.h>
 #include <CesiumIonClient/Response.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
@@ -188,4 +191,26 @@ TEST_CASE("CesiumIonClient::Connection::geocode") {
   CHECK(
       geocode.value->features[2].getGlobeRectangle().getWest() ==
       point.longitude);
+}
+
+TEST_CASE(
+    "CesiumIonClient::Connection handles refreshing expired access tokens") {
+  std::shared_ptr<MockIonAssetAccessor> pAssetAccessor =
+      std::make_shared<MockIonAssetAccessor>();
+  AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
+
+  pAssetAccessor->refreshToken = "abcd";
+  pAssetAccessor->authToken = "";
+
+  CesiumIonClient::Connection connection(
+      asyncSystem,
+      pAssetAccessor,
+      LoginToken("", 0),
+      "abcd",
+      190,
+      "/test",
+      ApplicationData{AuthenticationMode::CesiumIon, "", ""});
+  Response<Profile> result = connection.me().waitInMainThread();
+  REQUIRE(result.value);
+  CHECK(pAssetAccessor->authToken != "");
 }

@@ -1,0 +1,16 @@
+{
+  "id": 212352,
+  "scopes": [
+    "assets:read",
+    "profile:read"
+  ],
+  "username": "mamato",
+  "email": "matt@cesium.com",
+  "emailVerified": true,
+  "avatar": "https://www.gravatar.com/avatar/4f14cc6c584f41d89ef1d34c8986ebfb.jpg?d=mp",
+  "storage": {
+    "used": 214526475,
+    "available": 53472564725,
+    "total": 53687091200
+  }
+}
