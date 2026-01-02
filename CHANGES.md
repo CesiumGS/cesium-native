@@ -17,6 +17,7 @@
   - Accommodate new Cesium ion token refresh requirements. The extra parameters allow the login token to be refreshed when it expires and the refresh token is still valid.
   - Access a self-hosted Cesium ion server configured for Single User authentication.
 - Warnings-as-errors are now enabled by setting the `COMPILE_WARNING_AS_ERROR` target property on each Cesium Native library, instead of by manuallying setting compiler flags. This means that if we supply the `--compile-no-warning-as-error` option to the cmake configure command, warnings will no longer cause the build to fail.
+- Added `JwtTokenUtility` to the `CesiumClientCommon` library.
 
 ##### Fixes :wrench:
 
