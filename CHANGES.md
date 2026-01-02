@@ -6,7 +6,6 @@
 
 - `CesiumIonClient::Connection::authorize` now returns a `CesiumUtility::Result<Connection>`. This removes the previous behavior of throwing an exception when authorization failed. 
 - `SharedAssetDepot` will no longer cache asset loads that fail with an exception / `Future` rejection, allowing them to be retried. Other types of load failures are cached as before.
-- Fixed a bug in `JsonHelpers::GetInt64OrDefault` and `GetUint64OrDefault` that made them return the default for a value larger than the maximum value of a 32-bit integer.
 
 ##### Additions :tada:
 
@@ -22,6 +21,7 @@
 ##### Fixes :wrench:
 
 - `CesiumRasterOverlays::WebMapServiceRasterOverlay` will no longer attempt to add a default `styles` parameter to the URL if the user has already specified one.
+- Fixed a bug in `JsonHelpers::GetInt64OrDefault` and `GetUint64OrDefault` that made them return the default for a value larger than the maximum value of a 32-bit integer.
 
 ### v0.55.0 - 2025-12-01
 
