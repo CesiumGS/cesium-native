@@ -16,4 +16,4 @@
 
 ## Process
 
-* \subpage release-process
+* \subpage native-release-process

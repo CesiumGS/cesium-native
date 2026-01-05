@@ -1,4 +1,4 @@
-# Releasing a new version of Cesium Native {#release-process}
+# Releasing a new version of Cesium Native {#native-release-process}
 
 This is the process we follow when releasing a new version of Cesium Native.
 
