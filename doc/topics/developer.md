@@ -13,3 +13,7 @@
 * \subpage selection-algorithm-details
 * \subpage rendering-3d-tiles
 * \subpage raster-overlays
+
+## Process
+
+* \subpage release-process
