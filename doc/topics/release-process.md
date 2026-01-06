@@ -25,7 +25,7 @@ A CI job automatically publishes the documentation to the web site at https://ce
 
 1. `git checkout cesium.com`
 2. `git pull --ff-only`
-3. `git merge v2.22.0 --ff-only`
+3. `git merge v0.56.0 --ff-only`
 4. `git push`
 5. `git checkout main`
 
