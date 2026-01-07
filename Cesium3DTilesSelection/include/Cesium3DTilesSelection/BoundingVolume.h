@@ -96,4 +96,9 @@ getOrientedBoundingBoxFromBoundingVolume(
     const BoundingVolume& boundingVolume,
     const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
+/**
+ * @brief Returns true if two bounding volumes intersect.
+ */
+CESIUM3DTILESSELECTION_API bool
+testIntersection(const BoundingVolume& volume0, const BoundingVolume& volume1);
 } // namespace Cesium3DTilesSelection
