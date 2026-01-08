@@ -29,6 +29,7 @@
 #include <glm/common.hpp>
 #include <glm/ext/vector_int2.hpp>
 #include <nonstd/expected.hpp>
+#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -44,6 +45,15 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 using namespace CesiumVectorData;
+
+// We won't generate any quadtree nodes past this depth.
+const uint32_t DEPTH_LIMIT = 30;
+
+// The exact texture size depends on the geometric error of the tile it's
+// attached to, among other things. We use a reasonable value for the smallest
+// texture size as this will be the case where the pixel width of a
+// line/outline will have the most impact on the size of a geometry primitive.
+const glm::ivec2 BASE_TEXTURE_SIZE(64, 64);
 
 namespace CesiumRasterOverlays {
 
@@ -65,6 +75,54 @@ struct QuadtreeGeometryData {
    * @brief The bounding rectangle encompassing this geometry.
    */
   GlobeRectangle rectangle;
+
+  /**
+   * @brief Calculates the size of the bounding rectangle for this geometry when
+   * rendered on a tile with the given bounds and texture size.
+   *
+   * For a tile that has no line width or where line width is specified in
+   * `LineWidthMode::Meters`, this will be equivalent to `rectangle`. For tiles
+   * where the line width is specified in `LineWidthMode::Pixels`, this result
+   * can change depending on texture size and bounds.
+   *
+   * @param tileBounds The bounding box of this tile.
+   * @param textureSize The size of the texture this tile will be rasterized
+   * into.
+   */
+  GlobeRectangle calculateBoundingRectangleForTileSize(
+      const GlobeRectangle& tileBounds,
+      const glm::ivec2& textureSize) {
+    LineStyle activeLineStyle;
+    if (this->pObject->isType<GeoJsonPolygon>() ||
+        this->pObject->isType<GeoJsonMultiPolygon>()) {
+      if (!this->pStyle->polygon.outline) {
+        return this->rectangle;
+      }
+
+      activeLineStyle = *this->pStyle->polygon.outline;
+    } else {
+      activeLineStyle = this->pStyle->line;
+    }
+
+    // We already accounted for meters when building the rectangle in the first
+    // place.
+    if (activeLineStyle.widthMode == LineWidthMode::Meters) {
+      return this->rectangle;
+    }
+
+    const double longPerPixel =
+        tileBounds.computeWidth() / static_cast<double>(textureSize.x);
+    const double latPerPixel =
+        tileBounds.computeHeight() / static_cast<double>(textureSize.y);
+    const double halfX = longPerPixel * activeLineStyle.width * 0.5;
+    const double halfY = latPerPixel * activeLineStyle.width * 0.5;
+
+    return GlobeRectangle(
+        this->rectangle.getWest() - halfX,
+        this->rectangle.getSouth() - halfY,
+        this->rectangle.getEast() + halfX,
+        this->rectangle.getNorth() + halfY);
+  }
 };
 
 struct QuadtreeNode {
@@ -147,64 +205,74 @@ struct Quadtree {
 
 struct GlobeRectangleFromObjectVisitor {
   BoundingRegionBuilder& builder;
-  void operator()(const GeoJsonPoint& point) {
-    builder.expandToIncludePosition(
-        Cartographic::fromDegrees(point.coordinates.x, point.coordinates.y));
-  }
-  void operator()(const GeoJsonMultiPoint& points) {
-    for (const glm::dvec3& point : points.coordinates) {
-      builder.expandToIncludePosition(
-          Cartographic::fromDegrees(point.x, point.y));
-    }
-  }
-  void operator()(const GeoJsonLineString& line) {
-    for (const glm::dvec3& point : line.coordinates) {
-      builder.expandToIncludePosition(
-          Cartographic::fromDegrees(point.x, point.y));
-    }
-  }
-  void operator()(const GeoJsonMultiLineString& lines) {
-    for (const std::vector<glm::dvec3>& line : lines.coordinates) {
-      for (const glm::dvec3& point : line) {
+  const VectorStyle& style;
+  const Ellipsoid& ellipsoid;
+
+  void visitWithLineWidth(
+      const std::vector<glm::dvec3>& coordinates,
+      const std::optional<LineStyle>& lineStyle) {
+    // For geometry where the line width is specified in meters, we can include
+    // that in the bounding region calculation up front.
+    if (lineStyle && lineStyle->widthMode == LineWidthMode::Meters) {
+      const double halfWidth =
+          (lineStyle->width / ellipsoid.getRadii().x) / 2.0;
+      for (const glm::dvec3& point : coordinates) {
+        builder.expandToIncludePosition(Cartographic::fromDegrees(
+            point.x - halfWidth,
+            point.y - halfWidth));
+        builder.expandToIncludePosition(Cartographic::fromDegrees(
+            point.x + halfWidth,
+            point.y + halfWidth));
+      }
+    } else {
+      for (const glm::dvec3& point : coordinates) {
         builder.expandToIncludePosition(
             Cartographic::fromDegrees(point.x, point.y));
       }
+    }
+  }
+  void operator()(const GeoJsonLineString& line) {
+    visitWithLineWidth(line.coordinates, style.line);
+  }
+  void operator()(const GeoJsonMultiLineString& lines) {
+    for (const std::vector<glm::dvec3>& line : lines.coordinates) {
+      visitWithLineWidth(line, style.line);
     }
   }
   void operator()(const GeoJsonPolygon& polygon) {
     for (const std::vector<glm::dvec3>& ring : polygon.coordinates) {
-      for (const glm::dvec3& point : ring) {
-        builder.expandToIncludePosition(
-            Cartographic::fromDegrees(point.x, point.y));
-      }
+      visitWithLineWidth(ring, style.polygon.outline);
     }
   }
   void operator()(const GeoJsonMultiPolygon& polygons) {
     for (const std::vector<std::vector<glm::dvec3>>& polygon :
          polygons.coordinates) {
       for (const std::vector<glm::dvec3>& ring : polygon) {
-        for (const glm::dvec3& point : ring) {
-          builder.expandToIncludePosition(
-              Cartographic::fromDegrees(point.x, point.y));
-        }
+        visitWithLineWidth(ring, style.polygon.outline);
       }
     }
   }
   void operator()(const GeoJsonFeature&) {}
   void operator()(const GeoJsonFeatureCollection&) {}
   void operator()(const GeoJsonGeometryCollection&) {}
+  // While we could calculate a bounding box for a point just fine, they are not
+  // rendered by the raster overlay, so there's no need.
+  void operator()(const GeoJsonPoint&) {}
+  void operator()(const GeoJsonMultiPoint&) {}
 };
 
 void addPrimitivesToData(
     const GeoJsonObject* pGeoJsonObject,
     std::vector<QuadtreeGeometryData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
-    const VectorStyle& style);
+    const VectorStyle& style,
+    const Ellipsoid& ellipsoid);
 
 struct GeoJsonChildVisitor {
   std::vector<QuadtreeGeometryData>& data;
   BoundingRegionBuilder& documentRegionBuilder;
   const VectorStyle& style;
+  const Ellipsoid& ellipsoid;
 
   void operator()(const GeoJsonFeature& feature) {
     if (feature.geometry) {
@@ -216,7 +284,8 @@ struct GeoJsonChildVisitor {
           feature.geometry.get(),
           data,
           documentRegionBuilder,
-          featureStyle ? *featureStyle : style);
+          featureStyle ? *featureStyle : style,
+          ellipsoid);
     }
   }
 
@@ -233,7 +302,8 @@ struct GeoJsonChildVisitor {
             pFeature->geometry.get(),
             data,
             documentRegionBuilder,
-            collectionStyle ? *collectionStyle : style);
+            collectionStyle ? *collectionStyle : style,
+            ellipsoid);
       }
     }
   }
@@ -247,7 +317,8 @@ struct GeoJsonChildVisitor {
           &geometry,
           data,
           documentRegionBuilder,
-          useStyle ? *useStyle : style);
+          useStyle ? *useStyle : style,
+          ellipsoid);
     }
   }
 
@@ -258,22 +329,29 @@ void addPrimitivesToData(
     const GeoJsonObject* geoJsonObject,
     std::vector<QuadtreeGeometryData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
-    const VectorStyle& style) {
+    const VectorStyle& style,
+    const Ellipsoid& ellipsoid) {
   BoundingRegionBuilder thisBuilder;
   std::visit(
-      GlobeRectangleFromObjectVisitor{thisBuilder},
+      GlobeRectangleFromObjectVisitor{thisBuilder, style, ellipsoid},
       geoJsonObject->value);
   GlobeRectangle rect = thisBuilder.toGlobeRectangle();
-  documentRegionBuilder.expandToIncludeGlobeRectangle(rect);
-  data.emplace_back(
-      QuadtreeGeometryData{geoJsonObject, &style, std::move(rect)});
+  // Points and MultiPoints, as well as Features, FeatureCollections, and
+  // GeometryCollections will return a zero-size bounding box. For the first
+  // two, this is because they are not rasterized by this overlay. For the rest,
+  // though they may contain geometry, they do not themselves have anything to
+  // render. We can save some effort by ignoring them all now.
+  if (rect.computeWidth() != 0.0 || rect.computeHeight() != 0.0) {
+    QuadtreeGeometryData primitive{geoJsonObject, &style, std::move(rect)};
+    documentRegionBuilder.expandToIncludeGlobeRectangle(rect);
+    data.emplace_back(primitive);
+  }
 
   std::visit(
-      GeoJsonChildVisitor{data, documentRegionBuilder, style},
+      GeoJsonChildVisitor{data, documentRegionBuilder, style, ellipsoid},
       geoJsonObject->value);
 }
 
-const uint32_t DEPTH_LIMIT = 8;
 uint32_t buildQuadtreeNode(
     Quadtree& tree,
     const QuadtreeTilingScheme& tilingScheme,
@@ -317,6 +395,13 @@ uint32_t buildQuadtreeNode(
 
   const GlobeRectangle southWestRect = GlobeRectangle::fromRectangleRadians(
       tilingScheme.tileToRectangle(southWestTile));
+  const GlobeRectangle southEastRect = GlobeRectangle::fromRectangleRadians(
+      tilingScheme.tileToRectangle(southEastTile));
+  const GlobeRectangle northWestRect = GlobeRectangle::fromRectangleRadians(
+      tilingScheme.tileToRectangle(northWestTile));
+  const GlobeRectangle northEastRect = GlobeRectangle::fromRectangleRadians(
+      tilingScheme.tileToRectangle(northEastTile));
+
   tree.nodes[resultId].children[0][0] = buildQuadtreeNode(
       tree,
       tilingScheme,
@@ -327,13 +412,14 @@ uint32_t buildQuadtreeNode(
           end,
           [&southWestRect, &data = tree.data](uint32_t idx) {
             return data[idx]
-                .rectangle.computeIntersection(southWestRect)
+                .calculateBoundingRectangleForTileSize(
+                    southWestRect,
+                    BASE_TEXTURE_SIZE)
+                .computeIntersection(southWestRect)
                 .has_value();
           }),
       southWestTile);
 
-  const GlobeRectangle southEastRect = GlobeRectangle::fromRectangleRadians(
-      tilingScheme.tileToRectangle(southEastTile));
   tree.nodes[resultId].children[0][1] = buildQuadtreeNode(
       tree,
       tilingScheme,
@@ -344,13 +430,14 @@ uint32_t buildQuadtreeNode(
           end,
           [&southEastRect, &data = tree.data](uint32_t idx) {
             return data[idx]
-                .rectangle.computeIntersection(southEastRect)
+                .calculateBoundingRectangleForTileSize(
+                    southEastRect,
+                    BASE_TEXTURE_SIZE)
+                .computeIntersection(southEastRect)
                 .has_value();
           }),
       southEastTile);
 
-  const GlobeRectangle northWestRect = GlobeRectangle::fromRectangleRadians(
-      tilingScheme.tileToRectangle(northWestTile));
   tree.nodes[resultId].children[1][0] = buildQuadtreeNode(
       tree,
       tilingScheme,
@@ -361,13 +448,14 @@ uint32_t buildQuadtreeNode(
           end,
           [&northWestRect, &data = tree.data](uint32_t idx) {
             return data[idx]
-                .rectangle.computeIntersection(northWestRect)
+                .calculateBoundingRectangleForTileSize(
+                    northWestRect,
+                    BASE_TEXTURE_SIZE)
+                .computeIntersection(northWestRect)
                 .has_value();
           }),
       northWestTile);
 
-  const GlobeRectangle northEastRect = GlobeRectangle::fromRectangleRadians(
-      tilingScheme.tileToRectangle(northEastTile));
   tree.nodes[resultId].children[1][1] = buildQuadtreeNode(
       tree,
       tilingScheme,
@@ -378,7 +466,10 @@ uint32_t buildQuadtreeNode(
           end,
           [&northEastRect, &data = tree.data](uint32_t idx) {
             return data[idx]
-                .rectangle.computeIntersection(northEastRect)
+                .calculateBoundingRectangleForTileSize(
+                    northEastRect,
+                    BASE_TEXTURE_SIZE)
+                .computeIntersection(northEastRect)
                 .has_value();
           }),
       northEastTile);
@@ -388,7 +479,8 @@ uint32_t buildQuadtreeNode(
 
 Quadtree buildQuadtree(
     const std::shared_ptr<GeoJsonDocument>& document,
-    const VectorStyle& defaultStyle) {
+    const VectorStyle& defaultStyle,
+    const Ellipsoid& ellipsoid) {
   BoundingRegionBuilder builder;
   std::vector<QuadtreeGeometryData> data;
   const std::optional<VectorStyle>& rootObjectStyle =
@@ -397,7 +489,8 @@ Quadtree buildQuadtree(
       &document->rootObject,
       data,
       builder,
-      rootObjectStyle ? *rootObjectStyle : defaultStyle);
+      rootObjectStyle ? *rootObjectStyle : defaultStyle,
+      ellipsoid);
 
   Quadtree tree{
       builder.toGlobeRectangle(),
@@ -414,7 +507,8 @@ Quadtree buildQuadtree(
   }
 
   const QuadtreeTilingScheme tilingScheme(
-      tree.rectangle.toSimpleRectangle(),
+      GlobeRectangle::MAXIMUM.toSimpleRectangle(),
+      // tree.rectangle.toSimpleRectangle(),
       1,
       1);
 
@@ -529,7 +623,10 @@ public:
         _ellipsoid(geoJsonOptions.ellipsoid),
         _mipLevels(geoJsonOptions.mipLevels) {
     CESIUM_ASSERT(this->_pDocument);
-    this->_tree = buildQuadtree(this->_pDocument, this->_defaultStyle);
+    this->_tree = buildQuadtree(
+        this->_pDocument,
+        this->_defaultStyle,
+        geoJsonOptions.ellipsoid);
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
@@ -556,7 +653,7 @@ public:
           LoadedRasterOverlayImage result;
           result.rectangle = rectangle;
 
-          if (!tileRectangle.computeIntersection(tree.rectangle)) {
+          if (false && !tileRectangle.computeIntersection(tree.rectangle)) {
             // Transparent square if this is outside of the contents of this
             // vector document.
             result.moreDetailAvailable = false;
