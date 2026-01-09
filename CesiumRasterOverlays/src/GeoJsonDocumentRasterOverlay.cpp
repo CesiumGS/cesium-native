@@ -47,75 +47,7 @@ using namespace CesiumUtility;
 using namespace CesiumVectorData;
 
 // We won't generate any quadtree nodes past this depth.
-const uint32_t DEPTH_LIMIT = 30;
-
-// The number of primitives in a node before it splits.
-const size_t NODE_COUNT_THRESHOLD = 32;
-
-// The exact texture size depends on the geometric error of the tile it's
-// attached to, among other things. We use a reasonable value for the smallest
-// texture size as this will be the case where the pixel width of a
-// line/outline will have the most impact on the size of a geometry primitive.
-// const glm::ivec2 BASE_TEXTURE_SIZE(64, 64);
-
-namespace {
-// Line-line intersection algorithm from "Tricks of the Windows Game Programming
-// Gurus" by Andre Lamothe
-bool lineLineIntersection2D(
-    const glm::dvec3& a0,
-    const glm::dvec3& a1,
-    const glm::dvec3& b0,
-    const glm::dvec3& b1) {
-  const double s1X = a1.x - a0.x;
-  const double s1Y = a1.y - a0.y;
-
-  const double s2X = b1.x - b0.x;
-  const double s2Y = b1.y - b0.y;
-
-  const double s =
-      (-s1Y * (a0.x - b0.x) + s1X * (a0.y - b0.y)) / (-s2X * s1Y + s1X * s2Y);
-  const double t =
-      (s2X * (a0.y - b0.y) - s2Y * (a0.x - b0.x)) / (-s2X * s1Y + s1X * s2Y);
-
-  return s >= 0.0 && s <= 1.0 && t >= 0.0 && t <= 1.0;
-}
-
-bool lineRectangleIntersection2D(
-    const glm::dvec3& a0,
-    const glm::dvec3& a1,
-    const GlobeRectangle& rect) {
-  const glm::dvec3 northWest(rect.getWest(), rect.getNorth(), 0.0);
-  const glm::dvec3 northEast(rect.getEast(), rect.getNorth(), 0.0);
-  const glm::dvec3 southWest(rect.getWest(), rect.getSouth(), 0.0);
-  const glm::dvec3 southEast(rect.getEast(), rect.getSouth(), 0.0);
-
-  return lineLineIntersection2D(a0, a1, northWest, northEast) ||
-         lineLineIntersection2D(a0, a1, northEast, southEast) ||
-         lineLineIntersection2D(a0, a1, southWest, southEast) ||
-         lineLineIntersection2D(a0, a1, northWest, southWest);
-}
-
-bool lineStringRectangleIntersection2D(
-    const std::vector<glm::dvec3>& points,
-    const GlobeRectangle& rect) {
-  if (points.size() < 2) {
-    return false;
-  }
-
-  for (size_t i = 0; i < points.size() - 1; i++) {
-    if (rect.contains(Cartographic(points[i].x, points[i].y, points[i].z)) &&
-        rect.contains(
-            Cartographic(points[i + 1].x, points[i + 1].y, points[i + 1].z))) {
-      return true;
-    }
-    if (lineRectangleIntersection2D(points[i], points[i + 1], rect)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-} // namespace
+const uint32_t DEPTH_LIMIT = 8;
 
 namespace CesiumRasterOverlays {
 
@@ -137,6 +69,11 @@ struct QuadtreeGeometryData {
    * @brief The bounding rectangle encompassing this geometry.
    */
   GlobeRectangle rectangle;
+  /**
+   * The maximum width of all lines or outlines for this geometry with
+   * `LineWidthMode::Pixels`.
+   */
+  double maxLineWidthPixels = 0.0;
 
   /**
    * @brief Calculates the size of the bounding rectangle for this geometry when
@@ -185,45 +122,9 @@ struct QuadtreeGeometryData {
         this->rectangle.getEast() + halfX,
         this->rectangle.getNorth() + halfY);
   }
-
-  bool testRectIntersection2D(const GlobeRectangle& rect) {
-    struct RectIntersectionVisitor {
-      const GlobeRectangle& ourAabb;
-      const GlobeRectangle& testAabb;
-
-      bool operator()(const GeoJsonLineString& line) {
-        return lineStringRectangleIntersection2D(line.coordinates, testAabb);
-      }
-      bool operator()(const GeoJsonMultiLineString& line) {
-        for (const std::vector<glm::dvec3>& coordinates : line.coordinates) {
-          if (lineStringRectangleIntersection2D(coordinates, testAabb)) {
-            return true;
-          }
-        }
-
-        return false;
-      }
-      bool operator()(const GeoJsonPolygon& /*polygon*/) {
-        return this->ourAabb.computeIntersection(testAabb).has_value();
-      }
-      bool operator()(const GeoJsonMultiPolygon& /*polygons*/) {
-        return this->ourAabb.computeIntersection(testAabb).has_value();
-      }
-      bool operator()(const GeoJsonFeature&) { return false; }
-      bool operator()(const GeoJsonFeatureCollection&) { return false; }
-      bool operator()(const GeoJsonGeometryCollection&) { return false; }
-      // While we could calculate a bounding box for a point just fine, they are
-      // not rendered by the raster overlay, so there's no need.
-      bool operator()(const GeoJsonPoint&) { return false; }
-      bool operator()(const GeoJsonMultiPoint&) { return false; }
-    };
-
-    return this->pObject->visit(RectIntersectionVisitor{this->rectangle, rect});
-  }
 };
 
 struct QuadtreeNode {
-  QuadtreeTileID tileId;
   /**
    * @brief The `GlobeRectangle` defining the bounds of this node.
    */
@@ -239,9 +140,13 @@ struct QuadtreeNode {
    * Indices into `tree.data` for every primitive that this node contains.
    */
   std::vector<uint32_t> data;
+  /**
+   * The maximum width of all lines or outlines in this node with
+   * `LineWidthMode::Pixels`.
+   */
+  double maxLineWidthPixels = 0.0;
 
-  QuadtreeNode(QuadtreeTileID tileId_, const GlobeRectangle& rectangle_)
-      : tileId(tileId_), rectangle(rectangle_) {}
+  QuadtreeNode(const GlobeRectangle& rectangle_) : rectangle(rectangle_) {}
 
   /**
    * @brief Returns `true` if this node has any children.
@@ -249,6 +154,22 @@ struct QuadtreeNode {
   bool anyChildren() const {
     return children[0][0] != 0 && children[0][1] != 0 && children[1][0] != 0 &&
            children[1][1] != 0;
+  }
+
+  GlobeRectangle
+  getRectangleScaledWithPixelSize(const glm::dvec2& halfPixelSize) const {
+    if (this->maxLineWidthPixels == 0.0) {
+      return this->rectangle;
+    }
+
+    const glm::dvec2 scaledHalfPixelSize =
+        halfPixelSize * this->maxLineWidthPixels;
+
+    return GlobeRectangle(
+        this->rectangle.getWest() - scaledHalfPixelSize.x,
+        this->rectangle.getSouth() - scaledHalfPixelSize.y,
+        this->rectangle.getEast() + scaledHalfPixelSize.x,
+        this->rectangle.getNorth() + scaledHalfPixelSize.y);
   }
 };
 
@@ -285,10 +206,30 @@ struct Quadtree {
   uint32_t rootId = 0;
   std::vector<QuadtreeNode> nodes;
   std::vector<QuadtreeGeometryData> data;
+  /**
+   * @brief A vector containing all the geometry of all the nodes.
+   *
+   * Each element in this vector is an index into `data`.
+   */
+  std::vector<uint32_t> dataIndices;
+  /**
+   * @brief A vector containing the first index into `dataIndices` for every
+   * node.
+   *
+   * This vector contains `nodeCount + 1` items, with a synthetic final index
+   * added so that `nodeIndex + 1` will always represent the exclusive end of
+   * the node's geometry.
+   *
+   * For example, for the node at index `i`, the indices into `dataIndices`
+   * representing its geometry will be the range `[ dataNodeIndicesBegin[i],
+   * dataNodeIndicesBegin[i + 1] ]`.
+   */
+  std::vector<uint32_t> dataNodeIndicesBegin;
 };
 
-struct GlobeRectangleFromObjectVisitor {
+struct RectangleAndLineWidthFromObjectVisitor {
   BoundingRegionBuilder& builder;
+  double& maxLineWidthPixels;
   const VectorStyle& style;
   const Ellipsoid& ellipsoid;
 
@@ -309,6 +250,10 @@ struct GlobeRectangleFromObjectVisitor {
             point.y + halfWidth));
       }
     } else {
+      if (lineStyle && lineStyle->widthMode == LineWidthMode::Pixels) {
+        this->maxLineWidthPixels =
+            std::max(this->maxLineWidthPixels, lineStyle->width);
+      }
       for (const glm::dvec3& point : coordinates) {
         builder.expandToIncludePosition(
             Cartographic::fromDegrees(point.x, point.y));
@@ -416,8 +361,13 @@ void addPrimitivesToData(
     const VectorStyle& style,
     const Ellipsoid& ellipsoid) {
   BoundingRegionBuilder thisBuilder;
+  double maxLineWidthPixels;
   std::visit(
-      GlobeRectangleFromObjectVisitor{thisBuilder, style, ellipsoid},
+      RectangleAndLineWidthFromObjectVisitor{
+          thisBuilder,
+          maxLineWidthPixels,
+          style,
+          ellipsoid},
       geoJsonObject->value);
   GlobeRectangle rect = thisBuilder.toGlobeRectangle();
   // Points and MultiPoints, as well as Features, FeatureCollections, and
@@ -426,7 +376,7 @@ void addPrimitivesToData(
   // though they may contain geometry, they do not themselves have anything to
   // render. We can save some effort by ignoring them all now.
   if (rect.computeWidth() != 0.0 || rect.computeHeight() != 0.0) {
-    QuadtreeGeometryData primitive{geoJsonObject, &style, std::move(rect)};
+    QuadtreeGeometryData primitive{geoJsonObject, &style, std::move(rect), maxLineWidthPixels};
     documentRegionBuilder.expandToIncludeGlobeRectangle(rect);
     data.emplace_back(primitive);
   }
@@ -436,67 +386,42 @@ void addPrimitivesToData(
       geoJsonObject->value);
 }
 
-void addToQuadtree(
+uint32_t buildQuadtreeNode(
     Quadtree& tree,
-    uint32_t nodeIdx,
     const QuadtreeTilingScheme& tilingScheme,
-    uint32_t dataIndex);
-
-uint32_t splitNodeContentsForRectangle(
-    Quadtree& tree,
-    uint32_t parentNodeIdx,
-    const QuadtreeTilingScheme& tilingScheme,
-    const GlobeRectangle& childRectangle,
-    QuadtreeTileID childId) {
-  const uint32_t nodeId = (uint32_t)tree.nodes.size();
-  tree.nodes.emplace_back(childId, childRectangle);
-
-  for (uint32_t dataIdx : tree.nodes[parentNodeIdx].data) {
-    if (tree.data[dataIdx].testRectIntersection2D(childRectangle)) {
-      addToQuadtree(tree, nodeId, tilingScheme, dataIdx);
-    }
+    const GlobeRectangle& rectangle,
+    std::vector<uint32_t>::iterator begin,
+    std::vector<uint32_t>::iterator end,
+    QuadtreeTileID tileId) {
+  if (begin == end) {
+    return 0;
   }
 
-  return nodeId;
-}
+  uint32_t resultId = (uint32_t)tree.nodes.size();
+  tree.nodes.emplace_back(rectangle);
 
-void addToQuadtree(
-    Quadtree& tree,
-    uint32_t nodeIdx,
-    const QuadtreeTilingScheme& tilingScheme,
-    uint32_t dataIndex) {
-  tree.nodes[nodeIdx].data.push_back(dataIndex);
-
-  if (tree.nodes[nodeIdx].data.size() < NODE_COUNT_THRESHOLD ||
-      tree.nodes[nodeIdx].tileId.level >= DEPTH_LIMIT) {
-    return;
+  double maxLineWidthPixels = 0.0;
+  for (std::vector<uint32_t>::iterator it = begin; it != end; ++it) {
+    maxLineWidthPixels =
+        std::max(tree.data[*it].maxLineWidthPixels, maxLineWidthPixels);
   }
 
-  if (tree.nodes[nodeIdx].anyChildren()) {
-    // This node already has children, we can just add to the existing children.
-    for (size_t i = 0; i < 2; i++) {
-      for (size_t j = 0; j < 2; j++) {
-        addToQuadtree(
-            tree,
-            tree.nodes[nodeIdx].children[i][j],
-            tilingScheme,
-            dataIndex);
-      }
-    }
+  tree.nodes[resultId].maxLineWidthPixels = maxLineWidthPixels;
 
-    return;
+  uint32_t indicesBegin = (uint32_t)tree.dataIndices.size();
+  tree.dataIndices.insert(tree.dataIndices.end(), begin, end);
+
+  tree.dataNodeIndicesBegin.emplace_back(indicesBegin);
+
+  if (begin + 1 == end || tileId.level >= DEPTH_LIMIT ||
+      std::equal(begin + 1, end, begin)) {
+    return resultId;
   }
 
-  // At this point adding more nodes will not help us be any more efficient.
-  if(tree.nodes.size() >= tree.data.size()) {
-    return;
-  }
-
-  // We need to split the node.
   const CesiumGeometry::QuadtreeTileID southWestTile(
-      tree.nodes[nodeIdx].tileId.level + 1,
-      tree.nodes[nodeIdx].tileId.x * 2,
-      tree.nodes[nodeIdx].tileId.y * 2);
+      tileId.level + 1,
+      tileId.x * 2,
+      tileId.y * 2);
   const CesiumGeometry::QuadtreeTileID southEastTile(
       southWestTile.level,
       southWestTile.x + 1,
@@ -512,37 +437,73 @@ void addToQuadtree(
 
   const GlobeRectangle southWestRect = GlobeRectangle::fromRectangleRadians(
       tilingScheme.tileToRectangle(southWestTile));
-  const GlobeRectangle southEastRect = GlobeRectangle::fromRectangleRadians(
-      tilingScheme.tileToRectangle(southEastTile));
-  const GlobeRectangle northWestRect = GlobeRectangle::fromRectangleRadians(
-      tilingScheme.tileToRectangle(northWestTile));
-  const GlobeRectangle northEastRect = GlobeRectangle::fromRectangleRadians(
-      tilingScheme.tileToRectangle(northEastTile));
-
-  tree.nodes[nodeIdx].children[0][0] = splitNodeContentsForRectangle(
+  tree.nodes[resultId].children[0][0] = buildQuadtreeNode(
       tree,
-      nodeIdx,
       tilingScheme,
       southWestRect,
+      begin,
+      std::partition(
+          begin,
+          end,
+          [&southWestRect, &data = tree.data](uint32_t idx) {
+            return data[idx]
+                .rectangle.computeIntersection(southWestRect)
+                .has_value();
+          }),
       southWestTile);
-  tree.nodes[nodeIdx].children[0][1] = splitNodeContentsForRectangle(
+
+  const GlobeRectangle southEastRect = GlobeRectangle::fromRectangleRadians(
+      tilingScheme.tileToRectangle(southEastTile));
+  tree.nodes[resultId].children[0][1] = buildQuadtreeNode(
       tree,
-      nodeIdx,
       tilingScheme,
       southEastRect,
+      begin,
+      std::partition(
+          begin,
+          end,
+          [&southEastRect, &data = tree.data](uint32_t idx) {
+            return data[idx]
+                .rectangle.computeIntersection(southEastRect)
+                .has_value();
+          }),
       southEastTile);
-  tree.nodes[nodeIdx].children[1][0] = splitNodeContentsForRectangle(
+
+  const GlobeRectangle northWestRect = GlobeRectangle::fromRectangleRadians(
+      tilingScheme.tileToRectangle(northWestTile));
+  tree.nodes[resultId].children[1][0] = buildQuadtreeNode(
       tree,
-      nodeIdx,
       tilingScheme,
       northWestRect,
+      begin,
+      std::partition(
+          begin,
+          end,
+          [&northWestRect, &data = tree.data](uint32_t idx) {
+            return data[idx]
+                .rectangle.computeIntersection(northWestRect)
+                .has_value();
+          }),
       northWestTile);
-  tree.nodes[nodeIdx].children[1][1] = splitNodeContentsForRectangle(
+
+  const GlobeRectangle northEastRect = GlobeRectangle::fromRectangleRadians(
+      tilingScheme.tileToRectangle(northEastTile));
+  tree.nodes[resultId].children[1][1] = buildQuadtreeNode(
       tree,
-      nodeIdx,
       tilingScheme,
       northEastRect,
+      begin,
+      std::partition(
+          begin,
+          end,
+          [&northEastRect, &data = tree.data](uint32_t idx) {
+            return data[idx]
+                .rectangle.computeIntersection(northEastRect)
+                .has_value();
+          }),
       northEastTile);
+
+  return resultId;
 }
 
 Quadtree buildQuadtree(
@@ -564,19 +525,30 @@ Quadtree buildQuadtree(
       builder.toGlobeRectangle(),
       0,
       std::vector<QuadtreeNode>(),
-      std::move(data)};
+      std::move(data),
+      std::vector<uint32_t>(),
+      std::vector<uint32_t>()};
+
+  std::vector<uint32_t> dataIndices;
+  dataIndices.reserve(tree.data.size());
+  for (size_t i = 0; i < tree.data.size(); i++) {
+    dataIndices.emplace_back((uint32_t)i);
+  }
 
   const QuadtreeTilingScheme tilingScheme(
       tree.rectangle.toSimpleRectangle(),
       1,
       1);
 
-  tree.rootId = 0;
-  tree.nodes.emplace_back(QuadtreeTileID(0, 0, 0), tree.rectangle);
-
-  for (uint32_t i = 0; i < static_cast<uint32_t>(tree.data.size()); i++) {
-    addToQuadtree(tree, tree.rootId, tilingScheme, i);
-  }
+  tree.rootId = buildQuadtreeNode(
+      tree,
+      tilingScheme,
+      tree.rectangle,
+      dataIndices.begin(),
+      dataIndices.end(),
+      QuadtreeTileID(0, 0, 0));
+  // Add last entry so [i + 1] is always valid
+  tree.dataNodeIndicesBegin.emplace_back((uint32_t)tree.dataIndices.size() - 1);
 
   return tree;
 }
@@ -586,14 +558,20 @@ void rasterizeQuadtreeNode(
     uint32_t nodeId,
     const GlobeRectangle& rectangle,
     VectorRasterizer& rasterizer,
-    std::vector<bool>& primitivesRendered) {
+    std::vector<bool>& primitivesRendered,
+    const glm::dvec2& halfPixelSize) {
   const QuadtreeNode& node = tree.nodes[nodeId];
+  const GlobeRectangle scaledNodeRectangle =
+      node.getRectangleScaledWithPixelSize(halfPixelSize);
   // If this node has no children, or if it is entirely within the target
   // rectangle, let's rasterize this node's contents and not any children.
   if (!node.anyChildren() ||
-      (rectangle.contains(node.rectangle.getSouthwest()) &&
-       rectangle.contains(node.rectangle.getNortheast()))) {
-    for (uint32_t dataIdx : node.data) {
+      (rectangle.contains(scaledNodeRectangle.getSouthwest()) &&
+       rectangle.contains(scaledNodeRectangle.getNortheast()))) {
+    for (uint32_t i = tree.dataNodeIndicesBegin[nodeId];
+         i < tree.dataNodeIndicesBegin[nodeId + 1];
+         i++) {
+      const uint32_t dataIdx = tree.dataIndices[i];
       if (primitivesRendered[dataIdx]) {
         continue;
       }
@@ -604,14 +582,17 @@ void rasterizeQuadtreeNode(
   } else {
     for (size_t i = 0; i < 2; i++) {
       for (size_t j = 0; j < 2; j++) {
-        if (rectangle.computeIntersection(
-                tree.nodes[node.children[i][j]].rectangle)) {
+        if (tree.nodes[node.children[i][j]]
+                .getRectangleScaledWithPixelSize(halfPixelSize)
+                .computeIntersection(rectangle)
+                .has_value()) {
           rasterizeQuadtreeNode(
               tree,
               node.children[i][j],
               rectangle,
               rasterizer,
-              primitivesRendered);
+              primitivesRendered,
+              halfPixelSize);
         }
       }
     }
@@ -622,7 +603,8 @@ void rasterizeVectorData(
     LoadedRasterOverlayImage& result,
     const GlobeRectangle& rectangle,
     const Quadtree& tree,
-    const Ellipsoid& ellipsoid) {
+    const Ellipsoid& ellipsoid,
+    const glm::dvec2& halfPixelSize) {
   // Keeps track of primitives that have already been rendered to avoid
   // re-drawing the same primitives that appear in multiple quadtree nodes.
   std::vector<bool> primitivesRendered(tree.data.size(), false);
@@ -641,7 +623,8 @@ void rasterizeVectorData(
         tree.rootId,
         rectangle,
         rasterizer,
-        primitivesRendered);
+        primitivesRendered,
+        halfPixelSize);
     rasterizer.finalize();
   }
 }
@@ -695,7 +678,7 @@ public:
 
     return this->getAsyncSystem().runInWorkerThread(
         [&tree = this->_tree,
-         _ellipsoid = this->_ellipsoid,
+         ellipsoid = this->_ellipsoid,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
          textureSize,
@@ -706,7 +689,14 @@ public:
           LoadedRasterOverlayImage result;
           result.rectangle = rectangle;
 
-          if (false && !tileRectangle.computeIntersection(tree.rectangle)) {
+          const glm::dvec2 halfPixelSize(
+              tileRectangle.computeWidth() / (double)textureSize.x / 2.0,
+              tileRectangle.computeHeight() / (double)textureSize.y / 2.0);
+
+          if (!tree.nodes[tree.rootId]
+                   .getRectangleScaledWithPixelSize(halfPixelSize)
+                   .computeIntersection(tileRectangle)
+                   .has_value()) {
             // Transparent square if this is outside of the contents of this
             // vector document.
             result.moreDetailAvailable = false;
@@ -748,7 +738,12 @@ public:
               }
               result.pImage->pixelData.resize(totalSize, std::byte{0});
             }
-            rasterizeVectorData(result, tileRectangle, tree, _ellipsoid);
+            rasterizeVectorData(
+                result,
+                tileRectangle,
+                tree,
+                ellipsoid,
+                halfPixelSize);
           }
 
           return result;

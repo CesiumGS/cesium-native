@@ -1,4 +1,3 @@
-#include "CesiumNativeTests/writeTga.h"
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/GeographicProjection.h>
@@ -6,6 +5,7 @@
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumNativeTests/checkFilesEqual.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/writeTga.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
@@ -17,9 +17,9 @@
 #include <doctest/doctest.h>
 #include <spdlog/spdlog.h>
 
+#include <chrono>
 #include <filesystem>
 #include <memory>
-#include <chrono>
 #include <random>
 
 using namespace CesiumAsync;
@@ -30,8 +30,58 @@ using namespace CesiumVectorData;
 
 const size_t BENCHMARK_ITERATIONS = 100000;
 
-TEST_CASE(
-    "GeoJsonDocumentRasterOverlay vienna-streets benchmark"/** doctest::skip() */) {
+namespace {
+CesiumGltf::ImageAsset rasterizeOverlayTile(
+    const GlobeRectangle& rectangle,
+    const glm::dvec2& imageSize,
+    const std::filesystem::path& testDataPath,
+    const GeoJsonDocumentRasterOverlayOptions& overlayOptions) {
+  AsyncSystem asyncSystem(
+      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
+
+  Result<GeoJsonDocument> docResult =
+      GeoJsonDocument::fromGeoJson(readFile(testDataPath));
+  CHECK(!docResult.errors.hasErrors());
+  CHECK(docResult.errors.warnings.empty());
+  REQUIRE(docResult.value);
+
+  IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay;
+  pOverlay.emplace(
+      asyncSystem,
+      "overlay0",
+      std::make_shared<GeoJsonDocument>(std::move(*docResult.value)),
+      overlayOptions);
+
+  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
+      std::make_shared<CesiumNativeTests::SimpleAssetAccessor>(
+          std::map<
+              std::string,
+              std::shared_ptr<CesiumNativeTests::SimpleAssetRequest>>());
+
+  IntrusivePointer<ActivatedRasterOverlay> pActivated = pOverlay->activate(
+      RasterOverlayExternals{
+          .pAssetAccessor = pAssetAccessor,
+          .pPrepareRendererResources = nullptr,
+          .asyncSystem = asyncSystem,
+          .pCreditSystem = nullptr,
+          .pLogger = spdlog::default_logger()},
+      Ellipsoid::WGS84);
+
+  pActivated->getReadyEvent().waitInMainThread();
+
+  REQUIRE(pActivated->getTileProvider() != nullptr);
+
+  IntrusivePointer<RasterOverlayTile> pTile =
+      pActivated->getTile(rectangle.toSimpleRectangle(), imageSize);
+  pActivated->loadTile(*pTile);
+  while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
+    asyncSystem.dispatchMainThreadTasks();
+  }
+  return *pTile->getImage();
+}
+} // namespace
+
+TEST_CASE("GeoJsonDocumentRasterOverlay vienna-streets benchmark" /** doctest::skip() */) {
   AsyncSystem asyncSystem(
       std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
 
@@ -119,22 +169,19 @@ TEST_CASE(
   }
 
   const std::chrono::time_point end = std::chrono::steady_clock::now();
-  const int64_t duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-  spdlog::info("GeoJsonDocumentRasterOverlay vienna-streets benchmark time: {}", duration);
+  const int64_t duration =
+      std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+          .count();
+  spdlog::info(
+      "GeoJsonDocumentRasterOverlay vienna-streets benchmark time: {}",
+      duration);
 }
 
-TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with a bounding box height of zero") {
-      AsyncSystem asyncSystem(
-      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
-
+TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with a bounding box "
+          "height of zero") {
   const std::filesystem::path testDataPath =
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
       "equator.geojson";
-  Result<GeoJsonDocument> docResult =
-      GeoJsonDocument::fromGeoJson(readFile(testDataPath));
-  CHECK(!docResult.errors.hasErrors());
-  CHECK(docResult.errors.warnings.empty());
-  REQUIRE(docResult.value);
 
   GeoJsonDocumentRasterOverlayOptions options{
       VectorStyle{
@@ -146,55 +193,28 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with a bounding box hei
       Ellipsoid::WGS84,
       0};
 
-  IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay;
-  pOverlay.emplace(
-      asyncSystem,
-      "overlay0",
-      std::make_shared<GeoJsonDocument>(std::move(*docResult.value)),
+  CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+      GlobeRectangle::fromDegrees(-5.0, -5.0, 5.0, 5.0),
+      glm::dvec2(256, 256),
+      testDataPath,
       options);
 
-  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
-      std::make_shared<CesiumNativeTests::SimpleAssetAccessor>(
-          std::map<
-              std::string,
-              std::shared_ptr<CesiumNativeTests::SimpleAssetRequest>>());
-
-  IntrusivePointer<ActivatedRasterOverlay> pActivated = pOverlay->activate(
-      RasterOverlayExternals{
-          .pAssetAccessor = pAssetAccessor,
-          .pPrepareRendererResources = nullptr,
-          .asyncSystem = asyncSystem,
-          .pCreditSystem = nullptr,
-          .pLogger = spdlog::default_logger()},
-      Ellipsoid::WGS84);
-
-  pActivated->getReadyEvent().waitInMainThread();
-
-  REQUIRE(pActivated->getTileProvider() != nullptr);
-
-  IntrusivePointer<RasterOverlayTile> pTile =
-      pActivated->getTile(GlobeRectangle::fromDegrees(-5.0, -5.0, 5.0, 5.0).toSimpleRectangle(), glm::dvec2(256, 256));
-  pActivated->loadTile(*pTile);
-  while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
-    asyncSystem.dispatchMainThreadTasks();
-  }
-  CHECK(pTile->getImage()->width > 1);
-  CHECK(pTile->getImage()->height > 1);
-  CesiumNativeTests::writeImageToTgaFile(*pTile->getImage(), "out-tile-bb.tga");
+  // Tile size is divided by options.maximumScreenSpaceError which defaults
+  // to 2.
+  CHECK(image.width == 128);
+  CHECK(image.height == 128);
+  CesiumNativeTests::writeImageToTgaFile(image, "out-equator-meridian.tga");
+  CesiumNativeTests::checkFilesEqual(
+      std::filesystem::current_path() / "out-equator-meridian.tga",
+      std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+          "equator-meridian.tga");
 }
 
-TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings wrapping around the earth") {
-      AsyncSystem asyncSystem(
-      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
-
+TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
+          "wrapping around the earth") {
   const std::filesystem::path testDataPath =
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
       "equator.geojson";
-  Result<GeoJsonDocument> docResult =
-      GeoJsonDocument::fromGeoJson(readFile(testDataPath));
-  CHECK(!docResult.errors.hasErrors());
-  CHECK(docResult.errors.warnings.empty());
-  REQUIRE(docResult.value);
 
   GeoJsonDocumentRasterOverlayOptions options{
       VectorStyle{
@@ -206,39 +226,17 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings wra
       Ellipsoid::WGS84,
       0};
 
-  IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay;
-  pOverlay.emplace(
-      asyncSystem,
-      "overlay0",
-      std::make_shared<GeoJsonDocument>(std::move(*docResult.value)),
+  CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+      GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0),
+      glm::dvec2(64, 64),
+      testDataPath,
       options);
 
-  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
-      std::make_shared<CesiumNativeTests::SimpleAssetAccessor>(
-          std::map<
-              std::string,
-              std::shared_ptr<CesiumNativeTests::SimpleAssetRequest>>());
-
-  IntrusivePointer<ActivatedRasterOverlay> pActivated = pOverlay->activate(
-      RasterOverlayExternals{
-          .pAssetAccessor = pAssetAccessor,
-          .pPrepareRendererResources = nullptr,
-          .asyncSystem = asyncSystem,
-          .pCreditSystem = nullptr,
-          .pLogger = spdlog::default_logger()},
-      Ellipsoid::WGS84);
-
-  pActivated->getReadyEvent().waitInMainThread();
-
-  REQUIRE(pActivated->getTileProvider() != nullptr);
-
-  IntrusivePointer<RasterOverlayTile> pTile =
-      pActivated->getTile(GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0).toSimpleRectangle(), glm::dvec2(256, 256));
-  pActivated->loadTile(*pTile);
-  while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
-    asyncSystem.dispatchMainThreadTasks();
-  }
-  CHECK(pTile->getImage()->width > 1);
-  CHECK(pTile->getImage()->height > 1);
-  CesiumNativeTests::writeImageToTgaFile(*pTile->getImage(), "out-tile.tga");
+  CHECK(image.width == 32);
+  CHECK(image.height == 32);
+  CesiumNativeTests::writeImageToTgaFile(image, "out-equator-antimeridian.tga");
+  CesiumNativeTests::checkFilesEqual(
+      std::filesystem::current_path() / "out-equator-antimeridian.tga",
+      std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+          "equator-antimeridian.tga");
 }

@@ -1,7 +1,7 @@
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
-#include <CesiumNativeTests/readFile.h>
+#include <CesiumNativeTests/checkFilesEqual.h>
 #include <CesiumNativeTests/writeTga.h>
 #include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -21,20 +21,6 @@ using namespace CesiumGeospatial;
 using namespace CesiumVectorData;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
-
-namespace {
-void checkFilesEqual(
-    const std::filesystem::path& fileA,
-    const std::filesystem::path& fileB) {
-  const std::vector<std::byte>& bytes = readFile(fileA);
-  const std::vector<std::byte>& bytes2 = readFile(fileB);
-
-  REQUIRE(bytes.size() == bytes2.size());
-  for (size_t i = 0; i < bytes.size(); i++) {
-    CHECK(bytes[i] == bytes2[i]);
-  }
-}
-} // namespace
 
 TEST_CASE("VectorRasterizer::rasterize") {
   const std::filesystem::path dir(
