@@ -31,7 +31,7 @@ using namespace CesiumVectorData;
 const size_t BENCHMARK_ITERATIONS = 100000;
 
 TEST_CASE(
-    "GeoJsonDocumentRasterOverlay vienna-streets benchmark" * doctest::skip()) {
+    "GeoJsonDocumentRasterOverlay vienna-streets benchmark"/** doctest::skip() */) {
   AsyncSystem asyncSystem(
       std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
 
