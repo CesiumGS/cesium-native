@@ -177,8 +177,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay vienna-streets benchmark" /** doctest::s
       duration);
 }
 
-TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with a bounding box "
-          "height of zero") {
+TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box height set by pixels") {
   const std::filesystem::path testDataPath =
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
       "equator.geojson";
@@ -194,7 +193,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with a bounding box "
       0};
 
   CesiumGltf::ImageAsset image = rasterizeOverlayTile(
-      GlobeRectangle::fromDegrees(-5.0, -5.0, 5.0, 5.0),
+      GlobeRectangle::fromDegrees(0.0, -5.0, 5.0, 5.0),
       glm::dvec2(256, 256),
       testDataPath,
       options);
@@ -206,6 +205,38 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with a bounding box "
   CesiumNativeTests::writeImageToTgaFile(image, "out-equator-meridian.tga");
   CesiumNativeTests::checkFilesEqual(
       std::filesystem::current_path() / "out-equator-meridian.tga",
+      std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+          "equator-meridian.tga");
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box height set by meters") {
+  const std::filesystem::path testDataPath =
+      std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+      "equator.geojson";
+
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2174.21,
+              LineWidthMode::Meters},
+          PolygonStyle{std::nullopt, std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+      GlobeRectangle::fromDegrees(-5.0, -5.0, 5.0, 5.0),
+      glm::dvec2(256, 256),
+      testDataPath,
+      options);
+
+  // Tile size is divided by options.maximumScreenSpaceError which defaults
+  // to 2.
+  CHECK(image.width == 128);
+  CHECK(image.height == 128);
+  CesiumNativeTests::writeImageToTgaFile(image, "out-equator-meridian-meters.tga");
+  CesiumNativeTests::checkFilesEqual(
+      std::filesystem::current_path() / "out-equator-meridian-meters.tga",
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
           "equator-meridian.tga");
 }
@@ -227,7 +258,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
       0};
 
   CesiumGltf::ImageAsset image = rasterizeOverlayTile(
-      GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0),
+      GlobeRectangle::fromDegrees(-175.0, -5.0, 180.0, 5.0),
       glm::dvec2(64, 64),
       testDataPath,
       options);

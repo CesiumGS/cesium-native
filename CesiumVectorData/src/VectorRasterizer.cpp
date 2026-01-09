@@ -20,6 +20,7 @@
 #include <blend2d/path.h>
 #include <blend2d/rgba.h>
 #include <glm/ext/vector_double2.hpp>
+#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cmath>
@@ -213,6 +214,8 @@ void VectorRasterizer::drawPolyline(
   }
 
   setStrokeWidth(this->_context, style, this->_ellipsoid, this->_bounds);
+  const double lineWidth = this->_context.strokeWidth();
+  spdlog::info("line width: {}", lineWidth);
 
   this->_context.strokePolyline(
       vertices.data(),
