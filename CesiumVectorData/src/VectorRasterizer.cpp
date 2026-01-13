@@ -214,8 +214,6 @@ void VectorRasterizer::drawPolyline(
   }
 
   setStrokeWidth(this->_context, style, this->_ellipsoid, this->_bounds);
-  const double lineWidth = this->_context.strokeWidth();
-  spdlog::info("line width: {}", lineWidth);
 
   this->_context.strokePolyline(
       vertices.data(),
