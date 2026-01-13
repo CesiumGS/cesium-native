@@ -115,11 +115,20 @@ struct QuadtreeGeometryData {
         tileBounds.computeHeight() / static_cast<double>(textureSize.y);
     const double halfX = longPerPixel * activeLineStyle.width * 0.5;
     const double halfY = latPerPixel * activeLineStyle.width * 0.5;
+    
+    double newWest = this->rectangle.getWest() - halfX;
+    if(newWest < -180.0) {
+      newWest += 360.0;
+    }
+    double newEast = this->rectangle.getEast() + halfX;
+    if(newEast > 180.0) {
+      newEast -= 360.0;
+    }
 
     return GlobeRectangle(
-        this->rectangle.getWest() - halfX,
+        newWest,
         this->rectangle.getSouth() - halfY,
-        this->rectangle.getEast() + halfX,
+        newEast,
         this->rectangle.getNorth() + halfY);
   }
 };
