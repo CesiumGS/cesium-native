@@ -125,11 +125,12 @@ struct QuadtreeGeometryData {
       newEast -= 360.0;
     }
 
-    return GlobeRectangle(
-        newWest,
-        this->rectangle.getSouth() - halfY,
-        newEast,
-        this->rectangle.getNorth() + halfY);
+    BoundingRegionBuilder builder;
+    builder.expandToIncludeGlobeRectangle(this->rectangle);
+    builder.expandToIncludePosition(Cartographic(newWest, this->rectangle.getSouth() - halfY));
+    builder.expandToIncludePosition(Cartographic(newEast, this->rectangle.getNorth() + halfY));
+
+    return builder.toGlobeRectangle();
   }
 };
 
