@@ -491,6 +491,40 @@ TEST_CASE("VectorRasterizer::rasterize") {
     writeImageToTgaFile(*asset, "line-meters.tga");
     checkFilesEqual(dir / "line-meters.tga", thisDir / "line-meters.tga");
   }
+
+  SUBCASE("Can handle two lines touching without a gap") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 64;
+    asset->height = 64;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
+        std::byte{255});
+
+    const LineStyle style{
+        ColorStyle{Color{0xff, 0x00, 0x00, 0xff}, ColorMode::Normal},
+        2,
+        LineWidthMode::Pixels};
+
+    GlobeRectangle antiRect = GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0);
+
+    VectorRasterizer rasterizer(antiRect, asset);
+    const std::vector<glm::dvec3> line{
+        glm::dvec3(0.0, 0.0, 0.0),
+        glm::dvec3(180.0, 0.0, 0.0)};
+    rasterizer.drawPolyline(line, style);
+    const std::vector<glm::dvec3> line2{
+        glm::dvec3(-180.0, 0.0, 0.0),
+        glm::dvec3(0.0, 0.0, 0.0)};
+    rasterizer.drawPolyline(line2, style);
+    rasterizer.finalize();
+
+    writeImageToTgaFile(*asset, "lines-touching.tga");
+    checkFilesEqual(dir / "lines-touching.tga", thisDir / "lines-touching.tga");
+  }
 }
 
 TEST_CASE("VectorRasterizer::rasterize benchmark" * doctest::skip(true)) {

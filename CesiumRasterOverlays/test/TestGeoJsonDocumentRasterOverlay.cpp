@@ -83,7 +83,8 @@ CesiumGltf::ImageAsset rasterizeOverlayTile(
 }
 } // namespace
 
-TEST_CASE("GeoJsonDocumentRasterOverlay vienna-streets benchmark" /** doctest::skip() */) {
+TEST_CASE(
+    "GeoJsonDocumentRasterOverlay vienna-streets benchmark" * doctest::skip()) {
   AsyncSystem asyncSystem(
       std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
 
@@ -275,7 +276,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
       0};
 
   CesiumGltf::ImageAsset image = rasterizeOverlayTile(
-      GlobeRectangle::fromDegrees(-170.0, -5.0, -180.0, 5.0),
+      GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0),
       glm::dvec2(64, 64),
       testDataPath,
       options);
