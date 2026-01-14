@@ -115,20 +115,22 @@ struct QuadtreeGeometryData {
         tileBounds.computeHeight() / static_cast<double>(textureSize.y);
     const double halfX = longPerPixel * activeLineStyle.width * 0.5;
     const double halfY = latPerPixel * activeLineStyle.width * 0.5;
-    
+
     double newWest = this->rectangle.getWest() - halfX;
-    if(newWest < -180.0) {
+    if (newWest < -180.0) {
       newWest += 360.0;
     }
     double newEast = this->rectangle.getEast() + halfX;
-    if(newEast > 180.0) {
+    if (newEast > 180.0) {
       newEast -= 360.0;
     }
 
     BoundingRegionBuilder builder;
     builder.expandToIncludeGlobeRectangle(this->rectangle);
-    builder.expandToIncludePosition(Cartographic(newWest, this->rectangle.getSouth() - halfY));
-    builder.expandToIncludePosition(Cartographic(newEast, this->rectangle.getNorth() + halfY));
+    builder.expandToIncludePosition(
+        Cartographic(newWest, this->rectangle.getSouth() - halfY));
+    builder.expandToIncludePosition(
+        Cartographic(newEast, this->rectangle.getNorth() + halfY));
 
     return builder.toGlobeRectangle();
   }
@@ -146,10 +148,6 @@ struct QuadtreeNode {
    * the root node cannot ever be a child of another node.
    */
   uint32_t children[2][2] = {{0, 0}, {0, 0}};
-  /**
-   * Indices into `tree.data` for every primitive that this node contains.
-   */
-  std::vector<uint32_t> data;
   /**
    * The maximum width of all lines or outlines in this node with
    * `LineWidthMode::Pixels`.
@@ -238,7 +236,7 @@ struct Quadtree {
 };
 
 struct RectangleAndLineWidthFromObjectVisitor {
-  BoundingRegionBuilder& builder;
+  std::optional<GlobeRectangle>& rect;
   double& maxLineWidthPixels;
   const VectorStyle& style;
   const Ellipsoid& ellipsoid;
@@ -252,12 +250,26 @@ struct RectangleAndLineWidthFromObjectVisitor {
       const double halfWidth =
           (lineStyle->width / ellipsoid.getRadii().x) / 2.0;
       for (const glm::dvec3& point : coordinates) {
-        builder.expandToIncludePosition(Cartographic::fromDegrees(
-            point.x - halfWidth,
-            point.y - halfWidth));
-        builder.expandToIncludePosition(Cartographic::fromDegrees(
-            point.x + halfWidth,
-            point.y + halfWidth));
+        if (!rect) {
+          rect = GlobeRectangle(
+              std::min(Math::degreesToRadians(point.x) - halfWidth, -Math::OnePi),
+              Math::degreesToRadians(point.y) - halfWidth,
+              std::max(Math::degreesToRadians(point.x) + halfWidth, Math::OnePi),
+              Math::degreesToRadians(point.y) + halfWidth);
+        } else {
+          rect->setWest(std::max(std::min(
+              rect->getWest(),
+              Math::degreesToRadians(point.x) - halfWidth), -Math::OnePi));
+          rect->setSouth(std::min(
+              rect->getSouth(),
+              Math::degreesToRadians(point.y) - halfWidth));
+          rect->setEast(std::min(std::max(
+              rect->getEast(),
+              Math::degreesToRadians(point.x) + halfWidth), Math::OnePi));
+          rect->setNorth(std::max(
+              rect->getNorth(),
+              Math::degreesToRadians(point.y) + halfWidth));
+        }
       }
     } else {
       if (lineStyle && lineStyle->widthMode == LineWidthMode::Pixels) {
@@ -265,8 +277,22 @@ struct RectangleAndLineWidthFromObjectVisitor {
             std::max(this->maxLineWidthPixels, lineStyle->width);
       }
       for (const glm::dvec3& point : coordinates) {
-        builder.expandToIncludePosition(
-            Cartographic::fromDegrees(point.x, point.y));
+        if (!rect) {
+          rect = GlobeRectangle(
+              Math::degreesToRadians(point.x),
+              Math::degreesToRadians(point.y),
+              Math::degreesToRadians(point.x),
+              Math::degreesToRadians(point.y));
+        } else {
+          rect->setWest(
+              std::min(rect->getWest(), Math::degreesToRadians(point.x)));
+          rect->setSouth(
+              std::min(rect->getSouth(), Math::degreesToRadians(point.y)));
+          rect->setEast(
+              std::max(rect->getEast(), Math::degreesToRadians(point.x)));
+          rect->setNorth(
+              std::max(rect->getNorth(), Math::degreesToRadians(point.y)));
+        }
       }
     }
   }
@@ -370,24 +396,27 @@ void addPrimitivesToData(
     BoundingRegionBuilder& documentRegionBuilder,
     const VectorStyle& style,
     const Ellipsoid& ellipsoid) {
-  BoundingRegionBuilder thisBuilder;
+  std::optional<GlobeRectangle> rect;
   double maxLineWidthPixels;
   std::visit(
       RectangleAndLineWidthFromObjectVisitor{
-          thisBuilder,
+          rect,
           maxLineWidthPixels,
           style,
           ellipsoid},
       geoJsonObject->value);
-  GlobeRectangle rect = thisBuilder.toGlobeRectangle();
   // Points and MultiPoints, as well as Features, FeatureCollections, and
-  // GeometryCollections will return a zero-size bounding box. For the first
-  // two, this is because they are not rasterized by this overlay. For the rest,
-  // though they may contain geometry, they do not themselves have anything to
-  // render. We can save some effort by ignoring them all now.
-  if (rect.computeWidth() != 0.0 || rect.computeHeight() != 0.0) {
-    QuadtreeGeometryData primitive{geoJsonObject, &style, std::move(rect), maxLineWidthPixels};
-    documentRegionBuilder.expandToIncludeGlobeRectangle(rect);
+  // GeometryCollections have no bounding box. For the first two, this is
+  // because they are not rasterized by this overlay. For the rest, though they
+  // may contain geometry, they do not themselves have anything to render. We
+  // can save some effort by ignoring them all now.
+  if (rect) {
+    documentRegionBuilder.expandToIncludeGlobeRectangle(*rect);
+    QuadtreeGeometryData primitive{
+        geoJsonObject,
+        &style,
+        std::move(*rect),
+        maxLineWidthPixels};
     data.emplace_back(primitive);
   }
 
@@ -558,7 +587,7 @@ Quadtree buildQuadtree(
       dataIndices.end(),
       QuadtreeTileID(0, 0, 0));
   // Add last entry so [i + 1] is always valid
-  tree.dataNodeIndicesBegin.emplace_back((uint32_t)tree.dataIndices.size() - 1);
+  tree.dataNodeIndicesBegin.emplace_back((uint32_t)tree.dataIndices.size());
 
   return tree;
 }
