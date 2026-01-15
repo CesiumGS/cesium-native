@@ -1,5 +1,14 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Various `CesiumRasterOverlays::GeoJsonDocumentRasterOverlay` improvements:
+  - Line width is now factored in to calculations of what geometry is visible in any given tile, reducing the possibility that certain geometry (like perfectly vertical or horizontal lines) would be incorrectly ignored.
+  - Geometry near the antimeridian, such as lines that need to wrap around the entire globe, will now render correctly without gaps.
+  - Geometry contained in other objects, such as polygons within feature collections, will no longer cause the geometry to be incorrectly rendered multiple times.
+
 ### v0.56.0 - 2026-01-05
 
 ##### Breaking Changes :mega:
