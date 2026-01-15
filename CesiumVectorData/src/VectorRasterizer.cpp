@@ -20,7 +20,6 @@
 #include <blend2d/path.h>
 #include <blend2d/rgba.h>
 #include <glm/ext/vector_double2.hpp>
-#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cmath>

@@ -20,6 +20,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
@@ -27,9 +28,10 @@
 #include <CesiumVectorData/VectorStyle.h>
 
 #include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_int2.hpp>
 #include <nonstd/expected.hpp>
-#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cstddef>
