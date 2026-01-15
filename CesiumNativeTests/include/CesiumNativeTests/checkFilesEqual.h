@@ -4,9 +4,10 @@
 
 namespace CesiumNativeTests {
 /**
- * @brief Tests that the contents of `fileA` are equal to the contents of `fileB`.
+ * @brief Tests that the contents of `fileA` are equal to the contents of
+ * `fileB`.
  */
 void checkFilesEqual(
     const std::filesystem::path& fileA,
     const std::filesystem::path& fileB);
-} // namespace
+} // namespace CesiumNativeTests

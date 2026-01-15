@@ -252,20 +252,28 @@ struct RectangleAndLineWidthFromObjectVisitor {
       for (const glm::dvec3& point : coordinates) {
         if (!rect) {
           rect = GlobeRectangle(
-              std::min(Math::degreesToRadians(point.x) - halfWidth, -Math::OnePi),
+              std::min(
+                  Math::degreesToRadians(point.x) - halfWidth,
+                  -Math::OnePi),
               Math::degreesToRadians(point.y) - halfWidth,
-              std::max(Math::degreesToRadians(point.x) + halfWidth, Math::OnePi),
+              std::max(
+                  Math::degreesToRadians(point.x) + halfWidth,
+                  Math::OnePi),
               Math::degreesToRadians(point.y) + halfWidth);
         } else {
-          rect->setWest(std::max(std::min(
-              rect->getWest(),
-              Math::degreesToRadians(point.x) - halfWidth), -Math::OnePi));
+          rect->setWest(std::max(
+              std::min(
+                  rect->getWest(),
+                  Math::degreesToRadians(point.x) - halfWidth),
+              -Math::OnePi));
           rect->setSouth(std::min(
               rect->getSouth(),
               Math::degreesToRadians(point.y) - halfWidth));
-          rect->setEast(std::min(std::max(
-              rect->getEast(),
-              Math::degreesToRadians(point.x) + halfWidth), Math::OnePi));
+          rect->setEast(std::min(
+              std::max(
+                  rect->getEast(),
+                  Math::degreesToRadians(point.x) + halfWidth),
+              Math::OnePi));
           rect->setNorth(std::max(
               rect->getNorth(),
               Math::degreesToRadians(point.y) + halfWidth));

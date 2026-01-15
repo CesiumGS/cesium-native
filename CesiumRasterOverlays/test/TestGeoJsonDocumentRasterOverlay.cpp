@@ -277,14 +277,16 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
 
   {
     CesiumGltf::ImageAsset image = rasterizeOverlayTile(
-      GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0),
-      glm::dvec2(64, 64),
-      testDataPath,
-      options);
+        GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0),
+        glm::dvec2(64, 64),
+        testDataPath,
+        options);
 
     CHECK(image.width == 32);
     CHECK(image.height == 32);
-    CesiumNativeTests::writeImageToTgaFile(image, "out-equator-antimeridian-1.tga");
+    CesiumNativeTests::writeImageToTgaFile(
+        image,
+        "out-equator-antimeridian-1.tga");
     CesiumNativeTests::checkFilesEqual(
         std::filesystem::current_path() / "out-equator-antimeridian-1.tga",
         std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
@@ -293,14 +295,16 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
 
   {
     CesiumGltf::ImageAsset image = rasterizeOverlayTile(
-      GlobeRectangle::fromDegrees(-180.0, -5.0, -170.0, 5.0),
-      glm::dvec2(64, 64),
-      testDataPath,
-      options);
+        GlobeRectangle::fromDegrees(-180.0, -5.0, -170.0, 5.0),
+        glm::dvec2(64, 64),
+        testDataPath,
+        options);
 
     CHECK(image.width == 32);
     CHECK(image.height == 32);
-    CesiumNativeTests::writeImageToTgaFile(image, "out-equator-antimeridian-2.tga");
+    CesiumNativeTests::writeImageToTgaFile(
+        image,
+        "out-equator-antimeridian-2.tga");
     CesiumNativeTests::checkFilesEqual(
         std::filesystem::current_path() / "out-equator-antimeridian-2.tga",
         std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
@@ -309,14 +313,16 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
 
   {
     CesiumGltf::ImageAsset image = rasterizeOverlayTile(
-      GlobeRectangle::fromDegrees(170.0, -5.0, 180.0, 5.0),
-      glm::dvec2(64, 64),
-      testDataPath,
-      options);
+        GlobeRectangle::fromDegrees(170.0, -5.0, 180.0, 5.0),
+        glm::dvec2(64, 64),
+        testDataPath,
+        options);
 
     CHECK(image.width == 32);
     CHECK(image.height == 32);
-    CesiumNativeTests::writeImageToTgaFile(image, "out-equator-antimeridian-3.tga");
+    CesiumNativeTests::writeImageToTgaFile(
+        image,
+        "out-equator-antimeridian-3.tga");
     CesiumNativeTests::checkFilesEqual(
         std::filesystem::current_path() / "out-equator-antimeridian-3.tga",
         std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /

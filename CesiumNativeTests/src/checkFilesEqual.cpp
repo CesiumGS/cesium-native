@@ -3,9 +3,9 @@
 
 #include <doctest/doctest.h>
 
+#include <cstddef>
 #include <filesystem>
 #include <vector>
-#include <cstddef>
 
 namespace CesiumNativeTests {
 void checkFilesEqual(
@@ -19,4 +19,4 @@ void checkFilesEqual(
     CHECK(bytes[i] == bytes2[i]);
   }
 }
-} // namespace
+} // namespace CesiumNativeTests
