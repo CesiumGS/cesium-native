@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Fixed a bug that could cause an assertion failure or crash when destroying a `Cesium3DTilesSelection::Tileset` very soon after creating it using the constructor taking a custom `TilesetContentLoader` or `TilesetContentLoaderFactory`.
+
 ### v0.56.0 - 2026-01-05
 
 ##### Breaking Changes :mega:
