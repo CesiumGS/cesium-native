@@ -15,6 +15,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/WebMapServiceRasterOverlay.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
@@ -26,7 +27,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <map>
 #include <memory>
 #include <optional>
 #include <span>
@@ -201,44 +201,61 @@ protected:
             this->getProjection(),
             options.rectangle);
 
-    std::string queryString = "?";
+    Uri uri(this->_url);
+    if (!uri.isValid()) {
+      return this->getAsyncSystem().createResolvedFuture(
+          LoadedRasterOverlayImage{
+              nullptr,
+              {},
+              {},
+              ErrorList::error(
+                  fmt::format("Failed to parse URL {}", this->_url))});
+    }
 
-    if (this->_url.find(queryString) != std::string::npos)
-      queryString = "&";
+    UriQuery query(uri);
 
-    const std::string urlTemplate =
-        this->_url + queryString +
-        "request=GetMap&TRANSPARENT=TRUE&version={version}&service="
-        "WMS&"
-        "format={format}&styles="
-        "&width={width}&height={height}&bbox={minx},{miny},{maxx},{maxy}"
-        "&layers={layers}&crs=EPSG:4326";
+    // We need to provide these, but we don't want to override values passed in
+    // by the user.
+    if (!query.hasValue("crs")) {
+      query.setValue("crs", "EPSG:4326");
+    }
 
-    const auto radiansToDegrees = [](double rad) {
-      return std::to_string(CesiumUtility::Math::radiansToDegrees(rad));
-    };
+    if (!query.hasValue("styles")) {
+      query.setValue("styles", "");
+    }
 
-    const std::map<std::string, std::string> urlTemplateMap = {
-        {"baseUrl", this->_url},
-        {"version", this->_version},
-        {"maxx", radiansToDegrees(tileRectangle.getNorth())},
-        {"maxy", radiansToDegrees(tileRectangle.getEast())},
-        {"minx", radiansToDegrees(tileRectangle.getSouth())},
-        {"miny", radiansToDegrees(tileRectangle.getWest())},
-        {"layers", this->_layers},
-        {"format", this->_format},
-        {"width", std::to_string(this->getWidth())},
-        {"height", std::to_string(this->getHeight())}};
+    if (!query.hasValue("transparent")) {
+      query.setValue("transparent", "true");
+    }
 
-    std::string url = CesiumUtility::Uri::substituteTemplateParameters(
-        urlTemplate,
-        [&map = urlTemplateMap](const std::string& placeholder) {
-          auto it = map.find(placeholder);
-          return it == map.end() ? "{" + placeholder + "}"
-                                 : Uri::escape(it->second);
-        });
+    if (!query.hasValue("service")) {
+      query.setValue("service", "WMS");
+    }
 
-    return this->loadTileImageFromUrl(url, this->_headers, std::move(options));
+    // Set rest of parameters
+    query.setValue("request", "GetMap");
+    query.setValue("version", this->_version);
+    query.setValue(
+        "bbox",
+        fmt::format(
+            "{},{},{},{}",
+            Math::radiansToDegrees(tileRectangle.getSouth()),
+            Math::radiansToDegrees(tileRectangle.getWest()),
+            Math::radiansToDegrees(tileRectangle.getNorth()),
+            Math::radiansToDegrees(tileRectangle.getEast())));
+    query.setValue("layers", this->_layers);
+    query.setValue("format", this->_format);
+    query.setValue("width", std::to_string(this->getWidth()));
+    query.setValue("height", std::to_string(this->getHeight()));
+
+    uri.setQuery(query.toQueryString());
+
+    const std::string uriStr(uri.toString());
+
+    return this->loadTileImageFromUrl(
+        uriStr,
+        this->_headers,
+        std::move(options));
   }
 
 private:
@@ -266,31 +283,20 @@ Future<RasterOverlay::CreateTileProviderResult>
 WebMapServiceRasterOverlay::createTileProvider(
     const CreateRasterOverlayTileProviderParameters& parameters) const {
 
-  std::string xmlUrlGetcapabilities =
-      CesiumUtility::Uri::substituteTemplateParameters(
-          "{baseUrl}{queryString}request=GetCapabilities&version={version}&"
-          "service=WMS",
-          [this](const std::string& placeholder) {
-            if (placeholder == "baseUrl") {
-              return this->_baseUrl;
-            } else if (placeholder == "version") {
-              return Uri::escape(this->_options.version);
-            } else if (placeholder == "queryString") {
-              std::string queryString = "?";
-              if (this->_baseUrl.find(queryString) != std::string::npos)
-                queryString = "&";
-              return queryString;
-            }
-            // Keep other placeholders
-            return "{" + placeholder + "}";
-          });
+  CesiumUtility::Uri uri(this->_baseUrl);
+  CesiumUtility::UriQuery query(uri.getQuery());
+  query.setValue("request", "GetCapabilities");
+  query.setValue("version", this->_options.version);
+  query.setValue("service", "WMS");
+  uri.setQuery(query.toQueryString());
+  const std::string xmlUrlGetCapabilities(uri.toString());
 
   IntrusivePointer<const WebMapServiceRasterOverlay> thiz = this;
 
   return parameters.externals.pAssetAccessor
       ->get(
           parameters.externals.asyncSystem,
-          xmlUrlGetcapabilities,
+          xmlUrlGetCapabilities,
           this->_headers)
       .thenInMainThread(
           [thiz, parameters](std::shared_ptr<IAssetRequest>&& pRequest)

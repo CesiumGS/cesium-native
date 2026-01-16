@@ -24,7 +24,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <exception>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -90,66 +89,58 @@ QuadtreeRasterOverlayTileProvider::QuadtreeRasterOverlayTileProvider(
           const SharedAssetContext& context,
           const QuadtreeTileID& key)
           -> Future<ResultPointer<LoadedQuadtreeImage>> {
-        return pThis->loadQuadtreeTileImage(key)
-            .catchImmediately([](std::exception&& e) {
-              // Turn an exception into an error.
-              LoadedRasterOverlayImage result;
-              result.errorList.emplaceError(e.what());
-              return result;
-            })
-            .thenImmediately(
-                [loadParentTile,
-                 key,
-                 currentLevel = key.level,
-                 minimumLevel = pThis->getMinimumLevel(),
-                 asyncSystem =
-                     context.asyncSystem](LoadedRasterOverlayImage&& loaded)
-                    -> Future<ResultPointer<LoadedQuadtreeImage>> {
-                  if (loaded.pImage && !loaded.errorList.hasErrors() &&
-                      loaded.pImage->width > 0 && loaded.pImage->height > 0) {
+        return pThis->loadQuadtreeTileImage(key).thenImmediately(
+            [loadParentTile,
+             key,
+             currentLevel = key.level,
+             minimumLevel = pThis->getMinimumLevel(),
+             asyncSystem =
+                 context.asyncSystem](LoadedRasterOverlayImage&& loaded)
+                -> Future<ResultPointer<LoadedQuadtreeImage>> {
+              if (loaded.pImage && !loaded.errorList.hasErrors() &&
+                  loaded.pImage->width > 0 && loaded.pImage->height > 0) {
 #if SHOW_TILE_BOUNDARIES
-                    // Highlight the edges in red to show tile boundaries.
-                    std::span<uint32_t> pixels =
-                        reintepretCastSpan<uint32_t, std::byte>(
-                            loaded.image->pixelData);
-                    for (int32_t j = 0; j < loaded.pImage->height; ++j) {
-                      for (int32_t i = 0; i < loaded.pImage->width; ++i) {
-                        if (i == 0 || j == 0 || i == loaded.pImage->width - 1 ||
-                            j == loaded.pImage->height - 1) {
-                          pixels[j * loaded.pImage->width + i] = 0xFF0000FF;
-                        }
-                      }
+                // Highlight the edges in red to show tile boundaries.
+                std::span<uint32_t> pixels =
+                    reintepretCastSpan<uint32_t, std::byte>(
+                        loaded.image->pixelData);
+                for (int32_t j = 0; j < loaded.pImage->height; ++j) {
+                  for (int32_t i = 0; i < loaded.pImage->width; ++i) {
+                    if (i == 0 || j == 0 || i == loaded.pImage->width - 1 ||
+                        j == loaded.pImage->height - 1) {
+                      pixels[j * loaded.pImage->width + i] = 0xFF0000FF;
                     }
+                  }
+                }
 #endif
 
-                    IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
-                    pLoadedImage.emplace(
-                        std::make_shared<LoadedRasterOverlayImage>(
-                            std::move(loaded)),
-                        std::nullopt);
-                    return asyncSystem.createResolvedFuture(
-                        ResultPointer<LoadedQuadtreeImage>(pLoadedImage));
-                  }
+                IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
+                pLoadedImage.emplace(
+                    std::make_shared<LoadedRasterOverlayImage>(
+                        std::move(loaded)),
+                    std::nullopt);
+                return asyncSystem.createResolvedFuture(
+                    ResultPointer<LoadedQuadtreeImage>(pLoadedImage));
+              }
 
-                  // Tile failed to load, try loading the parent tile
-                  // instead. We can only initiate a new tile request from
-                  // the main thread, though.
-                  if (currentLevel > minimumLevel) {
-                    return asyncSystem.runInMainThread([key, loadParentTile]() {
-                      return loadParentTile(key);
-                    });
-                  } else {
-                    // No parent available, so return the original failed
-                    // result.
-                    IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
-                    pLoadedImage.emplace(
-                        std::make_shared<LoadedRasterOverlayImage>(
-                            std::move(loaded)),
-                        std::nullopt);
-                    return asyncSystem.createResolvedFuture(
-                        ResultPointer<LoadedQuadtreeImage>(pLoadedImage));
-                  }
-                });
+              // Tile failed to load, try loading the parent tile
+              // instead. We can only initiate a new tile request from
+              // the main thread, though.
+              if (currentLevel > minimumLevel) {
+                return asyncSystem.runInMainThread(
+                    [key, loadParentTile]() { return loadParentTile(key); });
+              } else {
+                // No parent available, so return the original failed
+                // result.
+                IntrusivePointer<LoadedQuadtreeImage> pLoadedImage;
+                pLoadedImage.emplace(
+                    std::make_shared<LoadedRasterOverlayImage>(
+                        std::move(loaded)),
+                    std::nullopt);
+                return asyncSystem.createResolvedFuture(
+                    ResultPointer<LoadedQuadtreeImage>(pLoadedImage));
+              }
+            });
       }));
 }
 
@@ -485,7 +476,7 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
               // errors and warnings.
               ErrorList errors;
               for (ResultPointer<LoadedQuadtreeImage>& image : images) {
-                if (image.pValue->pLoaded) {
+                if (image.pValue && image.pValue->pLoaded) {
                   errors.merge(image.pValue->pLoaded->errorList);
                 }
                 errors.merge(image.errors);

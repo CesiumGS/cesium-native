@@ -20,6 +20,9 @@ namespace {
 
 class TestAsset : public SharedAsset<TestAsset> {
 public:
+  TestAsset() = default;
+  TestAsset(const std::string& value) : someValue(value) {}
+
   std::string someValue;
 
   int64_t getSizeBytes() const { return int64_t(this->someValue.size()); }
@@ -29,15 +32,24 @@ struct JustAsyncSystemContext {
   AsyncSystem asyncSystem;
 };
 
+std::optional<Future<ResultPointer<TestAsset>>> maybeFuture{};
+
 IntrusivePointer<
     SharedAssetDepot<TestAsset, std::string, JustAsyncSystemContext>>
 createDepot() {
   return new SharedAssetDepot<TestAsset, std::string, JustAsyncSystemContext>(
       [](const JustAsyncSystemContext& context, const std::string& assetKey) {
-        IntrusivePointer<TestAsset> p = new TestAsset();
-        p->someValue = assetKey;
-        return context.asyncSystem.createResolvedFuture(
-            ResultPointer<TestAsset>(p));
+        if (maybeFuture) {
+          Future<ResultPointer<TestAsset>> localFuture =
+              std::move(*maybeFuture);
+          maybeFuture.reset();
+          return localFuture;
+        } else {
+          IntrusivePointer<TestAsset> p = new TestAsset();
+          p->someValue = assetKey;
+          return context.asyncSystem.createResolvedFuture(
+              ResultPointer<TestAsset>(p));
+        }
       });
 }
 
@@ -70,6 +82,116 @@ TEST_CASE("SharedAssetDepot") {
 
     REQUIRE(assetOne.pValue != nullptr);
     CHECK(assetOne.pValue == assetTwo.pValue);
+  }
+
+  SUBCASE("getOrCreate returns a future for the same asset when called "
+          "multiple times while loading") {
+    auto pDepot = createDepot();
+
+    Promise<ResultPointer<TestAsset>> promise =
+        context.asyncSystem.createPromise<ResultPointer<TestAsset>>();
+    maybeFuture = promise.getFuture();
+
+    auto futureOne = pDepot->getOrCreate(context, "one");
+    auto futureTwo = pDepot->getOrCreate(context, "one");
+
+    promise.resolve(ResultPointer<TestAsset>(new TestAsset("one")));
+
+    ResultPointer<TestAsset> assetOne = futureOne.waitInMainThread();
+    ResultPointer<TestAsset> assetTwo = futureTwo.waitInMainThread();
+
+    REQUIRE(assetOne.pValue != nullptr);
+    REQUIRE(assetTwo.pValue != nullptr);
+    CHECK(assetOne.pValue == assetTwo.pValue);
+  }
+
+  SUBCASE("loads that fail with an exception can be retried") {
+    auto pDepot = createDepot();
+
+    Promise<ResultPointer<TestAsset>> promise =
+        context.asyncSystem.createPromise<ResultPointer<TestAsset>>();
+    maybeFuture = promise.getFuture();
+
+    auto futureOne = pDepot->getOrCreate(context, "one");
+
+    // Reject the load with an exception.
+    promise.reject(std::runtime_error("Simulated load failure"));
+
+    ResultPointer<TestAsset> assetOne = futureOne.waitInMainThread();
+
+    REQUIRE(assetOne.pValue == nullptr);
+    CHECK(assetOne.errors.hasErrors());
+
+    // Now try again, this time succeeding.
+    promise = context.asyncSystem.createPromise<ResultPointer<TestAsset>>();
+    maybeFuture = promise.getFuture();
+    auto futureTwo = pDepot->getOrCreate(context, "one");
+
+    promise.resolve(ResultPointer<TestAsset>(new TestAsset("one")));
+
+    ResultPointer<TestAsset> assetTwo = futureTwo.waitInMainThread();
+
+    REQUIRE(assetTwo.pValue != nullptr);
+    CHECK(assetTwo.pValue->someValue == "one");
+  }
+
+  SUBCASE("loads that fail immediately with an exception can also be retried") {
+    auto pDepot = createDepot();
+
+    Promise<ResultPointer<TestAsset>> promise =
+        context.asyncSystem.createPromise<ResultPointer<TestAsset>>();
+    maybeFuture = promise.getFuture();
+
+    // Reject the load with an exception before requesting the asset, so that
+    // the load will fail immediately in the thread that calls getOrCreate.
+    promise.reject(std::runtime_error("Simulated load failure"));
+
+    auto futureOne = pDepot->getOrCreate(context, "one");
+
+    ResultPointer<TestAsset> assetOne = futureOne.waitInMainThread();
+
+    REQUIRE(assetOne.pValue == nullptr);
+    CHECK(assetOne.errors.hasErrors());
+
+    // Now try again, this time succeeding.
+    promise = context.asyncSystem.createPromise<ResultPointer<TestAsset>>();
+    maybeFuture = promise.getFuture();
+    auto futureTwo = pDepot->getOrCreate(context, "one");
+
+    promise.resolve(ResultPointer<TestAsset>(new TestAsset("one")));
+
+    ResultPointer<TestAsset> assetTwo = futureTwo.waitInMainThread();
+
+    REQUIRE(assetTwo.pValue != nullptr);
+    CHECK(assetTwo.pValue->someValue == "one");
+  }
+
+  SUBCASE("loads with a non-exception failure cache the failure") {
+    auto pDepot = createDepot();
+
+    Promise<ResultPointer<TestAsset>> promise =
+        context.asyncSystem.createPromise<ResultPointer<TestAsset>>();
+    maybeFuture = promise.getFuture();
+
+    auto futureOne = pDepot->getOrCreate(context, "one");
+
+    // Resolve the load with a non-exception failure.
+    promise.resolve(
+        ResultPointer<TestAsset>(ErrorList::error("Simulated load failure")));
+
+    ResultPointer<TestAsset> assetOne = futureOne.waitInMainThread();
+
+    REQUIRE(assetOne.pValue == nullptr);
+    CHECK(assetOne.errors.hasErrors());
+
+    // Now try again; it should return the same failure without attempting
+    // to load again.
+    auto futureTwo = pDepot->getOrCreate(context, "one");
+
+    ResultPointer<TestAsset> assetTwo = futureTwo.waitInMainThread();
+
+    REQUIRE(assetTwo.pValue == nullptr);
+    CHECK(assetTwo.errors.hasErrors());
   }
 
   SUBCASE("unreferenced assets become inactive") {

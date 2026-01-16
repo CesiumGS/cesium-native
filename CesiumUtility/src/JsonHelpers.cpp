@@ -185,8 +185,8 @@ uint64_t JsonHelpers::getUint64OrDefault(
 uint64_t JsonHelpers::getUint64OrDefault(
     const rapidjson::Value& json,
     uint64_t defaultValue) {
-  if (json.IsUint()) {
-    return json.GetUint();
+  if (json.IsUint64()) {
+    return json.GetUint64();
   }
   return defaultValue;
 }
@@ -204,8 +204,8 @@ int64_t JsonHelpers::getInt64OrDefault(
 int64_t JsonHelpers::getInt64OrDefault(
     const rapidjson::Value& json,
     int64_t defaultValue) {
-  if (json.IsInt()) {
-    return json.GetInt();
+  if (json.IsInt64()) {
+    return json.GetInt64();
   }
   return defaultValue;
 }

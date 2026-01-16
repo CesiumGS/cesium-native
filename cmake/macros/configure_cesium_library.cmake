@@ -1,14 +1,21 @@
 function(configure_cesium_library targetName)
     if (MSVC)
-        target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /bigobj /w45038 /w44254 /w44242 /w44191 /w45220)
+        target_compile_options(${targetName} PRIVATE /W4 /wd4201 /bigobj /w45038 /w44254 /w44242 /w44191 /w45220)
+        if (CMAKE_VERSION VERSION_LESS 3.24)
+            target_compile_options(${targetName} PRIVATE /WX)
+        endif()
     else()
-        target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion -Wno-unknown-pragmas)
+        if (CMAKE_VERSION VERSION_LESS 3.24)
+            target_compile_options(${targetName} PRIVATE -Werror)
+        endif()
+        target_compile_options(${targetName} PRIVATE -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion -Wno-unknown-pragmas)
     endif()
 
     set_target_properties(${targetName} PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED YES
         CXX_EXTENSIONS NO
+        COMPILE_WARNING_AS_ERROR YES
     )
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
