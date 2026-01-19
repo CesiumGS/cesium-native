@@ -26,7 +26,8 @@ auto transformTuple(Tuple&& tuple, Func&& f) {
     std::tuple result{
         std::forward<Func>(f)(std::get<Is>(std::forward<Tuple>(tuple)))...};
     return result;
-  }(std::make_index_sequence<N>{});
+  }
+  (std::make_index_sequence<N>{});
 }
 
 } // namespace CesiumUtility
