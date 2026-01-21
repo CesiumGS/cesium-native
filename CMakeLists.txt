@@ -128,7 +128,7 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 set(PACKAGES_PRIVATE
     abseil draco ktx[core] modp-base64 meshoptimizer openssl s2geometry
     sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp libmorton zstd spz zlib
+    earcut-hpp libmorton zstd spz zlib manifold
 )
 
 # asmjit needed by blend2d on non-iOS platforms (iOS and Wasm don't support JIT)
@@ -394,6 +394,7 @@ find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
 find_package(zlib-ng CONFIG REQUIRED)
+find_package(manifold CONFIG REQUIRED)
 
 # asmjit should not be included with iOS or Wasm builds as they don't support JIT compilation.
 if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")

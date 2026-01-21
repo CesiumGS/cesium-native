@@ -48,7 +48,8 @@
       "platform": "!ios&!wasm32"
     },
     "spz",
-    "zlib"
+    "zlib",
+    "manifold"
   ]
 }
 
