@@ -372,7 +372,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager(externals, {}, "tileset.json");
+        TilesetContentManager::createFromUrl(externals, {}, "tileset.json");
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
@@ -400,7 +400,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager(externals, {}, "layer.json");
+        TilesetContentManager::createFromUrl(externals, {}, "layer.json");
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
@@ -431,7 +431,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager(externals, {}, "layer.json");
+        TilesetContentManager::createFromUrl(externals, {}, "layer.json");
     TilesetContentManager& manager = *pManager;
     CHECK(manager.getNumberOfTilesLoading() == 1);
 
@@ -494,11 +494,11 @@ TEST_CASE("Test tile state machine") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             options,
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     pManager->waitUntilIdle(5000.0);
 
@@ -603,11 +603,11 @@ TEST_CASE("Test tile state machine") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             options,
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     pManager->waitUntilIdle(5000.0);
 
@@ -683,11 +683,11 @@ TEST_CASE("Test tile state machine") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             options,
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     pManager->waitUntilIdle(5000.0);
 
@@ -785,11 +785,11 @@ TEST_CASE("Test tile state machine") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             options,
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     pManager->waitUntilIdle(5000.0);
 
@@ -968,11 +968,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             {},
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     pManager->waitUntilIdle(5000.0);
 
@@ -1040,11 +1040,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             options,
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     pManager->waitUntilIdle(5000.0);
 
@@ -1108,11 +1108,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             {},
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     pManager->waitUntilIdle(5000.0);
 
@@ -1155,11 +1155,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             {},
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     // add raster overlay
     pManager->getRasterOverlayCollection().add(
@@ -1430,11 +1430,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             {},
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     pManager->getRasterOverlayCollection().add(
         new AlwaysMoreDetailRasterOverlay());
@@ -1652,11 +1652,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             {},
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     // add raster overlay
     pManager->getRasterOverlayCollection().add(
@@ -1724,11 +1724,13 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     // create manager
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             {},
             std::move(loaderResult.pLoader),
-            std::move(loaderResult.pRootTile)};
+            std::move(loaderResult.pRootTile));
+
+    pManager->waitUntilIdle(5000.0);
 
     for (auto& child : containerTile.getChildren()) {
       pManager->loadTileContent(child, {});
@@ -1844,11 +1846,11 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
     options.contentOptions.generateMissingNormalsSmooth = true;
 
     IntrusivePointer<TilesetContentManager> pManager =
-        new TilesetContentManager{
+        TilesetContentManager::createFromLoader(
             externals,
             options,
             std::move(pMockedLoader),
-            std::move(pRootTile)};
+            std::move(pRootTile));
 
     pManager->waitUntilIdle(5000.0);
 
@@ -1926,11 +1928,12 @@ TEST_CASE("Test glTF modifier state machine") {
   TilesetOptions options{};
   options.contentOptions.generateMissingNormalsSmooth = true;
 
-  IntrusivePointer<TilesetContentManager> pManager = new TilesetContentManager{
-      externals,
-      options,
-      std::move(pMockedLoader),
-      std::move(pRootTile)};
+  IntrusivePointer<TilesetContentManager> pManager =
+      TilesetContentManager::createFromLoader(
+          externals,
+          options,
+          std::move(pMockedLoader),
+          std::move(pRootTile));
 
   pManager->waitUntilIdle(5000.0);
 

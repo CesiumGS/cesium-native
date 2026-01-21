@@ -72,7 +72,7 @@ Tileset::Tileset(
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{
-          new TilesetContentManager(
+          TilesetContentManager::createFromLoader(
               _externals,
               _options,
               std::move(pCustomLoader),
@@ -91,7 +91,10 @@ Tileset::Tileset(
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{
-          new TilesetContentManager(this->_externals, this->_options, url),
+          TilesetContentManager::createFromUrl(
+              this->_externals,
+              this->_options,
+              url),
       },
       _heightRequests(),
       _defaultViewGroup() {}
@@ -107,7 +110,7 @@ Tileset::Tileset(
       _options(options),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{new TilesetContentManager(
+      _pTilesetContentManager{TilesetContentManager::createFromCesiumIon(
           this->_externals,
           this->_options,
           ionAssetID,
@@ -125,7 +128,7 @@ Tileset::Tileset(
       _options(options),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{new TilesetContentManager(
+      _pTilesetContentManager{TilesetContentManager::createFromLoaderFactory(
           _externals,
           _options,
           std::move(loaderFactory))} {}
