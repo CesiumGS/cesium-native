@@ -157,6 +157,19 @@ void TilesetViewGroup::finishFrame(
                         updateResult.tilesKicked +
                         this->_tilesAlreadyLoadingOrUnloading;
 
+  // Add the per-tile mapped raster tiles in the progress percentage.
+  for (const Tile::ConstPointer& pTile : updateResult.tilesToRenderThisFrame) {
+    const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
+        pTile->getMappedRasterTiles();
+    for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
+      ++totalTiles;
+      if (mappedRasterTile.getState() !=
+          RasterMappedTo3DTile::AttachmentState::Attached)
+        tilesLoading++;
+      }
+    }
+  
+
   if (tilesLoading == 0) {
     this->_loadProgressPercentage = 100.0f;
   } else {
