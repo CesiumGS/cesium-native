@@ -2,6 +2,7 @@
 #include "CesiumGltf/Accessor.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/BufferView.h"
+#include "CesiumGltf/MeshPrimitive.h"
 
 #include <Cesium3DTilesSelection/ManifoldGltfModifier.h>
 
@@ -11,6 +12,17 @@
 using namespace CesiumGltf;
 
 namespace Cesium3DTilesSelection {
+namespace {
+template<typename T>
+void addIndicesToManifoldMesh(const Model& model, const MeshPrimitive& primitive, manifold::MeshGL64& manifoldMesh) {
+  AccessorView indicesAccessor =
+      AccessorView<T>(model, primitive.indices);
+  for (int64_t i = 0; i < indicesAccessor.size(); i++) {
+    manifoldMesh.triVerts.push_back(indicesAccessor[i]);
+  }
+}
+}
+
 CesiumAsync::Future<std::optional<GltfModifierOutput>>
 ManifoldGltfModifier::apply(GltfModifierInput&& input) {
   manifold::MeshGL64 boxMeshGl;
@@ -78,8 +90,6 @@ ManifoldGltfModifier::apply(GltfModifierInput&& input) {
         continue;
       }
 
-      AccessorView indicesAccessor =
-          AccessorView<uint32_t>(model, primitive.indices);
       size_t vertOffset = manifoldMesh.vertProperties.size();
       manifoldMesh.vertProperties.resize(
           manifoldMesh.vertProperties.size() + (size_t)stride * vertexCount,
@@ -118,10 +128,18 @@ ManifoldGltfModifier::apply(GltfModifierInput&& input) {
       }
 
       size_t triOffset = manifoldMesh.triVerts.size();
-      for (int64_t i = 0; i < indicesAccessor.size(); i++) {
-        manifoldMesh.triVerts.push_back(indicesAccessor[i]);
+      const Accessor& indicesAccessor = Model::getSafe(model.accessors, primitive.indices);
+      switch(indicesAccessor.componentType) {
+        case Accessor::ComponentType::UNSIGNED_BYTE:
+          addIndicesToManifoldMesh<uint8_t>(model, primitive, manifoldMesh);
+          break;
+        case Accessor::ComponentType::UNSIGNED_SHORT:
+          addIndicesToManifoldMesh<uint16_t>(model, primitive, manifoldMesh);
+          break;
+        case Accessor::ComponentType::UNSIGNED_INT:
+          addIndicesToManifoldMesh<uint32_t>(model, primitive, manifoldMesh);
+          break;
       }
-
       manifoldMesh.runIndex.push_back(triOffset);
       manifoldMesh.runOriginalID.push_back(static_cast<uint32_t>(primitiveIdx));
     }
@@ -129,7 +147,7 @@ ManifoldGltfModifier::apply(GltfModifierInput&& input) {
     // manifoldMesh.Merge();
     manifold::Manifold manifold(manifoldMesh);
     manifold::Manifold resultManifold =
-        manifold.Boolean(boxManifold, manifold::OpType::Subtract);
+        manifold.Boolean(boxManifold, this->subtract ? manifold::OpType::Subtract : manifold::OpType::Intersect);
 
     manifold::MeshGL64 resultMesh = resultManifold.GetMeshGL64();
 

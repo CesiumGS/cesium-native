@@ -23,5 +23,6 @@ public:
 
 public:
   CesiumGeometry::AxisAlignedBox box;
+  bool subtract = true;
 };
 } // namespace Cesium3DTilesSelection
