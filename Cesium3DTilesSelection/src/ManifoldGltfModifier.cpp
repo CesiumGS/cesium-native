@@ -13,15 +13,41 @@ using namespace CesiumGltf;
 
 namespace Cesium3DTilesSelection {
 namespace {
-template<typename T>
-void addIndicesToManifoldMesh(const Model& model, const MeshPrimitive& primitive, manifold::MeshGL64& manifoldMesh) {
-  AccessorView indicesAccessor =
-      AccessorView<T>(model, primitive.indices);
+template <typename T>
+void addIndicesToManifoldMesh(
+    const Model& model,
+    const MeshPrimitive& primitive,
+    manifold::MeshGL64& manifoldMesh) {
+  AccessorView indicesAccessor = AccessorView<T>(model, primitive.indices);
   for (int64_t i = 0; i < indicesAccessor.size(); i++) {
     manifoldMesh.triVerts.push_back(indicesAccessor[i]);
   }
 }
+
+template<typename T>
+void memcpyAsDoubles(double* dest, T value) {
+  std::vector<float> results;
+  results.resize(sizeof(T) / 4);
+  std::memcpy(results.data(), &value, sizeof(T));
+  for(size_t i = 0; i < results.size(); i++) {
+    double v = (double)results[i];
+    std::memcpy(dest + i, &v, sizeof(double));
+  }
 }
+
+template <typename T>
+void addVertPropertiesFromAccessor(
+    const Model& model,
+    const Accessor& accessor,
+    size_t start,
+    int64_t stride,
+    manifold::MeshGL64& manifoldMesh) {
+  AccessorView<T> view(model, accessor);
+  for (int64_t j = 0; j < accessor.count; j++) {
+    memcpyAsDoubles(manifoldMesh.vertProperties.data() + (start + (size_t)(j * stride)), view[j]);
+  }
+}
+} // namespace
 
 CesiumAsync::Future<std::optional<GltfModifierOutput>>
 ManifoldGltfModifier::apply(GltfModifierInput&& input) {
@@ -108,37 +134,59 @@ ManifoldGltfModifier::apply(GltfModifierInput&& input) {
             positionAccessor[i].z;
       }
 
-      size_t offset = 0;
+      size_t offset = 3;
       for (size_t i = 0; i < attributeIndices.size(); i++) {
         if (attributeIndices[i] == positionIndex) {
           continue;
         }
-        Accessor accessor =
+        const Accessor& accessor =
             Model::getSafe(model.accessors, attributeIndices[i]);
-        AccessorView<float> accessorView(model, attributeIndices[i]);
-        int64_t numComponents = accessor.computeNumberOfComponents();
-        for (int64_t j = 0; j < accessor.count; j++) {
-          for (int64_t k = 0; k < numComponents; k++) {
-            manifoldMesh.vertProperties
-                [vertOffset + (size_t)(j * stride) + offset + (size_t)k] =
-                accessorView[j * numComponents + k];
-          }
+        if (accessor.type == Accessor::Type::VEC2) {
+          addVertPropertiesFromAccessor<glm::vec2>(
+              model,
+              accessor,
+              vertOffset + offset,
+              stride,
+              manifoldMesh);
+        } else if (accessor.type == Accessor::Type::VEC3) {
+          addVertPropertiesFromAccessor<glm::vec3>(
+              model,
+              accessor,
+              vertOffset + offset,
+              stride,
+              manifoldMesh);
+        } else if (accessor.type == Accessor::Type::VEC4) {
+          addVertPropertiesFromAccessor<glm::vec4>(
+              model,
+              accessor,
+              vertOffset + offset,
+              stride,
+              manifoldMesh);
+        } else if (accessor.type == Accessor::Type::SCALAR) {
+          addVertPropertiesFromAccessor<float>(
+              model,
+              accessor,
+              vertOffset + offset,
+              stride,
+              manifoldMesh);
         }
+        int64_t numComponents = accessor.computeNumberOfComponents();
         offset += static_cast<size_t>(numComponents);
       }
 
       size_t triOffset = manifoldMesh.triVerts.size();
-      const Accessor& indicesAccessor = Model::getSafe(model.accessors, primitive.indices);
-      switch(indicesAccessor.componentType) {
-        case Accessor::ComponentType::UNSIGNED_BYTE:
-          addIndicesToManifoldMesh<uint8_t>(model, primitive, manifoldMesh);
-          break;
-        case Accessor::ComponentType::UNSIGNED_SHORT:
-          addIndicesToManifoldMesh<uint16_t>(model, primitive, manifoldMesh);
-          break;
-        case Accessor::ComponentType::UNSIGNED_INT:
-          addIndicesToManifoldMesh<uint32_t>(model, primitive, manifoldMesh);
-          break;
+      const Accessor& indicesAccessor =
+          Model::getSafe(model.accessors, primitive.indices);
+      switch (indicesAccessor.componentType) {
+      case Accessor::ComponentType::UNSIGNED_BYTE:
+        addIndicesToManifoldMesh<uint8_t>(model, primitive, manifoldMesh);
+        break;
+      case Accessor::ComponentType::UNSIGNED_SHORT:
+        addIndicesToManifoldMesh<uint16_t>(model, primitive, manifoldMesh);
+        break;
+      case Accessor::ComponentType::UNSIGNED_INT:
+        addIndicesToManifoldMesh<uint32_t>(model, primitive, manifoldMesh);
+        break;
       }
       manifoldMesh.runIndex.push_back(triOffset);
       manifoldMesh.runOriginalID.push_back(static_cast<uint32_t>(primitiveIdx));
@@ -146,8 +194,10 @@ ManifoldGltfModifier::apply(GltfModifierInput&& input) {
 
     // manifoldMesh.Merge();
     manifold::Manifold manifold(manifoldMesh);
-    manifold::Manifold resultManifold =
-        manifold.Boolean(boxManifold, this->subtract ? manifold::OpType::Subtract : manifold::OpType::Intersect);
+    manifold::Manifold resultManifold = manifold.Boolean(
+        boxManifold,
+        this->subtract ? manifold::OpType::Subtract
+                       : manifold::OpType::Intersect);
 
     manifold::MeshGL64 resultMesh = resultManifold.GetMeshGL64();
 
@@ -260,7 +310,7 @@ ManifoldGltfModifier::apply(GltfModifierInput&& input) {
           newModel.accessors.emplace_back();
       positionAccessor.bufferView = verticesBufferViewIdx;
       positionAccessor.byteOffset = 0;
-      positionAccessor.count = (int64_t)(resultMesh.vertProperties.size() / 3);
+      positionAccessor.count = (int64_t)(resultMesh.vertProperties.size() / resultMesh.numProp);
       positionAccessor.type = Accessor::Type::VEC3;
       positionAccessor.componentType = Accessor::ComponentType::FLOAT;
       positionAccessor.min = std::vector<double>{minPos.x, minPos.y, minPos.z};
@@ -290,10 +340,8 @@ ManifoldGltfModifier::apply(GltfModifierInput&& input) {
             (int32_t)newModel.accessors.size());
         CesiumGltf::Accessor& newAccessor = newModel.accessors.emplace_back();
         newAccessor.bufferView = verticesBufferViewIdx;
-        newAccessor.byteOffset =
-            (int64_t)((resultMesh.runIndex[i] * resultMesh.numProp + offset) *
-                      sizeof(float));
-        newAccessor.count = count;
+        newAccessor.byteOffset = (int64_t)(offset * sizeof(float));
+        newAccessor.count = (int64_t)(resultMesh.vertProperties.size() / resultMesh.numProp);
         newAccessor.type = attrAccessor.type;
         newAccessor.componentType = attrAccessor.componentType;
 

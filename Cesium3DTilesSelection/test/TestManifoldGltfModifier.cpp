@@ -19,7 +19,6 @@ using namespace Cesium3DTilesSelection;
 
 namespace {
 CesiumGltf::Model createBox(const CesiumGeometry::AxisAlignedBox& box) {
-
   std::vector<glm::vec3> vertices{
       glm::vec3(box.minimumX, box.minimumY, box.minimumZ),
       glm::vec3(box.maximumX, box.minimumY, box.minimumZ),
@@ -30,9 +29,20 @@ CesiumGltf::Model createBox(const CesiumGeometry::AxisAlignedBox& box) {
       glm::vec3(box.maximumX, box.maximumY, box.maximumZ),
       glm::vec3(box.minimumX, box.maximumY, box.maximumZ)};
 
+  std::vector<glm::vec2> texcoords {
+    glm::vec2(0, 0),
+    glm::vec2(1, 0),
+    glm::vec2(1, 1),
+    glm::vec2(0, 1),
+    glm::vec2(0, 0),
+    glm::vec2(1, 0),
+    glm::vec2(1, 1),
+    glm::vec2(0, 1)
+  };
+
   std::vector<uint32_t> indices{1, 5, 0, 0, 5, 4, 6, 2, 7, 7, 2, 3, 3, 0, 7, 7, 0, 4, 7, 4, 6, 6, 4, 5, 6, 5, 2, 2, 5, 1, 2, 1, 3, 3, 1, 0};
 
-  const size_t verticesSize = vertices.size() * sizeof(glm::vec3);
+  const size_t verticesSize = vertices.size() * sizeof(glm::vec3) + texcoords.size() * sizeof(glm::vec2);
   const size_t indicesSize = indices.size() * sizeof(uint32_t);
 
   CesiumGltf::Model model;
@@ -40,7 +50,8 @@ CesiumGltf::Model createBox(const CesiumGeometry::AxisAlignedBox& box) {
   buffer.cesium.data.resize(verticesSize + indicesSize);
   buffer.byteLength = static_cast<int64_t>(buffer.cesium.data.size());
 
-  std::memcpy(buffer.cesium.data.data(), vertices.data(), verticesSize);
+  std::memcpy(buffer.cesium.data.data(), vertices.data(), vertices.size() * sizeof(glm::vec3));
+  std::memcpy(buffer.cesium.data.data() + (vertices.size() * sizeof(glm::vec3)), texcoords.data(), texcoords.size() * sizeof(glm::vec2));
 
   std::memcpy(
       buffer.cesium.data.data() + verticesSize,
@@ -52,7 +63,7 @@ CesiumGltf::Model createBox(const CesiumGeometry::AxisAlignedBox& box) {
   verticesBufferView.buffer = 0;
   verticesBufferView.byteOffset = 0;
   verticesBufferView.target = BufferView::Target::ARRAY_BUFFER;
-  verticesBufferView.byteLength = (int64_t)verticesSize;
+  verticesBufferView.byteLength = (int64_t)(vertices.size() * sizeof(glm::vec3));
 
   int32_t positionAccessorIdx = (int32_t)model.accessors.size();
   Accessor& positionAccessor = model.accessors.emplace_back();
@@ -65,6 +76,21 @@ CesiumGltf::Model createBox(const CesiumGeometry::AxisAlignedBox& box) {
       std::vector<double>{box.minimumX, box.minimumY, box.minimumZ};
   positionAccessor.max =
       std::vector<double>{box.maximumX, box.maximumY, box.maximumZ};
+
+  int32_t texcoordsBufferViewIdx = (int32_t)model.bufferViews.size();
+  BufferView& texcoordsBufferView = model.bufferViews.emplace_back();
+  texcoordsBufferView.buffer = 0;
+  texcoordsBufferView.byteOffset = (int64_t)(texcoords.size() * sizeof(glm::vec3));
+  texcoordsBufferView.target = BufferView::Target::ARRAY_BUFFER;
+  texcoordsBufferView.byteLength = (int64_t)(texcoords.size() * sizeof(glm::vec2));
+  
+  int32_t texcoordsAccessorIdx = (int32_t)model.accessors.size();
+  Accessor& texcoordsAccessor = model.accessors.emplace_back();
+  texcoordsAccessor.bufferView = texcoordsBufferViewIdx;
+  texcoordsAccessor.byteOffset = 0;
+  texcoordsAccessor.count = (int64_t)texcoords.size();
+  texcoordsAccessor.type = Accessor::Type::VEC2;
+  texcoordsAccessor.componentType = Accessor::ComponentType::FLOAT;
 
   int32_t indicesBufferViewIdx = (int32_t)model.bufferViews.size();
   BufferView& indicesBufferView = model.bufferViews.emplace_back();
@@ -85,6 +111,7 @@ CesiumGltf::Model createBox(const CesiumGeometry::AxisAlignedBox& box) {
   MeshPrimitive& primitive = mesh.primitives.emplace_back();
   primitive.indices = indicesAccessorIdx;
   primitive.attributes.emplace("POSITION", positionAccessorIdx);
+  primitive.attributes.emplace("TEXCOORD_0", texcoordsAccessorIdx);
 
   return model;
 }
