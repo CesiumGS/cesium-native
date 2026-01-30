@@ -1,8 +1,10 @@
 #include "CesiumGeometry/AxisAlignedBox.h"
+
 #include <Cesium3DTilesSelection/GltfModifier.h>
 
 namespace Cesium3DTilesSelection {
 class ManifoldGltfModifier : public GltfModifier {
+public:
   /**
    * @brief Implement this method to apply custom modification to a glTF model.
    * It is called by the @ref Tileset from within a worker thread.
@@ -19,6 +21,7 @@ class ManifoldGltfModifier : public GltfModifier {
   virtual CesiumAsync::Future<std::optional<GltfModifierOutput>>
   apply(GltfModifierInput&& input) override;
 
+public:
   CesiumGeometry::AxisAlignedBox box;
 };
-}
+} // namespace Cesium3DTilesSelection
