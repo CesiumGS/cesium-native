@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.57.0 - 2026-02-02
 
 ##### Additions :tada:
 
