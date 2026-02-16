@@ -168,7 +168,6 @@ void TilesetViewGroup::finishFrame(
         ++tilesLoading;
     }
   }
-  
 
   if (tilesLoading == 0) {
     this->_loadProgressPercentage = 100.0f;
