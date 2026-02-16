@@ -166,8 +166,8 @@ void TilesetViewGroup::finishFrame(
       if (mappedRasterTile.getState() !=
           RasterMappedTo3DTile::AttachmentState::Attached)
         ++tilesLoading;
-      }
     }
+  }
   
 
   if (tilesLoading == 0) {
