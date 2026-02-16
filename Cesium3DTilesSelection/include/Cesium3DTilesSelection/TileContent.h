@@ -251,6 +251,24 @@ public:
    */
   void replaceWithModifiedModel() noexcept;
 
+  /**
+   * @brief Returns whether this tile is currently being up-sampled.
+   * It should only be called by the main thread.
+   */
+  bool isBeingUpSampled() const noexcept;
+
+  /**
+   * @brief Increment the current up-sampling task count.
+   * It should only be called by the main thread.
+   */
+  void incrementUpSamplingTaskCount() const noexcept;
+
+  /**
+   * @brief Decrement the current up-sampling task count.
+   * It should only be called by the main thread.
+   */
+  void decrementUpSamplingTaskCount() const noexcept;
+
 private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
@@ -258,6 +276,7 @@ private:
   GltfModifierState _modifierState;
   std::optional<CesiumGltf::Model> _modifiedModel;
   void* _pModifiedRenderResources;
+  mutable int32_t _activeUpSamplingTaskCount;
 
   CesiumRasterOverlays::RasterOverlayDetails _rasterOverlayDetails;
   std::vector<CesiumUtility::Credit> _credits;
