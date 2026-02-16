@@ -88,6 +88,13 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
                : RasterOverlayTile::MoreDetailAvailable::No;
   }
 
+  auto const isTileUpToDate = [](Tile const& testedTile) {
+    const TileRenderContent* pRenderContent =
+        testedTile.getContent().getRenderContent();
+    return testedTile.getState() == TileLoadState::Done && pRenderContent &&
+           pRenderContent->getGltfModifierState() == GltfModifierState::Idle;
+  };
+
   // If the loading tile has failed, try its parent's loading tile.
   Tile* pTile = &tile;
   while (this->_pLoadingTile &&
@@ -143,7 +150,8 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
           *pTile,
           this->_pLoadingTile->getTileProvider().getOwner());
       if (pCandidate &&
-          pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
+          pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded &&
+          isTileUpToDate(*pTile)) {
         break;
       }
       pTile = pTile->getParent();
@@ -151,6 +159,7 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
 
     if (pCandidate &&
         pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded &&
+        isTileUpToDate(*pTile) &&
         this->_pReadyTile != pCandidate) {
       if (this->getState() != AttachmentState::Unattached) {
         prepareRendererResources.detachRasterInMainThread(
@@ -180,7 +189,8 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
 
   // Attach the ready tile if it's not already attached.
   if (this->_pReadyTile &&
-      this->getState() == RasterMappedTo3DTile::AttachmentState::Unattached) {
+      this->getState() == RasterMappedTo3DTile::AttachmentState::Unattached &&
+      isTileUpToDate(tile)) {
     this->_pReadyTile->loadInMainThread();
 
     prepareRendererResources.attachRasterInMainThread(

@@ -153,6 +153,21 @@ void Tile::createChildTiles(std::vector<Tile>&& children) {
   }
 }
 
+void Tile::updateBoundingVolume(const BoundingVolume& value) noexcept {
+  if (!_initialBoundingVolume) {
+    // Store the initial bounding volume, so that it can be restored if needed
+    // (typically for upsampling, where the updated volume can be empty...)
+    _initialBoundingVolume = this->_boundingVolume;
+  }
+  setBoundingVolume(value);
+}
+
+void Tile::restoreInitialBoundingVolume() noexcept {
+  if (_initialBoundingVolume) {
+    setBoundingVolume(*_initialBoundingVolume);
+  }
+}
+
 double Tile::getNonZeroGeometricError() const noexcept {
   double geometricError = this->getGeometricError();
   if (geometricError > Math::Epsilon5) {
