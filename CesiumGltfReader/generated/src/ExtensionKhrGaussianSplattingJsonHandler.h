@@ -43,8 +43,8 @@ protected:
 private:
   CesiumGltf::ExtensionKhrGaussianSplatting* _pObject = nullptr;
   CesiumJsonReader::StringJsonHandler _kernel;
+  CesiumJsonReader::StringJsonHandler _colorSpace;
   CesiumJsonReader::StringJsonHandler _projection;
   CesiumJsonReader::StringJsonHandler _sortingMethod;
-  CesiumJsonReader::StringJsonHandler _colorSpace;
 };
 } // namespace CesiumGltfReader

@@ -3007,9 +3007,9 @@ ExtensionKhrGaussianSplattingJsonHandler::
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
     : CesiumJsonReader::ExtensibleObjectJsonHandler(options),
       _kernel(),
+      _colorSpace(),
       _projection(),
-      _sortingMethod(),
-      _colorSpace() {}
+      _sortingMethod() {}
 
 void ExtensionKhrGaussianSplattingJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -3051,14 +3051,14 @@ CesiumJsonReader::IJsonHandler* ExtensionKhrGaussianSplattingJsonHandler::
   if ("kernel"s == str) {
     return property("kernel", this->_kernel, o.kernel);
   }
+  if ("colorSpace"s == str) {
+    return property("colorSpace", this->_colorSpace, o.colorSpace);
+  }
   if ("projection"s == str) {
     return property("projection", this->_projection, o.projection);
   }
   if ("sortingMethod"s == str) {
     return property("sortingMethod", this->_sortingMethod, o.sortingMethod);
-  }
-  if ("colorSpace"s == str) {
-    return property("colorSpace", this->_colorSpace, o.colorSpace);
   }
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);
