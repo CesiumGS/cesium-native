@@ -166,7 +166,7 @@
     },
     "KHR_gaussian_splatting glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionKhrGaussianSplatting",
-      "requireOptionalProps": [
+      "requireOptionalProperties": [
         "projection",
         "sortingMethod"
       ]
