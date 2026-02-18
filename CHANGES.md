@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- Added mapped raster tiles in the progress percentage. This allows apps that rely on this progress percentage to continue updating their views until all raster tiles have been properly loaded.
+
 ### v0.57.0 - 2026-02-02
 
 ##### Additions :tada:
