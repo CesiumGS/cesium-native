@@ -22,6 +22,27 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   static constexpr const char* ExtensionName = "KHR_gaussian_splatting";
 
   /**
+   * @brief Known values for Property specifying parameters regarding the kernel
+   * used to generate the Gaussians.
+   */
+  struct Kernel {
+    /** @brief `ellipse` */
+    inline static const std::string ellipse = "ellipse";
+  };
+
+  /**
+   * @brief Known values for Property specifying the color space of the
+   * spherical harmonics.
+   */
+  struct ColorSpace {
+    /** @brief `srgb_rec709_display` */
+    inline static const std::string srgb_rec709_display = "srgb_rec709_display";
+
+    /** @brief `lin_rec709_display` */
+    inline static const std::string lin_rec709_display = "lin_rec709_display";
+  };
+
+  /**
    * @brief Known values for Optional property specifying how to project the
    * Gaussians to achieve a perspective correct value. This property defaults to
    * perspective.
@@ -29,9 +50,6 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   struct Projection {
     /** @brief `perspective` */
     inline static const std::string perspective = "perspective";
-
-    /** @brief `orthographic` */
-    inline static const std::string orthographic = "orthographic";
   };
 
   /**
@@ -41,40 +59,24 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   struct SortingMethod {
     /** @brief `cameraDistance` */
     inline static const std::string cameraDistance = "cameraDistance";
-
-    /** @brief `zDepth` */
-    inline static const std::string zDepth = "zDepth";
   };
 
   /**
-   * @brief Known values for Optional property specifying the color space of the
-   * spherical harmonics. This property defaults to BT.709.
+   * @brief Property specifying parameters regarding the kernel used to generate
+   * the Gaussians.
+   *
+   * Known values are defined in {@link Kernel}.
+   *
    */
-  struct ColorSpace {
-    /** @brief `BT.709` */
-    inline static const std::string BT_709 = "BT.709";
-
-    /** @brief `BT.2020-ITU` */
-    inline static const std::string BT_2020_ITU = "BT.2020-ITU";
-
-    /** @brief `BT.2020-HLG` */
-    inline static const std::string BT_2020_HLG = "BT.2020-HLG";
-
-    /** @brief `BT.2020-PQ` */
-    inline static const std::string BT_2020_PQ = "BT.2020-PQ";
-
-    /** @brief `Display-P3` */
-    inline static const std::string Display_P3 = "Display-P3";
-
-    /** @brief `linear` */
-    inline static const std::string linear = "linear";
-  };
+  std::string kernel = Kernel::ellipse;
 
   /**
-   * @brief Optional property specifying parameters regarding the kernel used to
-   * generate the Gaussians. This property defaults to ellipse.
+   * @brief Property specifying the color space of the spherical harmonics.
+   *
+   * Known values are defined in {@link ColorSpace}.
+   *
    */
-  std::string kernel = "ellipse";
+  std::string colorSpace = ColorSpace::srgb_rec709_display;
 
   /**
    * @brief Optional property specifying how to project the Gaussians to achieve
@@ -95,15 +97,6 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   std::string sortingMethod = SortingMethod::cameraDistance;
 
   /**
-   * @brief Optional property specifying the color space of the spherical
-   * harmonics. This property defaults to BT.709.
-   *
-   * Known values are defined in {@link ColorSpace}.
-   *
-   */
-  std::string colorSpace = ColorSpace::BT_709;
-
-  /**
    * @brief Calculates the size in bytes of this object, including the contents
    * of all collections, pointers, and strings. This will NOT include the size
    * of any extensions attached to the object. Calling this method may be slow
@@ -114,7 +107,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
     accum += int64_t(sizeof(ExtensionKhrGaussianSplatting));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(this->kernel.capacity() * sizeof(char));
+
     return accum;
   }
 };
