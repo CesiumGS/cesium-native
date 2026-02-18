@@ -359,7 +359,7 @@ struct GeoJsonChildVisitor {
           feature.geometry.get(),
           data,
           documentRegionBuilder,
-          featureStyle ? *featureStyle : style,
+          featureStyle.value_or(style),
           ellipsoid);
     }
   }
