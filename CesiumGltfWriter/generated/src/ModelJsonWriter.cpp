@@ -992,15 +992,17 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  if (obj.shape != "ellipsoid") {
-  jsonWriter.Key("shape");
-  writeJson(obj.shape, jsonWriter, context);
-  }
+  jsonWriter.Key("kernel");
+  writeJson(obj.kernel, jsonWriter, context);
 
-  if (obj.hints.has_value()) {
-  jsonWriter.Key("hints");
-  writeJson(obj.hints, jsonWriter, context);
-  }
+  jsonWriter.Key("colorSpace");
+  writeJson(obj.colorSpace, jsonWriter, context);
+
+  jsonWriter.Key("projection");
+  writeJson(obj.projection, jsonWriter, context);
+
+  jsonWriter.Key("sortingMethod");
+  writeJson(obj.sortingMethod, jsonWriter, context);
 
   writeExtensibleObject(obj, jsonWriter, context);
 
