@@ -532,11 +532,11 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
        asyncSystem =
            this->getAsyncSystem()]() -> Future<const TilesetMetadata*> {
         Tile* pRoot = pManager->getRootTile();
-        CESIUM_ASSERT(pRoot);
 
         TileExternalContent* pExternal =
-            pRoot->getContent().getExternalContent();
+            pRoot ? pRoot->getContent().getExternalContent() : nullptr;
         if (!pExternal) {
+          // Something went wrong while loading the root tile, so exit early.
           return asyncSystem.createResolvedFuture<const TilesetMetadata*>(
               nullptr);
         }
