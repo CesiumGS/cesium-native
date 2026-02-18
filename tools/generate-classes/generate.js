@@ -51,19 +51,19 @@ function generate(options, schema, writers) {
   // Allows us to force specific optional props as required to meet occasional extension recommendations.
   const requireOptionalProperties = thisConfig.requireOptionalProperties;
   if (Array.isArray(requireOptionalProperties) && requireOptionalProperties.length > 0) {
-    const validProps = Object.keys(schema.properties || {});
-    for (const prop of requireOptionalProperties) {
-      if (!validProps.includes(prop)) {
+    const validProperties = Object.keys(schema.properties || {});
+    for (const property of requireOptionalProperties) {
+      if (!validProperties.includes(property)) {
         // Skip invalid properties.
         continue;
       }
 
-      if (required.includes(prop)) {
-        // Don't add props to list if they're already in `required`.
+      if (required.includes(property)) {
+        // Don't add properties to list if they're already in `required`.
         continue;
       }
 
-      required.push(prop);
+      required.push(property);
     }
   }
 
