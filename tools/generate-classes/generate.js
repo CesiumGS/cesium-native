@@ -50,8 +50,6 @@ function generate(options, schema, writers) {
 
   // Allows us to force specific optional props as required to meet occasional extension recommendations.
   const requireOptionalProps = thisConfig.requireOptionalProps;
-  console.log(requireOptionalProps);
-  console.log(schema.properties);
   if (Array.isArray(requireOptionalProps) && requireOptionalProps.length > 0) {
     const validProps = Object.keys(schema.properties || {});
     for (const prop of requireOptionalProps) {
@@ -68,7 +66,6 @@ function generate(options, schema, writers) {
       required.push(prop);
     }
   }
-  console.log(required);
 
   const properties = Object.keys(schema.properties || {})
     .map((key) =>
