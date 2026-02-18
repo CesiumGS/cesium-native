@@ -1192,10 +1192,11 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  if (obj.kernel != "ellipse") {
-    jsonWriter.Key("kernel");
-    writeJson(obj.kernel, jsonWriter, context);
-  }
+  jsonWriter.Key("kernel");
+  writeJson(obj.kernel, jsonWriter, context);
+
+  jsonWriter.Key("colorSpace");
+  writeJson(obj.colorSpace, jsonWriter, context);
 
   if (obj.projection !=
       CesiumGltf::ExtensionKhrGaussianSplatting::Projection::perspective) {
@@ -1207,12 +1208,6 @@ void writeJson(
                                SortingMethod::cameraDistance) {
     jsonWriter.Key("sortingMethod");
     writeJson(obj.sortingMethod, jsonWriter, context);
-  }
-
-  if (obj.colorSpace !=
-      CesiumGltf::ExtensionKhrGaussianSplatting::ColorSpace::BT_709) {
-    jsonWriter.Key("colorSpace");
-    writeJson(obj.colorSpace, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
