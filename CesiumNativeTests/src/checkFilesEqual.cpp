@@ -14,9 +14,6 @@ void checkFilesEqual(
   const std::vector<std::byte>& bytes = readFile(fileA);
   const std::vector<std::byte>& bytes2 = readFile(fileB);
 
-  REQUIRE(bytes.size() == bytes2.size());
-  for (size_t i = 0; i < bytes.size(); i++) {
-    CHECK(bytes[i] == bytes2[i]);
-  }
+  REQUIRE(bytes == bytes2);
 }
 } // namespace CesiumNativeTests
