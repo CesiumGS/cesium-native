@@ -165,7 +165,11 @@
       "overrideName": "ExtensionExtPrimitiveVoxels"
     },
     "KHR_gaussian_splatting glTF Mesh Primitive Extension": {
-      "overrideName": "ExtensionKhrGaussianSplatting"
+      "overrideName": "ExtensionKhrGaussianSplatting",
+      "requireOptionalProperties": [
+        "projection",
+        "sortingMethod"
+      ]
     },
     "KHR_gaussian_splatting_compression_spz_2 glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionKhrGaussianSplattingCompressionSpz2"
