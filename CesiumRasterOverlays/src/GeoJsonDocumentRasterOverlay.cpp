@@ -20,6 +20,7 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
@@ -27,6 +28,8 @@
 #include <CesiumVectorData/VectorStyle.h>
 
 #include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_int2.hpp>
 #include <nonstd/expected.hpp>
 
@@ -44,6 +47,9 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 using namespace CesiumVectorData;
+
+// We won't generate any quadtree nodes past this depth.
+const uint32_t DEPTH_LIMIT = 8;
 
 namespace CesiumRasterOverlays {
 
@@ -65,6 +71,71 @@ struct QuadtreeGeometryData {
    * @brief The bounding rectangle encompassing this geometry.
    */
   GlobeRectangle rectangle;
+  /**
+   * The maximum width of all lines or outlines for this geometry with
+   * `LineWidthMode::Pixels`.
+   */
+  double maxLineWidthPixels = 0.0;
+
+  /**
+   * @brief Calculates the size of the bounding rectangle for this geometry when
+   * rendered on a tile with the given bounds and texture size.
+   *
+   * For a tile that has no line width or where line width is specified in
+   * `LineWidthMode::Meters`, this will be equivalent to `rectangle`. For tiles
+   * where the line width is specified in `LineWidthMode::Pixels`, this result
+   * can change depending on texture size and bounds.
+   *
+   * @param tileBounds The bounding box of this tile.
+   * @param textureSize The size of the texture this tile will be rasterized
+   * into.
+   */
+  GlobeRectangle calculateBoundingRectangleForTileSize(
+      const GlobeRectangle& tileBounds,
+      const glm::ivec2& textureSize) {
+    LineStyle activeLineStyle;
+    if (this->pObject->isType<GeoJsonPolygon>() ||
+        this->pObject->isType<GeoJsonMultiPolygon>()) {
+      if (!this->pStyle->polygon.outline) {
+        return this->rectangle;
+      }
+
+      activeLineStyle = *this->pStyle->polygon.outline;
+    } else {
+      activeLineStyle = this->pStyle->line;
+    }
+
+    // We already accounted for meters when building the rectangle in the first
+    // place.
+    if (activeLineStyle.widthMode == LineWidthMode::Meters) {
+      return this->rectangle;
+    }
+
+    const double longPerPixel =
+        tileBounds.computeWidth() / static_cast<double>(textureSize.x);
+    const double latPerPixel =
+        tileBounds.computeHeight() / static_cast<double>(textureSize.y);
+    const double halfX = longPerPixel * activeLineStyle.width * 0.5;
+    const double halfY = latPerPixel * activeLineStyle.width * 0.5;
+
+    double newWest = this->rectangle.getWest() - halfX;
+    if (newWest < -180.0) {
+      newWest += 360.0;
+    }
+    double newEast = this->rectangle.getEast() + halfX;
+    if (newEast > 180.0) {
+      newEast -= 360.0;
+    }
+
+    BoundingRegionBuilder builder;
+    builder.expandToIncludeGlobeRectangle(this->rectangle);
+    builder.expandToIncludePosition(
+        Cartographic(newWest, this->rectangle.getSouth() - halfY));
+    builder.expandToIncludePosition(
+        Cartographic(newEast, this->rectangle.getNorth() + halfY));
+
+    return builder.toGlobeRectangle();
+  }
 };
 
 struct QuadtreeNode {
@@ -79,6 +150,11 @@ struct QuadtreeNode {
    * the root node cannot ever be a child of another node.
    */
   uint32_t children[2][2] = {{0, 0}, {0, 0}};
+  /**
+   * The maximum width of all lines or outlines in this node with
+   * `LineWidthMode::Pixels`.
+   */
+  double maxLineWidthPixels = 0.0;
 
   QuadtreeNode(const GlobeRectangle& rectangle_) : rectangle(rectangle_) {}
 
@@ -88,6 +164,22 @@ struct QuadtreeNode {
   bool anyChildren() const {
     return children[0][0] != 0 && children[0][1] != 0 && children[1][0] != 0 &&
            children[1][1] != 0;
+  }
+
+  GlobeRectangle
+  getRectangleScaledWithPixelSize(const glm::dvec2& halfPixelSize) const {
+    if (this->maxLineWidthPixels == 0.0) {
+      return this->rectangle;
+    }
+
+    const glm::dvec2 scaledHalfPixelSize =
+        halfPixelSize * this->maxLineWidthPixels;
+
+    return GlobeRectangle(
+        this->rectangle.getWest() - scaledHalfPixelSize.x,
+        this->rectangle.getSouth() - scaledHalfPixelSize.y,
+        this->rectangle.getEast() + scaledHalfPixelSize.x,
+        this->rectangle.getNorth() + scaledHalfPixelSize.y);
   }
 };
 
@@ -145,66 +237,117 @@ struct Quadtree {
   std::vector<uint32_t> dataNodeIndicesBegin;
 };
 
-struct GlobeRectangleFromObjectVisitor {
-  BoundingRegionBuilder& builder;
-  void operator()(const GeoJsonPoint& point) {
-    builder.expandToIncludePosition(
-        Cartographic::fromDegrees(point.coordinates.x, point.coordinates.y));
-  }
-  void operator()(const GeoJsonMultiPoint& points) {
-    for (const glm::dvec3& point : points.coordinates) {
-      builder.expandToIncludePosition(
-          Cartographic::fromDegrees(point.x, point.y));
+struct RectangleAndLineWidthFromObjectVisitor {
+  std::optional<GlobeRectangle>& rect;
+  double& maxLineWidthPixels;
+  const VectorStyle& style;
+  const Ellipsoid& ellipsoid;
+
+  void visitWithLineWidth(
+      const std::vector<glm::dvec3>& coordinates,
+      const std::optional<LineStyle>& lineStyle) {
+    // For geometry where the line width is specified in meters, we can include
+    // that in the bounding region calculation up front.
+    if (lineStyle && lineStyle->widthMode == LineWidthMode::Meters) {
+      const double halfWidth =
+          (lineStyle->width / ellipsoid.getRadii().x) / 2.0;
+      for (const glm::dvec3& point : coordinates) {
+        if (!rect) {
+          rect = GlobeRectangle(
+              std::min(
+                  Math::degreesToRadians(point.x) - halfWidth,
+                  -Math::OnePi),
+              Math::degreesToRadians(point.y) - halfWidth,
+              std::max(
+                  Math::degreesToRadians(point.x) + halfWidth,
+                  Math::OnePi),
+              Math::degreesToRadians(point.y) + halfWidth);
+        } else {
+          rect->setWest(std::max(
+              std::min(
+                  rect->getWest(),
+                  Math::degreesToRadians(point.x) - halfWidth),
+              -Math::OnePi));
+          rect->setSouth(std::min(
+              rect->getSouth(),
+              Math::degreesToRadians(point.y) - halfWidth));
+          rect->setEast(std::min(
+              std::max(
+                  rect->getEast(),
+                  Math::degreesToRadians(point.x) + halfWidth),
+              Math::OnePi));
+          rect->setNorth(std::max(
+              rect->getNorth(),
+              Math::degreesToRadians(point.y) + halfWidth));
+        }
+      }
+    } else {
+      if (lineStyle && lineStyle->widthMode == LineWidthMode::Pixels) {
+        this->maxLineWidthPixels =
+            std::max(this->maxLineWidthPixels, lineStyle->width);
+      }
+      for (const glm::dvec3& point : coordinates) {
+        if (!rect) {
+          rect = GlobeRectangle(
+              Math::degreesToRadians(point.x),
+              Math::degreesToRadians(point.y),
+              Math::degreesToRadians(point.x),
+              Math::degreesToRadians(point.y));
+        } else {
+          rect->setWest(
+              std::min(rect->getWest(), Math::degreesToRadians(point.x)));
+          rect->setSouth(
+              std::min(rect->getSouth(), Math::degreesToRadians(point.y)));
+          rect->setEast(
+              std::max(rect->getEast(), Math::degreesToRadians(point.x)));
+          rect->setNorth(
+              std::max(rect->getNorth(), Math::degreesToRadians(point.y)));
+        }
+      }
     }
   }
   void operator()(const GeoJsonLineString& line) {
-    for (const glm::dvec3& point : line.coordinates) {
-      builder.expandToIncludePosition(
-          Cartographic::fromDegrees(point.x, point.y));
-    }
+    visitWithLineWidth(line.coordinates, style.line);
   }
   void operator()(const GeoJsonMultiLineString& lines) {
     for (const std::vector<glm::dvec3>& line : lines.coordinates) {
-      for (const glm::dvec3& point : line) {
-        builder.expandToIncludePosition(
-            Cartographic::fromDegrees(point.x, point.y));
-      }
+      visitWithLineWidth(line, style.line);
     }
   }
   void operator()(const GeoJsonPolygon& polygon) {
     for (const std::vector<glm::dvec3>& ring : polygon.coordinates) {
-      for (const glm::dvec3& point : ring) {
-        builder.expandToIncludePosition(
-            Cartographic::fromDegrees(point.x, point.y));
-      }
+      visitWithLineWidth(ring, style.polygon.outline);
     }
   }
   void operator()(const GeoJsonMultiPolygon& polygons) {
     for (const std::vector<std::vector<glm::dvec3>>& polygon :
          polygons.coordinates) {
       for (const std::vector<glm::dvec3>& ring : polygon) {
-        for (const glm::dvec3& point : ring) {
-          builder.expandToIncludePosition(
-              Cartographic::fromDegrees(point.x, point.y));
-        }
+        visitWithLineWidth(ring, style.polygon.outline);
       }
     }
   }
   void operator()(const GeoJsonFeature&) {}
   void operator()(const GeoJsonFeatureCollection&) {}
   void operator()(const GeoJsonGeometryCollection&) {}
+  // While we could calculate a bounding box for a point just fine, they are not
+  // rendered by the raster overlay, so there's no need.
+  void operator()(const GeoJsonPoint&) {}
+  void operator()(const GeoJsonMultiPoint&) {}
 };
 
 void addPrimitivesToData(
     const GeoJsonObject* pGeoJsonObject,
     std::vector<QuadtreeGeometryData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
-    const VectorStyle& style);
+    const VectorStyle& style,
+    const Ellipsoid& ellipsoid);
 
 struct GeoJsonChildVisitor {
   std::vector<QuadtreeGeometryData>& data;
   BoundingRegionBuilder& documentRegionBuilder;
   const VectorStyle& style;
+  const Ellipsoid& ellipsoid;
 
   void operator()(const GeoJsonFeature& feature) {
     if (feature.geometry) {
@@ -216,7 +359,8 @@ struct GeoJsonChildVisitor {
           feature.geometry.get(),
           data,
           documentRegionBuilder,
-          featureStyle ? *featureStyle : style);
+          featureStyle.value_or(style),
+          ellipsoid);
     }
   }
 
@@ -233,7 +377,8 @@ struct GeoJsonChildVisitor {
             pFeature->geometry.get(),
             data,
             documentRegionBuilder,
-            collectionStyle ? *collectionStyle : style);
+            collectionStyle ? *collectionStyle : style,
+            ellipsoid);
       }
     }
   }
@@ -247,7 +392,8 @@ struct GeoJsonChildVisitor {
           &geometry,
           data,
           documentRegionBuilder,
-          useStyle ? *useStyle : style);
+          useStyle ? *useStyle : style,
+          ellipsoid);
     }
   }
 
@@ -258,22 +404,37 @@ void addPrimitivesToData(
     const GeoJsonObject* geoJsonObject,
     std::vector<QuadtreeGeometryData>& data,
     BoundingRegionBuilder& documentRegionBuilder,
-    const VectorStyle& style) {
-  BoundingRegionBuilder thisBuilder;
+    const VectorStyle& style,
+    const Ellipsoid& ellipsoid) {
+  std::optional<GlobeRectangle> rect;
+  double maxLineWidthPixels;
   std::visit(
-      GlobeRectangleFromObjectVisitor{thisBuilder},
+      RectangleAndLineWidthFromObjectVisitor{
+          rect,
+          maxLineWidthPixels,
+          style,
+          ellipsoid},
       geoJsonObject->value);
-  GlobeRectangle rect = thisBuilder.toGlobeRectangle();
-  documentRegionBuilder.expandToIncludeGlobeRectangle(rect);
-  data.emplace_back(
-      QuadtreeGeometryData{geoJsonObject, &style, std::move(rect)});
+  // Points and MultiPoints, as well as Features, FeatureCollections, and
+  // GeometryCollections have no bounding box. For the first two, this is
+  // because they are not rasterized by this overlay. For the rest, though they
+  // may contain geometry, they do not themselves have anything to render. We
+  // can save some effort by ignoring them all now.
+  if (rect) {
+    documentRegionBuilder.expandToIncludeGlobeRectangle(*rect);
+    QuadtreeGeometryData primitive{
+        geoJsonObject,
+        &style,
+        std::move(*rect),
+        maxLineWidthPixels};
+    data.emplace_back(primitive);
+  }
 
   std::visit(
-      GeoJsonChildVisitor{data, documentRegionBuilder, style},
+      GeoJsonChildVisitor{data, documentRegionBuilder, style, ellipsoid},
       geoJsonObject->value);
 }
 
-const uint32_t DEPTH_LIMIT = 8;
 uint32_t buildQuadtreeNode(
     Quadtree& tree,
     const QuadtreeTilingScheme& tilingScheme,
@@ -287,6 +448,14 @@ uint32_t buildQuadtreeNode(
 
   uint32_t resultId = (uint32_t)tree.nodes.size();
   tree.nodes.emplace_back(rectangle);
+
+  double maxLineWidthPixels = 0.0;
+  for (std::vector<uint32_t>::iterator it = begin; it != end; ++it) {
+    maxLineWidthPixels =
+        std::max(tree.data[*it].maxLineWidthPixels, maxLineWidthPixels);
+  }
+
+  tree.nodes[resultId].maxLineWidthPixels = maxLineWidthPixels;
 
   uint32_t indicesBegin = (uint32_t)tree.dataIndices.size();
   tree.dataIndices.insert(tree.dataIndices.end(), begin, end);
@@ -388,7 +557,8 @@ uint32_t buildQuadtreeNode(
 
 Quadtree buildQuadtree(
     const std::shared_ptr<GeoJsonDocument>& document,
-    const VectorStyle& defaultStyle) {
+    const VectorStyle& defaultStyle,
+    const Ellipsoid& ellipsoid) {
   BoundingRegionBuilder builder;
   std::vector<QuadtreeGeometryData> data;
   const std::optional<VectorStyle>& rootObjectStyle =
@@ -397,7 +567,8 @@ Quadtree buildQuadtree(
       &document->rootObject,
       data,
       builder,
-      rootObjectStyle ? *rootObjectStyle : defaultStyle);
+      rootObjectStyle ? *rootObjectStyle : defaultStyle,
+      ellipsoid);
 
   Quadtree tree{
       builder.toGlobeRectangle(),
@@ -426,7 +597,7 @@ Quadtree buildQuadtree(
       dataIndices.end(),
       QuadtreeTileID(0, 0, 0));
   // Add last entry so [i + 1] is always valid
-  tree.dataNodeIndicesBegin.emplace_back((uint32_t)tree.dataIndices.size() - 1);
+  tree.dataNodeIndicesBegin.emplace_back((uint32_t)tree.dataIndices.size());
 
   return tree;
 }
@@ -436,13 +607,16 @@ void rasterizeQuadtreeNode(
     uint32_t nodeId,
     const GlobeRectangle& rectangle,
     VectorRasterizer& rasterizer,
-    std::vector<bool>& primitivesRendered) {
+    std::vector<bool>& primitivesRendered,
+    const glm::dvec2& halfPixelSize) {
   const QuadtreeNode& node = tree.nodes[nodeId];
+  const GlobeRectangle scaledNodeRectangle =
+      node.getRectangleScaledWithPixelSize(halfPixelSize);
   // If this node has no children, or if it is entirely within the target
   // rectangle, let's rasterize this node's contents and not any children.
   if (!node.anyChildren() ||
-      (rectangle.contains(node.rectangle.getSouthwest()) &&
-       rectangle.contains(node.rectangle.getNortheast()))) {
+      (rectangle.contains(scaledNodeRectangle.getSouthwest()) &&
+       rectangle.contains(scaledNodeRectangle.getNortheast()))) {
     for (uint32_t i = tree.dataNodeIndicesBegin[nodeId];
          i < tree.dataNodeIndicesBegin[nodeId + 1];
          i++) {
@@ -457,14 +631,17 @@ void rasterizeQuadtreeNode(
   } else {
     for (size_t i = 0; i < 2; i++) {
       for (size_t j = 0; j < 2; j++) {
-        if (rectangle.computeIntersection(
-                tree.nodes[node.children[i][j]].rectangle)) {
+        if (tree.nodes[node.children[i][j]]
+                .getRectangleScaledWithPixelSize(halfPixelSize)
+                .computeIntersection(rectangle)
+                .has_value()) {
           rasterizeQuadtreeNode(
               tree,
               node.children[i][j],
               rectangle,
               rasterizer,
-              primitivesRendered);
+              primitivesRendered,
+              halfPixelSize);
         }
       }
     }
@@ -475,7 +652,8 @@ void rasterizeVectorData(
     LoadedRasterOverlayImage& result,
     const GlobeRectangle& rectangle,
     const Quadtree& tree,
-    const Ellipsoid& ellipsoid) {
+    const Ellipsoid& ellipsoid,
+    const glm::dvec2& halfPixelSize) {
   // Keeps track of primitives that have already been rendered to avoid
   // re-drawing the same primitives that appear in multiple quadtree nodes.
   std::vector<bool> primitivesRendered(tree.data.size(), false);
@@ -494,7 +672,8 @@ void rasterizeVectorData(
         tree.rootId,
         rectangle,
         rasterizer,
-        primitivesRendered);
+        primitivesRendered,
+        halfPixelSize);
     rasterizer.finalize();
   }
 }
@@ -529,7 +708,10 @@ public:
         _ellipsoid(geoJsonOptions.ellipsoid),
         _mipLevels(geoJsonOptions.mipLevels) {
     CESIUM_ASSERT(this->_pDocument);
-    this->_tree = buildQuadtree(this->_pDocument, this->_defaultStyle);
+    this->_tree = buildQuadtree(
+        this->_pDocument,
+        this->_defaultStyle,
+        geoJsonOptions.ellipsoid);
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
@@ -545,7 +727,7 @@ public:
 
     return this->getAsyncSystem().runInWorkerThread(
         [&tree = this->_tree,
-         _ellipsoid = this->_ellipsoid,
+         ellipsoid = this->_ellipsoid,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
          textureSize,
@@ -556,7 +738,14 @@ public:
           LoadedRasterOverlayImage result;
           result.rectangle = rectangle;
 
-          if (!tileRectangle.computeIntersection(tree.rectangle)) {
+          const glm::dvec2 halfPixelSize(
+              tileRectangle.computeWidth() / (double)textureSize.x / 2.0,
+              tileRectangle.computeHeight() / (double)textureSize.y / 2.0);
+
+          if (!tree.nodes[tree.rootId]
+                   .getRectangleScaledWithPixelSize(halfPixelSize)
+                   .computeIntersection(tileRectangle)
+                   .has_value()) {
             // Transparent square if this is outside of the contents of this
             // vector document.
             result.moreDetailAvailable = false;
@@ -598,7 +787,12 @@ public:
               }
               result.pImage->pixelData.resize(totalSize, std::byte{0});
             }
-            rasterizeVectorData(result, tileRectangle, tree, _ellipsoid);
+            rasterizeVectorData(
+                result,
+                tileRectangle,
+                tree,
+                ellipsoid,
+                halfPixelSize);
           }
 
           return result;

@@ -1,7 +1,7 @@
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
-#include <CesiumNativeTests/readFile.h>
+#include <CesiumNativeTests/checkFilesEqual.h>
 #include <CesiumNativeTests/writeTga.h>
 #include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -21,20 +21,6 @@ using namespace CesiumGeospatial;
 using namespace CesiumVectorData;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
-
-namespace {
-void checkFilesEqual(
-    const std::filesystem::path& fileA,
-    const std::filesystem::path& fileB) {
-  const std::vector<std::byte>& bytes = readFile(fileA);
-  const std::vector<std::byte>& bytes2 = readFile(fileB);
-
-  REQUIRE(bytes.size() == bytes2.size());
-  for (size_t i = 0; i < bytes.size(); i++) {
-    CHECK(bytes[i] == bytes2[i]);
-  }
-}
-} // namespace
 
 TEST_CASE("VectorRasterizer::rasterize") {
   const std::filesystem::path dir(
@@ -455,6 +441,79 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     CHECK(
         *reinterpret_cast<uint32_t*>(asset->pixelData.data()) == writtenColor);
+  }
+
+  SUBCASE("LineWidthMode::Meters produces the proper result") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 100;
+    asset->height = 100;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    // With a unit sphere, this means that the area covered by the rect is
+    // equivalent to one meter. If the image covers the same size, that
+    // means that 100 pixels = 1 meter. So, for a two pixel line width, we would
+    // need a 2/100 meter line width.
+    GlobeRectangle unitRect(0.0, 0.0, 1.0, 1.0);
+    const std::vector<glm::dvec3> line{
+        glm::dvec3(0.0, 0.0, 0.0),
+        glm::dvec3(
+            Math::radiansToDegrees(1.0),
+            Math::radiansToDegrees(1.0),
+            0.0)};
+    const LineStyle style{
+        ColorStyle{Color{0xff, 0x00, 0x00, 0xff}, ColorMode::Normal},
+        0.02,
+        LineWidthMode::Meters};
+
+    VectorRasterizer rasterizer(
+        unitRect,
+        asset,
+        0,
+        CesiumGeospatial::Ellipsoid::UNIT_SPHERE);
+    rasterizer.drawPolyline(line, style);
+    rasterizer.finalize();
+
+    writeImageToTgaFile(*asset, "line-meters.tga");
+    checkFilesEqual(dir / "line-meters.tga", thisDir / "line-meters.tga");
+  }
+
+  SUBCASE("Can handle two lines touching without a gap") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 64;
+    asset->height = 64;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    const LineStyle style{
+        ColorStyle{Color{0xff, 0x00, 0x00, 0xff}, ColorMode::Normal},
+        2,
+        LineWidthMode::Pixels};
+
+    GlobeRectangle antiRect =
+        GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0);
+
+    VectorRasterizer rasterizer(antiRect, asset);
+    const std::vector<glm::dvec3> line{
+        glm::dvec3(0.0, 0.0, 0.0),
+        glm::dvec3(180.0, 0.0, 0.0)};
+    rasterizer.drawPolyline(line, style);
+    const std::vector<glm::dvec3> line2{
+        glm::dvec3(-180.0, 0.0, 0.0),
+        glm::dvec3(0.0, 0.0, 0.0)};
+    rasterizer.drawPolyline(line2, style);
+    rasterizer.finalize();
+
+    writeImageToTgaFile(*asset, "lines-touching.tga");
+    checkFilesEqual(dir / "lines-touching.tga", thisDir / "lines-touching.tga");
   }
 }
 

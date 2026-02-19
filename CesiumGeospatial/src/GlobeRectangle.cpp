@@ -131,10 +131,19 @@ GlobeRectangle::computeUnion(const GlobeRectangle& other) const noexcept {
     rectangleWest += CesiumUtility::Math::TwoPi;
   }
 
-  const double west = CesiumUtility::Math::convertLongitudeRange(
-      glm::min(rectangleWest, otherRectangleWest));
-  const double east = CesiumUtility::Math::convertLongitudeRange(
-      glm::max(rectangleEast, otherRectangleEast));
+  double west = glm::min(rectangleWest, otherRectangleWest);
+  double east = glm::max(rectangleEast, otherRectangleEast);
+
+  // convertLongitudeRange will wrap values that are greater *or equal* to PI,
+  // which means a rectangle from [-PI, PI] would be wrapped to [-PI, -PI] - a
+  // completely different result. This is not what we want.
+  if (west != CesiumUtility::Math::OnePi) {
+    west = CesiumUtility::Math::convertLongitudeRange(west);
+  }
+
+  if (east != CesiumUtility::Math::OnePi) {
+    east = CesiumUtility::Math::convertLongitudeRange(east);
+  }
 
   return GlobeRectangle(
       west,
