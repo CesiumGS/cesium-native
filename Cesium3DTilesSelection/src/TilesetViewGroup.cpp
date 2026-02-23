@@ -157,16 +157,10 @@ void TilesetViewGroup::finishFrame(
                         updateResult.tilesKicked +
                         this->_tilesAlreadyLoadingOrUnloading;
 
-  if (tilesLoading == 0) {
-    this->_loadProgressPercentage = 100.0f;
-  } else {
-    this->_loadProgressPercentage =
-        100.0f * float(totalTiles - tilesLoading) / float(totalTiles);
-  }
-
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
       tileset.getExternals().pCreditSystem;
+
   if (pCreditSystem) {
     this->_currentFrameCredits.setCreditSystem(pCreditSystem);
 
@@ -189,35 +183,50 @@ void TilesetViewGroup::finishFrame(
 
       pActivated->getTileProvider()->addCredits(this->_currentFrameCredits);
     }
+  }
 
-    // Add per-tile credits for tiles selected this frame.
-    for (const Tile::ConstPointer& pTile :
-         updateResult.tilesToRenderThisFrame) {
-      const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
-          pTile->getMappedRasterTiles();
-      // raster overlay tile credits
-      for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
-        const RasterOverlayTile* pRasterOverlayTile =
-            mappedRasterTile.getReadyTile();
-        if (pRasterOverlayTile != nullptr) {
-          for (const Credit& credit : pRasterOverlayTile->getCredits()) {
-            this->_currentFrameCredits.addCreditReference(credit);
-          }
-        }
-      }
-
-      // content credits like gltf copyrights
-      const TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
-      if (pRenderContent) {
-        for (const Credit& credit : pRenderContent->getCredits()) {
-          this->_currentFrameCredits.addCreditReference(credit);
-        }
+  for (const Tile::ConstPointer& pTile : updateResult.tilesToRenderThisFrame) {
+    // add tile render content credits like gltf copyrights
+    const TileRenderContent* pRenderContent =
+        pTile->getContent().getRenderContent();
+    if (pCreditSystem && pRenderContent) {
+      for (const Credit& credit : pRenderContent->getCredits()) {
+        this->_currentFrameCredits.addCreditReference(credit);
       }
     }
 
+    // add mapped raster tile credits and tile progress percentage
+    const std::vector<RasterMappedTo3DTile>& mappedRasterTiles =
+        pTile->getMappedRasterTiles();
+    for (const RasterMappedTo3DTile& mappedRasterTile : mappedRasterTiles) {
+      // add mapped raster tile credits for tiles selected this frame.
+      const RasterOverlayTile* pRasterOverlayTile =
+          mappedRasterTile.getReadyTile();
+      if (pCreditSystem && pRasterOverlayTile != nullptr) {
+        for (const Credit& credit : pRasterOverlayTile->getCredits()) {
+          this->_currentFrameCredits.addCreditReference(credit);
+        }
+      }
+
+      // add the mapped raster tile in the progress percentage.
+      ++totalTiles;
+      if (mappedRasterTile.getState() !=
+          RasterMappedTo3DTile::AttachmentState::Attached)
+        ++tilesLoading;
+    }
+  }
+
+  if (pCreditSystem) {
     this->_previousFrameCredits.releaseAllReferences();
     std::swap(this->_previousFrameCredits, this->_currentFrameCredits);
+  }
+
+  // update progress percentage
+  if (tilesLoading == 0) {
+    this->_loadProgressPercentage = 100.0f;
+  } else {
+    this->_loadProgressPercentage =
+        100.0f * float(totalTiles - tilesLoading) / float(totalTiles);
   }
 }
 
