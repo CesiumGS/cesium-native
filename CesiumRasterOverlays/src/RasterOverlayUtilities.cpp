@@ -594,8 +594,8 @@ RasterOverlayUtilities::upsampleGltfForRasterOverlays(
         mesh.primitives.erase(mesh.primitives.begin() + ptrdiff_t(i));
         --i;
       }
-      containsPrimitives |= !mesh.primitives.empty();
     }
+    containsPrimitives |= !mesh.primitives.empty();
   }
 
   return containsPrimitives ? std::make_optional<Model>(std::move(result))

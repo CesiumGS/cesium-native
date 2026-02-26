@@ -82,6 +82,10 @@ void TileRenderContent::replaceWithModifiedModel() noexcept {
   }
 }
 
+std::shared_mutex& TileRenderContent::getModelMutex() const noexcept {
+  return _modelMutex;
+}
+
 const RasterOverlayDetails&
 TileRenderContent::getRasterOverlayDetails() const noexcept {
   return this->_rasterOverlayDetails;

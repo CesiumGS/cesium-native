@@ -567,15 +567,21 @@ postProcessContentInWorkerThread(
 
   std::optional<int64_t> version =
       pGltfModifier ? pGltfModifier->getCurrentVersion() : std::nullopt;
+  const bool needsApplyGltfModifier = (pGltfModifier && version);
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
 
   result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
   result.initialContentBoundingVolume = tileLoadInfo.tileContentBoundingVolume;
 
-  postProcessGltfInWorkerThread(result, std::move(projections), tileLoadInfo);
+  // Important: post-process must be performed *after* GltfModifier, as it does
+  // add attribute _CESIUMOVERLAY_xxx, which is required for raster overlays.
+  if (!needsApplyGltfModifier) {
+    postProcessGltfInWorkerThread(result, std::move(projections), tileLoadInfo);
+  }
 
-  auto applyGltfModifier = [&]() {
+  auto applyGltfModifier = [&](std::vector<CesiumGeospatial::Projection>&&
+                                   projections) {
     // Apply the glTF modifier right away, otherwise it will be
     // triggered immediately after the renderer-side resources
     // have been created, which is both inefficient and a cause
@@ -593,7 +599,10 @@ postProcessContentInWorkerThread(
             .tileTransform = tileLoadInfo.tileTransform})
         .thenInWorkerThread(
             [result = std::move(result),
-             version](std::optional<GltfModifierOutput>&& modified) mutable {
+             version,
+             projections = std::move(projections),
+             tileLoadInfo = std::move(tileLoadInfo)](
+                std::optional<GltfModifierOutput>&& modified) mutable {
               if (modified) {
                 result.contentKind = std::move(modified->modifiedModel);
               }
@@ -604,14 +613,22 @@ postProcessContentInWorkerThread(
                 GltfModifierVersionExtension::setVersion(*pModel, *version);
               }
 
-              return result;
-            })
-        .thenPassThrough(std::move(tileLoadInfo));
+              // Important: post-process must be performed *after* the model
+              // is modified.
+              postProcessGltfInWorkerThread(
+                  result,
+                  std::move(projections),
+                  tileLoadInfo);
+
+              return std::make_tuple(
+                  std::move(tileLoadInfo),
+                  std::move(result));
+            });
   };
 
   CesiumAsync::Future<std::tuple<TileContentLoadInfo, TileLoadResult>> future =
-      pGltfModifier && version
-          ? applyGltfModifier()
+      needsApplyGltfModifier
+          ? applyGltfModifier(std::move(projections))
           : tileLoadInfo.asyncSystem.createResolvedFuture(std::move(result))
                 .thenPassThrough(std::move(tileLoadInfo));
 
@@ -957,6 +974,28 @@ TilesetContentManager::~TilesetContentManager() noexcept {
   this->_destructionCompletePromise.resolve();
 }
 
+namespace
+{
+
+CesiumAsync::Future<std::optional<GltfModifierOutput>> reapplyGltfUpsampling(
+    const TileLoadInput& loadInput,
+    RasterOverlayUpsampler& upsampler) {
+  CESIUM_ASSERT(loadInput.tile.getLoader() == &upsampler);
+  return upsampler.loadTileContent(loadInput).thenImmediately(
+      [](TileLoadResult&& result) {
+        if (result.state == TileLoadResultState::Success &&
+            std::holds_alternative<CesiumGltf::Model>(result.contentKind)) {
+          return std::make_optional<GltfModifierOutput>(
+              std::move(std::get<CesiumGltf::Model>(result.contentKind)));
+        } else {
+          return std::optional<GltfModifierOutput>{};
+        }
+      });
+}
+
+}
+
+
 void TilesetContentManager::reapplyGltfModifier(
     Tile& tile,
     const TilesetOptions& tilesetOptions,
@@ -975,6 +1014,12 @@ void TilesetContentManager::reapplyGltfModifier(
     pRenderContent->setGltfModifierState(GltfModifierState::Idle);
   }
 
+  // While computing the upsampled version of a tile, we may have updated
+  // the tile's bounding volume with an empty one: restore the initial value
+  // to avoid wrong computations in #calcRasterOverlayDetailsInWorkerThread
+  // when the tile is reloaded.
+  tile.restoreInitialBoundingVolume();
+
   this->notifyTileStartLoading(&tile);
   pRenderContent->setGltfModifierState(GltfModifierState::WorkerRunning);
 
@@ -986,6 +1031,40 @@ void TilesetContentManager::reapplyGltfModifier(
   // worker is running.
   CESIUM_ASSERT(externals.pGltfModifier->getCurrentVersion());
   int64_t version = externals.pGltfModifier->getCurrentVersion().value_or(-1);
+
+  // Ensure raster overlays will be recomputed for this tile, BUT restore
+  // overlay details afterwards, or the tile could be unloaded in
+  // #updateDoneState (see test on status.firstIndexWithMissingProjection).
+  auto const rasterOverlayDetails =
+      pRenderContent->getRasterOverlayDetails();
+  pRenderContent->setRasterOverlayDetails({});
+  std::vector<CesiumGeospatial::Projection> projections =
+      this->_overlayCollection.addTileOverlays(tile, tilesetOptions);
+  pRenderContent->setRasterOverlayDetails(rasterOverlayDetails);
+
+  TileContentLoadInfo tileLoadInfo{
+      this->_externals.asyncSystem,
+      this->_externals.pAssetAccessor,
+      this->_externals.pPrepareRendererResources,
+      this->_externals.pLogger,
+      this->_pSharedAssetSystem,
+      tilesetOptions.contentOptions,
+      tile};
+
+  const bool isUpsampled = std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(
+                               &tile.getTileID()) != nullptr;
+  std::optional<TileLoadInput> upsamplingLoadInput;
+  if (isUpsampled) {
+    upsamplingLoadInput.emplace(
+        tile,
+        tilesetOptions.contentOptions,
+        this->_externals.asyncSystem,
+        this->_externals.pAssetAccessor,
+        this->_externals.pLogger,
+        this->_requestHeaders,
+        tilesetOptions.ellipsoid);
+    upsamplingLoadInput->pSharedAssetSystem = this->_pSharedAssetSystem;
+  }
 
   // It is safe to capture the TilesetExternals and Model by reference because
   // the TilesetContentManager guarantees both will continue to exist and are
@@ -1002,14 +1081,23 @@ void TilesetContentManager::reapplyGltfModifier(
       .runInWorkerThread([&externals,
                           &previousModel,
                           version,
-                          tileTransform = tile.getTransform()] {
-        return externals.pGltfModifier->apply(GltfModifierInput{
-            .version = version,
-            .asyncSystem = externals.asyncSystem,
-            .pAssetAccessor = externals.pAssetAccessor,
-            .pLogger = externals.pLogger,
-            .previousModel = previousModel,
-            .tileTransform = tileTransform});
+                          tileTransform = tile.getTransform(),
+                          upsamplingLoadInput = std::move(upsamplingLoadInput),
+                          pUpsampler = &this->_upsampler] {
+        if (upsamplingLoadInput) {
+          // Special case for upsampling: instead of applying the modifier rules
+          // on the former upsampled version, let's upsample the modified parent
+          // (by construction, it now has the up-to-date version of the model).
+          return reapplyGltfUpsampling(*upsamplingLoadInput, *pUpsampler);
+        } else {
+          return externals.pGltfModifier->apply(GltfModifierInput{
+              .version = version,
+              .asyncSystem = externals.asyncSystem,
+              .pAssetAccessor = externals.pAssetAccessor,
+              .pLogger = externals.pLogger,
+              .previousModel = previousModel,
+              .tileTransform = tileTransform});
+        }
       })
       .thenInWorkerThread([&externals,
                            &previousModel,
@@ -1018,13 +1106,15 @@ void TilesetContentManager::reapplyGltfModifier(
                            tileBoundingVolume = tile.getBoundingVolume(),
                            tileContentBoundingVolume =
                                tile.getContentBoundingVolume(),
-                           rendererOptions = tilesetOptions.rendererOptions](
-                              std::optional<GltfModifierOutput>&& modified) {
+                           rendererOptions = tilesetOptions.rendererOptions,
+                           tileLoadInfo = std::move(tileLoadInfo),
+                           ellipsoid = tilesetOptions.ellipsoid,
+                           projections = std::move(projections)](
+                              std::optional<GltfModifierOutput>&&
+                                  modified) mutable {
         TileLoadResult tileLoadResult;
         tileLoadResult.state = TileLoadResultState::Success;
         tileLoadResult.pAssetAccessor = externals.pAssetAccessor;
-        tileLoadResult.rasterOverlayDetails =
-            pRenderContent->getRasterOverlayDetails();
         tileLoadResult.initialBoundingVolume = tileBoundingVolume;
         tileLoadResult.initialContentBoundingVolume = tileContentBoundingVolume;
 
@@ -1038,10 +1128,24 @@ void TilesetContentManager::reapplyGltfModifier(
           }
         }
 
+        tileLoadResult.ellipsoid = ellipsoid;
         if (modified) {
           tileLoadResult.contentKind = std::move(modified->modifiedModel);
+
+          // Apply post-process to the modified model.
+          postProcessGltfInWorkerThread(
+              tileLoadResult,
+              std::move(projections),
+              tileLoadInfo);
+          if (tileLoadResult.rasterOverlayDetails) {
+            pRenderContent->setRasterOverlayDetails(
+                *tileLoadResult.rasterOverlayDetails);
+          }
         } else {
+          // No modification could be reapplied => we'll keep previous model and
+          // render resources.
           tileLoadResult.contentKind = previousModel;
+          tileLoadResult.state = TileLoadResultState::Failed;
         }
 
         if (modified && externals.pPrepareRendererResources) {
@@ -1107,15 +1211,18 @@ void TilesetContentManager::reapplyGltfModifier(
           pRenderContent->setGltfModifierState(GltfModifierState::WorkerDone);
 
           // The modified model is up-to-date with the version that triggered
-          // this run.
+          // this run (even though the modification did nothing or failed, as it
+          // can happen for upsampling typically).
           CesiumGltf::Model& modifiedModel =
               std::get<CesiumGltf::Model>(pair.result.contentKind);
           GltfModifierVersionExtension::setVersion(modifiedModel, version);
 
-          pRenderContent->setModifiedModelAndRenderResources(
-              std::move(modifiedModel),
-              pair.pRenderResources);
-          this->_externals.pGltfModifier->onWorkerThreadApplyComplete(*pTile);
+          if (pair.result.state == TileLoadResultState::Success) {
+            pRenderContent->setModifiedModelAndRenderResources(
+                std::move(modifiedModel),
+                pair.pRenderResources);
+            this->_externals.pGltfModifier->onWorkerThreadApplyComplete(*pTile);
+          }
         }
       })
       .catchInMainThread(
@@ -1597,6 +1704,17 @@ void TilesetContentManager::finishLoading(
 
   if (this->_externals.pGltfModifier &&
       this->_externals.pGltfModifier->needsMainThreadModification(tile)) {
+
+    std::unique_lock<std::shared_mutex> wlock(
+        pRenderContent->getModelMutex(),
+        std::defer_lock);
+    if (!wlock.try_lock()) {
+      // If this tile is currently being upsampled in a worker thread, we
+      // cannot replace its model. Return so that we do not block the main
+      // thread (finishLoading will be called again later).
+      return;
+    }
+
     // Free outdated render resources before replacing them.
     if (this->_externals.pPrepareRendererResources) {
       this->_externals.pPrepareRendererResources->free(
@@ -2011,7 +2129,7 @@ void TilesetContentManager::setTileContent(
   } else {
     // update tile if the result state is success
     if (result.updatedBoundingVolume) {
-      tile.setBoundingVolume(*result.updatedBoundingVolume);
+      tile.updateBoundingVolume(*result.updatedBoundingVolume);
     }
 
     if (result.updatedContentBoundingVolume) {
