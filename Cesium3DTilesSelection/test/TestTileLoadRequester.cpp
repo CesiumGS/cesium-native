@@ -145,6 +145,7 @@ TEST_CASE("TileLoadRequester") {
 
       // Request this tile for main thread loading and verify it happens.
       requester.setMainThreadQueue({pToLoad});
+      externals.asyncSystem.dispatchMainThreadTasks();
       pTileset->loadTiles();
       CHECK(pToLoad->getState() == TileLoadState::Done);
     }

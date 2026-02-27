@@ -93,9 +93,11 @@ static void initializeTileset(Tileset& tileset) {
       horizontalFieldOfView,
       verticalFieldOfView,
       Ellipsoid::WGS84);
-
+  tileset.getExternals().asyncSystem.dispatchMainThreadTasks();
   tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+  tileset.getExternals().asyncSystem.dispatchMainThreadTasks();
   tileset.loadTiles();
+
 }
 
 static ViewState zoomToTile(const Tile& tile) {
@@ -222,7 +224,9 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result = tileset.updateViewGroup(
           tileset.getDefaultViewGroup(),
           {zoomOutViewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       // Check tile state. Ensure root meet sse
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -284,6 +288,7 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       // Check tile state. Ensure root doesn't meet sse, but children does.
       // Children begin loading as well
@@ -312,7 +317,7 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
-
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       // Check tile state. Ensure root doesn't meet sse, but children does
       REQUIRE(root->getState() == TileLoadState::Done);
       REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
@@ -358,6 +363,7 @@ TEST_CASE("Test replace refinement for render") {
           tileset.getDefaultViewGroup(),
           {zoomInViewState});
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -392,6 +398,7 @@ TEST_CASE("Test replace refinement for render") {
           tileset.getDefaultViewGroup(),
           {zoomInViewState});
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -449,6 +456,7 @@ TEST_CASE("Test replace refinement for render") {
           tileset.getDefaultViewGroup(),
           {zoomOutViewState});
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -498,6 +506,7 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       // Check tile state. Ensure root doesn't meet sse, but children does
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -525,6 +534,7 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       // check tile states
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -623,6 +633,7 @@ TEST_CASE("Test additive refinement") {
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       const std::vector<Tile::ConstPointer>& ttr =
           result.tilesToRenderThisFrame;
@@ -659,6 +670,7 @@ TEST_CASE("Test additive refinement") {
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       const std::vector<Tile::ConstPointer>& ttr =
           result.tilesToRenderThisFrame;
@@ -716,6 +728,7 @@ TEST_CASE("Test additive refinement") {
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       REQUIRE(result.tilesToRenderThisFrame.size() == 8);
 
@@ -789,6 +802,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     ViewUpdateResult result =
         tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
     tileset.loadTiles();
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
     for (const Tile& child : root->getChildren()) {
       CHECK(child.getState() == TileLoadState::ContentLoading);
@@ -808,6 +822,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
     ViewUpdateResult result =
         tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
     tileset.loadTiles();
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
     REQUIRE(root->isRenderable());
 
@@ -908,6 +923,7 @@ TEST_CASE("Test multiple frustums") {
           tileset.getDefaultViewGroup(),
           {viewState, zoomOutViewState});
       tileset.loadTiles();
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
 
       // Check tile state. Ensure root meets sse for only the zoomed out
       // ViewState
@@ -997,7 +1013,7 @@ TEST_CASE("Test multiple frustums") {
           tileset.getDefaultViewGroup(),
           {zoomInViewState1, zoomInViewState2});
       tileset.loadTiles();
-
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       // check result
       // The grand child and the second child are the only ones rendered.
       // The third and fourth children of the root are culled.
@@ -1289,6 +1305,8 @@ TEST_CASE("Makes metadata available on external tilesets") {
         tileset.getDefaultViewGroup(),
         {zoomToTileViewState});
     tileset.loadTiles();
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+
     pExternalContent = pExternal->getContent().getExternalContent();
   }
 
@@ -1746,6 +1764,8 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
     updateResult =
         tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
     tileset.loadTiles();
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+
   }
 
   // All three tiles (plus the tileset.json) should be rendered.
@@ -1766,6 +1786,8 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
   updateResult =
       tileset.updateViewGroup(tileset.getDefaultViewGroup(), {zoomedOut});
   tileset.loadTiles();
+  tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+
 
   // Only the root tile (plus the tileset.json) is visible now, and the other
   // two are fading out.

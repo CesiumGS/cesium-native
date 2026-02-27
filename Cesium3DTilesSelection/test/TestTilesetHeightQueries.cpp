@@ -66,6 +66,7 @@ TEST_CASE("Tileset height queries") {
 
     while (!future.isReady()) {
       tileset.loadTiles();
+      externals.asyncSystem.dispatchMainThreadTasks();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -105,6 +106,7 @@ TEST_CASE("Tileset height queries") {
 
     while (!future.isReady()) {
       tileset.loadTiles();
+      externals.asyncSystem.dispatchMainThreadTasks();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -139,6 +141,7 @@ TEST_CASE("Tileset height queries") {
 
     while (!future.isReady()) {
       tileset.loadTiles();
+      externals.asyncSystem.dispatchMainThreadTasks();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -178,6 +181,7 @@ TEST_CASE("Tileset height queries") {
 
     while (!future.isReady()) {
       tileset.loadTiles();
+      externals.asyncSystem.dispatchMainThreadTasks();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -213,6 +217,7 @@ TEST_CASE("Tileset height queries") {
 
     while (!future.isReady()) {
       tileset.loadTiles();
+      externals.asyncSystem.dispatchMainThreadTasks();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -232,6 +237,7 @@ TEST_CASE("Tileset height queries") {
 
     while (!future.isReady()) {
       tileset.loadTiles();
+      externals.asyncSystem.dispatchMainThreadTasks();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -251,6 +257,7 @@ TEST_CASE("Tileset height queries") {
 
     while (!future.isReady()) {
       pTileset->loadTiles();
+      externals.asyncSystem.dispatchMainThreadTasks();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -293,6 +300,7 @@ TEST_CASE("Tileset height queries") {
 
     while (!future.isReady()) {
       tileset.loadTiles();
+      externals.asyncSystem.dispatchMainThreadTasks();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -331,6 +339,7 @@ TEST_CASE("Tileset height queries") {
 
     while (!future.isReady()) {
       tileset.loadTiles();
+      externals.asyncSystem.dispatchMainThreadTasks();
     }
 
     SampleHeightResult results = future.waitInMainThread();

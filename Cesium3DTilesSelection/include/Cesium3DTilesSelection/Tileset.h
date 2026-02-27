@@ -437,7 +437,7 @@ public:
    *
    * This method also calls
    * {@link CesiumAsync::AsyncSystem::dispatchMainThreadTasks} on the tileset's
-   * {@link getAsyncSystem}.
+   * {@link getAsyncSystem}, but not for long!
    */
   void loadTiles();
 
