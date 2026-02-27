@@ -899,4 +899,30 @@ TEST_CASE("Test loading individual tile of tileset json") {
       }
     }
   }
+
+  SUBCASE("Tile with GeoJson content") {
+    auto loaderResult = createTilesetJsonLoader(
+        testDataPath / "ContentGeojson" / "tileset.json");
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+    auto& childTile = pRootTile->getChildren()[0];
+    const auto& tileID = std::get<std::string>(childTile.getTileID());
+    CHECK(tileID == "1.geojson");
+
+    // check tile content
+    auto tileLoadResult = loadTileContent(
+        testDataPath / "ContentGeojson" / tileID,
+        *loaderResult.pLoader,
+        childTile);
+    CHECK(std::holds_alternative<CesiumVectorData::GeoJsonDocument>(
+        tileLoadResult.contentKind));
+#if 0
+    CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
+    CHECK(tileLoadResult.updatedContentBoundingVolume == std::nullopt);
+#endif
+    CHECK(tileLoadResult.state == TileLoadResultState::Success);
+    CHECK(!tileLoadResult.tileInitializer);
+  }
 }

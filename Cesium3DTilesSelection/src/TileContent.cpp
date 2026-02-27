@@ -3,6 +3,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
 
 #include <memory>
 #include <optional>
@@ -134,6 +135,28 @@ void TileRenderContent::setLodTransitionFadePercentage(
   this->_lodTransitionFadePercentage = percentage;
 }
 
+TileFeatureContent::TileFeatureContent(
+    CesiumVectorData::GeoJsonDocument&& geoJson)
+    : _geoJson(std::move(geoJson)), _pRenderResources(nullptr) {}
+
+void* TileFeatureContent::getRenderResources() const noexcept {
+  return _pRenderResources;
+}
+
+void TileFeatureContent::setGeoJson(
+    const CesiumVectorData::GeoJsonDocument& geoJson) {
+  _geoJson = geoJson;
+}
+
+void TileFeatureContent::setGeoJson(
+    CesiumVectorData::GeoJsonDocument&& geoJson) {
+  _geoJson = std::move(geoJson);
+}
+
+void TileFeatureContent::setRenderResources(void* pRenderResources) noexcept {
+  _pRenderResources = pRenderResources;
+}
+
 TileContent::TileContent() : _contentKind{TileUnknownContent{}} {}
 
 TileContent::TileContent(TileEmptyContent content) : _contentKind{content} {}
@@ -158,6 +181,11 @@ void TileContent::setContentKind(std::unique_ptr<TileRenderContent>&& content) {
   this->_contentKind = std::move(content);
 }
 
+void TileContent::setContentKind(
+    std::unique_ptr<TileFeatureContent>&& content) {
+  _contentKind = std::move(content);
+}
+
 bool TileContent::isUnknownContent() const noexcept {
   return std::holds_alternative<TileUnknownContent>(this->_contentKind);
 }
@@ -173,6 +201,11 @@ bool TileContent::isExternalContent() const noexcept {
 
 bool TileContent::isRenderContent() const noexcept {
   return std::holds_alternative<std::unique_ptr<TileRenderContent>>(
+      this->_contentKind);
+}
+
+bool TileContent::isFeatureContent() const noexcept {
+  return std::holds_alternative<std::unique_ptr<TileFeatureContent>>(
       this->_contentKind);
 }
 
@@ -211,6 +244,26 @@ TileExternalContent* TileContent::getExternalContent() noexcept {
       std::get_if<std::unique_ptr<TileExternalContent>>(&this->_contentKind);
   if (pExternalContent) {
     return pExternalContent->get();
+  }
+
+  return nullptr;
+}
+
+const TileFeatureContent* TileContent::getFeatureContent() const noexcept {
+  const std::unique_ptr<TileFeatureContent>* pFeatureContent =
+      std::get_if<std::unique_ptr<TileFeatureContent>>(&this->_contentKind);
+  if (pFeatureContent) {
+    return pFeatureContent->get();
+  }
+
+  return nullptr;
+}
+
+TileFeatureContent* TileContent::getFeatureContent() noexcept {
+  std::unique_ptr<TileFeatureContent>* pFeatureContent =
+      std::get_if<std::unique_ptr<TileFeatureContent>>(&this->_contentKind);
+  if (pFeatureContent) {
+    return pFeatureContent->get();
   }
 
   return nullptr;

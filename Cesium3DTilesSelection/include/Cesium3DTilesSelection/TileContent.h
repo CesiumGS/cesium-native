@@ -8,6 +8,7 @@
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/ExtensibleObject.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
 
 #include <memory>
 #include <variant>
@@ -265,6 +266,52 @@ private:
 };
 
 /**
+ * @brief A content tag that indicates a tile has a GeoJson content and
+ * render resources for the resulting geometry.
+ */
+class CESIUM3DTILESSELECTION_API TileFeatureContent {
+public:
+  /**
+   * @brief Construct the content with a GeoJson document.
+   *
+   * @param geoJson A GeoJson document that will be owned by this content
+   */
+  explicit TileFeatureContent(CesiumVectorData::GeoJsonDocument&& geoJson);
+
+  /**
+   * @brief Get the render resources created for the feature content
+   *
+   * @return The created render resources
+   */
+  void* getRenderResources() const noexcept;
+
+  /**
+   * @brief Set the GeoJson for this content
+   *
+   * @param geoJson a GeoJsonDocument that will be owned by this content
+   */
+  void setGeoJson(const CesiumVectorData::GeoJsonDocument& geoJson);
+
+  /**
+   * @brief Set the GeoJson for this content
+   *
+   * @param geoJson a GeoJsonDocument that will be owned by this content
+   */
+  void setGeoJson(CesiumVectorData::GeoJsonDocument&& geoJson);
+
+  /**
+   * @brief Set the render resources created for the feature content
+   *
+   * @param pRenderResources The created render resources
+   */
+  void setRenderResources(void* pRenderResources) noexcept;
+
+private:
+  CesiumVectorData::GeoJsonDocument _geoJson;
+  void* _pRenderResources;
+};
+
+/**
  * @brief A tile content container that can store and query the content type
  * that is currently being owned by the tile
  */
@@ -273,7 +320,8 @@ class CESIUM3DTILESSELECTION_API TileContent {
       TileUnknownContent,
       TileEmptyContent,
       std::unique_ptr<TileExternalContent>,
-      std::unique_ptr<TileRenderContent>>;
+      std::unique_ptr<TileRenderContent>,
+      std::unique_ptr<TileFeatureContent>>;
 
 public:
   /**
@@ -318,6 +366,11 @@ public:
   void setContentKind(std::unique_ptr<TileRenderContent>&& content);
 
   /**
+   * @brief Set feature content for a tile
+   */
+  void setContentKind(std::unique_ptr<TileFeatureContent>&& content);
+
+  /**
    * @brief Query if a tile has an unknown content
    */
   bool isUnknownContent() const noexcept;
@@ -337,6 +390,11 @@ public:
    * @brief Query if a tile has an glTF model content
    */
   bool isRenderContent() const noexcept;
+
+  /**
+   * @brief Query if a tile has feature content
+   */
+  bool isFeatureContent() const noexcept;
 
   /**
    * @brief Get the {@link TileRenderContent} which stores the glTF model
@@ -361,6 +419,18 @@ public:
    * the external tileset.
    */
   TileExternalContent* getExternalContent() noexcept;
+
+  /**
+   * @brief Get the {@link TileFeatureContent} which stores GeoJson
+   * and render resources of the tile
+   */
+  const TileFeatureContent* getFeatureContent() const noexcept;
+
+  /**
+   * @brief Get the {@link TileFeatureContent} which stores GeoJson
+   * and render resources of the tile
+   */
+  TileFeatureContent* getFeatureContent() noexcept;
 
 private:
   TileContentKindImpl _contentKind;
