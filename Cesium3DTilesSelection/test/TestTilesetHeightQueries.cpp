@@ -65,8 +65,8 @@ TEST_CASE("Tileset height queries") {
          Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)});
 
     while (!future.isReady()) {
-      tileset.loadTiles();
       externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -105,8 +105,8 @@ TEST_CASE("Tileset height queries") {
          Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)});
 
     while (!future.isReady()) {
-      tileset.loadTiles();
       externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -140,8 +140,8 @@ TEST_CASE("Tileset height queries") {
          Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)});
 
     while (!future.isReady()) {
-      tileset.loadTiles();
       externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -180,8 +180,8 @@ TEST_CASE("Tileset height queries") {
          Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)});
 
     while (!future.isReady()) {
-      tileset.loadTiles();
       externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -216,8 +216,8 @@ TEST_CASE("Tileset height queries") {
         {Cartographic::fromDegrees(-75.612559, 40.042183, 0.0)});
 
     while (!future.isReady()) {
-      tileset.loadTiles();
       externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -236,8 +236,8 @@ TEST_CASE("Tileset height queries") {
         {Cartographic::fromDegrees(-75.612559, 40.042183, 0.0)});
 
     while (!future.isReady()) {
-      tileset.loadTiles();
       externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -256,8 +256,8 @@ TEST_CASE("Tileset height queries") {
         {Cartographic::fromDegrees(-75.612559, 40.042183, 1.0)});
 
     while (!future.isReady()) {
-      pTileset->loadTiles();
       externals.asyncSystem.dispatchMainThreadTasks();
+      pTileset->loadTiles();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -299,8 +299,8 @@ TEST_CASE("Tileset height queries") {
         {Cartographic::fromDegrees(10.0, 45.0, 0.0)});
 
     while (!future.isReady()) {
-      tileset.loadTiles();
       externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
     }
 
     SampleHeightResult results = future.waitInMainThread();
@@ -338,8 +338,8 @@ TEST_CASE("Tileset height queries") {
         tileset.sampleHeightMostDetailed({samplePosition});
 
     while (!future.isReady()) {
-      tileset.loadTiles();
       externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
     }
 
     SampleHeightResult results = future.waitInMainThread();
