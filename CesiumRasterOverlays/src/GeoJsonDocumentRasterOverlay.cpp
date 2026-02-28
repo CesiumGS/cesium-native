@@ -778,11 +778,13 @@ public:
               for (uint32_t i = 0; i < mipLevels; i++) {
                 const int32_t width = std::max(textureSize.x >> i, 1);
                 const int32_t height = std::max(textureSize.y >> i, 1);
+                const int32_t rowPitch = width * result.pImage->channels *
+                                         result.pImage->bytesPerChannel;
                 result.pImage->mipPositions.emplace_back(
                     CesiumGltf::ImageAssetMipPosition{
                         totalSize,
-                        (size_t)(width * height * result.pImage->channels *
-                                 result.pImage->bytesPerChannel)});
+                        size_t(rowPitch * height),
+                        size_t(rowPitch)});
                 totalSize += result.pImage->mipPositions[i].byteSize;
               }
               result.pImage->pixelData.resize(totalSize, std::byte{0});

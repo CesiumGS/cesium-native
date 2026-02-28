@@ -234,8 +234,10 @@ ImageReaderResult ImageDecoder::readImage(
                   &imageOffset);
               ktx_size_t imageSize =
                   ktxTexture_GetImageSize(ktxTexture(pTexture), level);
+              ktx_uint32_t rowPitch =
+                  ktxTexture_GetRowPitch(ktxTexture(pTexture), level);
 
-              image.mipPositions[level] = {imageOffset, imageSize};
+              image.mipPositions[level] = {imageOffset, imageSize, rowPitch};
             }
           } else {
             CESIUM_ASSERT(pTexture->numLevels == 1);
@@ -398,13 +400,16 @@ std::optional<std::string> ImageDecoder::generateMipMaps(ImageAsset& image) {
     totalPixelCount += mipWidth * mipHeight;
   }
 
+  const size_t imageRowPitch =
+      static_cast<size_t>(image.width * image.channels * image.bytesPerChannel);
   // Byte size of the base image.
-  const size_t imageByteSize = static_cast<size_t>(
-      image.width * image.height * image.channels * image.bytesPerChannel);
+  const size_t imageByteSize =
+      imageRowPitch * static_cast<size_t>(image.height);
 
   image.mipPositions.resize(mipCount);
   image.mipPositions[0].byteOffset = 0;
   image.mipPositions[0].byteSize = imageByteSize;
+  image.mipPositions[0].rowPitch = imageRowPitch;
 
   image.pixelData.resize(static_cast<size_t>(
       totalPixelCount * image.channels * image.bytesPerChannel));
@@ -429,11 +434,13 @@ std::optional<std::string> ImageDecoder::generateMipMaps(ImageAsset& image) {
       mipHeight >>= 1;
     }
 
-    byteSize = static_cast<size_t>(
-        mipWidth * mipHeight * image.channels * image.bytesPerChannel);
+    size_t rowPitch =
+        static_cast<size_t>(mipWidth * image.channels * image.bytesPerChannel);
+    byteSize = rowPitch * static_cast<size_t>(mipHeight);
 
     image.mipPositions[mipIndex].byteOffset = byteOffset;
     image.mipPositions[mipIndex].byteSize = byteSize;
+    image.mipPositions[mipIndex].rowPitch = rowPitch;
 
     if (!ImageDecoder::unsafeResize(
             &image.pixelData[lastByteOffset],
