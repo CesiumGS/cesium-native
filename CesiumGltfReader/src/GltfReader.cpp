@@ -31,13 +31,10 @@
 
 #define STBI_FAILURE_USERMSG
 
-namespace Cesium {
-// Use STB resize in our own namespace to avoid conflicts from other libs
 #define STBIRDEF
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
-#include <stb_image_resize.h>
+#include <stb_image_resize2.h>
 #undef STBIRDEF
-} // namespace Cesium
 
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
@@ -49,7 +46,6 @@ using namespace CesiumGltf;
 using namespace CesiumGltfReader;
 using namespace CesiumJsonReader;
 using namespace CesiumUtility;
-using namespace Cesium;
 
 namespace {
 #pragma pack(push, 1)
@@ -970,7 +966,7 @@ std::optional<std::string> GltfReader::generateMipMaps(ImageCesium& image) {
     image.mipPositions[mipIndex].byteOffset = byteOffset;
     image.mipPositions[mipIndex].byteSize = byteSize;
 
-    if (!stbir_resize_uint8(
+    if (!stbir_resize_uint8_linear(
             reinterpret_cast<const unsigned char*>(
                 &image.pixelData[lastByteOffset]),
             lastWidth,
@@ -980,7 +976,7 @@ std::optional<std::string> GltfReader::generateMipMaps(ImageCesium& image) {
             mipWidth,
             mipHeight,
             0,
-            image.channels)) {
+            static_cast<stbir_pixel_layout>(image.channels))) {
       // Remove any added mipmaps.
       image.mipPositions.clear();
       image.pixelData.resize(imageByteSize);
