@@ -64,9 +64,9 @@ struct QuadtreeGeometryData {
    */
   const GeoJsonObject* pObject;
   /**
-   * @brief The `VectorStyle` to apply to this geometry object.
+   * @brief A pointer to the `VectorStyle` to apply to this geometry object.
    */
-  VectorStyle style;
+  const VectorStyle* pStyle;
   /**
    * @brief The bounding rectangle encompassing this geometry.
    */
@@ -96,13 +96,13 @@ struct QuadtreeGeometryData {
     LineStyle activeLineStyle;
     if (this->pObject->isType<GeoJsonPolygon>() ||
         this->pObject->isType<GeoJsonMultiPolygon>()) {
-      if (!this->style.polygon.outline) {
+      if (!this->pStyle->polygon.outline) {
         return this->rectangle;
       }
 
-      activeLineStyle = *this->style.polygon.outline;
+      activeLineStyle = *this->pStyle->polygon.outline;
     } else {
-      activeLineStyle = this->style.line;
+      activeLineStyle = this->pStyle->line;
     }
 
     // We already accounted for meters when building the rectangle in the first
@@ -214,6 +214,7 @@ struct QuadtreeNode {
 struct Quadtree {
   GlobeRectangle rectangle = GlobeRectangle::EMPTY;
   uint32_t rootId = 0;
+  VectorStyle defaultStyle;
   std::vector<QuadtreeNode> nodes;
   std::vector<QuadtreeGeometryData> data;
   /**
@@ -424,7 +425,7 @@ void addPrimitivesToData(
     documentRegionBuilder.expandToIncludeGlobeRectangle(*rect);
     QuadtreeGeometryData primitive{
         geoJsonObject,
-        style,
+        &style,
         std::move(*rect),
         maxLineWidthPixels};
     data.emplace_back(primitive);
@@ -559,24 +560,20 @@ Quadtree buildQuadtree(
     const std::shared_ptr<GeoJsonDocument>& document,
     const VectorStyle& defaultStyle,
     const Ellipsoid& ellipsoid) {
+  Quadtree tree;
+  tree.defaultStyle = defaultStyle;
+
   BoundingRegionBuilder builder;
-  std::vector<QuadtreeGeometryData> data;
   const std::optional<VectorStyle>& rootObjectStyle =
       document->rootObject.getStyle();
   addPrimitivesToData(
       &document->rootObject,
-      data,
+      tree.data,
       builder,
-      rootObjectStyle ? *rootObjectStyle : defaultStyle,
+      rootObjectStyle ? *rootObjectStyle : tree.defaultStyle,
       ellipsoid);
 
-  Quadtree tree{
-      builder.toGlobeRectangle(),
-      0,
-      std::vector<QuadtreeNode>(),
-      std::move(data),
-      std::vector<uint32_t>(),
-      std::vector<uint32_t>()};
+  tree.rectangle = builder.toGlobeRectangle();
 
   std::vector<uint32_t> dataIndices;
   dataIndices.reserve(tree.data.size());
@@ -626,7 +623,7 @@ void rasterizeQuadtreeNode(
       }
       primitivesRendered[dataIdx] = true;
       const QuadtreeGeometryData& data = tree.data[dataIdx];
-      rasterizer.drawGeoJsonObject(*data.pObject, data.style);
+      rasterizer.drawGeoJsonObject(*data.pObject, *data.pStyle);
     }
   } else {
     for (size_t i = 0; i < 2; i++) {
@@ -684,7 +681,6 @@ class CESIUMRASTEROVERLAYS_API GeoJsonDocumentRasterOverlayTileProvider final
 
 private:
   std::shared_ptr<GeoJsonDocument> _pDocument;
-  VectorStyle _defaultStyle;
   std::shared_ptr<Quadtree> _pTree;
   Ellipsoid _ellipsoid;
   uint32_t _mipLevels;
@@ -703,14 +699,13 @@ public:
                 GeographicProjection(geoJsonOptions.ellipsoid),
                 GlobeRectangle::MAXIMUM)),
         _pDocument(std::move(pDocument)),
-        _defaultStyle(geoJsonOptions.defaultStyle),
         _pTree(),
         _ellipsoid(geoJsonOptions.ellipsoid),
         _mipLevels(geoJsonOptions.mipLevels) {
     CESIUM_ASSERT(this->_pDocument);
     this->_pTree = std::make_shared<Quadtree>(buildQuadtree(
         this->_pDocument,
-        this->_defaultStyle,
+        geoJsonOptions.defaultStyle,
         geoJsonOptions.ellipsoid));
   }
 
