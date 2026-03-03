@@ -97,7 +97,6 @@ static void initializeTileset(Tileset& tileset) {
   tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
   tileset.getExternals().asyncSystem.dispatchMainThreadTasks();
   tileset.loadTiles();
-
 }
 
 static ViewState zoomToTile(const Tile& tile) {
@@ -290,7 +289,6 @@ TEST_CASE("Test replace refinement for render") {
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
-
 
       // Check tile state. Ensure root doesn't meet sse, but children does.
       // Children begin loading as well
@@ -938,7 +936,6 @@ TEST_CASE("Test multiple frustums") {
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
-
       // Check tile state. Ensure root meets sse for only the zoomed out
       // ViewState
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -1322,7 +1319,6 @@ TEST_CASE("Makes metadata available on external tilesets") {
         {zoomToTileViewState});
     tileset.loadTiles();
     tilesetExternals.asyncSystem.dispatchMainThreadTasks();
-
     pExternalContent = pExternal->getContent().getExternalContent();
   }
 
@@ -1781,7 +1777,6 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
         tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
     tileset.loadTiles();
     tilesetExternals.asyncSystem.dispatchMainThreadTasks();
-
   }
 
   // All three tiles (plus the tileset.json) should be rendered.
@@ -1803,7 +1798,6 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
       tileset.updateViewGroup(tileset.getDefaultViewGroup(), {zoomedOut});
   tileset.loadTiles();
   tilesetExternals.asyncSystem.dispatchMainThreadTasks();
-
 
   // Only the root tile (plus the tileset.json) is visible now, and the other
   // two are fading out.
