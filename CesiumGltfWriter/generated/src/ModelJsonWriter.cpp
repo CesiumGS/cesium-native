@@ -1198,17 +1198,11 @@ void writeJson(
   jsonWriter.Key("colorSpace");
   writeJson(obj.colorSpace, jsonWriter, context);
 
-  if (obj.projection !=
-      CesiumGltf::ExtensionKhrGaussianSplatting::Projection::perspective) {
-    jsonWriter.Key("projection");
-    writeJson(obj.projection, jsonWriter, context);
-  }
+  jsonWriter.Key("projection");
+  writeJson(obj.projection, jsonWriter, context);
 
-  if (obj.sortingMethod != CesiumGltf::ExtensionKhrGaussianSplatting::
-                               SortingMethod::cameraDistance) {
-    jsonWriter.Key("sortingMethod");
-    writeJson(obj.sortingMethod, jsonWriter, context);
-  }
+  jsonWriter.Key("sortingMethod");
+  writeJson(obj.sortingMethod, jsonWriter, context);
 
   writeExtensibleObject(obj, jsonWriter, context);
 
