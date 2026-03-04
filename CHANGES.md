@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- `Tileset::updateViewGroupOffline`, `Tileset::updateViewGroup`, and `Tileset::loadTiles` no longer call `AsyncSystem::dispatchMainThreadTasks`. Client applications must call that function themselves from their main thread.
+
 ### v0.58.0 - 2026-03-02
 
 ##### Fixes :wrench:
