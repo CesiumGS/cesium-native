@@ -78,7 +78,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
    * @brief The up axis of glTF content.
    */
-  CesiumGeometry::Axis glTFUpAxis;
+  CesiumGeometry::Axis glTFUpAxis = CesiumGeometry::Axis::Y;
 
   /**
    * @brief A tile can potentially store a more fit bounding volume along with

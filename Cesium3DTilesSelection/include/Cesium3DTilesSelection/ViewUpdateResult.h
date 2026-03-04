@@ -27,7 +27,7 @@ public:
    * Tiles in this list may be fading in if \ref
    * TilesetOptions::enableLodTransitionPeriod is true.
    */
-  std::vector<Tile::Pointer> tilesToRenderThisFrame;
+  std::vector<Tile::ConstPointer> tilesToRenderThisFrame;
 
   /**
    * @brief The computed screen space error of the tiles selected by the
@@ -44,7 +44,7 @@ public:
    * fading out. If a tile's \ref TileRenderContent::lodTransitionPercentage is
    * 0 or LOD transitions are disabled, the tile should be hidden right away.
    */
-  std::unordered_set<Tile::Pointer> tilesFadingOut;
+  std::unordered_set<Tile::ConstPointer> tilesFadingOut;
 
   /**
    * @brief The number of tiles in the worker thread load queue.

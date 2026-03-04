@@ -22,7 +22,7 @@ struct CESIUMGLTF_API ExtensionTextureWebp final
   static constexpr const char* ExtensionName = "EXT_texture_webp";
 
   /**
-   * @brief The index of the images node which points to a WebP image.
+   * @brief The index of the WebP image.
    */
   int32_t source = -1;
 

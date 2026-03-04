@@ -64,7 +64,7 @@ public:
    *
    * @return The next tile to load in a worker thread.
    */
-  virtual Tile* getNextTileToLoadInWorkerThread() = 0;
+  virtual const Tile* getNextTileToLoadInWorkerThread() = 0;
 
   /**
    * @brief Determines if this requester has any more tiles that need to be
@@ -92,7 +92,7 @@ public:
    *
    * @return The next tile to load in the main thread.
    */
-  virtual Tile* getNextTileToLoadInMainThread() = 0;
+  virtual const Tile* getNextTileToLoadInMainThread() = 0;
 
   /**
    * @brief Unregister this requester with the {link Tileset} with which it is
@@ -105,6 +105,12 @@ public:
    * {@link Tileset::registerLoadRequester} on the tileset.
    */
   void unregister() noexcept;
+
+  /**
+   * @brief Determines if this requester is currently registered with a
+   * {@link Tileset}.
+   */
+  bool isRegistered() const noexcept;
 
 protected:
   /**
@@ -142,7 +148,7 @@ private:
   CesiumUtility::IntrusivePointer<TilesetContentManager>
       _pTilesetContentManager;
 
-  friend class Tileset;
+  friend class TilesetContentManager;
 };
 
 } // namespace Cesium3DTilesSelection

@@ -416,6 +416,7 @@ ITwinRealityDataContentLoader::loadTileContent(const TileLoadInput& loadInput) {
       this->_pLogger,
       loadInput.requestHeaders,
       loadInput.ellipsoid);
+  aggregatedInput.pSharedAssetSystem = loadInput.pSharedAssetSystem;
 
   return this->_pAggregatedLoader->loadTileContent(aggregatedInput);
 }

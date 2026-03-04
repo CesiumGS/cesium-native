@@ -9,9 +9,11 @@
 #include <functional>
 #include <string>
 
-namespace Cesium3DTilesSelection {
-
+namespace CesiumAsync {
 class CesiumIonAssetAccessor;
+}
+
+namespace Cesium3DTilesSelection {
 
 class CesiumIonTilesetLoader : public TilesetContentLoader {
 public:
@@ -73,10 +75,6 @@ protected:
   void setOwnerOfNestedLoaders(TilesetContentManager& owner) noexcept override;
 
 private:
-  CesiumAsync::SharedFuture<std::string> refreshTokenInMainThread(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::string& currentAuthorizationHeader);
-
   CesiumGeospatial::Ellipsoid _ellipsoid;
   std::string _url;
   std::string _ionAccessToken;
@@ -84,9 +82,6 @@ private:
   AuthorizationHeaderChangeListener _headerChangeListener;
   std::shared_ptr<spdlog::logger> _pLogger;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pTilesetAccessor;
-  std::shared_ptr<CesiumIonAssetAccessor> _pIonAccessor;
-  std::optional<CesiumAsync::SharedFuture<std::string>> _tokenRefreshInProgress;
-
-  friend class CesiumIonAssetAccessor;
+  std::shared_ptr<CesiumAsync::CesiumIonAssetAccessor> _pIonAccessor;
 };
 } // namespace Cesium3DTilesSelection

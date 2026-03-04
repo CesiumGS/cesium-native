@@ -182,14 +182,9 @@ public:
   explicit LoadedTileEnumerator(Tile* pRootTile) noexcept;
 
   /** @brief Returns an iterator starting at the first tile. */
-  const_iterator begin() const noexcept;
+  iterator begin() const noexcept;
   /** @brief Returns an iterator starting after the last tile. */
-  const_iterator end() const noexcept;
-
-  /** @brief Returns an iterator starting at the first tile. */
-  iterator begin() noexcept;
-  /** @brief Returns an iterator starting after the last tile. */
-  iterator end() noexcept;
+  iterator end() const noexcept;
 
 private:
   Tile* _pRootTile;

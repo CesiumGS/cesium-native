@@ -153,10 +153,10 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
    * this method.
    *
    * The `target screen pixels` returned here may be further modified by the
-   * raster overlay's {@link RasterOverlayTileProvider::getTile} method. In particular, it
-   * will usually be divided by the raster overlay's `maximum screen space
-   * error` of the raster overlay (not to be confused with the `maximum screen
-   * space error` of the tileset, mentioned above).
+   * raster overlay's {@link ActivatedRasterOverlay::getTile} method. In
+   * particular, it will usually be divided by the raster overlay's `maximum
+   * screen space error` of the raster overlay (not to be confused with the
+   * `maximum screen space error` of the tileset, mentioned above).
    *
    * @param geometricError The geometric error of the tile.
    * @param maximumScreenSpaceError The maximum screen-space error used to

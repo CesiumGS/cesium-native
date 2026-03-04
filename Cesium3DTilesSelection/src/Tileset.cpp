@@ -72,7 +72,7 @@ Tileset::Tileset(
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{
-          new TilesetContentManager(
+          TilesetContentManager::createFromLoader(
               _externals,
               _options,
               std::move(pCustomLoader),
@@ -91,7 +91,10 @@ Tileset::Tileset(
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{
-          new TilesetContentManager(this->_externals, this->_options, url),
+          TilesetContentManager::createFromUrl(
+              this->_externals,
+              this->_options,
+              url),
       },
       _heightRequests(),
       _defaultViewGroup() {}
@@ -107,7 +110,7 @@ Tileset::Tileset(
       _options(options),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{new TilesetContentManager(
+      _pTilesetContentManager{TilesetContentManager::createFromCesiumIon(
           this->_externals,
           this->_options,
           ionAssetID,
@@ -125,7 +128,7 @@ Tileset::Tileset(
       _options(options),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{new TilesetContentManager(
+      _pTilesetContentManager{TilesetContentManager::createFromLoaderFactory(
           _externals,
           _options,
           std::move(loaderFactory))} {}
@@ -170,8 +173,8 @@ void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
   }
 }
 
-Tile* Tileset::getRootTile() noexcept {
-  return this->_pTilesetContentManager->getRootTile();
+const CesiumUtility::CreditSource& Tileset::getCreditSource() const noexcept {
+  return this->_pTilesetContentManager->getCreditSource();
 }
 
 const Tile* Tileset::getRootTile() const noexcept {
@@ -263,8 +266,8 @@ void Tileset::_updateLodTransitions(
     // Update fade out
     for (auto tileIt = result.tilesFadingOut.begin();
          tileIt != result.tilesFadingOut.end();) {
-      TileRenderContent* pRenderContent =
-          (*tileIt)->getContent().getRenderContent();
+      TileRenderContent* pRenderContent = const_cast<TileRenderContent*>(
+          (*tileIt)->getContent().getRenderContent());
 
       if (!pRenderContent) {
         // This tile is done fading out and was immediately kicked from the
@@ -291,9 +294,9 @@ void Tileset::_updateLodTransitions(
     }
 
     // Update fade in
-    for (const Tile::Pointer& pTile : result.tilesToRenderThisFrame) {
-      TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
+    for (const Tile::ConstPointer& pTile : result.tilesToRenderThisFrame) {
+      TileRenderContent* pRenderContent = const_cast<TileRenderContent*>(
+          pTile->getContent().getRenderContent());
       if (pRenderContent) {
         float transitionPercentage =
             pRenderContent->getLodTransitionFadePercentage();
@@ -311,9 +314,9 @@ void Tileset::_updateLodTransitions(
   } else {
     // If there are any tiles still fading in, set them to fully visible right
     // away.
-    for (const Tile::Pointer& pTile : result.tilesToRenderThisFrame) {
-      TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
+    for (const Tile::ConstPointer& pTile : result.tilesToRenderThisFrame) {
+      TileRenderContent* pRenderContent = const_cast<TileRenderContent*>(
+          pTile->getContent().getRenderContent());
       if (pRenderContent) {
         pRenderContent->setLodTransitionFadePercentage(1.0f);
       }
@@ -325,7 +328,7 @@ const ViewUpdateResult& Tileset::updateViewGroupOffline(
     TilesetViewGroup& viewGroup,
     const std::vector<ViewState>& frustums) {
   ViewUpdateResult& updateResult = viewGroup.getViewUpdateResult();
-  std::vector<Tile::Pointer> tilesSelectedPrevFrame =
+  std::vector<Tile::ConstPointer> tilesSelectedPrevFrame =
       updateResult.tilesToRenderThisFrame;
 
   // TODO: fix the fading for offline case
@@ -334,23 +337,29 @@ const ViewUpdateResult& Tileset::updateViewGroupOffline(
   while (viewGroup.getPreviousLoadProgressPercentage() < 100.0f) {
     this->_externals.pAssetAccessor->tick();
     this->loadTiles();
+
+    // If there are no frustums, we'll never make any progress. So break here to
+    // avoid getting stuck in an endless loop.
+    if (frustums.empty())
+      break;
+
     this->updateViewGroup(viewGroup, frustums, 0.0f);
   }
 
   updateResult.tilesFadingOut.clear();
 
-  std::unordered_set<Tile*> uniqueTilesToRenderThisFrame;
+  std::unordered_set<const Tile*> uniqueTilesToRenderThisFrame;
   uniqueTilesToRenderThisFrame.reserve(
       updateResult.tilesToRenderThisFrame.size());
-  for (const Tile::Pointer& pTile : updateResult.tilesToRenderThisFrame) {
+  for (const Tile::ConstPointer& pTile : updateResult.tilesToRenderThisFrame) {
     uniqueTilesToRenderThisFrame.insert(pTile.get());
   }
 
-  for (const Tile::Pointer& pTile : tilesSelectedPrevFrame) {
+  for (const Tile::ConstPointer& pTile : tilesSelectedPrevFrame) {
     if (uniqueTilesToRenderThisFrame.find(pTile.get()) ==
         uniqueTilesToRenderThisFrame.end()) {
-      TileRenderContent* pRenderContent =
-          pTile->getContent().getRenderContent();
+      TileRenderContent* pRenderContent = const_cast<TileRenderContent*>(
+          pTile->getContent().getRenderContent());
       if (pRenderContent) {
         pRenderContent->setLodTransitionFadePercentage(1.0f);
         updateResult.tilesFadingOut.insert(pTile);
@@ -392,7 +401,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   ViewUpdateResult& result = viewGroup.getViewUpdateResult();
 
-  Tile* pRootTile = this->getRootTile();
+  Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   if (!pRootTile) {
     return result;
   }
@@ -438,7 +447,7 @@ void Tileset::loadTiles() {
 
   this->_asyncSystem.dispatchMainThreadTasks();
 
-  Tile* pRootTile = this->getRootTile();
+  Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   if (!pRootTile) {
     // If the root tile is marked as ready, but doesn't actually exist, then
     // the tileset couldn't load. Fail any outstanding height requests.
@@ -466,18 +475,12 @@ void Tileset::loadTiles() {
 }
 
 void Tileset::registerLoadRequester(TileLoadRequester& requester) {
-  if (requester._pTilesetContentManager == this->_pTilesetContentManager) {
-    return;
-  }
+  this->_pTilesetContentManager->registerTileRequester(requester);
+}
 
-  if (requester._pTilesetContentManager != nullptr) {
-    requester._pTilesetContentManager->unregisterTileRequester(requester);
-  }
-
-  requester._pTilesetContentManager = this->_pTilesetContentManager;
-  if (requester._pTilesetContentManager != nullptr) {
-    requester._pTilesetContentManager->registerTileRequester(requester);
-  }
+bool Tileset::waitForAllLoadsToComplete(double maximumWaitTimeInMilliseconds) {
+  return this->_pTilesetContentManager->waitUntilIdle(
+      maximumWaitTimeInMilliseconds);
 }
 
 int32_t Tileset::getNumberOfTilesLoaded() const {
@@ -493,20 +496,6 @@ LoadedConstTileEnumerator Tileset::loadedTiles() const {
       this->_pTilesetContentManager
           ? this->_pTilesetContentManager->getRootTile()
           : nullptr);
-}
-
-LoadedTileEnumerator Tileset::loadedTiles() {
-  return LoadedTileEnumerator(
-      this->_pTilesetContentManager
-          ? this->_pTilesetContentManager->getRootTile()
-          : nullptr);
-}
-
-void Tileset::forEachLoadedTile(
-    const std::function<void(Tile& tile)>& callback) {
-  for (Tile& tile : this->loadedTiles()) {
-    callback(tile);
-  }
 }
 
 void Tileset::forEachLoadedTile(
@@ -543,11 +532,11 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
        asyncSystem =
            this->getAsyncSystem()]() -> Future<const TilesetMetadata*> {
         Tile* pRoot = pManager->getRootTile();
-        CESIUM_ASSERT(pRoot);
 
         TileExternalContent* pExternal =
-            pRoot->getContent().getExternalContent();
+            pRoot ? pRoot->getContent().getExternalContent() : nullptr;
         if (!pExternal) {
+          // Something went wrong while loading the root tile, so exit early.
           return asyncSystem.createResolvedFuture<const TilesetMetadata*>(
               nullptr);
         }
@@ -1137,10 +1126,27 @@ bool Tileset::_kickDescendantsAndRenderTile(
         selectionState.kick();
       });
 
-  // Remove all descendants from the render list and add this tile.
-  std::vector<Tile::Pointer>& renderList = result.tilesToRenderThisFrame;
-  std::vector<double>& sseList = result.tileScreenSpaceErrorThisFrame;
+  // If any kicked tiles were rendered last frame, add them to the
+  // tilesFadingOut. This is unlikely! It would imply that a tile rendered last
+  // frame has suddenly become unrenderable, and therefore eligible for kicking.
+  //
+  // In general, it's possible that a Tile previously traversed has been deleted
+  // completely, so we have to be careful about dereferencing the Tile pointers
+  // given to the callback below. However, we can be certain that a Tile that
+  // was rendered last frame has _not_ been deleted yet.
+  traversalState.forEachPreviousDescendant(
+      [&result](
+          const Tile::Pointer& pTile,
+          const TileSelectionState& previousState) {
+        addToTilesFadingOutIfPreviouslyRendered(
+            previousState.getResult(),
+            *pTile,
+            result);
+      });
 
+  // Remove all descendants from the render list and add this tile.
+  std::vector<Tile::ConstPointer>& renderList = result.tilesToRenderThisFrame;
+  std::vector<double>& sseList = result.tileScreenSpaceErrorThisFrame;
   renderList.erase(
       renderList.begin() +
           static_cast<std::vector<Tile*>::iterator::difference_type>(
@@ -1170,8 +1176,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
       getPreviousState(frameState.viewGroup, tile).getResult();
   const bool wasRenderedLastFrame =
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
-  const bool wasReallyRenderedLastFrame =
-      wasRenderedLastFrame && tile.isRenderable();
+  const bool isRenderable = tile.isRenderable();
+  const bool wasReallyRenderedLastFrame = wasRenderedLastFrame && isRenderable;
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1195,10 +1201,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
     queuedForLoad = true;
   }
 
-  bool isRenderable = tile.isRenderable();
   traversalDetails.allAreRenderable = isRenderable;
-  traversalDetails.anyWereRenderedLastFrame =
-      isRenderable && wasRenderedLastFrame;
+  traversalDetails.anyWereRenderedLastFrame = wasReallyRenderedLastFrame;
 
   return queuedForLoad;
 }
@@ -1548,7 +1552,8 @@ void Tileset::addTileToLoadQueue(
     TileLoadPriorityGroup priorityGroup,
     double priority) {
   frameState.viewGroup.addToLoadQueue(
-      TileLoadTask{&tile, priorityGroup, priority});
+      TileLoadTask{&tile, priorityGroup, priority},
+      this->_externals.pGltfModifier);
 }
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(

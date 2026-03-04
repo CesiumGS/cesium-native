@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumGeospatial/Projection.h>
@@ -161,17 +162,19 @@ public:
   void setCredits(const std::vector<CesiumUtility::Credit>& credits);
 
   /**
-   * @brief Get the render resources created for the glTF model of the content
+   * @brief Get the renderer resources created for the glTF model of the
+   * content.
    *
-   * @return The render resources that is created for the glTF model
+   * @return The renderer resources that are created for the glTF model
    */
   void* getRenderResources() const noexcept;
 
   /**
-   * @brief Set the render resources created for the glTF model of the content
+   * @brief Set the renderer resources created for the glTF model of the
+   * content.
    *
-   * @param pRenderResources The render resources that is created for the glTF
-   * model
+   * @param pRenderResources The renderer resources that are created for the
+   * glTF model.
    */
   void setRenderResources(void* pRenderResources) noexcept;
 
@@ -195,9 +198,67 @@ public:
    */
   void setLodTransitionFadePercentage(float percentage) noexcept;
 
+  /**
+   * @brief Gets the state of the {@link GltfModifier} processing of this
+   * tile's content.
+   * */
+  GltfModifierState getGltfModifierState() const noexcept;
+
+  /**
+   * @brief Sets the state of the {@link GltfModifier} processing of this
+   * tile's content.
+   */
+  void setGltfModifierState(GltfModifierState modifierState) noexcept;
+
+  /**
+   * @brief Gets the modified model produced by the {@link GltfModifier} that is
+   * not yet available for rendering.
+   * */
+  const std::optional<CesiumGltf::Model>& getModifiedModel() const noexcept;
+
+  /**
+   * @brief Gets the renderer resources for the modified model produced by the
+   * {@link GltfModifier} that is not yet available for rendering. These resources
+   * are created by {@link IPrepareRendererResources::prepareInLoadThread}.
+   */
+  void* getModifiedRenderResources() const noexcept;
+
+  /**
+   * @brief Stores the modified model and associated renderer resources produced
+   * by the {@link GltfModifier} that are not yet available for rendering. The
+   * renderer resources are created by
+   * {@link IPrepareRendererResources::prepareInLoadThread}.
+   */
+  void setModifiedModelAndRenderResources(
+      CesiumGltf::Model&& modifiedModel,
+      void* pModifiedRenderResources) noexcept;
+
+  /**
+   * @brief Resets the modified model and renderer resources after they have
+   * been determined to be outdated and have been freed with
+   * {@link IPrepareRendererResources::free}.
+   */
+  void resetModifiedModelAndRenderResources() noexcept;
+
+  /**
+   * @brief Overwrites this instance's model and renderer resources with the
+   * modified ones produced by {@link GltfModifier}. The new model and
+   * resources become eligible for rendering.
+   *
+   * After this method returns, {@link getModifiedModel} will return
+   * `std::nullopt` and {@link getModifiedRenderResources} will return
+   * `nullptr`.
+   */
+  void replaceWithModifiedModel() noexcept;
+
 private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
+
+  GltfModifierState _modifierState;
+  std::optional<CesiumGltf::Model> _modifiedModel;
+  void* _pModifiedRenderResources;
+
   CesiumRasterOverlays::RasterOverlayDetails _rasterOverlayDetails;
   std::vector<CesiumUtility::Credit> _credits;
   float _lodTransitionFadePercentage;

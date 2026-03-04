@@ -550,6 +550,13 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.culledTilesVisited == 0);
     }
   }
+
+  SUBCASE(
+      "updateViewGroupOffline does not get stuck in an endless loop when no "
+      "frustums are given") {
+    std::vector<ViewState> empty;
+    tileset.updateViewGroupOffline(tileset.getDefaultViewGroup(), empty);
+  }
 }
 
 TEST_CASE("Test additive refinement") {
@@ -617,7 +624,8 @@ TEST_CASE("Test additive refinement") {
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
 
-      const std::vector<Tile::Pointer>& ttr = result.tilesToRenderThisFrame;
+      const std::vector<Tile::ConstPointer>& ttr =
+          result.tilesToRenderThisFrame;
       REQUIRE(ttr.size() == 7);
 
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -652,7 +660,8 @@ TEST_CASE("Test additive refinement") {
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
       tileset.loadTiles();
 
-      const std::vector<Tile::Pointer>& ttr = result.tilesToRenderThisFrame;
+      const std::vector<Tile::ConstPointer>& ttr =
+          result.tilesToRenderThisFrame;
       REQUIRE(ttr.size() == 8);
 
       // root is done loading and rendered.
@@ -765,10 +774,10 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   initializeTileset(tileset);
   ViewState viewState = zoomToTileset(tileset);
 
-  Tile* pTilesetJson = tileset.getRootTile();
+  const Tile* pTilesetJson = tileset.getRootTile();
   REQUIRE(pTilesetJson);
   REQUIRE(pTilesetJson->getChildren().size() == 1);
-  Tile* root = &pTilesetJson->getChildren()[0];
+  const Tile* root = &pTilesetJson->getChildren()[0];
 
   REQUIRE(!doesTileMeetSSE(viewState, *root, tileset));
   REQUIRE(root->getState() == TileLoadState::ContentLoading);
@@ -1206,10 +1215,11 @@ TEST_CASE("Makes metadata available once root tile is loaded") {
   Tileset tileset(tilesetExternals, "tileset.json");
   initializeTileset(tileset);
 
-  Tile* pRoot = tileset.getRootTile();
+  const Tile* pRoot = tileset.getRootTile();
   REQUIRE(pRoot);
 
-  TileExternalContent* pExternal = pRoot->getContent().getExternalContent();
+  const TileExternalContent* pExternal =
+      pRoot->getContent().getExternalContent();
   REQUIRE(pExternal);
 
   const TilesetMetadata& metadata = pExternal->metadata;
@@ -1262,16 +1272,16 @@ TEST_CASE("Makes metadata available on external tilesets") {
   Tileset tileset(tilesetExternals, "tileset.json");
   initializeTileset(tileset);
 
-  Tile* pTilesetJson = tileset.getRootTile();
+  const Tile* pTilesetJson = tileset.getRootTile();
   REQUIRE(pTilesetJson);
   REQUIRE(pTilesetJson->getChildren().size() == 1);
 
-  Tile* pRoot = &pTilesetJson->getChildren()[0];
+  const Tile* pRoot = &pTilesetJson->getChildren()[0];
   REQUIRE(pRoot);
   REQUIRE(pRoot->getChildren().size() == 5);
-  Tile* pExternal = &pRoot->getChildren()[4];
+  const Tile* pExternal = &pRoot->getChildren()[4];
 
-  TileExternalContent* pExternalContent = nullptr;
+  const TileExternalContent* pExternalContent = nullptr;
 
   for (int i = 0; i < 10 && pExternalContent == nullptr; ++i) {
     ViewState zoomToTileViewState = zoomToTile(*pExternal);
@@ -1634,8 +1644,8 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
   // On the first update, we should refine down to the grandchild tile, even
   // though no tiles are loaded yet.
   initializeTileset(tileset);
-  Tile& child = tileset.getRootTile()->getChildren()[0];
-  Tile& grandchild = child.getChildren()[0];
+  const Tile& child = tileset.getRootTile()->getChildren()[0];
+  const Tile& grandchild = child.getChildren()[0];
 
   auto states = viewGroup.getTraversalState().slowlyGetCurrentStates();
 

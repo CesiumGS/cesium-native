@@ -234,7 +234,7 @@ public:
   bool isContentAvailable(
       const CesiumGeometry::QuadtreeTileID& subtreeId,
       const CesiumGeometry::QuadtreeTileID& tileId,
-      uint64_t contentId) const noexcept;
+      size_t contentId) const noexcept;
 
   /**
    * @brief Determines if content for a given tile in the octree is available.
@@ -247,7 +247,7 @@ public:
   bool isContentAvailable(
       const CesiumGeometry::OctreeTileID& subtreeId,
       const CesiumGeometry::OctreeTileID& tileId,
-      uint64_t contentId) const noexcept;
+      size_t contentId) const noexcept;
 
   /**
    * @brief Determines if content for a given tile in the subtree is available.
@@ -262,7 +262,7 @@ public:
   bool isContentAvailable(
       uint32_t relativeTileLevel,
       uint64_t relativeTileMortonId,
-      uint64_t contentId) const noexcept;
+      size_t contentId) const noexcept;
 
   /**
    * @brief Sets the availability state of the content for a given tile in the
@@ -276,7 +276,7 @@ public:
   void setContentAvailable(
       const CesiumGeometry::QuadtreeTileID& subtreeId,
       const CesiumGeometry::QuadtreeTileID& tileId,
-      uint64_t contentId,
+      size_t contentId,
       bool isAvailable) noexcept;
 
   /**
@@ -291,7 +291,7 @@ public:
   void setContentAvailable(
       const CesiumGeometry::OctreeTileID& subtreeId,
       const CesiumGeometry::OctreeTileID& tileId,
-      uint64_t contentId,
+      size_t contentId,
       bool isAvailable) noexcept;
 
   /**
@@ -309,7 +309,7 @@ public:
   void setContentAvailable(
       uint32_t relativeTileLevel,
       uint64_t relativeTileMortonId,
-      uint64_t contentId,
+      size_t contentId,
       bool isAvailable) noexcept;
 
   /**

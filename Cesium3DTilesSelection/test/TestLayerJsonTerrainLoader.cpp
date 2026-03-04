@@ -423,6 +423,173 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(layers[0].tileTemplateUrls[0] == "{z}/{x}/{y}.terrain?v={version}");
     CHECK(layers[0].extensionsToRequest == "octvertexnormals-watermask");
   }
+
+  SUBCASE("Verify custom headers are passed to all HTTP requests") {
+    // Create a custom asset accessor that tracks headers for each request
+    class HeaderTrackingAssetAccessor : public CesiumAsync::IAssetAccessor {
+    public:
+      HeaderTrackingAssetAccessor(
+          std::map<std::string, std::shared_ptr<SimpleAssetRequest>>&&
+              mockRequests)
+          : mockCompletedRequests{std::move(mockRequests)} {}
+
+      CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>>
+      get(const CesiumAsync::AsyncSystem& asyncSystem,
+          const std::string& url,
+          const std::vector<THeader>& headers) override {
+        // Temporary logging for debugging
+        spdlog::info("HTTP Request to: {}", url);
+        spdlog::info("Headers count: {}", headers.size());
+        for (const auto& header : headers) {
+          spdlog::info("  {} = {}", header.first, header.second);
+        }
+
+        // Store the headers for this URL
+        requestHeaders[url] = headers;
+
+        // Return the mock request if available
+        auto it = mockCompletedRequests.find(url);
+        if (it != mockCompletedRequests.end()) {
+          return asyncSystem.createResolvedFuture<
+              std::shared_ptr<CesiumAsync::IAssetRequest>>(it->second);
+        }
+
+        // Return a 404 response if no mock is available
+        auto pMock404Response = std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(404),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            std::vector<std::byte>{});
+        auto pMock404Request = std::make_shared<SimpleAssetRequest>(
+            "GET",
+            url,
+            CesiumAsync::HttpHeaders{},
+            std::move(pMock404Response));
+        return asyncSystem
+            .createResolvedFuture<std::shared_ptr<CesiumAsync::IAssetRequest>>(
+                pMock404Request);
+      }
+
+      CesiumAsync::Future<std::shared_ptr<CesiumAsync::IAssetRequest>> request(
+          const CesiumAsync::AsyncSystem& asyncSystem,
+          const std::string& /* verb */,
+          const std::string& url,
+          const std::vector<THeader>& headers,
+          const std::span<const std::byte>&) override {
+        return get(asyncSystem, url, headers);
+      }
+
+      void tick() noexcept override {}
+
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+          mockCompletedRequests;
+      std::map<std::string, std::vector<THeader>> requestHeaders;
+    };
+
+    // Setup mock files
+    auto layerJsonPath =
+        testDataPath / "CesiumTerrainTileJson" / "ParentUrl.tile.json";
+    auto parentJsonPath =
+        testDataPath / "CesiumTerrainTileJson" / "Parent.tile.json";
+    auto tileContentPath =
+        testDataPath / "CesiumTerrainTileJson" / "tile.terrain";
+
+    auto pHeaderTrackingAccessor =
+        std::make_shared<HeaderTrackingAssetAccessor>(
+            std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{
+                {"layer.json", createMockAssetRequest(layerJsonPath)},
+                {"Parent/layer.json", createMockAssetRequest(parentJsonPath)},
+                {"0/0/0.terrain?v=1.0.0",
+                 createMockAssetRequest(tileContentPath)}});
+
+    TilesetExternals customExternals{
+        pHeaderTrackingAccessor,
+        pMockedPrepareRendererResources,
+        asyncSystem,
+        pMockedCreditSystem};
+
+    // Define custom headers
+    std::vector<CesiumAsync::IAssetAccessor::THeader> customHeaders = {
+        {"Authorization", "Bearer test-token-123"},
+        {"X-Custom-Header", "custom-value"},
+        {"User-Agent", "CesiumNative-Test/1.0"}};
+
+    // **DEBUG POINT 2**: Set breakpoint here to inspect custom headers before
+    // loader creation
+    auto loaderFuture = LayerJsonTerrainLoader::createLoader(
+        customExternals,
+        {},
+        "layer.json",
+        customHeaders);
+
+    asyncSystem.dispatchMainThreadTasks();
+
+    auto loaderResult = loaderFuture.wait();
+    // **DEBUG POINT 3**: Set breakpoint here to inspect loader creation results
+    CHECK(loaderResult.pLoader);
+    CHECK(loaderResult.pRootTile);
+    CHECK(!loaderResult.errors);
+
+    // Verify that custom headers were passed to all requests
+    CHECK(pHeaderTrackingAccessor->requestHeaders.size() >= 2);
+
+    // **DEBUG POINT 4**: Set breakpoint here to inspect captured headers
+    auto mainLayerHeaders =
+        pHeaderTrackingAccessor->requestHeaders.find("layer.json");
+    REQUIRE(mainLayerHeaders != pHeaderTrackingAccessor->requestHeaders.end());
+    CHECK(mainLayerHeaders->second.size() == customHeaders.size());
+    for (size_t i = 0; i < customHeaders.size(); ++i) {
+      CHECK(mainLayerHeaders->second[i].first == customHeaders[i].first);
+      CHECK(mainLayerHeaders->second[i].second == customHeaders[i].second);
+    }
+
+    // Check headers for parent layer.json request
+    auto parentLayerHeaders =
+        pHeaderTrackingAccessor->requestHeaders.find("Parent/layer.json");
+    REQUIRE(
+        parentLayerHeaders != pHeaderTrackingAccessor->requestHeaders.end());
+    CHECK(parentLayerHeaders->second.size() == customHeaders.size());
+    for (size_t i = 0; i < customHeaders.size(); ++i) {
+      CHECK(parentLayerHeaders->second[i].first == customHeaders[i].first);
+      CHECK(parentLayerHeaders->second[i].second == customHeaders[i].second);
+    }
+
+    // Now test tile content loading with custom headers
+    // Create a tile and load it with custom headers
+    Tile tile(loaderResult.pLoader.get());
+    tile.setTileID(QuadtreeTileID(0, 0, 0));
+    tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights{
+        {GlobeRectangle(-Math::OnePi, -Math::PiOverTwo, 0.0, Math::PiOverTwo),
+         -1000.0,
+         9000.0,
+         Ellipsoid::WGS84}});
+
+    // Create TileLoadInput with correct constructor parameters
+    TileLoadInput loadInput(
+        tile,
+        {}, // TilesetContentOptions
+        asyncSystem,
+        pHeaderTrackingAccessor,
+        spdlog::default_logger(),
+        customHeaders,
+        Ellipsoid::WGS84);
+
+    auto tileLoadResultFuture =
+        loaderResult.pLoader->loadTileContent(loadInput);
+    asyncSystem.dispatchMainThreadTasks();
+    auto tileLoadResult = tileLoadResultFuture.wait();
+
+    // Verify tile content request used custom headers
+    auto tileContentHeaders =
+        pHeaderTrackingAccessor->requestHeaders.find("0/0/0.terrain?v=1.0.0");
+    REQUIRE(
+        tileContentHeaders != pHeaderTrackingAccessor->requestHeaders.end());
+    CHECK(tileContentHeaders->second.size() == customHeaders.size());
+    for (size_t i = 0; i < customHeaders.size(); ++i) {
+      CHECK(tileContentHeaders->second[i].first == customHeaders[i].first);
+      CHECK(tileContentHeaders->second[i].second == customHeaders[i].second);
+    }
+  }
 }
 
 TEST_CASE("Test load layer json tile content") {

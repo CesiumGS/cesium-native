@@ -5,6 +5,8 @@
 #include <CesiumGeospatial/Library.h>
 #include <CesiumUtility/Math.h>
 
+#include <glm/ext/vector_double2.hpp>
+
 #include <optional>
 
 namespace CesiumGeospatial {
@@ -60,6 +62,25 @@ public:
       double east,
       double north) noexcept
       : _west(west), _south(south), _east(east), _north(north) {}
+
+  /**
+   * @brief Constructs a new `GlobeRectangle` from the provided `Rectangle`.
+   *
+   * The rectangle's minimum coordinates will be interpreted as the southwest
+   * position in radians and the maximum coordinates as the northeast in
+   * radians.
+   *
+   * @param rectangle The rectangle defining the bounds of the new
+   * `GlobeRectangle`.
+   */
+  static constexpr GlobeRectangle
+  fromRectangleRadians(const CesiumGeometry::Rectangle& rectangle) noexcept {
+    return GlobeRectangle(
+        rectangle.minimumX,
+        rectangle.minimumY,
+        rectangle.maximumX,
+        rectangle.maximumY);
+  }
 
   /**
    * Creates a rectangle given the boundary longitude and latitude in degrees.
@@ -239,6 +260,18 @@ public:
    * @return The union.
    */
   GlobeRectangle computeUnion(const GlobeRectangle& other) const noexcept;
+
+  /**
+   * @brief Computes the normalized position of the given cartographic
+   * coordinate on this globe rectangle, with (0.0, 0.0) representing southwest
+   * and (1.0, 1.0) representing northeast. The returned coordinates vary
+   * linearly with longitude and latitude within the rectangle.
+   *
+   * @param cartographic The cartographic coordinate to transform.
+   * @return The normalized coordinates.
+   */
+  glm::dvec2
+  computeNormalizedCoordinates(const Cartographic& cartographic) const noexcept;
 
   /**
    * @brief Splits this rectangle at the anti-meridian (180 degrees longitude),

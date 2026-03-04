@@ -46,8 +46,12 @@ target_link_libraries(CesiumRasterOverlays
         CesiumGltf
         CesiumGltfContent
         CesiumGltfReader
+        CesiumJsonReader
+        CesiumJsonWriter
         CesiumUtility
+        CesiumVectorData
         nonstd::expected-lite
+        spdlog::spdlog
     PRIVATE
         tinyxml2::tinyxml2
 )

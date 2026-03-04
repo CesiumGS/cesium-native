@@ -30,6 +30,16 @@ public:
   }
 };
 
+template <typename T> class Uncopyable {
+public:
+  Uncopyable(T value_) : value(value_) {}
+  Uncopyable(const Uncopyable&) = delete;
+  Uncopyable& operator=(const Uncopyable&) = delete;
+  Uncopyable(Uncopyable&& other) noexcept = default;
+  Uncopyable& operator=(Uncopyable&& other) noexcept = default;
+  T value;
+};
+
 } // namespace
 
 TEST_CASE("AsyncSystem") {
@@ -388,6 +398,117 @@ TEST_CASE("AsyncSystem") {
 
     last.wait();
     CHECK(rejected);
+  }
+
+  SUBCASE("Future returned by 'all(Futures...)' resolves when all given "
+          "Futures resolve") {
+    auto one = asyncSystem.createPromise<int>();
+    auto two = asyncSystem.createPromise<double>();
+    auto three = asyncSystem.createPromise<std::string>();
+
+    auto all =
+        asyncSystem.all(one.getFuture(), two.getFuture(), three.getFuture());
+
+    one.resolve(1);
+    two.resolve(2.0);
+    three.resolve("3");
+
+    bool resolved = false;
+    auto last = std::move(all).thenImmediately(
+        [&resolved](std::tuple<int, double, std::string>&& result) {
+          auto& [i, d, s] = result;
+          CHECK_EQ(i, 1);
+          CHECK_EQ(d, 2.0);
+          CHECK_EQ(s, "3");
+          resolved = true;
+        });
+
+    last.wait();
+    CHECK(resolved);
+  }
+
+  SUBCASE(
+      "Future returned by 'all(Futures...)' rejects when any Future rejects") {
+    auto one = asyncSystem.createPromise<int>();
+    auto two = asyncSystem.createPromise<double>();
+    auto three = asyncSystem.createPromise<std::string>();
+
+    auto all =
+        asyncSystem.all(one.getFuture(), two.getFuture(), three.getFuture());
+
+    bool rejected = false;
+
+    auto last = std::move(all)
+                    .thenImmediately(
+                        [](std::tuple<int, double, std::string>&& /*result*/) {
+                          // Should not happen.
+                          CHECK(false);
+                        })
+                    .catchImmediately([&rejected](std::exception&& e) {
+                      CHECK_EQ(std::string(e.what()), "2");
+                      rejected = true;
+                    });
+
+    three.resolve("3");
+    one.resolve(1);
+    two.reject(std::runtime_error("2"));
+
+    last.wait();
+    CHECK(rejected);
+  }
+
+  SUBCASE("When multiple futures in an 'all(Futures...)' reject, the data from "
+          "the first rejection in the argument list is used") {
+    auto one = asyncSystem.createPromise<int>();
+    auto two = asyncSystem.createPromise<double>();
+    auto three = asyncSystem.createPromise<std::string>();
+
+    auto all =
+        asyncSystem.all(one.getFuture(), two.getFuture(), three.getFuture());
+
+    bool rejected = false;
+
+    auto last = std::move(all)
+                    .thenImmediately(
+                        [](std::tuple<int, double, std::string>&& /*result*/) {
+                          // Should not happen.
+                          CHECK(false);
+                        })
+                    .catchImmediately([&rejected](std::exception&& e) {
+                      CHECK_EQ(std::string(e.what()), "1");
+                      CHECK(!rejected);
+                      rejected = true;
+                    });
+
+    three.reject(std::runtime_error("3"));
+    one.reject(std::runtime_error("1"));
+    two.reject(std::runtime_error("2"));
+
+    last.wait();
+    CHECK(rejected);
+  }
+
+  SUBCASE("'all(Futures...)' works with uncopyable types") {
+    auto one = asyncSystem.createPromise<Uncopyable<int>>();
+    auto two = asyncSystem.createPromise<Uncopyable<double>>();
+
+    auto all = asyncSystem.all(one.getFuture(), two.getFuture());
+
+    bool resolved = false;
+
+    one.resolve(1);
+    two.resolve(2.0);
+
+    auto last = std::move(all).thenImmediately(
+        [&resolved](std::tuple<Uncopyable<int>, Uncopyable<double>>&& result) {
+          auto& [i, d] = result;
+          CHECK_EQ(i.value, 1);
+          CHECK_EQ(d.value, 2.0);
+          resolved = true;
+        });
+
+    last.wait();
+    CHECK(resolved);
   }
 
   SUBCASE("conversion to SharedFuture") {

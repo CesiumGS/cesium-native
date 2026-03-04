@@ -14,6 +14,10 @@ void TileLoadRequester::unregister() noexcept {
   }
 }
 
+bool TileLoadRequester::isRegistered() const noexcept {
+  return this->_pTilesetContentManager != nullptr;
+}
+
 TileLoadRequester::TileLoadRequester() noexcept
     : _pTilesetContentManager(nullptr) {}
 
