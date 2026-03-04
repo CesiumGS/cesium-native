@@ -859,6 +859,8 @@ TilesetContentManager::createFromUrl(
           pManager->_rootTileAvailablePromise.reject(
               std::runtime_error("Root tile failed to load."));
         });
+  } else {
+    pManager->_rootTileAvailablePromise.resolve();
   }
 
   return pManager;
@@ -919,6 +921,8 @@ TilesetContentManager::createFromLoaderFactory(
           pManager->_rootTileAvailablePromise.reject(
               std::runtime_error("Root tile failed to load."));
         });
+  } else {
+    pManager->_rootTileAvailablePromise.resolve();
   }
 
   return pManager;
