@@ -396,9 +396,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
       _options.enableFrustumCulling && !_options.enableLodTransitionPeriod;
   _options.enableFogCulling =
       _options.enableFogCulling && !_options.enableLodTransitionPeriod;
-
-  this->_asyncSystem.dispatchMainThreadTasks();
-
   ViewUpdateResult& result = viewGroup.getViewUpdateResult();
 
   Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
@@ -444,9 +441,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
 void Tileset::loadTiles() {
   CESIUM_TRACE("Tileset::loadTiles");
-
-  this->_asyncSystem.dispatchMainThreadTasks();
-
   Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   if (!pRootTile) {
     // If the root tile is marked as ready, but doesn't actually exist, then
