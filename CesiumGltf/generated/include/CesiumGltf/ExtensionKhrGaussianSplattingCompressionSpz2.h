@@ -3,21 +3,25 @@
 #pragma once
 
 #include "CesiumGltf/Library.h"
+
 #include <CesiumUtility/ExtensibleObject.h>
+
 #include <cstdint>
 
 namespace CesiumGltf {
-    /**
-     * @brief Compressed data for SPZ v2 primitive.
-     */
-    struct CESIUMGLTF_API ExtensionKhrGaussianSplattingCompressionSpz2 final : public CesiumUtility::ExtensibleObject {
-        static inline constexpr const char* TypeName = "ExtensionKhrGaussianSplattingCompressionSpz2";
-        static inline constexpr const char* ExtensionName = "KHR_gaussian_splatting_compression_spz_2";
+/**
+ * @brief Compressed data for SPZ v2 primitive.
+ */
+struct CESIUMGLTF_API ExtensionKhrGaussianSplattingCompressionSpz2 final
+    : public CesiumUtility::ExtensibleObject {
+  static inline constexpr const char* TypeName =
+      "ExtensionKhrGaussianSplattingCompressionSpz2";
+  static inline constexpr const char* ExtensionName =
+      "KHR_gaussian_splatting_compression_spz_2";
 
-        /**
-         * @brief The index of the bufferView.
-         */
-        int32_t bufferView = -1;
-
-    };
-}
+  /**
+   * @brief The index of the bufferView.
+   */
+  int32_t bufferView = -1;
+};
+} // namespace CesiumGltf

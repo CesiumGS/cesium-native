@@ -7,31 +7,42 @@
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class JsonReaderOptions;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-  class ExtensionKhrSpzGaussianSplatsCompressionJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
-  public:
-    using ValueType = CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression;
+class ExtensionKhrSpzGaussianSplatsCompressionJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
+      public CesiumJsonReader::IExtensionJsonHandler {
+public:
+  using ValueType = CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression;
 
-    static inline constexpr const char* ExtensionName = "KHR_spz_gaussian_splats_compression";
+  static inline constexpr const char* ExtensionName =
+      "KHR_spz_gaussian_splats_compression";
 
-    ExtensionKhrSpzGaussianSplatsCompressionJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression* pObject);
+  ExtensionKhrSpzGaussianSplatsCompressionJsonHandler(
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+  void reset(
+      IJsonHandler* pParentHandler,
+      CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-    virtual void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
+  virtual void reset(
+      IJsonHandler* pParentHandler,
+      CesiumUtility::ExtensibleObject& o,
+      const std::string_view& extensionName) override;
 
-    virtual IJsonHandler& getHandler() override { return *this; }
+  virtual IJsonHandler& getHandler() override { return *this; }
 
-  protected:
-    IJsonHandler* readObjectKeyExtensionKhrSpzGaussianSplatsCompression(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression& o);
+protected:
+  IJsonHandler* readObjectKeyExtensionKhrSpzGaussianSplatsCompression(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression& o);
 
-  private:
-
-    CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression* _pObject = nullptr;
-    CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
-  };
-}
+private:
+  CesiumGltf::ExtensionKhrSpzGaussianSplatsCompression* _pObject = nullptr;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _bufferView;
+};
+} // namespace CesiumGltfReader

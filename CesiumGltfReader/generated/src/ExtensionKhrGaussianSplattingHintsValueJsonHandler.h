@@ -7,26 +7,32 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class JsonReaderOptions;
+class JsonReaderOptions;
 }
 
 namespace CesiumGltfReader {
-  class ExtensionKhrGaussianSplattingHintsValueJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler {
-  public:
-    using ValueType = CesiumGltf::ExtensionKhrGaussianSplattingHintsValue;
+class ExtensionKhrGaussianSplattingHintsValueJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler {
+public:
+  using ValueType = CesiumGltf::ExtensionKhrGaussianSplattingHintsValue;
 
-    ExtensionKhrGaussianSplattingHintsValueJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionKhrGaussianSplattingHintsValue* pObject);
+  ExtensionKhrGaussianSplattingHintsValueJsonHandler(
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+  void reset(
+      IJsonHandler* pParentHandler,
+      CesiumGltf::ExtensionKhrGaussianSplattingHintsValue* pObject);
 
-    virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-  protected:
-    IJsonHandler* readObjectKeyExtensionKhrGaussianSplattingHintsValue(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionKhrGaussianSplattingHintsValue& o);
+protected:
+  IJsonHandler* readObjectKeyExtensionKhrGaussianSplattingHintsValue(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::ExtensionKhrGaussianSplattingHintsValue& o);
 
-  private:
-
-    CesiumGltf::ExtensionKhrGaussianSplattingHintsValue* _pObject = nullptr;
-    CesiumJsonReader::StringJsonHandler _projection;
-    CesiumJsonReader::StringJsonHandler _sortingMethod;
-  };
-}
+private:
+  CesiumGltf::ExtensionKhrGaussianSplattingHintsValue* _pObject = nullptr;
+  CesiumJsonReader::StringJsonHandler _projection;
+  CesiumJsonReader::StringJsonHandler _sortingMethod;
+};
+} // namespace CesiumGltfReader
