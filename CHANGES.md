@@ -5,6 +5,7 @@
 ##### Fixes :wrench:
 
 - `Cesium3DTilesetSelection::Tileset::getRootTileAvailableEvent` will now resolve even when a `Tileset` is constructed with invalid source parameters, instead of hanging indefinitely.
+- Fixed compilation error with MSVC when using custom `CesiumITwinClient::PagedList` types.
 
 ### v0.58.0 - 2026-03-02
 
