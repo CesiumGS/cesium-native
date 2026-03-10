@@ -41,6 +41,7 @@ Our naming differs from the naming proposed in the C++ Core Guidelines, primaril
 * DON'T prefix classes with `C`.
 * DO prefix pure interfaces - a class with most methods virtual and no fields - with `I`.
 * DON'T use Hungarian notation, except that it's useful to prefix pointer-like variables with a `p`, e.g. `pThing`. This is justified because it's not meant to convey type information (not so useful), but rather as an easily-understood abbreviation for the descriptive name of what the variable actually is (very useful). The variable isn't a `thing`, it's a pointer to a thing, but `pointerToThing` would get annoying quickly. (see [NL.5](http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#nl5-avoid-encoding-type-information-in-names))
+* DO prefix descriptive template types with `T`, for example `template <typename TFoo>`. For truly general templates, such as containers, a simple `typename T` is appropriate. For templates that only accept a relatively limited set of types, it's better to use a descriptive type name.
 * DO prefix optional values with `maybe`.
 * DO prefix expected values with `expected`.
 * DO prefix private fields with `_`, as in `_boundingVolume`.
