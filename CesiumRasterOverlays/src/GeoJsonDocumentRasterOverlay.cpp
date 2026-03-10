@@ -556,11 +556,11 @@ uint32_t buildQuadtreeNode(
   return resultId;
 }
 
-Quadtree buildQuadtree(
+void buildQuadtree(
+    Quadtree& tree,
     const std::shared_ptr<GeoJsonDocument>& document,
     const VectorStyle& defaultStyle,
     const Ellipsoid& ellipsoid) {
-  Quadtree tree;
   tree.defaultStyle = defaultStyle;
 
   BoundingRegionBuilder builder;
@@ -595,8 +595,6 @@ Quadtree buildQuadtree(
       QuadtreeTileID(0, 0, 0));
   // Add last entry so [i + 1] is always valid
   tree.dataNodeIndicesBegin.emplace_back((uint32_t)tree.dataIndices.size());
-
-  return tree;
 }
 
 void rasterizeQuadtreeNode(
@@ -703,10 +701,12 @@ public:
         _ellipsoid(geoJsonOptions.ellipsoid),
         _mipLevels(geoJsonOptions.mipLevels) {
     CESIUM_ASSERT(this->_pDocument);
-    this->_pTree = std::make_shared<Quadtree>(buildQuadtree(
+    this->_pTree = std::make_shared<Quadtree>();
+    buildQuadtree(
+        *this->_pTree,
         this->_pDocument,
         geoJsonOptions.defaultStyle,
-        geoJsonOptions.ellipsoid));
+        geoJsonOptions.ellipsoid);
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
