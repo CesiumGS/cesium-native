@@ -17,6 +17,7 @@
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
@@ -253,6 +254,94 @@ GltfReaderResult readBinaryGltf(
   return result;
 }
 
+enum DataType {
+  IMAGE_SOURCE = 1,
+  DRACO_COMPRESSED = 2,
+  MESHOPT_COMPRESSED = 4,
+  GAUSSIAN_SPLATS = 8,
+  OTHER = 16
+};
+
+using DataUsage = uint32_t;
+
+struct ModelDataUsage {
+  std::vector<DataUsage> buffers;
+  std::vector<DataUsage> bufferViews;
+  ModelDataUsage(const Model& model)
+      : buffers(model.buffers.size()), bufferViews(model.bufferViews.size()) {}
+};
+
+void traceDraco(
+    ModelDataUsage& dataUsage,
+    const Model&,
+    const MeshPrimitive&,
+    const CesiumGltf::ExtensionKhrDracoMeshCompression* pDraco) {
+  if (int32_t bufferViewIndex = pDraco->bufferView; bufferViewIndex >= 0) {
+    dataUsage.bufferViews[static_cast<size_t>(bufferViewIndex)] |=
+        DRACO_COMPRESSED;
+  }
+}
+
+ModelDataUsage traceDataUsage(const Model& model) {
+  ModelDataUsage dataUsage(model);
+  for (const auto& mesh : model.meshes) {
+    for (const auto& primitive : mesh.primitives) {
+      for (const auto& [name, accessorIndex] : primitive.attributes) {
+        const Accessor& accessor =
+            model.accessors[static_cast<size_t>(accessorIndex)];
+        if (accessor.bufferView >= 0) {
+          dataUsage.bufferViews[static_cast<size_t>(accessor.bufferView)] |=
+              OTHER;
+        }
+      }
+      if (primitive.indices >= 0) {
+        const Accessor& accessor =
+            model.accessors[static_cast<size_t>(primitive.indices)];
+        if (accessor.bufferView >= 0) {
+          dataUsage.bufferViews[static_cast<size_t>(accessor.bufferView)] |=
+              OTHER;
+        }
+      }
+      if (const auto* pDraco =
+              primitive.getExtension<
+                  CesiumGltf::ExtensionKhrDracoMeshCompression>()) {
+        traceDraco(dataUsage, model, primitive, pDraco);
+      }
+    }
+  }
+  for (const auto& image : model.images) {
+    if (image.bufferView > -1) {
+      dataUsage.bufferViews[static_cast<size_t>(image.bufferView)] |=
+          IMAGE_SOURCE;
+    }
+  }
+  for (size_t i = 0; i < dataUsage.bufferViews.size(); ++i) {
+    const BufferView& bufferView = model.bufferViews[i];
+    if (bufferView.buffer >= 0) {
+      dataUsage.buffers[static_cast<size_t>(bufferView.buffer)] |=
+          dataUsage.bufferViews[i];
+    }
+  }
+  return dataUsage;
+}
+
+void freeCompressedBuffers(Model& model) {
+  ModelDataUsage dataUsage = traceDataUsage(model);
+  for (size_t i = 0; i < dataUsage.buffers.size(); ++i) {
+    if ((dataUsage.buffers[i] & OTHER) == 0) {
+      std::vector<std::byte> data;
+      data.swap(model.buffers[i].cesium.data);
+      model.buffers[i].byteLength = 0;
+    }
+  }
+  for (auto& bufferView : model.bufferViews) {
+    const auto& buffer = Model::getSafe(model.buffers, bufferView.buffer);
+    if (buffer.byteLength == 0) {
+      bufferView.buffer = -1;
+    }
+  }
+}
+
 void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
   if (!readGltf.model) {
     return;
@@ -380,6 +469,8 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
           "KHR_texture_transform") != model.extensionsUsed.end()) {
     applyKhrTextureTransform(model);
   }
+
+  freeCompressedBuffers(model);
 }
 
 } // namespace
