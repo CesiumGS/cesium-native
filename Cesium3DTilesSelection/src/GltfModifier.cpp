@@ -60,6 +60,40 @@ void GltfModifier::trigger() {
   }
 }
 
+bool GltfModifier::canRecomputeUpsampledTile(const Tile& tile) const {
+  std::optional<int64_t> modelVersion = this->getCurrentVersion();
+  if (!modelVersion)
+    return true;
+  const CesiumGeometry::UpsampledQuadtreeNode* pUpsampleID =
+      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&tile.getTileID());
+  if (!pUpsampleID) {
+    CESIUM_ASSERT(0 && "Not an upsampled tile");
+    return false;
+  }
+  // Upsampling can be recomputed only when the parent has been updated.
+  Tile const* parentTile = tile.getParent();
+  if (parentTile) {
+    if (parentTile->getState() != TileLoadState::Done &&
+        parentTile->getState() != TileLoadState::ContentLoaded) {
+      return false;
+    }
+    const TileRenderContent* parentRenderContent =
+        parentTile->getContent().getRenderContent();
+    if (parentRenderContent && parentRenderContent->getGltfModifierState() ==
+                                   GltfModifierState::Idle) {
+      const bool parentHasUpToDateModel =
+          GltfModifierVersionExtension::getVersion(
+              parentRenderContent->getModel()) == modelVersion;
+      return parentHasUpToDateModel;
+    } else {
+      return false;
+    }
+  } else {
+    CESIUM_ASSERT(0 && "Upsampled tile but no parent");
+    return false;
+  }
+}
+
 bool GltfModifier::needsWorkerThreadModification(const Tile& tile) const {
   std::optional<int64_t> modelVersion = this->getCurrentVersion();
   if (!modelVersion)
@@ -84,6 +118,9 @@ bool GltfModifier::needsWorkerThreadModification(const Tile& tile) const {
     return false;
   }
 
+  const bool isUpsampled =
+      std::get_if<CesiumGeometry::UpsampledQuadtreeNode>(&tile.getTileID()) !=
+      nullptr;
   // If modification is WorkerDone, and the version is already up-to-date, we
   // don't need to do it again. But if it's outdated, we want to run the worker
   // thread modification again.
@@ -93,6 +130,11 @@ bool GltfModifier::needsWorkerThreadModification(const Tile& tile) const {
     bool hasUpToDateModifiedModel =
         maybeModifiedModel && GltfModifierVersionExtension::getVersion(
                                   *maybeModifiedModel) == modelVersion;
+    // In case of upsampling, we also need to check the status of the parent.
+    if (isUpsampled && !hasUpToDateModifiedModel &&
+        !canRecomputeUpsampledTile(tile)) {
+      return false;
+    }
     return !hasUpToDateModifiedModel;
   } else {
     // Worker is idle. Modification is needed if the model version is out of
@@ -101,6 +143,10 @@ bool GltfModifier::needsWorkerThreadModification(const Tile& tile) const {
         pRenderContent->getGltfModifierState() == GltfModifierState::Idle);
     bool hasUpToDateModel = GltfModifierVersionExtension::getVersion(
                                 pRenderContent->getModel()) == modelVersion;
+    // In case of upsampling, we also need to check the status of the parent.
+    if (isUpsampled && !hasUpToDateModel && !canRecomputeUpsampledTile(tile)) {
+      return false;
+    }
     return !hasUpToDateModel;
   }
 }
