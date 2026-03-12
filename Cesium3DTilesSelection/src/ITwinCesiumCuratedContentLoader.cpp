@@ -8,6 +8,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 
+#include <fmt/args.h>
 #include <fmt/format.h>
 
 #include <cstdint>
