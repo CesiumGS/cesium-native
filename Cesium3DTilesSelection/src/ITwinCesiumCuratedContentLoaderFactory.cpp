@@ -44,9 +44,9 @@ ITwinCesiumCuratedContentLoaderFactory::ITwinCesiumCuratedContentLoaderFactory(
     uint32_t iTwinCesiumContentID,
     const std::string& iTwinAccessToken)
     : ITwinCesiumCuratedContentLoaderFactory(
-      iTwinCesiumContentID,
-      iTwinAccessToken,
-      defaultCuratedContentUrl) {}
+        iTwinCesiumContentID,
+        iTwinAccessToken,
+        defaultCuratedContentUrl) {}
 
 ITwinCesiumCuratedContentLoaderFactory::ITwinCesiumCuratedContentLoaderFactory(
     uint32_t iTwinCesiumContentID,
