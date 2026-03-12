@@ -29,6 +29,14 @@ public:
       uint32_t iTwinCesiumContentID,
       const std::string& iTwinAccessToken);
 
+  /**
+   * @brief Creates a new factory for loading content from iTwin Cesium Curated
+   * Content.
+   *
+   * @param iTwinCesiumContentID The ID of the item to load.
+   * @param iTwinAccessToken The access token to use to access the API.
+   * @param iTwinURL The URL to use to access the API.
+   */
   ITwinCesiumCuratedContentLoaderFactory(
       uint32_t iTwinCesiumContentID,
       const std::string& iTwinAccessToken,
