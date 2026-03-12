@@ -43,7 +43,8 @@ ITwinCesiumCuratedContentLoaderFactory::createLoader(
 ITwinCesiumCuratedContentLoaderFactory::ITwinCesiumCuratedContentLoaderFactory(
     uint32_t iTwinCesiumContentID,
     const std::string& iTwinAccessToken)
-    : ITwinCesiumCuratedContentLoaderFactory(iTwinCesiumContentID,
+    : ITwinCesiumCuratedContentLoaderFactory(
+      iTwinCesiumContentID,
       iTwinAccessToken,
       defaultCuratedContentUrl) {}
 
