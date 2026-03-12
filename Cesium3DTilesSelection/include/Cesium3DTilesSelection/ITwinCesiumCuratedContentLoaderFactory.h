@@ -29,6 +29,11 @@ public:
       uint32_t iTwinCesiumContentID,
       const std::string& iTwinAccessToken);
 
+  ITwinCesiumCuratedContentLoaderFactory(
+      uint32_t iTwinCesiumContentID,
+      const std::string& iTwinAccessToken,
+      const std::string& iTwinURL);
+
   virtual CesiumAsync::Future<
       Cesium3DTilesSelection::TilesetContentLoaderResult<
           Cesium3DTilesSelection::TilesetContentLoader>>
@@ -42,5 +47,6 @@ public:
 private:
   uint32_t _iTwinCesiumContentID;
   std::string _iTwinAccessToken;
+  std::string _iTwinURL;
 };
 } // namespace Cesium3DTilesSelection

@@ -13,6 +13,12 @@
 #include <utility>
 
 namespace Cesium3DTilesSelection {
+
+namespace {
+constexpr const char* defaultCuratedContentUrl =
+    "https://api.bentley.com/curated-content/cesium/{}/tiles";
+}
+
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetContentLoader>>
 ITwinCesiumCuratedContentLoaderFactory::createLoader(
     const TilesetExternals& externals,
@@ -23,6 +29,7 @@ ITwinCesiumCuratedContentLoaderFactory::createLoader(
              tilesetOptions.contentOptions,
              this->_iTwinCesiumContentID,
              this->_iTwinAccessToken,
+             this->_iTwinURL,
              headerChangeListener,
              tilesetOptions.showCreditsOnScreen,
              tilesetOptions.ellipsoid)
@@ -36,8 +43,17 @@ ITwinCesiumCuratedContentLoaderFactory::createLoader(
 ITwinCesiumCuratedContentLoaderFactory::ITwinCesiumCuratedContentLoaderFactory(
     uint32_t iTwinCesiumContentID,
     const std::string& iTwinAccessToken)
+    : ITwinCesiumCuratedContentLoaderFactory(iTwinCesiumContentID,
+      iTwinAccessToken,
+      defaultCuratedContentUrl) {}
+
+ITwinCesiumCuratedContentLoaderFactory::ITwinCesiumCuratedContentLoaderFactory(
+    uint32_t iTwinCesiumContentID,
+    const std::string& iTwinAccessToken,
+    const std::string& iTwinURL)
     : _iTwinCesiumContentID(iTwinCesiumContentID),
-      _iTwinAccessToken(iTwinAccessToken) {}
+      _iTwinAccessToken(iTwinAccessToken),
+      _iTwinURL(iTwinURL) {}
 
 bool ITwinCesiumCuratedContentLoaderFactory::isValid() const {
   return this->_iTwinCesiumContentID > 0;
