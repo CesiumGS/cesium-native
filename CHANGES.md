@@ -6,6 +6,7 @@
 
 - `Cesium3DTilesetSelection::Tileset::getRootTileAvailableEvent` will now resolve even when a `Tileset` is constructed with invalid source parameters, instead of hanging indefinitely.
 - Fixed compilation error with MSVC when using custom `CesiumITwinClient::PagedList` types.
+- Ability to override the iTwin Cesium Curated Content base URL used by `iTwinCesiumCuratedContentLoaderFactory` to make it possible to connect to alternate servers (e.g., staging, QA, mock servers).
 
 ### v0.58.0 - 2026-03-02
 
