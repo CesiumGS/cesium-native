@@ -16,7 +16,7 @@ namespace Cesium3DTilesSelection {
 
 namespace {
 constexpr const char* defaultCuratedContentUrl =
-    "https://api.bentley.com/curated-content/cesium/{}/tiles";
+    "https://api.bentley.com/curated-content/cesium/";
 }
 
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetContentLoader>>
@@ -54,7 +54,11 @@ ITwinCesiumCuratedContentLoaderFactory::ITwinCesiumCuratedContentLoaderFactory(
     const std::string& iTwinURL)
     : _iTwinCesiumContentID(iTwinCesiumContentID),
       _iTwinAccessToken(iTwinAccessToken),
-      _iTwinURL(iTwinURL) {}
+      _iTwinURL(iTwinURL) {
+  if (!_iTwinURL.empty() && _iTwinURL.back() != '/') {
+    _iTwinURL.push_back('/');
+  }
+}
 
 bool ITwinCesiumCuratedContentLoaderFactory::isValid() const {
   return this->_iTwinCesiumContentID > 0;

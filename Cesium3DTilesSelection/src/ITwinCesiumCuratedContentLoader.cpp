@@ -8,7 +8,6 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 
-#include <fmt/core.h>
 #include <fmt/format.h>
 
 #include <cstdint>
@@ -29,7 +28,7 @@ ITwinCesiumCuratedContentLoader::createLoader(
   return CesiumIonTilesetLoader::createLoader(
       externals,
       contentOptions,
-      fmt::format(fmt::runtime(ionURL), ionAssetID),
+      fmt::format("{}{}/tiles", ionURL, ionAssetID),
       ionAccessToken,
       true,
       headerChangeListener,
