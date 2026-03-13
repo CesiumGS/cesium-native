@@ -652,66 +652,11 @@ std::optional<Credit> createUserCredit(
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
-    const TilesetOptions& tilesetOptions,
-    std::unique_ptr<TilesetContentLoader>&& pLoader,
-    std::unique_ptr<Tile>&& pRootTile)
+    const TilesetOptions& tilesetOptions)
     : _externals{externals},
       _requestHeaders{tilesetOptions.requestHeaders},
-      _pLoader{std::move(pLoader)},
+      _pLoader{nullptr},
       _pRootTile{nullptr},
-      _userCredit(),
-      _tilesetCredits{},
-      _overlayCollection(
-          LoadedTileEnumerator(pRootTile.get()),
-          externals,
-          tilesetOptions.ellipsoid),
-      _tileLoadsInProgress{0},
-      _loadedTilesCount{0},
-      _tilesDataUsed{0},
-      _tilesetDestroyed(false),
-      _pSharedAssetSystem(externals.pSharedAssetSystem),
-      _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
-      _destructionCompleteFuture{
-          this->_destructionCompletePromise.getFuture().share()},
-      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
-      _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()},
-      _tilesEligibleForContentUnloading(),
-      _requesters(),
-      _roundRobinValueWorker(0.0),
-      _roundRobinValueMain(0.0),
-      _requesterFractions(),
-      _requestersWithRequests(),
-      _creditSource(externals.pCreditSystem) {
-  CESIUM_ASSERT(this->_pLoader != nullptr);
-
-  this->_userCredit = createUserCredit(
-      tilesetOptions,
-      externals.pCreditSystem,
-      this->_creditSource);
-  this->_upsampler.setOwner(*this);
-
-  this->notifyTileStartLoading(nullptr);
-
-  this->registerGltfModifier(pRootTile.get())
-      .thenInMainThread([this, pRootTile = std::move(pRootTile)]() mutable {
-        this->_pRootTile = std::move(pRootTile);
-        this->_overlayCollection.setLoadedTileEnumerator(
-            LoadedTileEnumerator(this->_pRootTile.get()));
-        this->_pLoader->setOwner(*this);
-        this->_rootTileAvailablePromise.resolve();
-        this->notifyTileDoneLoading(this->_pRootTile.get());
-      });
-}
-
-TilesetContentManager::TilesetContentManager(
-    const TilesetExternals& externals,
-    const TilesetOptions& tilesetOptions,
-    const std::string& url)
-    : _externals{externals},
-      _requestHeaders{tilesetOptions.requestHeaders},
-      _pLoader{},
-      _pRootTile{},
       _userCredit(),
       _tilesetCredits{},
       _overlayCollection(
@@ -742,15 +687,58 @@ TilesetContentManager::TilesetContentManager(
       this->_creditSource);
 
   this->_upsampler.setOwner(*this);
+}
+
+/* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
+TilesetContentManager::createFromLoader(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    std::unique_ptr<TilesetContentLoader>&& pLoader,
+    std::unique_ptr<Tile>&& pRootTile) {
+  CESIUM_ASSERT(pLoader != nullptr);
+
+  IntrusivePointer<TilesetContentManager> pManager =
+      new TilesetContentManager(externals, tilesetOptions);
+
+  pManager->notifyTileStartLoading(nullptr);
+
+  pManager->registerGltfModifier(pRootTile.get())
+      .thenInMainThread([pManager,
+                         pLoader = std::move(pLoader),
+                         pRootTile = std::move(pRootTile)]() mutable {
+        pManager->notifyTileDoneLoading(pRootTile.get());
+
+        pManager->propagateTilesetContentLoaderResult(
+            TilesetLoadType::TilesetJson,
+            [](const TilesetLoadFailureDetails&) {},
+            TilesetContentLoaderResult<TilesetContentLoader>(
+                std::move(pLoader),
+                std::move(pRootTile),
+                {},
+                {},
+                ErrorList()));
+
+        pManager->_rootTileAvailablePromise.resolve();
+      });
+
+  return pManager;
+}
+
+/* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
+TilesetContentManager::createFromUrl(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    const std::string& url) {
+  IntrusivePointer<TilesetContentManager> pManager =
+      new TilesetContentManager(externals, tilesetOptions);
 
   if (!url.empty()) {
-    this->notifyTileStartLoading(nullptr);
+    pManager->notifyTileStartLoading(nullptr);
 
-    CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
     const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
 
     externals.pAssetAccessor
-        ->get(externals.asyncSystem, url, this->_requestHeaders)
+        ->get(externals.asyncSystem, url, pManager->_requestHeaders)
         .thenInWorkerThread(
             [externals,
              ellipsoid,
@@ -845,78 +833,50 @@ TilesetContentManager::TilesetContentManager(
               }
             })
         .thenInMainThread(
-            [thiz](TilesetContentLoaderResult<TilesetContentLoader>&& result) {
-              return thiz->registerGltfModifier(result.pRootTile.get())
+            [pManager](
+                TilesetContentLoaderResult<TilesetContentLoader>&& result) {
+              return pManager->registerGltfModifier(result.pRootTile.get())
                   .thenImmediately([result = std::move(result)]() mutable {
                     return std::move(result);
                   });
             })
         .thenInMainThread(
-            [thiz, errorCallback = tilesetOptions.loadErrorCallback](
+            [pManager, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<TilesetContentLoader>&& result) {
-              thiz->notifyTileDoneLoading(result.pRootTile.get());
-              thiz->propagateTilesetContentLoaderResult(
+              pManager->notifyTileDoneLoading(result.pRootTile.get());
+              pManager->propagateTilesetContentLoaderResult(
                   TilesetLoadType::TilesetJson,
                   errorCallback,
                   std::move(result));
-              thiz->_rootTileAvailablePromise.resolve();
+              pManager->_rootTileAvailablePromise.resolve();
             })
-        .catchInMainThread([thiz](std::exception&& e) {
-          thiz->notifyTileDoneLoading(nullptr);
+        .catchInMainThread([pManager](std::exception&& e) {
+          pManager->notifyTileDoneLoading(nullptr);
           SPDLOG_LOGGER_ERROR(
-              thiz->_externals.pLogger,
+              pManager->_externals.pLogger,
               "An unexpected error occurred when loading tile: {}",
               e.what());
-          thiz->_rootTileAvailablePromise.reject(
+          pManager->_rootTileAvailablePromise.reject(
               std::runtime_error("Root tile failed to load."));
         });
   }
+
+  return pManager;
 }
 
-TilesetContentManager::TilesetContentManager(
+/* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
+TilesetContentManager::createFromLoaderFactory(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    TilesetContentLoaderFactory&& loaderFactory)
-    : _externals{externals},
-      _requestHeaders{tilesetOptions.requestHeaders},
-      _pLoader{},
-      _pRootTile{},
-      _userCredit(),
-      _tilesetCredits{},
-      _overlayCollection(
-          LoadedTileEnumerator(nullptr),
-          externals,
-          tilesetOptions.ellipsoid),
-      _tileLoadsInProgress{0},
-      _loadedTilesCount{0},
-      _tilesDataUsed{0},
-      _tilesetDestroyed(false),
-      _pSharedAssetSystem(externals.pSharedAssetSystem),
-      _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
-      _destructionCompleteFuture{
-          this->_destructionCompletePromise.getFuture().share()},
-      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
-      _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()},
-      _tilesEligibleForContentUnloading(),
-      _requesters(),
-      _roundRobinValueWorker(0.0),
-      _roundRobinValueMain(0.0),
-      _requesterFractions(),
-      _requestersWithRequests(),
-      _creditSource(externals.pCreditSystem) {
-  this->_userCredit = createUserCredit(
-      tilesetOptions,
-      externals.pCreditSystem,
-      this->_creditSource);
-
-  this->_upsampler.setOwner(*this);
+    TilesetContentLoaderFactory&& loaderFactory) {
+  IntrusivePointer<TilesetContentManager> pManager =
+      new TilesetContentManager(externals, tilesetOptions);
 
   if (loaderFactory.isValid()) {
-    auto authorizationChangeListener = [this](
+    auto authorizationChangeListener = [pManagerRaw = pManager.get()](
                                            const std::string& header,
                                            const std::string& headerValue) {
-      auto& requestHeaders = this->_requestHeaders;
+      auto& requestHeaders = pManagerRaw->_requestHeaders;
       auto authIt = std::find_if(
           requestHeaders.begin(),
           requestHeaders.end(),
@@ -928,54 +888,57 @@ TilesetContentManager::TilesetContentManager(
       }
     };
 
-    this->notifyTileStartLoading(nullptr);
-
-    CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+    pManager->notifyTileStartLoading(nullptr);
 
     loaderFactory
         .createLoader(externals, tilesetOptions, authorizationChangeListener)
         .thenInMainThread(
-            [thiz](TilesetContentLoaderResult<TilesetContentLoader>&& result) {
-              return thiz->registerGltfModifier(result.pRootTile.get())
+            [pManager](
+                TilesetContentLoaderResult<TilesetContentLoader>&& result) {
+              return pManager->registerGltfModifier(result.pRootTile.get())
                   .thenImmediately([result = std::move(result)]() mutable {
                     return std::move(result);
                   });
             })
         .thenInMainThread(
-            [thiz, errorCallback = tilesetOptions.loadErrorCallback](
+            [pManager, errorCallback = tilesetOptions.loadErrorCallback](
                 TilesetContentLoaderResult<TilesetContentLoader>&& result) {
-              thiz->notifyTileDoneLoading(result.pRootTile.get());
-              thiz->propagateTilesetContentLoaderResult(
+              pManager->notifyTileDoneLoading(result.pRootTile.get());
+              pManager->propagateTilesetContentLoaderResult(
                   TilesetLoadType::CesiumIon,
                   errorCallback,
                   std::move(result));
-              thiz->_rootTileAvailablePromise.resolve();
+              pManager->_rootTileAvailablePromise.resolve();
             })
-        .catchInMainThread([thiz](std::exception&& e) {
-          thiz->notifyTileDoneLoading(nullptr);
+        .catchInMainThread([pManager](std::exception&& e) {
+          pManager->notifyTileDoneLoading(nullptr);
           SPDLOG_LOGGER_ERROR(
-              thiz->_externals.pLogger,
+              pManager->_externals.pLogger,
               "An unexpected error occurred when loading tile: {}",
               e.what());
-          thiz->_rootTileAvailablePromise.reject(
+          pManager->_rootTileAvailablePromise.reject(
               std::runtime_error("Root tile failed to load."));
         });
   }
+
+  return pManager;
 }
 
-TilesetContentManager::TilesetContentManager(
+/* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
+TilesetContentManager::createFromCesiumIon(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
-    const std::string& ionAssetEndpointUrl)
-    : TilesetContentManager(
-          externals,
-          tilesetOptions,
-          CesiumIonTilesetContentLoaderFactory(
-              static_cast<uint32_t>(ionAssetID),
-              ionAccessToken,
-              ionAssetEndpointUrl)) {}
+    const std::string& ionAssetEndpointUrl) {
+  return TilesetContentManager::createFromLoaderFactory(
+      externals,
+      tilesetOptions,
+      CesiumIonTilesetContentLoaderFactory(
+          static_cast<uint32_t>(ionAssetID),
+          ionAccessToken,
+          ionAssetEndpointUrl));
+}
 
 CesiumAsync::SharedFuture<void>&
 TilesetContentManager::getAsyncDestructionCompleteEvent() {
@@ -1181,6 +1144,9 @@ void TilesetContentManager::reapplyGltfModifier(
 void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
+  CESIUM_ASSERT(this->_pLoader != nullptr);
+  CESIUM_ASSERT(this->_pRootTile != nullptr);
+
   CESIUM_TRACE("TilesetContentManager::loadTileContent");
 
   if (this->_externals.pGltfModifier &&

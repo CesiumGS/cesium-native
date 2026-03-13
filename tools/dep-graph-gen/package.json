@@ -1,5 +1,6 @@
 {
-  "name": "dep-graph-gen",
+  "name": "@cesium/dep-graph-gen",
+  "private": true,
   "version": "1.0.0",
   "description": "Parses and filters a CMake graphviz dependency graph",
   "main": "index.js",

@@ -119,8 +119,11 @@ public:
 
   /**
    * @brief A future that resolves when the details of the root tile of this
-   * tileset are available. The root tile's content (e.g., 3D model), however,
-   * will not necessarily be loaded yet.
+   * tileset are available. The root tile may still be nullptr if the tileset
+   * failed to load (e.g., from an invalid URL).
+   *
+   * Moreover, the root tile's content (e.g., 3D model) will not necessarily
+   * have been loaded yet when this future resolves.
    */
   CesiumAsync::SharedFuture<void>& getRootTileAvailableEvent();
 

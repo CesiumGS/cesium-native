@@ -10,6 +10,7 @@
 #include <CesiumAsync/Promise.h>
 #include <CesiumAsync/ThreadPool.h>
 #include <CesiumUtility/Tracing.h>
+#include <CesiumUtility/transformTuple.h>
 
 #include <memory>
 #include <type_traits>
@@ -183,7 +184,7 @@ public:
   }
 
   /**
-   * @brief The value type of the Future returned by {@link all}.
+   * @brief The value type of the Future returned by {@link AsyncSystem::all(std::vector<Future<T>>&&) const}.
    *
    * This will be either `std::vector<T>`, if the input Futures passed to the
    * `all` function return values, or `void` if they do not.
@@ -248,6 +249,66 @@ public:
   Future<AllValueType<T>> all(std::vector<SharedFuture<T>>&& futures) const {
     return this->all<T, SharedFuture<T>>(
         std::forward<std::vector<SharedFuture<T>>>(futures));
+  }
+
+  /**
+   * @brief The value type of the Future returned by
+   * {@link AsyncSystem::all(Futures&&... futures) const}.
+   *
+   * This will be a `std::tuple` containing the value types from each future.
+   *
+   * @tparam Futures Variadic template parameters representing the types of the
+   * input futures.
+   */
+  template <typename... Futures>
+  using AllTupleType =
+      std::tuple<typename CesiumImpl::RemoveFuture<Futures>::type...>;
+
+  /**
+   * @brief Creates a Future that resolves when every Future in a variadic
+   * parameter pack resolves, and rejects when any Future in the pack rejects.
+   *
+   * The futures must be of type Future or SharedFuture and cannot resolve to
+   * void values.
+   *
+   * The returned Future resolves to a tuple of values, with elements in the
+   * same order as the input Futures.
+   *
+   * If any of the Futures rejects, the returned Future rejects as well. The
+   * exception included in the rejection will be from the leftmost Future in the
+   * parameter pack that rejects.
+   *
+   * To get detailed rejection information from each of the Futures, attach a
+   * `catchInMainThread` continuation prior to passing the futures into `all`.
+   *
+   * @tparam Futures Variadic template parameters representing the types of the
+   * input futures.
+   * @param futures The futures.
+   * @return A Future that resolves when all the given Futures resolve, and
+   * rejects when any Future rejects.
+   */
+  template <typename... Futures>
+  Future<AllTupleType<Futures...>> all(Futures&&... futures) const {
+    // Helper function so that we can get the `_task` member of each future and
+    // pass as a variadic pack.
+    auto getTaskFromFuture = [](auto&& future) {
+      return std::move(future._task);
+    };
+
+    using AggregateTaskType = std::tuple<
+        async::task<typename CesiumImpl::RemoveFuture<Futures>::type>...>;
+
+    async::task<AllTupleType<Futures...>> task =
+        async::when_all(getTaskFromFuture(std::forward<Futures>(futures))...)
+            .then(async::inline_scheduler(), [](AggregateTaskType&& tasks) {
+              return CesiumUtility::transformTuple(
+                  std::move(tasks),
+                  [](auto&& task) { return task.get(); });
+            });
+
+    return Future<AllTupleType<Futures...>>(
+        this->_pSchedulers,
+        std::move(task));
   }
 
   /**

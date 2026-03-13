@@ -47,23 +47,26 @@ class TilesetContentManager
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
           TilesetContentManager> {
 public:
-  TilesetContentManager(
+  static CesiumUtility::IntrusivePointer<TilesetContentManager>
+  createFromLoader(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       std::unique_ptr<TilesetContentLoader>&& pLoader,
       std::unique_ptr<Tile>&& pRootTile);
 
-  TilesetContentManager(
+  static CesiumUtility::IntrusivePointer<TilesetContentManager> createFromUrl(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       const std::string& url);
 
-  TilesetContentManager(
+  static CesiumUtility::IntrusivePointer<TilesetContentManager>
+  createFromLoaderFactory(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       TilesetContentLoaderFactory&& loaderFactory);
 
-  TilesetContentManager(
+  static CesiumUtility::IntrusivePointer<TilesetContentManager>
+  createFromCesiumIon(
       const TilesetExternals& externals,
       const TilesetOptions& tilesetOptions,
       int64_t ionAssetID,
@@ -186,6 +189,10 @@ public:
   const CesiumUtility::CreditSource& getCreditSource() const noexcept;
 
 private:
+  TilesetContentManager(
+      const TilesetExternals& externals,
+      const TilesetOptions& tilesetOptions);
+
   static void setTileContent(
       Tile& tile,
       TileLoadResult&& result,
