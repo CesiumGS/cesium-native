@@ -128,8 +128,9 @@ public:
   CesiumAsync::Future<CesiumUtility::Result<PagedList<T>>>
   next(CesiumAsync::AsyncSystem& asyncSystem, Connection& connection) const {
     if (!this->_nextUrl.has_value()) {
-      return asyncSystem.createResolvedFuture(
-          CesiumUtility::Result<PagedList<T>>(std::nullopt));
+      return asyncSystem
+          .createResolvedFuture<CesiumUtility::Result<PagedList<T>>>(
+              CesiumUtility::Result<PagedList<T>>(CesiumUtility::ErrorList{}));
     }
 
     return _operation(connection, *this->_nextUrl);
@@ -145,8 +146,9 @@ public:
   CesiumAsync::Future<CesiumUtility::Result<PagedList<T>>>
   prev(CesiumAsync::AsyncSystem& asyncSystem, Connection& connection) const {
     if (!this->_prevUrl.has_value()) {
-      return asyncSystem.createResolvedFuture(
-          CesiumUtility::Result<PagedList<T>>(std::nullopt));
+      return asyncSystem
+          .createResolvedFuture<CesiumUtility::Result<PagedList<T>>>(
+              CesiumUtility::Result<PagedList<T>>(CesiumUtility::ErrorList{}));
     }
 
     return _operation(connection, *this->_prevUrl);

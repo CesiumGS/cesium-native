@@ -18,6 +18,7 @@ public:
       const TilesetContentOptions& contentOptions,
       int64_t ionAssetID,
       const std::string& ionAccessToken,
+      const std::string& ionURL,
       const AuthorizationHeaderChangeListener& headerChangeListener,
       bool showCreditsOnScreen,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
