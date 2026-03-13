@@ -142,7 +142,7 @@ PRIVATE
 
 target_compile_definitions(cesium-native-tests
 PRIVATE
-  CESIUM_NATIVE_DATA_DIR=\"${CMAKE_SOURCE_DIR}/data\"
+  CESIUM_NATIVE_DATA_DIR=\"${PROJECT_SOURCE_DIR}/data\"
 )
 
 include(CTest)
