@@ -434,10 +434,6 @@ public:
    * In order to minimize tile load latency, this method should be called
    * frequently, such as once per render frame. It will return quickly when
    * there is no work to do.
-   *
-   * This method also calls
-   * {@link CesiumAsync::AsyncSystem::dispatchMainThreadTasks} on the tileset's
-   * {@link getAsyncSystem}.
    */
   void loadTiles();
 
