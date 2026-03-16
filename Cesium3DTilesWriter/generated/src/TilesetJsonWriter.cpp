@@ -571,6 +571,11 @@ void writeJson(
   jsonWriter.Key("uri");
   writeJson(obj.uri, jsonWriter, context);
 
+  if (!obj.keys.empty()) {
+    jsonWriter.Key("keys");
+    writeJson(obj.keys, jsonWriter, context);
+  }
+
   writeExtensibleObject(obj, jsonWriter, context);
 
   jsonWriter.EndObject();

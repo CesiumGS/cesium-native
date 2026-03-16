@@ -971,7 +971,7 @@ namespace Cesium3DTilesReader {
 DynamicContentDynamicContentsValueJsonHandler::
     DynamicContentDynamicContentsValueJsonHandler(
         const CesiumJsonReader::JsonReaderOptions& options) noexcept
-    : CesiumJsonReader::ExtensibleObjectJsonHandler(options), _uri() {}
+    : CesiumJsonReader::ExtensibleObjectJsonHandler(options), _uri(), _keys() {}
 
 void DynamicContentDynamicContentsValueJsonHandler::reset(
     CesiumJsonReader::IJsonHandler* pParentHandler,
@@ -999,6 +999,9 @@ CesiumJsonReader::IJsonHandler* DynamicContentDynamicContentsValueJsonHandler::
 
   if ("uri"s == str) {
     return property("uri", this->_uri, o.uri);
+  }
+  if ("keys"s == str) {
+    return property("keys", this->_keys, o.keys);
   }
 
   return this->readObjectKeyExtensibleObject(objectType, str, *this->_pObject);

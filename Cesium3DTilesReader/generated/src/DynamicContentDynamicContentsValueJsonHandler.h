@@ -3,6 +3,7 @@
 #pragma once
 
 #include <Cesium3DTiles/DynamicContentDynamicContentsValue.h>
+#include <CesiumJsonReader/DictionaryJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
@@ -33,5 +34,8 @@ protected:
 private:
   Cesium3DTiles::DynamicContentDynamicContentsValue* _pObject = nullptr;
   CesiumJsonReader::StringJsonHandler _uri;
+  CesiumJsonReader::
+      DictionaryJsonHandler<std::string, CesiumJsonReader::StringJsonHandler>
+          _keys;
 };
 } // namespace Cesium3DTilesReader

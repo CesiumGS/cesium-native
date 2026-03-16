@@ -6,6 +6,7 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <string>
+#include <unordered_map>
 
 namespace Cesium3DTiles {
 /**
@@ -24,6 +25,11 @@ struct CESIUM3DTILES_API DynamicContentDynamicContentsValue final
   std::string uri;
 
   /**
+   * @brief keys
+   */
+  std::unordered_map<std::string, std::string> keys;
+
+  /**
    * @brief Calculates the size in bytes of this object, including the contents
    * of all collections, pointers, and strings. This will NOT include the size
    * of any extensions attached to the object. Calling this method may be slow
@@ -35,6 +41,13 @@ struct CESIUM3DTILES_API DynamicContentDynamicContentsValue final
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
     accum += int64_t(this->uri.capacity() * sizeof(char));
+    accum += int64_t(
+        this->keys.bucket_count() *
+        (sizeof(std::string) + sizeof(std::string)));
+    for (const auto& [k, v] : this->keys) {
+      accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
+      accum += int64_t(v.capacity() * sizeof(char));
+    }
     return accum;
   }
 };
