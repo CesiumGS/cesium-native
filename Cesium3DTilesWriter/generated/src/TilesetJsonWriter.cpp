@@ -12,10 +12,14 @@
 #include <Cesium3DTiles/ClassProperty.h>
 #include <Cesium3DTiles/ClassStatistics.h>
 #include <Cesium3DTiles/Content.h>
+#include <Cesium3DTiles/DynamicContent.h>
+#include <Cesium3DTiles/DynamicContentDynamicContentsValue.h>
 #include <Cesium3DTiles/Enum.h>
 #include <Cesium3DTiles/EnumValue.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <Cesium3DTiles/Extension3dTilesDynamic.h>
+#include <Cesium3DTiles/Extension3dTilesDynamicDimensionsValue.h>
 #include <Cesium3DTiles/Extension3dTilesEllipsoid.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTiles/GroupMetadata.h>
@@ -72,7 +76,27 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
+    const Cesium3DTiles::Extension3dTilesDynamic& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesDynamicDimensionsValue& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
     const Cesium3DTiles::Padding& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::DynamicContent& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::DynamicContentDynamicContentsValue& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -467,6 +491,41 @@ void writeJson(
 }
 
 void writeJson(
+    const Cesium3DTiles::Extension3dTilesDynamic& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.dimensions.empty()) {
+    jsonWriter.Key("dimensions");
+    writeJson(obj.dimensions, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::Extension3dTilesDynamicDimensionsValue& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("name");
+  writeJson(obj.name, jsonWriter, context);
+
+  if (!obj.keySet.empty()) {
+    jsonWriter.Key("keySet");
+    writeJson(obj.keySet, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
     const Cesium3DTiles::Padding& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
@@ -481,6 +540,36 @@ void writeJson(
     jsonWriter.Key("after");
     writeJson(obj.after, jsonWriter, context);
   }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::DynamicContent& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.dynamicContents.empty()) {
+    jsonWriter.Key("dynamicContents");
+    writeJson(obj.dynamicContents, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::DynamicContentDynamicContentsValue& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("uri");
+  writeJson(obj.uri, jsonWriter, context);
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -1296,8 +1385,36 @@ void ExtensionContent3dTilesContentVoxelsJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
+void Extension3dTilesDynamicJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesDynamic& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesDynamicDimensionsValueJsonWriter::write(
+    const Cesium3DTiles::Extension3dTilesDynamicDimensionsValue& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
 void PaddingJsonWriter::write(
     const Cesium3DTiles::Padding& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void DynamicContentJsonWriter::write(
+    const Cesium3DTiles::DynamicContent& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void DynamicContentDynamicContentsValueJsonWriter::write(
+    const Cesium3DTiles::DynamicContentDynamicContentsValue& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

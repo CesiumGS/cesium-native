@@ -28,6 +28,12 @@
     "3DTILES_ellipsoid extension": {
       "overrideName": "Extension3dTilesEllipsoid"
     },
+    "3DTILES_dynamic extension": {
+      "overrideName": "Extension3dTilesDynamic"
+    },
+    "3DTILES_dynamic content": {
+      "overrideName": "DynamicContent"
+    },
     "Metadata Entity": {
       "isBaseClass": true
     },
@@ -54,6 +60,13 @@
     {
       "extensionName": "3DTILES_content_voxels",
       "schema": "3DTILES_content_voxels/schema/content.3DTILES_content_voxels.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_dynamic",
+      "schema": "3DTILES_dynamic/schema/3DTILES_dynamic_extension.json",
+      "attachTo": [
+        "tileset"
+      ]
     }
   ]
 }

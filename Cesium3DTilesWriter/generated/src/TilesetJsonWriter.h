@@ -14,7 +14,11 @@ struct Extension3dTilesBoundingVolumeS2;
 struct Extension3dTilesEllipsoid;
 struct Extension3dTilesBoundingVolumeCylinder;
 struct ExtensionContent3dTilesContentVoxels;
+struct Extension3dTilesDynamic;
+struct Extension3dTilesDynamicDimensionsValue;
 struct Padding;
+struct DynamicContent;
+struct DynamicContentDynamicContentsValue;
 struct Statistics;
 struct ClassStatistics;
 struct PropertyStatistics;
@@ -96,11 +100,51 @@ struct ExtensionContent3dTilesContentVoxelsJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
+struct Extension3dTilesDynamicJsonWriter {
+  using ValueType = Cesium3DTiles::Extension3dTilesDynamic;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "3DTILES_dynamic";
+
+  static void write(
+      const Cesium3DTiles::Extension3dTilesDynamic& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct Extension3dTilesDynamicDimensionsValueJsonWriter {
+  using ValueType = Cesium3DTiles::Extension3dTilesDynamicDimensionsValue;
+
+  static void write(
+      const Cesium3DTiles::Extension3dTilesDynamicDimensionsValue& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct PaddingJsonWriter {
   using ValueType = Cesium3DTiles::Padding;
 
   static void write(
       const Cesium3DTiles::Padding& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct DynamicContentJsonWriter {
+  using ValueType = Cesium3DTiles::DynamicContent;
+
+  static void write(
+      const Cesium3DTiles::DynamicContent& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct DynamicContentDynamicContentsValueJsonWriter {
+  using ValueType = Cesium3DTiles::DynamicContentDynamicContentsValue;
+
+  static void write(
+      const Cesium3DTiles::DynamicContentDynamicContentsValue& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

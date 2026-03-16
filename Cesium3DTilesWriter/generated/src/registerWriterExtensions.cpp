@@ -13,6 +13,7 @@
 // NOLINTBEGIN(misc-include-cleaner)
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
+#include <Cesium3DTiles/Extension3dTilesDynamic.h>
 #include <Cesium3DTiles/Extension3dTilesEllipsoid.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 // NOLINTEND(misc-include-cleaner)
@@ -31,6 +32,9 @@ void registerWriterExtensions(
   context.registerExtension<
       Cesium3DTiles::Tileset,
       Extension3dTilesEllipsoidJsonWriter>();
+  context.registerExtension<
+      Cesium3DTiles::Tileset,
+      Extension3dTilesDynamicJsonWriter>();
   context.registerExtension<
       Cesium3DTiles::Content,
       ExtensionContent3dTilesContentVoxelsJsonWriter>();
