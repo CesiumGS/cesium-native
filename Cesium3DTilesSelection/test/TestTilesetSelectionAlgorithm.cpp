@@ -459,8 +459,8 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result = tileset.updateViewGroup(
           tileset.getDefaultViewGroup(),
           {zoomOutViewState});
-      tileset.loadTiles();
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
 
       // check tiles status. All the children should have loading status
       REQUIRE(root->getState() == TileLoadState::Done);
@@ -735,8 +735,8 @@ TEST_CASE("Test additive refinement") {
     {
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
-      tileset.loadTiles();
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
 
       REQUIRE(result.tilesToRenderThisFrame.size() == 8);
 
@@ -1025,8 +1025,8 @@ TEST_CASE("Test multiple frustums") {
       ViewUpdateResult result = tileset.updateViewGroup(
           tileset.getDefaultViewGroup(),
           {zoomInViewState1, zoomInViewState2});
-      tileset.loadTiles();
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
       // check result
       // The grand child and the second child are the only ones rendered.
       // The third and fourth children of the root are culled.
@@ -1317,8 +1317,8 @@ TEST_CASE("Makes metadata available on external tilesets") {
     tileset.updateViewGroup(
         tileset.getDefaultViewGroup(),
         {zoomToTileViewState});
-    tileset.loadTiles();
     tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+    tileset.loadTiles();
     pExternalContent = pExternal->getContent().getExternalContent();
   }
 
@@ -1775,8 +1775,8 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
          tileset.computeLoadProgress() < 100.0f) {
     updateResult =
         tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
-    tileset.loadTiles();
     tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+    tileset.loadTiles();
   }
 
   // All three tiles (plus the tileset.json) should be rendered.
@@ -1796,8 +1796,8 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
       Ellipsoid::WGS84);
   updateResult =
       tileset.updateViewGroup(tileset.getDefaultViewGroup(), {zoomedOut});
-  tileset.loadTiles();
   tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+  tileset.loadTiles();
 
   // Only the root tile (plus the tileset.json) is visible now, and the other
   // two are fading out.
