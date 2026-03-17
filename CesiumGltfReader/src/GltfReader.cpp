@@ -26,6 +26,7 @@
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/PropertyTable.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltfReader/GltfReader.h>
