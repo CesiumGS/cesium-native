@@ -133,7 +133,7 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * "Compressed data" includes Draco compressed data and images in JPEG / PNG
    * format.
    */
-  bool freeCompressedData = true;
+  bool freeCompressedData = false;
 };
 
 /**
