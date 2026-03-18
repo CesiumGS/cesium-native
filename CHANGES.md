@@ -2,6 +2,14 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- `Tileset::updateViewGroupOffline`, `Tileset::updateViewGroup`, and `Tileset::loadTiles` no longer call `AsyncSystem::dispatchMainThreadTasks`. Client applications must call that function themselves from their main thread.
+
+##### Additions :tada:
+
+- Added a constructor overload for `Cesium3DTilesSelection::ITwinCesiumCuratedContentLoaderFactory` to override the iTwin Cesium Curated Content base URL. This makes it possible to connect to alternate servers (e.g., staging, QA, mock servers).
+
 ##### Fixes :wrench:
 
 - `Cesium3DTilesetSelection::Tileset::getRootTileAvailableEvent` will now resolve even when a `Tileset` is constructed with invalid source parameters, instead of hanging indefinitely.

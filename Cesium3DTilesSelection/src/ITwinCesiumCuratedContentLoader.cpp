@@ -21,15 +21,14 @@ ITwinCesiumCuratedContentLoader::createLoader(
     const TilesetContentOptions& contentOptions,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
+    const std::string& ionURL,
     const AuthorizationHeaderChangeListener& headerChangeListener,
     bool showCreditsOnScreen,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   return CesiumIonTilesetLoader::createLoader(
       externals,
       contentOptions,
-      fmt::format(
-          "https://api.bentley.com/curated-content/cesium/{}/tiles",
-          ionAssetID),
+      fmt::format("{}{}/tiles", ionURL, ionAssetID),
       ionAccessToken,
       true,
       headerChangeListener,
