@@ -10,6 +10,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <list>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -103,6 +104,38 @@ public:
    * candidate search.
    */
   void findCandidateTiles(Tile* pTile, std::vector<std::string>& outWarnings);
+
+  /**
+   * @brief Find candidate tiles using only currently-loaded tiles.
+   *
+   * Like {@link findCandidateTiles}, but only considers tiles that already have
+   * renderable content loaded. If a tile's children are not loaded, the tile
+   * itself is used as a candidate (if it has renderable content), rather than
+   * waiting for children to load.
+   *
+   * @param pTile The tile at which to start traversal.
+   * @param outWarnings On return, reports any warnings that occurred during
+   * candidate search.
+   */
+  void
+  findLoadedCandidateTiles(Tile* pTile, std::vector<std::string>& outWarnings);
+
+  /**
+   * @brief Intersect the ray with all current candidate tiles (both additive
+   * and regular).
+   *
+   * @param outWarnings On return, reports any warnings that occurred during
+   * intersection testing.
+   */
+  void intersectCandidateTiles(std::vector<std::string>& outWarnings);
+
+  /**
+   * @brief Compute the sampled height from the current intersection, if any.
+   *
+   * @return The height above the ellipsoid, or std::nullopt if no intersection
+   * exists.
+   */
+  std::optional<double> getHeightFromIntersection() const;
 };
 
 /**

@@ -214,6 +214,107 @@ void TilesetHeightQuery::findCandidateTiles(
   }
 }
 
+namespace {
+bool tileHasRenderContent(const Tile& tile) {
+  return tile.getState() >= TileLoadState::ContentLoaded &&
+         tile.getContent().getRenderContent() != nullptr;
+}
+} // namespace
+
+void TilesetHeightQuery::findLoadedCandidateTiles(
+    Tile* pTile,
+    std::vector<std::string>& warnings) {
+  if (pTile->getState() == TileLoadState::Failed) {
+    warnings.emplace_back("Tile load failed during query. Ignoring.");
+    return;
+  }
+
+  const std::optional<BoundingVolume>& contentBoundingVolume =
+      pTile->getContentBoundingVolume();
+
+  // Recurse into children whose bounding volumes intersect the ray,
+  // tracking whether any descendant became a candidate. We recurse even
+  // into children that are not yet loaded, because deeper descendants
+  // may be loaded.
+  bool anyDescendantCandidate = false;
+  if (!pTile->getChildren().empty()) {
+    for (Tile& child : pTile->getChildren()) {
+      if (!boundingVolumeContainsCoordinate(
+              child.getBoundingVolume(),
+              this->ray,
+              this->inputPosition,
+              this->ellipsoid))
+        continue;
+
+      size_t prevCount =
+          this->candidateTiles.size() + this->additiveCandidateTiles.size();
+      findLoadedCandidateTiles(&child, warnings);
+      if (this->candidateTiles.size() + this->additiveCandidateTiles.size() >
+          prevCount) {
+        anyDescendantCandidate = true;
+      }
+    }
+  }
+
+  bool isLeaf = pTile->getChildren().empty();
+
+  // For additive refinement, this tile is always a candidate alongside
+  // children.
+  if (!isLeaf && pTile->getRefine() == TileRefine::Add &&
+      tileHasRenderContent(*pTile)) {
+    if (contentBoundingVolume) {
+      if (boundingVolumeContainsCoordinate(
+              *contentBoundingVolume,
+              this->ray,
+              this->inputPosition,
+              this->ellipsoid)) {
+        this->additiveCandidateTiles.emplace_back(pTile);
+      }
+    } else {
+      this->additiveCandidateTiles.emplace_back(pTile);
+    }
+  }
+
+  // Use this tile as a leaf candidate if:
+  // - It is actually a leaf, OR
+  // - No descendant was found as a candidate AND this is not an
+  //   additively-refined tile (those are already in additiveCandidateTiles)
+  // In either case, the tile must have renderable content.
+  if ((isLeaf ||
+       (!anyDescendantCandidate && pTile->getRefine() != TileRefine::Add)) &&
+      tileHasRenderContent(*pTile)) {
+    if (contentBoundingVolume) {
+      if (boundingVolumeContainsCoordinate(
+              *contentBoundingVolume,
+              this->ray,
+              this->inputPosition,
+              this->ellipsoid)) {
+        this->candidateTiles.emplace_back(pTile);
+      }
+    } else {
+      this->candidateTiles.emplace_back(pTile);
+    }
+  }
+}
+
+void TilesetHeightQuery::intersectCandidateTiles(
+    std::vector<std::string>& outWarnings) {
+  for (const Tile::Pointer& pTile : this->additiveCandidateTiles) {
+    this->intersectVisibleTile(pTile.get(), outWarnings);
+  }
+  for (const Tile::Pointer& pTile : this->candidateTiles) {
+    this->intersectVisibleTile(pTile.get(), outWarnings);
+  }
+}
+
+std::optional<double> TilesetHeightQuery::getHeightFromIntersection() const {
+  if (!this->intersection.has_value()) {
+    return std::nullopt;
+  }
+  return this->ellipsoid.getMaximumRadius() * rayOriginHeightFraction -
+         glm::sqrt(this->intersection->rayToWorldPointDistanceSq);
+}
+
 TilesetHeightRequest::TilesetHeightRequest(
     std::vector<TilesetHeightQuery>&& queries_,
     const CesiumAsync::Promise<SampleHeightResult>& promise_) noexcept
@@ -381,12 +482,7 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
 
   // Do the intersect tests
   for (TilesetHeightQuery& query : this->queries) {
-    for (const Tile::Pointer& pTile : query.additiveCandidateTiles) {
-      query.intersectVisibleTile(pTile.get(), warnings);
-    }
-    for (const Tile::Pointer& pTile : query.candidateTiles) {
-      query.intersectVisibleTile(pTile.get(), warnings);
-    }
+    query.intersectCandidateTiles(warnings);
   }
 
   // All rays are done, create results
@@ -402,14 +498,11 @@ bool TilesetHeightRequest::tryCompleteHeightRequest(
   for (size_t i = 0; i < this->queries.size(); ++i) {
     const TilesetHeightQuery& query = this->queries[i];
 
-    bool sampleSuccess = query.intersection.has_value();
-    results.sampleSuccess[i] = sampleSuccess;
     results.positions[i] = query.inputPosition;
-
-    if (sampleSuccess) {
-      results.positions[i].height =
-          options.ellipsoid.getMaximumRadius() * rayOriginHeightFraction -
-          glm::sqrt(query.intersection->rayToWorldPointDistanceSq);
+    std::optional<double> height = query.getHeightFromIntersection();
+    results.sampleSuccess[i] = height.has_value();
+    if (height.has_value()) {
+      results.positions[i].height = *height;
     }
   }
 

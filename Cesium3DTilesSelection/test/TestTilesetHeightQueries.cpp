@@ -32,14 +32,14 @@ std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
 
 }
 
-TEST_CASE("Tileset height queries") {
-  // The coordinates and expected heights in this file were determined in Cesium
-  // for Unreal Engine by adding the tileset, putting a cube above the location
-  // of interest, adding a CesiumGlobeAnchor to it, and pressing the "End" key
-  // to drop it onto terrain. The coordinates were then copied out of the globe
-  // anchor, subtracting 0.5 from the height to account for "End" placing the
-  // bottom of the cube on the surface instead of its center.
+// The coordinates and expected heights in this file were determined in Cesium
+// for Unreal Engine by adding the tileset, putting a cube above the location
+// of interest, adding a CesiumGlobeAnchor to it, and pressing the "End" key
+// to drop it onto terrain. The coordinates were then copied out of the globe
+// anchor, subtracting 0.5 from the height to account for "End" placing the
+// bottom of the cube on the surface instead of its center.
 
+TEST_CASE("Tileset most detailed height queries") {
   registerAllTileContentTypes();
 
   std::shared_ptr<IAssetAccessor> pAccessor =
@@ -355,5 +355,231 @@ TEST_CASE("Tileset height queries") {
         83.0 + glm::length(difference),
         0.0,
         Math::Epsilon1));
+  }
+}
+
+namespace {
+
+/**
+ * @brief Creates a ViewState looking down at a given cartographic position.
+ */
+ViewState createViewState(
+    const Cartographic& target,
+    const CesiumGeospatial::Ellipsoid& ellipsoid =
+        CesiumGeospatial::Ellipsoid::WGS84) {
+  // Position the camera 200m above the target, looking straight down.
+  Cartographic cameraPosition(target.longitude, target.latitude, 200.0);
+  glm::dvec3 position = ellipsoid.cartographicToCartesian(cameraPosition);
+  glm::dvec3 target3D = ellipsoid.cartographicToCartesian(
+      Cartographic(target.longitude, target.latitude, 0.0));
+  glm::dvec3 direction = glm::normalize(target3D - position);
+  glm::dvec3 up{0.0, 0.0, 1.0};
+  glm::dvec2 viewportSize{500.0, 500.0};
+  double aspectRatio = viewportSize.x / viewportSize.y;
+  double horizontalFieldOfView = Math::degreesToRadians(60.0);
+  double verticalFieldOfView =
+      std::atan(std::tan(horizontalFieldOfView * 0.5) / aspectRatio) * 2.0;
+  return ViewState(
+      position,
+      direction,
+      up,
+      viewportSize,
+      horizontalFieldOfView,
+      verticalFieldOfView,
+      ellipsoid);
+}
+
+/**
+ * @brief Loads a tileset to completion for a given view using
+ * updateViewGroupOffline.
+ */
+void loadTilesetForView(Tileset& tileset, const ViewState& viewState) {
+  tileset.updateViewGroupOffline(tileset.getDefaultViewGroup(), {viewState});
+}
+
+} // namespace
+
+TEST_CASE("Tileset current detail height queries") {
+  registerAllTileContentTypes();
+
+  std::shared_ptr<IAssetAccessor> pAccessor =
+      std::make_shared<CesiumNativeTests::FileAccessor>();
+  AsyncSystem asyncSystem(std::make_shared<SimpleTaskProcessor>());
+
+  TilesetExternals externals{pAccessor, nullptr, asyncSystem, nullptr};
+
+  SUBCASE("Additive-refined tileset") {
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "Tileset" / "tileset.json").u8string()));
+
+    Tileset tileset(externals, url);
+
+    std::vector<Cartographic> positions = {
+        // A point on geometry in "parent.b3dm", which should only be included
+        // because this tileset is additive-refined.
+        Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
+
+        // A point on geometry in a leaf tile.
+        Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)};
+
+    // Fully load the tileset at this location
+    ViewState viewState = createViewState(positions[0]);
+    loadTilesetForView(tileset, viewState);
+
+    SampleHeightResult results = tileset.sampleHeightCurrentDetail(positions);
+    CHECK(results.warnings.empty());
+    REQUIRE(results.positions.size() == 2);
+
+    CHECK(results.sampleSuccess[0]);
+    CHECK(Math::equalsEpsilon(
+        results.positions[0].height,
+        78.155809,
+        0.0,
+        Math::Epsilon4));
+
+    CHECK(results.sampleSuccess[1]);
+    CHECK(Math::equalsEpsilon(
+        results.positions[1].height,
+        7.837332,
+        0.0,
+        Math::Epsilon4));
+  }
+
+  SUBCASE("Replace-refined tileset") {
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "ReplaceTileset" / "tileset.json").u8string()));
+
+    Tileset tileset(externals, url);
+
+    std::vector<Cartographic> positions = {
+        // A point on geometry in "parent.b3dm", which should not be
+        // included because this tileset is replace-refined.
+        Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
+
+        // A point on geometry in a leaf tile.
+        Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)};
+
+    // Fully load the tileset at this location
+    ViewState viewState = createViewState(positions[0]);
+    loadTilesetForView(tileset, viewState);
+
+    SampleHeightResult results = tileset.sampleHeightCurrentDetail(positions);
+    CHECK(results.warnings.empty());
+    REQUIRE(results.positions.size() == 2);
+
+    CHECK(!results.sampleSuccess[0]);
+
+    CHECK(results.sampleSuccess[1]);
+    CHECK(Math::equalsEpsilon(
+        results.positions[1].height,
+        7.837332,
+        0.0,
+        Math::Epsilon4));
+  }
+
+  SUBCASE("Partially-loaded additive-refined tileset") {
+    // Use a very high maximumScreenSpaceError so that only the root tile is
+    // loaded (children are never requested because the root already meets SSE).
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "Tileset" / "tileset.json").u8string()));
+
+    TilesetOptions options;
+    options.maximumScreenSpaceError = 999999.0;
+
+    Tileset tileset(externals, url, options);
+
+    std::vector<Cartographic> positions = {
+        // A point on geometry in "parent.b3dm" (the root tile content).
+        Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
+
+        // A point on geometry in a leaf tile, which should NOT be loaded.
+        Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)};
+
+    ViewState viewState = createViewState(positions[0]);
+    loadTilesetForView(tileset, viewState);
+
+    SampleHeightResult results = tileset.sampleHeightCurrentDetail(positions);
+    REQUIRE(results.positions.size() == 2);
+
+    // The root tile's geometry should be found.
+    CHECK(results.sampleSuccess[0]);
+    CHECK(Math::equalsEpsilon(
+        results.positions[0].height,
+        78.155809,
+        0.0,
+        Math::Epsilon4));
+
+    // The leaf tile geometry should NOT be found because only the root is
+    // loaded.
+    CHECK(!results.sampleSuccess[1]);
+  }
+
+  SUBCASE("Partially-loaded replace-refined tileset") {
+    // Use a very high maximumScreenSpaceError so that only the root tile is
+    // loaded (children are never requested because the root already meets SSE).
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "ReplaceTileset" / "tileset.json").u8string()));
+
+    TilesetOptions options;
+    options.maximumScreenSpaceError = 999999.0;
+
+    Tileset tileset(externals, url, options);
+
+    std::vector<Cartographic> positions = {
+        // A point on geometry in "parent.b3dm" (the root tile content).
+        // With replace refinement and only the root loaded, this geometry
+        // should be found (since no children have replaced it).
+        Cartographic::fromDegrees(-75.612088, 40.042526, 0.0),
+
+        // A point on geometry in a leaf tile, which should NOT be loaded.
+        Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)};
+
+    ViewState viewState = createViewState(positions[0]);
+    loadTilesetForView(tileset, viewState);
+
+    SampleHeightResult results = tileset.sampleHeightCurrentDetail(positions);
+    REQUIRE(results.positions.size() == 2);
+
+    // The root tile's geometry should be found because children haven't
+    // replaced it yet.
+    CHECK(results.sampleSuccess[0]);
+    CHECK(Math::equalsEpsilon(
+        results.positions[0].height,
+        78.155809,
+        0.0,
+        Math::Epsilon4));
+
+    // The leaf tile geometry should NOT be found because only the root is
+    // loaded.
+    CHECK(!results.sampleSuccess[1]);
+  }
+
+  SUBCASE("Convenience overload") {
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "ReplaceTileset" / "tileset.json").u8string()));
+
+    Tileset tileset(externals, url);
+
+    Cartographic position =
+        Cartographic::fromDegrees(-75.612025, 40.041684, 0.0);
+
+    // Fully load the tileset at this location
+    ViewState viewState = createViewState({position});
+    loadTilesetForView(tileset, viewState);
+
+    std::optional<double> height = tileset.sampleHeightCurrentDetail(position);
+
+    CHECK(height.has_value());
+    CHECK(Math::equalsEpsilon(*height, 7.837332, 0.0, Math::Epsilon4));
   }
 }

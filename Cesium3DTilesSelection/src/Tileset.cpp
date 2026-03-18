@@ -585,6 +585,57 @@ Tileset::sampleHeightMostDetailed(const std::vector<Cartographic>& positions) {
   return promise.getFuture();
 }
 
+SampleHeightResult Tileset::sampleHeightCurrentDetail(
+    const std::vector<Cartographic>& positions) const {
+  SampleHeightResult results;
+  if (positions.empty()) {
+    return results;
+  }
+
+  results.positions.resize(positions.size(), Cartographic(0.0, 0.0, 0.0));
+  results.sampleSuccess.resize(positions.size(), false);
+
+  const Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
+  if (!pRootTile) {
+    results.warnings.emplace_back(
+        "Height sampling could not complete because the tileset root tile is "
+        "not available.");
+    for (size_t i = 0; i < positions.size(); ++i) {
+      results.positions[i] = positions[i];
+    }
+    return results;
+  }
+
+  const Ellipsoid& ellipsoid = this->_options.ellipsoid;
+
+  for (size_t i = 0; i < positions.size(); ++i) {
+    TilesetHeightQuery query(positions[i], ellipsoid);
+    query.findLoadedCandidateTiles(
+        const_cast<Tile*>(pRootTile),
+        results.warnings);
+    query.intersectCandidateTiles(results.warnings);
+
+    results.positions[i] = positions[i];
+    std::optional<double> height = query.getHeightFromIntersection();
+    results.sampleSuccess[i] = height.has_value();
+    if (height.has_value()) {
+      results.positions[i].height = *height;
+    }
+  }
+
+  return results;
+}
+
+std::optional<double>
+Tileset::sampleHeightCurrentDetail(const Cartographic& position) const {
+  SampleHeightResult result =
+      this->sampleHeightCurrentDetail(std::vector<Cartographic>{position});
+  if (!result.sampleSuccess.empty() && result.sampleSuccess[0]) {
+    return result.positions[0].height;
+  }
+  return std::nullopt;
+}
+
 TilesetViewGroup& Tileset::getDefaultViewGroup() {
   return this->_defaultViewGroup;
 }
