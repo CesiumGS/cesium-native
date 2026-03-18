@@ -41,8 +41,8 @@ public:
    * @brief Tiles on this list are no longer selected for rendering.
    *
    * If \ref TilesetOptions::enableLodTransitionPeriod is true they may be
-   * fading out. If a tile's \ref TileRenderContent::lodTransitionPercentage is
-   * 0 or LOD transitions are disabled, the tile should be hidden right away.
+   * fading out. If a tile's \ref TileRenderContent::lodTransitionFadePercentage
+   * is 0 or LOD transitions are disabled, the tile should be hidden right away.
    */
   std::unordered_set<Tile::ConstPointer> tilesFadingOut;
 
