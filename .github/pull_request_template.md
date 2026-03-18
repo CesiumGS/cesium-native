@@ -45,7 +45,7 @@ To ensure your Pull Request is reviewed and accepted quickly, please refer to ou
 
 Thank you for taking the time to review this PR. By approving a PR you are taking as much responsibility for these changes as the author.
 
-As you review, please go th∏rough the checklist below:
+As you review, please go through the checklist below:
 
 - [ ] Review and run all parts of the test plan on this branch and verify it matches expectations.
     - [ ] If the issue is a bug please make sure you can reproduce the bug in the main branch and then checkout this branch to make sure it actually solved the issue.
