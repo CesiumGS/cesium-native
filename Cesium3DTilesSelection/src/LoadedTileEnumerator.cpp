@@ -84,27 +84,14 @@ bool LoadedConstTileEnumerator::const_iterator::operator!=(
 LoadedTileEnumerator::LoadedTileEnumerator(Tile* pRootTile) noexcept
     : _pRootTile(pRootTile) {}
 
-LoadedTileEnumerator::const_iterator
-LoadedTileEnumerator::begin() const noexcept {
-  if (meetsCriteriaForEnumeration(this->_pRootTile))
-    return const_iterator(this->_pRootTile);
-  else
-    return const_iterator(nullptr);
-}
-
-LoadedTileEnumerator::const_iterator
-LoadedTileEnumerator::end() const noexcept {
-  return const_iterator(nullptr);
-}
-
-LoadedTileEnumerator::iterator LoadedTileEnumerator::begin() noexcept {
+LoadedTileEnumerator::iterator LoadedTileEnumerator::begin() const noexcept {
   if (meetsCriteriaForEnumeration(this->_pRootTile))
     return iterator(this->_pRootTile);
   else
     return iterator(nullptr);
 }
 
-LoadedTileEnumerator::iterator LoadedTileEnumerator::end() noexcept {
+LoadedTileEnumerator::iterator LoadedTileEnumerator::end() const noexcept {
   return iterator(nullptr);
 }
 

@@ -2,7 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "dependencies": [
     "asyncplusplus",
-    "curl",
+    {
+      "name": "curl",
+      "platform": "!wasm32"
+    },
     "doctest",
     "expected-lite",
     "glm",
@@ -24,7 +27,10 @@
     "zlib-ng",
     "picosha2",
     "earcut-hpp",
-    "cpp-httplib",
+    {
+      "name": "cpp-httplib",
+      "platform": "!wasm32"
+    },
     "libmorton",
     "zstd",
     {
@@ -33,14 +39,16 @@
       "features": [
         {
           "name": "jit",
-          "platform": "!ios"
+          "platform": "!ios&!wasm32"
         }
       ]
     },
     {
       "name": "asmjit",
-      "platform": "!ios"
-    }
+      "platform": "!ios&!wasm32"
+    },
+    "spz",
+    "zlib"
   ]
 }
 

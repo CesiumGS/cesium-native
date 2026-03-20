@@ -1,15 +1,26 @@
+#include "EmptyRasterOverlayTileProvider.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayExternals.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
-#include <memory>
+#include <fmt/format.h>
+#include <nonstd/expected.hpp>
+#include <spdlog/spdlog.h>
+
+#include <exception>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -21,20 +32,17 @@ namespace {
 class PlaceholderTileProvider : public RasterOverlayTileProvider {
 public:
   PlaceholderTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& pCreditSystem,
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept
       : RasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            pCreditSystem,
-            ellipsoid) {}
+            pCreator,
+            parameters,
+            CesiumGeospatial::GeographicProjection(ellipsoid),
+            CesiumGeometry::Rectangle()) {}
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
-  loadTileImage(RasterOverlayTile& /* overlayTile */) override {
+  loadTileImage(const RasterOverlayTile& /* overlayTile */) override {
     return this->getAsyncSystem()
         .createResolvedFuture<LoadedRasterOverlayImage>({});
   }
@@ -72,15 +80,72 @@ RasterOverlay::getAsyncDestructionCompleteEvent(
   return this->_destructionCompleteDetails->future;
 }
 
+CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> RasterOverlay::activate(
+    const RasterOverlayExternals& externals,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) const {
+  IntrusivePointer<ActivatedRasterOverlay> pResult =
+      new ActivatedRasterOverlay(externals, this, ellipsoid);
+
+  CreateRasterOverlayTileProviderParameters parameters{
+      .externals = externals,
+      .pOwner = nullptr,
+      .pCreditSource = nullptr};
+
+  CesiumAsync::Future<RasterOverlay::CreateTileProviderResult> future =
+      this->createTileProvider(parameters);
+
+  // This continuation, by capturing pResult, keeps the instance from being
+  // destroyed. But it does not keep the RasterOverlayCollection itself alive.
+  std::move(future)
+      .catchInMainThread(
+          [](const std::exception& e)
+              -> RasterOverlay::CreateTileProviderResult {
+            return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                RasterOverlayLoadType::Unknown,
+                nullptr,
+                fmt::format(
+                    "Error while creating tile provider: {0}",
+                    e.what())});
+          })
+      .thenInMainThread([pResult, parameters](
+                            RasterOverlay::CreateTileProviderResult&& result) {
+        IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
+        if (result) {
+          pProvider = *result;
+        } else {
+          // Report error creating the tile provider.
+          const RasterOverlayLoadFailureDetails& failureDetails =
+              result.error();
+          SPDLOG_LOGGER_ERROR(
+              parameters.externals.pLogger,
+              failureDetails.message);
+          if (pResult->getOverlay().getOptions().loadErrorCallback) {
+            pResult->getOverlay().getOptions().loadErrorCallback(
+                failureDetails);
+          }
+
+          // Create a tile provider that does not provide any tiles at
+          // all.
+          pProvider = new EmptyRasterOverlayTileProvider(
+              &pResult->getOverlay(),
+              parameters);
+        }
+
+        pResult->setTileProvider(pProvider);
+      });
+
+  return pResult;
+}
+
 CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>
 RasterOverlay::createPlaceholder(
-    const CesiumAsync::AsyncSystem& asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const RasterOverlayExternals& externals,
     const CesiumGeospatial::Ellipsoid& ellipsoid) const {
   return new PlaceholderTileProvider(
       this,
-      asyncSystem,
-      pAssetAccessor,
-      nullptr,
+      CreateRasterOverlayTileProviderParameters{
+          .externals = externals,
+          .pOwner = nullptr,
+          .pCreditSource = nullptr},
       ellipsoid);
 }

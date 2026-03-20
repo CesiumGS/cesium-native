@@ -110,6 +110,8 @@ TEST_CASE("TileLoadRequester") {
 
     auto pTileset = EllipsoidTilesetLoader::createTileset(externals);
 
+    externals.asyncSystem.dispatchMainThreadTasks();
+
     const Tile* pRoot = pTileset->getRootTile();
     REQUIRE(pRoot != nullptr);
     REQUIRE(pRoot->getChildren().size() == 2);
@@ -143,6 +145,7 @@ TEST_CASE("TileLoadRequester") {
 
       // Request this tile for main thread loading and verify it happens.
       requester.setMainThreadQueue({pToLoad});
+      externals.asyncSystem.dispatchMainThreadTasks();
       pTileset->loadTiles();
       CHECK(pToLoad->getState() == TileLoadState::Done);
     }
@@ -176,6 +179,8 @@ TEST_CASE("TileLoadRequester") {
         std::move(pCustomLoader),
         std::move(pRootTile),
         options);
+
+    externals.asyncSystem.dispatchMainThreadTasks();
 
     const Tile* pRoot = pTileset->getRootTile();
     REQUIRE(pRoot != nullptr);

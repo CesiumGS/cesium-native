@@ -38,6 +38,14 @@ cesium_glob_files(test_headers
 )
 set(test_include_directories ${CMAKE_CURRENT_LIST_DIR}/include)
 
+if(CESIUM_TARGET_WASM)
+    target_link_options(
+        cesium-native-tests
+        PRIVATE
+        "-sEXIT_RUNTIME=1" 
+    )
+endif()
+
 # Iterate through all targets, extracting their private sources and test sources / test headers
 foreach(target ${cesium_native_targets})
     get_target_property(target_test_sources ${target} TEST_SOURCES)
@@ -75,6 +83,41 @@ foreach(target ${cesium_native_targets})
     endif()
 endforeach()
 
+if(CESIUM_TARGET_WASM)
+  file(GLOB directories_list LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/Cesium*")
+  set(FILE_PACKAGER_ARGS "")
+  set(TEST_DATA_FILES "")
+  foreach(dir ${directories_list})
+    if(IS_DIRECTORY ${dir}/test/data)
+      list(APPEND FILE_PACKAGER_ARGS "--embed" "${dir}/test/data")
+
+      file(GLOB_RECURSE data_files "${dir}/test/data/*")
+      list(APPEND TEST_DATA_FILES ${data_files})
+    endif()
+  endforeach()
+
+  list(APPEND FILE_PACKAGER_ARGS "--embed" "${CMAKE_SOURCE_DIR}/data")
+
+  if(CESIUM_WASM64)
+    list(APPEND FILE_PACKAGER_ARGS "--wasm64")
+  endif()
+
+  set(CESIUM_NATIVE_TESTS_DATA_OBJ ${CMAKE_CURRENT_BINARY_DIR}/cesium-native-tests-data.o)
+  add_custom_command(
+    COMMENT "Generating test data object file"
+    OUTPUT ${CESIUM_NATIVE_TESTS_DATA_OBJ}
+    COMMAND ${EMSCRIPTEN_ROOT_PATH}/tools/file_packager none.data ${FILE_PACKAGER_ARGS} --obj-output=${CESIUM_NATIVE_TESTS_DATA_OBJ}
+    VERBATIM
+    DEPENDS ${TEST_DATA_FILES}
+  )
+
+  target_sources(
+    cesium-native-tests
+    PRIVATE
+      ${CESIUM_NATIVE_TESTS_DATA_OBJ}
+  )
+endif()
+
 target_sources(
     cesium-native-tests
     PRIVATE
@@ -99,9 +142,12 @@ PRIVATE
 
 target_compile_definitions(cesium-native-tests
 PRIVATE
-  CESIUM_NATIVE_DATA_DIR=\"${CMAKE_CURRENT_LIST_DIR}/../data\"
+  CESIUM_NATIVE_DATA_DIR=\"${CMAKE_SOURCE_DIR}/data\"
 )
 
 include(CTest)
 include(doctest)
-doctest_discover_tests(cesium-native-tests)
+if(NOT CESIUM_TARGET_WASM)
+    # doctest_discover_tests can't handle the target being an html file, so we just avoid it on a wasm build
+    doctest_discover_tests(cesium-native-tests)
+endif()

@@ -119,8 +119,11 @@ public:
 
   /**
    * @brief A future that resolves when the details of the root tile of this
-   * tileset are available. The root tile's content (e.g., 3D model), however,
-   * will not necessarily be loaded yet.
+   * tileset are available. The root tile may still be nullptr if the tileset
+   * failed to load (e.g., from an invalid URL).
+   *
+   * Moreover, the root tile's content (e.g., 3D model) will not necessarily
+   * have been loaded yet when this future resolves.
    */
   CesiumAsync::SharedFuture<void>& getRootTileAvailableEvent();
 
@@ -140,6 +143,12 @@ public:
    * @param showCreditsOnScreen Whether the credits should be shown on screen.
    */
   void setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept;
+
+  /**
+   * @brief Gets the @ref CesiumUtility::CreditSource that identifies this
+   * tileset's credits with the @ref CesiumUtility::CreditSystem.
+   */
+  const CesiumUtility::CreditSource& getCreditSource() const noexcept;
 
   /**
    * @brief Gets the {@link TilesetExternals} that summarize the external
@@ -425,10 +434,6 @@ public:
    * In order to minimize tile load latency, this method should be called
    * frequently, such as once per render frame. It will return quickly when
    * there is no work to do.
-   *
-   * This method also calls
-   * {@link CesiumAsync::AsyncSystem::dispatchMainThreadTasks} on the tileset's
-   * {@link getAsyncSystem}.
    */
   void loadTiles();
 
@@ -445,6 +450,19 @@ public:
    * @param requester The requester to register.
    */
   void registerLoadRequester(TileLoadRequester& requester);
+
+  /**
+   * @brief Waits until no tile loads are in progress. This function must be
+   * called from the main thread, and it blocks the caller (does not return)
+   * until all tile loads are complete.
+   *
+   * @param maximumWaitTimeInMilliseconds The maximum time to wait for tile
+   * loads to complete, in milliseconds. If this time is exceeded, the function
+   * will return even if some tile loads are still in progress.
+   * @returns true if all tile loads completed before the maximum wait time was
+   * exceeded; otherwise, false.
+   */
+  bool waitForAllLoadsToComplete(double maximumWaitTimeInMilliseconds);
 
   Tileset(const Tileset& rhs) = delete;
   Tileset& operator=(const Tileset& rhs) = delete;

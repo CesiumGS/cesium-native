@@ -41,7 +41,7 @@ cesium_target_include_directories(
 target_link_libraries(
     CesiumUtility
     PUBLIC
-        zlib-ng::zlib-ng
+        zlib-ng::zlib
         spdlog::spdlog
         glm::glm
         ada::ada

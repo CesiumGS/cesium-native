@@ -76,7 +76,7 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
 
   const std::span<const std::byte> data(
       buffer.cesium.data.data() + bufferView.byteOffset,
-      static_cast<uint64_t>(bufferView.byteLength));
+      static_cast<size_t>(bufferView.byteLength));
 
   draco::DecoderBuffer decodeBuffer;
   decodeBuffer.Init(reinterpret_cast<const char*>(data.data()), data.size());

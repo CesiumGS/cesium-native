@@ -6,6 +6,9 @@
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/GltfModifier.h>
+#include <Cesium3DTilesSelection/GltfModifierState.h>
+#include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
@@ -37,13 +40,14 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltfContent/GltfUtilities.h>
-#include <CesiumGltfReader/GltfReader.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlayUtilities.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/ReferenceCounted.h>
@@ -71,6 +75,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -357,44 +362,6 @@ void createQuadtreeSubdividedChildren(
   ne.setTransform(parent.getTransform());
 }
 
-std::vector<CesiumGeospatial::Projection> mapOverlaysToTile(
-    Tile& tile,
-    RasterOverlayCollection& overlays,
-    const TilesetOptions& tilesetOptions) {
-  // when tile fails temporarily, it may still have mapped raster tiles, so
-  // clear it here
-  tile.getMappedRasterTiles().clear();
-
-  std::vector<CesiumGeospatial::Projection> projections;
-  const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
-      tileProviders = overlays.getTileProviders();
-  const std::vector<CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>>&
-      placeholders = overlays.getPlaceholderTileProviders();
-  CESIUM_ASSERT(tileProviders.size() == placeholders.size());
-
-  const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
-
-  for (size_t i = 0; i < tileProviders.size() && i < placeholders.size(); ++i) {
-    RasterOverlayTileProvider& tileProvider = *tileProviders[i];
-    RasterOverlayTileProvider& placeholder = *placeholders[i];
-
-    RasterMappedTo3DTile* pMapped = RasterMappedTo3DTile::mapOverlayToTile(
-        tilesetOptions.maximumScreenSpaceError,
-        tileProvider,
-        placeholder,
-        tile,
-        projections,
-        ellipsoid);
-    if (pMapped) {
-      // Try to load now, but if the mapped raster tile is a placeholder this
-      // won't do anything.
-      pMapped->loadThrottled();
-    }
-  }
-
-  return projections;
-}
-
 // Really, these two methods are risky and could easily result in bugs, but
 // they're private methods used only in this class, so it's easier to just tell
 // clang-tidy to ignore them.
@@ -598,95 +565,66 @@ postProcessContentInWorkerThread(
     TileLoadResult&& result,
     std::vector<CesiumGeospatial::Projection>&& projections,
     TileContentLoadInfo&& tileLoadInfo,
-    const std::any& rendererOptions) {
+    const std::any& rendererOptions,
+    const std::shared_ptr<GltfModifier>& pGltfModifier) {
   CESIUM_ASSERT(
       result.state == TileLoadResultState::Success &&
       "This function requires result to be success");
 
-  CesiumGltf::Model& model = std::get<CesiumGltf::Model>(result.contentKind);
-
-  // Download any external image or buffer urls in the gltf if there are any
-  CesiumGltfReader::GltfReaderResult gltfResult{std::move(model), {}, {}};
-
-  CesiumAsync::HttpHeaders requestHeaders;
-  std::string baseUrl;
-  if (result.pCompletedRequest) {
-    requestHeaders = result.pCompletedRequest->headers();
-    baseUrl = result.pCompletedRequest->url();
-  }
-
-  CesiumGltfReader::GltfReaderOptions gltfOptions;
-  gltfOptions.ktx2TranscodeTargets =
-      tileLoadInfo.contentOptions.ktx2TranscodeTargets;
-  gltfOptions.applyTextureTransform =
-      tileLoadInfo.contentOptions.applyTextureTransform;
-  if (tileLoadInfo.pSharedAssetSystem) {
-    gltfOptions.pSharedAssetSystem = tileLoadInfo.pSharedAssetSystem;
-  }
+  std::optional<int64_t> version =
+      pGltfModifier ? pGltfModifier->getCurrentVersion() : std::nullopt;
 
   auto asyncSystem = tileLoadInfo.asyncSystem;
-  auto pAssetAccessor = result.pAssetAccessor;
-  return CesiumGltfReader::GltfReader::resolveExternalData(
-             asyncSystem,
-             baseUrl,
-             requestHeaders,
-             pAssetAccessor,
-             gltfOptions,
-             std::move(gltfResult))
-      .thenInWorkerThread([result = std::move(result),
-                           projections = std::move(projections),
-                           tileLoadInfo = std::move(tileLoadInfo),
-                           rendererOptions](CesiumGltfReader::GltfReaderResult&&
-                                                gltfResult) mutable {
-        if (!gltfResult.errors.empty()) {
-          if (result.pCompletedRequest) {
-            SPDLOG_LOGGER_ERROR(
-                tileLoadInfo.pLogger,
-                "Failed resolving external glTF buffers from {}:\n- {}",
-                result.pCompletedRequest->url(),
-                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-          } else {
-            SPDLOG_LOGGER_ERROR(
-                tileLoadInfo.pLogger,
-                "Failed resolving external glTF buffers:\n- {}",
-                CesiumUtility::joinToString(gltfResult.errors, "\n- "));
-          }
-        }
 
-        if (!gltfResult.warnings.empty()) {
-          if (result.pCompletedRequest) {
-            SPDLOG_LOGGER_WARN(
-                tileLoadInfo.pLogger,
-                "Warning when resolving external gltf buffers from "
-                "{}:\n- {}",
-                result.pCompletedRequest->url(),
-                CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
-          } else {
-            SPDLOG_LOGGER_ERROR(
-                tileLoadInfo.pLogger,
-                "Warning resolving external glTF buffers:\n- {}",
-                CesiumUtility::joinToString(gltfResult.warnings, "\n- "));
-          }
-        }
+  result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
+  result.initialContentBoundingVolume = tileLoadInfo.tileContentBoundingVolume;
 
-        if (!gltfResult.model) {
-          return tileLoadInfo.asyncSystem.createResolvedFuture(
-              TileLoadResultAndRenderResources{
-                  TileLoadResult::createFailedResult(
-                      result.pAssetAccessor,
-                      nullptr),
-                  nullptr});
-        }
+  postProcessGltfInWorkerThread(result, std::move(projections), tileLoadInfo);
 
-        result.contentKind = std::move(*gltfResult.model);
-        result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
-        result.initialContentBoundingVolume =
-            tileLoadInfo.tileContentBoundingVolume;
+  auto applyGltfModifier = [&]() {
+    // Apply the glTF modifier right away, otherwise it will be
+    // triggered immediately after the renderer-side resources
+    // have been created, which is both inefficient and a cause
+    // of visual glitches (the model will appear briefly in its
+    // unmodified state before stabilizing)
+    const CesiumGltf::Model& model =
+        std::get<CesiumGltf::Model>(result.contentKind);
+    return pGltfModifier
+        ->apply(GltfModifierInput{
+            .version = *version,
+            .asyncSystem = tileLoadInfo.asyncSystem,
+            .pAssetAccessor = tileLoadInfo.pAssetAccessor,
+            .pLogger = tileLoadInfo.pLogger,
+            .previousModel = model,
+            .tileTransform = tileLoadInfo.tileTransform})
+        .thenInWorkerThread(
+            [result = std::move(result),
+             version](std::optional<GltfModifierOutput>&& modified) mutable {
+              if (modified) {
+                result.contentKind = std::move(modified->modifiedModel);
+              }
 
-        postProcessGltfInWorkerThread(
-            result,
-            std::move(projections),
-            tileLoadInfo);
+              CesiumGltf::Model* pModel =
+                  std::get_if<CesiumGltf::Model>(&result.contentKind);
+              if (pModel) {
+                GltfModifierVersionExtension::setVersion(*pModel, *version);
+              }
+
+              return result;
+            })
+        .thenPassThrough(std::move(tileLoadInfo));
+  };
+
+  CesiumAsync::Future<std::tuple<TileContentLoadInfo, TileLoadResult>> future =
+      pGltfModifier && version
+          ? applyGltfModifier()
+          : tileLoadInfo.asyncSystem.createResolvedFuture(std::move(result))
+                .thenPassThrough(std::move(tileLoadInfo));
+
+  return std::move(future).thenInWorkerThread(
+      [rendererOptions](
+          std::tuple<TileContentLoadInfo, TileLoadResult>&& tuple) {
+        auto& [tileLoadInfo, result] = tuple;
 
         // create render resources
         if (tileLoadInfo.pPrepareRendererResources) {
@@ -702,68 +640,30 @@ postProcessContentInWorkerThread(
         }
       });
 }
+
+std::optional<Credit> createUserCredit(
+    const TilesetOptions& tilesetOptions,
+    const std::shared_ptr<CreditSystem>& pCreditSystem,
+    const CreditSource& creditSource) {
+  if (!tilesetOptions.credit || !pCreditSystem)
+    return std::nullopt;
+
+  return pCreditSystem->createCredit(
+      creditSource,
+      *tilesetOptions.credit,
+      tilesetOptions.showCreditsOnScreen);
+}
+
 } // namespace
 
 TilesetContentManager::TilesetContentManager(
     const TilesetExternals& externals,
-    const TilesetOptions& tilesetOptions,
-    std::unique_ptr<TilesetContentLoader>&& pLoader,
-    std::unique_ptr<Tile>&& pRootTile)
+    const TilesetOptions& tilesetOptions)
     : _externals{externals},
       _requestHeaders{tilesetOptions.requestHeaders},
-      _pLoader{std::move(pLoader)},
-      _pRootTile{std::move(pRootTile)},
-      _userCredit(
-          (tilesetOptions.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    tilesetOptions.credit.value(),
-                    tilesetOptions.showCreditsOnScreen))
-              : std::nullopt),
-      _tilesetCredits{},
-      _overlayCollection(
-          LoadedTileEnumerator(pRootTile.get()),
-          externals,
-          tilesetOptions.ellipsoid),
-      _tileLoadsInProgress{0},
-      _loadedTilesCount{0},
-      _tilesDataUsed{0},
-      _tilesetDestroyed(false),
-      _pSharedAssetSystem(externals.pSharedAssetSystem),
-      _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
-      _destructionCompleteFuture{
-          this->_destructionCompletePromise.getFuture().share()},
-      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
-      _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()},
-      _tilesEligibleForContentUnloading(),
-      _requesters(),
-      _roundRobinValueWorker(0.0),
-      _roundRobinValueMain(0.0),
-      _requesterFractions(),
-      _requestersWithRequests() {
-  this->_upsampler.setOwner(*this);
-
-  CESIUM_ASSERT(this->_pLoader != nullptr);
-  this->_overlayCollection.setLoadedTileEnumerator(
-      LoadedTileEnumerator(this->_pRootTile.get()));
-  this->_pLoader->setOwner(*this);
-  this->_rootTileAvailablePromise.resolve();
-}
-
-TilesetContentManager::TilesetContentManager(
-    const TilesetExternals& externals,
-    const TilesetOptions& tilesetOptions,
-    const std::string& url)
-    : _externals{externals},
-      _requestHeaders{tilesetOptions.requestHeaders},
-      _pLoader{},
-      _pRootTile{},
-      _userCredit(
-          (tilesetOptions.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    tilesetOptions.credit.value(),
-                    tilesetOptions.showCreditsOnScreen))
-              : std::nullopt),
+      _pLoader{nullptr},
+      _pRootTile{nullptr},
+      _userCredit(),
       _tilesetCredits{},
       _overlayCollection(
           LoadedTileEnumerator(nullptr),
@@ -785,17 +685,66 @@ TilesetContentManager::TilesetContentManager(
       _roundRobinValueWorker(0.0),
       _roundRobinValueMain(0.0),
       _requesterFractions(),
-      _requestersWithRequests() {
+      _requestersWithRequests(),
+      _creditSource(externals.pCreditSystem) {
+  this->_userCredit = createUserCredit(
+      tilesetOptions,
+      externals.pCreditSystem,
+      this->_creditSource);
+
   this->_upsampler.setOwner(*this);
+}
+
+/* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
+TilesetContentManager::createFromLoader(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    std::unique_ptr<TilesetContentLoader>&& pLoader,
+    std::unique_ptr<Tile>&& pRootTile) {
+  CESIUM_ASSERT(pLoader != nullptr);
+
+  IntrusivePointer<TilesetContentManager> pManager =
+      new TilesetContentManager(externals, tilesetOptions);
+
+  pManager->notifyTileStartLoading(nullptr);
+
+  pManager->registerGltfModifier(pRootTile.get())
+      .thenInMainThread([pManager,
+                         pLoader = std::move(pLoader),
+                         pRootTile = std::move(pRootTile)]() mutable {
+        pManager->notifyTileDoneLoading(pRootTile.get());
+
+        pManager->propagateTilesetContentLoaderResult(
+            TilesetLoadType::TilesetJson,
+            [](const TilesetLoadFailureDetails&) {},
+            TilesetContentLoaderResult<TilesetContentLoader>(
+                std::move(pLoader),
+                std::move(pRootTile),
+                {},
+                {},
+                ErrorList()));
+
+        pManager->_rootTileAvailablePromise.resolve();
+      });
+
+  return pManager;
+}
+
+/* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
+TilesetContentManager::createFromUrl(
+    const TilesetExternals& externals,
+    const TilesetOptions& tilesetOptions,
+    const std::string& url) {
+  IntrusivePointer<TilesetContentManager> pManager =
+      new TilesetContentManager(externals, tilesetOptions);
 
   if (!url.empty()) {
-    this->notifyTileStartLoading(nullptr);
+    pManager->notifyTileStartLoading(nullptr);
 
-    CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
     const CesiumGeospatial::Ellipsoid& ellipsoid = tilesetOptions.ellipsoid;
 
     externals.pAssetAccessor
-        ->get(externals.asyncSystem, url, this->_requestHeaders)
+        ->get(externals.asyncSystem, url, pManager->_requestHeaders)
         .thenInWorkerThread(
             [externals,
              ellipsoid,
@@ -890,70 +839,52 @@ TilesetContentManager::TilesetContentManager(
               }
             })
         .thenInMainThread(
-            [thiz, errorCallback = tilesetOptions.loadErrorCallback](
+            [pManager](
                 TilesetContentLoaderResult<TilesetContentLoader>&& result) {
-              thiz->notifyTileDoneLoading(result.pRootTile.get());
-              thiz->propagateTilesetContentLoaderResult(
+              return pManager->registerGltfModifier(result.pRootTile.get())
+                  .thenImmediately([result = std::move(result)]() mutable {
+                    return std::move(result);
+                  });
+            })
+        .thenInMainThread(
+            [pManager, errorCallback = tilesetOptions.loadErrorCallback](
+                TilesetContentLoaderResult<TilesetContentLoader>&& result) {
+              pManager->notifyTileDoneLoading(result.pRootTile.get());
+              pManager->propagateTilesetContentLoaderResult(
                   TilesetLoadType::TilesetJson,
                   errorCallback,
                   std::move(result));
-              thiz->_rootTileAvailablePromise.resolve();
+              pManager->_rootTileAvailablePromise.resolve();
             })
-        .catchInMainThread([thiz](std::exception&& e) {
-          thiz->notifyTileDoneLoading(nullptr);
+        .catchInMainThread([pManager](std::exception&& e) {
+          pManager->notifyTileDoneLoading(nullptr);
           SPDLOG_LOGGER_ERROR(
-              thiz->_externals.pLogger,
+              pManager->_externals.pLogger,
               "An unexpected error occurred when loading tile: {}",
               e.what());
-          thiz->_rootTileAvailablePromise.reject(
+          pManager->_rootTileAvailablePromise.reject(
               std::runtime_error("Root tile failed to load."));
         });
+  } else {
+    pManager->_rootTileAvailablePromise.resolve();
   }
+
+  return pManager;
 }
 
-TilesetContentManager::TilesetContentManager(
+/* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
+TilesetContentManager::createFromLoaderFactory(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
-    TilesetContentLoaderFactory&& loaderFactory)
-    : _externals{externals},
-      _requestHeaders{tilesetOptions.requestHeaders},
-      _pLoader{},
-      _pRootTile{},
-      _userCredit(
-          (tilesetOptions.credit && externals.pCreditSystem)
-              ? std::optional<Credit>(externals.pCreditSystem->createCredit(
-                    tilesetOptions.credit.value(),
-                    tilesetOptions.showCreditsOnScreen))
-              : std::nullopt),
-      _tilesetCredits{},
-      _overlayCollection(
-          LoadedTileEnumerator(nullptr),
-          externals,
-          tilesetOptions.ellipsoid),
-      _tileLoadsInProgress{0},
-      _loadedTilesCount{0},
-      _tilesDataUsed{0},
-      _tilesetDestroyed(false),
-      _pSharedAssetSystem(externals.pSharedAssetSystem),
-      _destructionCompletePromise{externals.asyncSystem.createPromise<void>()},
-      _destructionCompleteFuture{
-          this->_destructionCompletePromise.getFuture().share()},
-      _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
-      _rootTileAvailableFuture{
-          this->_rootTileAvailablePromise.getFuture().share()},
-      _tilesEligibleForContentUnloading(),
-      _requesters(),
-      _roundRobinValueWorker(0.0),
-      _roundRobinValueMain(0.0),
-      _requesterFractions(),
-      _requestersWithRequests() {
-  this->_upsampler.setOwner(*this);
+    TilesetContentLoaderFactory&& loaderFactory) {
+  IntrusivePointer<TilesetContentManager> pManager =
+      new TilesetContentManager(externals, tilesetOptions);
 
   if (loaderFactory.isValid()) {
-    auto authorizationChangeListener = [this](
+    auto authorizationChangeListener = [pManagerRaw = pManager.get()](
                                            const std::string& header,
                                            const std::string& headerValue) {
-      auto& requestHeaders = this->_requestHeaders;
+      auto& requestHeaders = pManagerRaw->_requestHeaders;
       auto authIt = std::find_if(
           requestHeaders.begin(),
           requestHeaders.end(),
@@ -965,47 +896,59 @@ TilesetContentManager::TilesetContentManager(
       }
     };
 
-    this->notifyTileStartLoading(nullptr);
-
-    CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
+    pManager->notifyTileStartLoading(nullptr);
 
     loaderFactory
         .createLoader(externals, tilesetOptions, authorizationChangeListener)
         .thenInMainThread(
-            [thiz, errorCallback = tilesetOptions.loadErrorCallback](
+            [pManager](
                 TilesetContentLoaderResult<TilesetContentLoader>&& result) {
-              thiz->notifyTileDoneLoading(result.pRootTile.get());
-              thiz->propagateTilesetContentLoaderResult(
+              return pManager->registerGltfModifier(result.pRootTile.get())
+                  .thenImmediately([result = std::move(result)]() mutable {
+                    return std::move(result);
+                  });
+            })
+        .thenInMainThread(
+            [pManager, errorCallback = tilesetOptions.loadErrorCallback](
+                TilesetContentLoaderResult<TilesetContentLoader>&& result) {
+              pManager->notifyTileDoneLoading(result.pRootTile.get());
+              pManager->propagateTilesetContentLoaderResult(
                   TilesetLoadType::CesiumIon,
                   errorCallback,
                   std::move(result));
-              thiz->_rootTileAvailablePromise.resolve();
+              pManager->_rootTileAvailablePromise.resolve();
             })
-        .catchInMainThread([thiz](std::exception&& e) {
-          thiz->notifyTileDoneLoading(nullptr);
+        .catchInMainThread([pManager](std::exception&& e) {
+          pManager->notifyTileDoneLoading(nullptr);
           SPDLOG_LOGGER_ERROR(
-              thiz->_externals.pLogger,
+              pManager->_externals.pLogger,
               "An unexpected error occurred when loading tile: {}",
               e.what());
-          thiz->_rootTileAvailablePromise.reject(
+          pManager->_rootTileAvailablePromise.reject(
               std::runtime_error("Root tile failed to load."));
         });
+  } else {
+    pManager->_rootTileAvailablePromise.resolve();
   }
+
+  return pManager;
 }
 
-TilesetContentManager::TilesetContentManager(
+/* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
+TilesetContentManager::createFromCesiumIon(
     const TilesetExternals& externals,
     const TilesetOptions& tilesetOptions,
     int64_t ionAssetID,
     const std::string& ionAccessToken,
-    const std::string& ionAssetEndpointUrl)
-    : TilesetContentManager(
-          externals,
-          tilesetOptions,
-          CesiumIonTilesetContentLoaderFactory(
-              static_cast<uint32_t>(ionAssetID),
-              ionAccessToken,
-              ionAssetEndpointUrl)) {}
+    const std::string& ionAssetEndpointUrl) {
+  return TilesetContentManager::createFromLoaderFactory(
+      externals,
+      tilesetOptions,
+      CesiumIonTilesetContentLoaderFactory(
+          static_cast<uint32_t>(ionAssetID),
+          ionAccessToken,
+          ionAssetEndpointUrl));
+}
 
 CesiumAsync::SharedFuture<void>&
 TilesetContentManager::getAsyncDestructionCompleteEvent() {
@@ -1024,10 +967,205 @@ TilesetContentManager::~TilesetContentManager() noexcept {
   this->_destructionCompletePromise.resolve();
 }
 
+void TilesetContentManager::reapplyGltfModifier(
+    Tile& tile,
+    const TilesetOptions& tilesetOptions,
+    TileRenderContent* pRenderContent) noexcept {
+  // An existing modified model must be the wrong version (or we wouldn't be
+  // here), so discard it.
+  if (pRenderContent->getModifiedModel()) {
+    CESIUM_ASSERT(
+        pRenderContent->getGltfModifierState() ==
+        GltfModifierState::WorkerDone);
+    this->_externals.pPrepareRendererResources->free(
+        tile,
+        pRenderContent->getModifiedRenderResources(),
+        nullptr);
+    pRenderContent->resetModifiedModelAndRenderResources();
+    pRenderContent->setGltfModifierState(GltfModifierState::Idle);
+  }
+
+  this->notifyTileStartLoading(&tile);
+  pRenderContent->setGltfModifierState(GltfModifierState::WorkerRunning);
+
+  const CesiumGltf::Model& previousModel = pRenderContent->getModel();
+
+  const TilesetExternals& externals = this->getExternals();
+
+  // Get the version here, in the main thread, because it may change while the
+  // worker is running.
+  CESIUM_ASSERT(externals.pGltfModifier->getCurrentVersion());
+  int64_t version = externals.pGltfModifier->getCurrentVersion().value_or(-1);
+
+  // It is safe to capture the TilesetExternals and Model by reference because
+  // the TilesetContentManager guarantees both will continue to exist and are
+  // immutable while modification is in progress.
+  //
+  // This is largely true of Tile as well, except that Tiles are nodes in a
+  // larger graph, and the entire graph is _not_ guaranteed to be immutable. So
+  // best to avoid handing a `Tile` instance to a worker thread.
+  //
+  // We capture an IntrusivePointer to a Tile in the main thread continuations
+  // at the end in order to keep the Tile, its content, and the
+  // TilesetContentManager alive during the entire process.
+  externals.asyncSystem
+      .runInWorkerThread([&externals,
+                          &previousModel,
+                          version,
+                          tileTransform = tile.getTransform()] {
+        return externals.pGltfModifier->apply(GltfModifierInput{
+            .version = version,
+            .asyncSystem = externals.asyncSystem,
+            .pAssetAccessor = externals.pAssetAccessor,
+            .pLogger = externals.pLogger,
+            .previousModel = previousModel,
+            .tileTransform = tileTransform});
+      })
+      .thenInWorkerThread([&externals,
+                           &previousModel,
+                           pRenderContent,
+                           tileTransform = tile.getTransform(),
+                           tileBoundingVolume = tile.getBoundingVolume(),
+                           tileContentBoundingVolume =
+                               tile.getContentBoundingVolume(),
+                           rendererOptions = tilesetOptions.rendererOptions](
+                              std::optional<GltfModifierOutput>&& modified) {
+        TileLoadResult tileLoadResult;
+        tileLoadResult.state = TileLoadResultState::Success;
+        tileLoadResult.pAssetAccessor = externals.pAssetAccessor;
+        tileLoadResult.rasterOverlayDetails =
+            pRenderContent->getRasterOverlayDetails();
+        tileLoadResult.initialBoundingVolume = tileBoundingVolume;
+        tileLoadResult.initialContentBoundingVolume = tileContentBoundingVolume;
+
+        {
+          const CesiumGltf::Model& model =
+              modified ? modified->modifiedModel : previousModel;
+          const auto it = model.extras.find("gltfUpAxis");
+          if (it != model.extras.end()) {
+            tileLoadResult.glTFUpAxis = static_cast<CesiumGeometry::Axis>(
+                it->second.getSafeNumberOrDefault(1));
+          }
+        }
+
+        if (modified) {
+          tileLoadResult.contentKind = std::move(modified->modifiedModel);
+        } else {
+          tileLoadResult.contentKind = previousModel;
+        }
+
+        if (modified && externals.pPrepareRendererResources) {
+          return externals.pPrepareRendererResources->prepareInLoadThread(
+              externals.asyncSystem,
+              std::move(tileLoadResult),
+              tileTransform,
+              rendererOptions);
+        } else {
+          return externals.asyncSystem
+              .createResolvedFuture<TileLoadResultAndRenderResources>(
+                  TileLoadResultAndRenderResources{
+                      std::move(tileLoadResult),
+                      nullptr});
+        }
+      })
+      .thenInMainThread([this, version, pTile = Tile::Pointer(&tile)](
+                            TileLoadResultAndRenderResources&& pair) {
+        TileRenderContent* pRenderContent =
+            pTile->getContent().getRenderContent();
+        CESIUM_ASSERT(pRenderContent != nullptr);
+
+        this->notifyTileDoneLoading(pTile.get());
+
+        if (std::holds_alternative<TileUnknownContent>(
+                pair.result.contentKind)) {
+          // GltfModifier did not actually modify the model.
+          pRenderContent->resetModifiedModelAndRenderResources();
+          pRenderContent->setGltfModifierState(GltfModifierState::Idle);
+
+          // Even though the GltfModifier chose not to modify anything, the
+          // model is now up-to-date with the version that triggered this run.
+          GltfModifierVersionExtension::setVersion(
+              pRenderContent->getModel(),
+              version);
+        } else if (pTile->getState() == TileLoadState::ContentLoaded) {
+          // This Tile is in the ContentLoaded state, which means that it was
+          // (partially) loaded before the GltfModifier triggered to the current
+          // version. In that case, we need to free the previous renderer
+          // resources but can then send the tile through the rest of the normal
+          // pipeline. We know a Tile in the ContentLoaded state isn't already
+          // being rendered.
+          if (this->_externals.pPrepareRendererResources) {
+            this->_externals.pPrepareRendererResources->free(
+                *pTile,
+                pRenderContent->getRenderResources(),
+                nullptr);
+          }
+          pRenderContent->setModel(
+              std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)));
+          pRenderContent->setRenderResources(pair.pRenderResources);
+          pRenderContent->setGltfModifierState(GltfModifierState::Idle);
+
+          // The model is now up-to-date with the version that triggered this
+          // run.
+          GltfModifierVersionExtension::setVersion(
+              pRenderContent->getModel(),
+              version);
+        } else {
+          // This is a reapply of the GltfModifier to an already loaded and
+          // potentially rendered tile.
+          CESIUM_ASSERT(pTile->getState() == TileLoadState::Done);
+          pRenderContent->setGltfModifierState(GltfModifierState::WorkerDone);
+
+          // The modified model is up-to-date with the version that triggered
+          // this run.
+          CesiumGltf::Model& modifiedModel =
+              std::get<CesiumGltf::Model>(pair.result.contentKind);
+          GltfModifierVersionExtension::setVersion(modifiedModel, version);
+
+          pRenderContent->setModifiedModelAndRenderResources(
+              std::move(modifiedModel),
+              pair.pRenderResources);
+          this->_externals.pGltfModifier->onWorkerThreadApplyComplete(*pTile);
+        }
+      })
+      .catchInMainThread(
+          [this, pTile = Tile::Pointer(&tile), &externals, version](
+              std::exception&& e) {
+            pTile->getContent().getRenderContent()->setGltfModifierState(
+                GltfModifierState::WorkerDone);
+            this->notifyTileDoneLoading(pTile.get());
+            SPDLOG_LOGGER_ERROR(
+                externals.pLogger,
+                "An unexpected error occurred when reapplying GltfModifier: {}",
+                e.what());
+
+            // Even though the GltfModifier failed, we mark the model up-to-date
+            // with the version that triggered this run so that we won't try to
+            // run again for this version.
+            TileRenderContent* pRenderContent =
+                pTile->getContent().getRenderContent();
+            CESIUM_ASSERT(pRenderContent != nullptr);
+            GltfModifierVersionExtension::setVersion(
+                pRenderContent->getModel(),
+                version);
+          });
+}
+
 void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
+  CESIUM_ASSERT(this->_pLoader != nullptr);
+  CESIUM_ASSERT(this->_pRootTile != nullptr);
+
   CESIUM_TRACE("TilesetContentManager::loadTileContent");
+
+  if (this->_externals.pGltfModifier &&
+      this->_externals.pGltfModifier->needsWorkerThreadModification(tile)) {
+    TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
+    CESIUM_ASSERT(pRenderContent != nullptr);
+    this->reapplyGltfModifier(tile, tilesetOptions, pRenderContent);
+    return;
+  }
 
   if (tile.getState() == TileLoadState::Unloading) {
     // We can't load a tile that is unloading; it has to finish unloading first.
@@ -1087,7 +1225,7 @@ void TilesetContentManager::loadTileContent(
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
-      mapOverlaysToTile(tile, this->_overlayCollection, tilesetOptions);
+      this->_overlayCollection.addTileOverlays(tile, tilesetOptions);
 
   // begin loading tile
   notifyTileStartLoading(&tile);
@@ -1117,14 +1255,19 @@ void TilesetContentManager::loadTileContent(
       this->_externals.pLogger,
       this->_requestHeaders,
       tilesetOptions.ellipsoid};
+  loadInput.pSharedAssetSystem = tileLoadInfo.pSharedAssetSystem;
 
   // Keep the manager alive while the load is in progress.
   CesiumUtility::IntrusivePointer<TilesetContentManager> thiz = this;
 
   pLoader->loadTileContent(loadInput)
-      .thenImmediately([tileLoadInfo = std::move(tileLoadInfo),
+      .thenImmediately([asyncSystem = this->_externals.asyncSystem,
+                        pAssetAccessor = this->_externals.pAssetAccessor,
+                        pLogger = this->_externals.pLogger,
+                        tileLoadInfo = std::move(tileLoadInfo),
                         projections = std::move(projections),
-                        rendererOptions = tilesetOptions.rendererOptions](
+                        rendererOptions = tilesetOptions.rendererOptions,
+                        pGltfModifier = _externals.pGltfModifier](
                            TileLoadResult&& result) mutable {
         // the reason we run immediate continuation, instead of in the
         // worker thread, is that the loader may run the task in the main
@@ -1140,12 +1283,14 @@ void TilesetContentManager::loadTileContent(
                 [result = std::move(result),
                  projections = std::move(projections),
                  tileLoadInfo = std::move(tileLoadInfo),
-                 rendererOptions]() mutable {
+                 rendererOptions,
+                 pGltfModifier]() mutable {
                   return postProcessContentInWorkerThread(
                       std::move(result),
                       std::move(projections),
                       std::move(tileLoadInfo),
-                      rendererOptions);
+                      rendererOptions,
+                      pGltfModifier);
                 });
           } else if (
               std::holds_alternative<CesiumVectorData::GeoJsonDocument>(
@@ -1172,6 +1317,19 @@ void TilesetContentManager::loadTileContent(
       .thenInMainThread([pTile, thiz](TileLoadResultAndRenderResources&& pair) {
         setTileContent(*pTile, std::move(pair.result), pair.pRenderResources);
         thiz->notifyTileDoneLoading(pTile.get());
+
+        if (thiz->_externals.pGltfModifier) {
+          const TileRenderContent* pRenderContent =
+              pTile->getContent().getRenderContent();
+          CESIUM_ASSERT(!pRenderContent || !pRenderContent->getModifiedModel());
+          if (pRenderContent &&
+              GltfModifierVersionExtension::getVersion(
+                  pRenderContent->getModel()) !=
+                  thiz->_externals.pGltfModifier->getCurrentVersion()) {
+            thiz->_externals.pGltfModifier->onOldVersionContentLoadingComplete(
+                *pTile);
+          }
+        }
       })
       .catchInMainThread([pLogger = this->_externals.pLogger, pTile, thiz](
                              std::exception&& e) {
@@ -1233,6 +1391,31 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
   }
 
   TileLoadState state = tile.getState();
+  // Test if a glTF modifier is in progress.
+  if (this->_externals.pGltfModifier) {
+    TileRenderContent* pRenderContent = tile.getContent().getRenderContent();
+    if (pRenderContent) {
+      switch (pRenderContent->getGltfModifierState()) {
+      case GltfModifierState::WorkerRunning:
+        // Worker thread is running, we cannot unload yet.
+        return UnloadTileContentResult::Keep;
+      case GltfModifierState::WorkerDone:
+        // Free temporary render resources.
+        CESIUM_ASSERT(pRenderContent->getModifiedRenderResources());
+        if (this->_externals.pPrepareRendererResources) {
+          this->_externals.pPrepareRendererResources->free(
+              tile,
+              pRenderContent->getModifiedRenderResources(),
+              nullptr);
+        }
+        pRenderContent->resetModifiedModelAndRenderResources();
+        pRenderContent->setGltfModifierState(GltfModifierState::Idle);
+        break;
+      default:
+        break;
+      }
+    }
+  }
   if (state == TileLoadState::Unloaded) {
     return UnloadTileContentResult::Remove;
   }
@@ -1252,6 +1435,13 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     return UnloadTileContentResult::Remove;
   }
 
+  // Detach raster tiles first so that the renderer's tile free
+  // process doesn't need to worry about them.
+  for (RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+    mapped.detachFromTile(*this->_externals.pPrepareRendererResources, tile);
+  }
+  tile.getMappedRasterTiles().clear();
+
   if (content.isExternalContent()) {
     // We can unload an external content tile with one reference, because this
     // represents the external content itself. Any more than that indicates
@@ -1267,13 +1457,6 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
     tile.releaseReference("UnloadTileContent: External");
     return UnloadTileContentResult::RemoveAndClearChildren;
   }
-
-  // Detach raster tiles first so that the renderer's tile free
-  // process doesn't need to worry about them.
-  for (RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
-    mapped.detachFromTile(*this->_externals.pPrepareRendererResources, tile);
-  }
-  tile.getMappedRasterTiles().clear();
 
   // Unload the renderer resources and clear any raster overlay tiles. We can do
   // this even if the tile can't be fully unloaded because this tile's geometry
@@ -1321,13 +1504,25 @@ void TilesetContentManager::unloadAll() {
   }
 }
 
-void TilesetContentManager::waitUntilIdle() {
+bool TilesetContentManager::waitUntilIdle(
+    double maximumWaitTimeInMilliseconds) {
+  auto start = std::chrono::system_clock::now();
+  auto end = (maximumWaitTimeInMilliseconds <= 0.0)
+                 ? std::chrono::time_point<std::chrono::system_clock>::max()
+                 : (start + std::chrono::microseconds(static_cast<int64_t>(
+                                1000.0 * maximumWaitTimeInMilliseconds)));
+
   // Wait for all asynchronous loading to terminate.
   // If you're hanging here, it's most likely caused by _tileLoadsInProgress not
   // being decremented correctly when an async load ends.
   while (this->_tileLoadsInProgress > 0) {
     this->_externals.pAssetAccessor->tick();
     this->_externals.asyncSystem.dispatchMainThreadTasks();
+
+    auto time = std::chrono::system_clock::now();
+    if (time >= end) {
+      break;
+    }
   }
 
   // Wait for all overlays to wrap up their loading, too.
@@ -1337,11 +1532,18 @@ void TilesetContentManager::waitUntilIdle() {
     this->_externals.asyncSystem.dispatchMainThreadTasks();
 
     rasterOverlayTilesLoading = 0;
-    for (const auto& pTileProvider :
-         this->_overlayCollection.getTileProviders()) {
-      rasterOverlayTilesLoading += pTileProvider->getNumberOfTilesLoading();
+    for (const auto& pActivated :
+         this->_overlayCollection.getActivatedOverlays()) {
+      rasterOverlayTilesLoading += pActivated->getNumberOfTilesLoading();
+    }
+
+    auto time = std::chrono::system_clock::now();
+    if (time >= end) {
+      break;
     }
   }
+
+  return this->_tileLoadsInProgress == 0 && rasterOverlayTilesLoading == 0;
 }
 
 const Tile* TilesetContentManager::getRootTile() const noexcept {
@@ -1400,9 +1602,9 @@ int32_t TilesetContentManager::getNumberOfTilesLoaded() const noexcept {
 
 int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   int64_t bytes = this->_tilesDataUsed;
-  for (const auto& pTileProvider :
-       this->_overlayCollection.getTileProviders()) {
-    bytes += pTileProvider->getTileDataBytes();
+  for (const auto& pActivated :
+       this->_overlayCollection.getActivatedOverlays()) {
+    bytes += pActivated->getTileDataBytes();
   }
 
   return bytes;
@@ -1411,13 +1613,46 @@ int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
 void TilesetContentManager::finishLoading(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
-  CESIUM_ASSERT(tile.getState() == TileLoadState::ContentLoaded);
-
-  // Run the main thread part of loading.
   TileContent& content = tile.getContent();
-  TileRenderContent* pRenderContent = content.getRenderContent();
 
-  CESIUM_ASSERT(pRenderContent != nullptr);
+  // If this tile doesn't have render content, there's nothing to finish
+  // loading.
+  TileRenderContent* pRenderContent = content.getRenderContent();
+  if (pRenderContent == nullptr)
+    return;
+
+  if (this->_externals.pGltfModifier &&
+      this->_externals.pGltfModifier->needsMainThreadModification(tile)) {
+    // Free outdated render resources before replacing them.
+    if (this->_externals.pPrepareRendererResources) {
+      this->_externals.pPrepareRendererResources->free(
+          tile,
+          nullptr,
+          pRenderContent->getRenderResources());
+    }
+
+    // Replace model and render resources with the newly modified versions,
+    // discarding the old ones
+    pRenderContent->replaceWithModifiedModel();
+
+    // Run the main thread part of loading.
+    if (this->_externals.pPrepareRendererResources) {
+      pRenderContent->setRenderResources(
+          this->_externals.pPrepareRendererResources->prepareInMainThread(
+              tile,
+              pRenderContent->getRenderResources()));
+    } else {
+      pRenderContent->setRenderResources(nullptr);
+    }
+
+    pRenderContent->setGltfModifierState(GltfModifierState::Idle);
+    return;
+  }
+
+  // None of the processing below makes sense until the Tile hits the
+  // ContentLoaded state.
+  if (tile.getState() != TileLoadState::ContentLoaded)
+    return;
 
   // add copyright
   CreditSystem* pCreditSystem = this->_externals.pCreditSystem.get();
@@ -1430,6 +1665,7 @@ void TilesetContentManager::finishLoading(
 
     for (const std::string_view& creditString : creditStrings) {
       credits.emplace_back(pCreditSystem->createCredit(
+          this->_creditSource,
           std::string(creditString),
           tilesetOptions.showCreditsOnScreen));
     }
@@ -1437,6 +1673,7 @@ void TilesetContentManager::finishLoading(
     pRenderContent->setCredits(credits);
   }
 
+  // Run the main thread part of loading.
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
   if (this->_externals.pPrepareRendererResources) {
     void* pMainThreadRenderResources =
@@ -1538,6 +1775,16 @@ void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
 
 void TilesetContentManager::registerTileRequester(
     TileLoadRequester& requester) {
+  if (requester._pTilesetContentManager.get() == this) {
+    return;
+  }
+
+  if (requester._pTilesetContentManager != nullptr) {
+    requester._pTilesetContentManager->unregisterTileRequester(requester);
+  }
+
+  requester._pTilesetContentManager = this;
+
   CESIUM_ASSERT(
       std::find(
           this->_requesters.begin(),
@@ -1554,6 +1801,8 @@ void TilesetContentManager::unregisterTileRequester(
   if (it != this->_requesters.end()) {
     this->_requesters.erase(it);
   }
+
+  requester._pTilesetContentManager = nullptr;
 }
 
 namespace {
@@ -1729,14 +1978,7 @@ void TilesetContentManager::processMainThreadLoadRequests(
     if (pToLoad->_referenceCount == 0)
       continue;
 
-    // We double-check that the tile is still in the ContentLoaded state here,
-    // in case something (such as a child that needs to upsample from this
-    // parent) already pushed the tile into the Done state. Because in that
-    // case, calling finishLoading here would assert or crash.
-    if (pToLoad->getState() == TileLoadState::ContentLoaded &&
-        pToLoad->isRenderContent()) {
-      this->finishLoading(*pToLoad, options);
-    }
+    this->finishLoading(*pToLoad, options);
 
     auto time = std::chrono::system_clock::now();
     if (timeBudget > 0.0 && time >= end) {
@@ -1747,6 +1989,13 @@ void TilesetContentManager::processMainThreadLoadRequests(
 
 void TilesetContentManager::markTilesetDestroyed() noexcept {
   this->_tilesetDestroyed = true;
+
+  // Unregister the GltfModifier. This will not destroy it, but it will ensure
+  // it releases any references it holds to this TilesetContentManager so that
+  // the TilesetContentManager can be destroyed.
+  if (this->_externals.pGltfModifier) {
+    this->_externals.pGltfModifier->onUnregister(*this);
+  }
 }
 
 void TilesetContentManager::releaseReference() const {
@@ -1762,6 +2011,17 @@ void TilesetContentManager::releaseReference() const {
     // modification. And the `Tileset` is already destroyed, anyway.
     const_cast<TilesetContentManager*>(this)->unloadAll();
   }
+}
+
+TilesetExternals& TilesetContentManager::getExternals() {
+  return this->_externals;
+}
+const TilesetExternals& TilesetContentManager::getExternals() const {
+  return this->_externals;
+}
+
+const CreditSource& TilesetContentManager::getCreditSource() const noexcept {
+  return this->_creditSource;
 }
 
 void TilesetContentManager::setTileContent(
@@ -1886,76 +2146,32 @@ void TilesetContentManager::updateDoneState(
   TileContent& content = tile.getContent();
   const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent) {
-    bool moreRasterDetailAvailable = false;
-    bool skippedUnknown = false;
-    std::vector<RasterMappedTo3DTile>& rasterTiles =
-        tile.getMappedRasterTiles();
-    for (size_t i = 0; i < rasterTiles.size(); ++i) {
-      RasterMappedTo3DTile& mappedRasterTile = rasterTiles[i];
+    TileRasterOverlayStatus status =
+        this->_overlayCollection.updateTileOverlays(tile, tilesetOptions);
 
-      RasterOverlayTile* pLoadingTile = mappedRasterTile.getLoadingTile();
-      if (pLoadingTile && pLoadingTile->getState() ==
-                              RasterOverlayTile::LoadState::Placeholder) {
-        RasterOverlayTileProvider* pProvider =
-            this->_overlayCollection.findTileProviderForOverlay(
-                pLoadingTile->getOverlay());
-        RasterOverlayTileProvider* pPlaceholder =
-            this->_overlayCollection.findPlaceholderTileProviderForOverlay(
-                pLoadingTile->getOverlay());
-
-        // Try to replace this placeholder with real tiles.
-        if (pProvider && pPlaceholder && !pProvider->isPlaceholder()) {
-          // Remove the existing placeholder mapping
-          rasterTiles.erase(
-              rasterTiles.begin() +
-              static_cast<std::vector<RasterMappedTo3DTile>::difference_type>(
-                  i));
-          --i;
-
-          // Add a new mapping.
-          std::vector<CesiumGeospatial::Projection> missingProjections;
-          RasterMappedTo3DTile::mapOverlayToTile(
-              tilesetOptions.maximumScreenSpaceError,
-              *pProvider,
-              *pPlaceholder,
-              tile,
-              missingProjections,
-              ellipsoid);
-
-          if (!missingProjections.empty()) {
-            // The mesh doesn't have the right texture coordinates for this
-            // overlay's projection, so we need to kick it back to the unloaded
-            // state to fix that.
-            // In the future, we could add the ability to add the required
-            // texture coordinates without starting over from scratch.
-            unloadTileContent(tile);
-            return;
-          }
-        }
-
-        continue;
-      }
-
-      const RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
-          mappedRasterTile.update(
-              *this->_externals.pPrepareRendererResources,
-              tile);
-
-      if (moreDetailAvailable ==
-              RasterOverlayTile::MoreDetailAvailable::Unknown &&
-          !moreRasterDetailAvailable) {
-        skippedUnknown = true;
-      }
-
-      moreRasterDetailAvailable |=
-          moreDetailAvailable == RasterOverlayTile::MoreDetailAvailable::Yes;
+    if (status.firstIndexWithMissingProjection) {
+      // The mesh doesn't have the right texture coordinates for this
+      // overlay's projection, so we need to kick it back to the unloaded
+      // state to fix that.
+      // In the future, we could add the ability to add the required
+      // texture coordinates without starting over from scratch.
+      unloadTileContent(tile);
+      return;
     }
+
+    bool hasMoreDetailAvailable =
+        status.firstIndexWithMoreDetailAvailable.has_value();
+    bool hasUnknown = status.firstIndexWithUnknownAvailability.has_value();
+
+    bool doSubdivide =
+        hasMoreDetailAvailable &&
+        (!hasUnknown || *status.firstIndexWithUnknownAvailability >
+                            *status.firstIndexWithMoreDetailAvailable);
 
     // If this tile still has no children after it's done loading, but it does
     // have raster tiles that are not the most detailed available, create fake
     // children to hang more detailed rasters on by subdividing this tile.
-    if (!skippedUnknown && moreRasterDetailAvailable &&
-        tile.getChildren().empty()) {
+    if (doSubdivide && tile.getChildren().empty()) {
       createQuadtreeSubdividedChildren(ellipsoid, tile, this->_upsampler);
     }
   } else {
@@ -2052,9 +2268,11 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
   this->_tilesetCredits.reserve(
       this->_tilesetCredits.size() + result.credits.size());
   for (const auto& creditResult : result.credits) {
-    this->_tilesetCredits.emplace_back(_externals.pCreditSystem->createCredit(
-        creditResult.creditText,
-        creditResult.showOnScreen));
+    this->_tilesetCredits.emplace_back(
+        this->_externals.pCreditSystem->createCredit(
+            this->_creditSource,
+            creditResult.creditText,
+            creditResult.showOnScreen));
   }
 
   this->_requestHeaders = std::move(result.requestHeaders);
@@ -2065,4 +2283,27 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
       LoadedTileEnumerator(this->_pRootTile.get()));
   this->_pLoader->setOwner(*this);
 }
+
+CesiumAsync::Future<void>
+TilesetContentManager::registerGltfModifier(const Tile* pRootTile) {
+  std::shared_ptr<GltfModifier> pGltfModifier =
+      this->getExternals().pGltfModifier;
+
+  if (pGltfModifier && pRootTile) {
+    const TileExternalContent* pExternal =
+        pRootTile->getContent().getExternalContent();
+    return pGltfModifier
+        ->onRegister(
+            *this,
+            pExternal ? pExternal->metadata : TilesetMetadata(),
+            *pRootTile)
+        .catchInMainThread([this](std::exception&&) {
+          // Disable the failed glTF modifier.
+          this->getExternals().pGltfModifier.reset();
+        });
+  }
+
+  return this->getExternals().asyncSystem.createResolvedFuture();
+}
+
 } // namespace Cesium3DTilesSelection

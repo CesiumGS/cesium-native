@@ -75,9 +75,8 @@ public:
    * should be specified in degrees.
    * @param style The \ref LineStyle to use when drawing the polyline.
    */
-  void drawPolyline(
-      const std::span<const glm::dvec3>& points,
-      const LineStyle& style);
+  void
+  drawPolyline(const std::vector<glm::dvec3>& points, const LineStyle& style);
 
   /**
    * @brief Rasterizes a `GeoJsonObject` to the canvas.

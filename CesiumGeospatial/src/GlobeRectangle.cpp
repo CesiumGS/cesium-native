@@ -3,6 +3,7 @@
 #include <CesiumUtility/Math.h>
 
 #include <glm/common.hpp>
+#include <glm/ext/vector_double2.hpp>
 
 #include <optional>
 #include <utility>
@@ -130,16 +131,41 @@ GlobeRectangle::computeUnion(const GlobeRectangle& other) const noexcept {
     rectangleWest += CesiumUtility::Math::TwoPi;
   }
 
-  const double west = CesiumUtility::Math::convertLongitudeRange(
-      glm::min(rectangleWest, otherRectangleWest));
-  const double east = CesiumUtility::Math::convertLongitudeRange(
-      glm::max(rectangleEast, otherRectangleEast));
+  double west = glm::min(rectangleWest, otherRectangleWest);
+  double east = glm::max(rectangleEast, otherRectangleEast);
+
+  // convertLongitudeRange will wrap values that are greater *or equal* to PI,
+  // which means a rectangle from [-PI, PI] would be wrapped to [-PI, -PI] - a
+  // completely different result. This is not what we want.
+  if (west != CesiumUtility::Math::OnePi) {
+    west = CesiumUtility::Math::convertLongitudeRange(west);
+  }
+
+  if (east != CesiumUtility::Math::OnePi) {
+    east = CesiumUtility::Math::convertLongitudeRange(east);
+  }
 
   return GlobeRectangle(
       west,
       glm::min(this->_south, other._south),
       east,
       glm::max(this->_north, other._north));
+}
+
+glm::dvec2 GlobeRectangle::computeNormalizedCoordinates(
+    const Cartographic& cartographic) const noexcept {
+  double east = this->_east;
+  double cartoLong = cartographic.longitude;
+  if (east < this->_west) {
+    east += CesiumUtility::Math::TwoPi;
+    if (cartoLong < this->_west) {
+      cartoLong += CesiumUtility::Math::TwoPi;
+    }
+  }
+
+  return glm::dvec2(
+      (cartoLong - this->_west) / (east - this->_west),
+      (cartographic.latitude - this->_south) / (this->_north - this->_south));
 }
 
 std::pair<GlobeRectangle, std::optional<GlobeRectangle>>

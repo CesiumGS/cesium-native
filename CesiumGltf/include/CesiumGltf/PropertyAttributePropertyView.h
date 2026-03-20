@@ -251,6 +251,12 @@ public:
    */
   int64_t size() const noexcept { return _size; }
 
+  /**
+   * @brief Gets the underlying \ref AccessorView from the
+   * PropertyAttributePropertyView.
+   */
+  const AccessorView<ElementType>& accessorView() const { return _accessor; }
+
 private:
   AccessorView<ElementType> _accessor;
   int64_t _size;
@@ -430,6 +436,12 @@ public:
    * @return The number of elements in this PropertyAttributePropertyView.
    */
   int64_t size() const noexcept { return _size; }
+
+  /**
+   * @brief Gets the underlying \ref AccessorView from the
+   * PropertyAttributePropertyView.
+   */
+  const AccessorView<ElementType>& accessorView() const { return _accessor; }
 
 private:
   AccessorView<ElementType> _accessor;

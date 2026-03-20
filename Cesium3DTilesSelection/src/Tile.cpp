@@ -1,5 +1,7 @@
 #include "TilesetContentManager.h"
 
+#include <Cesium3DTilesSelection/GltfModifier.h>
+#include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -18,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -271,16 +274,34 @@ bool anyRasterOverlaysNeedLoading(const Tile& tile) noexcept {
 
 } // namespace
 
-bool Tile::needsWorkerThreadLoading() const noexcept {
-  TileLoadState state = this->getState();
-  return state == TileLoadState::Unloaded ||
-         state == TileLoadState::FailedTemporarily ||
-         anyRasterOverlaysNeedLoading(*this);
+bool Tile::needsWorkerThreadLoading(
+    const GltfModifier* pModifier) const noexcept {
+  if (this->getState() == TileLoadState::Unloaded ||
+      this->getState() == TileLoadState::FailedTemporarily)
+    return true;
+
+  if (pModifier && pModifier->needsWorkerThreadModification(*this))
+    return true;
+
+  if (anyRasterOverlaysNeedLoading(*this))
+    return true;
+
+  return false;
 }
 
-bool Tile::needsMainThreadLoading() const noexcept {
-  return this->getState() == TileLoadState::ContentLoaded &&
-         this->isRenderContent();
+bool Tile::needsMainThreadLoading(
+    const GltfModifier* pModifier) const noexcept {
+  // Only render content needs main thread loading.
+  if (!this->isRenderContent())
+    return false;
+
+  if (this->getState() == TileLoadState::ContentLoaded)
+    return true;
+
+  if (pModifier && pModifier->needsMainThreadModification(*this))
+    return true;
+
+  return false;
 }
 
 void Tile::setParent(Tile* pParent) noexcept {

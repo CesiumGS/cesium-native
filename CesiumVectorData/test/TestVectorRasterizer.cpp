@@ -1,7 +1,7 @@
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
-#include <CesiumNativeTests/readFile.h>
+#include <CesiumNativeTests/checkFilesEqual.h>
 #include <CesiumNativeTests/writeTga.h>
 #include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -21,20 +21,6 @@ using namespace CesiumGeospatial;
 using namespace CesiumVectorData;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
-
-namespace {
-void checkFilesEqual(
-    const std::filesystem::path& fileA,
-    const std::filesystem::path& fileB) {
-  const std::vector<std::byte>& bytes = readFile(fileA);
-  const std::vector<std::byte>& bytes2 = readFile(fileB);
-
-  REQUIRE(bytes.size() == bytes2.size());
-  for (size_t i = 0; i < bytes.size(); i++) {
-    CHECK(bytes[i] == bytes2[i]);
-  }
-}
-} // namespace
 
 TEST_CASE("VectorRasterizer::rasterize") {
   const std::filesystem::path dir(
@@ -238,6 +224,101 @@ TEST_CASE("VectorRasterizer::rasterize") {
     checkFilesEqual(dir / "polygon-holes.tga", thisDir / "polygon-holes.tga");
   }
 
+  SUBCASE("Polygon with holes and outline") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 256;
+    asset->height = 256;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    VectorRasterizer rasterizer(rect, asset);
+
+    std::vector<std::vector<glm::dvec3>> composite{
+        std::vector<glm::dvec3>{
+            glm::dvec3(0.25, 0.25, 0.0),
+            glm::dvec3(0.25, 0.75, 0.0),
+            glm::dvec3(0.75, 0.75, 0.0),
+            glm::dvec3(0.75, 0.25, 0.0),
+            glm::dvec3(0.25, 0.25, 0.0)},
+        std::vector<glm::dvec3>{
+            glm::dvec3(0.4, 0.4, 0.0),
+            glm::dvec3(0.6, 0.4, 0.0),
+            glm::dvec3(0.6, 0.6, 0.0),
+            glm::dvec3(0.4, 0.6, 0.0),
+            glm::dvec3(0.4, 0.4, 0.0)}};
+
+    VectorStyle style{Color{255, 50, 12, 255}};
+    style.polygon.outline = LineStyle{
+        ColorStyle{Color{0, 0, 0, 255}, ColorMode::Normal},
+        5.0,
+        LineWidthMode::Pixels};
+
+    rasterizer.drawPolygon(composite, style.polygon);
+    rasterizer.finalize();
+    writeImageToTgaFile(*asset, "polygon-holes-outline.tga");
+    checkFilesEqual(
+        dir / "polygon-holes-outline.tga",
+        thisDir / "polygon-holes-outline.tga");
+  }
+
+  SUBCASE("Proper antimeridian handling") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 256;
+    asset->height = 256;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    GlobeRectangle antiRect{
+        Math::degreesToRadians(175.0),
+        0,
+        Math::degreesToRadians(-175.0),
+        Math::degreesToRadians(10.0)};
+
+    CartographicPolygon square(std::vector<glm::dvec2>{
+        glm::dvec2{Math::degreesToRadians(175.0), Math::degreesToRadians(0.0)},
+        glm::dvec2{Math::degreesToRadians(175.0), Math::degreesToRadians(10.0)},
+        glm::dvec2{Math::degreesToRadians(180.0), Math::degreesToRadians(10.0)},
+        glm::dvec2{Math::degreesToRadians(180.0), Math::degreesToRadians(0.0)},
+        glm::dvec2{
+            Math::degreesToRadians(175.0),
+            Math::degreesToRadians(0.0)}});
+
+    CartographicPolygon square2(std::vector<glm::dvec2>{
+        glm::dvec2{Math::degreesToRadians(-180.0), Math::degreesToRadians(0.0)},
+        glm::dvec2{
+            Math::degreesToRadians(-180.0),
+            Math::degreesToRadians(10.0)},
+        glm::dvec2{
+            Math::degreesToRadians(-175.0),
+            Math::degreesToRadians(10.0)},
+        glm::dvec2{Math::degreesToRadians(-175.0), Math::degreesToRadians(0.0)},
+        glm::dvec2{
+            Math::degreesToRadians(-180.0),
+            Math::degreesToRadians(0.0)}});
+
+    VectorStyle style{Color{0xff, 0x9e, 0x33, 0xff}};
+
+    VectorRasterizer rasterizer(antiRect, asset);
+    rasterizer.drawPolygon(
+        square,
+        VectorStyle{Color{0xff, 0xbb, 0x55, 0xff}}.polygon);
+    rasterizer.drawPolygon(
+        square2,
+        VectorStyle{Color{0x55, 0xbb, 0xff, 0xff}}.polygon);
+    rasterizer.finalize();
+
+    writeImageToTgaFile(*asset, "antimeridian.tga");
+    checkFilesEqual(dir / "antimeridian.tga", thisDir / "antimeridian.tga");
+  }
+
   SUBCASE("Mip levels") {
     CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
     asset.emplace();
@@ -326,6 +407,113 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     writeImageToTgaFile(*asset, "styling.tga");
     checkFilesEqual(dir / "styling.tga", thisDir / "styling.tga");
+  }
+
+  SUBCASE("Random color uses the same color across calls") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 1;
+    asset->height = 1;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(4, std::byte{255});
+
+    CartographicPolygon square(std::vector<glm::dvec2>{
+        glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(0.0)},
+        glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(1.0)},
+        glm::dvec2{Math::degreesToRadians(1.0), Math::degreesToRadians(1.0)},
+        glm::dvec2{Math::degreesToRadians(1.0), Math::degreesToRadians(0.0)},
+        glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(0.0)}});
+
+    VectorStyle style;
+    style.polygon.fill =
+        ColorStyle{Color{0xff, 0x00, 0xaa, 0xff}, ColorMode::Random};
+
+    VectorRasterizer rasterizer(rect, asset);
+    rasterizer.drawPolygon(square, style.polygon);
+    rasterizer.finalize();
+
+    const uint32_t writtenColor =
+        *reinterpret_cast<uint32_t*>(asset->pixelData.data());
+    VectorRasterizer rasterizer2(rect, asset);
+    rasterizer2.drawPolygon(square, style.polygon);
+    rasterizer2.finalize();
+
+    CHECK(
+        *reinterpret_cast<uint32_t*>(asset->pixelData.data()) == writtenColor);
+  }
+
+  SUBCASE("LineWidthMode::Meters produces the proper result") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 100;
+    asset->height = 100;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    // With a unit sphere, this means that the area covered by the rect is
+    // equivalent to one meter. If the image covers the same size, that
+    // means that 100 pixels = 1 meter. So, for a two pixel line width, we would
+    // need a 2/100 meter line width.
+    GlobeRectangle unitRect(0.0, 0.0, 1.0, 1.0);
+    const std::vector<glm::dvec3> line{
+        glm::dvec3(0.0, 0.0, 0.0),
+        glm::dvec3(
+            Math::radiansToDegrees(1.0),
+            Math::radiansToDegrees(1.0),
+            0.0)};
+    const LineStyle style{
+        ColorStyle{Color{0xff, 0x00, 0x00, 0xff}, ColorMode::Normal},
+        0.02,
+        LineWidthMode::Meters};
+
+    VectorRasterizer rasterizer(
+        unitRect,
+        asset,
+        0,
+        CesiumGeospatial::Ellipsoid::UNIT_SPHERE);
+    rasterizer.drawPolyline(line, style);
+    rasterizer.finalize();
+
+    writeImageToTgaFile(*asset, "line-meters.tga");
+    checkFilesEqual(dir / "line-meters.tga", thisDir / "line-meters.tga");
+  }
+
+  SUBCASE("Can handle two lines touching without a gap") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 64;
+    asset->height = 64;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    const LineStyle style{
+        ColorStyle{Color{0xff, 0x00, 0x00, 0xff}, ColorMode::Normal},
+        2,
+        LineWidthMode::Pixels};
+
+    GlobeRectangle antiRect =
+        GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0);
+
+    VectorRasterizer rasterizer(antiRect, asset);
+    const std::vector<glm::dvec3> line{
+        glm::dvec3(0.0, 0.0, 0.0),
+        glm::dvec3(180.0, 0.0, 0.0)};
+    rasterizer.drawPolyline(line, style);
+    const std::vector<glm::dvec3> line2{
+        glm::dvec3(-180.0, 0.0, 0.0),
+        glm::dvec3(0.0, 0.0, 0.0)};
+    rasterizer.drawPolyline(line2, style);
+    rasterizer.finalize();
+
+    writeImageToTgaFile(*asset, "lines-touching.tga");
+    checkFilesEqual(dir / "lines-touching.tga", thisDir / "lines-touching.tga");
   }
 }
 

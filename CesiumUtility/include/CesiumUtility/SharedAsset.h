@@ -8,8 +8,11 @@
 #include <atomic>
 
 namespace CesiumAsync {
-template <typename TAssetType, typename TAssetKey> class SharedAssetDepot;
-}
+
+template <typename TAssetType, typename TAssetKey, typename TContext>
+class SharedAssetDepot;
+
+} // namespace CesiumAsync
 
 namespace CesiumUtility {
 
@@ -149,9 +152,10 @@ private:
 
   mutable std::atomic<std::int32_t> _referenceCount{0};
   IDepotOwningAsset<T>* _pDepot{nullptr};
+  bool _isInvalidated{false};
 
   // To allow the depot to modify _pDepot.
-  template <typename TAssetType, typename TAssetKey>
+  template <typename TAssetType, typename TAssetKey, typename TContext>
   friend class CesiumAsync::SharedAssetDepot;
   friend T;
 };

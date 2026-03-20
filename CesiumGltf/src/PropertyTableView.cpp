@@ -28,7 +28,7 @@ template <typename T>
 PropertyViewStatusType checkOffsetsBuffer(
     const std::span<const std::byte>& offsetBuffer,
     size_t valueBufferSize,
-    size_t instanceCount,
+    uint64_t instanceCount,
     bool checkBitSize,
     PropertyViewStatusType offsetsNotSortedError,
     PropertyViewStatusType offsetOutOfBoundsError) noexcept {

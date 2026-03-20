@@ -3,16 +3,23 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/Library.h>
+#include <CesiumAsync/SharedFuture.h>
+#include <CesiumClientCommon/OAuth2PKCE.h>
 #include <CesiumIonClient/ApplicationData.h>
 #include <CesiumIonClient/Assets.h>
 #include <CesiumIonClient/Defaults.h>
 #include <CesiumIonClient/Geocoder.h>
+#include <CesiumIonClient/LoginToken.h>
 #include <CesiumIonClient/Profile.h>
 #include <CesiumIonClient/Response.h>
 #include <CesiumIonClient/Token.h>
 #include <CesiumIonClient/TokenList.h>
+#include <CesiumUtility/Result.h>
 
 #include <cstdint>
+#include <mutex>
+#include <optional>
+#include <string>
 
 namespace CesiumIonClient {
 
@@ -94,10 +101,13 @@ public:
    * @param appData The app data retrieved from the Cesium ion server.
    * @param ionApiUrl The base URL of the Cesium ion API.
    * @param ionAuthorizeUrl The URL of the Cesium ion OAuth authorization page.
-   * @return A future that resolves to a Cesium ion {@link Connection} once the
-   * user authorizes the application and the token handshake completes.
+   * @return A future that resolves to a Cesium ion @ref Connection once the
+   * user authorizes the application and the token handshake completes. If the
+   * authorization fails, the \ref CesiumUtility::Result::value will be
+   * `std::nullopt`, and \ref CesiumUtility::Result::errors will contain details
+   * about the failure.
    */
-  static CesiumAsync::Future<Connection> authorize(
+  static CesiumAsync::Future<CesiumUtility::Result<Connection>> authorize(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::string& friendlyApplicationName,
@@ -147,10 +157,14 @@ public:
   /**
    * @brief Creates a connection to Cesium ion using the provided access token.
    *
+   * This connection will *not* have the ability to refresh itself if the access
+   * token is invalid. This constructor is intended to be used with tokens that
+   * do not expire, rather than the Cesium ion OAuth2 login tokens.
+   *
    * @param asyncSystem The async system used to do work in threads.
    * @param pAssetAccessor The interface used to interact with the Cesium ion
    * REST API.
-   * @param accessToken The access token
+   * @param accessToken The access token.
    * @param appData The app data retrieved from the Cesium ion server.
    * @param apiUrl The base URL of the Cesium ion API.
    */
@@ -162,32 +176,81 @@ public:
       const std::string& apiUrl = "https://api.cesium.com");
 
   /**
+   * @brief Creates a "login" connection to Cesium ion.
+   *
+   * This type of connection is usually initiated with a call to @ref authorize.
+   * The parameters of the resulting connection can then be saved in a safe
+   * location, and the authorized login can be resumed later by passing them to
+   * this constructor.
+   *
+   * @param asyncSystem The async system used to do work in threads.
+   * @param pAssetAccessor The interface used to interact with the Cesium ion
+   * REST API.
+   * @param accessToken The access token.
+   * @param refreshToken The refresh token.
+   * @param clientId The OAuth2 client ID used to authorize the token for this
+   * connection. This will be used to refresh the token when it nears
+   * expiration.
+   * @param redirectPath The OAuth2 redirect path used to authorize this token
+   * for this connection. This will be used to refresh the token when it nears
+   * expiration.
+   * @param appData The app data retrieved from the Cesium ion server.
+   * @param apiUrl The base URL of the Cesium ion API.
+   */
+  Connection(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const CesiumIonClient::LoginToken& accessToken,
+      const std::string& refreshToken,
+      int64_t clientId,
+      const std::string& redirectPath,
+      const CesiumIonClient::ApplicationData& appData,
+      const std::string& apiUrl = "https://api.cesium.com");
+
+  /**
+   * @brief Creates a connection to a Cesium ion server without authentication.
+   *
+   * This is intended to be used with Cesium ion Self-Hosted instances that are
+   * set to Single User authentication.
+   *
+   * @param asyncSystem The async system used to do work in threads.
+   * @param pAssetAccessor The interface used to interact with the Cesium ion
+   * REST API.
+   * @param appData The app data retrieved from the Cesium ion server.
+   * @param apiUrl The base URL of the Cesium ion API.
+   */
+  Connection(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const CesiumIonClient::ApplicationData& appData,
+      const std::string& apiUrl);
+
+  /**
    * @brief Gets the async system used by this connection to do work in threads.
    */
-  const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept {
-    return this->_asyncSystem;
-  }
+  const CesiumAsync::AsyncSystem& getAsyncSystem() const noexcept;
 
   /**
    * @brief Gets the interface used by this connection to interact with the
    * Cesium ion REST API.
    */
   const std::shared_ptr<CesiumAsync::IAssetAccessor>&
-  getAssetAccessor() const noexcept {
-    return this->_pAssetAccessor;
-  }
+  getAssetAccessor() const noexcept;
 
   /**
    * @brief Gets the access token used by this connection.
    */
-  const std::string& getAccessToken() const noexcept {
-    return this->_accessToken;
-  }
+  const std::string& getAccessToken() const noexcept;
+
+  /**
+   * @brief Gets the refresh token used by this connection.
+   */
+  const std::string& getRefreshToken() const noexcept;
 
   /**
    * @brief Gets the Cesium ion API base URL.
    */
-  const std::string& getApiUrl() const noexcept { return this->_apiUrl; }
+  const std::string& getApiUrl() const noexcept;
 
   /**
    * @brief Retrieves profile information for the access token currently being
@@ -324,7 +387,7 @@ public:
   CesiumAsync::Future<Response<GeocoderResult>> geocode(
       GeocoderProviderType provider,
       GeocoderRequestType type,
-      const std::string& query);
+      const std::string& query) const;
 
   /**
    * @brief Decodes a token ID from a token.
@@ -336,12 +399,30 @@ public:
   static std::optional<std::string> getIdFromToken(const std::string& token);
 
 private:
+  // This is a separate structure so that it can outlive the Connection while an
+  // async operation is in progress.
+  struct TokenDetails {
+    TokenDetails(
+        const CesiumIonClient::LoginToken& accessToken,
+        const std::string& refreshToken);
+
+    CesiumIonClient::LoginToken accessToken;
+    std::string refreshToken;
+    std::optional<CesiumAsync::SharedFuture<CesiumUtility::Result<std::string>>>
+        refreshInProgress;
+    std::mutex mutex;
+  };
+
   CesiumAsync::Future<Response<TokenList>> tokens(const std::string& url) const;
+  CesiumAsync::Future<CesiumUtility::Result<std::string>>
+  ensureValidToken() const;
 
   CesiumAsync::AsyncSystem _asyncSystem;
   std::shared_ptr<CesiumAsync::IAssetAccessor> _pAssetAccessor;
-  std::string _accessToken;
   std::string _apiUrl;
   CesiumIonClient::ApplicationData _appData;
+  int64_t _clientId;
+  std::string _redirectPath;
+  std::shared_ptr<TokenDetails> _pTokenDetails;
 };
 } // namespace CesiumIonClient

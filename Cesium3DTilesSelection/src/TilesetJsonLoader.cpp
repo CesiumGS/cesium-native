@@ -1108,6 +1108,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& asyncSystem = loadInput.asyncSystem;
   const auto& pAssetAccessor = loadInput.pAssetAccessor;
   const auto& pLogger = loadInput.pLogger;
+  const auto& pSharedAssetSystem = loadInput.pSharedAssetSystem;
   const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
 
@@ -1142,6 +1143,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            externalContentInitializer = std::move(externalContentInitializer),
            pAssetAccessor,
            asyncSystem,
+           pSharedAssetSystem,
            requestHeaders](std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                pCompletedRequest) mutable {
             auto pResponse = pCompletedRequest->response();
@@ -1191,6 +1193,9 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                   contentOptions.ktx2TranscodeTargets;
               gltfOptions.applyTextureTransform =
                   contentOptions.applyTextureTransform;
+              if (pSharedAssetSystem) {
+                gltfOptions.pSharedAssetSystem = pSharedAssetSystem;
+              }
               return converter(responseData, gltfOptions, assetFetcher)
                   .thenImmediately(
                       [ellipsoid,

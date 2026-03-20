@@ -40,8 +40,12 @@ struct ColorStyle {
    * For `ColorMode::Normal`, this just returns the value of `color`. For
    * `ColorMode::Random`, this returns a randomized value obtained based on
    * the rules described in \ref ColorMode.
+   *
+   * @param randomColorSeed The seed for the random color to be generated, if
+   * `colorMode` is set to `Random`. The same color will always be returned for
+   * a given seed, but nearby seeds will not usually return nearby colors.
    */
-  CesiumUtility::Color getColor() const;
+  CesiumUtility::Color getColor(size_t randomColorSeed = 0) const;
 };
 
 /** @brief The mode to use when interpreting a given line width. */

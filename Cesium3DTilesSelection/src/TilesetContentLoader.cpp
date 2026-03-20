@@ -34,6 +34,11 @@ TileLoadInput::TileLoadInput(
       requestHeaders{requestHeaders_},
       ellipsoid(ellipsoid_) {}
 
+TileLoadInput::~TileLoadInput() noexcept = default;
+
+TileLoadInput::TileLoadInput(const TileLoadInput&) noexcept = default;
+TileLoadInput::TileLoadInput(TileLoadInput&&) noexcept = default;
+
 TileLoadResult TileLoadResult::createFailedResult(
     std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest> pCompletedRequest) {

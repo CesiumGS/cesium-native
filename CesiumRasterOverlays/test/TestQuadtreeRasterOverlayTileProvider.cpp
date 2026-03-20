@@ -11,6 +11,8 @@
 #include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -46,14 +48,8 @@ namespace {
 class TestTileProvider : public QuadtreeRasterOverlayTileProvider {
 public:
   TestTileProvider(
-      const IntrusivePointer<const RasterOverlay>& pOwner,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CesiumUtility::CreditSystem>& pCreditSystem,
-      std::optional<Credit> credit,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters,
       const CesiumGeospatial::Projection& projection,
       const CesiumGeometry::QuadtreeTilingScheme& tilingScheme,
       const CesiumGeometry::Rectangle& coverageRectangle,
@@ -62,13 +58,8 @@ public:
       uint32_t imageWidth,
       uint32_t imageHeight) noexcept
       : QuadtreeRasterOverlayTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            pCreditSystem,
-            credit,
-            pPrepareRendererResources,
-            pLogger,
+            pCreator,
+            parameters,
             projection,
             tilingScheme,
             coverageRectangle,
@@ -113,27 +104,12 @@ public:
       : RasterOverlay(name, options) {}
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<CreditSystem>& /* pCreditSystem */,
-      const std::shared_ptr<IPrepareRasterOverlayRendererResources>&
-          pPrepareRendererResources,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      CesiumUtility::IntrusivePointer<const RasterOverlay> pOwner)
+      const CreateRasterOverlayTileProviderParameters& parameters)
       const override {
-    if (!pOwner) {
-      pOwner = this;
-    }
-
-    return asyncSystem.createResolvedFuture<CreateTileProviderResult>(
-        new TestTileProvider(
-            pOwner,
-            asyncSystem,
-            pAssetAccessor,
-            nullptr,
-            std::nullopt,
-            pPrepareRendererResources,
-            pLogger,
+    return parameters.externals.asyncSystem
+        .createResolvedFuture<CreateTileProviderResult>(new TestTileProvider(
+            this,
+            parameters,
             WebMercatorProjection(Ellipsoid::WGS84),
             QuadtreeTilingScheme(
                 WebMercatorProjection::computeMaximumProjectedRectangle(
@@ -164,34 +140,26 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
   AsyncSystem asyncSystem(pTaskProcessor);
   IntrusivePointer<TestRasterOverlay> pOverlay = new TestRasterOverlay("Test");
 
-  IntrusivePointer<RasterOverlayTileProvider> pProvider = nullptr;
-
-  pOverlay
-      ->createTileProvider(
-          asyncSystem,
+  IntrusivePointer<ActivatedRasterOverlay> pActivated = pOverlay->activate(
+      RasterOverlayExternals{
           pAssetAccessor,
           nullptr,
+          asyncSystem,
           nullptr,
-          spdlog::default_logger(),
-          nullptr)
-      .thenInMainThread(
-          [&pProvider](RasterOverlay::CreateTileProviderResult&& created) {
-            CHECK(created);
-            pProvider = *created;
-          });
+          spdlog::default_logger()},
+      Ellipsoid::WGS84);
 
   asyncSystem.dispatchMainThreadTasks();
 
-  REQUIRE(pProvider);
-  REQUIRE(!pProvider->isPlaceholder());
+  REQUIRE(pActivated->getTileProvider() != nullptr);
 
   SUBCASE("uses root tile for a large area") {
     Rectangle rectangle =
         GeographicProjection::computeMaximumProjectedRectangle(
             Ellipsoid::WGS84);
     IntrusivePointer<RasterOverlayTile> pTile =
-        pProvider->getTile(rectangle, glm::dvec2(256));
-    pProvider->loadTile(*pTile);
+        pActivated->getTile(rectangle, glm::dvec2(256));
+    pActivated->loadTile(*pTile);
 
     while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();
@@ -215,7 +183,7 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
     glm::dvec2 center(0.1, 0.2);
 
     TestTileProvider* pTestProvider =
-        static_cast<TestTileProvider*>(pProvider.get());
+        static_cast<TestTileProvider*>(pActivated->getTileProvider());
 
     // Select a rectangle that spans four tiles at tile level 8.
     const uint32_t expectedLevel = 8;
@@ -246,8 +214,8 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
     pTestProvider->errorTiles.emplace_back(*southeastID);
 
     IntrusivePointer<RasterOverlayTile> pTile =
-        pProvider->getTile(tileRectangle, targetScreenPixels);
-    pProvider->loadTile(*pTile);
+        pActivated->getTile(tileRectangle, targetScreenPixels);
+    pActivated->loadTile(*pTile);
 
     while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
       asyncSystem.dispatchMainThreadTasks();

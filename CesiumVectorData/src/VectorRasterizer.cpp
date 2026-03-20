@@ -17,6 +17,7 @@
 #include <blend2d/context.h>
 #include <blend2d/format.h>
 #include <blend2d/geometry.h>
+#include <blend2d/path.h>
 #include <blend2d/rgba.h>
 #include <glm/ext/vector_double2.hpp>
 
@@ -24,7 +25,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <span>
 #include <vector>
 
 using namespace CesiumGeospatial;
@@ -38,11 +38,11 @@ BLPoint radiansToPoint(
     double latitude,
     const GlobeRectangle& rect,
     const BLContext& context) {
+  const glm::dvec2 point =
+      rect.computeNormalizedCoordinates(Cartographic(longitude, latitude));
   return BLPoint(
-      (longitude - rect.getWest()) / rect.computeWidth() *
-          context.targetWidth(),
-      (1.0 - (latitude - rect.getSouth()) / rect.computeHeight()) *
-          context.targetHeight());
+      point.x * context.targetWidth(),
+      (1.0 - point.y) * context.targetHeight());
 }
 
 void setStrokeWidth(
@@ -57,6 +57,10 @@ void setStrokeWidth(
         (context.targetWidth() * style.width) /
         (bounds.computeWidth() * ellipsoid.getRadii().x));
   }
+}
+
+template <typename T> size_t seedForObject(const T& object, size_t base) {
+  return base ^ reinterpret_cast<size_t>(&object);
 }
 } // namespace
 
@@ -90,11 +94,12 @@ VectorRasterizer::VectorRasterizer(
       imageHeight,
       BL_FORMAT_PRGB32,
       reinterpret_cast<void*>(pData),
-      (int64_t)imageWidth * (int64_t)this->_imageAsset->channels);
+      intptr_t(imageWidth) * intptr_t(this->_imageAsset->channels));
 
   this->_context.begin(this->_image);
   // Initialize the image as all transparent.
   this->_context.clearAll();
+  this->_context.setFillRule(BL_FILL_RULE_EVEN_ODD);
 }
 
 void VectorRasterizer::drawPolygon(
@@ -116,7 +121,7 @@ void VectorRasterizer::drawPolygon(
     this->_context.fillPolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.fill->getColor().toRgba32()));
+        BLRgba32(style.fill->getColor(seedForObject(polygon, 13)).toRgba32()));
   }
 
   if (style.outline) {
@@ -128,7 +133,8 @@ void VectorRasterizer::drawPolygon(
     this->_context.strokePolygon(
         vertices.data(),
         vertices.size(),
-        BLRgba32(style.outline->getColor().toRgba32()));
+        BLRgba32(
+            style.outline->getColor(seedForObject(polygon, 31)).toRgba32()));
   }
 }
 
@@ -139,25 +145,38 @@ void VectorRasterizer::drawPolygon(
     return;
   }
 
-  std::vector<BLPoint> vertices;
-  vertices.reserve(polygon.size());
+  BLPath path;
 
   for (const std::vector<glm::dvec3>& ring : polygon) {
-    // GeoJSON polygons have the reverse winding order from blend2D
-    for (auto it = ring.rbegin(); it != ring.rend(); ++it) {
-      vertices.emplace_back(radiansToPoint(
+    if (ring.empty())
+      continue;
+
+    auto it = ring.rbegin();
+    auto end = ring.rend();
+
+    glm::dvec3 firstPoint = *it;
+    path.moveTo(radiansToPoint(
+        CesiumUtility::Math::degreesToRadians(firstPoint.x),
+        CesiumUtility::Math::degreesToRadians(firstPoint.y),
+        this->_bounds,
+        this->_context));
+    ++it;
+
+    for (; it != end; ++it) {
+      path.lineTo(radiansToPoint(
           CesiumUtility::Math::degreesToRadians(it->x),
           CesiumUtility::Math::degreesToRadians(it->y),
           this->_bounds,
           this->_context));
     }
+
+    path.close();
   }
 
   if (style.fill) {
-    this->_context.fillPolygon(
-        vertices.data(),
-        vertices.size(),
-        BLRgba32(style.fill->getColor().toRgba32()));
+    this->_context.fillPath(
+        path,
+        BLRgba32(style.fill->getColor(seedForObject(polygon, 13)).toRgba32()));
   }
 
   if (style.outline) {
@@ -166,15 +185,16 @@ void VectorRasterizer::drawPolygon(
         *style.outline,
         this->_ellipsoid,
         this->_bounds);
-    this->_context.strokePolygon(
-        vertices.data(),
-        vertices.size(),
-        BLRgba32(style.outline->getColor().toRgba32()));
+
+    this->_context.strokePath(
+        path,
+        BLRgba32(
+            style.outline->getColor(seedForObject(polygon, 31)).toRgba32()));
   }
 }
 
 void VectorRasterizer::drawPolyline(
-    const std::span<const glm::dvec3>& points,
+    const std::vector<glm::dvec3>& points,
     const LineStyle& style) {
   if (this->_finalized) {
     return;
@@ -197,7 +217,7 @@ void VectorRasterizer::drawPolyline(
   this->_context.strokePolyline(
       vertices.data(),
       vertices.size(),
-      BLRgba32(style.getColor().toRgba32()));
+      BLRgba32(style.getColor(seedForObject(points, 31)).toRgba32()));
 }
 
 void VectorRasterizer::drawGeoJsonObject(

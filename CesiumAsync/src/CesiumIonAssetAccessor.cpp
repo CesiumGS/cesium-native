@@ -238,7 +238,7 @@ CesiumIonAssetAccessor::refreshTokenInMainThread(
 
   SPDLOG_LOGGER_INFO(
       this->_pLogger,
-      "Refreshing Cesium ion token for url {}.",
+      "Refreshing Cesium ion token for URL {}.",
       this->_assetEndpointUrl);
 
   this->_tokenRefreshInProgress =
@@ -280,7 +280,7 @@ CesiumIonAssetAccessor::refreshTokenInMainThread(
                                       url = this->_assetEndpointUrl]() {
                       SPDLOG_LOGGER_INFO(
                           pLogger,
-                          "Successfuly refreshed Cesium ion token for url {}.",
+                          "Successfully refreshed Cesium ion token for URL {}.",
                           url);
 
                       return update;

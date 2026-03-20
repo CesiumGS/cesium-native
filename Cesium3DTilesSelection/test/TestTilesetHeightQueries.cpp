@@ -65,6 +65,7 @@ TEST_CASE("Tileset height queries") {
          Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)});
 
     while (!future.isReady()) {
+      externals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
     }
 
@@ -104,6 +105,7 @@ TEST_CASE("Tileset height queries") {
          Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)});
 
     while (!future.isReady()) {
+      externals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
     }
 
@@ -138,6 +140,7 @@ TEST_CASE("Tileset height queries") {
          Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)});
 
     while (!future.isReady()) {
+      externals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
     }
 
@@ -177,6 +180,7 @@ TEST_CASE("Tileset height queries") {
          Cartographic::fromDegrees(-75.612025, 40.041684, 0.0)});
 
     while (!future.isReady()) {
+      externals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
     }
 
@@ -212,6 +216,7 @@ TEST_CASE("Tileset height queries") {
         {Cartographic::fromDegrees(-75.612559, 40.042183, 0.0)});
 
     while (!future.isReady()) {
+      externals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
     }
 
@@ -231,6 +236,7 @@ TEST_CASE("Tileset height queries") {
         {Cartographic::fromDegrees(-75.612559, 40.042183, 0.0)});
 
     while (!future.isReady()) {
+      externals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
     }
 
@@ -250,6 +256,7 @@ TEST_CASE("Tileset height queries") {
         {Cartographic::fromDegrees(-75.612559, 40.042183, 1.0)});
 
     while (!future.isReady()) {
+      externals.asyncSystem.dispatchMainThreadTasks();
       pTileset->loadTiles();
     }
 
@@ -292,6 +299,7 @@ TEST_CASE("Tileset height queries") {
         {Cartographic::fromDegrees(10.0, 45.0, 0.0)});
 
     while (!future.isReady()) {
+      externals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
     }
 
@@ -303,6 +311,48 @@ TEST_CASE("Tileset height queries") {
     CHECK(Math::equalsEpsilon(
         results.positions[0].height,
         83.0,
+        0.0,
+        Math::Epsilon1));
+  }
+
+  SUBCASE("stacked-cubes on custom ellipsoid") {
+    // This tileset has two cubes on top of each other, each in a different
+    // tile, so we can test that the height of the top one is returned.
+    // Relative to the WGS84 ellipsoid, the bottom cube has a height of 78.0
+    // meters, and the upper cube has a height of 83.0 meters.
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "stacked-cubes" / "tileset.json").u8string()));
+
+    CesiumGeospatial::Ellipsoid ellipsoid(
+        CesiumGeospatial::Ellipsoid::WGS84.getRadii() - glm::dvec3(15.0));
+
+    TilesetOptions options;
+    options.ellipsoid = ellipsoid;
+
+    Tileset tileset(externals, url, options);
+
+    Cartographic samplePosition = Cartographic::fromDegrees(10.0, 45.0, 0.0);
+    Future<SampleHeightResult> future =
+        tileset.sampleHeightMostDetailed({samplePosition});
+
+    while (!future.isReady()) {
+      externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
+    }
+
+    SampleHeightResult results = future.waitInMainThread();
+    CHECK(results.warnings.empty());
+    REQUIRE(results.positions.size() == 1);
+
+    glm::dvec3 rayDirection = -ellipsoid.geodeticSurfaceNormal(samplePosition);
+    glm::dvec3 difference = glm::dvec3(15.0) * rayDirection;
+
+    CHECK(results.sampleSuccess[0]);
+    CHECK(Math::equalsEpsilon(
+        results.positions[0].height,
+        83.0 + glm::length(difference),
         0.0,
         Math::Epsilon1));
   }

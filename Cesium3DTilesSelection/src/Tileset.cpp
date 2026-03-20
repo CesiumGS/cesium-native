@@ -72,7 +72,7 @@ Tileset::Tileset(
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{
-          new TilesetContentManager(
+          TilesetContentManager::createFromLoader(
               _externals,
               _options,
               std::move(pCustomLoader),
@@ -91,7 +91,10 @@ Tileset::Tileset(
       _distances(),
       _childOcclusionProxies(),
       _pTilesetContentManager{
-          new TilesetContentManager(this->_externals, this->_options, url),
+          TilesetContentManager::createFromUrl(
+              this->_externals,
+              this->_options,
+              url),
       },
       _heightRequests(),
       _defaultViewGroup() {}
@@ -107,7 +110,7 @@ Tileset::Tileset(
       _options(options),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{new TilesetContentManager(
+      _pTilesetContentManager{TilesetContentManager::createFromCesiumIon(
           this->_externals,
           this->_options,
           ionAssetID,
@@ -125,7 +128,7 @@ Tileset::Tileset(
       _options(options),
       _distances(),
       _childOcclusionProxies(),
-      _pTilesetContentManager{new TilesetContentManager(
+      _pTilesetContentManager{TilesetContentManager::createFromLoaderFactory(
           _externals,
           _options,
           std::move(loaderFactory))} {}
@@ -168,6 +171,10 @@ void Tileset::setShowCreditsOnScreen(bool showCreditsOnScreen) noexcept {
   for (auto credit : credits) {
     pCreditSystem->setShowOnScreen(credit, showCreditsOnScreen);
   }
+}
+
+const CesiumUtility::CreditSource& Tileset::getCreditSource() const noexcept {
+  return this->_pTilesetContentManager->getCreditSource();
 }
 
 const Tile* Tileset::getRootTile() const noexcept {
@@ -389,9 +396,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
       _options.enableFrustumCulling && !_options.enableLodTransitionPeriod;
   _options.enableFogCulling =
       _options.enableFogCulling && !_options.enableLodTransitionPeriod;
-
-  this->_asyncSystem.dispatchMainThreadTasks();
-
   ViewUpdateResult& result = viewGroup.getViewUpdateResult();
 
   Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
@@ -437,9 +441,6 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
 void Tileset::loadTiles() {
   CESIUM_TRACE("Tileset::loadTiles");
-
-  this->_asyncSystem.dispatchMainThreadTasks();
-
   Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
   if (!pRootTile) {
     // If the root tile is marked as ready, but doesn't actually exist, then
@@ -468,18 +469,12 @@ void Tileset::loadTiles() {
 }
 
 void Tileset::registerLoadRequester(TileLoadRequester& requester) {
-  if (requester._pTilesetContentManager == this->_pTilesetContentManager) {
-    return;
-  }
+  this->_pTilesetContentManager->registerTileRequester(requester);
+}
 
-  if (requester._pTilesetContentManager != nullptr) {
-    requester._pTilesetContentManager->unregisterTileRequester(requester);
-  }
-
-  requester._pTilesetContentManager = this->_pTilesetContentManager;
-  if (requester._pTilesetContentManager != nullptr) {
-    requester._pTilesetContentManager->registerTileRequester(requester);
-  }
+bool Tileset::waitForAllLoadsToComplete(double maximumWaitTimeInMilliseconds) {
+  return this->_pTilesetContentManager->waitUntilIdle(
+      maximumWaitTimeInMilliseconds);
 }
 
 int32_t Tileset::getNumberOfTilesLoaded() const {
@@ -531,11 +526,11 @@ CesiumAsync::Future<const TilesetMetadata*> Tileset::loadMetadata() {
        asyncSystem =
            this->getAsyncSystem()]() -> Future<const TilesetMetadata*> {
         Tile* pRoot = pManager->getRootTile();
-        CESIUM_ASSERT(pRoot);
 
         TileExternalContent* pExternal =
-            pRoot->getContent().getExternalContent();
+            pRoot ? pRoot->getContent().getExternalContent() : nullptr;
         if (!pExternal) {
+          // Something went wrong while loading the root tile, so exit early.
           return asyncSystem.createResolvedFuture<const TilesetMetadata*>(
               nullptr);
         }
@@ -1115,6 +1110,24 @@ bool Tileset::_kickDescendantsAndRenderTile(
         selectionState.kick();
       });
 
+  // If any kicked tiles were rendered last frame, add them to the
+  // tilesFadingOut. This is unlikely! It would imply that a tile rendered last
+  // frame has suddenly become unrenderable, and therefore eligible for kicking.
+  //
+  // In general, it's possible that a Tile previously traversed has been deleted
+  // completely, so we have to be careful about dereferencing the Tile pointers
+  // given to the callback below. However, we can be certain that a Tile that
+  // was rendered last frame has _not_ been deleted yet.
+  traversalState.forEachPreviousDescendant(
+      [&result](
+          const Tile::Pointer& pTile,
+          const TileSelectionState& previousState) {
+        addToTilesFadingOutIfPreviouslyRendered(
+            previousState.getResult(),
+            *pTile,
+            result);
+      });
+
   // Remove all descendants from the render list and add this tile.
   std::vector<Tile::ConstPointer>& renderList = result.tilesToRenderThisFrame;
   renderList.erase(
@@ -1140,8 +1153,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
       getPreviousState(frameState.viewGroup, tile).getResult();
   const bool wasRenderedLastFrame =
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
-  const bool wasReallyRenderedLastFrame =
-      wasRenderedLastFrame && tile.isRenderable();
+  const bool isRenderable = tile.isRenderable();
+  const bool wasReallyRenderedLastFrame = wasRenderedLastFrame && isRenderable;
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
@@ -1165,10 +1178,8 @@ bool Tileset::_kickDescendantsAndRenderTile(
     queuedForLoad = true;
   }
 
-  bool isRenderable = tile.isRenderable();
   traversalDetails.allAreRenderable = isRenderable;
-  traversalDetails.anyWereRenderedLastFrame =
-      isRenderable && wasRenderedLastFrame;
+  traversalDetails.anyWereRenderedLastFrame = wasReallyRenderedLastFrame;
 
   return queuedForLoad;
 }
@@ -1515,7 +1526,8 @@ void Tileset::addTileToLoadQueue(
     TileLoadPriorityGroup priorityGroup,
     double priority) {
   frameState.viewGroup.addToLoadQueue(
-      TileLoadTask{&tile, priorityGroup, priority});
+      TileLoadTask{&tile, priorityGroup, priority},
+      this->_externals.pGltfModifier);
 }
 
 Tileset::TraversalDetails Tileset::createTraversalDetailsForSingleTile(
