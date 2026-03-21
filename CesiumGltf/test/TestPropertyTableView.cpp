@@ -58,9 +58,8 @@ void addBufferToModel(Model& model, const std::vector<T>& values) {
 }
 } // namespace
 
-TEST_CASE(
-    "Test PropertyTableView on model without EXT_structural_metadata "
-    "extension") {
+TEST_CASE("Test PropertyTableView on model without EXT_structural_metadata "
+          "extension") {
   Model model;
 
   // Create an erroneously isolated property table.
@@ -4360,10 +4359,9 @@ TEST_CASE("Test callback for scalar PropertyTableProperty") {
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<uint32_t>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<uint32_t>,
+                          decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
           REQUIRE(propertyValue.size() > 0);
@@ -4376,9 +4374,8 @@ TEST_CASE("Test callback for scalar PropertyTableProperty") {
             REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -4430,10 +4427,9 @@ TEST_CASE("Test callback for scalar PropertyTableProperty (normalized)") {
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<uint32_t, true>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<uint32_t, true>,
+                          decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
           REQUIRE(propertyValue.size() > 0);
@@ -4446,9 +4442,8 @@ TEST_CASE("Test callback for scalar PropertyTableProperty (normalized)") {
             REQUIRE(propertyValue.get(i) == normalize(expectedValue));
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -4507,10 +4502,9 @@ TEST_CASE("Test callback for vecN PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<glm::ivec3>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<glm::ivec3>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             auto expectedValue = values[static_cast<size_t>(i)];
             REQUIRE(
@@ -4519,9 +4513,8 @@ TEST_CASE("Test callback for vecN PropertyTableProperty") {
             REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -4581,19 +4574,17 @@ TEST_CASE("Test callback for vecN PropertyTableProperty (normalized)") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<glm::ivec3, true>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<glm::ivec3, true>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             auto expectedValue = values[static_cast<size_t>(i)];
             REQUIRE(propertyValue.getRaw(i) == expectedValue);
             REQUIRE(propertyValue.get(i) == normalize(expectedValue));
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -4661,19 +4652,17 @@ TEST_CASE("Test callback for matN PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<glm::umat2x2>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<glm::umat2x2>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             auto expectedValue = values[static_cast<size_t>(i)];
             REQUIRE(propertyValue.getRaw(i) == expectedValue);
             REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
         invokedCallbackCount++;
       });
@@ -4743,10 +4732,9 @@ TEST_CASE("Test callback for matN PropertyTableProperty (normalized)") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<glm::umat2x2, true>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<glm::umat2x2, true>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             auto expectedValue = values[static_cast<size_t>(i)];
             REQUIRE(
@@ -4755,9 +4743,8 @@ TEST_CASE("Test callback for matN PropertyTableProperty (normalized)") {
             REQUIRE(propertyValue.get(i) == normalize(expectedValue));
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
         invokedCallbackCount++;
       });
@@ -4829,10 +4816,9 @@ TEST_CASE("Test callback for boolean PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<bool>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<bool>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             auto expectedValue = expected[static_cast<size_t>(i)];
             REQUIRE(
@@ -4840,9 +4826,8 @@ TEST_CASE("Test callback for boolean PropertyTableProperty") {
             REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -4921,10 +4906,9 @@ TEST_CASE("Test callback for string PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<std::string_view>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<std::string_view>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             auto expectedValue = expected[static_cast<size_t>(i)];
             REQUIRE(
@@ -4933,9 +4917,8 @@ TEST_CASE("Test callback for string PropertyTableProperty") {
             REQUIRE(propertyValue.get(i) == expectedValue);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -5005,10 +4988,9 @@ TEST_CASE("Test callback for enum PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<uint64_t>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<uint64_t>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             auto expectedValue = expected[static_cast<size_t>(i)];
             REQUIRE(propertyValue.getRaw(i) == expectedValue);
@@ -5018,9 +5000,8 @@ TEST_CASE("Test callback for enum PropertyTableProperty") {
                 expectedNames[static_cast<size_t>(i)]);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -5079,10 +5060,10 @@ TEST_CASE("Test callback for scalar array PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<PropertyArrayView<uint32_t>>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<
+                              PropertyArrayView<uint32_t>>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             PropertyArrayView<uint32_t> array = propertyValue.getRaw(i);
             auto maybeArray = propertyValue.get(i);
@@ -5094,9 +5075,8 @@ TEST_CASE("Test callback for scalar array PropertyTableProperty") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -5171,9 +5151,8 @@ TEST_CASE("Test callback for scalar array PropertyTableProperty (normalized)") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -5238,10 +5217,10 @@ TEST_CASE("Test callback for vecN array PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<PropertyArrayView<glm::ivec3>>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<
+                              PropertyArrayView<glm::ivec3>>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             PropertyArrayView<glm::ivec3> array = propertyValue.getRaw(i);
             auto maybeArray = propertyValue.get(i);
@@ -5253,9 +5232,8 @@ TEST_CASE("Test callback for vecN array PropertyTableProperty") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -5336,9 +5314,8 @@ TEST_CASE("Test callback for vecN array PropertyTableProperty (normalized)") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -5416,10 +5393,10 @@ TEST_CASE("Test callback for matN array PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<PropertyArrayView<glm::imat2x2>>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<
+                              PropertyArrayView<glm::imat2x2>>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             PropertyArrayView<glm::imat2x2> member = propertyValue.getRaw(i);
             for (int64_t j = 0; j < member.size(); ++j) {
@@ -5427,9 +5404,8 @@ TEST_CASE("Test callback for matN array PropertyTableProperty") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -5508,10 +5484,9 @@ TEST_CASE("Test callback for boolean array PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() > 0);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<PropertyArrayView<bool>>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<PropertyArrayView<bool>>,
+                          decltype(propertyValue)>) {
           for (int64_t i = 0; i < propertyValue.size(); ++i) {
             PropertyArrayView<bool> array = propertyValue.getRaw(i);
             auto maybeArray = propertyValue.get(i);
@@ -5523,9 +5498,8 @@ TEST_CASE("Test callback for boolean array PropertyTableProperty") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -5612,10 +5586,10 @@ TEST_CASE("Test callback for string array PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() == 3);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<PropertyArrayView<std::string_view>>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<
+                              PropertyArrayView<std::string_view>>,
+                          decltype(propertyValue)>) {
           PropertyArrayView<std::string_view> v0 = propertyValue.getRaw(0);
           REQUIRE(v0.size() == 2);
           REQUIRE(v0[0] == "What's up");
@@ -5626,8 +5600,7 @@ TEST_CASE("Test callback for string array PropertyTableProperty") {
           PropertyArrayView<std::string_view> v1 = propertyValue.getRaw(1);
           REQUIRE(v1.size() == 2);
           REQUIRE(
-              v1[0] ==
-              "But they still abduct my cows! Those milk thiefs! 👽 🐮");
+              v1[0] == "But they still abduct my cows! Those milk thiefs! 👽 🐮");
           REQUIRE(v1[1] == "I'm not crazy. My mother had me tested 🤪");
 
           PropertyArrayView<std::string_view> v2 = propertyValue.getRaw(2);
@@ -5646,9 +5619,8 @@ TEST_CASE("Test callback for string array PropertyTableProperty") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -5731,10 +5703,10 @@ TEST_CASE("Test callback for enum array PropertyTableProperty") {
             propertyValue.status() == PropertyTablePropertyViewStatus::Valid);
         REQUIRE(propertyValue.size() == 4);
 
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<PropertyArrayView<uint16_t>>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<
+                              PropertyArrayView<uint16_t>>,
+                          decltype(propertyValue)>) {
           PropertyArrayView<uint16_t> v0 = propertyValue.getRaw(0);
           REQUIRE(v0.size() == 3);
           REQUIRE(v0[0] == 0);
@@ -5770,9 +5742,8 @@ TEST_CASE("Test callback for enum array PropertyTableProperty") {
             }
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -5818,10 +5789,9 @@ TEST_CASE("Test callback for empty PropertyTableProperty with default value") {
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyTablePropertyView<uint32_t>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyTablePropertyView<uint32_t>,
+                          decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() ==
               PropertyTablePropertyViewStatus::EmptyPropertyWithDefault);
@@ -5832,9 +5802,8 @@ TEST_CASE("Test callback for empty PropertyTableProperty with default value") {
             REQUIRE(propertyValue.get(i) == defaultValue);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyTablePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyTablePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 

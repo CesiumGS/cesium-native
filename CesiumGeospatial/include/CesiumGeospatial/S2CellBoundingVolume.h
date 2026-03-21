@@ -101,9 +101,9 @@ public:
    *
    * @return The bounding region.
    */
-  BoundingRegion computeBoundingRegion(
-      const CesiumGeospatial::Ellipsoid& ellipsoid
-          CESIUM_DEFAULT_ELLIPSOID) const noexcept;
+  BoundingRegion
+  computeBoundingRegion(const CesiumGeospatial::Ellipsoid& ellipsoid
+                            CESIUM_DEFAULT_ELLIPSOID) const noexcept;
 
 private:
   S2CellID _cellID;

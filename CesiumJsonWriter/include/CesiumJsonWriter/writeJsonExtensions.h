@@ -72,12 +72,11 @@ bool hasRegisteredExtensions(
       hasRegisteredExtensions = true;
     } else if (
         context.getExtensionState(item.first) != ExtensionState::Disabled) {
-      jsonWriter.emplaceWarning(
-          fmt::format(
-              "Encountered unregistered extension {}. This extension will be "
-              "ignored. To silence this warning, disable the extension with "
-              "ExtensionWriterContext::setExtensionState.",
-              item.first));
+      jsonWriter.emplaceWarning(fmt::format(
+          "Encountered unregistered extension {}. This extension will be "
+          "ignored. To silence this warning, disable the extension with "
+          "ExtensionWriterContext::setExtensionState.",
+          item.first));
     }
   }
 

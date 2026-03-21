@@ -76,11 +76,10 @@ static void checkNonArrayProperty(
   REQUIRE(propertyView.size() == static_cast<int64_t>(expectedTotalInstances));
   for (int64_t i = 0; i < propertyView.size(); ++i) {
     if constexpr (std::is_same_v<PropertyViewType, glm::vec3>) {
-      REQUIRE(
-          Math::equalsEpsilon(
-              static_cast<glm::dvec3>(propertyView.getRaw(i)),
-              static_cast<glm::dvec3>(expected[static_cast<size_t>(i)]),
-              Math::Epsilon6));
+      REQUIRE(Math::equalsEpsilon(
+          static_cast<glm::dvec3>(propertyView.getRaw(i)),
+          static_cast<glm::dvec3>(expected[static_cast<size_t>(i)]),
+          Math::Epsilon6));
     } else if constexpr (
         std::is_same_v<PropertyViewType, float> ||
         std::is_same_v<PropertyViewType, double>) {
@@ -1116,9 +1115,8 @@ TEST_CASE("Draco-compressed b3dm uses _FEATURE_ID_0 attribute name in glTF") {
   }
 }
 
-TEST_CASE(
-    "Converts Draco per-point PNTS batch table to "
-    "EXT_structural_metadata") {
+TEST_CASE("Converts Draco per-point PNTS batch table to "
+          "EXT_structural_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "PointCloud" / "pointCloudDraco.pnts";
 
@@ -2249,9 +2247,8 @@ TEST_CASE("Cannot write past batch table length") {
   }
 }
 
-TEST_CASE(
-    "Converts \"Feature Classes\" 3DTILES_batch_table_hierarchy example "
-    "to EXT_structural_metadata") {
+TEST_CASE("Converts \"Feature Classes\" 3DTILES_batch_table_hierarchy example "
+          "to EXT_structural_metadata") {
   Model gltf;
 
   std::string featureTableJson = R"(
@@ -2397,9 +2394,8 @@ TEST_CASE(
   }
 }
 
-TEST_CASE(
-    "Omits value-less properties when converting "
-    "3DTILES_batch_table_hierarchy to EXT_structural_metadata") {
+TEST_CASE("Omits value-less properties when converting "
+          "3DTILES_batch_table_hierarchy to EXT_structural_metadata") {
   Model gltf;
 
   std::string featureTableJson = R"(
@@ -2694,9 +2690,8 @@ TEST_CASE(
   }
 }
 
-TEST_CASE(
-    "3DTILES_batch_table_hierarchy with parentCounts is okay if all "
-    "values are 1") {
+TEST_CASE("3DTILES_batch_table_hierarchy with parentCounts is okay if all "
+          "values are 1") {
   Model gltf;
 
   std::string featureTableJson = R"(
@@ -2787,9 +2782,8 @@ TEST_CASE(
   REQUIRE(propertyTable.properties.size() == 3);
 }
 
-TEST_CASE(
-    "3DTILES_batch_table_hierarchy with parentCounts values != 1 is "
-    "unsupported") {
+TEST_CASE("3DTILES_batch_table_hierarchy with parentCounts values != 1 is "
+          "unsupported") {
   Model gltf;
 
   std::string featureTableJson = R"(

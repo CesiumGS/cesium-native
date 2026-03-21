@@ -165,11 +165,10 @@ TEST_CASE("ImageManipulation::blitImage") {
   targetRect.height = 4;
 
   auto verifyTargetUnchanged = [&target]() {
-    CHECK(
-        std::all_of(
-            target.pixelData.begin(),
-            target.pixelData.end(),
-            [](std::byte b) { return b == std::byte(1); }));
+    CHECK(std::all_of(
+        target.pixelData.begin(),
+        target.pixelData.end(),
+        [](std::byte b) { return b == std::byte(1); }));
   };
 
   auto contains = [](const PixelRectangle& rectangle, size_t x, size_t y) {

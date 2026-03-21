@@ -124,8 +124,8 @@ Result<std::vector<std::vector<glm::dvec3>>> parsePolygon(
       return Result<std::vector<std::vector<glm::dvec3>>>(
           std::move(pointsResult.errors));
     } else if (pointsResult.value->size() < minItems) {
-      return Result<std::vector<std::vector<glm::dvec3>>>(ErrorList::error(
-          fmt::format(
+      return Result<std::vector<std::vector<glm::dvec3>>>(
+          ErrorList::error(fmt::format(
               "{} 'coordinates' member must be an array of "
               "arrays of {} or more positions.",
               name,
@@ -137,15 +137,14 @@ Result<std::vector<std::vector<glm::dvec3>>> parsePolygon(
     if (mustBeClosed &&
         (*pointsResult.value)[0] !=
             (*pointsResult.value)[pointsResult.value->size() - 1]) {
-      error.emplaceWarning(
-          fmt::format(
-              "{} 'coordinates' member can only contain closed rings, "
-              "requiring "
-              "the first and last coordinates of each ring to have identical "
-              "values. The first position has been duplicated to make a valid "
-              "closed ring.",
-              name,
-              minItems));
+      error.emplaceWarning(fmt::format(
+          "{} 'coordinates' member can only contain closed rings, "
+          "requiring "
+          "the first and last coordinates of each ring to have identical "
+          "values. The first position has been duplicated to make a valid "
+          "closed ring.",
+          name,
+          minItems));
       points.emplace_back(points[0]);
     }
 
@@ -323,9 +322,9 @@ Result<GeoJsonObject> parseGeoJsonObject(
     features.reserve(featuresArr.Size());
     for (const rapidjson::Value& feature : featuresArr) {
       if (!feature.IsObject()) {
-        return Result<GeoJsonObject>(ErrorList::error(
-            "FeatureCollection 'features' member must contain "
-            "only GeoJSON objects."));
+        return Result<GeoJsonObject>(
+            ErrorList::error("FeatureCollection 'features' member must contain "
+                             "only GeoJSON objects."));
       }
 
       Result<GeoJsonObject> childResult = parseGeoJsonObject(
@@ -369,9 +368,9 @@ Result<GeoJsonObject> parseGeoJsonObject(
     children.reserve(childrenArr.Size());
     for (auto& value : childrenArr) {
       if (!value.IsObject()) {
-        return Result<GeoJsonObject>(ErrorList::error(
-            "GeometryCollection 'geometries' member must "
-            "contain only GeoJSON objects."));
+        return Result<GeoJsonObject>(
+            ErrorList::error("GeometryCollection 'geometries' member must "
+                             "contain only GeoJSON objects."));
         continue;
       }
 
@@ -465,9 +464,9 @@ Result<GeoJsonObject> parseGeoJsonObject(
     if (!pointsResult.value) {
       return Result<GeoJsonObject>(std::move(pointsResult.errors));
     } else if (pointsResult.value->size() < 2) {
-      return Result<GeoJsonObject>(ErrorList::error(
-          "LineString 'coordinates' member must contain two "
-          "or more positions."));
+      return Result<GeoJsonObject>(
+          ErrorList::error("LineString 'coordinates' member must contain two "
+                           "or more positions."));
     }
 
     return Result<GeoJsonObject>(
@@ -480,9 +479,9 @@ Result<GeoJsonObject> parseGeoJsonObject(
     // MultiLineString has a "coordinates" member that consists of an array of
     // arrays of two or more positions.
     if (!coordinatesMember->value.IsArray()) {
-      return Result<GeoJsonObject>(ErrorList::error(
-          "MultiLineString 'coordinates' member must be an "
-          "array of position arrays."));
+      return Result<GeoJsonObject>(
+          ErrorList::error("MultiLineString 'coordinates' member must be an "
+                           "array of position arrays."));
     }
 
     const rapidjson::Value::ConstArray& coordinatesArr =
@@ -528,9 +527,9 @@ Result<GeoJsonObject> parseGeoJsonObject(
     // MultiPolygon has a "coordinates" member that consists of an array of
     // arrays of arrays of four or more positions.
     if (!coordinatesMember->value.IsArray()) {
-      return Result<GeoJsonObject>(ErrorList::error(
-          "MultiPolygon 'coordinates' member must be an array "
-          "of arrays of position arrays."));
+      return Result<GeoJsonObject>(
+          ErrorList::error("MultiPolygon 'coordinates' member must be an array "
+                           "of arrays of position arrays."));
     }
 
     const rapidjson::Value::ConstArray& coordinatesArr =
@@ -540,9 +539,9 @@ Result<GeoJsonObject> parseGeoJsonObject(
     polygons.reserve(coordinatesArr.Size());
     for (auto& value : coordinatesArr) {
       if (!value.IsArray()) {
-        return Result<GeoJsonObject>(ErrorList::error(
-            "MultiPolygon 'coordinates' member must be an "
-            "array of arrays of position arrays."));
+        return Result<GeoJsonObject>(
+            ErrorList::error("MultiPolygon 'coordinates' member must be an "
+                             "array of arrays of position arrays."));
       }
 
       Result<std::vector<std::vector<glm::dvec3>>> ringsResult =
@@ -585,11 +584,10 @@ GeoJsonDocument::parseGeoJson(const std::span<const std::byte>& bytes) {
   rapidjson::Document d;
   d.Parse(reinterpret_cast<const char*>(bytes.data()), bytes.size());
   if (d.HasParseError()) {
-    return Result<GeoJsonObject>(ErrorList::error(
-        fmt::format(
-            "Failed to parse GeoJSON: {} at offset {}",
-            rapidjson::GetParseError_En(d.GetParseError()),
-            d.GetErrorOffset())));
+    return Result<GeoJsonObject>(ErrorList::error(fmt::format(
+        "Failed to parse GeoJSON: {} at offset {}",
+        rapidjson::GetParseError_En(d.GetParseError()),
+        d.GetErrorOffset())));
   }
 
   return parseGeoJson(d);
@@ -639,11 +637,10 @@ Future<Result<GeoJsonDocument>> GeoJsonDocument::fromCesiumIonAsset(
 
         if (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300) {
           return asyncSystem.createResolvedFuture<Result<GeoJsonDocument>>(
-              Result<GeoJsonDocument>(ErrorList::error(
-                  fmt::format(
-                      "Status code {} while requesting Cesium ion vector "
-                      "asset.",
-                      pResponse->statusCode()))));
+              Result<GeoJsonDocument>(ErrorList::error(fmt::format(
+                  "Status code {} while requesting Cesium ion vector "
+                  "asset.",
+                  pResponse->statusCode()))));
         }
 
         rapidjson::Document response;
@@ -653,23 +650,21 @@ Future<Result<GeoJsonDocument>> GeoJsonDocument::fromCesiumIonAsset(
 
         if (response.HasParseError()) {
           return asyncSystem.createResolvedFuture<Result<GeoJsonDocument>>(
-              Result<GeoJsonDocument>(ErrorList::error(
-                  fmt::format(
-                      "Error while parsing Cesium ion asset response: "
-                      "error {} at byte offset {}.",
-                      rapidjson::GetParseError_En(response.GetParseError()),
-                      response.GetErrorOffset()))));
+              Result<GeoJsonDocument>(ErrorList::error(fmt::format(
+                  "Error while parsing Cesium ion asset response: "
+                  "error {} at byte offset {}.",
+                  rapidjson::GetParseError_En(response.GetParseError()),
+                  response.GetErrorOffset()))));
         }
 
         const std::string type =
             JsonHelpers::getStringOrDefault(response, "type", "UNKNOWN");
         if (type != "GEOJSON") {
           return asyncSystem.createResolvedFuture<Result<GeoJsonDocument>>(
-              Result<GeoJsonDocument>(ErrorList::error(
-                  fmt::format(
-                      "Found asset type '{}'. Only GEOJSON is currently "
-                      "supported.",
-                      type))));
+              Result<GeoJsonDocument>(ErrorList::error(fmt::format(
+                  "Found asset type '{}'. Only GEOJSON is currently "
+                  "supported.",
+                  type))));
         }
 
         std::vector<VectorDocumentAttribution> attributions;
@@ -701,17 +696,16 @@ Future<Result<GeoJsonDocument>> GeoJsonDocument::fromCesiumIonAsset(
             .thenImmediately(
                 [attributions = std::move(attributions)](
                     std::shared_ptr<IAssetRequest>&& pAssetRequest) mutable
-                    -> Result<GeoJsonDocument> {
+                -> Result<GeoJsonDocument> {
                   const IAssetResponse* pAssetResponse =
                       pAssetRequest->response();
 
                   if (pAssetResponse->statusCode() < 200 ||
                       pAssetResponse->statusCode() >= 300) {
-                    return Result<GeoJsonDocument>(ErrorList::error(
-                        fmt::format(
-                            "Status code {} while requesting Cesium ion "
-                            "vector asset data.",
-                            pAssetResponse->statusCode())));
+                    return Result<GeoJsonDocument>(ErrorList::error(fmt::format(
+                        "Status code {} while requesting Cesium ion "
+                        "vector asset data.",
+                        pAssetResponse->statusCode())));
                   }
 
                   return GeoJsonDocument::fromGeoJson(
@@ -729,7 +723,7 @@ Future<Result<GeoJsonDocument>> GeoJsonDocument::fromUrl(
   return pAssetAccessor->get(asyncSystem, url, headers)
       .thenImmediately(
           [](std::shared_ptr<IAssetRequest>&& pAssetRequest) mutable
-              -> Result<GeoJsonDocument> {
+          -> Result<GeoJsonDocument> {
             const IAssetResponse* pAssetResponse = pAssetRequest->response();
 
             // Curl returns a status code of zero with a file URL, so we want to
@@ -737,10 +731,9 @@ Future<Result<GeoJsonDocument>> GeoJsonDocument::fromUrl(
             if (pAssetResponse->statusCode() != 0 &&
                 (pAssetResponse->statusCode() < 200 ||
                  pAssetResponse->statusCode() >= 300)) {
-              return Result<GeoJsonDocument>(ErrorList::error(
-                  fmt::format(
-                      "Status code {} while requesting GeoJSON data from URL.",
-                      pAssetResponse->statusCode())));
+              return Result<GeoJsonDocument>(ErrorList::error(fmt::format(
+                  "Status code {} while requesting GeoJSON data from URL.",
+                  pAssetResponse->statusCode())));
             }
 
             return GeoJsonDocument::fromGeoJson(pAssetResponse->data(), {});

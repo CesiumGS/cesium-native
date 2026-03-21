@@ -239,20 +239,18 @@ WebMapTileServiceRasterOverlay::createTileProvider(
           projectRectangleSimple(projection, tilingSchemeRectangle));
 
   CesiumGeometry::QuadtreeTilingScheme tilingScheme =
-      _options.tilingScheme.value_or(
-          CesiumGeometry::QuadtreeTilingScheme(
-              coverageRectangle,
-              rootTilesX,
-              1));
+      _options.tilingScheme.value_or(CesiumGeometry::QuadtreeTilingScheme(
+          coverageRectangle,
+          rootTilesX,
+          1));
 
   if (hasError) {
     return parameters.externals.asyncSystem
         .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
-            nonstd::make_unexpected(
-                RasterOverlayLoadFailureDetails{
-                    RasterOverlayLoadType::TileProvider,
-                    nullptr,
-                    errorMessage}));
+            nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                RasterOverlayLoadType::TileProvider,
+                nullptr,
+                errorMessage}));
   }
   return parameters.externals.asyncSystem
       .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(

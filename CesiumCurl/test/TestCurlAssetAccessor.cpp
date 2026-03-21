@@ -139,9 +139,8 @@ TEST_CASE("CurlAssetAccessor") {
           "this is my response text");
     }
 
-    SUBCASE(
-        "specific request headers take precendence over accessor-wide "
-        "headers") {
+    SUBCASE("specific request headers take precendence over accessor-wide "
+            "headers") {
       options.requestHeaders.emplace_back("Test-Header", "accessor");
       pAssetAccessor = std::make_shared<CurlAssetAccessor>(options);
 

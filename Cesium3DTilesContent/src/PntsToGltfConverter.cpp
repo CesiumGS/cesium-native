@@ -87,9 +87,8 @@ void parsePntsHeader(
     uint32_t& headerLength,
     GltfConverterResult& result) {
   if (pntsBinary.size() < sizeof(PntsHeader)) {
-    result.errors.emplaceError(
-        "The PNTS is invalid because it is too small to "
-        "include a PNTS header.");
+    result.errors.emplaceError("The PNTS is invalid because it is too small to "
+                               "include a PNTS header.");
     return;
   }
 
@@ -100,10 +99,9 @@ void parsePntsHeader(
   headerLength = sizeof(PntsHeader);
 
   if (pHeader->version != 1) {
-    result.errors.emplaceError(
-        fmt::format(
-            "The PNTS file is version {}, which is unsupported.",
-            pHeader->version));
+    result.errors.emplaceError(fmt::format(
+        "The PNTS file is version {}, which is unsupported.",
+        pHeader->version));
     return;
   }
 
@@ -563,13 +561,12 @@ rapidjson::Document parseFeatureTableJson(
       reinterpret_cast<const char*>(featureTableJsonData.data()),
       featureTableJsonData.size());
   if (document.HasParseError()) {
-    parsedContent.errors.emplaceError(
-        fmt::format(
-            "Error when parsing feature table JSON, error code {} at byte "
-            "offset "
-            "{}",
-            document.GetParseError(),
-            document.GetErrorOffset()));
+    parsedContent.errors.emplaceError(fmt::format(
+        "Error when parsing feature table JSON, error code {} at byte "
+        "offset "
+        "{}",
+        document.GetParseError(),
+        document.GetErrorOffset()));
     return document;
   }
 
@@ -585,9 +582,8 @@ rapidjson::Document parseFeatureTableJson(
   if (parsedContent.pointsLength == 0) {
     // This *should* be disallowed by the spec, but it currently isn't.
     // In the future, this can be converted to an error.
-    parsedContent.errors.emplaceWarning(
-        "The PNTS has a POINTS_LENGTH of zero. "
-        "Skip parsing the PNTS feature table.");
+    parsedContent.errors.emplaceWarning("The PNTS has a POINTS_LENGTH of zero. "
+                                        "Skip parsing the PNTS feature table.");
     return document;
   }
 
@@ -656,22 +652,20 @@ void parseDracoExtensionFromBatchTableJson(
     auto batchTablePropertyIt = batchTableJson.FindMember(name.c_str());
     if (batchTablePropertyIt == batchTableJson.MemberEnd() ||
         !batchTablePropertyIt->value.IsObject()) {
-      parsedContent.errors.emplaceWarning(
-          fmt::format(
-              "The metadata property {} is in the "
-              "3DTILES_draco_point_compression "
-              "extension but not in the batch table itself.",
-              name));
+      parsedContent.errors.emplaceWarning(fmt::format(
+          "The metadata property {} is in the "
+          "3DTILES_draco_point_compression "
+          "extension but not in the batch table itself.",
+          name));
       continue;
     }
 
     if (!dracoPropertyIt->value.IsInt()) {
-      parsedContent.errors.emplaceWarning(
-          fmt::format(
-              "Error parsing 3DTILES_draco_compression extension, the metadata "
-              "property {} does not have valid draco ID. Skip parsing "
-              "metadata.",
-              name));
+      parsedContent.errors.emplaceWarning(fmt::format(
+          "Error parsing 3DTILES_draco_compression extension, the metadata "
+          "property {} does not have valid draco ID. Skip parsing "
+          "metadata.",
+          name));
       parsedContent.dracoMetadataHasErrors = true;
       return;
     }
@@ -683,11 +677,10 @@ void parseDracoExtensionFromBatchTableJson(
     auto byteOffsetIt = batchTableProperty.FindMember("byteOffset");
     if (byteOffsetIt == batchTableProperty.MemberEnd() ||
         !byteOffsetIt->value.IsUint()) {
-      parsedContent.errors.emplaceWarning(
-          fmt::format(
-              "Skip decoding Draco-compressed property {}. The binary property "
-              "doesn't have a valid byteOffset.",
-              name));
+      parsedContent.errors.emplaceWarning(fmt::format(
+          "Skip decoding Draco-compressed property {}. The binary property "
+          "doesn't have a valid byteOffset.",
+          name));
       continue;
     }
 
@@ -699,11 +692,10 @@ void parseDracoExtensionFromBatchTableJson(
     }
     if (MetadataProperty::stringToMetadataComponentType.find(componentType) ==
         MetadataProperty::stringToMetadataComponentType.end()) {
-      parsedContent.errors.emplaceWarning(
-          fmt::format(
-              "Skip decoding Draco-compressed property {}. The binary property "
-              "doesn't have a valid componentType.",
-              name));
+      parsedContent.errors.emplaceWarning(fmt::format(
+          "Skip decoding Draco-compressed property {}. The binary property "
+          "doesn't have a valid componentType.",
+          name));
       continue;
     }
 
@@ -714,11 +706,10 @@ void parseDracoExtensionFromBatchTableJson(
     }
     if (MetadataProperty::stringToMetadataType.find(type) ==
         MetadataProperty::stringToMetadataType.end()) {
-      parsedContent.errors.emplaceWarning(
-          fmt::format(
-              "Skip decoding Draco-compressed property {}. The binary property "
-              "doesn't have a valid type.",
-              name));
+      parsedContent.errors.emplaceWarning(fmt::format(
+          "Skip decoding Draco-compressed property {}. The binary property "
+          "doesn't have a valid type.",
+          name));
       continue;
     }
 
@@ -740,13 +731,12 @@ rapidjson::Document parseBatchTableJson(
       reinterpret_cast<const char*>(batchTableJsonData.data()),
       batchTableJsonData.size());
   if (document.HasParseError()) {
-    parsedContent.errors.emplaceWarning(
-        fmt::format(
-            "Error when parsing batch table JSON, error code {} at byte "
-            "offset "
-            "{}. Skip parsing metadata",
-            document.GetParseError(),
-            document.GetErrorOffset()));
+    parsedContent.errors.emplaceWarning(fmt::format(
+        "Error when parsing batch table JSON, error code {} at byte "
+        "offset "
+        "{}. Skip parsing metadata",
+        document.GetParseError(),
+        document.GetErrorOffset()));
     return document;
   }
 
@@ -845,11 +835,10 @@ void decodeDracoMetadata(
     draco::PointAttribute* pAttribute =
         pPointCloud->attribute(dracoSemantic.dracoId);
     if (!validateDracoMetadataAttribute(pAttribute, dracoSemantic)) {
-      parsedContent.errors.emplaceWarning(
-          fmt::format(
-              "Error decoding {} property in the 3DTILES_draco_compression "
-              "extension. Skip parsing metadata.",
-              dracoMetadataSemantic.first));
+      parsedContent.errors.emplaceWarning(fmt::format(
+          "Error decoding {} property in the 3DTILES_draco_compression "
+          "extension. Skip parsing metadata.",
+          dracoMetadataSemantic.first));
       parsedContent.dracoMetadataHasErrors = true;
       return;
     }
@@ -1009,10 +998,9 @@ void decodeDraco(
       if (validateDracoAttribute(pNormalAttribute, draco::DT_FLOAT32, 3)) {
         getDracoData<glm::vec3>(pNormalAttribute, normal.data, pointsLength);
       } else {
-        parsedContent.errors.emplaceWarning(
-            "Error parsing decoded Draco point "
-            "cloud, invalid normal attribute. "
-            "Skip parsing normals.");
+        parsedContent.errors.emplaceWarning("Error parsing decoded Draco point "
+                                            "cloud, invalid normal attribute. "
+                                            "Skip parsing normals.");
         parsedContent.normal = std::nullopt;
       }
     }
@@ -1229,10 +1217,9 @@ void parseNormalsFromFeatureTableBinary(
 
     for (size_t i = 0; i < pointsLength; i++) {
       const glm::u8vec2 encodedNormal = encodedNormals[i];
-      outNormals[i] = glm::vec3(
-          CesiumUtility::AttributeCompression::octDecode(
-              encodedNormal.x,
-              encodedNormal.y));
+      outNormals[i] = glm::vec3(CesiumUtility::AttributeCompression::octDecode(
+          encodedNormal.x,
+          encodedNormal.y));
     }
   } else {
     std::memcpy(
@@ -1619,12 +1606,11 @@ void convertPntsContentToGltf(
     }
 
     if (result.model) {
-      result.errors.merge(
-          BatchTableToGltfStructuralMetadata::convertFromPnts(
-              featureTableJson,
-              batchTableJson,
-              batchTableBinaryData,
-              result.model.value()));
+      result.errors.merge(BatchTableToGltfStructuralMetadata::convertFromPnts(
+          featureTableJson,
+          batchTableJson,
+          batchTableBinaryData,
+          result.model.value()));
     }
   }
 }

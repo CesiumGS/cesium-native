@@ -48,11 +48,9 @@ void checkIntersection(
   }
 
   // Validate hit point
-  CHECK(
-      glm::all(
-          glm::lessThan(
-              glm::abs(hitResult.hit->worldPoint - expectedHit),
-              glm::dvec3(CesiumUtility::Math::Epsilon6))));
+  CHECK(glm::all(glm::lessThan(
+      glm::abs(hitResult.hit->worldPoint - expectedHit),
+      glm::dvec3(CesiumUtility::Math::Epsilon6))));
 
   // Use results to dive into model
   CHECK(hitResult.hit->meshId > -1);

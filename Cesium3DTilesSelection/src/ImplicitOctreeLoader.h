@@ -35,10 +35,9 @@ public:
         _subtreeLevels{subtreeLevels},
         _availableLevels{availableLevels},
         _boundingVolume{std::forward<ImplicitBoundingVolumeType>(volume)},
-        _loadedSubtrees(
-            static_cast<size_t>(std::ceil(
-                static_cast<float>(availableLevels) /
-                static_cast<float>(subtreeLevels)))) {}
+        _loadedSubtrees(static_cast<size_t>(std::ceil(
+            static_cast<float>(availableLevels) /
+            static_cast<float>(subtreeLevels)))) {}
 
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;

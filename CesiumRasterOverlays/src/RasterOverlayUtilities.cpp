@@ -1030,20 +1030,19 @@ bool upsamplePointsPrimitiveForRasterOverlays(
 
     vertexSizeFloats += accessorComponentElements;
 
-    attributes.push_back(
-        FloatVertexAttribute{
-            buffer.cesium.data,
-            bufferView.byteOffset + accessor.byteOffset,
-            accessorByteStride,
-            accessorComponentElements,
-            attribute.second,
-            std::vector<double>(
-                static_cast<size_t>(accessorComponentElements),
-                std::numeric_limits<double>::max()),
-            std::vector<double>(
-                static_cast<size_t>(accessorComponentElements),
-                std::numeric_limits<double>::lowest()),
-        });
+    attributes.push_back(FloatVertexAttribute{
+        buffer.cesium.data,
+        bufferView.byteOffset + accessor.byteOffset,
+        accessorByteStride,
+        accessorComponentElements,
+        attribute.second,
+        std::vector<double>(
+            static_cast<size_t>(accessorComponentElements),
+            std::numeric_limits<double>::max()),
+        std::vector<double>(
+            static_cast<size_t>(accessorComponentElements),
+            std::numeric_limits<double>::lowest()),
+    });
   }
 
   if (uvAccessorIndex == -1) {
@@ -1221,20 +1220,19 @@ bool upsampleTrianglesPrimitiveForRasterOverlays(
 
     vertexSizeFloats += accessorComponentElements;
 
-    attributes.push_back(
-        FloatVertexAttribute{
-            buffer.cesium.data,
-            bufferView.byteOffset + accessor.byteOffset,
-            accessorByteStride,
-            accessorComponentElements,
-            attribute.second,
-            std::vector<double>(
-                static_cast<size_t>(accessorComponentElements),
-                std::numeric_limits<double>::max()),
-            std::vector<double>(
-                static_cast<size_t>(accessorComponentElements),
-                std::numeric_limits<double>::lowest()),
-        });
+    attributes.push_back(FloatVertexAttribute{
+        buffer.cesium.data,
+        bufferView.byteOffset + accessor.byteOffset,
+        accessorByteStride,
+        accessorComponentElements,
+        attribute.second,
+        std::vector<double>(
+            static_cast<size_t>(accessorComponentElements),
+            std::numeric_limits<double>::max()),
+        std::vector<double>(
+            static_cast<size_t>(accessorComponentElements),
+            std::numeric_limits<double>::lowest()),
+    });
 
     // get position to be used to create skirts later
     if (attribute.first == "POSITION") {

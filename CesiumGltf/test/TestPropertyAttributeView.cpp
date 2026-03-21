@@ -120,9 +120,8 @@ void addAttributeToModel(
 }
 } // namespace
 
-TEST_CASE(
-    "Test PropertyAttributeView on model without EXT_structural_metadata "
-    "extension") {
+TEST_CASE("Test PropertyAttributeView on model without EXT_structural_metadata "
+          "extension") {
   Model model;
 
   // Create an erroneously isolated property Attribute.
@@ -1169,9 +1168,8 @@ TEST_CASE("Test with PropertyAttributeProperty offset, scale, min, max") {
   }
 }
 
-TEST_CASE(
-    "Test with PropertyAttributeProperty offset, scale, min, max "
-    "(normalized)") {
+TEST_CASE("Test with PropertyAttributeProperty offset, scale, min, max "
+          "(normalized)") {
   Model model;
 
   Mesh& mesh = model.meshes.emplace_back();
@@ -1715,10 +1713,9 @@ TEST_CASE("Test callback for scalar PropertyAttributeProperty") {
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyAttributePropertyView<int16_t>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyAttributePropertyView<int16_t>,
+                          decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() ==
               PropertyAttributePropertyViewStatus::Valid);
@@ -1728,9 +1725,8 @@ TEST_CASE("Test callback for scalar PropertyAttributeProperty") {
             REQUIRE(propertyValue.get(static_cast<int64_t>(i)) == data[i]);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyAttributePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyAttributePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -1785,10 +1781,9 @@ TEST_CASE("Test callback for scalar PropertyAttributeProperty (normalized)") {
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyAttributePropertyView<int16_t, true>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyAttributePropertyView<int16_t, true>,
+                          decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() ==
               PropertyAttributePropertyViewStatus::Valid);
@@ -1800,9 +1795,8 @@ TEST_CASE("Test callback for scalar PropertyAttributeProperty (normalized)") {
                 normalize(data[i]));
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyAttributePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyAttributePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -1860,10 +1854,9 @@ TEST_CASE("Test callback for vecN PropertyAttributeProperty") {
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyAttributePropertyView<glm::i8vec2>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyAttributePropertyView<glm::i8vec2>,
+                          decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() ==
               PropertyAttributePropertyViewStatus::Valid);
@@ -1873,9 +1866,8 @@ TEST_CASE("Test callback for vecN PropertyAttributeProperty") {
             REQUIRE(propertyValue.get(static_cast<int64_t>(i)) == data[i]);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyAttributePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyAttributePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -1934,10 +1926,9 @@ TEST_CASE("Test callback for vecN PropertyAttributeProperty (normalized)") {
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyAttributePropertyView<glm::i8vec2, true>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyAttributePropertyView<glm::i8vec2, true>,
+                          decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() ==
               PropertyAttributePropertyViewStatus::Valid);
@@ -1949,9 +1940,8 @@ TEST_CASE("Test callback for vecN PropertyAttributeProperty (normalized)") {
                 normalize(data[i]));
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyAttributePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyAttributePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -2019,10 +2009,9 @@ TEST_CASE("Test callback for matN PropertyAttributeProperty") {
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyAttributePropertyView<glm::u16mat2x2>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyAttributePropertyView<glm::u16mat2x2>,
+                          decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() ==
               PropertyAttributePropertyViewStatus::Valid);
@@ -2032,9 +2021,8 @@ TEST_CASE("Test callback for matN PropertyAttributeProperty") {
             REQUIRE(propertyValue.get(static_cast<int64_t>(i)) == data[i]);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyAttributePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyAttributePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -2107,10 +2095,9 @@ TEST_CASE("Test callback for matN PropertyAttributeProperty (normalized)") {
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyAttributePropertyView<glm::u16mat2x2, true>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyAttributePropertyView<glm::u16mat2x2, true>,
+                          decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() ==
               PropertyAttributePropertyViewStatus::Valid);
@@ -2122,9 +2109,8 @@ TEST_CASE("Test callback for matN PropertyAttributeProperty (normalized)") {
                 normalize(data[i]));
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyAttributePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyAttributePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 
@@ -2263,10 +2249,9 @@ TEST_CASE(
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (
-            std::is_same_v<
-                PropertyAttributePropertyView<int16_t>,
-                decltype(propertyValue)>) {
+        if constexpr (std::is_same_v<
+                          PropertyAttributePropertyView<int16_t>,
+                          decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() ==
               PropertyAttributePropertyViewStatus::EmptyPropertyWithDefault);
@@ -2276,9 +2261,8 @@ TEST_CASE(
             REQUIRE(propertyValue.get(static_cast<int64_t>(i)) == defaultValue);
           }
         } else {
-          FAIL(
-              "getPropertyView returned PropertyAttributePropertyView of "
-              "incorrect type for TestClassProperty.");
+          FAIL("getPropertyView returned PropertyAttributePropertyView of "
+               "incorrect type for TestClassProperty.");
         }
       });
 

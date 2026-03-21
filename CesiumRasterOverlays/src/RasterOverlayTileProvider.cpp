@@ -43,9 +43,8 @@ RasterOverlayTileProvider::RasterOverlayTileProvider(
     const CreateRasterOverlayTileProviderParameters& parameters,
     const CesiumGeospatial::Projection& projection,
     const CesiumGeometry::Rectangle& coverageRectangle) noexcept
-    : _pOwner(
-          const_intrusive_cast<RasterOverlay>(
-              parameters.pOwner ? parameters.pOwner : pCreator)),
+    : _pOwner(const_intrusive_cast<RasterOverlay>(
+          parameters.pOwner ? parameters.pOwner : pCreator)),
       _externals(parameters.externals),
       _credits(),
       _projection(projection),
@@ -71,10 +70,9 @@ RasterOverlayTileProvider::getAsyncDestructionCompleteEvent() {
   if (!this->_destructionCompleteDetails) {
     auto promise = this->_externals.asyncSystem.createPromise<void>();
     auto sharedFuture = promise.getFuture().share();
-    this->_destructionCompleteDetails.emplace(
-        DestructionCompleteDetails{
-            std::move(promise),
-            std::move(sharedFuture)});
+    this->_destructionCompleteDetails.emplace(DestructionCompleteDetails{
+        std::move(promise),
+        std::move(sharedFuture)});
   }
 
   return this->_destructionCompleteDetails->future;
@@ -187,11 +185,10 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                 (pResponse->statusCode() < 200 ||
                  pResponse->statusCode() >= 300)) {
               ErrorList errors;
-              errors.emplaceError(
-                  fmt::format(
-                      "Received response code {} for image {}.",
-                      pResponse->statusCode(),
-                      pRequest->url()));
+              errors.emplaceError(fmt::format(
+                  "Received response code {} for image {}.",
+                  pResponse->statusCode(),
+                  pRequest->url()));
               return LoadedRasterOverlayImage{
                   nullptr,
                   options.rectangle,
@@ -211,10 +208,9 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
               }
 
               ErrorList errors;
-              errors.emplaceError(
-                  fmt::format(
-                      "Image response for {} is empty.",
-                      pRequest->url()));
+              errors.emplaceError(fmt::format(
+                  "Image response for {} is empty.",
+                  pRequest->url()));
               return LoadedRasterOverlayImage{
                   nullptr,
                   options.rectangle,

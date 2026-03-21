@@ -70,9 +70,8 @@ TEST_CASE("SharedAssetDepot") {
     REQUIRE(assetOne.pValue != nullptr);
   }
 
-  SUBCASE(
-      "getOrCreate returns the same asset when called a second time with "
-      "the same key") {
+  SUBCASE("getOrCreate returns the same asset when called a second time with "
+          "the same key") {
     auto pDepot = createDepot();
 
     auto futureOne = pDepot->getOrCreate(context, "one");
@@ -85,9 +84,8 @@ TEST_CASE("SharedAssetDepot") {
     CHECK(assetOne.pValue == assetTwo.pValue);
   }
 
-  SUBCASE(
-      "getOrCreate returns a future for the same asset when called "
-      "multiple times while loading") {
+  SUBCASE("getOrCreate returns a future for the same asset when called "
+          "multiple times while loading") {
     auto pDepot = createDepot();
 
     Promise<ResultPointer<TestAsset>> promise =

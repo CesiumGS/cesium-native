@@ -869,21 +869,19 @@ TilesetJsonLoader::createLoader(
         const std::string& tileUrl = pCompletedRequest->url();
         if (!pResponse) {
           TilesetContentLoaderResult<TilesetJsonLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "Did not receive a valid response for tile content {}",
-                  tileUrl));
+          result.errors.emplaceError(fmt::format(
+              "Did not receive a valid response for tile content {}",
+              tileUrl));
           return asyncSystem.createResolvedFuture(std::move(result));
         }
 
         uint16_t statusCode = pResponse->statusCode();
         if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
           TilesetContentLoaderResult<TilesetJsonLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "Received status code {} for tile content {}",
-                  statusCode,
-                  tileUrl));
+          result.errors.emplaceError(fmt::format(
+              "Received status code {} for tile content {}",
+              statusCode,
+              tileUrl));
           result.statusCode = statusCode;
           return asyncSystem.createResolvedFuture(std::move(result));
         }
@@ -896,13 +894,12 @@ TilesetJsonLoader::createLoader(
             data.size());
         if (tilesetJson.HasParseError()) {
           TilesetContentLoaderResult<TilesetJsonLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "Error when parsing tileset JSON, error code {} at byte "
-                  "offset "
-                  "{}",
-                  tilesetJson.GetParseError(),
-                  tilesetJson.GetErrorOffset()));
+          result.errors.emplaceError(fmt::format(
+              "Error when parsing tileset JSON, error code {} at byte "
+              "offset "
+              "{}",
+              tilesetJson.GetParseError(),
+              tilesetJson.GetErrorOffset()));
           return asyncSystem.createResolvedFuture(std::move(result));
         }
 
@@ -1077,9 +1074,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            pAssetAccessor,
            asyncSystem,
            pSharedAssetSystem,
-           requestHeaders](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                  pCompletedRequest) mutable {
+           requestHeaders](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                               pCompletedRequest) mutable {
             auto pResponse = pCompletedRequest->response();
             const std::string& tileUrl = pCompletedRequest->url();
             if (!pResponse) {

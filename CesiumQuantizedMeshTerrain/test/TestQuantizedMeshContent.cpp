@@ -429,16 +429,14 @@ void checkGridMesh(
       // check that u ratio and v ratio is similar to grid ratio
       double uRatio = static_cast<double>(u) / 32767.0;
       double vRatio = static_cast<double>(v) / 32767.0;
-      REQUIRE(
-          Math::equalsEpsilon(
-              uRatio,
-              static_cast<double>(x) / static_cast<double>(verticesWidth - 1),
-              Math::Epsilon4));
-      REQUIRE(
-          Math::equalsEpsilon(
-              vRatio,
-              static_cast<double>(y) / static_cast<double>(verticesHeight - 1),
-              Math::Epsilon4));
+      REQUIRE(Math::equalsEpsilon(
+          uRatio,
+          static_cast<double>(x) / static_cast<double>(verticesWidth - 1),
+          Math::Epsilon4));
+      REQUIRE(Math::equalsEpsilon(
+          vRatio,
+          static_cast<double>(y) / static_cast<double>(verticesHeight - 1),
+          Math::Epsilon4));
 
       // check grid positions
       double longitude = Math::lerp(west, east, uRatio);

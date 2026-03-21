@@ -425,17 +425,15 @@ TEST_CASE("Test smooth normal generation") {
     glm::vec3 expectedNormal(-1.0f, -1.0f, -1.0f);
     expectedNormal = glm::normalize(expectedNormal);
 
-    REQUIRE(
-        glm::all(
-            glm::epsilonEqual(vertex0Normal, expectedNormal, DEFAULT_EPSILON)));
+    REQUIRE(glm::all(
+        glm::epsilonEqual(vertex0Normal, expectedNormal, DEFAULT_EPSILON)));
 
     const glm::vec3& vertex6Normal = normalView[6];
     expectedNormal = glm::vec3(1.0f, 1.0f, 1.0f);
     expectedNormal = glm::normalize(expectedNormal);
 
-    REQUIRE(
-        glm::all(
-            glm::epsilonEqual(vertex6Normal, expectedNormal, DEFAULT_EPSILON)));
+    REQUIRE(glm::all(
+        glm::epsilonEqual(vertex6Normal, expectedNormal, DEFAULT_EPSILON)));
   }
 
   SUBCASE("Test normal generation for TRIANGLE_STRIP") {
@@ -466,12 +464,10 @@ TEST_CASE("Test smooth normal generation") {
     glm::vec3 expectedNormal(0.0f, 1.0f, 0.0f);
     expectedNormal = glm::normalize(expectedNormal);
 
-    REQUIRE(
-        glm::all(
-            glm::epsilonEqual(vertex1Normal, expectedNormal, DEFAULT_EPSILON)));
-    REQUIRE(
-        glm::all(
-            glm::epsilonEqual(vertex2Normal, expectedNormal, DEFAULT_EPSILON)));
+    REQUIRE(glm::all(
+        glm::epsilonEqual(vertex1Normal, expectedNormal, DEFAULT_EPSILON)));
+    REQUIRE(glm::all(
+        glm::epsilonEqual(vertex2Normal, expectedNormal, DEFAULT_EPSILON)));
   }
 
   SUBCASE("Test normal generation for TRIANGLE_STRIP") {
@@ -501,9 +497,8 @@ TEST_CASE("Test smooth normal generation") {
     glm::vec3 expectedNormal(0.0f, 1.0f, 0.0f);
     expectedNormal = glm::normalize(expectedNormal);
 
-    REQUIRE(
-        glm::all(
-            glm::epsilonEqual(vertex0Normal, expectedNormal, DEFAULT_EPSILON)));
+    REQUIRE(glm::all(
+        glm::epsilonEqual(vertex0Normal, expectedNormal, DEFAULT_EPSILON)));
   }
 }
 
@@ -1162,9 +1157,8 @@ TEST_CASE("Model::merge") {
         CHECK(pPrimitiveMetadata2->propertyAttributes[0] == 1);
       }
 
-      SUBCASE(
-          "it updates PropertyTable indices in EXT_mesh_features attached "
-          "to a primitive") {
+      SUBCASE("it updates PropertyTable indices in EXT_mesh_features attached "
+              "to a primitive") {
         metadata1.propertyTables.emplace_back().name = "propertyTables1";
         metadata2.propertyTables.emplace_back().name = "propertyTables2";
 
@@ -1201,9 +1195,8 @@ TEST_CASE("Model::merge") {
         CHECK(pMeshFeatures2->featureIds[0].propertyTable == 1);
       }
 
-      SUBCASE(
-          "it updates Textures indices in EXT_mesh_features attached to a "
-          "primitive") {
+      SUBCASE("it updates Textures indices in EXT_mesh_features attached to a "
+              "primitive") {
         m1.textures.emplace_back().name = "texture1";
         m2.textures.emplace_back().name = "texture2";
 

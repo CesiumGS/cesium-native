@@ -93,11 +93,10 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
     const std::span<const std::byte>& data) const noexcept {
   if (data.size() < 4) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
-    result.errors.emplace_back(
-        fmt::format(
-            "Subtree file has only {} bytes, which is too few to be a valid "
-            "subtree.",
-            data.size()));
+    result.errors.emplace_back(fmt::format(
+        "Subtree file has only {} bytes, which is too few to be a valid "
+        "subtree.",
+        data.size()));
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
@@ -137,12 +136,11 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
     const std::span<const std::byte>& data) const noexcept {
   if (data.size() < sizeof(SubtreeHeader)) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
-    result.errors.emplace_back(
-        fmt::format(
-            "The binary Subtree file is invalid because it is too small to "
-            "include "
-            "a Subtree header.",
-            data.size()));
+    result.errors.emplace_back(fmt::format(
+        "The binary Subtree file is invalid because it is too small to "
+        "include "
+        "a Subtree header.",
+        data.size()));
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
@@ -150,24 +148,22 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
       reinterpret_cast<const SubtreeHeader*>(data.data());
   if (header->jsonByteLength > data.size() - sizeof(SubtreeHeader)) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
-    result.errors.emplace_back(
-        fmt::format(
-            "The binary Subtree file is invalid because it is too small to "
-            "include "
-            "the jsonByteLength specified in its header.",
-            data.size()));
+    result.errors.emplace_back(fmt::format(
+        "The binary Subtree file is invalid because it is too small to "
+        "include "
+        "the jsonByteLength specified in its header.",
+        data.size()));
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
   if (header->binaryByteLength >
       data.size() - sizeof(SubtreeHeader) - header->jsonByteLength) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
-    result.errors.emplace_back(
-        fmt::format(
-            "The binary Subtree file is invalid because it is too small to "
-            "include "
-            "the binaryByteLength specified in its header.",
-            data.size()));
+    result.errors.emplace_back(fmt::format(
+        "The binary Subtree file is invalid because it is too small to "
+        "include "
+        "the binaryByteLength specified in its header.",
+        data.size()));
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
@@ -307,28 +303,27 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::postprocess(
 
   if (!bufferRequests.empty()) {
     return asyncSystem.all(std::move(bufferRequests))
-        .thenInMainThread([loaded = std::move(loaded)](
-                              std::vector<RequestedSubtreeBuffer>&&
-                                  completedBuffers) mutable {
-          for (RequestedSubtreeBuffer& completedBuffer : completedBuffers) {
-            Buffer& buffer = loaded.value->buffers[completedBuffer.index];
-            if (buffer.byteLength >
-                static_cast<int64_t>(completedBuffer.data.size())) {
-              loaded.warnings.emplace_back(
-                  fmt::format(
+        .thenInMainThread(
+            [loaded = std::move(loaded)](std::vector<RequestedSubtreeBuffer>&&
+                                             completedBuffers) mutable {
+              for (RequestedSubtreeBuffer& completedBuffer : completedBuffers) {
+                Buffer& buffer = loaded.value->buffers[completedBuffer.index];
+                if (buffer.byteLength >
+                    static_cast<int64_t>(completedBuffer.data.size())) {
+                  loaded.warnings.emplace_back(fmt::format(
                       "Buffer byteLength ({}) is greater than the size of the "
                       "downloaded resource ({} bytes). The byteLength will be "
                       "updated to match.",
                       buffer.byteLength,
                       completedBuffer.data.size()));
-              buffer.byteLength =
-                  static_cast<int64_t>(completedBuffer.data.size());
-            }
-            buffer.cesium.data = std::move(completedBuffer.data);
-          }
+                  buffer.byteLength =
+                      static_cast<int64_t>(completedBuffer.data.size());
+                }
+                buffer.cesium.data = std::move(completedBuffer.data);
+              }
 
-          return std::move(loaded);
-        });
+              return std::move(loaded);
+            });
   }
 
   return asyncSystem.createResolvedFuture(std::move(loaded));

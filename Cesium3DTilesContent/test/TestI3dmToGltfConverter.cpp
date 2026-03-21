@@ -151,9 +151,8 @@ TEST_CASE("I3dmToGltfConverter") {
             *result.model,
             node,
             static_cast<int32_t>(*pInstanceExt->featureIds[0].attribute));
-        REQUIRE(
-            std::holds_alternative<AccessorView<uint8_t>>(
-                featureIdAccessorView));
+        REQUIRE(std::holds_alternative<AccessorView<uint8_t>>(
+            featureIdAccessorView));
         auto uint8AccessorView =
             std::get<AccessorView<uint8_t>>(featureIdAccessorView);
         // The feature IDs are sequential in the test file

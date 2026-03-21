@@ -75,13 +75,12 @@ CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
   }
 
   ErrorList errors;
-  errors.emplaceError(
-      fmt::format(
-          "No loader registered for tile with content type '{}' and magic "
-          "value "
-          "'{}'",
-          fileExtension,
-          magic));
+  errors.emplaceError(fmt::format(
+      "No loader registered for tile with content type '{}' and magic "
+      "value "
+      "'{}'",
+      fileExtension,
+      magic));
 
   return assetFetcher.asyncSystem.createResolvedFuture(
       GltfConverterResult{std::nullopt, std::move(errors)});
@@ -98,10 +97,9 @@ CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
   }
 
   ErrorList errors;
-  errors.emplaceError(
-      fmt::format(
-          "No loader registered for tile with magic value '{}'",
-          magic));
+  errors.emplaceError(fmt::format(
+      "No loader registered for tile with magic value '{}'",
+      magic));
 
   return assetFetcher.asyncSystem.createResolvedFuture(
       GltfConverterResult{std::nullopt, std::move(errors)});
@@ -168,20 +166,18 @@ AssetFetcher::get(const std::string& relativeUrl) const {
             AssetFetcherResult assetFetcherResult;
             const auto& url = pCompletedRequest->url();
             if (!pResponse) {
-              assetFetcherResult.errorList.emplaceError(
-                  fmt::format(
-                      "Did not receive a valid response for asset {}",
-                      url));
+              assetFetcherResult.errorList.emplaceError(fmt::format(
+                  "Did not receive a valid response for asset {}",
+                  url));
               return asyncSystem.createResolvedFuture(
                   std::move(assetFetcherResult));
             }
             uint16_t statusCode = pResponse->statusCode();
             if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              assetFetcherResult.errorList.emplaceError(
-                  fmt::format(
-                      "Received status code {} for asset {}",
-                      statusCode,
-                      url));
+              assetFetcherResult.errorList.emplaceError(fmt::format(
+                  "Received status code {} for asset {}",
+                  statusCode,
+                  url));
               return asyncSystem.createResolvedFuture(
                   std::move(assetFetcherResult));
             }

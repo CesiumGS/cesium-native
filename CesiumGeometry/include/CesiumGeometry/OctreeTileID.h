@@ -20,7 +20,7 @@ struct CESIUMGEOMETRY_API OctreeTileID {
   /**
    * @brief Creates a new instance.
    */
-  constexpr OctreeTileID() : level(0), x(0), y(0), z(0) {};
+  constexpr OctreeTileID() : level(0), x(0), y(0), z(0){};
 
   /**
    * @brief Creates a new instance.

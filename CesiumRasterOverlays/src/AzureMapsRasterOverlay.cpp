@@ -214,23 +214,19 @@ AzureMapsRasterOverlay::createTileProvider(
       errorList.errors = std::move(response.errors);
       errorList.warnings = std::move(response.warnings);
 
-      return nonstd::make_unexpected(
-          RasterOverlayLoadFailureDetails{
-              .type = RasterOverlayLoadType::TileProvider,
-              .pRequest = pRequest,
-              .message = errorList.format(
-                  "Failed to parse response from Azure "
-                  "Maps tileset API service:")});
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = errorList.format("Failed to parse response from Azure "
+                                      "Maps tileset API service:")});
     }
 
     if (!response.value->isObject()) {
-      return nonstd::make_unexpected(
-          RasterOverlayLoadFailureDetails{
-              .type = RasterOverlayLoadType::TileProvider,
-              .pRequest = pRequest,
-              .message =
-                  "Response from Azure Maps tileset API service was not a "
-                  "JSON object."});
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = "Response from Azure Maps tileset API service was not a "
+                     "JSON object."});
     }
     const JsonValue::Object& responseObject = response.value->getObject();
 
@@ -248,39 +244,36 @@ AzureMapsRasterOverlay::createTileProvider(
     try {
       tileSize = static_cast<uint32_t>(std::stoul(tileSizeEnum));
     } catch (std::exception&) {
-      return nonstd::make_unexpected(
-          RasterOverlayLoadFailureDetails{
-              .type = RasterOverlayLoadType::TileProvider,
-              .pRequest = pRequest,
-              .message = "Response from Azure Maps tileset API service did not "
-                         "contain a valid "
-                         "'tileSize' property."});
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = "Response from Azure Maps tileset API service did not "
+                     "contain a valid "
+                     "'tileSize' property."});
     }
 
     it = responseObject.find("minzoom");
     if (it != responseObject.end() && it->second.isNumber()) {
       minimumLevel = it->second.getSafeNumberOrDefault<uint32_t>(0);
     } else if (it != responseObject.end()) {
-      return nonstd::make_unexpected(
-          RasterOverlayLoadFailureDetails{
-              .type = RasterOverlayLoadType::TileProvider,
-              .pRequest = pRequest,
-              .message = "Response from Azure Maps tileset API service did not "
-                         "contain a valid "
-                         "'minzoom' property."});
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = "Response from Azure Maps tileset API service did not "
+                     "contain a valid "
+                     "'minzoom' property."});
     }
 
     it = responseObject.find("maxzoom");
     if (it != responseObject.end() && it->second.isNumber()) {
       maximumLevel = it->second.getSafeNumberOrDefault<uint32_t>(0);
     } else if (it != responseObject.end()) {
-      return nonstd::make_unexpected(
-          RasterOverlayLoadFailureDetails{
-              .type = RasterOverlayLoadType::TileProvider,
-              .pRequest = pRequest,
-              .message = "Response from Azure Maps tileset API service did not "
-                         "contain a valid "
-                         "'maxzoom' property."});
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = "Response from Azure Maps tileset API service did not "
+                     "contain a valid "
+                     "'maxzoom' property."});
     }
 
     std::vector<std::string> tiles;
@@ -290,13 +283,12 @@ AzureMapsRasterOverlay::createTileProvider(
     }
 
     if (tiles.empty()) {
-      return nonstd::make_unexpected(
-          RasterOverlayLoadFailureDetails{
-              .type = RasterOverlayLoadType::TileProvider,
-              .pRequest = pRequest,
-              .message = "Response from Azure Maps tileset API service did not "
-                         "contain a valid "
-                         "'tiles' property."});
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          .type = RasterOverlayLoadType::TileProvider,
+          .pRequest = pRequest,
+          .message = "Response from Azure Maps tileset API service did not "
+                     "contain a valid "
+                     "'tiles' property."});
     }
 
     std::string tileEndpoint;
@@ -312,12 +304,11 @@ AzureMapsRasterOverlay::createTileProvider(
     }
 
     if (tileEndpoint.empty()) {
-      return nonstd::make_unexpected(
-          RasterOverlayLoadFailureDetails{
-              RasterOverlayLoadType::TileProvider,
-              pRequest,
-              "Azure Maps returned no valid endpoints for the given "
-              "tilesetId."});
+      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+          RasterOverlayLoadType::TileProvider,
+          pRequest,
+          "Azure Maps returned no valid endpoints for the given "
+          "tilesetId."});
     }
 
     std::string topLevelCredit;
@@ -362,24 +353,22 @@ AzureMapsRasterOverlay::createTileProvider(
             const IAssetResponse* pResponse = pRequest->response();
 
             if (!pResponse) {
-              return nonstd::make_unexpected(
-                  RasterOverlayLoadFailureDetails{
-                      RasterOverlayLoadType::TileProvider,
-                      pRequest,
-                      "No response received from Azure Maps imagery tileset "
-                      "service."});
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  RasterOverlayLoadType::TileProvider,
+                  pRequest,
+                  "No response received from Azure Maps imagery tileset "
+                  "service."});
             }
 
             if (pResponse->statusCode() < 200 ||
                 pResponse->statusCode() >= 300) {
-              return nonstd::make_unexpected(
-                  RasterOverlayLoadFailureDetails{
-                      .type = RasterOverlayLoadType::TileProvider,
-                      .pRequest = pRequest,
-                      .message = fmt::format(
-                          "Azure Maps API tileset request service returned "
-                          "HTTP status code {}.",
-                          pResponse->statusCode())});
+              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  .type = RasterOverlayLoadType::TileProvider,
+                  .pRequest = pRequest,
+                  .message = fmt::format(
+                      "Azure Maps API tileset request service returned "
+                      "HTTP status code {}.",
+                      pResponse->statusCode())});
             }
 
             CreateTileProviderResult handleResponseResult =
@@ -519,22 +508,21 @@ AzureMapsRasterOverlayTileProvider::AzureMapsRasterOverlayTileProvider(
 CesiumAsync::Future<LoadedRasterOverlayImage>
 AzureMapsRasterOverlayTileProvider::loadQuadtreeTileImage(
     const CesiumGeometry::QuadtreeTileID& tileID) const {
-  Uri uri(
-      CesiumUtility::Uri::substituteTemplateParameters(
-          this->_tileEndpoint,
-          [this, &tileID](const std::string& key) {
-            if (key == "z") {
-              return std::to_string(tileID.level);
-            }
-            if (key == "x") {
-              return std::to_string(tileID.x);
-            }
-            if (key == "y") {
-              return std::to_string(
-                  tileID.computeInvertedY(this->getTilingScheme()));
-            }
-            return key;
-          }));
+  Uri uri(CesiumUtility::Uri::substituteTemplateParameters(
+      this->_tileEndpoint,
+      [this, &tileID](const std::string& key) {
+        if (key == "z") {
+          return std::to_string(tileID.level);
+        }
+        if (key == "x") {
+          return std::to_string(tileID.x);
+        }
+        if (key == "y") {
+          return std::to_string(
+              tileID.computeInvertedY(this->getTilingScheme()));
+        }
+        return key;
+      }));
 
   UriQuery query(uri);
   query.setValue("subscription-key", this->_key);

@@ -86,17 +86,16 @@ EllipsoidTilesetLoader::EllipsoidTilesetLoader(const Ellipsoid& ellipsoid)
 
 Future<TileLoadResult>
 EllipsoidTilesetLoader::loadTileContent(const TileLoadInput& input) {
-  return input.asyncSystem.createResolvedFuture(
-      TileLoadResult{
-          createModel(createGeometry(input.tile)),
-          Axis::Z,
-          std::nullopt,
-          std::nullopt,
-          std::nullopt,
-          input.pAssetAccessor,
-          nullptr,
-          {},
-          TileLoadResultState::Success});
+  return input.asyncSystem.createResolvedFuture(TileLoadResult{
+      createModel(createGeometry(input.tile)),
+      Axis::Z,
+      std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      input.pAssetAccessor,
+      nullptr,
+      {},
+      TileLoadResultState::Success});
 }
 
 TileChildrenResult EllipsoidTilesetLoader::createTileChildren(
@@ -154,11 +153,10 @@ void EllipsoidTilesetLoader::createChildTile(
   Tile& child = children.emplace_back(parent.getLoader());
   child.setTileID(childID);
   child.setRefine(parent.getRefine());
-  child.setTransform(
-      glm::translate(
-          glm::dmat4x4(1.0),
-          _projection.getEllipsoid().cartographicToCartesian(
-              globeRectangle.getNorthwest())));
+  child.setTransform(glm::translate(
+      glm::dmat4x4(1.0),
+      _projection.getEllipsoid().cartographicToCartesian(
+          globeRectangle.getNorthwest())));
   child.setBoundingVolume(boundingRegion);
   child.setGeometricError(
       8.0 * calcQuadtreeMaxGeometricError(_projection.getEllipsoid()) *

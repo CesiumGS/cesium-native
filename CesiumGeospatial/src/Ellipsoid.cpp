@@ -28,11 +28,10 @@ glm::dvec3 Ellipsoid::geodeticSurfaceNormal(
   const double latitude = cartographic.latitude;
   const double cosLatitude = glm::cos(latitude);
 
-  return glm::normalize(
-      glm::dvec3(
-          cosLatitude * glm::cos(longitude),
-          cosLatitude * glm::sin(longitude),
-          glm::sin(latitude)));
+  return glm::normalize(glm::dvec3(
+      cosLatitude * glm::cos(longitude),
+      cosLatitude * glm::sin(longitude),
+      glm::sin(latitude)));
 }
 
 glm::dvec3 Ellipsoid::cartographicToCartesian(

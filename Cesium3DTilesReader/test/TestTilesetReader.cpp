@@ -78,29 +78,25 @@ TEST_CASE("Reads tileset JSON") {
       0,
       158.4};
 
-  REQUIRE(
-      CesiumNativeTests::compareVectors(
-          tileset.root.boundingVolume.region,
-          expectedRegion));
+  REQUIRE(CesiumNativeTests::compareVectors(
+      tileset.root.boundingVolume.region,
+      expectedRegion));
 
-  REQUIRE(
-      CesiumNativeTests::compareVectors(
-          tileset.root.content->boundingVolume->region,
-          expectedContentRegion));
+  REQUIRE(CesiumNativeTests::compareVectors(
+      tileset.root.content->boundingVolume->region,
+      expectedContentRegion));
 
   REQUIRE(tileset.root.children.size() == 4);
 
   const Cesium3DTiles::Tile& child = tileset.root.children[0];
 
-  REQUIRE(
-      CesiumNativeTests::compareVectors(
-          child.boundingVolume.region,
-          expectedChildRegion));
+  REQUIRE(CesiumNativeTests::compareVectors(
+      child.boundingVolume.region,
+      expectedChildRegion));
 
-  REQUIRE(
-      CesiumNativeTests::compareVectors(
-          child.content->boundingVolume->region,
-          expectedChildContentRegion));
+  REQUIRE(CesiumNativeTests::compareVectors(
+      child.content->boundingVolume->region,
+      expectedChildContentRegion));
 
   CHECK(child.content->uri == "1/0/0.b3dm");
   CHECK(child.geometricError == 159.43385994848);
@@ -364,9 +360,8 @@ TEST_CASE("Reads tileset JSON with unknown properties") {
   REQUIRE(itNull->second.isNull());
 }
 
-TEST_CASE(
-    "Reads tileset JSON with unknown properties and ignores them when "
-    "requested") {
+TEST_CASE("Reads tileset JSON with unknown properties and ignores them when "
+          "requested") {
   using namespace std::string_literals;
 
   std::filesystem::path tilesetFile = Cesium3DTilesReader_TEST_DATA_DIR;

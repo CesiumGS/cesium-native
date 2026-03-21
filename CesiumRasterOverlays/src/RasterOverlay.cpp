@@ -66,11 +66,10 @@ RasterOverlay::getAsyncDestructionCompleteEvent(
   if (!this->_destructionCompleteDetails.has_value()) {
     auto promise = asyncSystem.createPromise<void>();
     auto sharedFuture = promise.getFuture().share();
-    this->_destructionCompleteDetails.emplace(
-        DestructionCompleteDetails{
-            asyncSystem,
-            std::move(promise),
-            std::move(sharedFuture)});
+    this->_destructionCompleteDetails.emplace(DestructionCompleteDetails{
+        asyncSystem,
+        std::move(promise),
+        std::move(sharedFuture)});
   } else {
     // All invocations of getAsyncDestructionCompleteEvent on a particular
     // RasterOverlay must pass equivalent AsyncSystems.
@@ -101,13 +100,12 @@ CesiumUtility::IntrusivePointer<ActivatedRasterOverlay> RasterOverlay::activate(
       .catchInMainThread(
           [](const std::exception& e)
               -> RasterOverlay::CreateTileProviderResult {
-            return nonstd::make_unexpected(
-                RasterOverlayLoadFailureDetails{
-                    RasterOverlayLoadType::Unknown,
-                    nullptr,
-                    fmt::format(
-                        "Error while creating tile provider: {0}",
-                        e.what())});
+            return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                RasterOverlayLoadType::Unknown,
+                nullptr,
+                fmt::format(
+                    "Error while creating tile provider: {0}",
+                    e.what())});
           })
       .thenInMainThread([pResult, parameters](
                             RasterOverlay::CreateTileProviderResult&& result) {

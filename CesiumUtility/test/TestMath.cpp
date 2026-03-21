@@ -84,11 +84,10 @@ TEST_CASE("Math::negativePitoPi") {
   CHECK(Math::negativePiToPi(-Math::OnePi + 1.0) == (-Math::OnePi + 1.0));
   CHECK(Math::negativePiToPi(+Math::OnePi - 0.1) == (+Math::OnePi - 0.1));
   CHECK(Math::negativePiToPi(-Math::OnePi + 0.1) == (-Math::OnePi + 0.1));
-  CHECK(
-      Math::equalsEpsilon(
-          Math::negativePiToPi(+Math::OnePi + 0.1),
-          -Math::OnePi + 0.1,
-          Math::Epsilon15));
+  CHECK(Math::equalsEpsilon(
+      Math::negativePiToPi(+Math::OnePi + 0.1),
+      -Math::OnePi + 0.1,
+      Math::Epsilon15));
   CHECK(Math::negativePiToPi(+2.0 * Math::OnePi) == 0.0);
   CHECK(Math::negativePiToPi(-2.0 * Math::OnePi) == 0.0);
   CHECK(Math::negativePiToPi(+3.0 * Math::OnePi) == Math::OnePi);
@@ -106,17 +105,15 @@ TEST_CASE("Math::zeroToTwoPi") {
   CHECK(Math::zeroToTwoPi(+Math::OnePi) == +Math::OnePi);
   CHECK(Math::zeroToTwoPi(-Math::OnePi) == +Math::OnePi);
   CHECK(Math::zeroToTwoPi(+Math::OnePi - 1.0) == (+Math::OnePi - 1.0));
-  CHECK(
-      Math::equalsEpsilon(
-          Math::zeroToTwoPi(-Math::OnePi + 1.0),
-          +Math::OnePi + 1.0,
-          Math::Epsilon15));
+  CHECK(Math::equalsEpsilon(
+      Math::zeroToTwoPi(-Math::OnePi + 1.0),
+      +Math::OnePi + 1.0,
+      Math::Epsilon15));
   CHECK(Math::zeroToTwoPi(+Math::OnePi - 0.1) == (+Math::OnePi - 0.1));
-  CHECK(
-      Math::equalsEpsilon(
-          Math::zeroToTwoPi(-Math::OnePi + 0.1),
-          +Math::OnePi + 0.1,
-          Math::Epsilon15));
+  CHECK(Math::equalsEpsilon(
+      Math::zeroToTwoPi(-Math::OnePi + 0.1),
+      +Math::OnePi + 0.1,
+      Math::Epsilon15));
   CHECK(Math::zeroToTwoPi(+2.0 * Math::OnePi) == (2.0 * Math::OnePi));
   CHECK(Math::zeroToTwoPi(-2.0 * Math::OnePi) == (2.0 * Math::OnePi));
   CHECK(Math::zeroToTwoPi(+3.0 * Math::OnePi) == Math::OnePi);

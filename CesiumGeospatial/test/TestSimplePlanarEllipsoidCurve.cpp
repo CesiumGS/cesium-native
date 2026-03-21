@@ -40,9 +40,8 @@ const glm::dvec3
     timesSquareEcef(1334771.9227395034, -4650343.070699833, 4142168.965635141);
 
 TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
-  SUBCASE(
-      "positions at start and end of curve are identical to input "
-      "coordinates") {
+  SUBCASE("positions at start and end of curve are identical to input "
+          "coordinates") {
     std::optional<SimplePlanarEllipsoidCurve> curve =
         SimplePlanarEllipsoidCurve::fromEarthCenteredEarthFixedCoordinates(
             Ellipsoid::WGS84,
@@ -50,16 +49,14 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
             tokyoEcef);
 
     CHECK(curve.has_value());
-    CHECK(
-        Math::equalsEpsilon(
-            curve.value().getPosition(0.0),
-            philadelphiaEcef,
-            Math::Epsilon6));
-    CHECK(
-        Math::equalsEpsilon(
-            curve.value().getPosition(1.0),
-            tokyoEcef,
-            Math::Epsilon6));
+    CHECK(Math::equalsEpsilon(
+        curve.value().getPosition(0.0),
+        philadelphiaEcef,
+        Math::Epsilon6));
+    CHECK(Math::equalsEpsilon(
+        curve.value().getPosition(1.0),
+        tokyoEcef,
+        Math::Epsilon6));
   }
 
   SUBCASE("all points should be coplanar") {
@@ -171,23 +168,20 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
             flightPath.value().getPosition(0.75));
 
     CHECK(position25Percent.has_value());
-    CHECK(
-        Math::equalsEpsilon(
-            position25Percent.value().height,
-            (endHeight - startHeight) * 0.25 + startHeight,
-            Math::Epsilon6));
+    CHECK(Math::equalsEpsilon(
+        position25Percent.value().height,
+        (endHeight - startHeight) * 0.25 + startHeight,
+        Math::Epsilon6));
     CHECK(position50Percent.has_value());
-    CHECK(
-        Math::equalsEpsilon(
-            position50Percent.value().height,
-            (endHeight - startHeight) * 0.5 + startHeight,
-            Math::Epsilon6));
+    CHECK(Math::equalsEpsilon(
+        position50Percent.value().height,
+        (endHeight - startHeight) * 0.5 + startHeight,
+        Math::Epsilon6));
     CHECK(position75Percent.has_value());
-    CHECK(
-        Math::equalsEpsilon(
-            position75Percent.value().height,
-            (endHeight - startHeight) * 0.75 + startHeight,
-            Math::Epsilon6));
+    CHECK(Math::equalsEpsilon(
+        position75Percent.value().height,
+        (endHeight - startHeight) * 0.75 + startHeight,
+        Math::Epsilon6));
   }
 
   // Testing a bug in SimplePlanarEllipsoidCurve where a path from a point with
@@ -208,11 +202,10 @@ TEST_CASE("SimplePlanarEllipsoidCurve::getPosition") {
         glm::distance(timesSquareEcef, midpoint) +
         glm::distance(newYorkCityEcef, midpoint);
 
-    CHECK(
-        Math::equalsEpsilon(
-            expectedDistance,
-            totalActualDistance,
-            Math::Epsilon4));
+    CHECK(Math::equalsEpsilon(
+        expectedDistance,
+        totalActualDistance,
+        Math::Epsilon4));
   }
 }
 
@@ -230,9 +223,8 @@ TEST_CASE(
 }
 
 TEST_CASE("SimplePlanarEllipsoidCurve::fromLongitudeLatitudeHeight") {
-  SUBCASE(
-      "should match results of curve created from equivalent ECEF "
-      "coordinates") {
+  SUBCASE("should match results of curve created from equivalent ECEF "
+          "coordinates") {
     std::optional<SimplePlanarEllipsoidCurve> llhCurve =
         SimplePlanarEllipsoidCurve::fromLongitudeLatitudeHeight(
             Ellipsoid::WGS84,
@@ -252,11 +244,10 @@ TEST_CASE("SimplePlanarEllipsoidCurve::fromLongitudeLatitudeHeight") {
 
     for (int i = 0; i <= steps; i++) {
       double n = 1.0 / (double)steps;
-      CHECK(
-          Math::equalsEpsilon(
-              ecefCurve.value().getPosition(n),
-              llhCurve.value().getPosition(n),
-              Math::Epsilon6));
+      CHECK(Math::equalsEpsilon(
+          ecefCurve.value().getPosition(n),
+          llhCurve.value().getPosition(n),
+          Math::Epsilon6));
     }
   }
 }

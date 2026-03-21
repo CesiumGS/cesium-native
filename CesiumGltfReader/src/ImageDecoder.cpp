@@ -406,9 +406,8 @@ std::optional<std::string> ImageDecoder::generateMipMaps(ImageAsset& image) {
   image.mipPositions[0].byteOffset = 0;
   image.mipPositions[0].byteSize = imageByteSize;
 
-  image.pixelData.resize(
-      static_cast<size_t>(
-          totalPixelCount * image.channels * image.bytesPerChannel));
+  image.pixelData.resize(static_cast<size_t>(
+      totalPixelCount * image.channels * image.bytesPerChannel));
 
   mipWidth = image.width;
   mipHeight = image.height;

@@ -14,9 +14,8 @@ namespace CesiumGltf {
 /**
  * @brief ExtensionMeshPrimitiveKhrMaterialsVariants Mappings Value
  */
-struct CESIUMGLTF_API
-    ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue final
-    : public CesiumUtility::ExtensibleObject {
+struct CESIUMGLTF_API ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue
+    final : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */

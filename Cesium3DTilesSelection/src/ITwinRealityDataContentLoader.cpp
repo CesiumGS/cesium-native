@@ -207,11 +207,10 @@ requestRealityDataContainer(
     const std::string& iTwinAccessToken,
     ITwinRealityDataContentLoader::TokenRefreshCallback&& tokenRefreshCallback,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  CesiumUtility::Uri readAccessUri(
-      fmt::format(
-          "https://api.bentley.com/reality-management/reality-data/{}/"
-          "readaccess",
-          details.id));
+  CesiumUtility::Uri readAccessUri(fmt::format(
+      "https://api.bentley.com/reality-management/reality-data/{}/"
+      "readaccess",
+      details.id));
   if (iTwinId.has_value()) {
     CesiumUtility::UriQuery query("");
     query.setValue("iTwinId", *iTwinId);
@@ -232,31 +231,28 @@ requestRealityDataContainer(
                         iTwinId,
                         iTwinAccessToken,
                         tokenRefreshCallback = std::move(tokenRefreshCallback),
-                        ellipsoid](
-                           std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                               pRequest) mutable {
+                        ellipsoid](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                       pRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
         const std::string& requestUrl = pRequest->url();
         if (!pResponse) {
           TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "No response received for reality data read access request "
-                  "{}",
-                  requestUrl));
+          result.errors.emplaceError(fmt::format(
+              "No response received for reality data read access request "
+              "{}",
+              requestUrl));
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
 
         uint16_t statusCode = pResponse->statusCode();
         if (statusCode < 200 || statusCode >= 300) {
           TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "Received status code {} for reality data read access "
-                  "response "
-                  "{}",
-                  statusCode,
-                  requestUrl));
+          result.errors.emplaceError(fmt::format(
+              "Received status code {} for reality data read access "
+              "response "
+              "{}",
+              statusCode,
+              requestUrl));
           result.statusCode = statusCode;
           parseITwinErrorResponseIntoErrorList(*pResponse, result.errors);
           return externals.asyncSystem.createResolvedFuture(std::move(result));
@@ -273,10 +269,9 @@ requestRealityDataContainer(
             getContainerUrl(readAccessResponse);
         if (parsedContainerUrl.empty()) {
           TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "Couldn't obtain container URL for reality data {}",
-                  details.id));
+          result.errors.emplaceError(fmt::format(
+              "Couldn't obtain container URL for reality data {}",
+              details.id));
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
 
@@ -347,29 +342,26 @@ ITwinRealityDataContentLoader::createLoader(
                         iTwinId,
                         iTwinAccessToken,
                         tokenRefreshCallback = std::move(tokenRefreshCallback),
-                        ellipsoid](
-                           std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                               pRequest) mutable {
+                        ellipsoid](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                       pRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
         const std::string& requestUrl = pRequest->url();
         if (!pResponse) {
           TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "No response received for reality data metadata request {}",
-                  requestUrl));
+          result.errors.emplaceError(fmt::format(
+              "No response received for reality data metadata request {}",
+              requestUrl));
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
 
         uint16_t statusCode = pResponse->statusCode();
         if (statusCode < 200 || statusCode >= 300) {
           TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "Received status code {} for reality data metadata response "
-                  "{}",
-                  statusCode,
-                  requestUrl));
+          result.errors.emplaceError(fmt::format(
+              "Received status code {} for reality data metadata response "
+              "{}",
+              statusCode,
+              requestUrl));
           result.statusCode = statusCode;
           parseITwinErrorResponseIntoErrorList(*pResponse, result.errors);
           return externals.asyncSystem.createResolvedFuture(std::move(result));
@@ -386,10 +378,9 @@ ITwinRealityDataContentLoader::createLoader(
             parseRealityDataDetails(metadataResponse);
         if (!details || details->type == RealityDataType::Unsupported) {
           TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "No 3D Tiles reality data found for id {}",
-                  realityDataId));
+          result.errors.emplaceError(fmt::format(
+              "No 3D Tiles reality data found for id {}",
+              realityDataId));
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
 

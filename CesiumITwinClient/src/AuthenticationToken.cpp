@@ -89,11 +89,10 @@ AuthenticationToken::AuthenticationToken(
     int64_t notValidBefore,
     int64_t expires)
     : _token(token),
-      _contents(
-          AccessTokenContents{
-              std::move(name),
-              std::move(userName),
-              std::move(scopes),
-              notValidBefore}),
+      _contents(AccessTokenContents{
+          std::move(name),
+          std::move(userName),
+          std::move(scopes),
+          notValidBefore}),
       _expires(expires) {}
 } // namespace CesiumITwinClient

@@ -359,18 +359,17 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
   // request it
   if (!subtreeIt->second.isContentAvailable(subtreeID, *pQuadtreeID, 0)) {
     // check if tile has empty content
-    return asyncSystem.createResolvedFuture(
-        TileLoadResult{
-            TileEmptyContent{},
-            CesiumGeometry::Axis::Y,
-            std::nullopt,
-            std::nullopt,
-            std::nullopt,
-            pAssetAccessor,
-            nullptr,
-            {},
-            TileLoadResultState::Success,
-            ellipsoid});
+    return asyncSystem.createResolvedFuture(TileLoadResult{
+        TileEmptyContent{},
+        CesiumGeometry::Axis::Y,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        pAssetAccessor,
+        nullptr,
+        {},
+        TileLoadResultState::Success,
+        ellipsoid});
   }
 
   std::string tileUrl = ImplicitTilingUtilities::resolveUrl(

@@ -970,9 +970,8 @@ TEST_CASE("Test parsing subtree format") {
               std::move(subtreeJson)) == std::nullopt);
     }
 
-    SUBCASE(
-        "Subtree json has no buffers though availability points to buffer "
-        "view") {
+    SUBCASE("Subtree json has no buffers though availability points to buffer "
+            "view") {
       subtreeJson.RemoveMember("buffers");
       CHECK(
           mockLoadSubtreeJson(
@@ -1004,9 +1003,8 @@ TEST_CASE("Test parsing subtree format") {
               std::move(subtreeJson)) == std::nullopt);
     }
 
-    SUBCASE(
-        "Subtree json has no buffer views though availability points to "
-        "buffer view") {
+    SUBCASE("Subtree json has no buffer views though availability points to "
+            "buffer view") {
       subtreeJson.RemoveMember("bufferViews");
       CHECK(
           mockLoadSubtreeJson(
@@ -1066,9 +1064,8 @@ TEST_CASE("SubtreeAvailability modifications") {
   SubtreeAvailability& availability = *maybeAvailability;
   const Subtree& subtree = availability.getSubtree();
 
-  SUBCASE(
-      "initially has all tiles available, and no content or subtrees "
-      "available") {
+  SUBCASE("initially has all tiles available, and no content or subtrees "
+          "available") {
     CHECK(availability.isTileAvailable(
         QuadtreeTileID(0, 0, 0),
         QuadtreeTileID(0, 0, 0)));

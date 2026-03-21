@@ -148,11 +148,10 @@ UrlTemplateRasterOverlay::createTileProvider(
           projectRectangleSimple(projection, tilingSchemeRectangle));
 
   CesiumGeometry::QuadtreeTilingScheme tilingScheme =
-      this->_options.tilingScheme.value_or(
-          CesiumGeometry::QuadtreeTilingScheme(
-              coverageRectangle,
-              rootTilesX,
-              1));
+      this->_options.tilingScheme.value_or(CesiumGeometry::QuadtreeTilingScheme(
+          coverageRectangle,
+          rootTilesX,
+          1));
 
   return parameters.externals.asyncSystem
       .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(

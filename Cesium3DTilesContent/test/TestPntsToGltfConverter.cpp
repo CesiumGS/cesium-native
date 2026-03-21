@@ -50,22 +50,20 @@ static void checkBufferContents(
       const glm::vec3& value =
           *reinterpret_cast<const glm::vec3*>(buffer.data() + i * byteStride);
       const glm::vec3& expectedValue = expected[i];
-      REQUIRE(
-          Math::equalsEpsilon(
-              static_cast<glm::dvec3>(value),
-              static_cast<glm::dvec3>(expectedValue),
-              epsilon));
+      REQUIRE(Math::equalsEpsilon(
+          static_cast<glm::dvec3>(value),
+          static_cast<glm::dvec3>(expectedValue),
+          epsilon));
     }
   } else if constexpr (std::is_same_v<Type, glm::vec4>) {
     for (size_t i = 0; i < expected.size(); ++i) {
       const glm::vec4& value =
           *reinterpret_cast<const glm::vec4*>(buffer.data() + i * byteStride);
       const glm::vec4& expectedValue = expected[i];
-      REQUIRE(
-          Math::equalsEpsilon(
-              static_cast<glm::dvec4>(value),
-              static_cast<glm::dvec4>(expectedValue),
-              epsilon));
+      REQUIRE(Math::equalsEpsilon(
+          static_cast<glm::dvec4>(value),
+          static_cast<glm::dvec4>(expectedValue),
+          epsilon));
     }
   } else if constexpr (std::is_floating_point_v<Type>) {
     for (size_t i = 0; i < expected.size(); ++i) {
@@ -719,9 +717,8 @@ getUniqueBufferIds(const std::vector<BufferView>& bufferViews) {
   return result;
 }
 
-TEST_CASE(
-    "Converts point cloud with batch IDs to glTF with "
-    "EXT_structural_metadata") {
+TEST_CASE("Converts point cloud with batch IDs to glTF with "
+          "EXT_structural_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath = testFilePath / "PointCloud" / "pointCloudBatched.pnts";
   const int32_t pointsLength = 8;
@@ -799,9 +796,8 @@ TEST_CASE(
   checkBufferContents<uint8_t>(featureIdBuffer.cesium.data, expectedFeatureIDs);
 }
 
-TEST_CASE(
-    "Converts point cloud with per-point properties to glTF with "
-    "EXT_structural_metadata") {
+TEST_CASE("Converts point cloud with per-point properties to glTF with "
+          "EXT_structural_metadata") {
   std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testFilePath =
       testFilePath / "PointCloud" / "pointCloudWithPerPointProperties.pnts";

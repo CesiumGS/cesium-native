@@ -113,9 +113,8 @@ TEST_CASE("AsyncSystem") {
     CHECK(executed2);
   }
 
-  SUBCASE(
-      "main thread continuations following a main thread task run "
-      "immediately") {
+  SUBCASE("main thread continuations following a main thread task run "
+          "immediately") {
     bool executed1 = false;
     bool executed2 = false;
 
@@ -132,9 +131,8 @@ TEST_CASE("AsyncSystem") {
     CHECK(pTaskProcessor->tasksStarted == 0);
   }
 
-  SUBCASE(
-      "worker continuations following a thread pool thread run as a "
-      "separate task") {
+  SUBCASE("worker continuations following a thread pool thread run as a "
+          "separate task") {
     ThreadPool pool(1);
 
     bool executed1 = false;
@@ -152,9 +150,8 @@ TEST_CASE("AsyncSystem") {
     CHECK(executed3);
   }
 
-  SUBCASE(
-      "a worker continuation that returns an already resolved future "
-      "immediately invokes an attached worker continuation") {
+  SUBCASE("a worker continuation that returns an already resolved future "
+          "immediately invokes an attached worker continuation") {
     bool executed = false;
 
     asyncSystem
@@ -369,9 +366,8 @@ TEST_CASE("AsyncSystem") {
     CHECK(rejected);
   }
 
-  SUBCASE(
-      "When multiple futures in an 'all' reject, the data from the first "
-      "rejection in the list is used") {
+  SUBCASE("When multiple futures in an 'all' reject, the data from the first "
+          "rejection in the list is used") {
     auto one = asyncSystem.createPromise<int>();
     auto two = asyncSystem.createPromise<int>();
     auto three = asyncSystem.createPromise<int>();
@@ -404,9 +400,8 @@ TEST_CASE("AsyncSystem") {
     CHECK(rejected);
   }
 
-  SUBCASE(
-      "Future returned by 'all(Futures...)' resolves when all given "
-      "Futures resolve") {
+  SUBCASE("Future returned by 'all(Futures...)' resolves when all given "
+          "Futures resolve") {
     auto one = asyncSystem.createPromise<int>();
     auto two = asyncSystem.createPromise<double>();
     auto three = asyncSystem.createPromise<std::string>();
@@ -462,9 +457,8 @@ TEST_CASE("AsyncSystem") {
     CHECK(rejected);
   }
 
-  SUBCASE(
-      "When multiple futures in an 'all(Futures...)' reject, the data from "
-      "the first rejection in the argument list is used") {
+  SUBCASE("When multiple futures in an 'all(Futures...)' reject, the data from "
+          "the first rejection in the argument list is used") {
     auto one = asyncSystem.createPromise<int>();
     auto two = asyncSystem.createPromise<double>();
     auto three = asyncSystem.createPromise<std::string>();

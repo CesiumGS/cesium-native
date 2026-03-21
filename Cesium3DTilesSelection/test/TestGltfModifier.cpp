@@ -170,9 +170,8 @@ TEST_CASE("GltfModifier") {
     CHECK_FALSE(pRequester->hasMoreTilesToLoadInMainThread());
   }
 
-  SUBCASE(
-      "trigger causes modifier to be reapplied and version number to be "
-      "updated") {
+  SUBCASE("trigger causes modifier to be reapplied and version number to be "
+          "updated") {
     const TileRenderContent* pRenderContent =
         pTile->getContent().getRenderContent();
     REQUIRE(pRenderContent);

@@ -164,24 +164,22 @@ TEST_CASE("GlobeRectangle::computeCenter") {
   center = wrapping.computeCenter();
   double expectedLongitude =
       3.0 + ((Math::OnePi - 3.0) + (-3.1 - -Math::OnePi)) * 0.5;
-  CHECK(
-      Math::equalsEpsilon(
-          center.longitude,
-          expectedLongitude,
-          0.0,
-          Math::Epsilon14));
+  CHECK(Math::equalsEpsilon(
+      center.longitude,
+      expectedLongitude,
+      0.0,
+      Math::Epsilon14));
   CHECK(Math::equalsEpsilon(center.latitude, 0.3, 0.0, Math::Epsilon14));
 
   GlobeRectangle wrapping2(3.1, 0.2, -3.0, 0.4);
   center = wrapping2.computeCenter();
   expectedLongitude =
       -3.0 - ((Math::OnePi - 3.1) + (-3.0 - -Math::OnePi)) * 0.5;
-  CHECK(
-      Math::equalsEpsilon(
-          center.longitude,
-          expectedLongitude,
-          0.0,
-          Math::Epsilon14));
+  CHECK(Math::equalsEpsilon(
+      center.longitude,
+      expectedLongitude,
+      0.0,
+      Math::Epsilon14));
   CHECK(Math::equalsEpsilon(center.latitude, 0.3, 0.0, Math::Epsilon14));
 }
 
@@ -225,44 +223,36 @@ TEST_CASE("GlobeRectangle::computeNormalizedCoordinates") {
   CHECK(
       wrapping.computeNormalizedCoordinates(
           Cartographic::fromDegrees(-180.0, 0.0)) == glm::dvec2(0.5, 0.0));
-  CHECK(
-      Math::equalsEpsilon(
-          wrapping.computeNormalizedCoordinates(
-              Cartographic::fromDegrees(-177.5, 0.0)),
-          glm::dvec2(0.75, 0.0),
-          Math::Epsilon6));
+  CHECK(Math::equalsEpsilon(
+      wrapping.computeNormalizedCoordinates(
+          Cartographic::fromDegrees(-177.5, 0.0)),
+      glm::dvec2(0.75, 0.0),
+      Math::Epsilon6));
   CHECK(
       wrapping.computeNormalizedCoordinates(
           Cartographic::fromDegrees(-175, 0.0)) == glm::dvec2(1.0, 0.0));
 
   GlobeRectangle tile = GlobeRectangle::fromDegrees(0.5, 0, 1.0, 0.5);
-  CHECK(
-      Math::equalsEpsilon(
-          tile.computeNormalizedCoordinates(
-              Cartographic::fromDegrees(0.25, 0.25)),
-          glm::dvec2(-0.5, 0.5),
-          Math::Epsilon6));
-  CHECK(
-      Math::equalsEpsilon(
-          tile.computeNormalizedCoordinates(
-              Cartographic::fromDegrees(0.5, 0.75)),
-          glm::dvec2(0, 1.5),
-          Math::Epsilon6));
-  CHECK(
-      Math::equalsEpsilon(
-          tile.computeNormalizedCoordinates(
-              Cartographic::fromDegrees(0.75, 0.25)),
-          glm::dvec2(0.5, 0.5),
-          Math::Epsilon6));
+  CHECK(Math::equalsEpsilon(
+      tile.computeNormalizedCoordinates(Cartographic::fromDegrees(0.25, 0.25)),
+      glm::dvec2(-0.5, 0.5),
+      Math::Epsilon6));
+  CHECK(Math::equalsEpsilon(
+      tile.computeNormalizedCoordinates(Cartographic::fromDegrees(0.5, 0.75)),
+      glm::dvec2(0, 1.5),
+      Math::Epsilon6));
+  CHECK(Math::equalsEpsilon(
+      tile.computeNormalizedCoordinates(Cartographic::fromDegrees(0.75, 0.25)),
+      glm::dvec2(0.5, 0.5),
+      Math::Epsilon6));
 
   GlobeRectangle bigWrapping =
       GlobeRectangle::fromDegrees(179.0, -10.0, 10.0, 10.0);
-  CHECK(
-      Math::equalsEpsilon(
-          bigWrapping.computeNormalizedCoordinates(
-              Cartographic::fromDegrees(5.0, 0.0)),
-          // Rectangle width is 191 degrees, position is 5 degrees west of east
-          // edge.
-          glm::dvec2(186.0 / 191.0, 0.5),
-          Math::Epsilon6));
+  CHECK(Math::equalsEpsilon(
+      bigWrapping.computeNormalizedCoordinates(
+          Cartographic::fromDegrees(5.0, 0.0)),
+      // Rectangle width is 191 degrees, position is 5 degrees west of east
+      // edge.
+      glm::dvec2(186.0 / 191.0, 0.5),
+      Math::Epsilon6));
 }

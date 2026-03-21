@@ -253,9 +253,8 @@ TEST_CASE("Test replace refinement for render") {
     }
   }
 
-  SUBCASE(
-      "Root doesn't meet sse but has to be rendered because children "
-      "cannot be rendered") {
+  SUBCASE("Root doesn't meet sse but has to be rendered because children "
+          "cannot be rendered") {
     // we should forbid hole first to let the checks below happen
     tileset.getOptions().forbidHoles = true;
 
@@ -267,9 +266,8 @@ TEST_CASE("Test replace refinement for render") {
       mockAssetAccessor->mockCompletedRequests["ur.b3dm"]->pResponse = nullptr;
     }
 
-    SUBCASE(
-        "Children cannot be rendered because response has an failed status "
-        "code") {
+    SUBCASE("Children cannot be rendered because response has an failed status "
+            "code") {
       // remove one of children completed response to mock network error
       mockAssetAccessor->mockCompletedRequests["ll.b3dm"]
           ->pResponse->mockStatusCode = 404;
@@ -752,9 +750,8 @@ TEST_CASE("Test additive refinement") {
   }
 }
 
-TEST_CASE(
-    "Render any tiles even when one of children can't be rendered for "
-    "additive refinement") {
+TEST_CASE("Render any tiles even when one of children can't be rendered for "
+          "additive refinement") {
   Cesium3DTilesContent::registerAllTileContentTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
@@ -927,9 +924,8 @@ TEST_CASE("Test multiple frustums") {
       viewState.getVerticalFieldOfView(),
       Ellipsoid::WGS84);
 
-  SUBCASE(
-      "The frustum with the highest SSE should be used for deciding to "
-      "refine") {
+  SUBCASE("The frustum with the highest SSE should be used for deciding to "
+          "refine") {
 
     // frame 1
     {
@@ -1051,9 +1047,8 @@ TEST_CASE("Test multiple frustums") {
   }
 }
 
-TEST_CASE(
-    "Can load example tileset.json from 3DTILES_bounding_volume_S2 "
-    "documentation") {
+TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
+          "documentation") {
   std::string s = R"(
       {
         "asset": {
@@ -1597,16 +1592,15 @@ void runUnconditionallyRefinedTestCase(const TilesetOptions& options) {
       pRootTile->setTileID(CesiumGeometry::QuadtreeTileID(0, 0, 0));
 
       Cartographic center = Cartographic::fromDegrees(118.0, 32.0, 0.0);
-      pRootTile->setBoundingVolume(
-          CesiumGeospatial::BoundingRegion(
-              GlobeRectangle(
-                  center.longitude - 0.001,
-                  center.latitude - 0.001,
-                  center.longitude + 0.001,
-                  center.latitude + 0.001),
-              0.0,
-              10.0,
-              Ellipsoid::WGS84));
+      pRootTile->setBoundingVolume(CesiumGeospatial::BoundingRegion(
+          GlobeRectangle(
+              center.longitude - 0.001,
+              center.latitude - 0.001,
+              center.longitude + 0.001,
+              center.latitude + 0.001),
+          0.0,
+          10.0,
+          Ellipsoid::WGS84));
       pRootTile->setGeometricError(100000000000.0);
 
       Tile child(this);

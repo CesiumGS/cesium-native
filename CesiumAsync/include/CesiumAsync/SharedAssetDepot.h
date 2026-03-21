@@ -421,9 +421,9 @@ SharedAssetDepot<TAssetType, TAssetKey, TContext>::getOrCreate(
             return pDepot->_factory(context, pEntry->key);
           })
           .thenInWorkerThread(
-              [pDepot, pEntry](
-                  CesiumUtility::Result<
-                      CesiumUtility::IntrusivePointer<TAssetType>>&& result) {
+              [pDepot,
+               pEntry](CesiumUtility::Result<
+                       CesiumUtility::IntrusivePointer<TAssetType>>&& result) {
                 LockHolder lock = pDepot->lock();
 
                 if (result.pValue) {

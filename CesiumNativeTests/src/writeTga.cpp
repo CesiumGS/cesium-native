@@ -109,12 +109,11 @@ void writeImageToTgaFile(
   } else {
     std::filesystem::path outputPathParsed(outputPath);
     for (size_t i = 0; i < image.mipPositions.size(); i++) {
-      std::filesystem::path thisPath(
-          fmt::format(
-              "{}-mip{}{}",
-              outputPathParsed.stem().string(),
-              i,
-              outputPathParsed.extension().string()));
+      std::filesystem::path thisPath(fmt::format(
+          "{}-mip{}{}",
+          outputPathParsed.stem().string(),
+          i,
+          outputPathParsed.extension().string()));
       writeTgaImpl(
           thisPath,
           image.pixelData.data() + image.mipPositions[i].byteOffset,

@@ -24,9 +24,8 @@
 
 using namespace CesiumGltf;
 
-TEST_CASE(
-    "Test FeatureIdTextureView on feature ID texture with invalid "
-    "texture index") {
+TEST_CASE("Test FeatureIdTextureView on feature ID texture with invalid "
+          "texture index") {
   Model model;
   Mesh& mesh = model.meshes.emplace_back();
   MeshPrimitive& primitive = mesh.primitives.emplace_back();
@@ -49,9 +48,8 @@ TEST_CASE(
   REQUIRE(view.status() == FeatureIdTextureViewStatus::ErrorInvalidTexture);
 }
 
-TEST_CASE(
-    "Test FeatureIdTextureView on feature ID texture with invalid image "
-    "index") {
+TEST_CASE("Test FeatureIdTextureView on feature ID texture with invalid image "
+          "index") {
   Model model;
   Mesh& mesh = model.meshes.emplace_back();
   MeshPrimitive& primitive = mesh.primitives.emplace_back();
@@ -110,9 +108,8 @@ TEST_CASE("Test FeatureIdTextureView on feature ID texture with empty image") {
   REQUIRE(view.status() == FeatureIdTextureViewStatus::ErrorEmptyImage);
 }
 
-TEST_CASE(
-    "Test FeatureIdTextureView on feature ID texture with too many bytes "
-    "per channel") {
+TEST_CASE("Test FeatureIdTextureView on feature ID texture with too many bytes "
+          "per channel") {
   Model model;
   Mesh& mesh = model.meshes.emplace_back();
   MeshPrimitive& primitive = mesh.primitives.emplace_back();
@@ -213,9 +210,8 @@ TEST_CASE(
   REQUIRE(view.status() == FeatureIdTextureViewStatus::ErrorInvalidChannels);
 }
 
-TEST_CASE(
-    "Test FeatureIdTextureView on feature ID texture with out of range "
-    "channel") {
+TEST_CASE("Test FeatureIdTextureView on feature ID texture with out of range "
+          "channel") {
   Model model;
   Mesh& mesh = model.meshes.emplace_back();
   MeshPrimitive& primitive = mesh.primitives.emplace_back();
@@ -279,9 +275,8 @@ TEST_CASE("Test FeatureIdTextureView on valid feature ID texture") {
   REQUIRE(view.status() == FeatureIdTextureViewStatus::Valid);
 }
 
-TEST_CASE(
-    "Test FeatureIdTextureView with applyKhrTextureTransformExtension = "
-    "false") {
+TEST_CASE("Test FeatureIdTextureView with applyKhrTextureTransformExtension = "
+          "false") {
   Model model;
   Mesh& mesh = model.meshes.emplace_back();
   MeshPrimitive& primitive = mesh.primitives.emplace_back();
@@ -330,9 +325,8 @@ TEST_CASE(
   REQUIRE(textureTransform->getTexCoordSetIndex() == 10);
 }
 
-TEST_CASE(
-    "Test FeatureIdTextureView with applyKhrTextureTransformExtension = "
-    "true") {
+TEST_CASE("Test FeatureIdTextureView with applyKhrTextureTransformExtension = "
+          "true") {
   Model model;
   Mesh& mesh = model.meshes.emplace_back();
   MeshPrimitive& primitive = mesh.primitives.emplace_back();
@@ -517,9 +511,8 @@ TEST_CASE("Test getFeatureID on valid feature ID texture view") {
   REQUIRE(view.getFeatureID(1, 1) == 7);
 }
 
-TEST_CASE(
-    "Test getFeatureID on view with applyKhrTextureTransformExtension = "
-    "false") {
+TEST_CASE("Test getFeatureID on view with applyKhrTextureTransformExtension = "
+          "false") {
   Model model;
   Mesh& mesh = model.meshes.emplace_back();
   MeshPrimitive& primitive = mesh.primitives.emplace_back();

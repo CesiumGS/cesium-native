@@ -112,9 +112,8 @@ void parseI3dmHeader(
     uint32_t& headerLength,
     GltfConverterResult& result) {
   if (instancesBinary.size() < sizeof(I3dmHeader)) {
-    result.errors.emplaceError(
-        "The I3DM is invalid because it is too small to "
-        "include a I3DM header.");
+    result.errors.emplaceError("The I3DM is invalid because it is too small to "
+                               "include a I3DM header.");
     return;
   }
 
@@ -125,10 +124,9 @@ void parseI3dmHeader(
   headerLength = sizeof(I3dmHeader);
 
   if (pHeader->version != 1) {
-    result.errors.emplaceError(
-        fmt::format(
-            "The I3DM file is version {}, which is unsupported.",
-            pHeader->version));
+    result.errors.emplaceError(fmt::format(
+        "The I3DM file is version {}, which is unsupported.",
+        pHeader->version));
     return;
   }
 
@@ -226,49 +224,45 @@ void validateI3dmDataSections(
   size_t dataSectionOffset = headerLength;
   if (dataSectionOffset + header.featureTableJsonByteLength >
       instancesBinary.size()) {
-    errors.emplaceError(
-        fmt::format(
-            "Invalid I3dm feature table offset {} length {} "
-            "file length {}",
-            dataSectionOffset,
-            header.featureTableJsonByteLength,
-            instancesBinary.size()));
+    errors.emplaceError(fmt::format(
+        "Invalid I3dm feature table offset {} length {} "
+        "file length {}",
+        dataSectionOffset,
+        header.featureTableJsonByteLength,
+        instancesBinary.size()));
     return;
   }
   dataSectionOffset += header.featureTableJsonByteLength;
   if (dataSectionOffset + header.featureTableBinaryByteLength >
       instancesBinary.size()) {
-    errors.emplaceError(
-        fmt::format(
-            "Invalid I3dm feature table binary offset {} length {} "
-            "file length {}",
-            dataSectionOffset,
-            header.featureTableBinaryByteLength,
-            instancesBinary.size()));
+    errors.emplaceError(fmt::format(
+        "Invalid I3dm feature table binary offset {} length {} "
+        "file length {}",
+        dataSectionOffset,
+        header.featureTableBinaryByteLength,
+        instancesBinary.size()));
     return;
   }
   dataSectionOffset += header.featureTableBinaryByteLength;
   if (dataSectionOffset + header.batchTableJsonByteLength >
       instancesBinary.size()) {
-    errors.emplaceError(
-        fmt::format(
-            "Invalid I3dm batch table offset {} length {} "
-            "file length {}",
-            dataSectionOffset,
-            header.batchTableJsonByteLength,
-            instancesBinary.size()));
+    errors.emplaceError(fmt::format(
+        "Invalid I3dm batch table offset {} length {} "
+        "file length {}",
+        dataSectionOffset,
+        header.batchTableJsonByteLength,
+        instancesBinary.size()));
     return;
   }
   dataSectionOffset += header.batchTableJsonByteLength;
   if (dataSectionOffset + header.batchTableBinaryByteLength >
       instancesBinary.size()) {
-    errors.emplaceError(
-        fmt::format(
-            "Invalid I3dm batch table binary offset {} length {} "
-            "file length {}",
-            dataSectionOffset,
-            header.batchTableBinaryByteLength,
-            instancesBinary.size()));
+    errors.emplaceError(fmt::format(
+        "Invalid I3dm batch table binary offset {} length {} "
+        "file length {}",
+        dataSectionOffset,
+        header.batchTableBinaryByteLength,
+        instancesBinary.size()));
     return;
   }
 }
@@ -292,14 +286,12 @@ void parseJsonAndBinaryData(
       reinterpret_cast<const char*>(featureTableJsonData.data()),
       featureTableJsonData.size());
   if (convertedI3dm.pFeatureTableJson->HasParseError()) {
-    errors.emplaceError(
-        fmt::format(
-            "Error when parsing feature table JSON, error code {} at byte "
-            "offset "
-            "{}",
-            static_cast<uint64_t>(
-                convertedI3dm.pFeatureTableJson->GetParseError()),
-            convertedI3dm.pFeatureTableJson->GetErrorOffset()));
+    errors.emplaceError(fmt::format(
+        "Error when parsing feature table JSON, error code {} at byte "
+        "offset "
+        "{}",
+        static_cast<uint64_t>(convertedI3dm.pFeatureTableJson->GetParseError()),
+        convertedI3dm.pFeatureTableJson->GetErrorOffset()));
     return;
   }
   dataSectionOffset += header.featureTableJsonByteLength;
@@ -318,14 +310,13 @@ void parseJsonAndBinaryData(
         reinterpret_cast<const char*>(batchTableJsonData.data()),
         batchTableJsonData.size());
     if (convertedI3dm.pBatchTableJson->HasParseError()) {
-      errors.emplaceError(
-          fmt::format(
-              "Error when parsing batch table JSON, error code {} at byte "
-              "offset "
-              "{}",
-              static_cast<uint64_t>(
-                  convertedI3dm.pFeatureTableJson->GetParseError()),
-              convertedI3dm.pFeatureTableJson->GetErrorOffset()));
+      errors.emplaceError(fmt::format(
+          "Error when parsing batch table JSON, error code {} at byte "
+          "offset "
+          "{}",
+          static_cast<uint64_t>(
+              convertedI3dm.pFeatureTableJson->GetParseError()),
+          convertedI3dm.pFeatureTableJson->GetErrorOffset()));
       return;
     }
   }
@@ -347,9 +338,8 @@ std::optional<I3dmContent> parseI3dmJson(
           getValue<uint32_t>(featureTableJson, "INSTANCES_LENGTH")) {
     parsedContent.instancesLength = *optInstancesLength;
   } else {
-    errors.emplaceError(
-        "Error parsing I3DM feature table, no valid "
-        "INSTANCES_LENGTH was found.");
+    errors.emplaceError("Error parsing I3DM feature table, no valid "
+                        "INSTANCES_LENGTH was found.");
     return {};
   }
   parsedContent.rtcCenter =
@@ -365,9 +355,8 @@ std::optional<I3dmContent> parseI3dmJson(
   // reasonable value of 0 causes the test to be false!
   if (!(parsedContent.position.has_value() ||
         parsedContent.positionQuantized.has_value())) {
-    errors.emplaceError(
-        "I3dm file contains neither POSITION nor "
-        "POSITION_QUANTIZED semantics.");
+    errors.emplaceError("I3dm file contains neither POSITION nor "
+                        "POSITION_QUANTIZED semantics.");
     return {};
   }
   if (parsedContent.positionQuantized.has_value()) {
@@ -501,7 +490,7 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
     decodedInstances.positions.assign(rawPositions.begin(), rawPositions.end());
   } else if (parsedContent.positionQuantized) {
     std::span<const uint16_t[3]> rawQuantizedPositions(
-        reinterpret_cast<const uint16_t (*)[3]>(
+        reinterpret_cast<const uint16_t(*)[3]>(
             pBinaryData + *parsedContent.positionQuantized),
         numInstances);
     std::transform(
@@ -548,11 +537,11 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
       parsedContent.normalRightOct32p.has_value()) {
 
     std::span<const uint16_t[2]> rawUpOct(
-        reinterpret_cast<const uint16_t (*)[2]>(
+        reinterpret_cast<const uint16_t(*)[2]>(
             pBinaryData + *parsedContent.normalUpOct32p),
         numInstances);
     std::span<const uint16_t[2]> rawRightOct(
-        reinterpret_cast<const uint16_t (*)[2]>(
+        reinterpret_cast<const uint16_t(*)[2]>(
             pBinaryData + *parsedContent.normalRightOct32p),
         numInstances);
     std::transform(
@@ -713,22 +702,20 @@ std::vector<glm::dmat4> getMeshGpuInstancingTransforms(
     if (count == 0) {
       count = rotations->count;
     } else if (count != rotations->count) {
-      return errorOut(
-          fmt::format(
-              "instance rotation count {} not consistent with {}",
-              rotations->count,
-              count));
+      return errorOut(fmt::format(
+          "instance rotation count {} not consistent with {}",
+          rotations->count,
+          count));
     }
   }
   if (scales) {
     if (count == 0) {
       count = scales->count;
     } else if (count != scales->count) {
-      return errorOut(
-          fmt::format(
-              "instance scale count {} not consistent with {}",
-              scales->count,
-              count));
+      return errorOut(fmt::format(
+          "instance scale count {} not consistent with {}",
+          scales->count,
+          count));
     }
   }
   if (count == 0) {
@@ -899,11 +886,10 @@ void instantiateWithExistingInstances(
             result.errors);
         if (numI3dmInstances * modelInstanceTransforms.size() >
             std::numeric_limits<uint32_t>::max()) {
-          result.errors.emplaceError(
-              fmt::format(
-                  "Too many instances: {} from i3dm and {} from glb",
-                  numI3dmInstances,
-                  modelInstanceTransforms.size()));
+          result.errors.emplaceError(fmt::format(
+              "Too many instances: {} from i3dm and {} from glb",
+              numI3dmInstances,
+              modelInstanceTransforms.size()));
           return;
         }
         if (modelInstanceTransforms.empty()) {

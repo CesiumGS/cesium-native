@@ -195,8 +195,7 @@ TEST_CASE("Test OctreeAvailability") {
             }
 
             REQUIRE(
-                (bool)(availability &
-                       TileAvailabilityFlags::CONTENT_AVAILABLE) ==
+                (bool)(availability & TileAvailabilityFlags::CONTENT_AVAILABLE) ==
                 contentShouldBeAvailable);
           }
         }

@@ -103,28 +103,25 @@ IModelMeshExportContentLoader::createLoader(
                         iModelId,
                         exportId,
                         iTwinAccessToken,
-                        ellipsoid](
-                           std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                               pRequest) {
+                        ellipsoid](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                       pRequest) {
         const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
         const std::string& requestUrl = pRequest->url();
         if (!pResponse) {
           TilesetContentLoaderResult<IModelMeshExportContentLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "No response received for asset request {}",
-                  requestUrl));
+          result.errors.emplaceError(fmt::format(
+              "No response received for asset request {}",
+              requestUrl));
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
 
         uint16_t statusCode = pResponse->statusCode();
         if (statusCode < 200 || statusCode >= 300) {
           TilesetContentLoaderResult<IModelMeshExportContentLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "Received status code {} for asset response {}",
-                  statusCode,
-                  requestUrl));
+          result.errors.emplaceError(fmt::format(
+              "Received status code {} for asset response {}",
+              statusCode,
+              requestUrl));
           result.statusCode = statusCode;
           parseITwinErrorResponseIntoErrorList(*pResponse, result.errors);
           return externals.asyncSystem.createResolvedFuture(std::move(result));
@@ -139,14 +136,13 @@ IModelMeshExportContentLoader::createLoader(
 
         if (iModelResponse.HasParseError()) {
           TilesetContentLoaderResult<IModelMeshExportContentLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "Error when parsing iModel Mesh Export service response "
-                  "JSON, "
-                  "error code {} at byte "
-                  "offset {}",
-                  iModelResponse.GetParseError(),
-                  iModelResponse.GetErrorOffset()));
+          result.errors.emplaceError(fmt::format(
+              "Error when parsing iModel Mesh Export service response "
+              "JSON, "
+              "error code {} at byte "
+              "offset {}",
+              iModelResponse.GetParseError(),
+              iModelResponse.GetErrorOffset()));
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
 
@@ -154,10 +150,9 @@ IModelMeshExportContentLoader::createLoader(
             parseGetExportsResponse(iModelResponse);
         if (exports.empty()) {
           TilesetContentLoaderResult<IModelMeshExportContentLoader> result;
-          result.errors.emplaceError(
-              fmt::format(
-                  "No 3D Tiles exports found for iModel ID {}",
-                  iModelId));
+          result.errors.emplaceError(fmt::format(
+              "No 3D Tiles exports found for iModel ID {}",
+              iModelId));
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
 
@@ -175,12 +170,11 @@ IModelMeshExportContentLoader::createLoader(
           if (foundExportIt != exports.end()) {
             exportToUse = *foundExportIt;
           } else {
-            result.errors.emplaceWarning(
-                fmt::format(
-                    "No export ID {} found on iModel {}, using most recently "
-                    "modified export",
-                    *exportId,
-                    iModelId));
+            result.errors.emplaceWarning(fmt::format(
+                "No export ID {} found on iModel {}, using most recently "
+                "modified export",
+                *exportId,
+                iModelId));
           }
         }
 

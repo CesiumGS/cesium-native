@@ -103,9 +103,8 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     CHECK(image.height > 0);
   }
 
-  SUBCASE(
-      "appends tilemapresource.xml to URL if not already present and "
-      "direct request fails") {
+  SUBCASE("appends tilemapresource.xml to URL if not already present and "
+          "direct request fails") {
     std::string url =
         "file:///" +
         StringHelpers::toStringUtf8(
@@ -172,9 +171,8 @@ TEST_CASE("TileMapServiceRasterOverlay") {
     REQUIRE(result);
   }
 
-  SUBCASE(
-      "adds tilemapresource.xml in the correct place even with query "
-      "parameters") {
+  SUBCASE("adds tilemapresource.xml in the correct place even with query "
+          "parameters") {
     // The initial URL does not include tilemapresource.xml and will fail
     std::string url =
         "file:///" +

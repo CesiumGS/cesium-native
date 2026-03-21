@@ -301,10 +301,9 @@ TEST_CASE("IntersectionTests::rayOBB") {
           Ray(glm::dvec3(10.0, 10.0, 20.0), glm::dvec3(0.0, 0.0, -1.0)),
           OrientedBoundingBox(
               glm::dvec3(10.0, 10.0, 10.0),
-              2.0 * glm::dmat3(
-                        glm::rotate(
-                            glm::radians(-45.0),
-                            glm::dvec3(1.0, 0.0, 0.0)))),
+              2.0 * glm::dmat3(glm::rotate(
+                        glm::radians(-45.0),
+                        glm::dvec3(1.0, 0.0, 0.0)))),
           glm::dvec3(10.0, 10.0, 10.0 + glm::sqrt(8.0))},
       // 4x4x4 obb at (10,20,30) that is rotated -45 degrees on the x-axis and
       // hit from an angle
@@ -313,10 +312,9 @@ TEST_CASE("IntersectionTests::rayOBB") {
               glm::normalize(glm::dvec3(0.0, -1.0, -2.0))),
           OrientedBoundingBox(
               glm::dvec3(10.0, 20.0, 30.0),
-              2.0 * glm::dmat3(
-                        glm::rotate(
-                            glm::radians(-45.0),
-                            glm::dvec3(1.0, 0.0, 0.0)))),
+              2.0 * glm::dmat3(glm::rotate(
+                        glm::radians(-45.0),
+                        glm::dvec3(1.0, 0.0, 0.0)))),
           glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(8.0))},
       // 4x4x2 obb at (10,10,10) that is not rotated.
       TestCase{
@@ -338,10 +336,9 @@ TEST_CASE("IntersectionTests::rayOBB") {
           OrientedBoundingBox(
               glm::dvec3(10.0, 20.0, 30.0),
               glm::dmat3(glm::scale(glm::dvec3(1.0, 2.0, 1.0))) *
-                  glm::dmat3(
-                      glm::rotate(
-                          glm::radians(45.0),
-                          glm::dvec3(0.0, 1.0, 0.0)))),
+                  glm::dmat3(glm::rotate(
+                      glm::radians(45.0),
+                      glm::dvec3(0.0, 1.0, 0.0)))),
           glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(2.0))},
       // 2x4x2 obb at (10,20,30) that is rotated 45 degrees on the X-axis.
       TestCase{
@@ -358,10 +355,9 @@ TEST_CASE("IntersectionTests::rayOBB") {
           OrientedBoundingBox(
               glm::dvec3(10.0, 20.0, 30.0),
               glm::dmat3(glm::scale(glm::dvec3(1.0, 2.0, 1.0))) *
-                  glm::dmat3(
-                      glm::rotate(
-                          glm::radians(225.0),
-                          glm::dvec3(0.0, 1.0, 0.0)))),
+                  glm::dmat3(glm::rotate(
+                      glm::radians(225.0),
+                      glm::dvec3(0.0, 1.0, 0.0)))),
           glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(2.0))},
       // 2x2x4 obb at (10,20,30) that is rotated 90 degrees on the X-axis and
       // hit from an angle.
@@ -380,25 +376,20 @@ TEST_CASE("IntersectionTests::rayOBB") {
           Ray(glm::dvec3(10.0, 20.0, 40.0), glm::dvec3(0.0, 0.0, -1.0)),
           OrientedBoundingBox(
               glm::dvec3(10.0, 20.0, 30.0),
-              (glm::dmat3(
-                  glm::rotate(
-                      glm::atan(1.0 / 2.0, glm::sqrt(2) / 2.0),
-                      glm::dvec3(1.0, 0.0, 0.0)))) *
-                  glm::dmat3(
-                      glm::rotate(
-                          glm::radians(45.0),
-                          glm::dvec3(0.0, 1.0, 0.0)))),
+              (glm::dmat3(glm::rotate(
+                  glm::atan(1.0 / 2.0, glm::sqrt(2) / 2.0),
+                  glm::dvec3(1.0, 0.0, 0.0)))) *
+                  glm::dmat3(glm::rotate(
+                      glm::radians(45.0),
+                      glm::dvec3(0.0, 1.0, 0.0)))),
           glm::dvec3(10.0, 20.0, 30.0 + glm::sqrt(3.0))}};
 
   for (auto& testCase : testCases) {
     std::optional<glm::dvec3> intersectionPoint =
         IntersectionTests::rayOBB(testCase.ray, testCase.obb);
-    CHECK(
-        glm::all(
-            glm::lessThan(
-                glm::abs(
-                    *intersectionPoint - *testCase.expectedIntersectionPoint),
-                glm::dvec3(CesiumUtility::Math::Epsilon6))));
+    CHECK(glm::all(glm::lessThan(
+        glm::abs(*intersectionPoint - *testCase.expectedIntersectionPoint),
+        glm::dvec3(CesiumUtility::Math::Epsilon6))));
   }
 }
 
@@ -541,11 +532,10 @@ TEST_CASE("IntersectionTests::raySphere") {
     if (!t)
       t = -1.0;
 
-    CHECK(
-        CesiumUtility::Math::equalsEpsilon(
-            t.value(),
-            testCase.t,
-            CesiumUtility::Math::Epsilon6));
+    CHECK(CesiumUtility::Math::equalsEpsilon(
+        t.value(),
+        testCase.t,
+        CesiumUtility::Math::Epsilon6));
   }
 }
 
@@ -739,9 +729,8 @@ TEST_CASE("IntersectionTests::pointInTriangle (3D overload)") {
   }
 }
 
-TEST_CASE(
-    "IntersectionTests::pointInTriangle (3D overload with barycentric "
-    "coordinates)") {
+TEST_CASE("IntersectionTests::pointInTriangle (3D overload with barycentric "
+          "coordinates)") {
   struct TestCase {
     glm::dvec3 point;
     glm::dvec3 triangleVert1;

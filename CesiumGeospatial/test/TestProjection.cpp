@@ -27,12 +27,11 @@ TEST_CASE("computeProjectedRectangleSize") {
         maxHeight,
         Ellipsoid::WGS84);
     CHECK(size.x - Ellipsoid::WGS84.getMaximumRadius() * 2.0 > 0.0);
-    CHECK(
-        Math::equalsEpsilon(
-            size.y,
-            Ellipsoid::WGS84.getMinimumRadius() * 2.0,
-            0.0,
-            1.0));
+    CHECK(Math::equalsEpsilon(
+        size.y,
+        Ellipsoid::WGS84.getMinimumRadius() * 2.0,
+        0.0,
+        1.0));
   }
 
   SUBCASE("Hemispheres") {
@@ -48,18 +47,16 @@ TEST_CASE("computeProjectedRectangleSize") {
         rectangle,
         maxHeight,
         Ellipsoid::WGS84);
-    CHECK(
-        Math::equalsEpsilon(
-            size.x,
-            Ellipsoid::WGS84.getMaximumRadius() * 2.0,
-            0.0,
-            1.0));
-    CHECK(
-        Math::equalsEpsilon(
-            size.y,
-            Ellipsoid::WGS84.getMinimumRadius() * 2.0,
-            0.0,
-            1.0));
+    CHECK(Math::equalsEpsilon(
+        size.x,
+        Ellipsoid::WGS84.getMaximumRadius() * 2.0,
+        0.0,
+        1.0));
+    CHECK(Math::equalsEpsilon(
+        size.y,
+        Ellipsoid::WGS84.getMinimumRadius() * 2.0,
+        0.0,
+        1.0));
 
     rectangle = projectRectangleSimple(
         projection,
@@ -69,18 +66,16 @@ TEST_CASE("computeProjectedRectangleSize") {
         rectangle,
         maxHeight,
         Ellipsoid::WGS84);
-    CHECK(
-        Math::equalsEpsilon(
-            size.x,
-            Ellipsoid::WGS84.getMaximumRadius() * 2.0,
-            0.0,
-            1.0));
-    CHECK(
-        Math::equalsEpsilon(
-            size.y,
-            Ellipsoid::WGS84.getMinimumRadius() * 2.0,
-            0.0,
-            1.0));
+    CHECK(Math::equalsEpsilon(
+        size.x,
+        Ellipsoid::WGS84.getMaximumRadius() * 2.0,
+        0.0,
+        1.0));
+    CHECK(Math::equalsEpsilon(
+        size.y,
+        Ellipsoid::WGS84.getMinimumRadius() * 2.0,
+        0.0,
+        1.0));
   }
 
   SUBCASE("Rectangle crossing the equator") {
@@ -96,16 +91,15 @@ TEST_CASE("computeProjectedRectangleSize") {
         rectangle,
         maxHeight,
         Ellipsoid::WGS84);
-    CHECK(
-        Math::equalsEpsilon(
-            size.x,
-            glm::distance(
-                Ellipsoid::WGS84.cartographicToCartesian(
-                    Cartographic::fromDegrees(-100.0, 0.0, 0.0)),
-                Ellipsoid::WGS84.cartographicToCartesian(
-                    Cartographic::fromDegrees(-80.0, 0.0, 0.0))),
-            0.0,
-            1.0));
+    CHECK(Math::equalsEpsilon(
+        size.x,
+        glm::distance(
+            Ellipsoid::WGS84.cartographicToCartesian(
+                Cartographic::fromDegrees(-100.0, 0.0, 0.0)),
+            Ellipsoid::WGS84.cartographicToCartesian(
+                Cartographic::fromDegrees(-80.0, 0.0, 0.0))),
+        0.0,
+        1.0));
   }
 
   SUBCASE("Narrow band around the entire globe") {
@@ -120,15 +114,14 @@ TEST_CASE("computeProjectedRectangleSize") {
         maxHeight,
         Ellipsoid::WGS84);
     CHECK(size.x - Ellipsoid::WGS84.getMaximumRadius() * 2.0 > 0.0);
-    CHECK(
-        Math::equalsEpsilon(
-            size.y,
-            glm::distance(
-                Ellipsoid::WGS84.cartographicToCartesian(
-                    Cartographic::fromDegrees(0.0, 20.0, 0.0)),
-                Ellipsoid::WGS84.cartographicToCartesian(
-                    Cartographic::fromDegrees(0.0, 40.0, 0.0))),
-            0.0,
-            1.0));
+    CHECK(Math::equalsEpsilon(
+        size.y,
+        glm::distance(
+            Ellipsoid::WGS84.cartographicToCartesian(
+                Cartographic::fromDegrees(0.0, 20.0, 0.0)),
+            Ellipsoid::WGS84.cartographicToCartesian(
+                Cartographic::fromDegrees(0.0, 40.0, 0.0))),
+        0.0,
+        1.0));
   }
 }

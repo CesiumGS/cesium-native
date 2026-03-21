@@ -109,10 +109,9 @@ public:
       previousTraversalIndex = -1;
     }
 
-    this->_parentIndices.emplace_back(
-        TraversalIndices{
-            .previous = previousTraversalIndex,
-            .current = currentTraversalIndex});
+    this->_parentIndices.emplace_back(TraversalIndices{
+        .previous = previousTraversalIndex,
+        .current = currentTraversalIndex});
 
     this->_currentTraversal.emplace_back(TraversalData{pNode, -1, TState()});
   }

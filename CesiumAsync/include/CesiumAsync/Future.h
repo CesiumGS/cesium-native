@@ -65,9 +65,8 @@ public:
     bool ok = orkester_future_wait_in_main(_signal, &errPtr, &errLen);
     _signal = nullptr;
     if (!ok) {
-      _slot->storeError(
-          std::make_exception_ptr(
-              std::runtime_error(makeErrorMsg(errPtr, errLen))));
+      _slot->storeError(std::make_exception_ptr(
+          std::runtime_error(makeErrorMsg(errPtr, errLen))));
     }
     return _slot->take();
   }
@@ -156,9 +155,8 @@ private:
     bool ok = orkester_future_wait(_signal, &errPtr, &errLen);
     _signal = nullptr;
     if (!ok) {
-      _slot->storeError(
-          std::make_exception_ptr(
-              std::runtime_error(makeErrorMsg(errPtr, errLen))));
+      _slot->storeError(std::make_exception_ptr(
+          std::runtime_error(makeErrorMsg(errPtr, errLen))));
     }
   }
 
@@ -531,9 +529,8 @@ template <> inline void Future<void>::waitInMainThread() {
   bool ok = orkester_future_wait_in_main(_signal, &errPtr, &errLen);
   _signal = nullptr;
   if (!ok) {
-    _slot->storeError(
-        std::make_exception_ptr(
-            std::runtime_error(makeErrorMsg(errPtr, errLen))));
+    _slot->storeError(std::make_exception_ptr(
+        std::runtime_error(makeErrorMsg(errPtr, errLen))));
   }
   _slot->take();
 }

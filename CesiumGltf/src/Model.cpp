@@ -145,9 +145,8 @@ ErrorList Model::merge(Model&& rhs) {
         *metadata.schemaUri != *pRhsMetadata->schemaUri) {
       // We can't merge schema URIs. So the thing to do here is download both
       // schemas and merge them. But for now we're just reporting an error.
-      result.emplaceError(
-          "Cannot merge EXT_structural_metadata extensions "
-          "with different schemaUris.");
+      result.emplaceError("Cannot merge EXT_structural_metadata extensions "
+                          "with different schemaUris.");
     } else if (pRhsMetadata->schemaUri) {
       metadata.schemaUri = pRhsMetadata->schemaUri;
     }
@@ -1027,9 +1026,8 @@ void mergeSchemas(
   if (!lhs.description)
     lhs.description = rhs.description;
   else if (rhs.description && *lhs.description != *rhs.description)
-    lhs.description.emplace(
-        "This is a merged schema created by combining "
-        "together the schemas from multiple glTFs.");
+    lhs.description.emplace("This is a merged schema created by combining "
+                            "together the schemas from multiple glTFs.");
 
   if (!lhs.version)
     lhs.version = rhs.version;

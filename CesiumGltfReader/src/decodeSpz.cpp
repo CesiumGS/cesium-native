@@ -249,10 +249,9 @@ void decodePrimitive(
           CesiumGltf::convertPropertyComponentTypeToString(
               CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
                   pColorAccessor->componentType));
-      readGltf.warnings.push_back(
-          fmt::format(
-              "SPZ glTF COLOR_0 accessor is type {} - changing type to FLOAT",
-              prevComponentTypeName));
+      readGltf.warnings.push_back(fmt::format(
+          "SPZ glTF COLOR_0 accessor is type {} - changing type to FLOAT",
+          prevComponentTypeName));
     }
     pColorAccessor->componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
     pColorAccessor->bufferView =
@@ -347,10 +346,9 @@ addExtensionFromJsonValue(
   }
 
   if (!it->second.isInt64() && !it->second.isUint64()) {
-    readGltf.errors.push_back(
-        fmt::format(
-            "`bufferView` property on {} extension must be an integer value",
-            extName));
+    readGltf.errors.push_back(fmt::format(
+        "`bufferView` property on {} extension must be an integer value",
+        extName));
     return nullptr;
   }
 

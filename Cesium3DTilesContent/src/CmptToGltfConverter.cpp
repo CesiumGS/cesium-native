@@ -50,19 +50,17 @@ CesiumAsync::Future<GltfConverterResult> CmptToGltfConverter::convert(
   }
 
   if (pHeader->version != 1) {
-    result.errors.emplaceWarning(
-        fmt::format(
-            "Unsupported composite tile version {}.",
-            pHeader->version));
+    result.errors.emplaceWarning(fmt::format(
+        "Unsupported composite tile version {}.",
+        pHeader->version));
     return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
   if (pHeader->byteLength > cmptBinary.size()) {
-    result.errors.emplaceWarning(
-        fmt::format(
-            "Composite tile byteLength is {} but only {} bytes are available.",
-            pHeader->byteLength,
-            cmptBinary.size()));
+    result.errors.emplaceWarning(fmt::format(
+        "Composite tile byteLength is {} but only {} bytes are available.",
+        pHeader->byteLength,
+        cmptBinary.size()));
     return assetFetcher.asyncSystem.createResolvedFuture(std::move(result));
   }
 
