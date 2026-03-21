@@ -381,6 +381,9 @@ private:
         orkester_context_t context,
         Func&& f)
     {
+        using RawResult = std::invoke_result_t<std::decay_t<Func>, std::exception&&>;
+        constexpr bool needsUnwrap = CesiumImpl::IsFuture<RawResult>::value;
+
         auto nextSlot = std::make_shared<CesiumImpl::ValueSlot<T>>();
 
         orkester_promise_t outPromise = nullptr;
@@ -392,6 +395,7 @@ private:
             std::shared_ptr<CesiumImpl::ValueSlot<T>> outputSlot;
             std::decay_t<Func> func;
             orkester_promise_t promise;
+            const orkester_async_t* system;
 
             static void invoke(void* ctx) {
                 auto* self = static_cast<CatchAdapter*>(ctx);
@@ -401,9 +405,21 @@ private:
                             (void)self->inputSlot->take(); // rethrows
                         } catch (std::exception& e) {
                             if constexpr (std::is_void_v<T>) {
-                                self->func(std::move(e));
+                                if constexpr (needsUnwrap) {
+                                    auto innerFuture = self->func(std::move(e));
+                                    self->unwrap(std::move(innerFuture));
+                                    return;
+                                } else {
+                                    self->func(std::move(e));
+                                }
                             } else {
-                                self->outputSlot->store(self->func(std::move(e)));
+                                if constexpr (needsUnwrap) {
+                                    auto innerFuture = self->func(std::move(e));
+                                    self->unwrap(std::move(innerFuture));
+                                    return;
+                                } else {
+                                    self->outputSlot->store(self->func(std::move(e)));
+                                }
                             }
                             orkester_promise_resolve(self->promise);
                             delete self;
@@ -420,9 +436,39 @@ private:
                 orkester_promise_resolve(self->promise);
                 delete self;
             }
+
+            void unwrap(Future<T>&& innerFuture) {
+                auto innerSlot = CesiumImpl::getSlot(innerFuture);
+                auto innerSignal = CesiumImpl::stealSignal(innerFuture);
+
+                struct Forwarder {
+                    std::shared_ptr<CesiumImpl::ValueSlot<T>> innerSlot;
+                    std::shared_ptr<CesiumImpl::ValueSlot<T>> outputSlot;
+                    orkester_promise_t promise;
+
+                    static void invoke(void* ctx) {
+                        auto* fwd = static_cast<Forwarder*>(ctx);
+                        try {
+                            if (fwd->innerSlot->hasError()) {
+                                fwd->outputSlot->storeError(CesiumImpl::extractError(*fwd->innerSlot));
+                            } else if constexpr (!std::is_void_v<T>) {
+                                fwd->outputSlot->store(fwd->innerSlot->take());
+                            }
+                        } catch (...) {
+                            fwd->outputSlot->storeError(std::current_exception());
+                        }
+                        orkester_promise_resolve(fwd->promise);
+                        delete fwd;
+                    }
+                };
+
+                auto* fwd = new Forwarder{innerSlot, outputSlot, promise};
+                orkester_future_then(innerSignal, orkester_context_t_ORKESTER_IMMEDIATE, &Forwarder::invoke, fwd);
+                delete this;
+            }
         };
 
-        auto* adapter = new CatchAdapter{_slot, nextSlot, std::forward<Func>(f), outPromise};
+        auto* adapter = new CatchAdapter{_slot, nextSlot, std::forward<Func>(f), outPromise, _system};
         orkester_future_then(_signal, context, &CatchAdapter::invoke, adapter);
         _signal = nullptr;
         return Future<T>(_system, nextSlot, outFuture);
