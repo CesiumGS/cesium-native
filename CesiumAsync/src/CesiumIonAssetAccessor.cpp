@@ -50,18 +50,18 @@ CesiumIonAssetAccessor::get(
   // so that it can safely use the tileset loader.
   auto refreshToken =
       [pThis = this->shared_from_this()](
-          const CesiumAsync::AsyncSystem& asyncSystem,
+          const CesiumAsync::AsyncSystem& innerAsyncSystem,
           std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
         if (!pThis->_maybeUpdatedTokenCallback) {
           // The owner has been destroyed, so just return the
           // original (failed) request.
-          return asyncSystem.createResolvedFuture(std::move(pRequest));
+          return innerAsyncSystem.createResolvedFuture(std::move(pRequest));
         }
 
-        const CesiumAsync::HttpHeaders& headers = pRequest->headers();
-        auto authIt = headers.find("authorization");
+        const CesiumAsync::HttpHeaders& requestHeaders = pRequest->headers();
+        auto authIt = requestHeaders.find("authorization");
         std::string currentAuthorizationHeaderValue =
-            authIt != headers.end() ? authIt->second : std::string();
+            authIt != requestHeaders.end() ? authIt->second : std::string();
 
         std::string currentAccessTokenQueryParameterValue;
         if (pRequest->url().find("access_token") != std::string::npos) {
@@ -76,27 +76,27 @@ CesiumIonAssetAccessor::get(
 
         return pThis
             ->refreshTokenInMainThread(
-                asyncSystem,
+                innerAsyncSystem,
                 currentAuthorizationHeaderValue,
                 currentAccessTokenQueryParameterValue)
             .thenImmediately([pThis,
-                              asyncSystem,
+                              innerAsyncSystem,
                               pRequest = std::move(pRequest)](
                                  const UpdatedToken& updatedToken) mutable {
               if (updatedToken.authorizationHeader.empty() &&
                   updatedToken.token.empty()) {
                 // Could not refresh the token, so just return the
                 // original (failed) request.
-                return asyncSystem.createResolvedFuture(std::move(pRequest));
+                return innerAsyncSystem.createResolvedFuture(std::move(pRequest));
               }
 
               // Repeat the request using the new token.
-              CesiumAsync::HttpHeaders headers = pRequest->headers();
+              CesiumAsync::HttpHeaders updatedHeaders = pRequest->headers();
               if (!updatedToken.authorizationHeader.empty()) {
-                headers["Authorization"] = updatedToken.authorizationHeader;
+                updatedHeaders["Authorization"] = updatedToken.authorizationHeader;
               }
 
-              std::string url = pRequest->url();
+              std::string updatedUrl = pRequest->url();
               if (pRequest->url().find("access_token") != std::string::npos) {
                 CesiumUtility::Uri uri(pRequest->url());
                 CesiumUtility::UriQuery query(uri);
@@ -105,14 +105,14 @@ CesiumIonAssetAccessor::get(
                 if (maybeToken) {
                   query.setValue("access_token", updatedToken.token);
                   uri.setQuery(query.toQueryString());
-                  url = uri.toString();
+                  updatedUrl = uri.toString();
                 }
               }
 
               std::vector<THeader> vecHeaders(
-                  std::make_move_iterator(headers.begin()),
-                  std::make_move_iterator(headers.end()));
-              return pThis->get(asyncSystem, url, vecHeaders);
+                  std::make_move_iterator(updatedHeaders.begin()),
+                  std::make_move_iterator(updatedHeaders.end()));
+              return pThis->get(innerAsyncSystem, updatedUrl, vecHeaders);
             });
       };
 
