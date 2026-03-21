@@ -153,7 +153,7 @@ getTileBoundingRegionForUpsampling(const Tile& parent) {
   // Get an accurate bounding region from the content first.
   const TileContent& parentContent = parent.getContent();
   const TileRenderContent* pRenderContent = parentContent.getRenderContent();
-  CESIUM_ASSERT(pRenderContent && "This function only deal with render content")
+  CESIUM_ASSERT(pRenderContent && "This function only deal with render content");
 
   const RasterOverlayDetails& details =
       pRenderContent->getRasterOverlayDetails();
@@ -2177,7 +2177,7 @@ void TilesetContentManager::unloadContentLoadedState(Tile& tile) {
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
   CESIUM_ASSERT(
-      pRenderContent && "Tile must have render content to be unloaded")
+      pRenderContent && "Tile must have render content to be unloaded");
 
   void* pWorkerRenderResources = pRenderContent->getRenderResources();
   if (this->_externals.pPrepareRendererResources) {
@@ -2193,7 +2193,7 @@ void TilesetContentManager::unloadDoneState(Tile& tile) {
   TileContent& content = tile.getContent();
   TileRenderContent* pRenderContent = content.getRenderContent();
   CESIUM_ASSERT(
-      pRenderContent && "Tile must have render content to be unloaded")
+      pRenderContent && "Tile must have render content to be unloaded");
 
   if (this->_externals.pPrepareRendererResources) {
     void* pMainThreadRenderResources = pRenderContent->getRenderResources();
