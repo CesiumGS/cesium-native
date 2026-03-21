@@ -9,6 +9,7 @@
 
 #include <functional>
 #include <memory>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -255,6 +256,26 @@ public:
             [results]() { return std::move(*results); });
     }
 
+    /// Wait for all void futures to complete.
+    Future<void> all(std::vector<Future<void>>&& futures) const {
+        if (futures.empty()) {
+            return createResolvedFuture();
+        }
+
+        Future<void> chain = createResolvedFuture();
+        for (auto& f : futures) {
+            auto slot = f._slot;
+            chain = std::move(chain).thenImmediately(
+                [system = _system, slot, signal = f._signal]() mutable {
+                    Future<void> inner(system, slot, signal);
+                    return std::move(inner).thenImmediately([]() {});
+                });
+            f._signal = nullptr;
+        }
+
+        return chain;
+    }
+
     /// Wait for all shared futures to complete.
     template <typename T>
     Future<std::vector<T>> all(std::vector<SharedFuture<T>>&& futures) const {
@@ -282,6 +303,39 @@ public:
                 });
         }
 
+        return std::move(chain).thenImmediately(
+            [results]() { return std::move(*results); });
+    }
+
+    /// Wait for all void shared futures to complete.
+    Future<void> all(std::vector<SharedFuture<void>>&& futures) const {
+        if (futures.empty()) {
+            return createResolvedFuture();
+        }
+
+        Future<void> chain = createResolvedFuture();
+        for (auto& f : futures) {
+            auto slot = f._slot;
+            auto sharedSig = f._signal;
+            chain = std::move(chain).thenImmediately(
+                [system = _system, slot, sharedSig]() mutable {
+                    struct Noop { static void invoke(void*) {} };
+                    orkester_future_t sig = orkester_shared_future_then(
+                        sharedSig, orkester_context_t_ORKESTER_IMMEDIATE, &Noop::invoke, nullptr);
+                    Future<void> inner(system, slot, sig);
+                    return std::move(inner).thenImmediately([]() {});
+                });
+        }
+
+        return chain;
+    }
+
+    /// Wait for heterogeneous futures to complete, returning a tuple.
+    template <typename... Ts>
+    Future<std::tuple<Ts...>> all(Future<Ts>&&... futures) const {
+        auto results = std::make_shared<std::tuple<Ts...>>();
+        Future<void> chain = createResolvedFuture();
+        allImpl<0>(chain, results, std::move(futures)...);
         return std::move(chain).thenImmediately(
             [results]() { return std::move(*results); });
     }
@@ -345,6 +399,33 @@ public:
     }
 
 private:
+    // Base case for variadic all(): no more futures to chain
+    template <std::size_t I, typename Tuple>
+    void allImpl(
+        Future<void>& /*chain*/,
+        const std::shared_ptr<Tuple>&) const {}
+
+    // Recursive case: peel off one future, chain it, recurse on the rest
+    template <std::size_t I, typename Tuple, typename Head, typename... Tail>
+    void allImpl(
+        Future<void>& chain,
+        const std::shared_ptr<Tuple>& results,
+        Future<Head>&& head,
+        Future<Tail>&&... tail) const {
+        auto slot = head._slot;
+        auto signal = head._signal;
+        head._signal = nullptr;
+        chain = std::move(chain).thenImmediately(
+            [system = _system, slot, signal, results]() mutable {
+                Future<Head> inner(system, slot, signal);
+                return std::move(inner).thenImmediately(
+                    [results](Head&& value) {
+                        std::get<I>(*results) = std::move(value);
+                    });
+            });
+        allImpl<I + 1>(chain, results, std::move(tail)...);
+    }
+
     orkester_async_t* _system = nullptr;
 };
 
