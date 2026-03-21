@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-if (NOT VCPKG_LIBRARY_LINKAGE)
+if(NOT VCPKG_LIBRARY_LINKAGE)
     set(VCPKG_LIBRARY_LINKAGE static)
 endif()
 
@@ -21,9 +21,9 @@ endif()
 #In a fresh build, before CMakeCache.txt exists, determine whether to
 #use ezvcpkg. After this, CESIUM_USE_EZVCPG will be in the cache.
 set(CESIUM_USE_EZVCPKG_DEFAULT ON)
-if (VCPKG_MANIFEST_MODE)
+if(VCPKG_MANIFEST_MODE)
     set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
-elseif (CMAKE_TOOLCHAIN_FILE)
+elseif(CMAKE_TOOLCHAIN_FILE)
     get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
     if(toolchainFile STREQUAL "vcpkg.cmake")
         set(CESIUM_USE_EZVCPKG_DEFAULT OFF)
@@ -35,16 +35,16 @@ option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
 option(CESIUM_DISABLE_LIBJPEG_TURBO "Disable cesium-native's use of libjpeg-turbo. JPEG images will be decoded with STB instead." OFF)
 option(CESIUM_WASM64 "Enable 64-bit WebAssembly target" OFF)
 
-if (CESIUM_TARGET_WASM)
+if(CESIUM_TARGET_WASM)
     # Make sure curl is disabled on wasm builds, as it is not supported.
     set(CESIUM_DISABLE_CURL ON)
 endif()
 
 if(CESIUM_USE_EZVCPKG)
-  # Keep vcpkg from running in manifset mode. It will try to because
-  # this directory contains a vcpkg.json manifest.
-  set(VCPKG_MANIFEST_MODE OFF CACHE BOOL "vcpkg manifest mode should not be enabled with ezvcpg!")
-  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
+    # Keep vcpkg from running in manifset mode. It will try to because
+    # this directory contains a vcpkg.json manifest.
+    set(VCPKG_MANIFEST_MODE OFF CACHE BOOL "vcpkg manifest mode should not be enabled with ezvcpg!")
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ezvcpkg/ezvcpkg.cmake)
 endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect-vcpkg-triplet.cmake)
@@ -53,12 +53,12 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/detect-vcpkg-triplet.cmake)
 # VCPKG_TARGET_TRIPLET and VCPKG_HOST_TRIPLET. ezvcpkg and our custom
 # installation code use VCPKG_TRIPLET, so initialize it here.
 
-if (VCPKG_TARGET_TRIPLET)
+if(VCPKG_TARGET_TRIPLET)
     set(VCPKG_TRIPLET "${VCPKG_TARGET_TRIPLET}")
 endif()
 
-if (NOT VCPKG_TRIPLET)
-    if (DEFINED ENV{VCPKG_TRIPLET})
+if(NOT VCPKG_TRIPLET)
+    if(DEFINED ENV{VCPKG_TRIPLET})
         set(VCPKG_TRIPLET "$ENV{VCPKG_TRIPLET}")
     elseif(DETECTED_VCPKG_TRIPLET_ERROR)
         message(FATAL_ERROR "${DETECTED_VCPKG_TRIPLET_ERROR}")
@@ -69,7 +69,7 @@ if (NOT VCPKG_TRIPLET)
         # Use our custom triplet for wasm builds. Most importantly, this
         # enables multithreading support. Also switch to 64-bit wasm if
         # requested.
-        if (CESIUM_WASM64)
+        if(CESIUM_WASM64)
             set(VCPKG_TRIPLET "wasm64-emscripten-cesium")
         else()
             set(VCPKG_TRIPLET "wasm32-emscripten-cesium")
@@ -93,25 +93,25 @@ message(STATUS "VCPKG_TRIPLET ${VCPKG_TRIPLET}")
 message(STATUS "VCPKG_TARGET_TRIPLET ${VCPKG_TARGET_TRIPLET}")
 message(STATUS "VCPKG_PLATFORM_TOOLSET_VERSION $ENV{VCPKG_PLATFORM_TOOLSET_VERSION}")
 
-if (NOT VCPKG_OVERLAY_PORTS)
-    if (DEFINED ENV{VCPKG_OVERLAY_PORTS})
+if(NOT VCPKG_OVERLAY_PORTS)
+    if(DEFINED ENV{VCPKG_OVERLAY_PORTS})
         set(VCPKG_OVERLAY_PORTS "$ENV{VCPKG_OVERLAY_PORTS}")
     endif()
 endif()
 
-if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
     list(APPEND VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/ports")
 endif()
 
 message(STATUS "VCPKG_OVERLAY_PORTS ${VCPKG_OVERLAY_PORTS}")
 
-if (NOT VCPKG_OVERLAY_TRIPLETS)
-    if (DEFINED ENV{VCPKG_OVERLAY_TRIPLETS})
+if(NOT VCPKG_OVERLAY_TRIPLETS)
+    if(DEFINED ENV{VCPKG_OVERLAY_TRIPLETS})
         set(VCPKG_OVERLAY_TRIPLETS "$ENV{VCPKG_OVERLAY_TRIPLETS}")
     endif()
 endif()
 
-if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
     list(APPEND VCPKG_OVERLAY_TRIPLETS "${CMAKE_CURRENT_SOURCE_DIR}/extern/vcpkg/triplets")
 endif()
 
@@ -184,7 +184,7 @@ if(CESIUM_USE_EZVCPKG)
     )
 endif()
 
-if (NOT CMAKE_TOOLCHAIN_FILE)
+if(NOT CMAKE_TOOLCHAIN_FILE)
     message(FATAL_ERROR "Specify the VCPKG toolchain on the command line as '-DCMAKE_TOOLCHAIN_FILE=<VCPKG_ROOT>/scripts/buildsystems/vcpkg.cmake'")
 else()
     message(STATUS "CMAKE_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE}")
@@ -250,7 +250,7 @@ if(CESIUM_INSTALL_STATIC_LIBS OR CESIUM_INSTALL_HEADERS AND EZVCPKG_PACKAGES_DIR
             )
         endif()
 
-        if (CESIUM_INSTALL_STATIC_LIBS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
+        if(CESIUM_INSTALL_STATIC_LIBS AND NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
             install(
                 DIRECTORY $<IF:$<CONFIG:Debug>,${PACKAGE_DIR}/debug/lib/,${PACKAGE_DIR}/lib/>
                 DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -264,7 +264,7 @@ if(CESIUM_INSTALL_STATIC_LIBS AND NOT VCPKG_MANIFEST_MODE)
         string(REGEX REPLACE "\\[.*\\]" "" PACKAGE "${PACKAGE}")
         set(PACKAGE_DIR "${PACKAGE_BASE_DIR}/${PACKAGE}_${VCPKG_TRIPLET}")
         message(DEBUG "PACKAGE_DIR ${PACKAGE_DIR}")
-        if (NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
+        if(NOT PACKAGE IN_LIST CESIUM_EXCLUDE_INSTALL_STATIC_LIBS AND EXISTS ${PACKAGE_DIR}/lib)
             install(
                 DIRECTORY $<IF:$<CONFIG:Debug>,${PACKAGE_DIR}/debug/lib/,${PACKAGE_DIR}/lib/>
                 DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -276,7 +276,7 @@ endif()
 if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER AND NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
     find_program(CCACHE_FOUND ccache)
     find_program(SCCACHE_FOUND sccache)
-    if (SCCACHE_FOUND)
+    if(SCCACHE_FOUND)
         message("setting SCCACHE to ${SCCACHE_FOUND}")
         set(CMAKE_C_COMPILER_LAUNCHER ${SCCACHE_FOUND})
         set(CMAKE_CXX_COMPILER_LAUNCHER ${SCCACHE_FOUND})
@@ -306,11 +306,11 @@ option(CESIUM_MSVC_STATIC_RUNTIME_ENABLED "Whether to enable static linking for 
 option(CESIUM_DEBUG_TILE_UNLOADING "Whether to enable tracking of tile _doNotUnloadSubtreeCount modifications for tile unloading debugging." OFF)
 option(CESIUM_CLANG_TIME_TRACE "Whether to enable the -ftime-trace compilation option when building with Clang." OFF)
 
-if (CESIUM_MSVC_STATIC_RUNTIME_ENABLED)
+if(CESIUM_MSVC_STATIC_RUNTIME_ENABLED)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-if (CESIUM_TRACING_ENABLED)
+if(CESIUM_TRACING_ENABLED)
     add_compile_definitions(CESIUM_TRACING_ENABLED=1)
 endif()
 
@@ -331,7 +331,7 @@ endif()
 # Add Modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/extern/cmake-modules/")
-if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
+if(CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     include(CodeCoverage)
     append_coverage_compiler_flags()
     setup_target_for_coverage_gcovr_html(
@@ -342,7 +342,7 @@ if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     )
 endif()
 
-if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
+if(NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
     set(GLOB_USE_CONFIGURE_DEPENDS OFF CACHE BOOL
         "Controls if cesium-native targets should use configure_depends or not for globbing their sources"
     )
@@ -444,21 +444,11 @@ if(NOT CESIUM_DISABLE_CURL)
 endif()
 
 # Private Targets
-if (CESIUM_TESTS_ENABLED)
+if(CESIUM_TESTS_ENABLED)
     # enable_testing() MUST be called before add_subdirectory or no tests
     # will be found by ctest
     enable_testing()
     add_subdirectory(CesiumNativeTests)
-endif()
-
-if(NOT TARGET test_orkester_async)
-    add_executable(test_orkester_async CesiumAsync/test/TestAsyncSystemOrkester.cpp)
-    target_link_libraries(test_orkester_async PRIVATE CesiumAsync spdlog::spdlog)
-    target_compile_features(test_orkester_async PRIVATE cxx_std_20)
-endif()
-
-if(CESIUM_TESTS_ENABLED)
-    add_test(NAME OrkesterAsyncTests COMMAND test_orkester_async)
 endif()
 
 
@@ -467,18 +457,18 @@ add_subdirectory(doc)
 include(CMakePackageConfigHelpers)
 
 if(CESIUM_INSTALL_STATIC_LIBS AND CESIUM_INSTALL_HEADERS)
-  install(EXPORT CesiumExports
-    FILE cesium-nativeTargets.cmake
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+    install(EXPORT CesiumExports
+        FILE cesium-nativeTargets.cmake
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
 
-  install(FILES
-    "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findmodp_b64.cmake"
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+    install(FILES
+        "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/Findmodp_b64.cmake"
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
 
-  configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config/Config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/cesium-nativeConfig.cmake"
-    INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+    configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/config/Config.cmake.in
+        "${CMAKE_CURRENT_BINARY_DIR}/cesium-nativeConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
 
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cesium-nativeConfig.cmake
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cesium-nativeConfig.cmake
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/cesium-native/cmake)
 endif()

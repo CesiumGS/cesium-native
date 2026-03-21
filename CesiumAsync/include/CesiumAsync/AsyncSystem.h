@@ -9,6 +9,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -347,11 +348,14 @@ public:
   /// Wait for heterogeneous futures to complete, returning a tuple.
   template <typename... Ts>
   Future<std::tuple<Ts...>> all(Future<Ts>&&... futures) const {
-    auto results = std::make_shared<std::tuple<Ts...>>();
+    auto results = std::make_shared<std::tuple<std::optional<Ts>...>>();
     Future<void> chain = createResolvedFuture();
     allImpl<0>(chain, results, std::move(futures)...);
-    return std::move(chain).thenImmediately(
-        [results]() { return std::move(*results); });
+    return std::move(chain).thenImmediately([results]() {
+      return std::apply(
+          [](auto&&... opts) { return std::tuple<Ts...>{std::move(*opts)...}; },
+          std::move(*results));
+    });
   }
 
   /// Dispatch queued main-thread tasks.
@@ -432,7 +436,7 @@ private:
         [system = _system, slot, signal, results]() mutable {
           Future<Head> inner(system, slot, signal);
           return std::move(inner).thenImmediately([results](Head&& value) {
-            std::get<I>(*results) = std::move(value);
+            std::get<I>(*results).emplace(std::move(value));
           });
         });
     allImpl<I + 1>(chain, results, std::move(tail)...);
