@@ -87,13 +87,15 @@ CesiumIonAssetAccessor::get(
                   updatedToken.token.empty()) {
                 // Could not refresh the token, so just return the
                 // original (failed) request.
-                return innerAsyncSystem.createResolvedFuture(std::move(pRequest));
+                return innerAsyncSystem.createResolvedFuture(
+                    std::move(pRequest));
               }
 
               // Repeat the request using the new token.
               CesiumAsync::HttpHeaders updatedHeaders = pRequest->headers();
               if (!updatedToken.authorizationHeader.empty()) {
-                updatedHeaders["Authorization"] = updatedToken.authorizationHeader;
+                updatedHeaders["Authorization"] =
+                    updatedToken.authorizationHeader;
               }
 
               std::string updatedUrl = pRequest->url();
