@@ -1248,14 +1248,16 @@ CesiumAsync::Future<Result<std::string>> Connection::ensureValidToken() const {
   std::lock_guard lock(this->_pTokenDetails->mutex);
 
   if (this->_pTokenDetails->accessToken.isValid()) {
-    return this->_asyncSystem.createResolvedFuture(Result<std::string>(
-        "Bearer " + this->_pTokenDetails->accessToken.getToken()));
+    return this->_asyncSystem.createResolvedFuture(
+        Result<std::string>(
+            "Bearer " + this->_pTokenDetails->accessToken.getToken()));
   }
 
   if (this->_pTokenDetails->refreshToken.empty()) {
-    return this->_asyncSystem.createResolvedFuture(Result<std::string>(
-        ErrorList::error("Cesium ion access token has expired and no refresh "
-                         "token is present.")));
+    return this->_asyncSystem.createResolvedFuture(
+        Result<std::string>(ErrorList::error(
+            "Cesium ion access token has expired and no refresh "
+            "token is present.")));
   }
 
   if (!this->_pTokenDetails->refreshInProgress) {

@@ -130,8 +130,9 @@ TEST_CASE("CreditReferencer") {
       REQUIRE(pReferencer->isCreditReferenced(credit3) == false);
     }
 
-    SUBCASE("and checks credit references after duplicating via the copy "
-            "constructor") {
+    SUBCASE(
+        "and checks credit references after duplicating via the copy "
+        "constructor") {
       CreditReferencer referencerCopy(*pReferencer);
       REQUIRE(referencerCopy.isCreditReferenced(credit1) == true);
       REQUIRE(referencerCopy.isCreditReferenced(credit2) == true);
@@ -146,8 +147,9 @@ TEST_CASE("CreditReferencer") {
       REQUIRE(referencerCopy.isCreditReferenced(credit3) == false);
     }
 
-    SUBCASE("and checks credit references after duplicating via the move "
-            "constructor") {
+    SUBCASE(
+        "and checks credit references after duplicating via the move "
+        "constructor") {
       CreditReferencer referencerMove(std::move(*pReferencer));
       REQUIRE(referencerMove.isCreditReferenced(credit1) == true);
       REQUIRE(referencerMove.isCreditReferenced(credit2) == true);
@@ -181,8 +183,9 @@ TEST_CASE("CreditReferencer") {
         CHECK(pCreditSystem->getSnapshot().currentCredits.size() == 2);
       }
 
-      SUBCASE("and releasing all references should not cause problems even "
-              "though some references are stale") {
+      SUBCASE(
+          "and releasing all references should not cause problems even "
+          "though some references are stale") {
         pReferencer->releaseAllReferences();
         CHECK(pCreditSystem->getSnapshot().currentCredits.size() == 0);
       }

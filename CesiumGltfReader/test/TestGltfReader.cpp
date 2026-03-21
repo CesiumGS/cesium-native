@@ -423,8 +423,9 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
   REQUIRE(!primitive3.getExtension<ExtensionKhrDracoMeshCompression>());
 }
 
-TEST_CASE("Extensions deserialize to JsonVaue iff "
-          "a default extension is registered") {
+TEST_CASE(
+    "Extensions deserialize to JsonVaue iff "
+    "a default extension is registered") {
   const std::string s = R"(
     {
         "asset" : {
@@ -662,8 +663,9 @@ TEST_CASE("Decodes images with data uris") {
   CHECK(size_t(buffer.byteLength) == buffer.cesium.data.size());
 }
 
-TEST_CASE("Decode buffer with data URI whose length does match the buffer's "
-          "byteLength") {
+TEST_CASE(
+    "Decode buffer with data URI whose length does match the buffer's "
+    "byteLength") {
   std::vector<std::byte> gltfBytes = readFile(
       CesiumGltfReader_TEST_DATA_DIR + std::string("/BoxTextured.gltf"));
   std::string gltfString(
@@ -678,9 +680,10 @@ TEST_CASE("Decode buffer with data URI whose length does match the buffer's "
       "\"byteLength\": 1");
 
   GltfReader reader;
-  GltfReaderResult result = reader.readGltf(std::span<const std::byte>(
-      reinterpret_cast<const std::byte*>(gltfString.data()),
-      gltfString.size()));
+  GltfReaderResult result = reader.readGltf(
+      std::span<const std::byte>(
+          reinterpret_cast<const std::byte*>(gltfString.data()),
+          gltfString.size()));
 
   REQUIRE(result.errors.empty());
   REQUIRE(result.warnings.size() == 1);

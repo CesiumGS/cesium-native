@@ -53,9 +53,10 @@ std::string generateAuthToken() {
   writer.Key("id");
   writer.Int64(222);
   writer.Key("iat");
-  writer.Int64(std::chrono::duration_cast<std::chrono::seconds>(
-                   std::chrono::system_clock::now().time_since_epoch())
-                   .count());
+  writer.Int64(
+      std::chrono::duration_cast<std::chrono::seconds>(
+          std::chrono::system_clock::now().time_since_epoch())
+          .count());
   writer.Key("exp");
   writer.Int64(
       std::chrono::duration_cast<std::chrono::seconds>(exp.time_since_epoch())

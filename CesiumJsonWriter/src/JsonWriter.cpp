@@ -14,8 +14,9 @@
 
 namespace CesiumJsonWriter {
 JsonWriter::JsonWriter()
-    : _compact(std::make_unique<rapidjson::Writer<rapidjson::StringBuffer>>(
-          _compactBuffer)) {}
+    : _compact(
+          std::make_unique<rapidjson::Writer<rapidjson::StringBuffer>>(
+              _compactBuffer)) {}
 
 bool JsonWriter::Null() { return _compact->Null(); }
 

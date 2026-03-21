@@ -74,8 +74,9 @@ TEST_CASE("UrlTemplateRasterOverlay getTile") {
   CHECK(image.width > 0);
   CHECK(image.height > 0);
   CHECK(image.pixelData.size() > 0);
-  CHECK(std::all_of(
-      image.pixelData.begin(),
-      image.pixelData.end(),
-      [](std::byte b) { return b == std::byte(0); }));
+  CHECK(
+      std::all_of(
+          image.pixelData.begin(),
+          image.pixelData.end(),
+          [](std::byte b) { return b == std::byte(0); }));
 }

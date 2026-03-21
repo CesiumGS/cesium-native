@@ -173,10 +173,11 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
     CHECK(image.width > 0);
     CHECK(image.height > 0);
     CHECK(image.pixelData.size() > 0);
-    CHECK(std::all_of(
-        image.pixelData.begin(),
-        image.pixelData.end(),
-        [](std::byte b) { return b == std::byte(0); }));
+    CHECK(
+        std::all_of(
+            image.pixelData.begin(),
+            image.pixelData.end(),
+            [](std::byte b) { return b == std::byte(0); }));
   }
 
   SUBCASE("uses a mix of levels when a tile returns an error") {
@@ -231,17 +232,22 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
     CHECK(image.pixelData.size() > 0);
 
     // We should have pixels from both level 7 and level 8.
-    CHECK(std::all_of(
-        image.pixelData.begin(),
-        image.pixelData.end(),
-        [](std::byte b) { return b == std::byte(7) || b == std::byte(8); }));
-    CHECK(std::any_of(
-        image.pixelData.begin(),
-        image.pixelData.end(),
-        [](std::byte b) { return b == std::byte(7); }));
-    CHECK(std::any_of(
-        image.pixelData.begin(),
-        image.pixelData.end(),
-        [](std::byte b) { return b == std::byte(8); }));
+    CHECK(
+        std::all_of(
+            image.pixelData.begin(),
+            image.pixelData.end(),
+            [](std::byte b) {
+              return b == std::byte(7) || b == std::byte(8);
+            }));
+    CHECK(
+        std::any_of(
+            image.pixelData.begin(),
+            image.pixelData.end(),
+            [](std::byte b) { return b == std::byte(7); }));
+    CHECK(
+        std::any_of(
+            image.pixelData.begin(),
+            image.pixelData.end(),
+            [](std::byte b) { return b == std::byte(8); }));
   }
 }

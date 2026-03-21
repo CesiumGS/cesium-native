@@ -41,17 +41,23 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
 
-    CartographicPolygon triangle(std::vector<glm::dvec2>{
-        glm::dvec2(Math::degreesToRadians(0.25), Math::degreesToRadians(0.25)),
-        glm::dvec2(Math::degreesToRadians(0.5), Math::degreesToRadians(0.75)),
-        glm::dvec2(
-            Math::degreesToRadians(0.75),
-            Math::degreesToRadians(0.25))});
+    CartographicPolygon triangle(
+        std::vector<glm::dvec2>{
+            glm::dvec2(
+                Math::degreesToRadians(0.25),
+                Math::degreesToRadians(0.25)),
+            glm::dvec2(
+                Math::degreesToRadians(0.5),
+                Math::degreesToRadians(0.75)),
+            glm::dvec2(
+                Math::degreesToRadians(0.75),
+                Math::degreesToRadians(0.25))});
 
     rasterizer.drawPolygon(
         triangle,
@@ -69,15 +75,21 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
-    CartographicPolygon triangle(std::vector<glm::dvec2>{
-        glm::dvec2(Math::degreesToRadians(0.25), Math::degreesToRadians(0.25)),
-        glm::dvec2(Math::degreesToRadians(0.5), Math::degreesToRadians(0.75)),
-        glm::dvec2(
-            Math::degreesToRadians(0.75),
-            Math::degreesToRadians(0.25))});
+    CartographicPolygon triangle(
+        std::vector<glm::dvec2>{
+            glm::dvec2(
+                Math::degreesToRadians(0.25),
+                Math::degreesToRadians(0.25)),
+            glm::dvec2(
+                Math::degreesToRadians(0.5),
+                Math::degreesToRadians(0.75)),
+            glm::dvec2(
+                Math::degreesToRadians(0.75),
+                Math::degreesToRadians(0.25))});
     VectorStyle style{Color{0, 255, 255, 255}};
     {
       VectorRasterizer rasterizer(rect, asset);
@@ -95,7 +107,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
         tile->channels = 4;
         tile->bytesPerChannel = 1;
         tile->pixelData.resize(
-            (size_t)(tile->width * tile->height * tile->channels * tile->bytesPerChannel),
+            (size_t)(tile->width * tile->height * tile->channels *
+                     tile->bytesPerChannel),
             std::byte{255});
         VectorRasterizer rasterizer(
             GlobeRectangle(
@@ -130,7 +143,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -165,19 +179,23 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect2, asset);
 
-    CartographicPolygon triangle(std::vector<glm::dvec2>{
-        glm::dvec2(
-            Math::degreesToRadians(0.375),
-            Math::degreesToRadians(0.3125)),
-        glm::dvec2(Math::degreesToRadians(0.5), Math::degreesToRadians(0.4375)),
-        glm::dvec2(
-            Math::degreesToRadians(0.625),
-            Math::degreesToRadians(0.3125))});
+    CartographicPolygon triangle(
+        std::vector<glm::dvec2>{
+            glm::dvec2(
+                Math::degreesToRadians(0.375),
+                Math::degreesToRadians(0.3125)),
+            glm::dvec2(
+                Math::degreesToRadians(0.5),
+                Math::degreesToRadians(0.4375)),
+            glm::dvec2(
+                Math::degreesToRadians(0.625),
+                Math::degreesToRadians(0.3125))});
 
     rasterizer.drawPolygon(
         triangle,
@@ -197,7 +215,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -232,7 +251,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -273,7 +293,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     GlobeRectangle antiRect{
@@ -282,27 +303,41 @@ TEST_CASE("VectorRasterizer::rasterize") {
         Math::degreesToRadians(-175.0),
         Math::degreesToRadians(10.0)};
 
-    CartographicPolygon square(std::vector<glm::dvec2>{
-        glm::dvec2{Math::degreesToRadians(175.0), Math::degreesToRadians(0.0)},
-        glm::dvec2{Math::degreesToRadians(175.0), Math::degreesToRadians(10.0)},
-        glm::dvec2{Math::degreesToRadians(180.0), Math::degreesToRadians(10.0)},
-        glm::dvec2{Math::degreesToRadians(180.0), Math::degreesToRadians(0.0)},
-        glm::dvec2{
-            Math::degreesToRadians(175.0),
-            Math::degreesToRadians(0.0)}});
+    CartographicPolygon square(
+        std::vector<glm::dvec2>{
+            glm::dvec2{
+                Math::degreesToRadians(175.0),
+                Math::degreesToRadians(0.0)},
+            glm::dvec2{
+                Math::degreesToRadians(175.0),
+                Math::degreesToRadians(10.0)},
+            glm::dvec2{
+                Math::degreesToRadians(180.0),
+                Math::degreesToRadians(10.0)},
+            glm::dvec2{
+                Math::degreesToRadians(180.0),
+                Math::degreesToRadians(0.0)},
+            glm::dvec2{
+                Math::degreesToRadians(175.0),
+                Math::degreesToRadians(0.0)}});
 
-    CartographicPolygon square2(std::vector<glm::dvec2>{
-        glm::dvec2{Math::degreesToRadians(-180.0), Math::degreesToRadians(0.0)},
-        glm::dvec2{
-            Math::degreesToRadians(-180.0),
-            Math::degreesToRadians(10.0)},
-        glm::dvec2{
-            Math::degreesToRadians(-175.0),
-            Math::degreesToRadians(10.0)},
-        glm::dvec2{Math::degreesToRadians(-175.0), Math::degreesToRadians(0.0)},
-        glm::dvec2{
-            Math::degreesToRadians(-180.0),
-            Math::degreesToRadians(0.0)}});
+    CartographicPolygon square2(
+        std::vector<glm::dvec2>{
+            glm::dvec2{
+                Math::degreesToRadians(-180.0),
+                Math::degreesToRadians(0.0)},
+            glm::dvec2{
+                Math::degreesToRadians(-180.0),
+                Math::degreesToRadians(10.0)},
+            glm::dvec2{
+                Math::degreesToRadians(-175.0),
+                Math::degreesToRadians(10.0)},
+            glm::dvec2{
+                Math::degreesToRadians(-175.0),
+                Math::degreesToRadians(0.0)},
+            glm::dvec2{
+                Math::degreesToRadians(-180.0),
+                Math::degreesToRadians(0.0)}});
 
     VectorStyle style{Color{0xff, 0x9e, 0x33, 0xff}};
 
@@ -368,23 +403,36 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
-    CartographicPolygon square(std::vector<glm::dvec2>{
-        glm::dvec2(Math::degreesToRadians(0.25), Math::degreesToRadians(0.25)),
-        glm::dvec2(Math::degreesToRadians(0.25), Math::degreesToRadians(0.75)),
-        glm::dvec2(Math::degreesToRadians(0.75), Math::degreesToRadians(0.75)),
-        glm::dvec2(
-            Math::degreesToRadians(0.75),
-            Math::degreesToRadians(0.25))});
+    CartographicPolygon square(
+        std::vector<glm::dvec2>{
+            glm::dvec2(
+                Math::degreesToRadians(0.25),
+                Math::degreesToRadians(0.25)),
+            glm::dvec2(
+                Math::degreesToRadians(0.25),
+                Math::degreesToRadians(0.75)),
+            glm::dvec2(
+                Math::degreesToRadians(0.75),
+                Math::degreesToRadians(0.75)),
+            glm::dvec2(
+                Math::degreesToRadians(0.75),
+                Math::degreesToRadians(0.25))});
 
-    CartographicPolygon triangle(std::vector<glm::dvec2>{
-        glm::dvec2(Math::degreesToRadians(0.25), Math::degreesToRadians(0.25)),
-        glm::dvec2(Math::degreesToRadians(0.5), Math::degreesToRadians(0.75)),
-        glm::dvec2(
-            Math::degreesToRadians(0.75),
-            Math::degreesToRadians(0.25))});
+    CartographicPolygon triangle(
+        std::vector<glm::dvec2>{
+            glm::dvec2(
+                Math::degreesToRadians(0.25),
+                Math::degreesToRadians(0.25)),
+            glm::dvec2(
+                Math::degreesToRadians(0.5),
+                Math::degreesToRadians(0.75)),
+            glm::dvec2(
+                Math::degreesToRadians(0.75),
+                Math::degreesToRadians(0.25))});
 
     std::vector<glm::dvec3> polyline{
         glm::dvec3(0.1, 0.1, 0.0),
@@ -418,12 +466,23 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(4, std::byte{255});
 
-    CartographicPolygon square(std::vector<glm::dvec2>{
-        glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(0.0)},
-        glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(1.0)},
-        glm::dvec2{Math::degreesToRadians(1.0), Math::degreesToRadians(1.0)},
-        glm::dvec2{Math::degreesToRadians(1.0), Math::degreesToRadians(0.0)},
-        glm::dvec2{Math::degreesToRadians(0.0), Math::degreesToRadians(0.0)}});
+    CartographicPolygon square(
+        std::vector<glm::dvec2>{
+            glm::dvec2{
+                Math::degreesToRadians(0.0),
+                Math::degreesToRadians(0.0)},
+            glm::dvec2{
+                Math::degreesToRadians(0.0),
+                Math::degreesToRadians(1.0)},
+            glm::dvec2{
+                Math::degreesToRadians(1.0),
+                Math::degreesToRadians(1.0)},
+            glm::dvec2{
+                Math::degreesToRadians(1.0),
+                Math::degreesToRadians(0.0)},
+            glm::dvec2{
+                Math::degreesToRadians(0.0),
+                Math::degreesToRadians(0.0)}});
 
     VectorStyle style;
     style.polygon.fill =
@@ -451,7 +510,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     // With a unit sphere, this means that the area covered by the rect is
@@ -490,7 +550,8 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     const LineStyle style{
@@ -536,7 +597,8 @@ TEST_CASE("VectorRasterizer::rasterize benchmark" * doctest::skip(true)) {
   asset->channels = 4;
   asset->bytesPerChannel = 1;
   asset->pixelData.resize(
-      (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+      (size_t)(asset->width * asset->height * asset->channels *
+               asset->bytesPerChannel),
       std::byte{255});
 
   for (int i = 0; i < 100; i++) {
@@ -544,22 +606,24 @@ TEST_CASE("VectorRasterizer::rasterize benchmark" * doctest::skip(true)) {
     std::vector<VectorStyle> styles;
     std::uniform_real_distribution<double> uniformDist;
     for (int j = 0; j < 1000; j++) {
-      polygons.emplace_back(std::vector<glm::dvec2>{
-          glm::dvec2(
-              Math::degreesToRadians(uniformDist(rand)),
-              Math::degreesToRadians(uniformDist(rand))),
-          glm::dvec2(
-              Math::degreesToRadians(uniformDist(rand)),
-              Math::degreesToRadians(uniformDist(rand))),
-          glm::dvec2(
-              Math::degreesToRadians(uniformDist(rand)),
-              Math::degreesToRadians(uniformDist(rand))),
-      });
-      styles.emplace_back(Color{
-          (uint8_t)(uniformDist(rand) * 255.0),
-          (uint8_t)(uniformDist(rand) * 255.0),
-          (uint8_t)(uniformDist(rand) * 255.0),
-          (uint8_t)(uniformDist(rand) * 255.0)});
+      polygons.emplace_back(
+          std::vector<glm::dvec2>{
+              glm::dvec2(
+                  Math::degreesToRadians(uniformDist(rand)),
+                  Math::degreesToRadians(uniformDist(rand))),
+              glm::dvec2(
+                  Math::degreesToRadians(uniformDist(rand)),
+                  Math::degreesToRadians(uniformDist(rand))),
+              glm::dvec2(
+                  Math::degreesToRadians(uniformDist(rand)),
+                  Math::degreesToRadians(uniformDist(rand))),
+          });
+      styles.emplace_back(
+          Color{
+              (uint8_t)(uniformDist(rand) * 255.0),
+              (uint8_t)(uniformDist(rand) * 255.0),
+              (uint8_t)(uniformDist(rand) * 255.0),
+              (uint8_t)(uniformDist(rand) * 255.0)});
     }
 
     std::chrono::steady_clock::time_point start = clock.now();

@@ -123,12 +123,13 @@ void decodeDataUrls(
     }
 
     if (buffer.byteLength != int64_t(buffer.cesium.data.size())) {
-      readGltf.warnings.emplace_back(fmt::format(
-          "The size of the data decoded from a `data:` URL ({} bytes) "
-          "does not match the declared byteLength of the buffer "
-          "({} bytes). The byteLength has been updated to match.",
-          buffer.cesium.data.size(),
-          buffer.byteLength));
+      readGltf.warnings.emplace_back(
+          fmt::format(
+              "The size of the data decoded from a `data:` URL ({} bytes) "
+              "does not match the declared byteLength of the buffer "
+              "({} bytes). The byteLength has been updated to match.",
+              buffer.cesium.data.size(),
+              buffer.byteLength));
       buffer.byteLength = int64_t(buffer.cesium.data.size());
     }
   }

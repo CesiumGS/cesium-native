@@ -63,16 +63,18 @@ Result<rapidjson::Document> handleJsonResponse(
             pResponse->data(),
             error,
             errorDesc)) {
-      return Result<rapidjson::Document>(ErrorList::error(fmt::format(
-          "Received error '{}' while {}: {}",
-          error,
-          operation,
-          errorDesc)));
+      return Result<rapidjson::Document>(ErrorList::error(
+          fmt::format(
+              "Received error '{}' while {}: {}",
+              error,
+              operation,
+              errorDesc)));
     }
 
-    return Result<rapidjson::Document>(ErrorList::error(fmt::format(
-        "The server returned an error code: {}",
-        pResponse->statusCode())));
+    return Result<rapidjson::Document>(ErrorList::error(
+        fmt::format(
+            "The server returned an error code: {}",
+            pResponse->statusCode())));
   }
 
   rapidjson::Document d;
@@ -80,9 +82,10 @@ Result<rapidjson::Document> handleJsonResponse(
       reinterpret_cast<const char*>(pResponse->data().data()),
       pResponse->data().size());
   if (d.HasParseError()) {
-    return Result<rapidjson::Document>(ErrorList::error(fmt::format(
-        "Failed to parse JSON response: {}",
-        rapidjson::GetParseError_En(d.GetParseError()))));
+    return Result<rapidjson::Document>(ErrorList::error(
+        fmt::format(
+            "Failed to parse JSON response: {}",
+            rapidjson::GetParseError_En(d.GetParseError()))));
   } else if (!d.IsObject()) {
     return Result<rapidjson::Document>(
         ErrorList::error("No JSON object contained in response."));
@@ -284,15 +287,22 @@ Connection::listITwins(const std::string& url) {
               items.reserve(itemsMember->value.Size());
 
               for (const auto& item : itemsMember->value.GetArray()) {
-                items.emplace_back(ITwin{
-                    JsonHelpers::getStringOrDefault(item, "id", ""),
-                    JsonHelpers::getStringOrDefault(item, "class", ""),
-                    JsonHelpers::getStringOrDefault(item, "subClass", ""),
-                    JsonHelpers::getStringOrDefault(item, "type", ""),
-                    JsonHelpers::getStringOrDefault(item, "number", ""),
-                    JsonHelpers::getStringOrDefault(item, "displayName", ""),
-                    iTwinStatusFromString(
-                        JsonHelpers::getStringOrDefault(item, "status", ""))});
+                items.emplace_back(
+                    ITwin{
+                        JsonHelpers::getStringOrDefault(item, "id", ""),
+                        JsonHelpers::getStringOrDefault(item, "class", ""),
+                        JsonHelpers::getStringOrDefault(item, "subClass", ""),
+                        JsonHelpers::getStringOrDefault(item, "type", ""),
+                        JsonHelpers::getStringOrDefault(item, "number", ""),
+                        JsonHelpers::getStringOrDefault(
+                            item,
+                            "displayName",
+                            ""),
+                        iTwinStatusFromString(
+                            JsonHelpers::getStringOrDefault(
+                                item,
+                                "status",
+                                ""))});
               }
 
               return Result<PagedList<ITwin>>(PagedList<ITwin>(
@@ -378,18 +388,25 @@ Connection::listIModels(const std::string& url) {
                   }
                 }
 
-                items.emplace_back(IModel{
-                    JsonHelpers::getStringOrDefault(item, "id", ""),
-                    JsonHelpers::getStringOrDefault(item, "displayName", ""),
-                    JsonHelpers::getStringOrDefault(item, "name", ""),
-                    JsonHelpers::getStringOrDefault(item, "description", ""),
-                    iModelStateFromString(
-                        JsonHelpers::getStringOrDefault(item, "state", "")),
-                    CesiumGeospatial::GlobeRectangle(
-                        southWest.longitude,
-                        southWest.latitude,
-                        northEast.longitude,
-                        northEast.latitude)});
+                items.emplace_back(
+                    IModel{
+                        JsonHelpers::getStringOrDefault(item, "id", ""),
+                        JsonHelpers::getStringOrDefault(
+                            item,
+                            "displayName",
+                            ""),
+                        JsonHelpers::getStringOrDefault(item, "name", ""),
+                        JsonHelpers::getStringOrDefault(
+                            item,
+                            "description",
+                            ""),
+                        iModelStateFromString(
+                            JsonHelpers::getStringOrDefault(item, "state", "")),
+                        CesiumGeospatial::GlobeRectangle(
+                            southWest.longitude,
+                            southWest.latitude,
+                            northEast.longitude,
+                            northEast.latitude)});
               }
 
               return Result<PagedList<IModel>>(PagedList<IModel>(
@@ -468,12 +485,19 @@ Connection::listIModelMeshExports(const std::string& url) {
                           ""));
                 }
 
-                items.emplace_back(IModelMeshExport{
-                    JsonHelpers::getStringOrDefault(item, "id", ""),
-                    JsonHelpers::getStringOrDefault(item, "displayName", ""),
-                    iModelMeshExportStatusFromString(
-                        JsonHelpers::getStringOrDefault(item, "status", "")),
-                    exportType});
+                items.emplace_back(
+                    IModelMeshExport{
+                        JsonHelpers::getStringOrDefault(item, "id", ""),
+                        JsonHelpers::getStringOrDefault(
+                            item,
+                            "displayName",
+                            ""),
+                        iModelMeshExportStatusFromString(
+                            JsonHelpers::getStringOrDefault(
+                                item,
+                                "status",
+                                "")),
+                        exportType});
               }
 
               return Result<PagedList<IModelMeshExport>>(
@@ -565,22 +589,32 @@ Connection::listITwinRealityData(const std::string& url) {
                   }
                 }
 
-                items.emplace_back(ITwinRealityData{
-                    JsonHelpers::getStringOrDefault(item, "id", ""),
-                    JsonHelpers::getStringOrDefault(item, "displayName", ""),
-                    JsonHelpers::getStringOrDefault(item, "description", ""),
-                    iTwinRealityDataClassificationFromString(
+                items.emplace_back(
+                    ITwinRealityData{
+                        JsonHelpers::getStringOrDefault(item, "id", ""),
                         JsonHelpers::getStringOrDefault(
                             item,
-                            "classification",
-                            "")),
-                    JsonHelpers::getStringOrDefault(item, "type", ""),
-                    CesiumGeospatial::GlobeRectangle(
-                        southWest.longitude,
-                        southWest.latitude,
-                        northEast.longitude,
-                        northEast.latitude),
-                    JsonHelpers::getBoolOrDefault(item, "authoring", false)});
+                            "displayName",
+                            ""),
+                        JsonHelpers::getStringOrDefault(
+                            item,
+                            "description",
+                            ""),
+                        iTwinRealityDataClassificationFromString(
+                            JsonHelpers::getStringOrDefault(
+                                item,
+                                "classification",
+                                "")),
+                        JsonHelpers::getStringOrDefault(item, "type", ""),
+                        CesiumGeospatial::GlobeRectangle(
+                            southWest.longitude,
+                            southWest.latitude,
+                            northEast.longitude,
+                            northEast.latitude),
+                        JsonHelpers::getBoolOrDefault(
+                            item,
+                            "authoring",
+                            false)});
               }
 
               return Result<PagedList<ITwinRealityData>>(
@@ -608,29 +642,29 @@ Connection::cesiumCuratedContent() {
       {"Accept", "application/vnd.bentley.itwin-platform.v1+json"}};
   return this->_pAssetAccessor
       ->get(this->_asyncSystem, LIST_CCC_ENDPOINT_URL, headers)
-      .thenInWorkerThread(
-          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pRequest) {
-            Result<rapidjson::Document> docResult =
-                handleJsonResponse(pRequest, "listing Cesium curated content");
-            if (!docResult.value) {
-              return Result<ITwinCCCListResponse>(docResult.errors);
-            }
+      .thenInWorkerThread([](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                 pRequest) {
+        Result<rapidjson::Document> docResult =
+            handleJsonResponse(pRequest, "listing Cesium curated content");
+        if (!docResult.value) {
+          return Result<ITwinCCCListResponse>(docResult.errors);
+        }
 
-            const rapidjson::Document& doc = *docResult.value;
+        const rapidjson::Document& doc = *docResult.value;
 
-            const auto& itemsMember = doc.FindMember("items");
-            if (itemsMember == doc.MemberEnd() ||
-                !itemsMember->value.IsArray()) {
-              return Result<ITwinCCCListResponse>(
-                  ErrorList::error("Can't find list of items in Cesium curated "
-                                   "content list response."));
-            }
+        const auto& itemsMember = doc.FindMember("items");
+        if (itemsMember == doc.MemberEnd() || !itemsMember->value.IsArray()) {
+          return Result<ITwinCCCListResponse>(ErrorList::error(
+              "Can't find list of items in Cesium curated "
+              "content list response."));
+        }
 
-            std::vector<CesiumCuratedContentAsset> items;
-            items.reserve(itemsMember->value.Size());
+        std::vector<CesiumCuratedContentAsset> items;
+        items.reserve(itemsMember->value.Size());
 
-            for (const auto& value : itemsMember->value.GetArray()) {
-              items.emplace_back(CesiumCuratedContentAsset{
+        for (const auto& value : itemsMember->value.GetArray()) {
+          items.emplace_back(
+              CesiumCuratedContentAsset{
                   JsonHelpers::getUint64OrDefault(value, "id", 0),
                   cesiumCuratedContentTypeFromString(
                       JsonHelpers::getStringOrDefault(value, "type", "")),
@@ -639,10 +673,10 @@ Connection::cesiumCuratedContent() {
                   JsonHelpers::getStringOrDefault(value, "attribution", ""),
                   cesiumCuratedContentStatusFromString(
                       JsonHelpers::getStringOrDefault(value, "status", ""))});
-            }
+        }
 
-            return Result<ITwinCCCListResponse>(std::move(items));
-          });
+        return Result<ITwinCCCListResponse>(std::move(items));
+      });
 }
 
 CesiumAsync::Future<
@@ -693,8 +727,9 @@ Connection::geospatialFeatureCollections(const std::string& iTwinId) {
                    collectionsMember->value.GetArray()) {
                 if (!collection.IsObject()) {
                   return Result<std::vector<GeospatialFeatureCollection>>(
-                      ErrorList::error("All items in `collections` must be "
-                                       "JSON objects - skipping "));
+                      ErrorList::error(
+                          "All items in `collections` must be "
+                          "JSON objects - skipping "));
                 }
 
                 GeospatialFeatureCollection& collectionResult =
@@ -715,8 +750,9 @@ Connection::geospatialFeatureCollections(const std::string& iTwinId) {
                 if (spatialMember == extentMember->value.MemberEnd() ||
                     !spatialMember->value.IsObject()) {
                   return Result<std::vector<GeospatialFeatureCollection>>(
-                      ErrorList::error("Collections result missing "
-                                       "`extent.spatial` property."));
+                      ErrorList::error(
+                          "Collections result missing "
+                          "`extent.spatial` property."));
                 }
 
                 const auto& bboxMember =
@@ -724,8 +760,9 @@ Connection::geospatialFeatureCollections(const std::string& iTwinId) {
                 if (bboxMember == spatialMember->value.MemberEnd() ||
                     !bboxMember->value.IsArray()) {
                   return Result<std::vector<GeospatialFeatureCollection>>(
-                      ErrorList::error("Collections result missing "
-                                       "`extent.spatial.bbox` property."));
+                      ErrorList::error(
+                          "Collections result missing "
+                          "`extent.spatial.bbox` property."));
                 }
 
                 collectionResult.extents.spatial.reserve(
@@ -766,8 +803,9 @@ Connection::geospatialFeatureCollections(const std::string& iTwinId) {
                   if (intervalMember == temporalMember->value.MemberEnd() ||
                       !intervalMember->value.IsArray()) {
                     return Result<std::vector<GeospatialFeatureCollection>>(
-                        ErrorList::error("Collections result missing "
-                                         "`extent.temporal.interval` member."));
+                        ErrorList::error(
+                            "Collections result missing "
+                            "`extent.temporal.interval` member."));
                   }
 
                   for (const auto& interval :
@@ -894,9 +932,9 @@ Connection::listGeospatialFeatures(const std::string& url) {
                   geoJsonDocResult.value->rootObject
                       .getIf<GeoJsonFeatureCollection>();
               if (!pFeatureCollection) {
-                return Result<PagedList<GeoJsonFeature>>(
-                    ErrorList::error("Unable to obtain FeatureCollection from "
-                                     "geospatial features response"));
+                return Result<PagedList<GeoJsonFeature>>(ErrorList::error(
+                    "Unable to obtain FeatureCollection from "
+                    "geospatial features response"));
               }
 
               std::vector<GeoJsonFeature> features;
@@ -904,8 +942,8 @@ Connection::listGeospatialFeatures(const std::string& url) {
               for (GeoJsonObject& object : pFeatureCollection->features) {
                 GeoJsonFeature* pFeature = object.getIf<GeoJsonFeature>();
                 if (!pFeature) {
-                  return Result<PagedList<GeoJsonFeature>>(
-                      ErrorList::error(fmt::format(
+                  return Result<PagedList<GeoJsonFeature>>(ErrorList::error(
+                      fmt::format(
                           "Expected only Feature objects to be in "
                           "FeatureCollection, found {}",
                           geoJsonObjectTypeToString(object.getType()))));
@@ -932,8 +970,9 @@ Connection::ensureValidToken() {
   }
 
   if (!this->_refreshToken) {
-    return _asyncSystem.createResolvedFuture(Result<std::string>(
-        ErrorList::error("No valid auth token or refresh token.")));
+    return _asyncSystem.createResolvedFuture(
+        Result<std::string>(
+            ErrorList::error("No valid auth token or refresh token.")));
   }
 
   return CesiumClientCommon::OAuth2PKCE::refresh(

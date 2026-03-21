@@ -7,13 +7,13 @@
 using namespace CesiumIonClient;
 
 TEST_CASE("parseLinkHeader") {
-  std::vector<Link> result =
-      parseLinkHeader("<https://api.cesium.com/v2/"
-                      "tokens?limit=100&page=3&sortBy=NAME&search=cesium%"
-                      "20token>; rel=\"next\", "
-                      "<https://api.cesium.com/v2/"
-                      "tokens?limit=100&page=1&sortBy=NAME&search=cesium%"
-                      "20token>; rel=\"prev\"");
+  std::vector<Link> result = parseLinkHeader(
+      "<https://api.cesium.com/v2/"
+      "tokens?limit=100&page=3&sortBy=NAME&search=cesium%"
+      "20token>; rel=\"next\", "
+      "<https://api.cesium.com/v2/"
+      "tokens?limit=100&page=1&sortBy=NAME&search=cesium%"
+      "20token>; rel=\"prev\"");
   REQUIRE(result.size() == 2);
   CHECK(
       result[0].url ==

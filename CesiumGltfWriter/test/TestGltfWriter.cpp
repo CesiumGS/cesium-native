@@ -19,9 +19,10 @@
 namespace {
 void check(const std::string& input, const std::string& expectedOutput) {
   CesiumGltfReader::GltfReader reader;
-  CesiumGltfReader::GltfReaderResult readResult = reader.readGltf(std::span(
-      reinterpret_cast<const std::byte*>(input.c_str()),
-      input.size()));
+  CesiumGltfReader::GltfReaderResult readResult = reader.readGltf(
+      std::span(
+          reinterpret_cast<const std::byte*>(input.c_str()),
+          input.size()));
   REQUIRE(readResult.errors.empty());
   REQUIRE(readResult.warnings.empty());
   REQUIRE(readResult.model.has_value());

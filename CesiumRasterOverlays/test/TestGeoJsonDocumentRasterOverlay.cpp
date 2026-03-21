@@ -180,8 +180,9 @@ TEST_CASE(
       duration);
 }
 
-TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
-          "height set by pixels") {
+TEST_CASE(
+    "GeoJsonDocumentRasterOverlay can render lines with bounding box "
+    "height set by pixels") {
   const std::filesystem::path testDataPath =
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
       "equator.geojson";
@@ -213,8 +214,9 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
           "equator-meridian.tga");
 }
 
-TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
-          "height set by meters") {
+TEST_CASE(
+    "GeoJsonDocumentRasterOverlay can render lines with bounding box "
+    "height set by meters") {
   const std::filesystem::path testDataPath =
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
       "equator.geojson";
@@ -259,8 +261,9 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
           "equator-meridian-meters.tga");
 }
 
-TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
-          "wrapping around the earth") {
+TEST_CASE(
+    "GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
+    "wrapping around the earth") {
   const std::filesystem::path testDataPath =
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
       "equator.geojson";

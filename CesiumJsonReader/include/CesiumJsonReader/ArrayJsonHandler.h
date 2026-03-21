@@ -151,8 +151,8 @@ private:
  * warning.
  */
 template <>
-class CESIUMJSONREADER_API ArrayJsonHandler<double, DoubleJsonHandler>
-    : public JsonHandler {
+class CESIUMJSONREADER_API
+    ArrayJsonHandler<double, DoubleJsonHandler> : public JsonHandler {
 public:
   /** @brief The destination type. */
   using ValueType = std::vector<double>;
@@ -279,8 +279,8 @@ private:
  * values. Attempting to read other values will cause a warning.
  */
 template <typename T>
-class CESIUMJSONREADER_API ArrayJsonHandler<T, IntegerJsonHandler<T>>
-    : public JsonHandler {
+class CESIUMJSONREADER_API
+    ArrayJsonHandler<T, IntegerJsonHandler<T>> : public JsonHandler {
 public:
   /** @brief The destination type. */
   using ValueType = std::vector<T>;
@@ -401,8 +401,8 @@ private:
  * values. Attempting to read other values will cause a warning.
  */
 template <>
-class CESIUMJSONREADER_API ArrayJsonHandler<std::string, StringJsonHandler>
-    : public JsonHandler {
+class CESIUMJSONREADER_API
+    ArrayJsonHandler<std::string, StringJsonHandler> : public JsonHandler {
 public:
   /** @brief The destination type. */
   using ValueType = std::vector<std::string>;

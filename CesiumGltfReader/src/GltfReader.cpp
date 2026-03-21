@@ -219,8 +219,9 @@ GltfReaderResult readBinaryGltf(
 
     Buffer& buffer = model.buffers[0];
     if (buffer.uri) {
-      result.errors.emplace_back("GLB has a binary chunk but the first buffer "
-                                 "in the JSON chunk also has a 'uri'.");
+      result.errors.emplace_back(
+          "GLB has a binary chunk but the first buffer "
+          "in the JSON chunk also has a 'uri'.");
       return result;
     }
 
@@ -470,21 +471,23 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::loadGltf(
             const CesiumAsync::IAssetResponse* pResponse = pRequest->response();
 
             if (!pResponse) {
-              return asyncSystem.createResolvedFuture(GltfReaderResult{
-                  std::nullopt,
-                  {fmt::format("Request for {} failed.", uri)},
-                  {}});
+              return asyncSystem.createResolvedFuture(
+                  GltfReaderResult{
+                      std::nullopt,
+                      {fmt::format("Request for {} failed.", uri)},
+                      {}});
             }
 
             uint16_t statusCode = pResponse->statusCode();
             if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              return asyncSystem.createResolvedFuture(GltfReaderResult{
-                  std::nullopt,
-                  {fmt::format(
-                      "Request for {} failed with code {}",
-                      uri,
-                      pResponse->statusCode())},
-                  {}});
+              return asyncSystem.createResolvedFuture(
+                  GltfReaderResult{
+                      std::nullopt,
+                      {fmt::format(
+                          "Request for {} failed with code {}",
+                          uri,
+                          pResponse->statusCode())},
+                      {}});
             }
 
             const CesiumJsonReader::JsonReaderOptions& context =
@@ -594,9 +597,9 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
                   asyncSystem,
                   Uri::resolve(baseUrl, *buffer.uri, true),
                   tHeaders)
-              .thenInWorkerThread([pBuffer =
-                                       &buffer](std::shared_ptr<IAssetRequest>&&
-                                                    pRequest) {
+              .thenInWorkerThread([pBuffer = &buffer](
+                                      std::shared_ptr<IAssetRequest>&&
+                                          pRequest) {
                 std::string bufferUri = pRequest->url();
 
                 const IAssetResponse* pResponse = pRequest->response();
@@ -736,21 +739,23 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
               }
 
               if (!bufferResult.warningsAndErrors.errors.empty()) {
-                pResult->warnings.emplace_back(fmt::format(
-                    "Errors while loading external glTF buffer: {}\n- {}",
-                    bufferResult.bufferUri,
-                    CesiumUtility::joinToString(
-                        bufferResult.warningsAndErrors.errors,
-                        "\n- ")));
+                pResult->warnings.emplace_back(
+                    fmt::format(
+                        "Errors while loading external glTF buffer: {}\n- {}",
+                        bufferResult.bufferUri,
+                        CesiumUtility::joinToString(
+                            bufferResult.warningsAndErrors.errors,
+                            "\n- ")));
               }
 
               if (!bufferResult.warningsAndErrors.warnings.empty()) {
-                pResult->warnings.emplace_back(fmt::format(
-                    "Warnings while loading external glTF buffer: {}\n- {}",
-                    bufferResult.bufferUri,
-                    CesiumUtility::joinToString(
-                        bufferResult.warningsAndErrors.warnings,
-                        "\n- ")));
+                pResult->warnings.emplace_back(
+                    fmt::format(
+                        "Warnings while loading external glTF buffer: {}\n- {}",
+                        bufferResult.bufferUri,
+                        CesiumUtility::joinToString(
+                            bufferResult.warningsAndErrors.warnings,
+                            "\n- ")));
               }
             }
 

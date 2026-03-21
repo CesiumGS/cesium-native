@@ -263,22 +263,26 @@ struct RectangleAndLineWidthFromObjectVisitor {
                   Math::OnePi),
               Math::degreesToRadians(point.y) + halfWidth);
         } else {
-          rect->setWest(std::max(
-              std::min(
-                  rect->getWest(),
-                  Math::degreesToRadians(point.x) - halfWidth),
-              -Math::OnePi));
-          rect->setSouth(std::min(
-              rect->getSouth(),
-              Math::degreesToRadians(point.y) - halfWidth));
-          rect->setEast(std::min(
+          rect->setWest(
               std::max(
-                  rect->getEast(),
-                  Math::degreesToRadians(point.x) + halfWidth),
-              Math::OnePi));
-          rect->setNorth(std::max(
-              rect->getNorth(),
-              Math::degreesToRadians(point.y) + halfWidth));
+                  std::min(
+                      rect->getWest(),
+                      Math::degreesToRadians(point.x) - halfWidth),
+                  -Math::OnePi));
+          rect->setSouth(
+              std::min(
+                  rect->getSouth(),
+                  Math::degreesToRadians(point.y) - halfWidth));
+          rect->setEast(
+              std::min(
+                  std::max(
+                      rect->getEast(),
+                      Math::degreesToRadians(point.x) + halfWidth),
+                  Math::OnePi));
+          rect->setNorth(
+              std::max(
+                  rect->getNorth(),
+                  Math::degreesToRadians(point.y) + halfWidth));
         }
       }
     } else {
@@ -835,10 +839,11 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
           [thiz, parameters](std::shared_ptr<GeoJsonDocument>&& pDocument)
               -> CreateTileProviderResult {
             if (!pDocument) {
-              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                  .type = RasterOverlayLoadType::Unknown,
-                  .pRequest = nullptr,
-                  .message = "GeoJSON document failed to load."});
+              return nonstd::make_unexpected(
+                  RasterOverlayLoadFailureDetails{
+                      .type = RasterOverlayLoadType::Unknown,
+                      .pRequest = nullptr,
+                      .message = "GeoJSON document failed to load."});
             }
 
             return IntrusivePointer<RasterOverlayTileProvider>(

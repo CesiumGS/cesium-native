@@ -204,10 +204,11 @@ Future<GetXmlDocumentResult> getXmlDocument(
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
               return asyncSystem.createResolvedFuture<GetXmlDocumentResult>(
-                  nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                      RasterOverlayLoadType::TileProvider,
-                      std::move(pRequest),
-                      "No response received from Tile Map Service."}));
+                  nonstd::make_unexpected(
+                      RasterOverlayLoadFailureDetails{
+                          RasterOverlayLoadType::TileProvider,
+                          std::move(pRequest),
+                          "No response received from Tile Map Service."}));
             }
 
             const std::span<const std::byte> data = pResponse->data();
@@ -280,10 +281,11 @@ Future<GetXmlDocumentResult> getXmlDocument(
                     headers);
               } else {
                 return asyncSystem.createResolvedFuture<GetXmlDocumentResult>(
-                    nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                        RasterOverlayLoadType::TileProvider,
-                        std::move(pRequest),
-                        errorMessage}));
+                    nonstd::make_unexpected(
+                        RasterOverlayLoadFailureDetails{
+                            RasterOverlayLoadType::TileProvider,
+                            std::move(pRequest),
+                            errorMessage}));
               }
             }
 

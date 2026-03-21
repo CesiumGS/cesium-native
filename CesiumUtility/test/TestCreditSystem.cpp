@@ -242,8 +242,9 @@ TEST_CASE("Test CreditSystem with CreditSources") {
     CHECK(creditSystem.getHtml(credit1) == html1);
   }
 
-  SUBCASE("when the source of a credit last frame is destroyed, that credit is "
-          "reported in removedCredits") {
+  SUBCASE(
+      "when the source of a credit last frame is destroyed, that credit is "
+      "reported in removedCredits") {
     std::unique_ptr<CreditSource> pTempSourceA =
         std::make_unique<CreditSource>(creditSystem);
     Credit credit0 = creditSystem.createCredit(*pTempSourceA, html0);

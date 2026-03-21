@@ -132,8 +132,9 @@ void decodeMeshOpt(Model& model, CesiumGltfReader::GltfReaderResult& readGltf) {
       }
       int64_t byteLength = pMeshOpt->byteStride * pMeshOpt->count;
       if (byteLength < 0) {
-        readGltf.warnings.emplace_back("The EXT_meshopt_compression extension "
-                                       "has a negative byte length.");
+        readGltf.warnings.emplace_back(
+            "The EXT_meshopt_compression extension "
+            "has a negative byte length.");
         continue;
       }
 

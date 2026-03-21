@@ -39,7 +39,7 @@ private:
   template <
       typename TElement,
       typename TElementBase,
-      DoublyLinkedListPointers<TElement>(TElementBase::*Pointers)>
+      DoublyLinkedListPointers<TElement>(TElementBase::* Pointers)>
   friend class DoublyLinkedListAdvanced;
 
   T* pNext;
@@ -59,7 +59,7 @@ private:
 template <
     typename T,
     typename TPointerBase,
-    DoublyLinkedListPointers<T>(TPointerBase::*Pointers)>
+    DoublyLinkedListPointers<T>(TPointerBase::* Pointers)>
 class DoublyLinkedListAdvanced final {
 public:
   /**
@@ -268,7 +268,7 @@ private:
 /**
  * @brief An intrusive doubly-linked list.
  */
-template <typename T, DoublyLinkedListPointers<T>(T::*Pointers)>
+template <typename T, DoublyLinkedListPointers<T>(T::* Pointers)>
 using DoublyLinkedList = DoublyLinkedListAdvanced<T, T, Pointers>;
 
 } // namespace CesiumUtility

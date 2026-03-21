@@ -230,8 +230,8 @@ GoogleMapTilesRasterOverlay::createTileProvider(
         });
   } else {
     return parameters.externals.asyncSystem
-        .createResolvedFuture<CreateTileProviderResult>(
-            nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+        .createResolvedFuture<CreateTileProviderResult>(nonstd::make_unexpected(
+            RasterOverlayLoadFailureDetails{
                 .type = RasterOverlayLoadType::TileProvider,
                 .pRequest = nullptr,
                 .message =
@@ -308,21 +308,21 @@ GoogleMapTilesRasterOverlay::createNewSession(
               -> Future<CreateTileProviderResult> {
             const IAssetResponse* pResponse = pRequest->response();
             if (!pResponse) {
-              return parameters.externals.asyncSystem
-                  .createResolvedFuture<CreateTileProviderResult>(
-                      nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                          .type = RasterOverlayLoadType::TileProvider,
-                          .pRequest = pRequest,
-                          .message =
-                              "No response received from Google Map Tiles API "
-                              "createSession service."}));
+              return parameters.externals.asyncSystem.createResolvedFuture<
+                  CreateTileProviderResult>(nonstd::make_unexpected(
+                  RasterOverlayLoadFailureDetails{
+                      .type = RasterOverlayLoadType::TileProvider,
+                      .pRequest = pRequest,
+                      .message =
+                          "No response received from Google Map Tiles API "
+                          "createSession service."}));
             }
 
             if (pResponse->statusCode() < 200 ||
                 pResponse->statusCode() >= 300) {
               return parameters.externals.asyncSystem.createResolvedFuture<
-                  CreateTileProviderResult>(
-                  nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  CreateTileProviderResult>(nonstd::make_unexpected(
+                  RasterOverlayLoadFailureDetails{
                       .type = RasterOverlayLoadType::TileProvider,
                       .pRequest = pRequest,
                       .message = fmt::format(
@@ -341,8 +341,8 @@ GoogleMapTilesRasterOverlay::createNewSession(
               errorList.warnings = std::move(response.warnings);
 
               return parameters.externals.asyncSystem.createResolvedFuture<
-                  CreateTileProviderResult>(
-                  nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+                  CreateTileProviderResult>(nonstd::make_unexpected(
+                  RasterOverlayLoadFailureDetails{
                       .type = RasterOverlayLoadType::TileProvider,
                       .pRequest = pRequest,
                       .message = errorList.format(
@@ -351,14 +351,14 @@ GoogleMapTilesRasterOverlay::createNewSession(
             }
 
             if (!response.value->isObject()) {
-              return parameters.externals.asyncSystem
-                  .createResolvedFuture<CreateTileProviderResult>(
-                      nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                          .type = RasterOverlayLoadType::TileProvider,
-                          .pRequest = pRequest,
-                          .message =
-                              "Response from Google Map Tiles API "
-                              "createSession service was not a JSON object."}));
+              return parameters.externals.asyncSystem.createResolvedFuture<
+                  CreateTileProviderResult>(nonstd::make_unexpected(
+                  RasterOverlayLoadFailureDetails{
+                      .type = RasterOverlayLoadType::TileProvider,
+                      .pRequest = pRequest,
+                      .message =
+                          "Response from Google Map Tiles API "
+                          "createSession service was not a JSON object."}));
             }
 
             const JsonValue::Object& responseObject =
@@ -366,45 +366,45 @@ GoogleMapTilesRasterOverlay::createNewSession(
 
             auto it = responseObject.find("session");
             if (it == responseObject.end() || !it->second.isString()) {
-              return parameters.externals.asyncSystem
-                  .createResolvedFuture<CreateTileProviderResult>(
-                      nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                          .type = RasterOverlayLoadType::TileProvider,
-                          .pRequest = pRequest,
-                          .message =
-                              "Response from Google Map Tiles API "
-                              "createSession service did not contain a valid "
-                              "'session' property."}));
+              return parameters.externals.asyncSystem.createResolvedFuture<
+                  CreateTileProviderResult>(nonstd::make_unexpected(
+                  RasterOverlayLoadFailureDetails{
+                      .type = RasterOverlayLoadType::TileProvider,
+                      .pRequest = pRequest,
+                      .message =
+                          "Response from Google Map Tiles API "
+                          "createSession service did not contain a valid "
+                          "'session' property."}));
             }
 
             std::string session = it->second.getString();
 
             it = responseObject.find("tileWidth");
             if (it == responseObject.end() || !it->second.isNumber()) {
-              return parameters.externals.asyncSystem
-                  .createResolvedFuture<CreateTileProviderResult>(
-                      nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                          .type = RasterOverlayLoadType::TileProvider,
-                          .pRequest = pRequest,
-                          .message =
-                              "Response from Google Map Tiles API "
-                              "createSession service did not contain a valid "
-                              "'tileWidth' property."}));
+              return parameters.externals.asyncSystem.createResolvedFuture<
+                  CreateTileProviderResult>(nonstd::make_unexpected(
+                  RasterOverlayLoadFailureDetails{
+                      .type = RasterOverlayLoadType::TileProvider,
+                      .pRequest = pRequest,
+                      .message =
+                          "Response from Google Map Tiles API "
+                          "createSession service did not contain a valid "
+                          "'tileWidth' property."}));
             }
 
             int32_t tileWidth = it->second.getSafeNumberOrDefault<int32_t>(256);
 
             it = responseObject.find("tileHeight");
             if (it == responseObject.end() || !it->second.isNumber()) {
-              return parameters.externals.asyncSystem
-                  .createResolvedFuture<CreateTileProviderResult>(
-                      nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                          .type = RasterOverlayLoadType::TileProvider,
-                          .pRequest = pRequest,
-                          .message =
-                              "Response from Google Map Tiles API "
-                              "createSession service did not contain a valid "
-                              "'tileHeight' property."}));
+              return parameters.externals.asyncSystem.createResolvedFuture<
+                  CreateTileProviderResult>(nonstd::make_unexpected(
+                  RasterOverlayLoadFailureDetails{
+                      .type = RasterOverlayLoadType::TileProvider,
+                      .pRequest = pRequest,
+                      .message =
+                          "Response from Google Map Tiles API "
+                          "createSession service did not contain a valid "
+                          "'tileHeight' property."}));
             }
 
             int32_t tileHeight =

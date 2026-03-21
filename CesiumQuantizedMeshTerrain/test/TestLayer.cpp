@@ -60,18 +60,20 @@ TEST_CASE("LayerJsonUtilities") {
     REQUIRE(maybeTilingScheme);
     CHECK(maybeTilingScheme->getRootTilesX() == 1);
     CHECK(maybeTilingScheme->getRootTilesY() == 1);
-    CHECK(Math::equalsEpsilon(
-        maybeTilingScheme->getRectangle().getLowerLeft(),
-        WebMercatorProjection::computeMaximumProjectedRectangle(
-            Ellipsoid::WGS84)
-            .getLowerLeft(),
-        1e-14));
-    CHECK(Math::equalsEpsilon(
-        maybeTilingScheme->getRectangle().getUpperRight(),
-        WebMercatorProjection::computeMaximumProjectedRectangle(
-            Ellipsoid::WGS84)
-            .getUpperRight(),
-        1e-14));
+    CHECK(
+        Math::equalsEpsilon(
+            maybeTilingScheme->getRectangle().getLowerLeft(),
+            WebMercatorProjection::computeMaximumProjectedRectangle(
+                Ellipsoid::WGS84)
+                .getLowerLeft(),
+            1e-14));
+    CHECK(
+        Math::equalsEpsilon(
+            maybeTilingScheme->getRectangle().getUpperRight(),
+            WebMercatorProjection::computeMaximumProjectedRectangle(
+                Ellipsoid::WGS84)
+                .getUpperRight(),
+            1e-14));
 
     layer.projection = "foo";
     maybeTilingScheme = layer.getTilingScheme(Ellipsoid::WGS84);

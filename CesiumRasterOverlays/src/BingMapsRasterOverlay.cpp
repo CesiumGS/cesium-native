@@ -151,12 +151,13 @@ public:
       this->_credits.reserve(perTileCredits.size());
       for (const CreditStringAndCoverageAreas& creditStringAndCoverageAreas :
            perTileCredits) {
-        this->_credits.emplace_back(CreditAndCoverageAreas{
-            parameters.externals.pCreditSystem->createCredit(
-                this->getCreditSource(),
-                creditStringAndCoverageAreas.credit,
-                pCreator->getOptions().showCreditsOnScreen),
-            creditStringAndCoverageAreas.coverageAreas});
+        this->_credits.emplace_back(
+            CreditAndCoverageAreas{
+                parameters.externals.pCreditSystem->createCredit(
+                    this->getCreditSource(),
+                    creditStringAndCoverageAreas.credit,
+                    pCreator->getOptions().showCreditsOnScreen),
+                creditStringAndCoverageAreas.coverageAreas});
       }
     }
   }
@@ -352,9 +353,10 @@ collectCredits(const rapidjson::Value* pResource) {
       const auto creditString = attribution.FindMember("attribution");
       if (creditString != attribution.MemberEnd() &&
           creditString->value.IsString()) {
-        credits.emplace_back(CreditStringAndCoverageAreas{
-            creditString->value.GetString(),
-            coverageAreas});
+        credits.emplace_back(
+            CreditStringAndCoverageAreas{
+                creditString->value.GetString(),
+                coverageAreas});
       }
     }
   }
@@ -392,37 +394,40 @@ BingMapsRasterOverlay::createTileProvider(
     response.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
     if (response.HasParseError()) {
-      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-          RasterOverlayLoadType::TileProvider,
-          pRequest,
-          fmt::format(
-              "Error while parsing Bing Maps imagery metadata, error code "
-              "{} at byte offset {}",
-              response.GetParseError(),
-              response.GetErrorOffset())});
+      return nonstd::make_unexpected(
+          RasterOverlayLoadFailureDetails{
+              RasterOverlayLoadType::TileProvider,
+              pRequest,
+              fmt::format(
+                  "Error while parsing Bing Maps imagery metadata, error code "
+                  "{} at byte offset {}",
+                  response.GetParseError(),
+                  response.GetErrorOffset())});
     }
 
     rapidjson::Value* pError =
         rapidjson::Pointer("/errorDetails/0").Get(response);
     if (pError && pError->IsString()) {
-      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-          RasterOverlayLoadType::TileProvider,
-          pRequest,
-          fmt::format(
-              "Received an error from the Bing Maps imagery metadata "
-              "service: "
-              "{}",
-              pError->GetString())});
+      return nonstd::make_unexpected(
+          RasterOverlayLoadFailureDetails{
+              RasterOverlayLoadType::TileProvider,
+              pRequest,
+              fmt::format(
+                  "Received an error from the Bing Maps imagery metadata "
+                  "service: "
+                  "{}",
+                  pError->GetString())});
     }
 
     rapidjson::Value* pResource =
         rapidjson::Pointer("/resourceSets/0/resources/0").Get(response);
     if (!pResource) {
-      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-          RasterOverlayLoadType::TileProvider,
-          pRequest,
-          "Resources were not found in the Bing Maps imagery metadata "
-          "response."});
+      return nonstd::make_unexpected(
+          RasterOverlayLoadFailureDetails{
+              RasterOverlayLoadType::TileProvider,
+              pRequest,
+              "Resources were not found in the Bing Maps imagery metadata "
+              "response."});
     }
 
     uint32_t width =
@@ -437,10 +442,11 @@ BingMapsRasterOverlay::createTileProvider(
     std::string urlTemplate =
         JsonHelpers::getStringOrDefault(*pResource, "imageUrl", std::string());
     if (urlTemplate.empty()) {
-      return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-          RasterOverlayLoadType::TileProvider,
-          pRequest,
-          "Bing Maps tile imageUrl is missing or empty."});
+      return nonstd::make_unexpected(
+          RasterOverlayLoadFailureDetails{
+              RasterOverlayLoadType::TileProvider,
+              pRequest,
+              "Bing Maps tile imageUrl is missing or empty."});
     }
 
     std::vector<CreditStringAndCoverageAreas> credits =
@@ -475,11 +481,12 @@ BingMapsRasterOverlay::createTileProvider(
             const IAssetResponse* pResponse = pRequest->response();
 
             if (pResponse == nullptr) {
-              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                  RasterOverlayLoadType::TileProvider,
-                  pRequest,
-                  "No response received from Bing Maps imagery metadata "
-                  "service."});
+              return nonstd::make_unexpected(
+                  RasterOverlayLoadFailureDetails{
+                      RasterOverlayLoadType::TileProvider,
+                      pRequest,
+                      "No response received from Bing Maps imagery metadata "
+                      "service."});
             }
 
             CreateTileProviderResult handleResponseResult =
