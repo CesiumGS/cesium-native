@@ -225,11 +225,12 @@ TEST_CASE("EarthGravitationalModel1996Grid::sampleHeight") {
     for (const Egm96TestCase& testCase : boundsCases) {
       const double obtainedValue =
           grid->sampleHeight(testCase.cartographicPosition);
-      CHECK(Math::equalsEpsilon(
-          testCase.expectedHeight,
-          obtainedValue,
-          0.0,
-          Math::Epsilon2));
+      CHECK(
+          Math::equalsEpsilon(
+              testCase.expectedHeight,
+              obtainedValue,
+              0.0,
+              Math::Epsilon2));
     }
   }
 

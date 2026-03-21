@@ -54,7 +54,7 @@ class GunzippedAssetRequest : public IAssetRequest {
 public:
   GunzippedAssetRequest(std::shared_ptr<IAssetRequest>&& pOther)
       : _pAssetRequest(std::move(pOther)),
-        _assetResponse(_pAssetRequest->response()){};
+        _assetResponse(_pAssetRequest->response()) {};
   virtual const std::string& method() const noexcept override {
     return this->_pAssetRequest->method();
   }

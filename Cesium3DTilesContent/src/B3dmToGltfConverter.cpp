@@ -52,8 +52,9 @@ void parseB3dmHeader(
     uint32_t& headerLength,
     GltfConverterResult& result) {
   if (b3dmBinary.size() < sizeof(B3dmHeader)) {
-    result.errors.emplaceError("The B3DM is invalid because it is too small to "
-                               "include a B3DM header.");
+    result.errors.emplaceError(
+        "The B3DM is invalid because it is too small to "
+        "include a B3DM header.");
     return;
   }
 
@@ -157,11 +158,13 @@ rapidjson::Document parseFeatureTableJsonData(
       reinterpret_cast<const char*>(featureTableJsonData.data()),
       featureTableJsonData.size());
   if (document.HasParseError()) {
-    result.errors.emplaceError(fmt::format(
-        "Error when parsing feature table JSON, error code {} at byte offset "
-        "{}",
-        document.GetParseError(),
-        document.GetErrorOffset()));
+    result.errors.emplaceError(
+        fmt::format(
+            "Error when parsing feature table JSON, error code {} at byte "
+            "offset "
+            "{}",
+            document.GetParseError(),
+            document.GetErrorOffset()));
     return document;
   }
 
@@ -219,21 +222,23 @@ void convertB3dmMetadataToGltfStructuralMetadata(
           reinterpret_cast<const char*>(batchTableJsonData.data()),
           batchTableJsonData.size());
       if (batchTableJson.HasParseError()) {
-        result.errors.emplaceWarning(fmt::format(
-            "Error when parsing batch table JSON, error code {} at byte "
-            "offset "
-            "{}. Skip parsing metadata",
-            batchTableJson.GetParseError(),
-            batchTableJson.GetErrorOffset()));
+        result.errors.emplaceWarning(
+            fmt::format(
+                "Error when parsing batch table JSON, error code {} at byte "
+                "offset "
+                "{}. Skip parsing metadata",
+                batchTableJson.GetParseError(),
+                batchTableJson.GetErrorOffset()));
         return;
       }
 
       // upgrade batch table to glTF structural metadata and append the result
-      result.errors.merge(BatchTableToGltfStructuralMetadata::convertFromB3dm(
-          featureTableJson,
-          batchTableJson,
-          batchTableBinaryData,
-          gltf));
+      result.errors.merge(
+          BatchTableToGltfStructuralMetadata::convertFromB3dm(
+              featureTableJson,
+              batchTableJson,
+              batchTableBinaryData,
+              gltf));
     }
   }
 }

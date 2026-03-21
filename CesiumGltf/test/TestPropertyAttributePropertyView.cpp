@@ -786,8 +786,9 @@ TEST_CASE("Check matN PropertyAttributePropertyView (normalized)") {
   }
 }
 
-TEST_CASE("Check that PropertyAttributeProperty values override class property "
-          "values") {
+TEST_CASE(
+    "Check that PropertyAttributeProperty values override class property "
+    "values") {
   Model model;
   std::vector<float> data{1.0f, 2.0f, 3.0f, 4.0f};
 

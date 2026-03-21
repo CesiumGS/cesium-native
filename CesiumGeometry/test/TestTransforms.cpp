@@ -148,13 +148,14 @@ TEST_CASE("Test perspective projection matrices") {
     }
   }
   SUBCASE("Check that points lie in clipping volume") {
-    CHECK(std::all_of(
-        testPoints.begin(),
-        testPoints.end(),
-        [&projMat](const glm::dvec4& p) {
-          glm::dvec4 projected = projMat * p;
-          return pointInClipVolume(projected);
-        }));
+    CHECK(
+        std::all_of(
+            testPoints.begin(),
+            testPoints.end(),
+            [&projMat](const glm::dvec4& p) {
+              glm::dvec4 projected = projMat * p;
+              return pointInClipVolume(projected);
+            }));
   }
   double hDim = std::tan(horizontalFieldOfView / 2.0) * zNear;
   double vDim = std::tan(verticalFieldOfView / 2.0) * zNear;
@@ -178,18 +179,21 @@ TEST_CASE("Test perspective projection matrices") {
         glm::dvec4 symProjected = corners * point;
         skewProjected /= skewProjected.w;
         symProjected /= symProjected.w;
-        CHECK(CesiumUtility::Math::equalsEpsilon(
-            skewProjected.x / 2.0 + .5,
-            symProjected.x,
-            1e-14));
-        CHECK(CesiumUtility::Math::equalsEpsilon(
-            skewProjected.y / 2.0 - .5,
-            symProjected.y,
-            1e-14));
-        CHECK(CesiumUtility::Math::equalsEpsilon(
-            skewProjected.z,
-            symProjected.z,
-            1e-14));
+        CHECK(
+            CesiumUtility::Math::equalsEpsilon(
+                skewProjected.x / 2.0 + .5,
+                symProjected.x,
+                1e-14));
+        CHECK(
+            CesiumUtility::Math::equalsEpsilon(
+                skewProjected.y / 2.0 - .5,
+                symProjected.y,
+                1e-14));
+        CHECK(
+            CesiumUtility::Math::equalsEpsilon(
+                skewProjected.z,
+                symProjected.z,
+                1e-14));
       }
     }
   }
@@ -204,12 +208,13 @@ TEST_CASE("Test perspective projection matrices") {
         orthoVDim,
         zNear,
         zFar);
-    CHECK(std::all_of(
-        testPoints.begin(),
-        testPoints.end(),
-        [&ortho](const glm::dvec4& p) {
-          glm::dvec4 projected = ortho * p;
-          return pointInClipVolume(projected);
-        }));
+    CHECK(
+        std::all_of(
+            testPoints.begin(),
+            testPoints.end(),
+            [&ortho](const glm::dvec4& p) {
+              glm::dvec4 projected = ortho * p;
+              return pointInClipVolume(projected);
+            }));
   }
 }

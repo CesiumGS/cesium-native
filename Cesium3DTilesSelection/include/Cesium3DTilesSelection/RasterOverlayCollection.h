@@ -143,30 +143,33 @@ public:
    *
    * @param pOverlay The pointer to the overlay. This may not be `nullptr`.
    */
-  void add(const CesiumUtility::IntrusivePointer<
-           const CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
+  void
+  add(const CesiumUtility::IntrusivePointer<
+      const CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
 
   /**
    * @brief Remove the given {@link CesiumRasterOverlays::RasterOverlay} from
    * this collection.
    */
-  void remove(const CesiumUtility::IntrusivePointer<
-              const CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
+  void remove(
+      const CesiumUtility::IntrusivePointer<
+          const CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
 
   /**
    * @brief Remove the given {@link CesiumRasterOverlays::RasterOverlay} from
    * this collection.
    */
-  void remove(const CesiumUtility::IntrusivePointer<
-              CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
+  void remove(
+      const CesiumUtility::IntrusivePointer<
+          CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
 
   /**
    * @brief Remove the given {@link CesiumRasterOverlays::ActivatedRasterOverlay}
    * from this collection.
    */
-  void
-  remove(const CesiumUtility::IntrusivePointer<
-         CesiumRasterOverlays::ActivatedRasterOverlay>& pActivated) noexcept;
+  void remove(
+      const CesiumUtility::IntrusivePointer<
+          CesiumRasterOverlays::ActivatedRasterOverlay>& pActivated) noexcept;
 
   /**
    * @brief Adds raster overlays to a new {@link Tile}.

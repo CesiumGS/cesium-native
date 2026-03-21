@@ -256,9 +256,9 @@ Future<std::shared_ptr<IAssetRequest>> CachingAssetAccessor::get(
                        pCacheDatabase,
                        pLogger,
                        url = std::move(url),
-                       headers =
-                           std::move(headers)](std::shared_ptr<IAssetRequest>&&
-                                                   pCompletedRequest) mutable {
+                       headers = std::move(headers)](
+                          std::shared_ptr<IAssetRequest>&&
+                              pCompletedRequest) mutable {
                         if (!pCompletedRequest) {
                           return std::move(pCompletedRequest);
                         }

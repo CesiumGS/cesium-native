@@ -1383,8 +1383,9 @@ TEST_CASE("Enum PropertyView") {
     REQUIRE(view.status() == PropertyViewStatus::ErrorInvalidNoDataValue);
   }
 
-  SUBCASE("Reports errors for noData and defaultProperty when they are not "
-          "present in the enum") {
+  SUBCASE(
+      "Reports errors for noData and defaultProperty when they are not "
+      "present in the enum") {
     ClassProperty classProperty;
     classProperty.type = ClassProperty::Type::ENUM;
     classProperty.required = false;

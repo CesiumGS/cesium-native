@@ -81,9 +81,10 @@ TEST_CASE("Create AccessorView of unknown type with lambda") {
     // it should only be _called_ for the actual type (UNSIGNED_INT).
     using AccessorType =
         std::remove_cv_t<std::remove_reference_t<decltype(accessorView)>>;
-    CHECK(std::is_same_v<
-          AccessorType,
-          AccessorView<AccessorTypes::SCALAR<uint32_t>>>);
+    CHECK(
+        std::is_same_v<
+            AccessorType,
+            AccessorView<AccessorTypes::SCALAR<uint32_t>>>);
 
     CHECK(int64_t(accessorView[0].value[0]) == int64_t(0x04030201));
   });
@@ -96,9 +97,10 @@ TEST_CASE("Create AccessorView of unknown type with lambda") {
     // it should only be _called_ for the actual type (UNSIGNED_SHORT).
     using AccessorType =
         std::remove_cv_t<std::remove_reference_t<decltype(accessorView)>>;
-    CHECK(std::is_same_v<
-          AccessorType,
-          AccessorView<AccessorTypes::SCALAR<uint16_t>>>);
+    CHECK(
+        std::is_same_v<
+            AccessorType,
+            AccessorView<AccessorTypes::SCALAR<uint16_t>>>);
 
     CHECK(int64_t(accessorView[0].value[0]) == int64_t(0x0201));
   });

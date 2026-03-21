@@ -63,11 +63,12 @@ TEST_CASE("GlobeAnchor") {
     glm::dvec3 actualPositionInEcef =
         glm::dvec3(anchor.getAnchorToFixedTransform()[3]);
 
-    CHECK(Math::equalsEpsilon(
-        expectedPositionInEcef,
-        actualPositionInEcef,
-        0.0,
-        Math::Epsilon10));
+    CHECK(
+        Math::equalsEpsilon(
+            expectedPositionInEcef,
+            actualPositionInEcef,
+            0.0,
+            Math::Epsilon10));
   }
 
   SUBCASE(
@@ -90,11 +91,12 @@ TEST_CASE("GlobeAnchor") {
         leftHandedEastUpNorth.getLocalToEcefTransformation() *
         (anchorToLocal * glm::dvec4(localPosition, 1.0)));
 
-    CHECK(Math::equalsEpsilon(
-        expectedPositionInEcef,
-        actualPositionInEcef,
-        0.0,
-        Math::Epsilon10));
+    CHECK(
+        Math::equalsEpsilon(
+            expectedPositionInEcef,
+            actualPositionInEcef,
+            0.0,
+            Math::Epsilon10));
   }
 
   SUBCASE("Can transform between different local coordinate systems") {
@@ -126,11 +128,12 @@ TEST_CASE("GlobeAnchor") {
                                            glm::dvec3(-2.0, 1.0, 3.0) +
                                            glm::dvec3(-456.0, 123.0, 789.0);
 
-    CHECK(Math::equalsEpsilon(
-        expectedPositionInLocal90,
-        positionInLocal90,
-        0.0,
-        Math::Epsilon10));
+    CHECK(
+        Math::equalsEpsilon(
+            expectedPositionInLocal90,
+            positionInLocal90,
+            0.0,
+            Math::Epsilon10));
   }
 
   SUBCASE("Moving in ECEF adjusts orientation if requested") {
@@ -152,21 +155,24 @@ TEST_CASE("GlobeAnchor") {
         Ellipsoid::WGS84);
     glm::dmat3 rotationScaleAfter =
         glm::dmat3(first.getAnchorToLocalTransform(leftHandedEastUpNorth90));
-    CHECK(Math::equalsEpsilon(
-        rotationScaleAfter[0],
-        glm::dmat3(1.0)[0],
-        0.0,
-        Math::Epsilon10));
-    CHECK(Math::equalsEpsilon(
-        rotationScaleAfter[1],
-        glm::dmat3(1.0)[1],
-        0.0,
-        Math::Epsilon10));
-    CHECK(Math::equalsEpsilon(
-        rotationScaleAfter[2],
-        glm::dmat3(1.0)[2],
-        0.0,
-        Math::Epsilon10));
+    CHECK(
+        Math::equalsEpsilon(
+            rotationScaleAfter[0],
+            glm::dmat3(1.0)[0],
+            0.0,
+            Math::Epsilon10));
+    CHECK(
+        Math::equalsEpsilon(
+            rotationScaleAfter[1],
+            glm::dmat3(1.0)[1],
+            0.0,
+            Math::Epsilon10));
+    CHECK(
+        Math::equalsEpsilon(
+            rotationScaleAfter[2],
+            glm::dmat3(1.0)[2],
+            0.0,
+            Math::Epsilon10));
 
     // But if we allow adjusting orientation, the object should stay upright.
     GlobeAnchor second = anchor;
@@ -181,20 +187,23 @@ TEST_CASE("GlobeAnchor") {
         glm::dvec3(0.0, -1.0, 0.0),
         glm::dvec3(1.0, 0.0, 0.0),
         glm::dvec3(0.0, 0.0, 1.0));
-    CHECK(Math::equalsEpsilon(
-        rotationScaleAfter[0],
-        expected[0],
-        0.0,
-        Math::Epsilon10));
-    CHECK(Math::equalsEpsilon(
-        rotationScaleAfter[1],
-        expected[1],
-        0.0,
-        Math::Epsilon10));
-    CHECK(Math::equalsEpsilon(
-        rotationScaleAfter[2],
-        expected[2],
-        0.0,
-        Math::Epsilon10));
+    CHECK(
+        Math::equalsEpsilon(
+            rotationScaleAfter[0],
+            expected[0],
+            0.0,
+            Math::Epsilon10));
+    CHECK(
+        Math::equalsEpsilon(
+            rotationScaleAfter[1],
+            expected[1],
+            0.0,
+            Math::Epsilon10));
+    CHECK(
+        Math::equalsEpsilon(
+            rotationScaleAfter[2],
+            expected[2],
+            0.0,
+            Math::Epsilon10));
   }
 }

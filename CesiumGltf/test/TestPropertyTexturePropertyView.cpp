@@ -1493,8 +1493,9 @@ TEST_CASE("Check array PropertyTexturePropertyView (normalized)") {
   }
 }
 
-TEST_CASE("Check that PropertyTextureProperty values override class property "
-          "values") {
+TEST_CASE(
+    "Check that PropertyTextureProperty values override class property "
+    "values") {
   ClassProperty classProperty;
   classProperty.type = ClassProperty::Type::SCALAR;
   classProperty.componentType = ClassProperty::ComponentType::FLOAT32;
@@ -1879,8 +1880,9 @@ TEST_CASE("Check sampling with different sampler values") {
   }
 }
 
-TEST_CASE("Test PropertyTextureProperty constructs with "
-          "applyKhrTextureTransformExtension = true") {
+TEST_CASE(
+    "Test PropertyTextureProperty constructs with "
+    "applyKhrTextureTransformExtension = true") {
   std::vector<uint8_t> data{1, 2, 3, 4};
 
   PropertyTextureProperty property;
@@ -1951,8 +1953,9 @@ TEST_CASE("Test PropertyTextureProperty constructs with "
   }
 }
 
-TEST_CASE("Test normalized PropertyTextureProperty constructs with "
-          "applyKhrTextureTransformExtension = true") {
+TEST_CASE(
+    "Test normalized PropertyTextureProperty constructs with "
+    "applyKhrTextureTransformExtension = true") {
   std::vector<uint8_t> data{0, 64, 127, 255};
 
   PropertyTextureProperty property;
@@ -2169,8 +2172,9 @@ TEST_CASE("Check enum PropertyTexturePropertyView") {
   }
 }
 
-TEST_CASE("Test PropertyTextureProperty constructs with "
-          "makeImageCopy = true") {
+TEST_CASE(
+    "Test PropertyTextureProperty constructs with "
+    "makeImageCopy = true") {
   std::vector<uint8_t> data{1, 2, 3, 4};
 
   PropertyTextureProperty property;
@@ -2235,8 +2239,9 @@ TEST_CASE("Test PropertyTextureProperty constructs with "
   }
 }
 
-TEST_CASE("Test normalized PropertyTextureProperty constructs with "
-          "makeImageCopy = true") {
+TEST_CASE(
+    "Test normalized PropertyTextureProperty constructs with "
+    "makeImageCopy = true") {
   std::vector<uint8_t> data{0, 64, 127, 255};
 
   PropertyTextureProperty property;

@@ -207,12 +207,14 @@ TEST_CASE("TileLoadRequester") {
 
       reqNormal.setWorkerThreadQueue(
           std::vector<const Tile*>(pointers.begin(), pointers.begin() + 20));
-      reqExtra.setWorkerThreadQueue(std::vector<const Tile*>(
-          pointers.begin() + 20,
-          pointers.begin() + 40));
-      reqVeryLow.setWorkerThreadQueue(std::vector<const Tile*>(
-          pointers.begin() + 40,
-          pointers.begin() + 60));
+      reqExtra.setWorkerThreadQueue(
+          std::vector<const Tile*>(
+              pointers.begin() + 20,
+              pointers.begin() + 40));
+      reqVeryLow.setWorkerThreadQueue(
+          std::vector<const Tile*>(
+              pointers.begin() + 40,
+              pointers.begin() + 60));
       reqVeryHigh.setWorkerThreadQueue(
           std::vector<const Tile*>(pointers.begin() + 80, pointers.end()));
 

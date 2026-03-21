@@ -87,8 +87,9 @@ void verifyTextureTransformConstruction(
 }
 } // namespace
 
-TEST_CASE("Test PropertyTextureView on model without EXT_structural_metadata "
-          "extension") {
+TEST_CASE(
+    "Test PropertyTextureView on model without EXT_structural_metadata "
+    "extension") {
   Model model;
 
   // Create an erroneously isolated property texture.
@@ -2229,9 +2230,10 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<int16_t>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<int16_t>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2242,8 +2244,9 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty") {
               REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         });
 
@@ -2261,9 +2264,10 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<int16_t>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<int16_t>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2279,8 +2283,9 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty") {
               REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         },
         options);
@@ -2350,9 +2355,10 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty (normalized)") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<int16_t, true>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<int16_t, true>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2364,8 +2370,9 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty (normalized)") {
                   propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         });
 
@@ -2383,9 +2390,10 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty (normalized)") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<int16_t, true>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<int16_t, true>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2402,8 +2410,9 @@ TEST_CASE("Test callback for scalar PropertyTextureProperty (normalized)") {
                   propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         },
         options);
@@ -2482,9 +2491,10 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<glm::i8vec2>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<glm::i8vec2>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2495,8 +2505,9 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty") {
               REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         });
 
@@ -2514,9 +2525,10 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<glm::i8vec2>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<glm::i8vec2>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2532,8 +2544,9 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty") {
               REQUIRE(propertyValue.get(uv[0], uv[1]) == expected[i]);
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         },
         options);
@@ -2613,9 +2626,10 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty (normalized)") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<glm::i8vec2, true>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<glm::i8vec2, true>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2627,8 +2641,9 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty (normalized)") {
                   propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         });
 
@@ -2646,9 +2661,10 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty (normalized)") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<glm::i8vec2, true>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<glm::i8vec2, true>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2665,8 +2681,9 @@ TEST_CASE("Test callback for vecN PropertyTextureProperty (normalized)") {
                   propertyValue.get(uv[0], uv[1]) == normalize(expected[i]));
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         },
         options);
@@ -2747,10 +2764,10 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<
-                                PropertyArrayView<uint16_t>>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<PropertyArrayView<uint16_t>>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2779,8 +2796,9 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
               }
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         });
 
@@ -2798,10 +2816,10 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<
-                                PropertyArrayView<uint16_t>>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<PropertyArrayView<uint16_t>>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2833,8 +2851,9 @@ TEST_CASE("Test callback for array PropertyTextureProperty") {
               }
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         },
         options);
@@ -2916,11 +2935,12 @@ TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<
-                                PropertyArrayView<uint16_t>,
-                                true>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<
+                      PropertyArrayView<uint16_t>,
+                      true>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -2948,8 +2968,9 @@ TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
               }
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         });
 
@@ -2967,11 +2988,12 @@ TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
             const std::string& /*propertyId*/,
             auto propertyValue) mutable {
           invokedCallbackCount++;
-          if constexpr (std::is_same_v<
-                            PropertyTexturePropertyView<
-                                PropertyArrayView<uint16_t>,
-                                true>,
-                            decltype(propertyValue)>) {
+          if constexpr (
+              std::is_same_v<
+                  PropertyTexturePropertyView<
+                      PropertyArrayView<uint16_t>,
+                      true>,
+                  decltype(propertyValue)>) {
             REQUIRE(
                 propertyValue.status() ==
                 PropertyTexturePropertyViewStatus::Valid);
@@ -3004,8 +3026,9 @@ TEST_CASE("Test callback for array PropertyTextureProperty (normalized)") {
               }
             }
           } else {
-            FAIL("getPropertyView returned PropertyTexturePropertyView of "
-                 "incorrect type for TestClassProperty.");
+            FAIL(
+                "getPropertyView returned PropertyTexturePropertyView of "
+                "incorrect type for TestClassProperty.");
           }
         },
         options);
@@ -3155,9 +3178,10 @@ TEST_CASE(
           const std::string& /*propertyId*/,
           auto propertyValue) mutable {
         invokedCallbackCount++;
-        if constexpr (std::is_same_v<
-                          PropertyTexturePropertyView<int16_t>,
-                          decltype(propertyValue)>) {
+        if constexpr (
+            std::is_same_v<
+                PropertyTexturePropertyView<int16_t>,
+                decltype(propertyValue)>) {
           REQUIRE(
               propertyValue.status() ==
               PropertyTexturePropertyViewStatus::EmptyPropertyWithDefault);
@@ -3168,8 +3192,9 @@ TEST_CASE(
             REQUIRE(propertyValue.get(uv[0], uv[1]) == defaultValue);
           }
         } else {
-          FAIL("getPropertyView returned PropertyTexturePropertyView of "
-               "incorrect type for TestClassProperty.");
+          FAIL(
+              "getPropertyView returned PropertyTexturePropertyView of "
+              "incorrect type for TestClassProperty.");
         }
       });
 

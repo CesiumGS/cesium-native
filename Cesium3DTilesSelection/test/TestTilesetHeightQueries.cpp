@@ -51,8 +51,9 @@ TEST_CASE("Tileset height queries") {
   SUBCASE("Additive-refined tileset") {
     std::string url =
         "file://" +
-        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
-            (testDataPath / "Tileset" / "tileset.json").u8string()));
+        Uri::nativePathToUriPath(
+            StringHelpers::toStringUtf8(
+                (testDataPath / "Tileset" / "tileset.json").u8string()));
 
     Tileset tileset(externals, url);
 
@@ -74,25 +75,28 @@ TEST_CASE("Tileset height queries") {
     REQUIRE(results.positions.size() == 2);
 
     CHECK(results.sampleSuccess[0]);
-    CHECK(Math::equalsEpsilon(
-        results.positions[0].height,
-        78.155809,
-        0.0,
-        Math::Epsilon4));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[0].height,
+            78.155809,
+            0.0,
+            Math::Epsilon4));
 
     CHECK(results.sampleSuccess[1]);
-    CHECK(Math::equalsEpsilon(
-        results.positions[1].height,
-        7.837332,
-        0.0,
-        Math::Epsilon4));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[1].height,
+            7.837332,
+            0.0,
+            Math::Epsilon4));
   }
 
   SUBCASE("Replace-refined tileset") {
     std::string url =
         "file://" +
-        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
-            (testDataPath / "ReplaceTileset" / "tileset.json").u8string()));
+        Uri::nativePathToUriPath(
+            StringHelpers::toStringUtf8(
+                (testDataPath / "ReplaceTileset" / "tileset.json").u8string()));
 
     Tileset tileset(externals, url);
 
@@ -116,18 +120,20 @@ TEST_CASE("Tileset height queries") {
     CHECK(!results.sampleSuccess[0]);
 
     CHECK(results.sampleSuccess[1]);
-    CHECK(Math::equalsEpsilon(
-        results.positions[1].height,
-        7.837332,
-        0.0,
-        Math::Epsilon4));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[1].height,
+            7.837332,
+            0.0,
+            Math::Epsilon4));
   }
 
   SUBCASE("External tileset") {
     std::string url =
         "file://" +
-        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
-            (testDataPath / "AddTileset" / "tileset.json").u8string()));
+        Uri::nativePathToUriPath(
+            StringHelpers::toStringUtf8(
+                (testDataPath / "AddTileset" / "tileset.json").u8string()));
 
     Tileset tileset(externals, url);
 
@@ -149,25 +155,29 @@ TEST_CASE("Tileset height queries") {
     REQUIRE(results.positions.size() == 2);
 
     CHECK(results.sampleSuccess[0]);
-    CHECK(Math::equalsEpsilon(
-        results.positions[0].height,
-        78.155809,
-        0.0,
-        Math::Epsilon4));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[0].height,
+            78.155809,
+            0.0,
+            Math::Epsilon4));
 
     CHECK(results.sampleSuccess[1]);
-    CHECK(Math::equalsEpsilon(
-        results.positions[1].height,
-        7.837332,
-        0.0,
-        Math::Epsilon4));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[1].height,
+            7.837332,
+            0.0,
+            Math::Epsilon4));
   }
 
   SUBCASE("Implicit tileset") {
     std::string url =
-        "file://" + Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
-                        (testDataPath / "ImplicitTileset" / "tileset_1.1.json")
-                            .u8string()));
+        "file://" +
+        Uri::nativePathToUriPath(
+            StringHelpers::toStringUtf8(
+                (testDataPath / "ImplicitTileset" / "tileset_1.1.json")
+                    .u8string()));
 
     Tileset tileset(externals, url);
 
@@ -189,26 +199,29 @@ TEST_CASE("Tileset height queries") {
     REQUIRE(results.positions.size() == 2);
 
     CHECK(results.sampleSuccess[0]);
-    CHECK(Math::equalsEpsilon(
-        results.positions[0].height,
-        78.155809,
-        0.0,
-        Math::Epsilon4));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[0].height,
+            78.155809,
+            0.0,
+            Math::Epsilon4));
 
     CHECK(results.sampleSuccess[1]);
-    CHECK(Math::equalsEpsilon(
-        results.positions[1].height,
-        7.837332,
-        0.0,
-        Math::Epsilon4));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[1].height,
+            7.837332,
+            0.0,
+            Math::Epsilon4));
   }
 
   SUBCASE("Instanced model is not yet supported") {
     std::string url =
-        "file://" +
-        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
-            (testDataPath / "i3dm" / "InstancedWithBatchTable" / "tileset.json")
-                .u8string()));
+        "file://" + Uri::nativePathToUriPath(
+                        StringHelpers::toStringUtf8(
+                            (testDataPath / "i3dm" / "InstancedWithBatchTable" /
+                             "tileset.json")
+                                .u8string()));
 
     Tileset tileset(externals, url);
 
@@ -266,21 +279,24 @@ TEST_CASE("Tileset height queries") {
     REQUIRE(results.positions.size() == 1);
     REQUIRE(results.sampleSuccess.size() == 1);
     CHECK(results.sampleSuccess[0]);
-    CHECK(Math::equalsEpsilon(
-        results.positions[0].longitude,
-        Math::degreesToRadians(-75.612559),
-        0.0,
-        Math::Epsilon4));
-    CHECK(Math::equalsEpsilon(
-        results.positions[0].latitude,
-        Math::degreesToRadians(40.042183),
-        0.0,
-        Math::Epsilon4));
-    CHECK(Math::equalsEpsilon(
-        results.positions[0].height,
-        0.0,
-        0.0,
-        Math::Epsilon4));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[0].longitude,
+            Math::degreesToRadians(-75.612559),
+            0.0,
+            Math::Epsilon4));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[0].latitude,
+            Math::degreesToRadians(40.042183),
+            0.0,
+            Math::Epsilon4));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[0].height,
+            0.0,
+            0.0,
+            Math::Epsilon4));
   }
 
   SUBCASE("stacked-cubes") {
@@ -290,8 +306,9 @@ TEST_CASE("Tileset height queries") {
     // of 83.0 meters.
     std::string url =
         "file://" +
-        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
-            (testDataPath / "stacked-cubes" / "tileset.json").u8string()));
+        Uri::nativePathToUriPath(
+            StringHelpers::toStringUtf8(
+                (testDataPath / "stacked-cubes" / "tileset.json").u8string()));
 
     Tileset tileset(externals, url);
 
@@ -308,11 +325,12 @@ TEST_CASE("Tileset height queries") {
     REQUIRE(results.positions.size() == 1);
 
     CHECK(results.sampleSuccess[0]);
-    CHECK(Math::equalsEpsilon(
-        results.positions[0].height,
-        83.0,
-        0.0,
-        Math::Epsilon1));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[0].height,
+            83.0,
+            0.0,
+            Math::Epsilon1));
   }
 
   SUBCASE("stacked-cubes on custom ellipsoid") {
@@ -322,8 +340,9 @@ TEST_CASE("Tileset height queries") {
     // meters, and the upper cube has a height of 83.0 meters.
     std::string url =
         "file://" +
-        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
-            (testDataPath / "stacked-cubes" / "tileset.json").u8string()));
+        Uri::nativePathToUriPath(
+            StringHelpers::toStringUtf8(
+                (testDataPath / "stacked-cubes" / "tileset.json").u8string()));
 
     CesiumGeospatial::Ellipsoid ellipsoid(
         CesiumGeospatial::Ellipsoid::WGS84.getRadii() - glm::dvec3(15.0));
@@ -350,10 +369,11 @@ TEST_CASE("Tileset height queries") {
     glm::dvec3 difference = glm::dvec3(15.0) * rayDirection;
 
     CHECK(results.sampleSuccess[0]);
-    CHECK(Math::equalsEpsilon(
-        results.positions[0].height,
-        83.0 + glm::length(difference),
-        0.0,
-        Math::Epsilon1));
+    CHECK(
+        Math::equalsEpsilon(
+            results.positions[0].height,
+            83.0 + glm::length(difference),
+            0.0,
+            Math::Epsilon1));
   }
 }

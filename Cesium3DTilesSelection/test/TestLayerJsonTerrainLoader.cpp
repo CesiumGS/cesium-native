@@ -80,11 +80,12 @@ Future<TileLoadResult> loadTile(
     const std::shared_ptr<IAssetAccessor>& pAssetAccessor) {
   Tile tile(&loader);
   tile.setTileID(tileID);
-  tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights{
-      {GlobeRectangle(-Math::OnePi, -Math::PiOverTwo, 0.0, Math::PiOverTwo),
-       -1000.0,
-       9000.0,
-       Ellipsoid::WGS84}});
+  tile.setBoundingVolume(
+      BoundingRegionWithLooseFittingHeights{
+          {GlobeRectangle(-Math::OnePi, -Math::PiOverTwo, 0.0, Math::PiOverTwo),
+           -1000.0,
+           9000.0,
+           Ellipsoid::WGS84}});
 
   TileLoadInput loadInput{
       tile,
@@ -262,8 +263,9 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(loaderResult.pRootTile);
     CHECK(!loaderResult.errors);
 
-    CHECK(std::holds_alternative<GeographicProjection>(
-        loaderResult.pLoader->getProjection()));
+    CHECK(
+        std::holds_alternative<GeographicProjection>(
+            loaderResult.pLoader->getProjection()));
 
     const auto& layers = loaderResult.pLoader->getLayers();
     CHECK(layers.size() == 1);
@@ -292,8 +294,9 @@ TEST_CASE("Test create layer json terrain loader") {
     CHECK(loaderResult.pRootTile);
     CHECK(!loaderResult.errors);
 
-    CHECK(std::holds_alternative<GeographicProjection>(
-        loaderResult.pLoader->getProjection()));
+    CHECK(
+        std::holds_alternative<GeographicProjection>(
+            loaderResult.pLoader->getProjection()));
 
     const auto& layers = loaderResult.pLoader->getLayers();
     CHECK(layers.size() == 1);
@@ -558,11 +561,16 @@ TEST_CASE("Test create layer json terrain loader") {
     // Create a tile and load it with custom headers
     Tile tile(loaderResult.pLoader.get());
     tile.setTileID(QuadtreeTileID(0, 0, 0));
-    tile.setBoundingVolume(BoundingRegionWithLooseFittingHeights{
-        {GlobeRectangle(-Math::OnePi, -Math::PiOverTwo, 0.0, Math::PiOverTwo),
-         -1000.0,
-         9000.0,
-         Ellipsoid::WGS84}});
+    tile.setBoundingVolume(
+        BoundingRegionWithLooseFittingHeights{
+            {GlobeRectangle(
+                 -Math::OnePi,
+                 -Math::PiOverTwo,
+                 0.0,
+                 Math::PiOverTwo),
+             -1000.0,
+             9000.0,
+             Ellipsoid::WGS84}});
 
     // Create TileLoadInput with correct constructor parameters
     TileLoadInput loadInput(
@@ -752,8 +760,9 @@ TEST_CASE("Test load layer json tile content") {
         QuadtreeTileID(8, 177, 177)));
   }
 
-  SUBCASE("Load tile with multiple layers. Ensure layer is chosen correctly to "
-          "load tile") {
+  SUBCASE(
+      "Load tile with multiple layers. Ensure layer is chosen correctly to "
+      "load tile") {
     // create loader
     std::vector<LayerJsonTerrainLoader::Layer> layers;
 
@@ -805,8 +814,9 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(std::holds_alternative<CesiumGltf::Model>(
-          tileLoadResult.contentKind));
+      CHECK(
+          std::holds_alternative<CesiumGltf::Model>(
+              tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -825,8 +835,9 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(std::holds_alternative<CesiumGltf::Model>(
-          tileLoadResult.contentKind));
+      CHECK(
+          std::holds_alternative<CesiumGltf::Model>(
+              tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -834,8 +845,9 @@ TEST_CASE("Test load layer json tile content") {
     }
   }
 
-  SUBCASE("Ensure layers metadata does not load twice when tile at "
-          "availability level is loaded the 2nd time") {
+  SUBCASE(
+      "Ensure layers metadata does not load twice when tile at "
+      "availability level is loaded the 2nd time") {
     // create loader
     std::vector<LayerJsonTerrainLoader::Layer> layers;
 
@@ -884,8 +896,9 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(std::holds_alternative<CesiumGltf::Model>(
-          tileLoadResult.contentKind));
+      CHECK(
+          std::holds_alternative<CesiumGltf::Model>(
+              tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -914,8 +927,9 @@ TEST_CASE("Test load layer json tile content") {
           pMockedAssetAccessor);
 
       auto tileLoadResult = tileLoadResultFuture.wait();
-      CHECK(std::holds_alternative<CesiumGltf::Model>(
-          tileLoadResult.contentKind));
+      CHECK(
+          std::holds_alternative<CesiumGltf::Model>(
+              tileLoadResult.contentKind));
       CHECK(tileLoadResult.updatedBoundingVolume);
       CHECK(!tileLoadResult.updatedContentBoundingVolume);
       CHECK(!tileLoadResult.tileInitializer);
@@ -959,8 +973,9 @@ TEST_CASE("Test load layer json tile content") {
     REQUIRE(logMessages.size() == 1);
     REQUIRE(logMessages.back()
                 .substr(0, logMessages.back().find_last_not_of("\n\r") + 1)
-                .ends_with("Received status code 404 for tile content "
-                           "nonexistent.terrain"));
+                .ends_with(
+                    "Received status code 404 for tile content "
+                    "nonexistent.terrain"));
   }
 }
 

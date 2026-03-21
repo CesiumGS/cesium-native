@@ -40,10 +40,12 @@ TEST_CASE(
   REQUIRE(JsonValue(floatMin).getDouble() == floatMin);
 }
 
-TEST_CASE("JsonValue::getSafeNumber() returns std::nullopt if narrowing "
-          "conversion error would occur") {
-  SUBCASE("At least one of 2^64 - 1 and 2^64 - 2 cannot be converted back to a "
-          "double") {
+TEST_CASE(
+    "JsonValue::getSafeNumber() returns std::nullopt if narrowing "
+    "conversion error would occur") {
+  SUBCASE(
+      "At least one of 2^64 - 1 and 2^64 - 2 cannot be converted back to a "
+      "double") {
     auto value1 = JsonValue(std::numeric_limits<std::uint64_t>::max());
     auto value2 = JsonValue(std::numeric_limits<std::uint64_t>::max() - 1);
     bool oneCantConvert = !value1.getSafeNumber<double>().has_value() ||
@@ -68,8 +70,9 @@ TEST_CASE("JsonValue::getSafeNumber() returns std::nullopt if narrowing "
   }
 }
 
-TEST_CASE("JsonValue::getSafeNumberOrDefault() returns default if narrowing "
-          "conversion error would occur") {
+TEST_CASE(
+    "JsonValue::getSafeNumberOrDefault() returns default if narrowing "
+    "conversion error would occur") {
   SUBCASE("2^64 - 1 cannot be converted back to a double") {
     auto value = JsonValue(std::numeric_limits<std::uint64_t>::max());
     REQUIRE(value.getSafeNumberOrDefault<double>(1995));

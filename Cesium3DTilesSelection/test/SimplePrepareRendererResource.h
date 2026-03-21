@@ -35,9 +35,10 @@ public:
       const glm::dmat4& /*transform*/,
       const std::any& /*rendererOptions*/) override {
     prepareInLoadThreadTestCallback(tileLoadResult);
-    return asyncSystem.createResolvedFuture(TileLoadResultAndRenderResources{
-        std::move(tileLoadResult),
-        new AllocationResult{totalAllocation}});
+    return asyncSystem.createResolvedFuture(
+        TileLoadResultAndRenderResources{
+            std::move(tileLoadResult),
+            new AllocationResult{totalAllocation}});
   }
 
   virtual void* prepareInMainThread(

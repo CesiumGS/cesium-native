@@ -230,9 +230,10 @@ public:
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  [[deprecated("Instead of `tileset.updateViewOffline(...)`, call "
-               "`tileset.updateViewGroupOffline(tileset.getDefaultViewGroup(), "
-               "...)`.")]] const ViewUpdateResult&
+  [[deprecated(
+      "Instead of `tileset.updateViewOffline(...)`, call "
+      "`tileset.updateViewGroupOffline(tileset.getDefaultViewGroup(), "
+      "...)`.")]] const ViewUpdateResult&
   updateViewOffline(const std::vector<ViewState>& frustums);
 
   /**
@@ -250,9 +251,10 @@ public:
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
    */
-  [[deprecated("Instead of `tileset.updateView(...)`, call "
-               "`tileset.updateViewGroup(tileset.getDefaultViewGroup(), ...)` "
-               "followed by `tileset.loadTiles()`.")]] const ViewUpdateResult&
+  [[deprecated(
+      "Instead of `tileset.updateView(...)`, call "
+      "`tileset.updateViewGroup(tileset.getDefaultViewGroup(), ...)` "
+      "followed by `tileset.loadTiles()`.")]] const ViewUpdateResult&
   updateView(const std::vector<ViewState>& frustums, float deltaTime = 0.0f);
 
   /**

@@ -52,10 +52,11 @@ JwtTokenUtility::parseTokenPayload(const std::string_view& tokenString) {
   json.Parse(decodedPayload.data(), decodedPayload.size());
 
   if (json.HasParseError()) {
-    return Result<rapidjson::Document>(ErrorList::error(fmt::format(
-        "Failed to parse payload JSON, parse error {} at byte offset {}.",
-        rapidjson::GetParseError_En(json.GetParseError()),
-        json.GetErrorOffset())));
+    return Result<rapidjson::Document>(ErrorList::error(
+        fmt::format(
+            "Failed to parse payload JSON, parse error {} at byte offset {}.",
+            rapidjson::GetParseError_En(json.GetParseError()),
+            json.GetErrorOffset())));
   }
 
   if (!json.IsObject()) {

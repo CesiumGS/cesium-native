@@ -27,14 +27,16 @@ TEST_CASE("Test KhrTextureTransform constructs with valid extension") {
   REQUIRE(textureTransform.rotation() == CesiumUtility::Math::PiOverTwo);
   REQUIRE(textureTransform.scale() == glm::dvec2{2.0, 0.5});
   glm::dvec2 sineCosine = textureTransform.rotationSineCosine();
-  REQUIRE(CesiumUtility::Math::equalsEpsilon(
-      sineCosine.x,
-      1.0,
-      CesiumUtility::Math::Epsilon6));
-  REQUIRE(CesiumUtility::Math::equalsEpsilon(
-      sineCosine.y,
-      0.0,
-      CesiumUtility::Math::Epsilon6));
+  REQUIRE(
+      CesiumUtility::Math::equalsEpsilon(
+          sineCosine.x,
+          1.0,
+          CesiumUtility::Math::Epsilon6));
+  REQUIRE(
+      CesiumUtility::Math::equalsEpsilon(
+          sineCosine.y,
+          0.0,
+          CesiumUtility::Math::Epsilon6));
 }
 
 TEST_CASE("Test KhrTextureTransform reports invalid offset") {
@@ -72,25 +74,29 @@ TEST_CASE("Test KhrTextureTransform applies non-identity transform") {
 
   KhrTextureTransform textureTransform(extension);
   glm::dvec2 transformedUv = textureTransform.applyTransform(0.0, 0.0);
-  REQUIRE(CesiumUtility::Math::equalsEpsilon(
-      transformedUv.x,
-      5.0,
-      CesiumUtility::Math::Epsilon6));
-  REQUIRE(CesiumUtility::Math::equalsEpsilon(
-      transformedUv.y,
-      12.0,
-      CesiumUtility::Math::Epsilon6));
+  REQUIRE(
+      CesiumUtility::Math::equalsEpsilon(
+          transformedUv.x,
+          5.0,
+          CesiumUtility::Math::Epsilon6));
+  REQUIRE(
+      CesiumUtility::Math::equalsEpsilon(
+          transformedUv.y,
+          12.0,
+          CesiumUtility::Math::Epsilon6));
 
   transformedUv = textureTransform.applyTransform(1.0, 1.0);
   // scaled = (2.0, 0.5)
   // rotated = (0.5, -2.0)
   // translated = (5.5, 10.0)
-  REQUIRE(CesiumUtility::Math::equalsEpsilon(
-      transformedUv.x,
-      5.5,
-      CesiumUtility::Math::Epsilon6));
-  REQUIRE(CesiumUtility::Math::equalsEpsilon(
-      transformedUv.y,
-      10.0,
-      CesiumUtility::Math::Epsilon6));
+  REQUIRE(
+      CesiumUtility::Math::equalsEpsilon(
+          transformedUv.x,
+          5.5,
+          CesiumUtility::Math::Epsilon6));
+  REQUIRE(
+      CesiumUtility::Math::equalsEpsilon(
+          transformedUv.y,
+          10.0,
+          CesiumUtility::Math::Epsilon6));
 }

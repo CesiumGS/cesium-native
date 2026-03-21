@@ -745,8 +745,9 @@ TEST_CASE("Test tile state machine") {
     CHECK(!tile.getContent().getRenderContent());
   }
 
-  SUBCASE("Make sure the manager loads parent first before loading upsampled "
-          "child") {
+  SUBCASE(
+      "Make sure the manager loads parent first before loading upsampled "
+      "child") {
     // create mock loader
     bool initializerCall = false;
     auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
@@ -1041,8 +1042,9 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
     pManager->unloadTileContent(tile);
   }
 
-  SUBCASE("Ensure the loader generate smooth normal when the mesh doesn't have "
-          "normal") {
+  SUBCASE(
+      "Ensure the loader generate smooth normal when the mesh doesn't have "
+      "normal") {
     CesiumGltfReader::GltfReader gltfReader;
     std::vector<std::byte> gltfBoxFile =
         readFile(testDataPath / "gltf" / "embedded_box" / "Box.glb");
@@ -1254,14 +1256,16 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
       int64_t uvIdx = 0;
       for (int y = 0; y < 10; ++y) {
         for (int x = 0; x < 10; ++x) {
-          CHECK(CesiumUtility::Math::equalsEpsilon(
-              uv[uvIdx].x,
-              x * 0.01 / globeRectangle.computeWidth(),
-              CesiumUtility::Math::Epsilon7));
-          CHECK(CesiumUtility::Math::equalsEpsilon(
-              uv[uvIdx].y,
-              y * 0.01 / globeRectangle.computeHeight(),
-              CesiumUtility::Math::Epsilon7));
+          CHECK(
+              CesiumUtility::Math::equalsEpsilon(
+                  uv[uvIdx].x,
+                  x * 0.01 / globeRectangle.computeWidth(),
+                  CesiumUtility::Math::Epsilon7));
+          CHECK(
+              CesiumUtility::Math::equalsEpsilon(
+                  uv[uvIdx].y,
+                  y * 0.01 / globeRectangle.computeHeight(),
+                  CesiumUtility::Math::Epsilon7));
           ++uvIdx;
         }
       }
@@ -1343,21 +1347,24 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
                               (-CesiumUtility::Math::PiOverTwo)) /
                              looseRectangle.computeHeight();
 
-          CHECK(CesiumUtility::Math::equalsEpsilon(
-              uv[uvIdx].x,
-              expectedX,
-              CesiumUtility::Math::Epsilon7));
-          CHECK(CesiumUtility::Math::equalsEpsilon(
-              uv[uvIdx].y,
-              expectedY,
-              CesiumUtility::Math::Epsilon7));
+          CHECK(
+              CesiumUtility::Math::equalsEpsilon(
+                  uv[uvIdx].x,
+                  expectedX,
+                  CesiumUtility::Math::Epsilon7));
+          CHECK(
+              CesiumUtility::Math::equalsEpsilon(
+                  uv[uvIdx].y,
+                  expectedY,
+                  CesiumUtility::Math::Epsilon7));
           ++uvIdx;
         }
       }
     }
 
-    SUBCASE("Automatically calculate fit bounding region when tile has loose "
-            "region") {
+    SUBCASE(
+        "Automatically calculate fit bounding region when tile has loose "
+        "region") {
       auto pRemovedOverlay =
           pManager->getRasterOverlayCollection().begin()->get();
       pManager->getRasterOverlayCollection().remove(pRemovedOverlay);
@@ -1522,14 +1529,16 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           rasterOverlayDetails.rasterOverlayRectangles.front();
       GlobeRectangle globeRectangle =
           geographicProjection.unproject(projectionRectangle);
-      CHECK(GlobeRectangle::equalsEpsilon(
-          globeRectangle,
-          tileRectangle,
-          Math::Epsilon13));
-      CHECK(GlobeRectangle::equalsEpsilon(
-          rasterOverlayDetails.boundingRegion.getRectangle(),
-          tileRectangle,
-          Math::Epsilon13));
+      CHECK(
+          GlobeRectangle::equalsEpsilon(
+              globeRectangle,
+              tileRectangle,
+              Math::Epsilon13));
+      CHECK(
+          GlobeRectangle::equalsEpsilon(
+              rasterOverlayDetails.boundingRegion.getRectangle(),
+              tileRectangle,
+              Math::Epsilon13));
 
       // Load the southeast child
       REQUIRE(tile.getChildren().size() == 4);
@@ -1583,10 +1592,11 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           tileRectangle.getSouth(),
           tileRectangle.getEast(),
           tileRectangle.computeCenter().latitude);
-      CHECK(GlobeRectangle::equalsEpsilon(
-          overlayGlobeRectangle,
-          seQuadrant,
-          Math::Epsilon13));
+      CHECK(
+          GlobeRectangle::equalsEpsilon(
+              overlayGlobeRectangle,
+              seQuadrant,
+              Math::Epsilon13));
 
       // The tile should have a raster overlay mapped to it.
       REQUIRE(se.getMappedRasterTiles().size() == 1);
@@ -1637,14 +1647,15 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
               .rasterOverlayRectangles.front();
       GlobeRectangle swOverlayGlobeRectangle =
           unprojectRectangleSimple(GeographicProjection(), swOverlayRectangle);
-      CHECK(GlobeRectangle::equalsEpsilon(
-          swOverlayGlobeRectangle,
-          GlobeRectangle(
-              seQuadrant.getWest(),
-              seQuadrant.getSouth(),
-              seQuadrant.computeCenter().longitude,
-              seQuadrant.computeCenter().latitude),
-          Math::Epsilon13));
+      CHECK(
+          GlobeRectangle::equalsEpsilon(
+              swOverlayGlobeRectangle,
+              GlobeRectangle(
+                  seQuadrant.getWest(),
+                  seQuadrant.getSouth(),
+                  seQuadrant.computeCenter().longitude,
+                  seQuadrant.computeCenter().latitude),
+              Math::Epsilon13));
 
       // The tile should have a raster overlay mapped to it.
       REQUIRE(sw.getMappedRasterTiles().size() == 1);

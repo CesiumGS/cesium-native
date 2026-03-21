@@ -33,22 +33,26 @@ TEST_CASE("TileTransform::getTransform") {
         Cesium3DTilesContent::TileTransform::getTransform(tile);
     REQUIRE(maybeTransform);
     const glm::dmat4& transform = *maybeTransform;
-    CHECK(Math::equalsEpsilon(
-        transform[0],
-        glm::dvec4(1.0, 2.0, 3.0, 4.0),
-        1e-14));
-    CHECK(Math::equalsEpsilon(
-        transform[1],
-        glm::dvec4(5.0, 6.0, 7.0, 8.0),
-        1e-14));
-    CHECK(Math::equalsEpsilon(
-        transform[2],
-        glm::dvec4(9.0, 10.0, 11.0, 12.0),
-        1e-14));
-    CHECK(Math::equalsEpsilon(
-        transform[3],
-        glm::dvec4(13.0, 14.0, 15.0, 16.0),
-        1e-14));
+    CHECK(
+        Math::equalsEpsilon(
+            transform[0],
+            glm::dvec4(1.0, 2.0, 3.0, 4.0),
+            1e-14));
+    CHECK(
+        Math::equalsEpsilon(
+            transform[1],
+            glm::dvec4(5.0, 6.0, 7.0, 8.0),
+            1e-14));
+    CHECK(
+        Math::equalsEpsilon(
+            transform[2],
+            glm::dvec4(9.0, 10.0, 11.0, 12.0),
+            1e-14));
+    CHECK(
+        Math::equalsEpsilon(
+            transform[3],
+            glm::dvec4(13.0, 14.0, 15.0, 16.0),
+            1e-14));
   }
 
   SUBCASE("returns nullopt on too few elements") {
@@ -98,22 +102,26 @@ TEST_CASE("TileTransform::getTransform") {
         Cesium3DTilesContent::TileTransform::getTransform(tile);
     REQUIRE(maybeTransform);
     const glm::dmat4& transform = *maybeTransform;
-    CHECK(Math::equalsEpsilon(
-        transform[0],
-        glm::dvec4(1.0, 2.0, 3.0, 4.0),
-        1e-14));
-    CHECK(Math::equalsEpsilon(
-        transform[1],
-        glm::dvec4(5.0, 6.0, 7.0, 8.0),
-        1e-14));
-    CHECK(Math::equalsEpsilon(
-        transform[2],
-        glm::dvec4(9.0, 10.0, 11.0, 12.0),
-        1e-14));
-    CHECK(Math::equalsEpsilon(
-        transform[3],
-        glm::dvec4(13.0, 14.0, 15.0, 16.0),
-        1e-14));
+    CHECK(
+        Math::equalsEpsilon(
+            transform[0],
+            glm::dvec4(1.0, 2.0, 3.0, 4.0),
+            1e-14));
+    CHECK(
+        Math::equalsEpsilon(
+            transform[1],
+            glm::dvec4(5.0, 6.0, 7.0, 8.0),
+            1e-14));
+    CHECK(
+        Math::equalsEpsilon(
+            transform[2],
+            glm::dvec4(9.0, 10.0, 11.0, 12.0),
+            1e-14));
+    CHECK(
+        Math::equalsEpsilon(
+            transform[3],
+            glm::dvec4(13.0, 14.0, 15.0, 16.0),
+            1e-14));
   }
 }
 

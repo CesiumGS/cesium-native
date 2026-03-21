@@ -195,9 +195,9 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKCE::authorize(
   // builds. In theory, we can do a more web-oriented authorization flow here
   // instead.
   return asyncSystem.createResolvedFuture<Result<OAuth2TokenResponse>>(
-      Result<OAuth2TokenResponse>(
-          ErrorList::error("OAuth2 PKCE authorization is not supported in "
-                           "Emscripten / WebAssembly builds.")));
+      Result<OAuth2TokenResponse>(ErrorList::error(
+          "OAuth2 PKCE authorization is not supported in "
+          "Emscripten / WebAssembly builds.")));
 #else  // #ifdef __EMSCRIPTEN__
   auto promise = asyncSystem.createPromise<Result<OAuth2TokenResponse>>();
 
@@ -207,9 +207,11 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKCE::authorize(
   if (clientOptions.redirectPort) {
     port = *clientOptions.redirectPort;
     if (!pServer->bind_to_port("127.0.0.1", port)) {
-      promise.resolve(Result<OAuth2TokenResponse>(ErrorList::error(fmt::format(
-          "Internal HTTP server failed to bind to port {}.",
-          port))));
+      promise.resolve(
+          Result<OAuth2TokenResponse>(ErrorList::error(
+              fmt::format(
+                  "Internal HTTP server failed to bind to port {}.",
+                  port))));
       return promise.getFuture();
     }
   } else {
@@ -281,8 +283,9 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKCE::authorize(
                   errorMessage,
                   errorDescriptionMessage),
               "text/html");
-          promise.resolve(Result<OAuth2TokenResponse>(
-              ErrorList{{errorMessage, errorDescriptionMessage}, {}}));
+          promise.resolve(
+              Result<OAuth2TokenResponse>(
+                  ErrorList{{errorMessage, errorDescriptionMessage}, {}}));
           return;
         }
 
@@ -295,8 +298,9 @@ CesiumAsync::Future<Result<OAuth2TokenResponse>> OAuth2PKCE::authorize(
                   "Invalid state",
                   "The redirection received an invalid state"),
               "text/html");
-          promise.resolve(Result<OAuth2TokenResponse>(
-              ErrorList{{"Received an invalid state."}, {}}));
+          promise.resolve(
+              Result<OAuth2TokenResponse>(
+                  ErrorList{{"Received an invalid state."}, {}}));
           return;
         }
 
@@ -423,10 +427,11 @@ OAuth2PKCE::completeTokenExchange(
                 pResponse->statusCode() >= 300) {
               std::string error, errorDesc;
               if (parseErrorResponse(pResponse->data(), error, errorDesc)) {
-                return Result<OAuth2TokenResponse>(ErrorList::error(fmt::format(
-                    "Received error '{}' while obtaining token: {}",
-                    error,
-                    errorDesc)));
+                return Result<OAuth2TokenResponse>(ErrorList::error(
+                    fmt::format(
+                        "Received error '{}' while obtaining token: {}",
+                        error,
+                        errorDesc)));
               }
 
               return Result<OAuth2TokenResponse>(ErrorList{
@@ -539,10 +544,11 @@ OAuth2PKCE::refresh(
                 pResponse->statusCode() >= 300) {
               std::string error, errorDesc;
               if (parseErrorResponse(pResponse->data(), error, errorDesc)) {
-                return Result<OAuth2TokenResponse>(ErrorList::error(fmt::format(
-                    "Received error '{}' while refreshing token: {}",
-                    error,
-                    errorDesc)));
+                return Result<OAuth2TokenResponse>(ErrorList::error(
+                    fmt::format(
+                        "Received error '{}' while refreshing token: {}",
+                        error,
+                        errorDesc)));
               }
 
               return Result<OAuth2TokenResponse>(ErrorList{

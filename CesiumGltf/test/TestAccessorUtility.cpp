@@ -721,8 +721,9 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SUBCASE("Retrieves from valid face index for nonexistent accessor; triangles "
-          "mode") {
+  SUBCASE(
+      "Retrieves from valid face index for nonexistent accessor; triangles "
+      "mode") {
     IndexAccessorType indexAccessor;
     const int64_t numFaces = vertexCount / 3;
 
@@ -741,8 +742,9 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SUBCASE("Retrieves from valid face index for nonexistent accessor; triangle "
-          "strip mode") {
+  SUBCASE(
+      "Retrieves from valid face index for nonexistent accessor; triangle "
+      "strip mode") {
     IndexAccessorType indexAccessor;
     const int64_t numFaces = vertexCount - 2;
 
@@ -761,8 +763,9 @@ TEST_CASE("Test IndicesForFaceFromAccessor") {
     }
   }
 
-  SUBCASE("Retrieves from valid face index for nonexistent accessor; triangle "
-          "fan mode") {
+  SUBCASE(
+      "Retrieves from valid face index for nonexistent accessor; triangle "
+      "fan mode") {
     IndexAccessorType indexAccessor;
     const int64_t numFaces = vertexCount - 2;
 

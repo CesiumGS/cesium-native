@@ -1534,9 +1534,10 @@ public:
   PropertyView(
       const ClassProperty& classProperty,
       const CesiumGltf::Enum* pEnumDefinition)
-      : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
-            classProperty,
-            pEnumDefinition)),
+      : _status(
+            validateArrayPropertyType<PropertyArrayView<ElementType>>(
+                classProperty,
+                pEnumDefinition)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
@@ -1971,8 +1972,9 @@ public:
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
-      : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
-            classProperty)),
+      : _status(
+            validateArrayPropertyType<PropertyArrayView<ElementType>>(
+                classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
@@ -2511,8 +2513,9 @@ public:
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const ClassProperty& classProperty)
-      : _status(validateArrayPropertyType<PropertyArrayView<std::string_view>>(
-            classProperty)),
+      : _status(
+            validateArrayPropertyType<PropertyArrayView<std::string_view>>(
+                classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),

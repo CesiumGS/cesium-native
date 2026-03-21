@@ -71,10 +71,11 @@ NetworkAssetDescriptor::loadBytesFromNetwork(
 
             uint16_t statusCode = pResponse->statusCode();
             if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              return ErrorList::error(fmt::format(
-                  "Request for {} failed with code {}",
-                  pRequest->url(),
-                  pResponse->statusCode()));
+              return ErrorList::error(
+                  fmt::format(
+                      "Request for {} failed with code {}",
+                      pRequest->url(),
+                      pResponse->statusCode()));
             }
 
             return std::vector<std::byte>(

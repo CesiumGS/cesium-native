@@ -29,11 +29,12 @@ BoundingRegion::BoundingRegion(
     : _rectangle(rectangle),
       _minimumHeight(minimumHeight),
       _maximumHeight(maximumHeight),
-      _boundingBox(BoundingRegion::_computeBoundingBox(
-          rectangle,
-          minimumHeight,
-          maximumHeight,
-          ellipsoid)),
+      _boundingBox(
+          BoundingRegion::_computeBoundingBox(
+              rectangle,
+              minimumHeight,
+              maximumHeight,
+              ellipsoid)),
       _southwestCornerCartesian(
           ellipsoid.cartographicToCartesian(rectangle.getSouthwest())),
       _northeastCornerCartesian(

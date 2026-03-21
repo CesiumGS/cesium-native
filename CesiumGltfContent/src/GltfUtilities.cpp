@@ -1277,8 +1277,9 @@ createPositionView(
   case Accessor::ComponentType::FLOAT:
     return callback(AccessorView<AccessorTypes::VEC3<float>>(model, accessor));
   default:
-    return callback(AccessorView<AccessorTypes::VEC3<float>>(
-        AccessorViewStatus::InvalidComponentType));
+    return callback(
+        AccessorView<AccessorTypes::VEC3<float>>(
+            AccessorViewStatus::InvalidComponentType));
   }
 }
 

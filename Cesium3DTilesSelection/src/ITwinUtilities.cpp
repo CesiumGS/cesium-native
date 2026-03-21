@@ -20,11 +20,12 @@ void parseITwinErrorResponseIntoErrorList(
   jsonResponse.Parse(reinterpret_cast<const char*>(data.data()), data.size());
 
   if (jsonResponse.HasParseError()) {
-    errors.emplaceError(fmt::format(
-        "Error when parsing iTwin API error message, error code {} at byte "
-        "offset {}",
-        jsonResponse.GetParseError(),
-        jsonResponse.GetErrorOffset()));
+    errors.emplaceError(
+        fmt::format(
+            "Error when parsing iTwin API error message, error code {} at byte "
+            "offset {}",
+            jsonResponse.GetParseError(),
+            jsonResponse.GetErrorOffset()));
     return;
   }
 

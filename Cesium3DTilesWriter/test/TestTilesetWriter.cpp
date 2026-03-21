@@ -14,9 +14,10 @@
 namespace {
 void check(const std::string& input, const std::string& expectedOutput) {
   Cesium3DTilesReader::TilesetReader reader;
-  auto readResult = reader.readFromJson(std::span(
-      reinterpret_cast<const std::byte*>(input.c_str()),
-      input.size()));
+  auto readResult = reader.readFromJson(
+      std::span(
+          reinterpret_cast<const std::byte*>(input.c_str()),
+          input.size()));
   REQUIRE(readResult.errors.empty());
   REQUIRE(readResult.warnings.empty());
   REQUIRE(readResult.value.has_value());

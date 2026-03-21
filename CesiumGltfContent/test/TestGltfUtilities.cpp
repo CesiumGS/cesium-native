@@ -118,10 +118,11 @@ TEST_CASE("GltfUtilities::getNodeTransform") {
         expectedAfterRotating.z + 3.0,
         1.0);
 
-    CHECK(Math::equalsEpsilon(
-        transformed,
-        expectedAfterTranslating,
-        Math::Epsilon14));
+    CHECK(
+        Math::equalsEpsilon(
+            transformed,
+            expectedAfterTranslating,
+            Math::Epsilon14));
   }
 
   SUBCASE("returns std::nullopt if translation has too few elements") {
@@ -662,8 +663,9 @@ TEST_CASE("GltfUtilities::collapseToSingleBuffer") {
     CHECK(m.bufferViews[2].byteLength == 100);
   }
 
-  SUBCASE("leaves a meshopt fallback buffer with no data intact even if it has "
-          "no URI") {
+  SUBCASE(
+      "leaves a meshopt fallback buffer with no data intact even if it has "
+      "no URI") {
     Model m;
     m.buffers.emplace_back();
     m.buffers.emplace_back();

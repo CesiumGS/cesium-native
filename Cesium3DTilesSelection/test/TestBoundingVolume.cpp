@@ -56,17 +56,19 @@ TEST_CASE("getOrientedBoundingBoxFromBoundingVolume") {
     glm::dvec3 expectedCenter(0.0, 3.0, 3.0);
     glm::dmat3 expectedHalfAxes(0.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.5);
 
-    CHECK(CesiumUtility::Math::equalsEpsilon(
-        newObb.getCenter(),
-        expectedCenter,
-        CesiumUtility::Math::Epsilon6));
+    CHECK(
+        CesiumUtility::Math::equalsEpsilon(
+            newObb.getCenter(),
+            expectedCenter,
+            CesiumUtility::Math::Epsilon6));
 
     const glm::dmat3& halfAxes = newObb.getHalfAxes();
     for (glm::length_t i = 0; i < 3; i++) {
-      CHECK(CesiumUtility::Math::equalsEpsilon(
-          halfAxes[i],
-          expectedHalfAxes[i],
-          CesiumUtility::Math::Epsilon6));
+      CHECK(
+          CesiumUtility::Math::equalsEpsilon(
+              halfAxes[i],
+              expectedHalfAxes[i],
+              CesiumUtility::Math::Epsilon6));
     }
   }
 

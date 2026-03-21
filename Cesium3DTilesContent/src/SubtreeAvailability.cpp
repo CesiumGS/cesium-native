@@ -199,7 +199,9 @@ SubtreeAvailability::SubtreeAvailability(
     AvailabilityView subtreeAvailability,
     std::vector<AvailabilityView>&& contentAvailability,
     Cesium3DTiles::Subtree&& subtree)
-    : _powerOf2{subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 2U : 3U},
+    : _powerOf2{
+          subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 2U
+                                                                       : 3U},
       _levelsInSubtree{levelsInSubtree},
       _subtree{std::move(subtree)},
       _childCount{
@@ -374,17 +376,19 @@ bool SubtreeAvailability::isSubtreeAvailable(
 bool SubtreeAvailability::isSubtreeAvailable(
     const CesiumGeometry::QuadtreeTileID& thisSubtreeID,
     const CesiumGeometry::QuadtreeTileID& checkSubtreeID) const noexcept {
-  return isSubtreeAvailable(ImplicitTilingUtilities::computeRelativeMortonIndex(
-      thisSubtreeID,
-      checkSubtreeID));
+  return isSubtreeAvailable(
+      ImplicitTilingUtilities::computeRelativeMortonIndex(
+          thisSubtreeID,
+          checkSubtreeID));
 }
 
 bool SubtreeAvailability::isSubtreeAvailable(
     const CesiumGeometry::OctreeTileID& thisSubtreeID,
     const CesiumGeometry::OctreeTileID& checkSubtreeID) const noexcept {
-  return isSubtreeAvailable(ImplicitTilingUtilities::computeRelativeMortonIndex(
-      thisSubtreeID,
-      checkSubtreeID));
+  return isSubtreeAvailable(
+      ImplicitTilingUtilities::computeRelativeMortonIndex(
+          thisSubtreeID,
+          checkSubtreeID));
 }
 
 void SubtreeAvailability::setSubtreeAvailable(

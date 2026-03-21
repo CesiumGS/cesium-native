@@ -75,7 +75,7 @@ struct MaskedType {
   bool isFloat64;
   bool isBool;
 
-  MaskedType() : MaskedType(true){};
+  MaskedType() : MaskedType(true) {};
 
   MaskedType(bool defaultValue)
       : isInt8(defaultValue),
@@ -131,12 +131,12 @@ struct MaskedArrayType {
   uint32_t minArrayCount;
   uint32_t maxArrayCount;
 
-  MaskedArrayType() : MaskedArrayType(true){};
+  MaskedArrayType() : MaskedArrayType(true) {};
 
   MaskedArrayType(bool defaultValue)
       : elementType(defaultValue),
         minArrayCount(std::numeric_limits<uint32_t>::max()),
-        maxArrayCount(std::numeric_limits<uint32_t>::min()){};
+        maxArrayCount(std::numeric_limits<uint32_t>::min()) {};
 
   MaskedArrayType(
       MaskedType inElementType,
@@ -205,10 +205,10 @@ private:
   bool _canUseNullStringSentinel = true;
 
 public:
-  CompatibleTypes() : _type(){};
-  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType){};
+  CompatibleTypes() : _type() {};
+  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType) {};
   CompatibleTypes(const MaskedArrayType& maskedArrayType)
-      : _type(maskedArrayType){};
+      : _type(maskedArrayType) {};
 
   /**
    * Whether this is exclusively compatible with array types. This indicates an
@@ -848,8 +848,9 @@ void updateExtensionWithJsonBooleanProperty(
     const TValueGetter& propertyValue) {
   CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
-  std::vector<std::byte> buffer(static_cast<size_t>(
-      glm::ceil(static_cast<double>(propertyTable.count) / 8.0)));
+  std::vector<std::byte> buffer(
+      static_cast<size_t>(
+          glm::ceil(static_cast<double>(propertyTable.count) / 8.0)));
   auto it = propertyValue.begin();
   for (rapidjson::SizeType i = 0;
        i < static_cast<rapidjson::SizeType>(propertyTable.count);
@@ -912,8 +913,8 @@ void updateScalarArrayProperty(
   CESIUM_ASSERT(propertyValue.size() >= propertyTable.count);
 
   classProperty.type = ClassProperty::Type::SCALAR;
-  classProperty.componentType =
-      convertPropertyComponentTypeToString(static_cast<PropertyComponentType>(
+  classProperty.componentType = convertPropertyComponentTypeToString(
+      static_cast<PropertyComponentType>(
           TypeToPropertyType<ValueType>::component));
   classProperty.array = true;
 
@@ -1592,28 +1593,32 @@ void updateExtensionWithBinaryProperty(
   const auto& byteOffsetIt = propertyValue.FindMember("byteOffset");
   if (byteOffsetIt == propertyValue.MemberEnd() ||
       !byteOffsetIt->value.IsInt64()) {
-    result.emplaceWarning(fmt::format(
-        "Skip converting {}. The binary property doesn't have a valid "
-        "byteOffset.",
-        propertyName));
+    result.emplaceWarning(
+        fmt::format(
+            "Skip converting {}. The binary property doesn't have a valid "
+            "byteOffset.",
+            propertyName));
     return;
   }
 
   const auto& componentTypeIt = propertyValue.FindMember("componentType");
   if (componentTypeIt == propertyValue.MemberEnd() ||
       !componentTypeIt->value.IsString()) {
-    result.emplaceWarning(fmt::format(
-        "Skip converting {}. The binary property doesn't have a valid "
-        "componentType.",
-        propertyName));
+    result.emplaceWarning(
+        fmt::format(
+            "Skip converting {}. The binary property doesn't have a valid "
+            "componentType.",
+            propertyName));
     return;
   }
 
   const auto& typeIt = propertyValue.FindMember("type");
   if (typeIt == propertyValue.MemberEnd() || !typeIt->value.IsString()) {
-    result.emplaceWarning(fmt::format(
-        "Skip converting {}. The binary property doesn't have a valid type.",
-        propertyName));
+    result.emplaceWarning(
+        fmt::format(
+            "Skip converting {}. The binary property doesn't have a valid "
+            "type.",
+            propertyName));
     return;
   }
 
@@ -1624,19 +1629,22 @@ void updateExtensionWithBinaryProperty(
 
   auto convertedTypeIt = batchTableTypeToGltfType.find(type);
   if (convertedTypeIt == batchTableTypeToGltfType.end()) {
-    result.emplaceWarning(fmt::format(
-        "Skip converting {}. The binary property doesn't have a valid type.",
-        propertyName));
+    result.emplaceWarning(
+        fmt::format(
+            "Skip converting {}. The binary property doesn't have a valid "
+            "type.",
+            propertyName));
     return;
   }
   auto convertedComponentTypeIt =
       batchTableComponentTypeToGltfComponentType.find(componentType);
   if (convertedComponentTypeIt ==
       batchTableComponentTypeToGltfComponentType.end()) {
-    result.emplaceWarning(fmt::format(
-        "Skip converting {}. The binary property doesn't have a valid "
-        "componentType.",
-        propertyName));
+    result.emplaceWarning(
+        fmt::format(
+            "Skip converting {}. The binary property doesn't have a valid "
+            "componentType.",
+            propertyName));
     return;
   }
 
@@ -1708,11 +1716,12 @@ void updateExtensionWithBatchTableHierarchy(
          propertyIt != instancesIt->value.MemberEnd();
          ++propertyIt) {
       if (propertyIt->value.IsObject()) {
-        result.emplaceWarning(fmt::format(
-            "Property {} uses binary values. Only JSON-based "
-            "3DTILES_batch_table_hierarchy properties are currently "
-            "supported.",
-            propertyIt->name.GetString()));
+        result.emplaceWarning(
+            fmt::format(
+                "Property {} uses binary values. Only JSON-based "
+                "3DTILES_batch_table_hierarchy properties are currently "
+                "supported.",
+                propertyIt->name.GetString()));
       } else {
         properties.insert(propertyIt->name.GetString());
       }
@@ -1955,8 +1964,9 @@ ErrorList BatchTableToGltfStructuralMetadata::convertFromPnts(
   const auto pointsLengthIt = featureTableJson.FindMember("POINTS_LENGTH");
   if (pointsLengthIt == featureTableJson.MemberEnd() ||
       !pointsLengthIt->value.IsInt64()) {
-    result.emplaceError("The PNTS cannot be parsed because there is no valid "
-                        "POINTS_LENGTH semantic.");
+    result.emplaceError(
+        "The PNTS cannot be parsed because there is no valid "
+        "POINTS_LENGTH semantic.");
     return result;
   }
 

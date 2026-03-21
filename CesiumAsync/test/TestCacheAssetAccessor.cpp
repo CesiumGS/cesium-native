@@ -274,8 +274,9 @@ TEST_CASE("Test the condition of caching the request") {
       }
     }
 
-    SUBCASE("GET Request, Expires header is less than current, but has a "
-            "Last-Modified") {
+    SUBCASE(
+        "GET Request, Expires header is less than current, but has a "
+        "Last-Modified") {
       std::vector<int> statusCodes{200, 202, 203, 204, 205, 304};
 
       for (auto& statusCode : statusCodes) {
@@ -786,8 +787,9 @@ TEST_CASE("Test serving cache item") {
         .wait();
   }
 
-  SUBCASE("Retrieve outdated cache item and cache control mandates "
-          "revalidation before using it") {
+  SUBCASE(
+      "Retrieve outdated cache item and cache control mandates "
+      "revalidation before using it") {
     // Mock 304 response
     std::unique_ptr<IAssetResponse> mockResponse =
         std::make_unique<MockAssetResponse>(
@@ -890,8 +892,9 @@ TEST_CASE("Test serving cache item") {
         .wait();
   }
 
-  SUBCASE("Cache should serve validation response from the server directly if "
-          "it is not 304") {
+  SUBCASE(
+      "Cache should serve validation response from the server directly if "
+      "it is not 304") {
     // Mock 200 response
     std::unique_ptr<IAssetResponse> mockResponse =
         std::make_unique<MockAssetResponse>(

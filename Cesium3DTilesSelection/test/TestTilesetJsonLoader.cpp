@@ -197,32 +197,36 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(children[0].getGeometricError() == 5.0);
     CHECK(children[0].getRefine() == TileRefine::Replace);
     CHECK(std::get<std::string>(children[0].getTileID()) == "ll.b3dm");
-    CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
-        children[0].getBoundingVolume()));
+    CHECK(
+        std::holds_alternative<CesiumGeospatial::BoundingRegion>(
+            children[0].getBoundingVolume()));
 
     CHECK(children[1].getParent() == pRootTile);
     CHECK(children[1].getChildren().size() == 0);
     CHECK(children[1].getGeometricError() == 0.0);
     CHECK(children[1].getRefine() == TileRefine::Replace);
     CHECK(std::get<std::string>(children[1].getTileID()) == "lr.b3dm");
-    CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
-        children[1].getBoundingVolume()));
+    CHECK(
+        std::holds_alternative<CesiumGeospatial::BoundingRegion>(
+            children[1].getBoundingVolume()));
 
     CHECK(children[2].getParent() == pRootTile);
     CHECK(children[2].getChildren().size() == 0);
     CHECK(children[2].getGeometricError() == 0.0);
     CHECK(children[2].getRefine() == TileRefine::Replace);
     CHECK(std::get<std::string>(children[2].getTileID()) == "ur.b3dm");
-    CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
-        children[2].getBoundingVolume()));
+    CHECK(
+        std::holds_alternative<CesiumGeospatial::BoundingRegion>(
+            children[2].getBoundingVolume()));
 
     CHECK(children[3].getParent() == pRootTile);
     CHECK(children[3].getChildren().size() == 0);
     CHECK(children[3].getGeometricError() == 0.0);
     CHECK(children[3].getRefine() == TileRefine::Replace);
     CHECK(std::get<std::string>(children[3].getTileID()) == "ul.b3dm");
-    CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
-        children[3].getBoundingVolume()));
+    CHECK(
+        std::holds_alternative<CesiumGeospatial::BoundingRegion>(
+            children[3].getBoundingVolume()));
 
     // check loader up axis
     CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
@@ -267,8 +271,9 @@ TEST_CASE("Test creating tileset json loader") {
       CHECK(child.getGeometricError() == 0.0);
       CHECK(child.getRefine() == TileRefine::Add);
       CHECK(std::get<std::string>(child.getTileID()) == *expectedUrlIt);
-      CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
-          child.getBoundingVolume()));
+      CHECK(
+          std::holds_alternative<CesiumGeospatial::BoundingRegion>(
+              child.getBoundingVolume()));
       ++expectedUrlIt;
     }
 
@@ -403,13 +408,14 @@ TEST_CASE("Test creating tileset json loader") {
     CHECK(pRootTile->getChildren().size() == 1);
 
     Tile& child = pRootTile->getChildren().front();
-    auto future = loaderResult.pLoader->loadTileContent(TileLoadInput{
-        child,
-        {},
-        asyncSystem,
-        pMockAssetAccessor,
-        spdlog::default_logger(),
-        {}});
+    auto future = loaderResult.pLoader->loadTileContent(
+        TileLoadInput{
+            child,
+            {},
+            asyncSystem,
+            pMockAssetAccessor,
+            spdlog::default_logger(),
+            {}});
     TileLoadResult result = future.wait();
     REQUIRE(result.state == TileLoadResultState::Success);
     TileEmptyContent* emptyContent =
@@ -553,8 +559,9 @@ TEST_CASE("Test loading individual tile of tileset json") {
         *pRootTile);
     CHECK(tileLoadResult.updatedBoundingVolume == std::nullopt);
     CHECK(tileLoadResult.updatedContentBoundingVolume == std::nullopt);
-    CHECK(std::holds_alternative<TileExternalContent>(
-        tileLoadResult.contentKind));
+    CHECK(
+        std::holds_alternative<TileExternalContent>(
+            tileLoadResult.contentKind));
     CHECK(tileLoadResult.state == TileLoadResultState::Success);
     CHECK(tileLoadResult.tileInitializer);
 
@@ -581,8 +588,9 @@ TEST_CASE("Test loading individual tile of tileset json") {
       CHECK(std::get<std::string>(child.getTileID()) == expectedChildUrls[i]);
       CHECK(child.getGeometricError() == Approx(0.0));
       CHECK(child.getRefine() == TileRefine::Add);
-      CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
-          child.getBoundingVolume()));
+      CHECK(
+          std::holds_alternative<CesiumGeospatial::BoundingRegion>(
+              child.getBoundingVolume()));
     }
   }
 
@@ -676,8 +684,9 @@ TEST_CASE("Test loading individual tile of tileset json") {
       asyncSystem.dispatchMainThreadTasks();
 
       auto implicitContentResult = implicitContentResultFuture.wait();
-      CHECK(std::holds_alternative<CesiumGltf::Model>(
-          implicitContentResult.contentKind));
+      CHECK(
+          std::holds_alternative<CesiumGltf::Model>(
+              implicitContentResult.contentKind));
       CHECK(!implicitContentResult.updatedBoundingVolume);
       CHECK(!implicitContentResult.updatedContentBoundingVolume);
       CHECK(implicitContentResult.state == TileLoadResultState::Success);

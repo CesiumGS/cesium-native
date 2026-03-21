@@ -68,10 +68,11 @@ bool validateJsonArrayValues(
 std::optional<glm::dvec3>
 parseArrayValueDVec3(const rapidjson::Value& arrayValue) {
   if (validateJsonArrayValues(arrayValue, 3, &rapidjson::Value::IsNumber)) {
-    return std::make_optional(glm::dvec3(
-        arrayValue[0].GetDouble(),
-        arrayValue[1].GetDouble(),
-        arrayValue[2].GetDouble()));
+    return std::make_optional(
+        glm::dvec3(
+            arrayValue[0].GetDouble(),
+            arrayValue[1].GetDouble(),
+            arrayValue[2].GetDouble()));
   }
   return {};
 }

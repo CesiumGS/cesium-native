@@ -25,23 +25,26 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         1.0,
         Ellipsoid::WGS84);
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
-        glm::dvec3(1.0, 0.0, 0.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
+            glm::dvec3(1.0, 0.0, 0.0),
+            0.0,
+            1e-10));
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
-        glm::dvec3(0.0, 1.0, 0.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
+            glm::dvec3(0.0, 1.0, 0.0),
+            0.0,
+            1e-10));
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
-        glm::dvec3(0.0, 0.0, 1.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
+            glm::dvec3(0.0, 0.0, 1.0),
+            0.0,
+            1e-10));
   }
 
   SUBCASE("North-east-down") {
@@ -53,23 +56,26 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         1.0,
         Ellipsoid::WGS84);
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
-        glm::dvec3(0.0, 1.0, 0.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
+            glm::dvec3(0.0, 1.0, 0.0),
+            0.0,
+            1e-10));
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
-        glm::dvec3(1.0, 0.0, 0.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
+            glm::dvec3(1.0, 0.0, 0.0),
+            0.0,
+            1e-10));
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
-        glm::dvec3(0.0, 0.0, -1.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
+            glm::dvec3(0.0, 0.0, -1.0),
+            0.0,
+            1e-10));
   }
 
   SUBCASE("Left handed East South Up") {
@@ -81,23 +87,26 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         1.0,
         Ellipsoid::WGS84);
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
-        glm::dvec3(1.0, 0.0, 0.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
+            glm::dvec3(1.0, 0.0, 0.0),
+            0.0,
+            1e-10));
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
-        glm::dvec3(0.0, -1.0, 0.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
+            glm::dvec3(0.0, -1.0, 0.0),
+            0.0,
+            1e-10));
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
-        glm::dvec3(0.0, 0.0, 1.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
+            glm::dvec3(0.0, 0.0, 1.0),
+            0.0,
+            1e-10));
   }
 
   SUBCASE("Left handed East Up North") {
@@ -109,23 +118,26 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         1.0,
         Ellipsoid::WGS84);
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
-        glm::dvec3(1.0, 0.0, 0.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
+            glm::dvec3(1.0, 0.0, 0.0),
+            0.0,
+            1e-10));
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
-        glm::dvec3(0.0, 0.0, 1.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
+            glm::dvec3(0.0, 0.0, 1.0),
+            0.0,
+            1e-10));
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
-        glm::dvec3(0.0, 1.0, 0.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
+            glm::dvec3(0.0, 1.0, 0.0),
+            0.0,
+            1e-10));
   }
 
   SUBCASE("Scale") {
@@ -137,23 +149,26 @@ TEST_CASE("LocalHorizontalCoordinateSystem") {
         1.0 / 100.0,
         Ellipsoid::WGS84);
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
-        glm::dvec3(100.0, 0.0, 0.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterEastEcef),
+            glm::dvec3(100.0, 0.0, 0.0),
+            0.0,
+            1e-10));
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
-        glm::dvec3(0.0, -100.0, 0.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterNorthEcef),
+            glm::dvec3(0.0, -100.0, 0.0),
+            0.0,
+            1e-10));
 
-    CHECK(Math::equalsEpsilon(
-        lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
-        glm::dvec3(0.0, 0.0, 100.0),
-        0.0,
-        1e-10));
+    CHECK(
+        Math::equalsEpsilon(
+            lh.ecefPositionToLocal(nullIslandEcef + oneMeterUpEcef),
+            glm::dvec3(0.0, 0.0, 100.0),
+            0.0,
+            1e-10));
   }
 
   SUBCASE("computeTransformationToAnotherLocal") {

@@ -52,10 +52,11 @@ TEST_CASE(
   BoundingSphere bs(glm::dvec3(0.0), 1.0);
   glm::dvec3 position(-2.0, 1.0, 0.0);
   double expected = 1.52786405;
-  CHECK(CesiumUtility::Math::equalsEpsilon(
-      bs.computeDistanceSquaredToPosition(position),
-      expected,
-      CesiumUtility::Math::Epsilon6));
+  CHECK(
+      CesiumUtility::Math::equalsEpsilon(
+          bs.computeDistanceSquaredToPosition(position),
+          expected,
+          CesiumUtility::Math::Epsilon6));
 }
 
 TEST_CASE(

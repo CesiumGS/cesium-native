@@ -743,20 +743,20 @@ void Tileset::_frustumCull(
       return;
     }
     // Frustum cull based on the actual tile's bounds.
-  } else if (std::any_of(
-                 frustums.begin(),
-                 frustums.end(),
-                 [&ellipsoid,
-                  &boundingVolume = tile.getBoundingVolume(),
-                  renderTilesUnderCamera =
-                      this->_options.renderTilesUnderCamera](
-                     const ViewState& frustum) {
-                   return isVisibleFromCamera(
-                       frustum,
-                       boundingVolume,
-                       ellipsoid,
-                       renderTilesUnderCamera);
-                 })) {
+  } else if (
+      std::any_of(
+          frustums.begin(),
+          frustums.end(),
+          [&ellipsoid,
+           &boundingVolume = tile.getBoundingVolume(),
+           renderTilesUnderCamera = this->_options.renderTilesUnderCamera](
+              const ViewState& frustum) {
+            return isVisibleFromCamera(
+                frustum,
+                boundingVolume,
+                ellipsoid,
+                renderTilesUnderCamera);
+          })) {
     // The tile is visible in at least one frustum, so don't cull.
     return;
   }
@@ -848,9 +848,10 @@ void computeDistances(
       frustums.end(),
       distances.begin(),
       [boundingVolume](const ViewState& frustum) -> double {
-        return glm::sqrt(glm::max(
-            frustum.computeDistanceSquaredToBoundingVolume(boundingVolume),
-            0.0));
+        return glm::sqrt(
+            glm::max(
+                frustum.computeDistanceSquaredToBoundingVolume(boundingVolume),
+                0.0));
       });
 }
 

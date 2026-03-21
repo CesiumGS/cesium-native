@@ -402,19 +402,21 @@ Future<LoadLayersResult> loadLayersRecursive(
                   pCompletedRequest->response();
               const std::string& tileUrl = pCompletedRequest->url();
               if (!pResponse) {
-                loadLayersResult.errors.emplaceWarning(fmt::format(
-                    "Did not receive a valid response for parent layer {}",
-                    pCompletedRequest->url()));
+                loadLayersResult.errors.emplaceWarning(
+                    fmt::format(
+                        "Did not receive a valid response for parent layer {}",
+                        pCompletedRequest->url()));
                 return asyncSystem.createResolvedFuture(
                     std::move(loadLayersResult));
               }
 
               uint16_t statusCode = pResponse->statusCode();
               if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-                loadLayersResult.errors.emplaceWarning(fmt::format(
-                    "Received status code {} for parent layer {}",
-                    statusCode,
-                    tileUrl));
+                loadLayersResult.errors.emplaceWarning(
+                    fmt::format(
+                        "Received status code {} for parent layer {}",
+                        statusCode,
+                        tileUrl));
                 return asyncSystem.createResolvedFuture(
                     std::move(loadLayersResult));
               }
@@ -426,11 +428,12 @@ Future<LoadLayersResult> loadLayersRecursive(
                   reinterpret_cast<const char*>(layerJsonBinary.data()),
                   layerJsonBinary.size());
               if (layerJson.HasParseError()) {
-                loadLayersResult.errors.emplaceWarning(fmt::format(
-                    "Error when parsing layer.json, error code {} at byte "
-                    "offset {}",
-                    layerJson.GetParseError(),
-                    layerJson.GetErrorOffset()));
+                loadLayersResult.errors.emplaceWarning(
+                    fmt::format(
+                        "Error when parsing layer.json, error code {} at byte "
+                        "offset {}",
+                        layerJson.GetParseError(),
+                        layerJson.GetErrorOffset()));
                 return asyncSystem.createResolvedFuture(
                     std::move(loadLayersResult));
               }
@@ -488,9 +491,10 @@ Future<LoadLayersResult> loadLayerJson(
     quadtreeXTiles = 1;
   } else {
     LoadLayersResult result;
-    result.errors.emplaceError(fmt::format(
-        "Tileset layer.json contained an unknown projection value: {}",
-        projectionString));
+    result.errors.emplaceError(
+        fmt::format(
+            "Tileset layer.json contained an unknown projection value: {}",
+            projectionString));
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
@@ -530,10 +534,11 @@ Future<LoadLayersResult> loadLayerJson(
       layerJsonBinary.size());
   if (layerJson.HasParseError()) {
     LoadLayersResult result;
-    result.errors.emplaceError(fmt::format(
-        "Error when parsing layer.json, error code {} at byte offset {}",
-        layerJson.GetParseError(),
-        layerJson.GetErrorOffset()));
+    result.errors.emplaceError(
+        fmt::format(
+            "Error when parsing layer.json, error code {} at byte offset {}",
+            layerJson.GetParseError(),
+            layerJson.GetErrorOffset()));
     return asyncSystem.createResolvedFuture(std::move(result));
   }
 
@@ -573,19 +578,21 @@ LayerJsonTerrainLoader::createLoader(
             const std::string& tileUrl = pCompletedRequest->url();
             if (!pResponse) {
               LoadLayersResult result;
-              result.errors.emplaceError(fmt::format(
-                  "Did not receive a valid response for tile content {}",
-                  tileUrl));
+              result.errors.emplaceError(
+                  fmt::format(
+                      "Did not receive a valid response for tile content {}",
+                      tileUrl));
               return asyncSystem.createResolvedFuture(std::move(result));
             }
 
             uint16_t statusCode = pResponse->statusCode();
             if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
               LoadLayersResult result;
-              result.errors.emplaceError(fmt::format(
-                  "Received status code {} for tile content {}",
-                  statusCode,
-                  tileUrl));
+              result.errors.emplaceError(
+                  fmt::format(
+                      "Received status code {} for tile content {}",
+                      statusCode,
+                      tileUrl));
               result.statusCode = statusCode;
               return asyncSystem.createResolvedFuture(std::move(result));
             }
@@ -720,9 +727,10 @@ Future<QuantizedMeshLoadResult> requestTileContent(
         const IAssetResponse* pResponse = pRequest->response();
         if (!pResponse) {
           QuantizedMeshLoadResult result;
-          result.errors.emplaceError(fmt::format(
-              "Did not receive a valid response for tile content {}",
-              pRequest->url()));
+          result.errors.emplaceError(
+              fmt::format(
+                  "Did not receive a valid response for tile content {}",
+                  pRequest->url()));
           result.pRequest = std::move(pRequest);
           return result;
         }
@@ -730,10 +738,11 @@ Future<QuantizedMeshLoadResult> requestTileContent(
         if (pResponse->statusCode() != 0 &&
             (pResponse->statusCode() < 200 || pResponse->statusCode() >= 300)) {
           QuantizedMeshLoadResult result;
-          result.errors.emplaceError(fmt::format(
-              "Received status code {} for tile content {}",
-              pResponse->statusCode(),
-              pRequest->url()));
+          result.errors.emplaceError(
+              fmt::format(
+                  "Received status code {} for tile content {}",
+                  pResponse->statusCode(),
+                  pRequest->url()));
           result.pRequest = std::move(pRequest);
           return result;
         }

@@ -22,8 +22,9 @@ TEST_CASE("S2CellBoundingVolume") {
       100000.0,
       Ellipsoid::WGS84);
 
-  SUBCASE("distance-squared to position is 0 when camera is inside bounding "
-          "volume") {
+  SUBCASE(
+      "distance-squared to position is 0 when camera is inside bounding "
+      "volume") {
     CHECK(
         tileS2Cell.computeDistanceSquaredToPosition(tileS2Cell.getCenter()) ==
         0.0);
@@ -41,11 +42,12 @@ TEST_CASE("S2CellBoundingVolume") {
         bvPlanes[0].getDistance() - testDistance);
     glm::dvec3 position =
         topPlane.projectPointOntoPlane(tileS2Cell.getCenter());
-    CHECK(Math::equalsEpsilon(
-        glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
-        testDistance,
-        0.0,
-        Math::Epsilon7));
+    CHECK(
+        Math::equalsEpsilon(
+            glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
+            testDistance,
+            0.0,
+            Math::Epsilon7));
 
     // Test against the first side plane.
     Plane sidePlane0(
@@ -57,11 +59,12 @@ TEST_CASE("S2CellBoundingVolume") {
                              (vertices[4] + vertices[5]) * 0.5) *
                             0.5;
     position = sidePlane0.projectPointOntoPlane(faceCenter);
-    CHECK(Math::equalsEpsilon(
-        glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
-        testDistance,
-        0.0,
-        Math::Epsilon7));
+    CHECK(
+        Math::equalsEpsilon(
+            glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
+            testDistance,
+            0.0,
+            Math::Epsilon7));
   }
 
   SUBCASE("Case II - distanceToCamera works when camera is facing two planes") {
@@ -71,22 +74,24 @@ TEST_CASE("S2CellBoundingVolume") {
     glm::dvec3 position =
         (tileS2Cell.getVertices()[0] + tileS2Cell.getVertices()[1]) * 0.5;
     position.z -= testDistance;
-    CHECK(Math::equalsEpsilon(
-        glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
-        testDistance,
-        0.0,
-        Math::Epsilon7));
+    CHECK(
+        Math::equalsEpsilon(
+            glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
+            testDistance,
+            0.0,
+            Math::Epsilon7));
 
     // Test with first and second side planes.
     position =
         (tileS2Cell.getVertices()[0] + tileS2Cell.getVertices()[4]) * 0.5;
     position.x -= 1;
     position.z -= 1;
-    CHECK(Math::equalsEpsilon(
-        tileS2Cell.computeDistanceSquaredToPosition(position),
-        2.0,
-        0.0,
-        Math::Epsilon7));
+    CHECK(
+        Math::equalsEpsilon(
+            tileS2Cell.computeDistanceSquaredToPosition(position),
+            2.0,
+            0.0,
+            Math::Epsilon7));
 
     // Test with bottom plane and second side plane. Handles the obtuse dihedral
     // angle case.
@@ -94,32 +99,36 @@ TEST_CASE("S2CellBoundingVolume") {
         (tileS2Cell.getVertices()[5] + tileS2Cell.getVertices()[6]) * 0.5;
     position.x -= 10000;
     position.y -= 1;
-    CHECK(Math::equalsEpsilon(
-        glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
-        10000.0,
-        0.0,
-        Math::Epsilon7));
+    CHECK(
+        Math::equalsEpsilon(
+            glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
+            10000.0,
+            0.0,
+            Math::Epsilon7));
   }
 
   SUBCASE(
       "Case III - distanceToCamera works when camera is facing three planes") {
     glm::dvec3 position = tileS2Cell.getVertices()[2] + glm::dvec3(1.0);
-    CHECK(Math::equalsEpsilon(
-        tileS2Cell.computeDistanceSquaredToPosition(position),
-        3.0,
-        0.0,
-        Math::Epsilon7));
+    CHECK(
+        Math::equalsEpsilon(
+            tileS2Cell.computeDistanceSquaredToPosition(position),
+            3.0,
+            0.0,
+            Math::Epsilon7));
   }
 
-  SUBCASE("Case IV - distanceToCamera works when camera is facing more than "
-          "three planes") {
+  SUBCASE(
+      "Case IV - distanceToCamera works when camera is facing more than "
+      "three planes") {
     glm::dvec3 position(-Ellipsoid::WGS84.getMaximumRadius(), 0.0, 0.0);
-    CHECK(Math::equalsEpsilon(
-        glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
-        Ellipsoid::WGS84.getMaximumRadius() +
-            tileS2Cell.getBoundingPlanes()[1].getDistance(),
-        0.0,
-        Math::Epsilon7));
+    CHECK(
+        Math::equalsEpsilon(
+            glm::sqrt(tileS2Cell.computeDistanceSquaredToPosition(position)),
+            Ellipsoid::WGS84.getMaximumRadius() +
+                tileS2Cell.getBoundingPlanes()[1].getDistance(),
+            0.0,
+            Math::Epsilon7));
   }
 
   SUBCASE("intersect plane") {
