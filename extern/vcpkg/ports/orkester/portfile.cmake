@@ -61,7 +61,7 @@ file(INSTALL "${SOURCE_PATH}/lib/" DESTINATION "${CURRENT_PACKAGES_DIR}/debug/li
     FILES_MATCHING PATTERN "*.lib" PATTERN "*.a")
 
 # CMake config
-file(INSTALL "${SOURCE_PATH}/lib/cmake/" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
+file(INSTALL "${SOURCE_PATH}/lib/cmake/orkester/" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}"
     FILES_MATCHING PATTERN "*.cmake")
 
 # License
