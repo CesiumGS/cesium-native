@@ -1,11 +1,10 @@
 # Dependencies
 
-Cesium Native relies on a number of third-party dependencies. These dependencies are automatically resolved and built using [vcpkg](https://vcpkg.io/) at compile time. 
+Cesium Native relies on a number of third-party dependencies. These dependencies are automatically resolved and built using [vcpkg](https://vcpkg.io/) at compile time.
 
 | Dependency                                                                                                          | Usage                                                                                                             |
 | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | [ada](https://github.com/ada-url/ada)                                                                               | Used to parse and manipulate URIs.                                                                                |
-| [Async++](https://github.com/Amanieu/asyncplusplus)                                                                 | Used by CesiumAsync for cross-platform concurrency.                                                               |
 | [Catch2](https://github.com/catchorg/Catch2)                                                                        | Test framework used by CesiumNativeTests.                                                                         |
 | [draco](https://github.com/google/draco)                                                                            | Required to decode meshes and point clouds compressed with Draco.                                                 |
 | [earcut](https://github.com/mapbox/earcut.hpp)                                                                      | Polygon triangulation library for used by CartographicPolygon.                                                    |

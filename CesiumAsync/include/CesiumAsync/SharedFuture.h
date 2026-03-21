@@ -1,345 +1,442 @@
 #pragma once
 
-#include "Impl/AsyncSystemSchedulers.h"
-#include "Impl/CatchFunction.h"
-#include "Impl/ContinuationFutureType.h"
-#include "Impl/WithTracing.h"
+/// @file SharedFuture.h
+/// Drop-in replacement for CesiumAsync::SharedFuture<T> backed by orkester.
+///
+/// Cloneable. Multiple continuations. Values stay in C++ via shared_ptr.
 
+#include <CesiumAsync/Impl/OrkesterImpl.h>
 #include <CesiumAsync/ThreadPool.h>
-#include <CesiumUtility/Tracing.h>
 
-#include <type_traits>
-#include <variant>
+#include <tuple>
 
 namespace CesiumAsync {
 
-namespace CesiumImpl {
+// ─── SharedFuture<T> ────────────────────────────────────────────────────────
 
-template <typename R> struct ParameterizedTaskUnwrapper;
-struct TaskUnwrapper;
-
-} // namespace CesiumImpl
-
-/**
- * @brief A value that will be available in the future, as produced by
- * {@link AsyncSystem}. Unlike {@link Future}, a `SharedFuture` allows
- * multiple continuations to be attached, and allows {@link SharedFuture::wait}
- * to be called multiple times.
- *
- * @tparam T The type of the value.
- */
-template <typename T> class SharedFuture final {
+/// Drop-in replacement for CesiumAsync::SharedFuture<T>, backed by orkester.
+/// Cloneable. Values stay in C++ via shared_ptr<ValueSlot<T>>.
+template <typename T>
+class CESIUMASYNC_API SharedFuture final {
 public:
-  /**
-   * @brief Registers a continuation function to be invoked in a worker thread
-   * when this Future resolves.
-   *
-   * If the function itself returns a `Future`, the function will not be
-   * considered complete until that returned `Future` also resolves.
-   *
-   * If this Future is resolved from a designated worker thread, the
-   * continuation function will be invoked immediately rather than in a
-   * separate task. Similarly, if the Future is already resolved when
-   * `thenInWorkerThread` is called from a designated worker thread, the
-   * continuation function will be invoked immediately before this
-   * method returns.
-   *
-   * @tparam Func The type of the function.
-   * @param f The function.
-   * @return A future that resolves after the supplied function completes.
-   */
-  template <typename Func>
-  CesiumImpl::ContinuationFutureType_t<Func, T> thenInWorkerThread(Func&& f) {
-    return this->thenWithScheduler(
-        this->_pSchedulers->workerThread.immediate,
-        "waiting for worker thread",
-        std::forward<Func>(f));
-  }
+    SharedFuture(const SharedFuture& rhs)
+        : _system(rhs._system), _slot(rhs._slot),
+          _signal(rhs._signal ? orkester_shared_future_clone(rhs._signal) : nullptr) {}
 
-  /**
-   * @brief Registers a continuation function to be invoked in the main thread
-   * when this Future resolves.
-   *
-   * If this Future is resolved from the main thread, the
-   * continuation function will be invoked immediately rather than queued for
-   * later execution in the main thread. Similarly, if the Future is already
-   * resolved when `thenInMainThread` is called from the main thread, the
-   * continuation function will be invoked immediately before this
-   * method returns.
-   *
-   * If the function itself returns a `Future`, the function will not be
-   * considered complete until that returned `Future` also resolves.
-   *
-   * @tparam Func The type of the function.
-   * @param f The function.
-   * @return A future that resolves after the supplied function completes.
-   */
-  template <typename Func>
-  CesiumImpl::ContinuationFutureType_t<Func, T> thenInMainThread(Func&& f) {
-    return this->thenWithScheduler(
-        this->_pSchedulers->mainThread.immediate,
-        "waiting for main thread",
-        std::forward<Func>(f));
-  }
+    SharedFuture& operator=(const SharedFuture& rhs) {
+        if (this != &rhs) {
+            if (_signal) orkester_shared_future_drop(_signal);
+            _system = rhs._system;
+            _slot = rhs._slot;
+            _signal = rhs._signal ? orkester_shared_future_clone(rhs._signal) : nullptr;
+        }
+        return *this;
+    }
 
-  /**
-   * @brief Registers a continuation function to be invoked immediately in
-   * whichever thread causes the Future to be resolved.
-   *
-   * If the Future is already resolved, the supplied function will be called
-   * immediately in the calling thread and this method will not return until
-   * that function does.
-   *
-   * If the function itself returns a `Future`, the function will not be
-   * considered complete until that returned `Future` also resolves.
-   *
-   * @tparam Func The type of the function.
-   * @param f The function.
-   * @return A future that resolves after the supplied function completes.
-   */
-  template <typename Func>
-  CesiumImpl::ContinuationFutureType_t<Func, T> thenImmediately(Func&& f) {
-    return CesiumImpl::ContinuationFutureType_t<Func, T>(
-        this->_pSchedulers,
-        _task.then(
-            async::inline_scheduler(),
-            CesiumImpl::WithTracingShared<T>::end(
-                nullptr,
-                std::forward<Func>(f))));
-  }
+    SharedFuture(SharedFuture&& rhs) noexcept
+        : _system(rhs._system), _slot(std::move(rhs._slot)), _signal(rhs._signal) {
+        rhs._signal = nullptr;
+    }
 
-  /**
-   * @brief Registers a continuation function to be invoked in a thread pool
-   * when this Future resolves.
-   *
-   * If the function itself returns a `Future`, the function will not be
-   * considered complete until that returned `Future` also resolves.
-   *
-   * If this Future is resolved from a thread pool thread, the
-   * continuation function will be invoked immediately rather than in a
-   * separate task. Similarly, if the Future is already resolved when
-   * `thenInThreadPool` is called from a designated thread pool thread, the
-   * continuation function will be invoked immediately before this
-   * method returns.
-   *
-   * @tparam Func The type of the function.
-   * @param threadPool The thread pool where this function will be invoked.
-   * @param f The function.
-   * @return A future that resolves after the supplied function completes.
-   */
-  template <typename Func>
-  CesiumImpl::ContinuationFutureType_t<Func, T>
-  thenInThreadPool(const ThreadPool& threadPool, Func&& f) {
-    return this->thenWithScheduler(
-        threadPool._pScheduler->immediate,
-        "waiting for thread pool thread",
-        std::forward<Func>(f));
-  }
+    SharedFuture& operator=(SharedFuture&& rhs) noexcept {
+        if (this != &rhs) {
+            if (_signal) orkester_shared_future_drop(_signal);
+            _system = rhs._system;
+            _slot = std::move(rhs._slot);
+            _signal = rhs._signal;
+            rhs._signal = nullptr;
+        }
+        return *this;
+    }
 
-  /**
-   * @brief Registers a continuation function to be invoked in the main thread
-   * when this Future rejects.
-   *
-   * If this Future is rejected from the main thread, the
-   * continuation function will be invoked immediately rather than queued for
-   * later execution in the main thread. Similarly, if the Future is already
-   * rejected when `catchInMainThread` is called from the main thread, the
-   * continuation function will be invoked immediately before this
-   * method returns.
-   *
-   * If the function itself returns a `Future`, the function will not be
-   * considered complete until that returned `Future` also resolves.
-   *
-   * Any `then` continuations chained after this one will be invoked with the
-   * return value of the catch callback.
-   *
-   * @tparam Func The type of the function.
-   * @param f The function.
-   * @return A future that resolves after the supplied function completes.
-   */
-  template <typename Func> Future<T> catchInMainThread(Func&& f) {
-    return this->catchWithScheduler(
-        this->_pSchedulers->mainThread.immediate,
-        std::forward<Func>(f));
-  }
+    ~SharedFuture() noexcept {
+        if (_signal) orkester_shared_future_drop(_signal);
+    }
 
-  /**
-   * @brief Registers a continuation function to be invoked immediately, and
-   * invalidates this Future.
-   *
-   * When this Future is rejected, the continuation function will be invoked
-   * in whatever thread does the rejection. Similarly, if the Future is already
-   * rejected when `catchImmediately` is called, the continuation function will
-   * be invoked immediately before this method returns.
-   *
-   * If the function itself returns a `Future`, the function will not be
-   * considered complete until that returned `Future` also resolves.
-   *
-   * Any `then` continuations chained after this one will be invoked with the
-   * return value of the catch callback.
-   *
-   * @tparam Func The type of the function.
-   * @param f The function.
-   * @return A future that resolves after the supplied function completes.
-   */
-  template <typename Func> Future<T> catchImmediately(Func&& f) {
-    return this->catchWithScheduler(
-        async::inline_scheduler(),
-        std::forward<Func>(f));
-  }
+    bool isReady() const {
+        return _signal && orkester_shared_future_is_ready(_signal);
+    }
 
-  /**
-   * @brief Passes through one or more additional values to the next
-   * continuation.
-   *
-   * The next continuation will receive a tuple with each of the provided
-   * values, followed by the result of the current Future.
-   *
-   * @tparam TPassThrough The types to pass through to the next continuation.
-   * @param values The values to pass through to the next continuation.
-   * @return A new Future that resolves to a tuple with the pass-through values,
-   * followed by the result of the last Future.
-   */
-  template <typename... TPassThrough>
-  Future<std::tuple<TPassThrough..., T>>
-  thenPassThrough(TPassThrough&&... values) {
-    return this->thenImmediately(
-        [values = std::tuple(std::forward<TPassThrough>(values)...)](
-            const T& result) mutable {
-          return std::tuple_cat(std::move(values), std::make_tuple(result));
-        });
-  }
+    /// Block until resolved. Can be called multiple times (copies value).
+    T wait() const {
+        const char* errPtr = nullptr;
+        size_t errLen = 0;
+        bool ok = orkester_shared_future_wait(_signal, &errPtr, &errLen);
+        if (!ok && errPtr) {
+            std::string msg(errPtr, errLen);
+            orkester_string_drop(errPtr, errLen);
+            throw std::runtime_error(msg);
+        }
+        return _slot->peek(); // copy, don't consume
+    }
 
-  /**
-   * @brief Waits for the future to resolve or reject and returns the result.
-   *
-   * \attention This method must not be called from the main thread, the one
-   * that calls {@link AsyncSystem::dispatchMainThreadTasks}. Doing so can lead to a
-   * deadlock because the main thread tasks will never complete while this
-   * method is blocking the main thread.
-   *
-   * To wait in the main thread, use {@link waitInMainThread} instead.
-   *
-   * @return The value if the future resolves successfully.
-   * @throws An exception if the future rejected.
-   */
-  template <
-      typename U = T,
-      std::enable_if_t<std::is_same_v<U, T>, int> = 0,
-      std::enable_if_t<!std::is_same_v<U, void>, int> = 0>
-  const U& wait() const {
-    return this->_task.get();
-  }
+    T waitInMainThread() {
+        return wait(); // TODO: proper main-thread dispatch variant
+    }
 
-  /**
-   * @brief Waits for the future to resolve or reject.
-   *
-   * \attention This method must not be called from the main thread, the one
-   * that calls {@link AsyncSystem::dispatchMainThreadTasks}. Doing so can lead to a
-   * deadlock because the main thread tasks will never complete while this
-   * method is blocking the main thread.
-   *
-   * To wait in the main thread, use {@link waitInMainThread} instead.
-   *
-   * @throws An exception if the future rejected.
-   */
-  template <
-      typename U = T,
-      std::enable_if_t<std::is_same_v<U, T>, int> = 0,
-      std::enable_if_t<std::is_same_v<U, void>, int> = 0>
-  void wait() const {
-    this->_task.get();
-  }
+    /// Chain: worker thread.
+    template <typename Func>
+    CesiumImpl::ContinuationFutureType_t<Func, T>
+    thenInWorkerThread(Func&& f) {
+        return chain<Func>(orkester_context_t_ORKESTER_WORKER, std::forward<Func>(f));
+    }
 
-  /**
-   * @brief Waits for this future to resolve or reject in the main thread while
-   * also processing main-thread tasks.
-   *
-   * This method must be called from the main thread.
-   *
-   * The function does not return until {@link Future::isReady} returns true.
-   * In the meantime, main-thread tasks are processed as necessary. This method
-   * does not spin wait; it suspends the calling thread by waiting on a
-   * condition variable when there is no work to do.
-   *
-   * @return The value if the future resolves successfully.
-   * @throws An exception if the future rejected.
-   */
-  T waitInMainThread() {
-    return this->_pSchedulers->mainThread.dispatchUntilTaskCompletes(
-        std::move(this->_task));
-  }
+    /// Chain: main thread.
+    template <typename Func>
+    CesiumImpl::ContinuationFutureType_t<Func, T>
+    thenInMainThread(Func&& f) {
+        return chain<Func>(orkester_context_t_ORKESTER_MAIN, std::forward<Func>(f));
+    }
 
-  /**
-   * @brief Determines if this future is already resolved or rejected.
-   *
-   * If this method returns true, it is guaranteed that {@link wait} will
-   * not block but will instead immediately return a value or throw an
-   * exception.
-   *
-   * @return True if the future is already resolved or rejected and {@link wait}
-   * will not block; otherwise, false.
-   */
-  bool isReady() const { return this->_task.ready(); }
+    /// Chain: immediately.
+    template <typename Func>
+    CesiumImpl::ContinuationFutureType_t<Func, T>
+    thenImmediately(Func&& f) {
+        return chain<Func>(orkester_context_t_ORKESTER_IMMEDIATE, std::forward<Func>(f));
+    }
+
+    /// Chain in thread pool.
+    template <typename Func>
+    CesiumImpl::ContinuationFutureType_t<Func, T>
+    thenInThreadPool(const ThreadPool& pool, Func&& f) {
+        return chainInPool<Func>(pool, std::forward<Func>(f));
+    }
+
+    template <typename Func>
+    Future<T> catchInMainThread(Func&& f) {
+        return doCatch(orkester_context_t_ORKESTER_MAIN, std::forward<Func>(f));
+    }
+
+    template <typename Func>
+    Future<T> catchImmediately(Func&& f) {
+        return doCatch(orkester_context_t_ORKESTER_IMMEDIATE, std::forward<Func>(f));
+    }
+
+    template <typename... TPassThrough>
+    Future<std::tuple<std::remove_cvref_t<TPassThrough>..., T>>
+    thenPassThrough(TPassThrough&&... values) {
+        return thenImmediately(
+            [... captured = std::forward<TPassThrough>(values)](T result) mutable {
+                return std::make_tuple(std::move(captured)..., std::move(result));
+            });
+    }
 
 private:
-  SharedFuture(
-      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
-      async::shared_task<T>&& task) noexcept
-      : _pSchedulers(pSchedulers), _task(std::move(task)) {}
+    friend class AsyncSystem;
+    template <typename R> friend class Future;
+    template <typename R> friend class SharedFuture;
+    template <typename R> friend class Promise;
+    template <typename V> friend orkester_future_t CesiumImpl::stealSignal(SharedFuture<V>&);
+    template <typename V> friend std::shared_ptr<CesiumImpl::ValueSlot<V>> CesiumImpl::getSlot(SharedFuture<V>&);
 
-  template <typename Func, typename Scheduler>
-  CesiumImpl::ContinuationFutureType_t<Func, T>
-  thenWithScheduler(Scheduler& scheduler, const char* tracingName, Func&& f) {
-    // It would be nice if tracingName were a template parameter instead of a
-    // function parameter, but that triggers a bug in VS2017. It was previously
-    // a bug in VS2019, too, but has been fixed there:
-    // https://developercommunity.visualstudio.com/t/internal-compiler-error-when-compiling-a-template-1/534210
-#if CESIUM_TRACING_ENABLED
-    // When tracing is enabled, we measure the time between scheduling and
-    // dispatching of the work.
-    auto task = this->_task.then(
-        async::inline_scheduler(),
-        CesiumImpl::WithTracingShared<T>::begin(
-            tracingName,
-            std::forward<Func>(f)));
-#else
-    auto& task = this->_task;
-#endif
+    SharedFuture(const orkester_async_t* system,
+                 std::shared_ptr<CesiumImpl::ValueSlot<T>> slot,
+                 orkester_shared_future_t signal)
+        : _system(system), _slot(std::move(slot)), _signal(signal) {}
 
-    return CesiumImpl::ContinuationFutureType_t<Func, T>(
-        this->_pSchedulers,
-        task.then(
-            scheduler,
-            CesiumImpl::WithTracingShared<T>::end(
-                tracingName,
-                std::forward<Func>(f))));
-  }
+    /// Generic continuation chaining using context enum + simple callbacks.
+    template <typename Func>
+    auto chain(
+        orkester_context_t context,
+        Func&& f)
+    {
+        using RawResult = typename CesiumImpl::ContinuationReturnType<Func, T>::type;
+        using U = typename CesiumImpl::RemoveFuture<RawResult>::type;
+        constexpr bool needsUnwrap = CesiumImpl::IsFuture<RawResult>::value;
 
-  template <typename Func, typename Scheduler>
-  CesiumImpl::ContinuationFutureType_t<Func, std::exception>
-  catchWithScheduler(Scheduler& scheduler, Func&& f) {
-    return CesiumImpl::ContinuationFutureType_t<Func, std::exception>(
-        this->_pSchedulers,
-        this->_task.then(
-            async::inline_scheduler(),
-            CesiumImpl::
-                CatchFunction<Func, T, Scheduler, const async::shared_task<T>&>{
-                    scheduler,
-                    std::forward<Func>(f)}));
-  }
+        auto nextSlot = std::make_shared<CesiumImpl::ValueSlot<U>>();
 
-  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
-  async::shared_task<T> _task;
+        orkester_promise_t outPromise = nullptr;
+        orkester_future_t outFuture = nullptr;
+        orkester_promise_create(_system, &outPromise, &outFuture);
 
-  friend class AsyncSystem;
+        struct Adapter {
+            std::shared_ptr<CesiumImpl::ValueSlot<T>> inputSlot;
+            std::shared_ptr<CesiumImpl::ValueSlot<U>> outputSlot;
+            std::decay_t<Func> func;
+            orkester_promise_t promise;
+            const orkester_async_t* system;
 
-  template <typename R> friend struct CesiumImpl::ParameterizedTaskUnwrapper;
+            static void invoke(void* ctx) {
+                auto* self = static_cast<Adapter*>(ctx);
+                self->run();
+            }
 
-  friend struct CesiumImpl::TaskUnwrapper;
+            void run() {
+                try {
+                    if (inputSlot->hasError()) {
+                        outputSlot->storeError(CesiumImpl::extractError(*inputSlot));
+                        orkester_promise_resolve(promise);
+                        delete this;
+                        return;
+                    }
 
-  template <typename R> friend class Future;
-  template <typename R> friend class SharedFuture;
+                    if constexpr (std::is_void_v<T>) {
+                        if constexpr (needsUnwrap) {
+                            auto innerFuture = func();
+                            unwrap(std::move(innerFuture));
+                            return;
+                        } else if constexpr (std::is_void_v<U>) {
+                            func();
+                        } else {
+                            outputSlot->store(func());
+                        }
+                    } else {
+                        if constexpr (needsUnwrap) {
+                            auto innerFuture = func(inputSlot->peek());
+                            unwrap(std::move(innerFuture));
+                            return;
+                        } else if constexpr (std::is_void_v<U>) {
+                            func(inputSlot->peek());
+                        } else {
+                            outputSlot->store(func(inputSlot->peek()));
+                        }
+                    }
+                } catch (...) {
+                    outputSlot->storeError(std::current_exception());
+                }
+                orkester_promise_resolve(promise);
+                delete this;
+            }
+
+            void unwrap(Future<U>&& innerFuture) {
+                auto innerSlot = CesiumImpl::getSlot(innerFuture);
+                auto innerSignal = CesiumImpl::stealSignal(innerFuture);
+
+                struct Forwarder {
+                    std::shared_ptr<CesiumImpl::ValueSlot<U>> innerSlot;
+                    std::shared_ptr<CesiumImpl::ValueSlot<U>> outputSlot;
+                    orkester_promise_t promise;
+
+                    static void invoke(void* ctx) {
+                        auto* fwd = static_cast<Forwarder*>(ctx);
+                        try {
+                            if (fwd->innerSlot->hasError()) {
+                                fwd->outputSlot->storeError(CesiumImpl::extractError(*fwd->innerSlot));
+                            } else if constexpr (!std::is_void_v<U>) {
+                                fwd->outputSlot->store(fwd->innerSlot->take());
+                            }
+                        } catch (...) {
+                            fwd->outputSlot->storeError(std::current_exception());
+                        }
+                        orkester_promise_resolve(fwd->promise);
+                        delete fwd;
+                    }
+                };
+
+                auto* fwd = new Forwarder{innerSlot, outputSlot, promise};
+                orkester_future_then(innerSignal, orkester_context_t_ORKESTER_IMMEDIATE, &Forwarder::invoke, fwd);
+                delete this;
+            }
+
+            void unwrap(SharedFuture<U>&& innerShared) {
+                auto slot = CesiumImpl::getSlot(innerShared);
+                orkester_future_t sig = CesiumImpl::stealSignal(innerShared);
+                Future<U> unique(system, std::move(slot), sig);
+                unwrap(std::move(unique));
+            }
+        };
+
+        auto* adapter = new Adapter{_slot, nextSlot, std::forward<Func>(f), outPromise, _system};
+        orkester_shared_future_then(_signal, context, &Adapter::invoke, adapter);
+        // SharedFuture does NOT null _signal (it can be reused)
+        return Future<U>(_system, nextSlot, outFuture);
+    }
+
+    /// Continuation chaining via thread pool.
+    template <typename Func>
+    auto chainInPool(const ThreadPool& pool, Func&& f)
+    {
+        using RawResult = typename CesiumImpl::ContinuationReturnType<Func, T>::type;
+        using U = typename CesiumImpl::RemoveFuture<RawResult>::type;
+        constexpr bool needsUnwrap = CesiumImpl::IsFuture<RawResult>::value;
+
+        auto nextSlot = std::make_shared<CesiumImpl::ValueSlot<U>>();
+
+        orkester_promise_t outPromise = nullptr;
+        orkester_future_t outFuture = nullptr;
+        orkester_promise_create(_system, &outPromise, &outFuture);
+
+        struct Adapter {
+            std::shared_ptr<CesiumImpl::ValueSlot<T>> inputSlot;
+            std::shared_ptr<CesiumImpl::ValueSlot<U>> outputSlot;
+            std::decay_t<Func> func;
+            orkester_promise_t promise;
+            const orkester_async_t* system;
+
+            static void invoke(void* ctx) {
+                auto* self = static_cast<Adapter*>(ctx);
+                self->run();
+            }
+
+            void run() {
+                try {
+                    if (inputSlot->hasError()) {
+                        outputSlot->storeError(CesiumImpl::extractError(*inputSlot));
+                        orkester_promise_resolve(promise);
+                        delete this;
+                        return;
+                    }
+
+                    if constexpr (std::is_void_v<T>) {
+                        if constexpr (needsUnwrap) {
+                            auto innerFuture = func();
+                            unwrap(std::move(innerFuture));
+                            return;
+                        } else if constexpr (std::is_void_v<U>) {
+                            func();
+                        } else {
+                            outputSlot->store(func());
+                        }
+                    } else {
+                        if constexpr (needsUnwrap) {
+                            auto innerFuture = func(inputSlot->peek());
+                            unwrap(std::move(innerFuture));
+                            return;
+                        } else if constexpr (std::is_void_v<U>) {
+                            func(inputSlot->peek());
+                        } else {
+                            outputSlot->store(func(inputSlot->peek()));
+                        }
+                    }
+                } catch (...) {
+                    outputSlot->storeError(std::current_exception());
+                }
+                orkester_promise_resolve(promise);
+                delete this;
+            }
+
+            void unwrap(Future<U>&& innerFuture) {
+                auto innerSlot = CesiumImpl::getSlot(innerFuture);
+                auto innerSignal = CesiumImpl::stealSignal(innerFuture);
+
+                struct Forwarder {
+                    std::shared_ptr<CesiumImpl::ValueSlot<U>> innerSlot;
+                    std::shared_ptr<CesiumImpl::ValueSlot<U>> outputSlot;
+                    orkester_promise_t promise;
+
+                    static void invoke(void* ctx) {
+                        auto* fwd = static_cast<Forwarder*>(ctx);
+                        try {
+                            if (fwd->innerSlot->hasError()) {
+                                fwd->outputSlot->storeError(CesiumImpl::extractError(*fwd->innerSlot));
+                            } else if constexpr (!std::is_void_v<U>) {
+                                fwd->outputSlot->store(fwd->innerSlot->take());
+                            }
+                        } catch (...) {
+                            fwd->outputSlot->storeError(std::current_exception());
+                        }
+                        orkester_promise_resolve(fwd->promise);
+                        delete fwd;
+                    }
+                };
+
+                auto* fwd = new Forwarder{innerSlot, outputSlot, promise};
+                orkester_future_then(innerSignal, orkester_context_t_ORKESTER_IMMEDIATE, &Forwarder::invoke, fwd);
+                delete this;
+            }
+
+            void unwrap(SharedFuture<U>&& innerShared) {
+                auto slot = CesiumImpl::getSlot(innerShared);
+                orkester_future_t sig = CesiumImpl::stealSignal(innerShared);
+                Future<U> unique(system, std::move(slot), sig);
+                unwrap(std::move(unique));
+            }
+        };
+
+        auto* adapter = new Adapter{_slot, nextSlot, std::forward<Func>(f), outPromise, _system};
+        orkester_shared_future_then_in_pool(_signal, pool._pool, &Adapter::invoke, adapter);
+        return Future<U>(_system, nextSlot, outFuture);
+    }
+
+    /// Generic catch chaining using context enum.
+    template <typename Func>
+    Future<T> doCatch(
+        orkester_context_t context,
+        Func&& f)
+    {
+        auto nextSlot = std::make_shared<CesiumImpl::ValueSlot<T>>();
+
+        orkester_promise_t outPromise = nullptr;
+        orkester_future_t outFuture = nullptr;
+        orkester_promise_create(_system, &outPromise, &outFuture);
+
+        struct CatchAdapter {
+            std::shared_ptr<CesiumImpl::ValueSlot<T>> inputSlot;
+            std::shared_ptr<CesiumImpl::ValueSlot<T>> outputSlot;
+            std::decay_t<Func> func;
+            orkester_promise_t promise;
+
+            static void invoke(void* ctx) {
+                auto* self = static_cast<CatchAdapter*>(ctx);
+                try {
+                    if (self->inputSlot->hasError()) {
+                        try {
+                            (void)self->inputSlot->peek(); // rethrows
+                        } catch (std::exception& e) {
+                            if constexpr (std::is_void_v<T>) {
+                                self->func(std::move(e));
+                            } else {
+                                self->outputSlot->store(self->func(std::move(e)));
+                            }
+                            orkester_promise_resolve(self->promise);
+                            delete self;
+                            return;
+                        }
+                    }
+                    // No error — pass through
+                    if constexpr (!std::is_void_v<T>) {
+                        self->outputSlot->store(self->inputSlot->peek());
+                    }
+                } catch (...) {
+                    self->outputSlot->storeError(std::current_exception());
+                }
+                orkester_promise_resolve(self->promise);
+                delete self;
+            }
+        };
+
+        auto* adapter = new CatchAdapter{_slot, nextSlot, std::forward<Func>(f), outPromise};
+        orkester_shared_future_then(_signal, context, &CatchAdapter::invoke, adapter);
+        return Future<T>(_system, nextSlot, outFuture);
+    }
+
+    const orkester_async_t* _system = nullptr;
+    std::shared_ptr<CesiumImpl::ValueSlot<T>> _slot;
+    orkester_shared_future_t _signal = nullptr;
 };
+
+// ─── void specialization ────────────────────────────────────────────────────
+
+template <>
+inline void SharedFuture<void>::wait() const {
+    const char* errPtr = nullptr;
+    size_t errLen = 0;
+    bool ok = orkester_shared_future_wait(_signal, &errPtr, &errLen);
+    if (!ok && errPtr) {
+        std::string msg(errPtr, errLen);
+        orkester_string_drop(errPtr, errLen);
+        throw std::runtime_error(msg);
+    }
+    _slot->peek();
+}
+
+// ─── Helper function definitions for SharedFuture ───────────────────────────
+
+namespace CesiumImpl {
+
+template <typename V>
+orkester_future_t stealSignal(SharedFuture<V>& f) {
+    orkester_future_t unique = orkester_shared_future_into_unique(f._signal);
+    f._signal = nullptr;
+    return unique;
+}
+
+template <typename V>
+std::shared_ptr<ValueSlot<V>> getSlot(SharedFuture<V>& f) {
+    return f._slot;
+}
+
+} // namespace CesiumImpl
 
 } // namespace CesiumAsync

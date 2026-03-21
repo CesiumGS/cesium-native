@@ -7,7 +7,7 @@ endif()
 get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
 if(toolchainFile STREQUAL "Emscripten.cmake")
     set(CESIUM_TARGET_WASM ON)
-    # Include the toolchain directly as ezvcpkg will overwrite the 
+    # Include the toolchain directly as ezvcpkg will overwrite the
     # toolchain before it's loaded
     include(${CMAKE_TOOLCHAIN_FILE})
 endif()
@@ -121,7 +121,7 @@ message(STATUS "VCPKG_OVERLAY_TRIPLETS ${VCPKG_OVERLAY_TRIPLETS}")
 # with the installation
 # Note that fmt is a public dependency of the vcpkg version of spdlog
 # STB is not technically part of the public interface, but it is used by the downstream Cesium for Unreal project
-set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada-url)
+set(PACKAGES_PUBLIC expected-lite fmt glm rapidjson spdlog stb ada-url)
 # These packages are used in the code and produce binaries, but are not part of the public interface.  Therefore we need
 # to distribute the binaries for linking, but not the headers, as downstream consumers don't need them
 # OpenSSL and abseil are both dependencies of s2geometry
@@ -377,7 +377,6 @@ list(APPEND CMAKE_FIND_ROOT_PATH "${PACKAGE_BUILD_DIR}")
 find_package(modp_b64 REQUIRED)
 
 find_package(ada CONFIG REQUIRED)
-find_package(Async++ CONFIG REQUIRED)
 find_package(blend2d CONFIG REQUIRED)
 find_package(doctest CONFIG REQUIRED)
 find_package(draco CONFIG REQUIRED)
@@ -391,6 +390,7 @@ find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(spz CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
+find_package(orkester CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
 find_package(zlib-ng CONFIG REQUIRED)
@@ -425,6 +425,7 @@ add_subdirectory(CesiumJsonWriter)
 add_subdirectory(CesiumGltfContent)
 add_subdirectory(CesiumGltfReader)
 add_subdirectory(CesiumGltfWriter)
+
 add_subdirectory(CesiumAsync)
 add_subdirectory(Cesium3DTiles)
 add_subdirectory(Cesium3DTilesReader)
@@ -448,6 +449,16 @@ if (CESIUM_TESTS_ENABLED)
     # will be found by ctest
     enable_testing()
     add_subdirectory(CesiumNativeTests)
+endif()
+
+if(NOT TARGET test_orkester_async)
+    add_executable(test_orkester_async CesiumAsync/test/TestAsyncSystemOrkester.cpp)
+    target_link_libraries(test_orkester_async PRIVATE CesiumAsync spdlog::spdlog)
+    target_compile_features(test_orkester_async PRIVATE cxx_std_20)
+endif()
+
+if(CESIUM_TESTS_ENABLED)
+    add_test(NAME OrkesterAsyncTests COMMAND test_orkester_async)
 endif()
 
 

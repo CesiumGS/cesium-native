@@ -39,9 +39,9 @@ cesium_target_include_directories(
 
 target_link_libraries(CesiumAsync
     PUBLIC
+        orkester::ffi
         CesiumUtility
         spdlog::spdlog
-        Async++
     PRIVATE
         unofficial::sqlite3::sqlite3
 )

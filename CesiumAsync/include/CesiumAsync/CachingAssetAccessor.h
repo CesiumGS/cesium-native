@@ -4,6 +4,7 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/ICacheDatabase.h>
 #include <CesiumAsync/ThreadPool.h>
+#include <CesiumUtility/Tracing.h>
 
 #include <spdlog/fwd.h>
 

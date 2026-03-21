@@ -1,0 +1,7 @@
+{
+  "name": "orkester",
+  "version-semver": "0.1.0",
+  "description": "Pre-built orkester async runtime (Rust FFI static libraries)",
+  "homepage": "https://github.com/calebbuffa/socle",
+  "license": "Apache-2.0"
+}
