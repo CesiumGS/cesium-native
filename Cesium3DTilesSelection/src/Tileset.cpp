@@ -860,10 +860,10 @@ double Tileset::_computeSse(
     const std::vector<ViewState>& frustums,
     const Tile& tile,
     const std::vector<double>& distances) const noexcept {
-
   double largestSse = 0.0;
 
-  for (size_t i = 0; i < frustums.size() && i < distances.size(); ++i) {
+  CESIUM_ASSERT(frustums.size() == distances.size());
+  for (size_t i = 0; i < frustums.size(); ++i) {
     const ViewState& frustum = frustums[i];
     const double distance = distances[i];
 
@@ -882,6 +882,13 @@ bool Tileset::_meetsSseThreshold(double sse, bool culled) const noexcept {
                       sse < this->_options.culledScreenSpaceError
                 : sse < this->_options.maximumScreenSpaceError;
 }
+
+namespace {
+void addTileToRender(ViewUpdateResult& result, Tile& tile, double sse) {
+  result.tilesToRenderThisFrame.emplace_back(&tile);
+  result.tileScreenSpaceErrorThisFrame.emplace_back(sse);
+}
+} // namespace
 
 // Visits a tile for possible rendering. When we call this function with a tile:
 //   * It is not yet known whether the tile is visible.
@@ -1019,8 +1026,7 @@ Tileset::TraversalDetails Tileset::_renderLeaf(
     ViewUpdateResult& result) {
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  result.tilesToRenderThisFrame.emplace_back(&tile);
-  result.tileScreenSpaceErrorThisFrame.emplace_back(tileSse);
+  addTileToRender(result, tile, tileSse);
 
   addTileToLoadQueue(
       frameState,
@@ -1072,8 +1078,7 @@ Tileset::TraversalDetails Tileset::_renderInnerTile(
       result);
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  result.tilesToRenderThisFrame.emplace_back(&tile);
-  result.tileScreenSpaceErrorThisFrame.emplace_back(tileSse);
+  addTileToRender(result, tile, tileSse);
 
   return Tileset::createTraversalDetailsForSingleTile(frameState, tile);
 }
@@ -1088,8 +1093,7 @@ bool Tileset::_loadAndRenderAdditiveRefinedTile(
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
-    result.tilesToRenderThisFrame.emplace_back(&tile);
-    result.tileScreenSpaceErrorThisFrame.emplace_back(tileSse);
+    addTileToRender(result, tile, tileSse);
     if (!queuedForLoad)
       addTileToLoadQueue(
           frameState,
@@ -1153,8 +1157,7 @@ bool Tileset::_kickDescendantsAndRenderTile(
       sseList.end());
 
   if (tile.getRefine() != Cesium3DTilesSelection::TileRefine::Add) {
-    renderList.emplace_back(&tile);
-    sseList.push_back(tileSse);
+    addTileToRender(result, tile, tileSse);
   }
 
   traversalState.currentState() =

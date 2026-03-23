@@ -597,6 +597,7 @@ private:
    * @param result The current view update result.
    * @param tilePriority The load priority of this tile.
    * priority.
+   * @param tileSse The screen space error of this tile.
    * @param queuedForLoad True if this tile has already been queued for loading.
    * @return true The additive-refined tile was queued for load and added to the
    * render list.
