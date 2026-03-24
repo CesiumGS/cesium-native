@@ -9,6 +9,7 @@
 ##### Additions :tada:
 
 - Added a constructor overload for `Cesium3DTilesSelection::ITwinCesiumCuratedContentLoaderFactory` to override the iTwin Cesium Curated Content base URL. This makes it possible to connect to alternate servers (e.g., staging, QA, mock servers).
+- Added `ViewUpdateResult::tileScreenSpaceErrorThisFrame`, which stores the screen space errors computed for tiles in `tilesToRenderThisFrame`.
 
 ##### Fixes :wrench:
 
