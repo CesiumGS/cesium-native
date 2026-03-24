@@ -17,7 +17,7 @@ namespace CesiumGltf {
  * @brief `EXT_primitive_voxels` extension for a primitive in a glTF model to
  * indicate voxel-based volumetric data
  */
-struct CESIUMGLTF_API ExtensionExtPrimitiveVoxels final
+struct CESIUMGLTF_API ExtensionExtPrimitiveVoxelsSpec
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
@@ -60,7 +60,7 @@ struct CESIUMGLTF_API ExtensionExtPrimitiveVoxels final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionExtPrimitiveVoxels));
+    accum += int64_t(sizeof(ExtensionExtPrimitiveVoxelsSpec));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
     accum += int64_t(sizeof(int64_t) * this->dimensions.capacity());
@@ -77,5 +77,12 @@ struct CESIUMGLTF_API ExtensionExtPrimitiveVoxels final
     }
     return accum;
   }
+
+protected:
+  /**
+   * @brief This class is not meant to be instantiated directly. Use {@link ExtensionExtPrimitiveVoxels} instead.
+   */
+  ExtensionExtPrimitiveVoxelsSpec() = default;
+  friend struct ExtensionExtPrimitiveVoxels;
 };
 } // namespace CesiumGltf

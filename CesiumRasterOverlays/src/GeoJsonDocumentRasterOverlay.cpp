@@ -408,7 +408,7 @@ void addPrimitivesToData(
     const VectorStyle& style,
     const Ellipsoid& ellipsoid) {
   std::optional<GlobeRectangle> rect;
-  double maxLineWidthPixels;
+  double maxLineWidthPixels = 0.0;
   std::visit(
       RectangleAndLineWidthFromObjectVisitor{
           rect,

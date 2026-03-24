@@ -877,6 +877,48 @@ TEST_CASE("Test tile state machine") {
     CHECK(!upsampledTile.isRenderContent());
     CHECK(!upsampledTile.getContent().getRenderContent());
   }
+
+  SUBCASE("Resolves root tile promise for invalid URL") {
+    // create manager
+    TilesetOptions options{};
+    options.contentOptions.generateMissingNormalsSmooth = true;
+
+    // Create an invalid Cesium ion loader that will never attempt to make a
+    // request.
+    IntrusivePointer<TilesetContentManager> pManager =
+        TilesetContentManager::createFromUrl(externals, options, std::string());
+
+    bool eventResolved = false;
+    pManager->getRootTileAvailableEvent().thenInMainThread(
+        [&eventResolved]() { eventResolved = true; });
+
+    pManager->waitUntilIdle(5000.0);
+    CHECK(eventResolved);
+    CHECK(!pManager->getRootTile());
+  }
+
+  SUBCASE("Resolves root tile promise for invalid loader") {
+    // create manager
+    TilesetOptions options{};
+    options.contentOptions.generateMissingNormalsSmooth = true;
+
+    // Create an invalid Cesium ion loader that will never attempt to make a
+    // request.
+    IntrusivePointer<TilesetContentManager> pManager =
+        TilesetContentManager::createFromCesiumIon(
+            externals,
+            options,
+            0,
+            std::string());
+
+    bool eventResolved = false;
+    pManager->getRootTileAvailableEvent().thenInMainThread(
+        [&eventResolved]() { eventResolved = true; });
+
+    pManager->waitUntilIdle(5000.0);
+    CHECK(eventResolved);
+    CHECK(!pManager->getRootTile());
+  }
 }
 
 TEST_CASE("Test the tileset content manager's post processing for gltf") {
