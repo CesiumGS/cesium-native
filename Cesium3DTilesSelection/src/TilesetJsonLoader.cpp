@@ -895,7 +895,8 @@ TilesetJsonLoader::createLoader(
         if (tilesetJson.HasParseError()) {
           TilesetContentLoaderResult<TilesetJsonLoader> result;
           result.errors.emplaceError(fmt::format(
-              "Error when parsing tileset JSON, error code {} at byte offset "
+              "Error when parsing tileset JSON, error code {} at byte "
+              "offset "
               "{}",
               tilesetJson.GetParseError(),
               tilesetJson.GetErrorOffset()));

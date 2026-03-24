@@ -76,7 +76,8 @@ CesiumAsync::Future<GltfConverterResult> GltfConverters::convert(
 
   ErrorList errors;
   errors.emplaceError(fmt::format(
-      "No loader registered for tile with content type '{}' and magic value "
+      "No loader registered for tile with content type '{}' and magic "
+      "value "
       "'{}'",
       fileExtension,
       magic));

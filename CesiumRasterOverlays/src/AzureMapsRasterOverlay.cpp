@@ -307,7 +307,8 @@ AzureMapsRasterOverlay::createTileProvider(
       return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
           RasterOverlayLoadType::TileProvider,
           pRequest,
-          "Azure Maps returned no valid endpoints for the given tilesetId."});
+          "Azure Maps returned no valid endpoints for the given "
+          "tilesetId."});
     }
 
     std::string topLevelCredit;

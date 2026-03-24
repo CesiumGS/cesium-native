@@ -1612,7 +1612,8 @@ void updateExtensionWithBinaryProperty(
   const auto& typeIt = propertyValue.FindMember("type");
   if (typeIt == propertyValue.MemberEnd() || !typeIt->value.IsString()) {
     result.emplaceWarning(fmt::format(
-        "Skip converting {}. The binary property doesn't have a valid type.",
+        "Skip converting {}. The binary property doesn't have a valid "
+        "type.",
         propertyName));
     return;
   }
@@ -1625,7 +1626,8 @@ void updateExtensionWithBinaryProperty(
   auto convertedTypeIt = batchTableTypeToGltfType.find(type);
   if (convertedTypeIt == batchTableTypeToGltfType.end()) {
     result.emplaceWarning(fmt::format(
-        "Skip converting {}. The binary property doesn't have a valid type.",
+        "Skip converting {}. The binary property doesn't have a valid "
+        "type.",
         propertyName));
     return;
   }

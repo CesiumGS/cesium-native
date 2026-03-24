@@ -6,12 +6,6 @@
     "license": ["Apache 2.0"]
   },
   {
-    "name": "Async++",
-    "url": "https://github.com/Amanieu/asyncplusplus",
-    "version": "756893feb9e69c098225d5a454a668a2c139e4be",
-    "license": ["MIT"]
-  },
-  {
     "name": "cpp-httplib",
     "url": "https://github.com/yhirose/cpp-httplib",
     "version": "0.10.3",

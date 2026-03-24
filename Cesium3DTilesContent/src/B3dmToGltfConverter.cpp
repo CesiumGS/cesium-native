@@ -158,7 +158,8 @@ rapidjson::Document parseFeatureTableJsonData(
       featureTableJsonData.size());
   if (document.HasParseError()) {
     result.errors.emplaceError(fmt::format(
-        "Error when parsing feature table JSON, error code {} at byte offset "
+        "Error when parsing feature table JSON, error code {} at byte "
+        "offset "
         "{}",
         document.GetParseError(),
         document.GetErrorOffset()));

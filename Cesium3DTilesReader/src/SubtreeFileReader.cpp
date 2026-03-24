@@ -137,7 +137,8 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
   if (data.size() < sizeof(SubtreeHeader)) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
     result.errors.emplace_back(fmt::format(
-        "The binary Subtree file is invalid because it is too small to include "
+        "The binary Subtree file is invalid because it is too small to "
+        "include "
         "a Subtree header.",
         data.size()));
     return asyncSystem.createResolvedFuture(std::move(result));
@@ -148,7 +149,8 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
   if (header->jsonByteLength > data.size() - sizeof(SubtreeHeader)) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
     result.errors.emplace_back(fmt::format(
-        "The binary Subtree file is invalid because it is too small to include "
+        "The binary Subtree file is invalid because it is too small to "
+        "include "
         "the jsonByteLength specified in its header.",
         data.size()));
     return asyncSystem.createResolvedFuture(std::move(result));
@@ -158,7 +160,8 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadBinary(
       data.size() - sizeof(SubtreeHeader) - header->jsonByteLength) {
     CesiumJsonReader::ReadJsonResult<Subtree> result;
     result.errors.emplace_back(fmt::format(
-        "The binary Subtree file is invalid because it is too small to include "
+        "The binary Subtree file is invalid because it is too small to "
+        "include "
         "the binaryByteLength specified in its header.",
         data.size()));
     return asyncSystem.createResolvedFuture(std::move(result));

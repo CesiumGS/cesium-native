@@ -287,7 +287,8 @@ void parseJsonAndBinaryData(
       featureTableJsonData.size());
   if (convertedI3dm.pFeatureTableJson->HasParseError()) {
     errors.emplaceError(fmt::format(
-        "Error when parsing feature table JSON, error code {} at byte offset "
+        "Error when parsing feature table JSON, error code {} at byte "
+        "offset "
         "{}",
         static_cast<uint64_t>(convertedI3dm.pFeatureTableJson->GetParseError()),
         convertedI3dm.pFeatureTableJson->GetErrorOffset()));
@@ -310,7 +311,8 @@ void parseJsonAndBinaryData(
         batchTableJsonData.size());
     if (convertedI3dm.pBatchTableJson->HasParseError()) {
       errors.emplaceError(fmt::format(
-          "Error when parsing batch table JSON, error code {} at byte offset "
+          "Error when parsing batch table JSON, error code {} at byte "
+          "offset "
           "{}",
           static_cast<uint64_t>(
               convertedI3dm.pFeatureTableJson->GetParseError()),

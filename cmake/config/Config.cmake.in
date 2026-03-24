@@ -7,7 +7,6 @@ include(CMakeFindDependencyMacro)
 find_dependency(modp_b64 REQUIRED)
 
 find_dependency(ada CONFIG REQUIRED)
-find_dependency(Async++ CONFIG REQUIRED)
 find_dependency(blend2d CONFIG REQUIRED)
 find_dependency(doctest CONFIG REQUIRED)
 find_dependency(draco CONFIG REQUIRED)

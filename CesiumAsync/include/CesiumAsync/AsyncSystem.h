@@ -1,438 +1,448 @@
 #pragma once
 
-#include "Impl/ContinuationFutureType.h"
-#include "Impl/RemoveFuture.h"
-#include "Impl/WithTracing.h"
-#include "Impl/cesium-async++.h"
-
 #include <CesiumAsync/Future.h>
+#include <CesiumAsync/ITaskProcessor.h>
 #include <CesiumAsync/Library.h>
 #include <CesiumAsync/Promise.h>
+#include <CesiumAsync/SharedFuture.h>
 #include <CesiumAsync/ThreadPool.h>
-#include <CesiumUtility/Tracing.h>
-#include <CesiumUtility/transformTuple.h>
 
+#include <functional>
 #include <memory>
-#include <type_traits>
+#include <optional>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace CesiumAsync {
+
 class ITaskProcessor;
+class ThreadPool;
 
-class AsyncSystem;
-
-/**
- * @brief A system for managing asynchronous requests and tasks.
- *
- * Instances of this class may be safely and efficiently stored and passed
- * around by value. However, it is essential that the _last_ AsyncSystem
- * instance be destroyed only after all continuations have run to completion.
- * Otherwise, continuations may be scheduled using invalid scheduler instances,
- * leading to a crash. Broadly, there are two ways to achieve this:
- *
- *   * Wait until all Futures complete before destroying the "owner" of the
- *     AsyncSystem.
- *   * Make the AsyncSystem a global or static local in order to extend its
- *     lifetime all the way until program termination.
- */
 class CESIUMASYNC_API AsyncSystem final {
 public:
-  /**
-   * @brief Constructs a new instance.
-   *
-   * @param pTaskProcessor The interface used to run tasks in background
-   * threads.
-   */
-  AsyncSystem(const std::shared_ptr<ITaskProcessor>& pTaskProcessor) noexcept;
+  explicit AsyncSystem(
+      const std::shared_ptr<ITaskProcessor>& pTaskProcessor) noexcept {
+    auto* ctx = new std::shared_ptr<ITaskProcessor>(pTaskProcessor);
 
-  /**
-   * @brief Creates a new Future by immediately invoking a function and giving
-   * it the opportunity to resolve or reject a {@link Promise}.
-   *
-   * The {@link Promise} passed to the callback `f` may be resolved or rejected
-   * asynchronously, even after the function has returned.
-   *
-   * This method is very similar to {@link AsyncSystem::createPromise}, except
-   * that that method returns the Promise directly. The advantage of using this
-   * method instead is that it is more exception-safe.  If the callback `f`
-   * throws an exception, the `Future` will be rejected automatically and the
-   * exception will not escape the callback.
-   *
-   * @tparam T The type that the Future resolves to.
-   * @tparam Func The type of the callback function.
-   * @param f The callback function to invoke immediately to create the Future.
-   * @return A Future that will resolve when the callback function resolves the
-   * supplied Promise.
-   */
+    _system = orkester_async_create(
+        // dispatch: schedule work(work_data) on a background thread
+        [](void* context, orkester_callback_fn_t work, void* work_data) {
+          auto* p = static_cast<std::shared_ptr<ITaskProcessor>*>(context);
+          (*p)->startTask([work, work_data]() { work(work_data); });
+        },
+        static_cast<void*>(ctx),
+        // destroy: clean up the shared_ptr
+        [](void* context) {
+          delete static_cast<std::shared_ptr<ITaskProcessor>*>(context);
+        });
+  }
+
+  ~AsyncSystem() noexcept {
+    if (_system)
+      orkester_async_destroy(_system);
+  }
+
+  // Copyable (cheap Arc clone on Rust side)
+  AsyncSystem(const AsyncSystem& other) noexcept
+      : _system(other._system ? orkester_async_clone(other._system) : nullptr) {
+  }
+
+  AsyncSystem& operator=(const AsyncSystem& other) noexcept {
+    if (this != &other) {
+      if (_system)
+        orkester_async_destroy(_system);
+      _system = other._system ? orkester_async_clone(other._system) : nullptr;
+    }
+    return *this;
+  }
+
+  AsyncSystem(AsyncSystem&& other) noexcept : _system(other._system) {
+    other._system = nullptr;
+  }
+  AsyncSystem& operator=(AsyncSystem&& other) noexcept {
+    if (this != &other) {
+      if (_system)
+        orkester_async_destroy(_system);
+      _system = other._system;
+      other._system = nullptr;
+    }
+    return *this;
+  }
+
+  /// Create a Future via callback that receives a Promise.
   template <typename T, typename Func> Future<T> createFuture(Func&& f) const {
-    std::shared_ptr<async::event_task<T>> pEvent =
-        std::make_shared<async::event_task<T>>();
+    auto slot = std::make_shared<CesiumImpl::ValueSlot<T>>();
 
-    Promise<T> promise(this->_pSchedulers, pEvent);
+    orkester_promise_t promiseHandle = nullptr;
+    orkester_future_t futureHandle = nullptr;
+    orkester_promise_create(_system, &promiseHandle, &futureHandle);
 
-    try {
-      f(promise);
-    } catch (...) {
-      promise.reject(std::current_exception());
+    f(Promise<T>(_system, slot, promiseHandle, nullptr));
+    return Future<T>(_system, slot, futureHandle);
+  }
+
+  /// Create a Promise<T> directly.
+  template <typename T> Promise<T> createPromise() const {
+    auto slot = std::make_shared<CesiumImpl::ValueSlot<T>>();
+
+    orkester_promise_t promiseHandle = nullptr;
+    orkester_future_t futureHandle = nullptr;
+    orkester_promise_create(_system, &promiseHandle, &futureHandle);
+
+    return Promise<T>(_system, slot, promiseHandle, futureHandle);
+  }
+
+  /// Create a pre-resolved Future<T>.
+  template <typename T> Future<T> createResolvedFuture(T&& value) const {
+    auto slot = std::make_shared<CesiumImpl::ValueSlot<T>>();
+    slot->store(std::forward<T>(value));
+
+    auto signal = orkester_future_create_resolved(_system);
+    return Future<T>(_system, slot, signal);
+  }
+
+  /// Create a pre-resolved Future<void>.
+  Future<void> createResolvedFuture() const {
+    auto slot = std::make_shared<CesiumImpl::ValueSlot<void>>();
+    auto signal = orkester_future_create_resolved(_system);
+    return Future<void>(_system, slot, signal);
+  }
+
+  /// Run a function in a worker thread.
+  template <typename Func> auto runInWorkerThread(Func&& f) const {
+    using RawResult = std::invoke_result_t<Func>;
+    using U = typename CesiumImpl::RemoveFuture<RawResult>::type;
+    constexpr bool needsUnwrap = CesiumImpl::IsFuture<RawResult>::value;
+
+    if constexpr (needsUnwrap) {
+      // Delegate to chain which auto-unwraps via orchestration protocol.
+      return createResolvedFuture().thenInWorkerThread(std::forward<Func>(f));
+    } else {
+      auto outputSlot = std::make_shared<CesiumImpl::ValueSlot<U>>();
+
+      struct WorkerAdapter {
+        std::decay_t<Func> func;
+        std::shared_ptr<CesiumImpl::ValueSlot<U>> slot;
+
+        static void invoke(void* ctx) {
+          auto* self = static_cast<WorkerAdapter*>(ctx);
+          try {
+            if constexpr (std::is_void_v<U>) {
+              self->func();
+            } else {
+              self->slot->store(self->func());
+            }
+          } catch (...) {
+            self->slot->storeError(std::current_exception());
+          }
+          delete self;
+        }
+      };
+
+      auto* adapter = new WorkerAdapter{std::forward<Func>(f), outputSlot};
+      auto signal = orkester_async_run_in_worker(
+          _system,
+          &WorkerAdapter::invoke,
+          adapter);
+      return Future<U>(_system, outputSlot, signal);
+    }
+  }
+
+  /// Run a function in the main thread.
+  template <typename Func> auto runInMainThread(Func&& f) const {
+    using RawResult = std::invoke_result_t<Func>;
+    using U = typename CesiumImpl::RemoveFuture<RawResult>::type;
+    constexpr bool needsUnwrap = CesiumImpl::IsFuture<RawResult>::value;
+
+    if constexpr (needsUnwrap) {
+      // Delegate to chain which auto-unwraps via orchestration protocol.
+      return createResolvedFuture().thenInMainThread(std::forward<Func>(f));
+    } else {
+      auto outputSlot = std::make_shared<CesiumImpl::ValueSlot<U>>();
+
+      struct MainAdapter {
+        std::decay_t<Func> func;
+        std::shared_ptr<CesiumImpl::ValueSlot<U>> slot;
+
+        static void invoke(void* ctx) {
+          auto* self = static_cast<MainAdapter*>(ctx);
+          try {
+            if constexpr (std::is_void_v<U>) {
+              self->func();
+            } else {
+              self->slot->store(self->func());
+            }
+          } catch (...) {
+            self->slot->storeError(std::current_exception());
+          }
+          delete self;
+        }
+      };
+
+      auto* adapter = new MainAdapter{std::forward<Func>(f), outputSlot};
+      auto signal =
+          orkester_async_run_in_main(_system, &MainAdapter::invoke, adapter);
+      return Future<U>(_system, outputSlot, signal);
+    }
+  }
+
+  /// Run a function in a thread pool.
+  template <typename Func>
+  auto runInThreadPool(const ThreadPool& pool, Func&& f) const {
+    using RawResult = std::invoke_result_t<Func>;
+    using U = typename CesiumImpl::RemoveFuture<RawResult>::type;
+    constexpr bool needsUnwrap = CesiumImpl::IsFuture<RawResult>::value;
+
+    if constexpr (needsUnwrap) {
+      return createResolvedFuture().thenInThreadPool(
+          pool,
+          std::forward<Func>(f));
+    } else {
+      auto outputSlot = std::make_shared<CesiumImpl::ValueSlot<U>>();
+
+      struct PoolAdapter {
+        std::decay_t<Func> func;
+        std::shared_ptr<CesiumImpl::ValueSlot<U>> slot;
+
+        static void invoke(void* ctx) {
+          auto* self = static_cast<PoolAdapter*>(ctx);
+          try {
+            if constexpr (std::is_void_v<U>) {
+              self->func();
+            } else {
+              self->slot->store(self->func());
+            }
+          } catch (...) {
+            self->slot->storeError(std::current_exception());
+          }
+          delete self;
+        }
+      };
+
+      auto* adapter = new PoolAdapter{std::forward<Func>(f), outputSlot};
+      auto signal = orkester_async_run_in_pool(
+          _system,
+          pool._pool,
+          &PoolAdapter::invoke,
+          adapter);
+      return Future<U>(_system, outputSlot, signal);
+    }
+  }
+
+  /// Wait for all futures to complete.
+  template <typename T>
+  Future<std::vector<T>> all(std::vector<Future<T>>&& futures) const {
+    if (futures.empty()) {
+      return createResolvedFuture(std::vector<T>{});
     }
 
-    return Future<T>(this->_pSchedulers, pEvent->get_task());
+    auto results = std::make_shared<std::vector<T>>();
+    results->reserve(futures.size());
+
+    // Chain each future sequentially: wait for its signal,
+    // then take the result and accumulate.
+    Future<void> chain = createResolvedFuture();
+    for (auto& f : futures) {
+      auto slot = f._slot;
+      // Chain our void chain through this future's signal.
+      // After our chain resolves, schedule a continuation on
+      // this future's signal so we wait for both.
+      chain = std::move(chain).thenImmediately(
+          [system = _system, slot, signal = f._signal, results]() mutable {
+            // Create a future from this signal+slot so we
+            // can chain on it properly.
+            Future<T> inner(system, slot, signal);
+            return std::move(inner).thenImmediately(
+                [results](T&& value) { results->push_back(std::move(value)); });
+          });
+      f._signal = nullptr;
+    }
+
+    return std::move(chain).thenImmediately(
+        [results]() { return std::move(*results); });
   }
 
-  /**
-   * @brief Create a Promise that can be used at a later time to resolve or
-   * reject a Future.
-   *
-   * Use {@link Promise<T>::getFuture} to get the Future that is resolved
-   * or rejected when this Promise is resolved or rejected.
-   *
-   * Consider using {@link AsyncSystem::createFuture} instead of this method.
-   *
-   * @tparam T The type that is provided when resolving the Promise and the type
-   * that the associated Future resolves to. Future.
-   * @return The Promise.
-   */
-  template <typename T> Promise<T> createPromise() const {
-    return Promise<T>(
-        this->_pSchedulers,
-        std::make_shared<async::event_task<T>>());
+  /// Wait for all void futures to complete.
+  Future<void> all(std::vector<Future<void>>&& futures) const {
+    if (futures.empty()) {
+      return createResolvedFuture();
+    }
+
+    Future<void> chain = createResolvedFuture();
+    for (auto& f : futures) {
+      auto slot = f._slot;
+      chain = std::move(chain).thenImmediately(
+          [system = _system, slot, signal = f._signal]() mutable {
+            Future<void> inner(system, slot, signal);
+            return std::move(inner).thenImmediately([]() {});
+          });
+      f._signal = nullptr;
+    }
+
+    return chain;
   }
 
-  /**
-   * @brief Runs a function in a worker thread, returning a Future that
-   * resolves when the function completes.
-   *
-   * If the function itself returns a `Future`, the function will not be
-   * considered complete until that returned `Future` also resolves.
-   *
-   * If this method is called from a designated worker thread, the
-   * callback will be invoked immediately and complete before this function
-   * returns.
-   *
-   * @tparam Func The type of the function.
-   * @param f The function.
-   * @return A future that resolves after the supplied function completes.
-   */
-  template <typename Func>
-  CesiumImpl::ContinuationFutureType_t<Func, void>
-  runInWorkerThread(Func&& f) const {
-    static const char* tracingName = "waiting for worker thread";
-
-    CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
-
-    return CesiumImpl::ContinuationFutureType_t<Func, void>(
-        this->_pSchedulers,
-        async::spawn(
-            this->_pSchedulers->workerThread.immediate,
-            CesiumImpl::WithTracing<void>::end(
-                tracingName,
-                std::forward<Func>(f))));
-  }
-
-  /**
-   * @brief Runs a function in the main thread, returning a Future that
-   * resolves when the function completes.
-   *
-   * If the function itself returns a `Future`, the function will not be
-   * considered complete until that returned `Future` also resolves.
-   *
-   * If this method is called from the main thread, the callback will be invoked
-   * immediately and complete before this function returns.
-   *
-   * @tparam Func The type of the function.
-   * @param f The function.
-   * @return A future that resolves after the supplied function completes.
-   */
-  template <typename Func>
-  CesiumImpl::ContinuationFutureType_t<Func, void>
-  runInMainThread(Func&& f) const {
-    static const char* tracingName = "waiting for main thread";
-
-    CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
-
-    return CesiumImpl::ContinuationFutureType_t<Func, void>(
-        this->_pSchedulers,
-        async::spawn(
-            this->_pSchedulers->mainThread.immediate,
-            CesiumImpl::WithTracing<void>::end(
-                tracingName,
-                std::forward<Func>(f))));
-  }
-
-  /**
-   * @brief Runs a function in a thread pool, returning a Future that resolves
-   * when the function completes.
-   *
-   * @tparam Func The type of the function.
-   * @param threadPool The thread pool in which to run the function.
-   * @param f The function to run.
-   * @return A future that resolves after the supplied function completes.
-   */
-  template <typename Func>
-  CesiumImpl::ContinuationFutureType_t<Func, void>
-  runInThreadPool(const ThreadPool& threadPool, Func&& f) const {
-    static const char* tracingName = "waiting for thread pool";
-
-    CESIUM_TRACE_BEGIN_IN_TRACK(tracingName);
-
-    return CesiumImpl::ContinuationFutureType_t<Func, void>(
-        this->_pSchedulers,
-        async::spawn(
-            threadPool._pScheduler->immediate,
-            CesiumImpl::WithTracing<void>::end(
-                tracingName,
-                std::forward<Func>(f))));
-  }
-
-  /**
-   * @brief The value type of the Future returned by {@link AsyncSystem::all(std::vector<Future<T>>&&) const}.
-   *
-   * This will be either `std::vector<T>`, if the input Futures passed to the
-   * `all` function return values, or `void` if they do not.
-   *
-   * @tparam T The value type of the input Futures passed to the function.
-   */
+  /// Wait for all shared futures to complete.
   template <typename T>
-  using AllValueType =
-      std::conditional_t<std::is_void_v<T>, void, std::vector<T>>;
+  Future<std::vector<T>> all(std::vector<SharedFuture<T>>&& futures) const {
+    if (futures.empty()) {
+      return createResolvedFuture(std::vector<T>{});
+    }
 
-  /**
-   * @brief Creates a Future that resolves when every Future in a vector
-   * resolves, and rejects when any Future in the vector rejects.
-   *
-   * If the input Futures resolve to non-void values, the returned Future
-   * resolves to a vector of the values, in the same order as the input Futures.
-   * If the input Futures resolve to void, the returned Future resolves to void
-   * as well.
-   *
-   * If any of the Futures rejects, the returned Future rejects as well. The
-   * exception included in the rejection will be from the first Future in the
-   * vector that rejects.
-   *
-   * To get detailed rejection information from each of the Futures,
-   * attach a `catchInMainThread` continuation prior to passing the
-   * list into `all`.
-   *
-   * @tparam T The type that each Future resolves to.
-   * @param futures The list of futures.
-   * @return A Future that resolves when all the given Futures resolve, and
-   * rejects when any Future in the vector rejects.
-   */
-  template <typename T>
-  Future<AllValueType<T>> all(std::vector<Future<T>>&& futures) const {
-    return this->all<T, Future<T>>(
-        std::forward<std::vector<Future<T>>>(futures));
+    auto results = std::make_shared<std::vector<T>>();
+    results->reserve(futures.size());
+
+    Future<void> chain = createResolvedFuture();
+    for (auto& f : futures) {
+      auto slot = f._slot;
+      auto sharedSig = f._signal;
+      chain = std::move(chain).thenImmediately(
+          [system = _system, slot, sharedSig, results]() mutable {
+            struct Noop {
+              static void invoke(void*) {}
+            };
+            orkester_future_t sig = orkester_shared_future_then(
+                sharedSig,
+                orkester_context_t_ORKESTER_IMMEDIATE,
+                &Noop::invoke,
+                nullptr);
+            Future<T> inner(system, slot, sig);
+            return std::move(inner).thenImmediately(
+                [results](T&& value) { results->push_back(std::move(value)); });
+          });
+    }
+
+    return std::move(chain).thenImmediately(
+        [results]() { return std::move(*results); });
   }
 
-  /**
-   * @brief Creates a Future that resolves when every Future in a vector
-   * resolves, and rejects when any Future in the vector rejects.
-   *
-   * If the input SharedFutures resolve to non-void values, the returned Future
-   * resolves to a vector of the values, in the same order as the input
-   * SharedFutures. If the input SharedFutures resolve to void, the returned
-   * Future resolves to void as well.
-   *
-   * If any of the SharedFutures rejects, the returned Future rejects as well.
-   * The exception included in the rejection will be from the first SharedFuture
-   * in the vector that rejects.
-   *
-   * To get detailed rejection information from each of the SharedFutures,
-   * attach a `catchInMainThread` continuation prior to passing the
-   * list into `all`.
-   *
-   * @tparam T The type that each SharedFuture resolves to.
-   * @param futures The list of shared futures.
-   * @return A Future that resolves when all the given SharedFutures resolve,
-   * and rejects when any SharedFuture in the vector rejects.
-   */
-  template <typename T>
-  Future<AllValueType<T>> all(std::vector<SharedFuture<T>>&& futures) const {
-    return this->all<T, SharedFuture<T>>(
-        std::forward<std::vector<SharedFuture<T>>>(futures));
+  /// Wait for all void shared futures to complete.
+  Future<void> all(std::vector<SharedFuture<void>>&& futures) const {
+    if (futures.empty()) {
+      return createResolvedFuture();
+    }
+
+    Future<void> chain = createResolvedFuture();
+    for (auto& f : futures) {
+      auto slot = f._slot;
+      auto sharedSig = f._signal;
+      chain = std::move(chain).thenImmediately(
+          [system = _system, slot, sharedSig]() mutable {
+            struct Noop {
+              static void invoke(void*) {}
+            };
+            orkester_future_t sig = orkester_shared_future_then(
+                sharedSig,
+                orkester_context_t_ORKESTER_IMMEDIATE,
+                &Noop::invoke,
+                nullptr);
+            Future<void> inner(system, slot, sig);
+            return std::move(inner).thenImmediately([]() {});
+          });
+    }
+
+    return chain;
   }
 
-  /**
-   * @brief The value type of the Future returned by
-   * {@link AsyncSystem::all(Futures&&... futures) const}.
-   *
-   * This will be a `std::tuple` containing the value types from each future.
-   *
-   * @tparam Futures Variadic template parameters representing the types of the
-   * input futures.
-   */
-  template <typename... Futures>
-  using AllTupleType =
-      std::tuple<typename CesiumImpl::RemoveFuture<Futures>::type...>;
-
-  /**
-   * @brief Creates a Future that resolves when every Future in a variadic
-   * parameter pack resolves, and rejects when any Future in the pack rejects.
-   *
-   * The futures must be of type Future or SharedFuture and cannot resolve to
-   * void values.
-   *
-   * The returned Future resolves to a tuple of values, with elements in the
-   * same order as the input Futures.
-   *
-   * If any of the Futures rejects, the returned Future rejects as well. The
-   * exception included in the rejection will be from the leftmost Future in the
-   * parameter pack that rejects.
-   *
-   * To get detailed rejection information from each of the Futures, attach a
-   * `catchInMainThread` continuation prior to passing the futures into `all`.
-   *
-   * @tparam Futures Variadic template parameters representing the types of the
-   * input futures.
-   * @param futures The futures.
-   * @return A Future that resolves when all the given Futures resolve, and
-   * rejects when any Future rejects.
-   */
-  template <typename... Futures>
-  Future<AllTupleType<Futures...>> all(Futures&&... futures) const {
-    // Helper function so that we can get the `_task` member of each future and
-    // pass as a variadic pack.
-    auto getTaskFromFuture = [](auto&& future) {
-      return std::move(future._task);
-    };
-
-    using AggregateTaskType = std::tuple<
-        async::task<typename CesiumImpl::RemoveFuture<Futures>::type>...>;
-
-    async::task<AllTupleType<Futures...>> task =
-        async::when_all(getTaskFromFuture(std::forward<Futures>(futures))...)
-            .then(async::inline_scheduler(), [](AggregateTaskType&& tasks) {
-              return CesiumUtility::transformTuple(
-                  std::move(tasks),
-                  [](auto&& task) { return task.get(); });
-            });
-
-    return Future<AllTupleType<Futures...>>(
-        this->_pSchedulers,
-        std::move(task));
+  /// Wait for heterogeneous futures to complete, returning a tuple.
+  template <typename... Ts>
+  Future<std::tuple<Ts...>> all(Future<Ts>&&... futures) const {
+    auto results = std::make_shared<std::tuple<std::optional<Ts>...>>();
+    Future<void> chain = createResolvedFuture();
+    allImpl<0>(chain, results, std::move(futures)...);
+    return std::move(chain).thenImmediately([results]() {
+      return std::apply(
+          [](auto&&... opts) { return std::tuple<Ts...>{std::move(*opts)...}; },
+          std::move(*results));
+    });
   }
 
-  /**
-   * @brief Creates a future that is already resolved.
-   *
-   * @tparam T The type of the future.
-   * @param value The value for the future.
-   * @return The future.
-   */
-  template <typename T> Future<T> createResolvedFuture(T&& value) const {
-    return Future<T>(
-        this->_pSchedulers,
-        async::make_task<T>(std::forward<T>(value)));
+  /// Dispatch queued main-thread tasks.
+  void dispatchMainThreadTasks() const { orkester_async_dispatch(_system); }
+
+  /// Dispatch one main-thread task.
+  bool dispatchOneMainThreadTask() const {
+    return orkester_async_dispatch_one(_system);
   }
 
-  /**
-   * @brief Creates a future that is already resolved and resolves to no value.
-   *
-   * @return The future.
-   */
-  Future<void> createResolvedFuture() const {
-    return Future<void>(this->_pSchedulers, async::make_task());
+  /// RAII scope that designates the current thread as the "main thread".
+  /// While this scope is alive, continuations scheduled for the main thread
+  /// will run inline on the current thread.
+  class MainThreadScope {
+  public:
+    MainThreadScope(const MainThreadScope&) = delete;
+    MainThreadScope& operator=(const MainThreadScope&) = delete;
+
+    MainThreadScope(MainThreadScope&& rhs) noexcept : _scope(rhs._scope) {
+      rhs._scope = nullptr;
+    }
+    MainThreadScope& operator=(MainThreadScope&& rhs) noexcept {
+      if (this != &rhs) {
+        if (_scope)
+          orkester_main_thread_scope_drop(_scope);
+        _scope = rhs._scope;
+        rhs._scope = nullptr;
+      }
+      return *this;
+    }
+
+    ~MainThreadScope() noexcept {
+      if (_scope)
+        orkester_main_thread_scope_drop(_scope);
+    }
+
+  private:
+    friend class AsyncSystem;
+    explicit MainThreadScope(orkester_main_thread_scope_t scope)
+        : _scope(scope) {}
+    orkester_main_thread_scope_t _scope = nullptr;
+  };
+
+  /// Enter a scope in which the calling thread is treated as the main thread.
+  MainThreadScope enterMainThread() const {
+    return MainThreadScope(orkester_main_thread_scope_create(_system));
   }
 
-  /**
-   * @brief Runs all tasks that are currently queued for the main thread.
-   *
-   * The tasks are run in the calling thread.
-   */
-  void dispatchMainThreadTasks();
+  /// Create a thread pool with the given number of threads.
+  ThreadPool createThreadPool(int32_t numberOfThreads) const {
+    return ThreadPool(numberOfThreads);
+  }
 
-  /**
-   * @brief Runs a single waiting task that is currently queued for the main
-   * thread. If there are no tasks waiting, it returns immediately without
-   * running any tasks.
-   *
-   * The task is run in the calling thread.
-   *
-   * @return true A single task was executed.
-   * @return false No task was executed because none are waiting.
-   */
-  bool dispatchOneMainThreadTask();
+  bool operator==(const AsyncSystem& rhs) const noexcept {
+    return _system == rhs._system;
+  }
 
-  /**
-   * @brief An object that denotes a scope for the current thread acting as the
-   * "main thread". When this object is constructed, the current thread becomes
-   * the main thread. When it's destroyed, the current thread is no longer
-   * treated as the main thread.
-   */
-  using MainThreadScope = CesiumImpl::ImmediateScheduler<
-      CesiumImpl::QueuedScheduler>::SchedulerScope;
-
-  /**
-   * @brief Enters a scope in which the current thread is treated as the "main
-   * thread". It is essential that no other thread be acting as the main thread
-   * at the same time, or undefined behavior will result. The scope continues
-   * until the returned object is destroyed.
-   */
-  MainThreadScope enterMainThread() const;
-
-  /**
-   * @brief Creates a new thread pool that can be used to run continuations.
-   *
-   * @param numberOfThreads The number of threads in the pool.
-   * @return The thread pool.
-   */
-  ThreadPool createThreadPool(int32_t numberOfThreads) const;
-
-  /**
-   * Returns true if this instance and the right-hand side can be used
-   * interchangeably because they schedule continuations identically. Otherwise,
-   * returns false.
-   */
-  bool operator==(const AsyncSystem& rhs) const noexcept;
-
-  /**
-   * Returns true if this instance and the right-hand side can _not_ be used
-   * interchangeably because they schedule continuations differently. Otherwise,
-   * returns false.
-   */
-  bool operator!=(const AsyncSystem& rhs) const noexcept;
+  bool operator!=(const AsyncSystem& rhs) const noexcept {
+    return _system != rhs._system;
+  }
 
 private:
-  // Common implementation of 'all' for both Future and SharedFuture.
-  template <typename T, typename TFutureType>
-  Future<AllValueType<T>> all(std::vector<TFutureType>&& futures) const {
-    using TTaskType = decltype(TFutureType::_task);
-    std::vector<TTaskType> tasks;
-    tasks.reserve(futures.size());
+  // Base case for variadic all(): no more futures to chain
+  template <std::size_t I, typename Tuple>
+  void allImpl(Future<void>& /*chain*/, const std::shared_ptr<Tuple>&) const {}
 
-    for (auto it = futures.begin(); it != futures.end(); ++it) {
-      tasks.emplace_back(std::move(it->_task));
-    }
-
-    futures.clear();
-
-    async::task<AllValueType<T>> task =
-        async::when_all(tasks.begin(), tasks.end())
-            .then(
-                async::inline_scheduler(),
-                [](std::vector<TTaskType>&& tasks) {
-                  if constexpr (std::is_void_v<T>) {
-                    // Tasks return void. "Get" each task so that error
-                    // information is propagated.
-                    for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-                      it->get();
-                    }
-                  } else {
-                    // Get all the results. If any tasks rejected, we'll bail
-                    // with an exception.
-                    std::vector<T> results;
-                    results.reserve(tasks.size());
-
-                    for (auto it = tasks.begin(); it != tasks.end(); ++it) {
-                      results.emplace_back(std::move(it->get()));
-                    }
-                    return results;
-                  }
-                });
-    return Future<AllValueType<T>>(this->_pSchedulers, std::move(task));
+  // Recursive case: peel off one future, chain it, recurse on the rest
+  template <std::size_t I, typename Tuple, typename Head, typename... Tail>
+  void allImpl(
+      Future<void>& chain,
+      const std::shared_ptr<Tuple>& results,
+      Future<Head>&& head,
+      Future<Tail>&&... tail) const {
+    auto slot = head._slot;
+    auto signal = head._signal;
+    head._signal = nullptr;
+    chain = std::move(chain).thenImmediately(
+        [system = _system, slot, signal, results]() mutable {
+          Future<Head> inner(system, slot, signal);
+          return std::move(inner).thenImmediately([results](Head&& value) {
+            std::get<I>(*results).emplace(std::move(value));
+          });
+        });
+    allImpl<I + 1>(chain, results, std::move(tail)...);
   }
 
-  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
-
-  template <typename T> friend class Future;
+  orkester_async_t* _system = nullptr;
 };
+
 } // namespace CesiumAsync

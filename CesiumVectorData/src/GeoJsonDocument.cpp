@@ -138,7 +138,8 @@ Result<std::vector<std::vector<glm::dvec3>>> parsePolygon(
         (*pointsResult.value)[0] !=
             (*pointsResult.value)[pointsResult.value->size() - 1]) {
       error.emplaceWarning(fmt::format(
-          "{} 'coordinates' member can only contain closed rings, requiring "
+          "{} 'coordinates' member can only contain closed rings, "
+          "requiring "
           "the first and last coordinates of each ring to have identical "
           "values. The first position has been duplicated to make a valid "
           "closed ring.",

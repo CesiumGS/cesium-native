@@ -1,7 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "dependencies": [
-    "asyncplusplus",
     {
       "name": "curl",
       "platform": "!wasm32"
@@ -18,6 +17,7 @@
     "ktx",
     "modp-base64",
     "meshoptimizer",
+    "orkester",
     "openssl",
     "s2geometry",
     "libjpeg-turbo",
@@ -51,4 +51,3 @@
     "zlib"
   ]
 }
-
