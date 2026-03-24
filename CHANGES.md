@@ -10,6 +10,7 @@
 
 - Added a constructor overload for `Cesium3DTilesSelection::ITwinCesiumCuratedContentLoaderFactory` to override the iTwin Cesium Curated Content base URL. This makes it possible to connect to alternate servers (e.g., staging, QA, mock servers).
 - Added `ViewUpdateResult::tileScreenSpaceErrorThisFrame`, which stores the screen space errors computed for tiles in `tilesToRenderThisFrame`.
+- Added `CesiumGltf::ExtensionExtPrimitiveVoxels::MODE`, representing the primitive mode constant used by the extension.
 
 ##### Fixes :wrench:
 
