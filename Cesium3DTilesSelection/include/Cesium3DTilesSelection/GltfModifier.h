@@ -250,6 +250,16 @@ private:
    */
   void onWorkerThreadApplyComplete(const Tile& tile);
 
+  /**
+   * @private
+   *
+   * @brief Returns whether the given tile (supposedly an upsampled tile needing
+   * a modification) can be recomputed now.
+   *
+   * @param tile The upsampled tile that needs to be modified.
+   */
+  bool canRecomputeUpsampledTile(const Tile& tile) const;
+
   // TileLoadRequester implementation
   double getWeight() const override;
   bool hasMoreTilesToLoadInWorkerThread() const override;

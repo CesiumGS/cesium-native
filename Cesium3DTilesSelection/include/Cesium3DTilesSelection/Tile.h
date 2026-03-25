@@ -302,6 +302,30 @@ public:
   }
 
   /**
+   * @brief Update the {@link BoundingVolume} of this tile after the content is fully
+   * loaded.
+   *
+   * This function is not supposed to be called by clients.
+   *
+   * @param value The bounding volume.
+   *
+   * @see TileLoadResult::updatedBoundingVolume
+   */
+  void updateBoundingVolume(const BoundingVolume& value) noexcept;
+
+  /**
+   * @brief Restore the initial {@link BoundingVolume} of this tile. This initial
+   * value is stored when the volume is adjusted after the tile is fully loaded.
+   * If the {@link BoundingVolume} was not modified, calling this method will not modify
+   * anything.
+   *
+   * This function is not supposed to be called by clients.
+   *
+   * @see Tile::updateBoundingVolume
+   */
+  void restoreInitialBoundingVolume() noexcept;
+
+  /**
    * @brief Returns the viewer request volume of this tile.
    *
    * The viewer request volume is an optional {@link BoundingVolume} that
@@ -693,6 +717,9 @@ private:
   BoundingVolume _boundingVolume;
   std::optional<BoundingVolume> _viewerRequestVolume;
   std::optional<BoundingVolume> _contentBoundingVolume;
+  // Stores the initial bounding volume, in case the bounding is updated through
+  // {@link Tile::updateBoundingVolume}.
+  std::optional<BoundingVolume> _initialBoundingVolume;
   double _geometricError;
   TileRefine _refine;
   glm::dmat4x4 _transform;
