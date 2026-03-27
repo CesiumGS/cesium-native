@@ -14,12 +14,17 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
+struct TilesetJsonLoaderOptions {
+  bool loadFeatureContent = false;
+};
+
 class TilesetJsonLoader : public TilesetContentLoader {
 public:
   TilesetJsonLoader(
       const std::string& baseUrl,
       CesiumGeometry::Axis upAxis,
-      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+      const CesiumGeospatial::Ellipsoid& ellipsoid,
+      const TilesetJsonLoaderOptions& options = {});
 
   CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& loadInput) override;
@@ -32,6 +37,8 @@ public:
   const std::string& getBaseUrl() const noexcept;
 
   CesiumGeometry::Axis getUpAxis() const noexcept;
+
+  const TilesetJsonLoaderOptions getLoaderOptions() const noexcept;
 
   void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);
 
@@ -59,6 +66,7 @@ private:
   std::string _baseUrl;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
+  TilesetJsonLoaderOptions _options;
 
   /**
    * @brief The axis that was declared as the "up-axis" for glTF content.
