@@ -856,7 +856,8 @@ TileLoadResult parseJsonContentInWorkerThread(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
     ExternalContentInitializer&& externalContentInitializer,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    bool translateToGltf) {
   const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
   const auto& responseData = pResponse->data();
 
@@ -881,8 +882,8 @@ TileLoadResult parseJsonContentInWorkerThread(
       return TileLoadResult::createFailedResult(
           pAssetAccessor,
           std::move(pCompletedRequest));
-    }
-    return TileLoadResult{
+    } else if (!translateToGltf) {
+      return TileLoadResult{
         std::move(*geoJson.value),
         upAxis,
         std::nullopt,
@@ -893,6 +894,8 @@ TileLoadResult parseJsonContentInWorkerThread(
         {},
         TileLoadResultState::Success,
         ellipsoid};
+    } else {
+    }
   } else {
     return parseExternalTilesetInWorkerThread(
         tileTransform,
@@ -1234,7 +1237,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                       pAssetAccessor,
                       std::move(pCompletedRequest),
                       std::move(externalContentInitializer),
-                      ellipsoid));
+                      ellipsoid,
+                      contentOptions.translateVectorFeatures));
             }
           });
 }
