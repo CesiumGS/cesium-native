@@ -841,6 +841,67 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       ellipsoid};
 }
 
+TileLoadResult parseJsonContentInWorkerThread(
+    const glm::dmat4& tileTransform,
+    CesiumGeometry::Axis upAxis,
+    TileRefine tileRefine,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
+    ExternalContentInitializer&& externalContentInitializer,
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    bool translateToGltf) {
+  const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
+  const auto& responseData = pResponse->data();
+
+  rapidjson::Document tilesetJson;
+  tilesetJson.Parse(
+      reinterpret_cast<const char*>(responseData.data()),
+      responseData.size());
+  if (tilesetJson.HasParseError()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Error when parsing tileset JSON, error code {} at byte offset {}",
+        tilesetJson.GetParseError(),
+        tilesetJson.GetErrorOffset());
+    return TileLoadResult::createFailedResult(
+        pAssetAccessor,
+        std::move(pCompletedRequest));
+  }
+  if (const auto typeIt = tilesetJson.FindMember("type");
+      typeIt != tilesetJson.MemberEnd()) {
+    auto geoJson = CesiumVectorData::GeoJsonDocument::fromGeoJson(tilesetJson);
+    if (!geoJson.value.has_value() || geoJson.errors.hasErrors()) {
+      return TileLoadResult::createFailedResult(
+          pAssetAccessor,
+          std::move(pCompletedRequest));
+    } else if (!translateToGltf) {
+      return TileLoadResult{
+        std::move(*geoJson.value),
+        upAxis,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        pAssetAccessor,
+        std::move(pCompletedRequest),
+        {},
+        TileLoadResultState::Success,
+        ellipsoid};
+    } else {
+    }
+  } else {
+    return parseExternalTilesetInWorkerThread(
+        tileTransform,
+        upAxis,
+        tileRefine,
+        pLogger,
+        pAssetAccessor,
+        std::move(pCompletedRequest),
+        std::move(externalContentInitializer),
+        tilesetJson,
+        ellipsoid);
+  }
+}
 } // namespace
 
 TilesetJsonLoader::TilesetJsonLoader(
@@ -1155,7 +1216,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
             } else {
               // not a renderable content, then it must be external tileset
               return asyncSystem.createResolvedFuture(
-                  parseExternalTilesetInWorkerThread(
+                  parseJsonContentInWorkerThread(
                       tileTransform,
                       upAxis,
                       tileRefine,
@@ -1163,7 +1224,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                       pAssetAccessor,
                       std::move(pCompletedRequest),
                       std::move(externalContentInitializer),
-                      ellipsoid));
+                      ellipsoid,
+                      contentOptions.translateVectorFeatures));
             }
           });
 }
