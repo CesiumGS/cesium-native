@@ -3,6 +3,7 @@
 
 #include <algorithm>
 
+using namespace CesiumGeospatial;
 using namespace CesiumGltf;
 using namespace CesiumVectorData;
 
@@ -39,10 +40,11 @@ void transformIntoFrame(
 }
 
 ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
-  GeoJsonObject& root = geoJson.rootObject;
+  ConverterResult result;
+  const GeoJsonObject& root = geoJson.rootObject;
   // Look for linestrings, count objects and coordinates
-  int numLineStrings = 0;
-  int numCoordinates = 0;
+  size_t numLineStrings = 0;
+  size_t numCoordinates = 0;
   auto lineStringItr = root.allOfType<GeoJsonLineString>().begin();
   while (lineStringItr != root.allOfType<GeoJsonLineString>().end()) {
     numLineStrings++;
@@ -60,6 +62,7 @@ ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
       Ellipsoid::WGS84.cartographicToCartesian(Cartographic::fromDegrees(centroid.x, centroid.y, centroid.z)));
   std::vector<glm::dvec3> localPositions(numCoordinates);
   transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
+  return result;
 }
 
 }
