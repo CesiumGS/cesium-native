@@ -41,6 +41,8 @@
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumVectorData/GltfConverter.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
 
 #include <fmt/format.h>
 #include <glm/common.hpp>
@@ -888,6 +890,19 @@ TileLoadResult parseJsonContentInWorkerThread(
         TileLoadResultState::Success,
         ellipsoid};
     } else {
+      CesiumVectorData::GltfConverter geoJsonCoverter;
+      CesiumVectorData::ConverterResult converterResult = geoJsonCoverter(*geoJson.value);
+      return TileLoadResult{
+        std::move(*converterResult.model),
+        CesiumGeometry::Axis::Z,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        pAssetAccessor,
+        std::move(pCompletedRequest),
+        {},
+        TileLoadResultState::Success,
+        ellipsoid};
     }
   } else {
     return parseExternalTilesetInWorkerThread(
