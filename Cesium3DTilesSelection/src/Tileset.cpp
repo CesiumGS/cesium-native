@@ -333,9 +333,11 @@ const ViewUpdateResult& Tileset::updateViewGroupOffline(
 
   // TODO: fix the fading for offline case
   // (https://github.com/CesiumGS/cesium-native/issues/549)
+  this->_asyncSystem.dispatchMainThreadTasks();
   this->updateViewGroup(viewGroup, frustums, 0.0f);
   while (viewGroup.getPreviousLoadProgressPercentage() < 100.0f) {
     this->_externals.pAssetAccessor->tick();
+    this->_asyncSystem.dispatchMainThreadTasks();
     this->loadTiles();
 
     // If there are no frustums, we'll never make any progress. So break here to
@@ -343,6 +345,7 @@ const ViewUpdateResult& Tileset::updateViewGroupOffline(
     if (frustums.empty())
       break;
 
+    this->_asyncSystem.dispatchMainThreadTasks();
     this->updateViewGroup(viewGroup, frustums, 0.0f);
   }
 
@@ -371,9 +374,12 @@ const ViewUpdateResult& Tileset::updateViewGroupOffline(
 }
 
 const ViewUpdateResult&
+
 Tileset::updateView(const std::vector<ViewState>& frustums, float deltaTime) {
+  this->_asyncSystem.dispatchMainThreadTasks();
   const ViewUpdateResult& result =
       this->updateViewGroup(this->_defaultViewGroup, frustums, deltaTime);
+  this->_asyncSystem.dispatchMainThreadTasks();
   this->loadTiles();
   return result;
 }
