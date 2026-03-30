@@ -567,7 +567,6 @@ TEST_CASE("Test replace refinement for render") {
     }
   }
 
-
   SUBCASE(
       "updateViewGroupOffline does its own dispatching of main thread tasks "
       " so it doesn't get stuck") {
