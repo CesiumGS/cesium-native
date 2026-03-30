@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.59.0 - 2026-03-30
 
 ##### Breaking Changes :mega:
 
@@ -16,7 +16,7 @@
 
 - `Cesium3DTilesetSelection::Tileset::getRootTileAvailableEvent` will now resolve even when a `Tileset` is constructed with invalid source parameters, instead of hanging indefinitely.
 - Fixed compilation error with MSVC when using custom `CesiumITwinClient::PagedList` types.
-- Fixed a "maybe uninitialized" error in `GeoJsonDocumentRasterOverlay` signaled by gcc 15.2. 
+- Fixed a "maybe uninitialized" error in `GeoJsonDocumentRasterOverlay` signaled by gcc 15.2.
 - Fixed crashes in `GeoJsonDocumentRasterOverlay` caused by the `GeoJsonDocumentRasterOverlayTileProvider` being freed before actions on the worker thread completed.
 
 ### v0.58.0 - 2026-03-02
