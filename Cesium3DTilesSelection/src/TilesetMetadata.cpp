@@ -61,7 +61,8 @@ SharedFuture<void>& TilesetMetadata::loadSchemaUri(
                 const IAssetResponse* pResponse = pRequest->response();
                 if (!pResponse) {
                   promise.reject(std::runtime_error(fmt::format(
-                      "Did not receive a valid response for schema URI {}",
+                      "Did not receive a valid response for schema URI "
+                      "{}",
                       pRequest->url())));
                   return promise.getFuture();
                 }

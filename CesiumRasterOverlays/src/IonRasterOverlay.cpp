@@ -454,7 +454,8 @@ IonRasterOverlay::getEndpointCache() {
                     return ResultPointer<ExternalAssetEndpoint>(
                         new ExternalAssetEndpoint(std::move(endpoint)),
                         ErrorList::error(fmt::format(
-                            "Assets used with a raster overlay must have type "
+                            "Assets used with a raster overlay must have "
+                            "type "
                             "'IMAGERY', but instead saw '{}'.",
                             type)));
                   }
@@ -474,8 +475,10 @@ IonRasterOverlay::getEndpointCache() {
                       return ResultPointer<ExternalAssetEndpoint>(
                           new ExternalAssetEndpoint(std::move(endpoint)),
                           ErrorList::error(fmt::format(
-                              "Cesium ion Azure Maps raster overlay metadata "
-                              "response does not contain 'options' or it is "
+                              "Cesium ion Azure Maps raster overlay "
+                              "metadata "
+                              "response does not contain 'options' or it "
+                              "is "
                               "not an object.")));
                     }
                   } else if (endpoint.externalType == "GOOGLE_2D_MAPS") {
@@ -489,7 +492,8 @@ IonRasterOverlay::getEndpointCache() {
                           new ExternalAssetEndpoint(std::move(endpoint)),
                           ErrorList::error(fmt::format(
                               "Cesium ion Google Map Tiles raster overlay "
-                              "metadata response does not contain 'options' or "
+                              "metadata response does not contain "
+                              "'options' or "
                               "it is not an object.")));
                     }
                   } else if (endpoint.externalType == "BING") {
@@ -501,8 +505,10 @@ IonRasterOverlay::getEndpointCache() {
                       return ResultPointer<ExternalAssetEndpoint>(
                           new ExternalAssetEndpoint(std::move(endpoint)),
                           ErrorList::error(fmt::format(
-                              "Cesium ion Bing Maps raster overlay metadata "
-                              "response does not contain 'options' or it is "
+                              "Cesium ion Bing Maps raster overlay "
+                              "metadata "
+                              "response does not contain 'options' or it "
+                              "is "
                               "not an object.")));
                     }
                   } else {

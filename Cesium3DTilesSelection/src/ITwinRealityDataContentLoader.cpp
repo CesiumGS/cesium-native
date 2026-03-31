@@ -208,7 +208,8 @@ requestRealityDataContainer(
     ITwinRealityDataContentLoader::TokenRefreshCallback&& tokenRefreshCallback,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   CesiumUtility::Uri readAccessUri(fmt::format(
-      "https://api.bentley.com/reality-management/reality-data/{}/readaccess",
+      "https://api.bentley.com/reality-management/reality-data/{}/"
+      "readaccess",
       details.id));
   if (iTwinId.has_value()) {
     CesiumUtility::UriQuery query("");
@@ -237,7 +238,8 @@ requestRealityDataContainer(
         if (!pResponse) {
           TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
           result.errors.emplaceError(fmt::format(
-              "No response received for reality data read access request {}",
+              "No response received for reality data read access request "
+              "{}",
               requestUrl));
           return externals.asyncSystem.createResolvedFuture(std::move(result));
         }
@@ -246,7 +248,8 @@ requestRealityDataContainer(
         if (statusCode < 200 || statusCode >= 300) {
           TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
           result.errors.emplaceError(fmt::format(
-              "Received status code {} for reality data read access response "
+              "Received status code {} for reality data read access "
+              "response "
               "{}",
               statusCode,
               requestUrl));
@@ -355,7 +358,8 @@ ITwinRealityDataContentLoader::createLoader(
         if (statusCode < 200 || statusCode >= 300) {
           TilesetContentLoaderResult<ITwinRealityDataContentLoader> result;
           result.errors.emplaceError(fmt::format(
-              "Received status code {} for reality data metadata response {}",
+              "Received status code {} for reality data metadata response "
+              "{}",
               statusCode,
               requestUrl));
           result.statusCode = statusCode;

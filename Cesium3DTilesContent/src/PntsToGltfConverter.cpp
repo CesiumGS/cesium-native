@@ -562,7 +562,8 @@ rapidjson::Document parseFeatureTableJson(
       featureTableJsonData.size());
   if (document.HasParseError()) {
     parsedContent.errors.emplaceError(fmt::format(
-        "Error when parsing feature table JSON, error code {} at byte offset "
+        "Error when parsing feature table JSON, error code {} at byte "
+        "offset "
         "{}",
         document.GetParseError(),
         document.GetErrorOffset()));
@@ -652,7 +653,8 @@ void parseDracoExtensionFromBatchTableJson(
     if (batchTablePropertyIt == batchTableJson.MemberEnd() ||
         !batchTablePropertyIt->value.IsObject()) {
       parsedContent.errors.emplaceWarning(fmt::format(
-          "The metadata property {} is in the 3DTILES_draco_point_compression "
+          "The metadata property {} is in the "
+          "3DTILES_draco_point_compression "
           "extension but not in the batch table itself.",
           name));
       continue;
@@ -661,7 +663,8 @@ void parseDracoExtensionFromBatchTableJson(
     if (!dracoPropertyIt->value.IsInt()) {
       parsedContent.errors.emplaceWarning(fmt::format(
           "Error parsing 3DTILES_draco_compression extension, the metadata "
-          "property {} does not have valid draco ID. Skip parsing metadata.",
+          "property {} does not have valid draco ID. Skip parsing "
+          "metadata.",
           name));
       parsedContent.dracoMetadataHasErrors = true;
       return;

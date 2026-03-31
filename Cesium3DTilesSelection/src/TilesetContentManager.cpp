@@ -618,19 +618,21 @@ postProcessContentInWorkerThread(
   return std::move(future).thenInWorkerThread(
       [rendererOptions](
           std::tuple<TileContentLoadInfo, TileLoadResult>&& tuple) {
-        auto& [tileLoadInfo, result] = tuple;
+        auto& [loadInfo, loadResult] = tuple;
 
         // create render resources
-        if (tileLoadInfo.pPrepareRendererResources) {
-          return tileLoadInfo.pPrepareRendererResources->prepareInLoadThread(
-              tileLoadInfo.asyncSystem,
-              std::move(result),
-              tileLoadInfo.tileTransform,
+        if (loadInfo.pPrepareRendererResources) {
+          return loadInfo.pPrepareRendererResources->prepareInLoadThread(
+              loadInfo.asyncSystem,
+              std::move(loadResult),
+              loadInfo.tileTransform,
               rendererOptions);
         } else {
-          return tileLoadInfo.asyncSystem
+          return loadInfo.asyncSystem
               .createResolvedFuture<TileLoadResultAndRenderResources>(
-                  TileLoadResultAndRenderResources{std::move(result), nullptr});
+                  TileLoadResultAndRenderResources{
+                      std::move(loadResult),
+                      nullptr});
         }
       });
 }

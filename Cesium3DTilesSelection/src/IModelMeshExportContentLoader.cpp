@@ -137,7 +137,8 @@ IModelMeshExportContentLoader::createLoader(
         if (iModelResponse.HasParseError()) {
           TilesetContentLoaderResult<IModelMeshExportContentLoader> result;
           result.errors.emplaceError(fmt::format(
-              "Error when parsing iModel Mesh Export service response JSON, "
+              "Error when parsing iModel Mesh Export service response "
+              "JSON, "
               "error code {} at byte "
               "offset {}",
               iModelResponse.GetParseError(),

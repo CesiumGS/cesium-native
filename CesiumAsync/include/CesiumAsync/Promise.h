@@ -1,125 +1,168 @@
 #pragma once
 
-#include "Impl/AsyncSystemSchedulers.h"
-#include "Impl/cesium-async++.h"
+/// @file Promise.h
+/// Drop-in replacement for CesiumAsync::Promise<T> backed by orkester.
+///
+/// Holds a shared_ptr<ValueSlot<T>> (C++ value) and a orkester_promise_t (Rust
+/// signal).
 
-#include <exception>
-#include <memory>
-#include <utility>
+#include <CesiumAsync/Impl/OrkesterImpl.h>
+
+#include <string>
 
 namespace CesiumAsync {
 
-template <typename T> class Future;
+// ─── Promise<T> ─────────────────────────────────────────────────────────────
 
-/**
- * @brief A promise that can be resolved or rejected by an asynchronous task.
- *
- * @tparam T The type of the object that the promise will be resolved with.
- */
-template <typename T> class Promise {
+/// Drop-in replacement for CesiumAsync::Promise<T>, backed by orkester.
+///
+/// Copyable (shared internal state). resolve/reject are const-qualified
+/// so they can be called from non-mutable lambdas and std::function.
+template <typename T> class CESIUMASYNC_API Promise final {
 public:
-  /**
-   * @brief Will be called when the task completed successfully.
-   *
-   * @param value The value that was computed by the asynchronous task.
-   */
-  void resolve(T&& value) const { this->_pEvent->set(std::move(value)); }
+  Promise(const Promise&) = default;
+  Promise& operator=(const Promise&) = default;
+  Promise(Promise&&) noexcept = default;
+  Promise& operator=(Promise&&) noexcept = default;
+  ~Promise() noexcept = default;
 
-  /**
-   * @brief Will be called when the task completed successfully.
-   *
-   * @param value The value that was computed by the asynchronous task.
-   */
-  void resolve(const T& value) const { this->_pEvent->set(value); }
-
-  /**
-   * @brief Will be called when the task failed.
-   *
-   * @param error The error that caused the task to fail.
-   */
-  template <typename TException> void reject(TException error) const {
-    this->_pEvent->set_exception(std::make_exception_ptr(std::move(error)));
+  /// Resolve with a value. Stores in C++ slot, then signals Rust.
+  void resolve(T&& value) const {
+    _state->slot->store(std::move(value));
+    auto p = _state->promise;
+    _state->promise = nullptr;
+    orkester_promise_resolve(p);
   }
 
-  /**
-   * @brief Will be called when the task failed.
-   *
-   * @param error The error, captured with `std::current_exception`, that
-   * caused the task to fail.
-   */
-  void reject(const std::exception_ptr& error) const {
-    this->_pEvent->set_exception(error);
+  void resolve(const T& value) const {
+    _state->slot->store(value);
+    auto p = _state->promise;
+    _state->promise = nullptr;
+    orkester_promise_resolve(p);
   }
 
-  /**
-   * @brief Gets the Future that resolves or rejects when this Promise is
-   * resolved or rejected.
-   *
-   * This method may only be called once.
-   *
-   * @return The future.
-   */
-  Future<T> getFuture() const {
-    return Future<T>(this->_pSchedulers, this->_pEvent->get_task());
+  /// Reject with an exception_ptr.
+  void reject(std::exception_ptr error) const {
+    _state->slot->storeError(error);
+    auto p = _state->promise;
+    _state->promise = nullptr;
+    orkester_promise_resolve(p);
+  }
+
+  /// Reject with any exception object.
+  template <
+      typename E,
+      std::enable_if_t<
+          !std::is_same_v<std::decay_t<E>, std::exception_ptr>,
+          int> = 0>
+  void reject(E&& exception) const {
+    reject(std::make_exception_ptr(std::forward<E>(exception)));
+  }
+
+  /// Get the paired Future (can only be called once).
+  Future<T> getFuture() {
+    auto signal = _state->futureSignal;
+    _state->futureSignal = nullptr;
+    return Future<T>(_state->system, _state->slot, signal);
   }
 
 private:
-  Promise(
-      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
-      const std::shared_ptr<async::event_task<T>>& pEvent) noexcept
-      : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
-
-  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
-  std::shared_ptr<async::event_task<T>> _pEvent;
-
   friend class AsyncSystem;
+  template <typename R> friend class Future;
+
+  struct State {
+    const orkester_async_t* system = nullptr;
+    std::shared_ptr<CesiumImpl::ValueSlot<T>> slot;
+    orkester_promise_t promise = nullptr;
+    orkester_future_t futureSignal = nullptr;
+
+    ~State() noexcept {
+      if (promise)
+        orkester_promise_drop(promise);
+    }
+  };
+
+  Promise(
+      const orkester_async_t* system,
+      std::shared_ptr<CesiumImpl::ValueSlot<T>> slot,
+      orkester_promise_t promise,
+      orkester_future_t futureSignal)
+      : _state(std::make_shared<State>()) {
+    _state->system = system;
+    _state->slot = std::move(slot);
+    _state->promise = promise;
+    _state->futureSignal = futureSignal;
+  }
+
+  std::shared_ptr<State> _state;
 };
 
-/**
- * @brief Specialization for promises that resolve to no value.
- */
-template <> class Promise<void> {
+// ─── void specialization ────────────────────────────────────────────────────
+
+template <> class CESIUMASYNC_API Promise<void> final {
 public:
-  /**
-   * @brief Will be called when the task completed successfully.
-   */
-  void resolve() const { this->_pEvent->set(); }
+  Promise(const Promise&) = default;
+  Promise& operator=(const Promise&) = default;
+  Promise(Promise&&) noexcept = default;
+  Promise& operator=(Promise&&) noexcept = default;
+  ~Promise() noexcept = default;
 
-  /**
-   * @brief Will be called when the task failed.
-   *
-   * @param error The error that caused the task to fail.
-   */
-  template <typename TException> void reject(TException error) const {
-    this->_pEvent->set_exception(std::make_exception_ptr(std::move(error)));
+  void resolve() const {
+    auto p = _state->promise;
+    _state->promise = nullptr;
+    orkester_promise_resolve(p);
   }
 
-  /**
-   * @brief Will be called when the task failed.
-   *
-   * @param error The error, captured with `std::current_exception`, that
-   * caused the task to fail.
-   */
-  void reject(const std::exception_ptr& error) const {
-    this->_pEvent->set_exception(error);
+  void reject(std::exception_ptr error) const {
+    _state->slot->storeError(error);
+    auto p = _state->promise;
+    _state->promise = nullptr;
+    orkester_promise_resolve(p);
   }
-  /**
-   * @copydoc Promise::getFuture
-   */
-  Future<void> getFuture() const {
-    return Future<void>(this->_pSchedulers, this->_pEvent->get_task());
+
+  template <
+      typename E,
+      std::enable_if_t<
+          !std::is_same_v<std::decay_t<E>, std::exception_ptr>,
+          int> = 0>
+  void reject(E&& exception) const {
+    reject(std::make_exception_ptr(std::forward<E>(exception)));
+  }
+
+  Future<void> getFuture() {
+    auto signal = _state->futureSignal;
+    _state->futureSignal = nullptr;
+    return Future<void>(_state->system, _state->slot, signal);
   }
 
 private:
-  Promise(
-      const std::shared_ptr<CesiumImpl::AsyncSystemSchedulers>& pSchedulers,
-      const std::shared_ptr<async::event_task<void>>& pEvent) noexcept
-      : _pSchedulers(pSchedulers), _pEvent(pEvent) {}
-
-  std::shared_ptr<CesiumImpl::AsyncSystemSchedulers> _pSchedulers;
-  std::shared_ptr<async::event_task<void>> _pEvent;
-
   friend class AsyncSystem;
+
+  struct State {
+    const orkester_async_t* system = nullptr;
+    std::shared_ptr<CesiumImpl::ValueSlot<void>> slot;
+    orkester_promise_t promise = nullptr;
+    orkester_future_t futureSignal = nullptr;
+
+    ~State() noexcept {
+      if (promise)
+        orkester_promise_drop(promise);
+    }
+  };
+
+  Promise(
+      const orkester_async_t* system,
+      std::shared_ptr<CesiumImpl::ValueSlot<void>> slot,
+      orkester_promise_t promise,
+      orkester_future_t futureSignal)
+      : _state(std::make_shared<State>()) {
+    _state->system = system;
+    _state->slot = std::move(slot);
+    _state->promise = promise;
+    _state->futureSignal = futureSignal;
+  }
+
+  std::shared_ptr<State> _state;
 };
 
 } // namespace CesiumAsync

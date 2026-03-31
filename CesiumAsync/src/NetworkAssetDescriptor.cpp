@@ -20,13 +20,13 @@ using namespace CesiumUtility;
 
 std::size_t std::hash<CesiumAsync::NetworkAssetDescriptor>::operator()(
     const CesiumAsync::NetworkAssetDescriptor& key) const noexcept {
-  std::hash<std::string> hash{};
+  std::hash<std::string> stringHash{};
 
-  size_t result = hash(key.url);
+  size_t result = stringHash(key.url);
 
   for (const CesiumAsync::IAssetAccessor::THeader& header : key.headers) {
-    result = Hash::combine(result, hash(header.first));
-    result = Hash::combine(result, hash(header.second));
+    result = Hash::combine(result, stringHash(header.first));
+    result = Hash::combine(result, stringHash(header.second));
   }
 
   return result;

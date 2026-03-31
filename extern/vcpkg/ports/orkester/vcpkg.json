@@ -1,0 +1,13 @@
+{
+  "name": "orkester",
+  "version-semver": "0.1.2",
+  "description": "Pre-built orkester async runtime (Rust FFI static libraries)",
+  "homepage": "https://github.com/calebbuffa/socle",
+  "license": "Apache-2.0",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ]
+}
