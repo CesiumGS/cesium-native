@@ -368,11 +368,12 @@ struct GeoJsonChildVisitor {
     for (const GeoJsonObject& feature : collection.features) {
       const GeoJsonFeature* pFeature = feature.getIf<GeoJsonFeature>();
       if (pFeature && pFeature->geometry) {
-        const std::optional<VectorStyle>& geometryStyle = feature.getStyle();
+        const std::optional<VectorStyle>& geometryStyle =
+            pFeature->geometry->getStyle();
         const std::optional<VectorStyle>& featureStyle =
             geometryStyle ? geometryStyle : pFeature->style;
         const std::optional<VectorStyle>& collectionStyle =
-            featureStyle ? featureStyle : pFeature->style;
+            featureStyle ? featureStyle : collection.style;
         addPrimitivesToData(
             pFeature->geometry.get(),
             data,
