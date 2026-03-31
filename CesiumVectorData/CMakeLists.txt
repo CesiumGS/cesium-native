@@ -55,6 +55,7 @@ target_link_libraries(CesiumVectorData
         CesiumGeospatial
         CesiumAsync
         CesiumGltf
+        CesiumGltfContent
     PRIVATE
         blend2d::blend2d
         ${CESIUM_VECTOR_DATA_ASMJIT_DEPENDENCY}
