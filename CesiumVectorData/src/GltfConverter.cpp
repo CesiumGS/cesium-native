@@ -1,6 +1,7 @@
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumVectorData/GltfConverter.h>
+#include <mapbox/earcut.hpp>
 
 #include <algorithm>
 
@@ -90,21 +91,20 @@ void transformIntoFrame(
 void gatherLines(const GeoJsonDocument& geoJson, Model& model, const glm::dmat4& enuToFixedFrame) {
   const GeoJsonObject& root = geoJson.rootObject;
   // Look for linestrings, count objects and coordinates
-  size_t numLineStrings = 0;
   std::vector<glm::dvec3> cartoCoordinates;
   auto lineStringItr = root.allOfType<GeoJsonLineString>().begin();
   while (lineStringItr != root.allOfType<GeoJsonLineString>().end()) {
-    numLineStrings++;
     cartoCoordinates.insert(cartoCoordinates.end(),
                        lineStringItr->coordinates.begin(),
                        lineStringItr->coordinates.end());
+    lineStringItr++;
   }
   auto multiLineItr = root.allOfType<GeoJsonMultiLineString>().begin();
   while (multiLineItr != root.allOfType<GeoJsonMultiLineString>().end()) {
     for (const auto& lineStringCoords : multiLineItr->coordinates) {
-      numLineStrings++;
       cartoCoordinates.insert(cartoCoordinates.end(), lineStringCoords.begin(), lineStringCoords.end());
     }
+    multiLineItr++;
   }
   std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
   transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
@@ -160,6 +160,138 @@ void gatherLines(const GeoJsonDocument& geoJson, Model& model, const glm::dmat4&
   CesiumGltfContent::GltfUtilities::setNodeTransform(model.nodes.back(), enuToFixedFrame);
 }
 
+std::vector<uint64_t> triangulatePolygon(const std::vector<std::vector<glm::dvec3>>& polygonIn) {
+    using N = uint64_t;
+
+    using Point = std::array<double, 2>;
+    std::vector<std::vector<Point>> polygon;
+
+    for (const auto& ring : polygonIn) {
+        polygon.emplace_back();
+        for (const auto& coord : ring) {
+            polygon.back().push_back(Point{{coord[0], coord[1]}});
+        }
+    }
+
+    // Run earcut
+    std::vector<N> indices = mapbox::earcut<N>(polygon);
+
+    return indices;
+}
+
+std::vector<uint64_t> triangulatePolygon(const CesiumVectorData::GeoJsonPolygon& polygonIn) {
+  return triangulatePolygon(polygonIn.coordinates);
+}
+
+
+void gatherPolygons(const GeoJsonDocument& geoJson, Model& model, const glm::dmat4& enuToFixedFrame) {
+  const GeoJsonObject& root = geoJson.rootObject;
+  std::vector<glm::dvec3> cartoCoordinates;
+  auto polyItr = root.allOfType<GeoJsonPolygon>().begin();
+  // GeoJson polygons contain an outer counter and possible inner contours. The
+  // first and last coordinates must be identical. An optimization would be to
+  // only include that coordinate once, but for now we will put both values into
+  // the big array of coordinates.
+  while (polyItr != root.allOfType<GeoJsonPolygon>().end()) {
+    for (const auto& contour : polyItr->coordinates) {
+      cartoCoordinates.insert(cartoCoordinates.end(),
+                              contour.begin(),
+                              contour.end());
+    }
+    polyItr++;
+  }
+  auto multiPolyItr = root.allOfType<GeoJsonMultiPolygon>().begin();
+  while (multiPolyItr != root.allOfType<GeoJsonMultiPolygon>().end()) {
+    for (const auto& polygon : multiPolyItr->coordinates) {
+      for (const auto& contour : polygon) {
+        cartoCoordinates.insert(cartoCoordinates.end(),
+                                contour.begin(),
+                                contour.end());
+      } 
+    }
+    multiPolyItr++;
+  }
+  std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
+  transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
+  int32_t bufferIndex = model.buffers.size();
+  model.buffers.emplace_back();
+  std::vector<std::byte>& bytes = model.buffers.back().cesium.data;
+  bytes.resize(localPositions.size() * sizeof(glm::vec3));
+  glm::vec3* position32 = reinterpret_cast<glm::vec3*>(bytes.data());
+  for (const auto& localPosition : localPositions) {
+    *position32++ = glm::vec3(localPosition.x, localPosition.y, localPosition.z);
+  }
+  int32_t bufferViewIndex = static_cast<int32_t>(model.bufferViews.size());
+  model.bufferViews.emplace_back();
+  model.bufferViews.back().buffer = bufferIndex;
+  model.bufferViews.back().byteOffset = 0;
+  model.bufferViews.back().byteLength = static_cast<int64_t>(bytes.size());
+  model.bufferViews.back().target = BufferView::Target::ARRAY_BUFFER;
+  // The polygons will all be triangulated, with indices to vertices being
+  // available. Create an additional buffer for the indices.
+  std::vector<uint32_t> allIndices;
+  size_t allVertexCounter = 0;
+  polyItr = root.allOfType<GeoJsonPolygon>().begin();
+  while (polyItr != root.allOfType<GeoJsonPolygon>().end()) {
+    std::vector<uint64_t> triangulated = triangulatePolygon(*polyItr);
+    for (auto index : triangulated) {
+      allIndices.push_back(static_cast<uint32_t>(allVertexCounter + index));
+    }
+    allVertexCounter += polyItr->coordinates.size();
+    polyItr++;
+  }
+  multiPolyItr = root.allOfType<GeoJsonMultiPolygon>().begin();
+  while (multiPolyItr != root.allOfType<GeoJsonMultiPolygon>().end()) {
+    for (const auto& polygon : multiPolyItr->coordinates) {
+      std::vector<uint64_t> triangulated = triangulatePolygon(polygon);
+      for (auto index : triangulated) {
+        allIndices.push_back(static_cast<uint32_t>(allVertexCounter + index));
+      }
+      allVertexCounter += polygon.size();
+    }
+    multiPolyItr++;
+  }
+
+  int32_t indexBufferIndex = static_cast<int32_t>(model.buffers.size());  
+  model.buffers.emplace_back();
+  std::vector<std::byte>& indexBytes = model.buffers.back().cesium.data;
+  indexBytes.resize(sizeof(uint32_t) * allIndices.size());
+  std::memcpy(indexBytes.data(), allIndices.data(), sizeof(uint32_t) * allIndices.size());
+  int32_t indexBufferViewIndex = static_cast<int32_t>(model.bufferViews.size());
+  model.bufferViews.emplace_back();
+  model.bufferViews.back().buffer = indexBufferIndex;
+  model.bufferViews.back().byteOffset = 0;
+  model.bufferViews.back().byteLength = static_cast<int64_t>(indexBytes.size());
+  model.bufferViews.back().target = BufferView::Target::ELEMENT_ARRAY_BUFFER;;
+
+  int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
+  model.accessors.emplace_back();
+  model.accessors.back().bufferView = bufferViewIndex;
+  model.accessors.back().byteOffset = 0;
+  model.accessors.back().componentType = Accessor::ComponentType::FLOAT;
+  model.accessors.back().count = static_cast<int64_t>(localPositions.size());
+  model.accessors.back().type = Accessor::Type::VEC3;
+
+  int32_t indexAccessorIndex = static_cast<int32_t>(model.accessors.size());
+  model.accessors.emplace_back();
+  model.accessors.back().bufferView = indexBufferViewIndex;
+  model.accessors.back().byteOffset = 0;
+  model.accessors.back().componentType = Accessor::ComponentType::UNSIGNED_INT;
+  model.accessors.back().count = static_cast<int64_t>(allIndices.size());
+  model.accessors.back().type = Accessor::Type::SCALAR;
+
+  int32_t meshIndex = model.meshes.size();
+  model.meshes.back().primitives.emplace_back();
+  model.meshes.back().primitives.back().attributes["POSITION"] = accessorIndex;
+  model.meshes.back().primitives.back().indices = indexAccessorIndex;
+  model.meshes.back().primitives.back().mode = MeshPrimitive::Mode::TRIANGLES;
+
+  model.nodes.emplace_back();
+  model.nodes.back().mesh = meshIndex;
+  CesiumGltfContent::GltfUtilities::setNodeTransform(model.nodes.back(), enuToFixedFrame);
+}
+
+
 ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
   ConverterResult result;
   const GeoJsonObject& root = geoJson.rootObject;
@@ -169,6 +301,7 @@ ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
       Ellipsoid::WGS84.cartographicToCartesian(Cartographic::fromDegrees(centroid.x, centroid.y, centroid.z)));
   result.model.emplace();
   gatherLines(geoJson, *result.model, enuToFixedFrame);
+  gatherPolygons(geoJson, *result.model, enuToFixedFrame);
   return result;
 }
 
