@@ -20,6 +20,7 @@
 
 #include <list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -364,6 +365,39 @@ public:
    */
   CesiumAsync::Future<SampleHeightResult> sampleHeightMostDetailed(
       const std::vector<CesiumGeospatial::Cartographic>& positions);
+
+  /**
+   * @brief Samples the height of this tileset at a list of cartographic
+   * positions using only currently-loaded tile content.
+   *
+   * Unlike {@link sampleHeightMostDetailed}, this method does not trigger any
+   * tile loads and returns immediately. It uses whatever is the most detailed
+   * LOD that is currently loaded in memory, which may not be the most detailed
+   * LOD available in the tileset.
+   *
+   * The height of the input positions is ignored. The output height is
+   * expressed in meters above the ellipsoid (usually WGS84), which should not
+   * be confused with a height above mean sea level.
+   *
+   * @param positions The positions for which to sample heights.
+   * @return The result of the height query.
+   */
+  SampleHeightResult sampleHeightCurrentDetail(
+      const std::vector<CesiumGeospatial::Cartographic>& positions) const;
+
+  /**
+   * @brief Samples the height of this tileset at a single cartographic
+   * position using only currently-loaded tile content.
+   *
+   * This is a convenience overload of
+   * {@link sampleHeightCurrentDetail(const std::vector<CesiumGeospatial::Cartographic>&) const}.
+   *
+   * @param position The position for which to sample height.
+   * @return The sampled height in meters above the ellipsoid, or std::nullopt
+   * if no loaded tile covers the position.
+   */
+  std::optional<double> sampleHeightCurrentDetail(
+      const CesiumGeospatial::Cartographic& position) const;
 
   /**
    * @brief Gets the default view group that is used when calling

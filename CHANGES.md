@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `Tileset::sampleHeightCurrentDetail` to synchonously sample heights from the currently loaded tiles.
+
 ### v0.59.0 - 2026-03-31
 
 ##### Breaking Changes :mega:
