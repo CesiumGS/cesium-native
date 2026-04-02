@@ -52,6 +52,7 @@ target_link_libraries(Cesium3DTilesSelection
         CesiumQuantizedMeshTerrain
         CesiumRasterOverlays
         CesiumUtility
+        CesiumVectorData
         spdlog::spdlog
 # PRIVATE
         libmorton::libmorton
