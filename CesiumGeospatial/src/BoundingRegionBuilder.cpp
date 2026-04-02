@@ -145,4 +145,25 @@ bool BoundingRegionBuilder::expandToIncludeGlobeRectangle(
   return modified;
 }
 
+bool BoundingRegionBuilder::expandToIncludeBoundingRegion(
+    const BoundingRegion& region) {
+  bool modified = false;
+
+  if (expandToIncludeGlobeRectangle(region.getRectangle())) {
+    modified = true;
+  }
+
+  if (region.getMinimumHeight() < this->_minimumHeight) {
+    this->_minimumHeight = region.getMinimumHeight();
+    modified = true;
+  }
+
+  if (region.getMaximumHeight() > this->_maximumHeight) {
+    this->_maximumHeight = region.getMaximumHeight();
+    modified = true;
+  }
+
+  return modified;
+}
+
 } // namespace CesiumGeospatial

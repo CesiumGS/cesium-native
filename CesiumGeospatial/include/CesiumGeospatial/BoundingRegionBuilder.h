@@ -82,6 +82,17 @@ public:
    */
   bool expandToIncludeGlobeRectangle(const GlobeRectangle& rectangle);
 
+  /**
+   * @brief Expands the bounding region to include the given bounding region.
+   *
+   * The region will be kept as small as possible.
+   *
+   * @param region The region to be included in the region.
+   * @returns True if the region was modified, or false if the region already
+   * contained the region.
+   */
+  bool expandToIncludeBoundingRegion(const BoundingRegion& region);
+
 private:
   /**
    * @brief When a position's latitude is within this distance in radians from
