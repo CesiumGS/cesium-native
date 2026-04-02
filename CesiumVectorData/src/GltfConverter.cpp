@@ -138,6 +138,7 @@ void gatherLines(const GeoJsonDocument& geoJson, Model& model, const glm::dmat4&
     model.meshes.back().primitives.emplace_back();
     model.meshes.back().primitives.back().attributes["POSITION"] = accessorIndex;
     model.meshes.back().primitives.back().mode = MeshPrimitive::Mode::LINE_STRIP;
+    model.meshes.back().primitives.back().material = 0;
   }
   multiLineItr = root.allOfType<GeoJsonMultiLineString>().begin();
   while (multiLineItr != root.allOfType<GeoJsonMultiLineString>().end()) {
@@ -153,6 +154,7 @@ void gatherLines(const GeoJsonDocument& geoJson, Model& model, const glm::dmat4&
       model.meshes.back().primitives.emplace_back();
       model.meshes.back().primitives.back().attributes["POSITION"] = accessorIndex;
       model.meshes.back().primitives.back().mode = MeshPrimitive::Mode::LINE_STRIP;
+      model.meshes.back().primitives.back().material = 0;
     }
   }
   model.nodes.emplace_back();
@@ -285,6 +287,7 @@ void gatherPolygons(const GeoJsonDocument& geoJson, Model& model, const glm::dma
   model.meshes.back().primitives.back().attributes["POSITION"] = accessorIndex;
   model.meshes.back().primitives.back().indices = indexAccessorIndex;
   model.meshes.back().primitives.back().mode = MeshPrimitive::Mode::TRIANGLES;
+  model.meshes.back().primitives.back().material = 0;
 
   model.nodes.emplace_back();
   model.nodes.back().mesh = meshIndex;
@@ -300,6 +303,13 @@ ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
   glm::dmat4 enuToFixedFrame = GlobeTransforms::eastNorthUpToFixedFrame(
       Ellipsoid::WGS84.cartographicToCartesian(Cartographic::fromDegrees(centroid.x, centroid.y, centroid.z)));
   result.model.emplace();
+  result.model->asset.version = "2.0";
+  CesiumGltf::Material& material = result.model->materials.emplace_back();
+  CesiumGltf::MaterialPBRMetallicRoughness& pbr =
+      material.pbrMetallicRoughness.emplace();
+  pbr.metallicFactor = 0.0;
+  pbr.roughnessFactor = 1.0;
+
   gatherLines(geoJson, *result.model, enuToFixedFrame);
   gatherPolygons(geoJson, *result.model, enuToFixedFrame);
   return result;
