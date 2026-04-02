@@ -98,7 +98,7 @@ void writeTgaImpl(
 
 void writeImageToTgaFile(
     const CesiumGltf::ImageAsset& image,
-    const std::string& outputPath) {
+    const std::filesystem::path& outputPath) {
   if (image.mipPositions.size() == 0) {
     writeTgaImpl(
         outputPath,
@@ -107,13 +107,13 @@ void writeImageToTgaFile(
         image.width,
         image.height);
   } else {
-    std::filesystem::path outputPathParsed(outputPath);
     for (size_t i = 0; i < image.mipPositions.size(); i++) {
-      std::filesystem::path thisPath(fmt::format(
-          "{}-mip{}{}",
-          outputPathParsed.stem().string(),
-          i,
-          outputPathParsed.extension().string()));
+      std::filesystem::path thisPath =
+          outputPath.parent_path() / (fmt::format(
+                                         "{}-mip{}{}",
+                                         outputPath.stem().string(),
+                                         i,
+                                         outputPath.extension().string()));
       writeTgaImpl(
           thisPath,
           image.pixelData.data() + image.mipPositions[i].byteOffset,

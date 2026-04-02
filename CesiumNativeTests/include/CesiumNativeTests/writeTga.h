@@ -2,7 +2,7 @@
 
 #include <CesiumGltf/ImageAsset.h>
 
-#include <string>
+#include <filesystem>
 
 namespace CesiumNativeTests {
 /**
@@ -15,5 +15,5 @@ namespace CesiumNativeTests {
  */
 void writeImageToTgaFile(
     const CesiumGltf::ImageAsset& image,
-    const std::string& outputPath);
+    const std::filesystem::path& outputPath);
 } // namespace CesiumNativeTests

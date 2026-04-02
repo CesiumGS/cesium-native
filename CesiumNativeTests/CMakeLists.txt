@@ -25,7 +25,7 @@ set(cesium_native_targets
     CesiumUtility
 )
 
-if(NOT CESIUM_DISABLE_CURL) 
+if(NOT CESIUM_DISABLE_CURL)
     list(APPEND cesium_native_targets CesiumCurl)
 endif()
 
@@ -42,7 +42,7 @@ if(CESIUM_TARGET_WASM)
     target_link_options(
         cesium-native-tests
         PRIVATE
-        "-sEXIT_RUNTIME=1" 
+        "-sEXIT_RUNTIME=1"
     )
 endif()
 
@@ -144,6 +144,15 @@ target_compile_definitions(cesium-native-tests
 PRIVATE
   CESIUM_NATIVE_DATA_DIR=\"${CMAKE_SOURCE_DIR}/data\"
 )
+
+set(CESIUM_NATIVE_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/temp")
+
+target_compile_definitions(cesium-native-tests
+PRIVATE
+  CESIUM_NATIVE_TEMP_DIR=\"${CESIUM_NATIVE_TEMP_DIR}\"
+)
+
+file(MAKE_DIRECTORY "${CESIUM_NATIVE_TEMP_DIR}")
 
 include(CTest)
 include(doctest)
