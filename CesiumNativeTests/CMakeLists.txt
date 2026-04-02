@@ -145,7 +145,11 @@ PRIVATE
   CESIUM_NATIVE_DATA_DIR=\"${CMAKE_SOURCE_DIR}/data\"
 )
 
-set(CESIUM_NATIVE_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/temp")
+if(CESIUM_TARGET_WASM)
+  set(CESIUM_NATIVE_TEMP_DIR "")
+else()
+  set(CESIUM_NATIVE_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/temp")
+endif()
 
 target_compile_definitions(cesium-native-tests
 PRIVATE
