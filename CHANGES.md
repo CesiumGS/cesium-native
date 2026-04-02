@@ -1,6 +1,12 @@
 # Change Log
 
-### v0.59.0 - 2026-03-31
+### v0.60.0 - 2026-05-01
+
+##### Additions :tada:
+
+- Added `BoundingRegionBuilder::expandToIncludeBoundingRegion`.
+
+### v0.59.0 - 2026-04-01
 
 ##### Breaking Changes :mega:
 
