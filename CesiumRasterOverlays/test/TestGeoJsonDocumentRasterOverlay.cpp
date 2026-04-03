@@ -206,9 +206,13 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
   // to 2.
   CHECK(image.width == 128);
   CHECK(image.height == 128);
-  CesiumNativeTests::writeImageToTgaFile(image, "out-equator-meridian.tga");
+  CesiumNativeTests::writeImageToTgaFile(
+      image,
+      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+          "out-equator-meridian.tga");
   CesiumNativeTests::checkFilesEqual(
-      std::filesystem::current_path() / "out-equator-meridian.tga",
+      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+          "out-equator-meridian.tga",
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
           "equator-meridian.tga");
 }
@@ -247,14 +251,16 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
   CHECK(image.height == 128);
   CesiumNativeTests::writeImageToTgaFile(
       image,
-      "out-equator-meridian-meters.tga");
+      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+          "out-equator-meridian-meters.tga");
   // equator-meridian-meters *should* be identical to equator-meridian, except
   // that because of floating point imprecision the line width gets calculated
   // to be 1.999999999989966 instead of 2 and so it's not a perfect solid two
   // pixel line. But this is more or less "working as intended" and it would be
   // a lot of work to fix without any benefit to the end user.
   CesiumNativeTests::checkFilesEqual(
-      std::filesystem::current_path() / "out-equator-meridian-meters.tga",
+      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+          "out-equator-meridian-meters.tga",
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
           "equator-meridian-meters.tga");
 }
@@ -286,9 +292,11 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
     CHECK(image.height == 32);
     CesiumNativeTests::writeImageToTgaFile(
         image,
-        "out-equator-antimeridian-1.tga");
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-1.tga");
     CesiumNativeTests::checkFilesEqual(
-        std::filesystem::current_path() / "out-equator-antimeridian-1.tga",
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-1.tga",
         std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
             "equator-antimeridian.tga");
   }
@@ -304,9 +312,11 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
     CHECK(image.height == 32);
     CesiumNativeTests::writeImageToTgaFile(
         image,
-        "out-equator-antimeridian-2.tga");
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-2.tga");
     CesiumNativeTests::checkFilesEqual(
-        std::filesystem::current_path() / "out-equator-antimeridian-2.tga",
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-2.tga",
         std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
             "equator-antimeridian.tga");
   }
@@ -322,9 +332,11 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
     CHECK(image.height == 32);
     CesiumNativeTests::writeImageToTgaFile(
         image,
-        "out-equator-antimeridian-3.tga");
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-3.tga");
     CesiumNativeTests::checkFilesEqual(
-        std::filesystem::current_path() / "out-equator-antimeridian-3.tga",
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-3.tga",
         std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
             "equator-antimeridian.tga");
   }
