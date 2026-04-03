@@ -20,6 +20,7 @@ class Tile;
 class Tileset;
 class TilesetContentManager;
 class TilesetFrameState;
+class ITilesetFrameInfo;
 
 /**
  * @brief Represents a group of views that collectively select tiles from a
@@ -176,6 +177,8 @@ public:
   void
   startNewFrame(const Tileset& tileset, const TilesetFrameState& frameState);
 
+  void startNewFrame(const ITilesetFrameInfo& tilesetFrameInfo);
+
   /**
    * @brief Finishes the current frame.
    *
@@ -188,6 +191,8 @@ public:
    * @param frameState The state of the frame.
    */
   void finishFrame(const Tileset& tileset, const TilesetFrameState& frameState);
+
+  void finishFrame(const ITilesetFrameInfo& tilesetFrameInfo);
 
   /**
    * @brief Gets the previous load progress percentage for this view group as

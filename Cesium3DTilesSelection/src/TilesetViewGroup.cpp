@@ -1,3 +1,5 @@
+#include "TilesetTileSelection.h"
+
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -113,6 +115,11 @@ size_t TilesetViewGroup::getMainThreadLoadQueueLength() const {
 void TilesetViewGroup::startNewFrame(
     const Tileset& tileset,
     const TilesetFrameState& /*frameState*/) {
+  this->startNewFrame(tileset);
+}
+
+void TilesetViewGroup::startNewFrame(
+    const ITilesetFrameInfo& tilesetFrameInfo) {
   this->_workerThreadLoadQueue.clear();
   this->_mainThreadLoadQueue.clear();
   this->_tilesAlreadyLoadingOrUnloading = 0;
@@ -129,7 +136,7 @@ void TilesetViewGroup::startNewFrame(
 
   this->_updateResult.tilesToRenderThisFrame.clear();
 
-  if (!tileset.getOptions().enableLodTransitionPeriod) {
+  if (!tilesetFrameInfo.getEnableLodTransitionPeriod()) {
     this->_updateResult.tilesFadingOut.clear();
   }
 }
@@ -137,6 +144,10 @@ void TilesetViewGroup::startNewFrame(
 void TilesetViewGroup::finishFrame(
     const Tileset& tileset,
     const TilesetFrameState& /*frameState*/) {
+  this->finishFrame(tileset);
+}
+
+void TilesetViewGroup::finishFrame(const ITilesetFrameInfo& tilesetFrameInfo) {
   std::sort(
       this->_workerThreadLoadQueue.begin(),
       this->_workerThreadLoadQueue.end());
@@ -159,24 +170,25 @@ void TilesetViewGroup::finishFrame(
 
   // aggregate all the credits needed from this tileset for the current frame
   const std::shared_ptr<CreditSystem>& pCreditSystem =
-      tileset.getExternals().pCreditSystem;
+      tilesetFrameInfo.getCreditSystem();
 
   if (pCreditSystem) {
     this->_currentFrameCredits.setCreditSystem(pCreditSystem);
 
     // per-tileset user-specified credit
-    std::optional<Credit> userCredit = tileset.getUserCredit();
+    std::optional<Credit> userCredit = tilesetFrameInfo.getUserCredit();
     if (userCredit) {
       this->_currentFrameCredits.addCreditReference(*userCredit);
     }
 
     // tileset credit
-    for (const Credit& credit : tileset.getTilesetCredits()) {
+    for (const Credit& credit : tilesetFrameInfo.getTilesetCredits()) {
       this->_currentFrameCredits.addCreditReference(credit);
     }
 
     // per-raster overlay credit
-    const RasterOverlayCollection& overlayCollection = tileset.getOverlays();
+    const RasterOverlayCollection& overlayCollection =
+        tilesetFrameInfo.getOverlays();
     for (auto& pActivated : overlayCollection.getActivatedOverlays()) {
       if (pActivated->getTileProvider() == nullptr)
         continue;
