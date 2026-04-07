@@ -63,6 +63,11 @@ EllipsoidTilesetLoader::EllipsoidTilesetLoader(const Ellipsoid& ellipsoid)
 
   pRootTile->setRefine(TileRefine::Replace);
   pRootTile->setUnconditionallyRefine();
+  pRootTile->setBoundingVolume(BoundingRegion(
+      pCustomLoader->_projection.MAXIMUM_GLOBE_RECTANGLE,
+      0.0,
+      0.0,
+      pCustomLoader->_projection.getEllipsoid()));
 
   std::vector<Tile> children;
   uint32_t rootTilesX = pCustomLoader->_tilingScheme.getRootTilesX();
