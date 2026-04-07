@@ -41,8 +41,8 @@
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
-#include <CesiumVectorData/GltfConverter.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
+#include <CesiumVectorData/GltfConverter.h>
 
 #include <fmt/format.h>
 #include <glm/common.hpp>
@@ -862,20 +862,21 @@ TileLoadResult parseJsonContentInWorkerThread(
       return TileLoadResult::createFailedResult(
           pAssetAccessor,
           std::move(pCompletedRequest));
-    }  else {
+    } else {
       CesiumVectorData::GltfConverter geoJsonCoverter;
-      CesiumVectorData::ConverterResult converterResult = geoJsonCoverter(*geoJson.value);
+      CesiumVectorData::ConverterResult converterResult =
+          geoJsonCoverter(*geoJson.value);
       return TileLoadResult{
-        std::move(*converterResult.model),
-        CesiumGeometry::Axis::Z,
-        std::nullopt,
-        std::nullopt,
-        std::nullopt,
-        pAssetAccessor,
-        std::move(pCompletedRequest),
-        {},
-        TileLoadResultState::Success,
-        ellipsoid};
+          std::move(*converterResult.model),
+          CesiumGeometry::Axis::Z,
+          std::nullopt,
+          std::nullopt,
+          std::nullopt,
+          pAssetAccessor,
+          std::move(pCompletedRequest),
+          {},
+          TileLoadResultState::Success,
+          ellipsoid};
     }
   } else {
     return parseExternalTilesetInWorkerThread(
@@ -887,8 +888,7 @@ TileLoadResult parseJsonContentInWorkerThread(
         std::move(pCompletedRequest),
         std::move(externalContentInitializer),
         ellipsoid,
-        tilesetJson
-);
+        tilesetJson);
   }
 }
 } // namespace

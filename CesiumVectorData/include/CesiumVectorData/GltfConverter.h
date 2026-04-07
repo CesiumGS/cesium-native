@@ -19,11 +19,10 @@ struct CESIUMVECTORDATA_API ConverterResult {
    * model. This is empty if there are no errors during the conversion
    */
   CesiumUtility::ErrorList errors;
-
 };
 
 class CESIUMVECTORDATA_API GltfConverter {
- public:
- ConverterResult operator()(const GeoJsonDocument& geoJson);
+public:
+  ConverterResult operator()(const GeoJsonDocument& geoJson);
 };
-}
+} // namespace CesiumVectorData

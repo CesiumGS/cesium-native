@@ -61,7 +61,6 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
    * glTF, or leave it in its native format.
    */
   bool translateVectorFeatures = true;
-   
 };
 
 /**
