@@ -387,10 +387,10 @@ void gatherPoints(
   }
   auto multiPointItr = root.allOfType<GeoJsonMultiPoint>().begin();
   while (multiPointItr != root.allOfType<GeoJsonMultiPoint>().end()) {
-      cartoCoordinates.insert(
-          cartoCoordinates.end(),
-          multiPointItr->coordinates.begin(),
-          multiPointItr->coordinates.end());
+    cartoCoordinates.insert(
+        cartoCoordinates.end(),
+        multiPointItr->coordinates.begin(),
+        multiPointItr->coordinates.end());
 
     multiPointItr++;
   }
