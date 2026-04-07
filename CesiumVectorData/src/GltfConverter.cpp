@@ -120,7 +120,7 @@ void gatherLines(
   }
   std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
   transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
-  int32_t bufferIndex = model.buffers.size();
+  int32_t bufferIndex = static_cast<int32_t>(model.buffers.size());
   model.buffers.emplace_back();
   std::vector<std::byte>& bytes = model.buffers.back().cesium.data;
   bytes.resize(localPositions.size() * sizeof(glm::vec3));
@@ -136,8 +136,8 @@ void gatherLines(
   model.bufferViews.back().byteLength = static_cast<int64_t>(bytes.size());
   model.bufferViews.back().target = BufferView::Target::ARRAY_BUFFER;
   lineStringItr = root.allOfType<GeoJsonLineString>().begin();
-  int32_t accessorByteOffset = 0;
-  int32_t meshIndex = model.meshes.size();
+  int64_t accessorByteOffset = 0;
+  int32_t meshIndex = static_cast<int32_t>(model.meshes.size());
   model.meshes.emplace_back();
   while (lineStringItr != root.allOfType<GeoJsonLineString>().end()) {
     int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
@@ -242,7 +242,7 @@ void gatherPolygons(
   }
   std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
   transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
-  int32_t bufferIndex = model.buffers.size();
+  int32_t bufferIndex = static_cast<int32_t>(model.buffers.size());
   model.buffers.emplace_back();
   std::vector<std::byte>& bytes = model.buffers.back().cesium.data;
   bytes.resize(localPositions.size() * sizeof(glm::vec3));
@@ -314,7 +314,7 @@ void gatherPolygons(
   model.accessors.back().count = static_cast<int64_t>(allIndices.size());
   model.accessors.back().type = Accessor::Type::SCALAR;
 
-  int32_t meshIndex = model.meshes.size();
+  int32_t meshIndex = static_cast<int32_t>(model.meshes.size());
   model.meshes.back().primitives.emplace_back();
   model.meshes.back().primitives.back().attributes["POSITION"] = accessorIndex;
   model.meshes.back().primitives.back().indices = indexAccessorIndex;
