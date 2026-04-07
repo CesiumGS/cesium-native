@@ -857,7 +857,8 @@ TileLoadResult parseJsonContentInWorkerThread(
   if (const auto typeIt = tilesetJson.FindMember("type");
       typeIt != tilesetJson.MemberEnd()) {
     auto geoJson = CesiumVectorData::GeoJsonDocument::fromGeoJson(tilesetJson);
-    if (!geoJson.value.has_value() || geoJson.errors.hasErrors() || translateToGltf) {
+    if (!(geoJson.value.has_value() && !geoJson.errors.hasErrors() &&
+          translateToGltf)) {
       return TileLoadResult::createFailedResult(
           pAssetAccessor,
           std::move(pCompletedRequest));
