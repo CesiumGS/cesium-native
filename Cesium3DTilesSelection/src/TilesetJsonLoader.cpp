@@ -866,7 +866,8 @@ TileLoadResult parseJsonContentInWorkerThread(
       CesiumVectorData::GltfConverter geoJsonCoverter;
       CesiumVectorData::ConverterResult converterResult =
           geoJsonCoverter(*geoJson.value);
-      return TileLoadResult{
+      if (converterResult.model.has_value() && !converterResult.errors.hasErrors()) {
+        return TileLoadResult{
           std::move(*converterResult.model),
           CesiumGeometry::Axis::Z,
           std::nullopt,
@@ -877,6 +878,11 @@ TileLoadResult parseJsonContentInWorkerThread(
           {},
           TileLoadResultState::Success,
           ellipsoid};
+      } else {
+        return TileLoadResult::createFailedResult(
+            pAssetAccessor,
+            std::move(pCompletedRequest));
+      }
     }
   } else {
     return parseExternalTilesetInWorkerThread(

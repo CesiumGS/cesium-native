@@ -11,9 +11,11 @@
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
 #include <CesiumVectorData/GltfConverter.h>
 
+#include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_float3.hpp>
+#include <glm/matrix.hpp>
 #include <mapbox/earcut.hpp>
 
 #include <algorithm>
