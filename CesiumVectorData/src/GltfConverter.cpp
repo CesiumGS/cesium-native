@@ -1,18 +1,36 @@
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/GlobeTransforms.h>
+#include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Material.h>
+#include <CesiumGltf/MaterialPBRMetallicRoughness.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
+#include <CesiumVectorData/GeoJsonObject.h>
+#include <CesiumVectorData/GeoJsonObjectTypes.h>
 #include <CesiumVectorData/GltfConverter.h>
 
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_float3.hpp>
 #include <mapbox/earcut.hpp>
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <span>
+#include <vector>
 
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
 using namespace CesiumVectorData;
 
 namespace CesiumVectorData {
-
-glm::dvec3 positionMin(const std::vector<glm::dvec3>& coords) {
+namespace {
+glm::dvec3 positionMin(const std::span<glm::dvec3> coords) {
   if (coords.empty()) {
     return {0.0, 0.0, 0.0};
   }
@@ -23,7 +41,12 @@ glm::dvec3 positionMin(const std::vector<glm::dvec3>& coords) {
   return minCoord;
 }
 
-glm::dvec3 positionMax(const std::vector<glm::dvec3>& coords) {
+std::vector<double> positionMinVector(const std::span<glm::dvec3> coords) {
+  glm::dvec3 result = positionMin(coords);
+  return {result[0], result[1], result[2]};
+}
+
+glm::dvec3 positionMax(const std::span<glm::dvec3> coords) {
   if (coords.empty()) {
     return {0.0, 0.0, 0.0};
   }
@@ -32,6 +55,11 @@ glm::dvec3 positionMax(const std::vector<glm::dvec3>& coords) {
     maxCoord = max(maxCoord, coords[i]);
   }
   return maxCoord;
+}
+
+std::vector<double> positionMaxVector(const std::span<glm::dvec3> coords) {
+  glm::dvec3 result = positionMax(coords);
+  return {result[0], result[1], result[2]};
 }
 
 // This finds the average of geographic coordinates, but it's not a great way to
@@ -137,6 +165,7 @@ void gatherLines(
   model.bufferViews.back().target = BufferView::Target::ARRAY_BUFFER;
   lineStringItr = root.allOfType<GeoJsonLineString>().begin();
   int64_t accessorByteOffset = 0;
+  size_t elementCount = 0;
   int32_t meshIndex = static_cast<int32_t>(model.meshes.size());
   model.meshes.emplace_back();
   while (lineStringItr != root.allOfType<GeoJsonLineString>().end()) {
@@ -148,7 +177,13 @@ void gatherLines(
     model.accessors.back().count =
         static_cast<int64_t>(lineStringItr->coordinates.size());
     model.accessors.back().type = Accessor::Type::VEC3;
+    std::span<glm::dvec3> stringCoords{
+        &localPositions[elementCount],
+        lineStringItr->coordinates.size()};
+    model.accessors.back().min = positionMinVector(stringCoords);
+    model.accessors.back().max = positionMaxVector(stringCoords);
     accessorByteOffset += model.accessors.back().count * 4 * 3;
+    elementCount += lineStringItr->coordinates.size();
     model.meshes.back().primitives.emplace_back();
     model.meshes.back().primitives.back().attributes["POSITION"] =
         accessorIndex;
@@ -167,7 +202,13 @@ void gatherLines(
       model.accessors.back().count =
           static_cast<int64_t>(lineStringCoords.size());
       model.accessors.back().type = Accessor::Type::VEC3;
+      std::span<glm::dvec3> stringCoords{
+          &localPositions[elementCount],
+          lineStringItr->coordinates.size()};
+      model.accessors.back().min = positionMinVector(stringCoords);
+      model.accessors.back().max = positionMaxVector(stringCoords);
       accessorByteOffset += model.accessors.back().count * 4 * 3;
+      elementCount += lineStringItr->coordinates.size();
       model.meshes.back().primitives.emplace_back();
       model.meshes.back().primitives.back().attributes["POSITION"] =
           accessorIndex;
@@ -304,6 +345,8 @@ void gatherPolygons(
   model.accessors.back().byteOffset = 0;
   model.accessors.back().componentType = Accessor::ComponentType::FLOAT;
   model.accessors.back().count = static_cast<int64_t>(localPositions.size());
+  model.accessors.back().min = positionMinVector(localPositions);
+  model.accessors.back().max = positionMaxVector(localPositions);
   model.accessors.back().type = Accessor::Type::VEC3;
 
   int32_t indexAccessorIndex = static_cast<int32_t>(model.accessors.size());
@@ -327,6 +370,7 @@ void gatherPolygons(
       model.nodes.back(),
       enuToFixedFrame);
 }
+} // namespace
 
 ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
   ConverterResult result;
