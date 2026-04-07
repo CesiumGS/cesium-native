@@ -5,8 +5,9 @@
 
 namespace CesiumVectorData {
 
-// Modeled after (copied from?) Cesium3DTilesContent::GltfConverterResult
-
+/**
+ * @brief The result of converting a GeoJSON file to a glTF model.
+ */
 struct CESIUMVECTORDATA_API ConverterResult {
   /**
    * @brief The gltf model converted from GeoJSON. This is empty if
@@ -21,8 +22,18 @@ struct CESIUMVECTORDATA_API ConverterResult {
   CesiumUtility::ErrorList errors;
 };
 
+/**
+ * @brief Functional for converting GeoJSON documents to glTF.
+ */
 class CESIUMVECTORDATA_API GltfConverter {
 public:
+/**
+ * @brief Convert geoJSON document to a result which includes a glTF Model
+ * object.
+ *
+ * @param geoJson The GeoJSON document.
+ * @returns A result object that includes the glTF Model and any errors.
+ */
   ConverterResult operator()(const GeoJsonDocument& geoJson);
 };
 } // namespace CesiumVectorData
