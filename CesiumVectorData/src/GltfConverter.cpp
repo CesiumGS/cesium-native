@@ -372,6 +372,67 @@ void gatherPolygons(
       model.nodes.back(),
       enuToFixedFrame);
 }
+
+void gatherPoints(
+    const GeoJsonDocument& geoJson,
+    Model& model,
+    const glm::dmat4& enuToFixedFrame) {
+  const GeoJsonObject& root = geoJson.rootObject;
+  // Look for points, count objects and coordinates
+  std::vector<glm::dvec3> cartoCoordinates;
+  auto pointsItr = root.allOfType<GeoJsonPoint>().begin();
+  while (pointsItr != root.allOfType<GeoJsonPoint>().end()) {
+    cartoCoordinates.push_back(pointsItr->coordinates);
+    pointsItr++;
+  }
+  auto multiPointItr = root.allOfType<GeoJsonMultiPoint>().begin();
+  while (multiPointItr != root.allOfType<GeoJsonMultiPoint>().end()) {
+      cartoCoordinates.insert(
+          cartoCoordinates.end(),
+          multiPointItr->coordinates.begin(),
+          multiPointItr->coordinates.end());
+
+    multiPointItr++;
+  }
+  std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
+  transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
+  int32_t bufferIndex = static_cast<int32_t>(model.buffers.size());
+  model.buffers.emplace_back();
+  std::vector<std::byte>& bytes = model.buffers.back().cesium.data;
+  bytes.resize(localPositions.size() * sizeof(glm::vec3));
+  glm::vec3* position32 = reinterpret_cast<glm::vec3*>(bytes.data());
+  for (const auto& localPosition : localPositions) {
+    *position32++ =
+        glm::vec3(localPosition.x, localPosition.y, localPosition.z);
+  }
+  int32_t bufferViewIndex = static_cast<int32_t>(model.bufferViews.size());
+  model.bufferViews.emplace_back();
+  model.bufferViews.back().buffer = bufferIndex;
+  model.bufferViews.back().byteOffset = 0;
+  model.bufferViews.back().byteLength = static_cast<int64_t>(bytes.size());
+  model.bufferViews.back().target = BufferView::Target::ARRAY_BUFFER;
+  int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
+  model.accessors.emplace_back();
+  model.accessors.back().bufferView = bufferViewIndex;
+  model.accessors.back().byteOffset = 0;
+  model.accessors.back().componentType = Accessor::ComponentType::FLOAT;
+  model.accessors.back().count = static_cast<int64_t>(localPositions.size());
+  model.accessors.back().min = positionMinVector(localPositions);
+  model.accessors.back().max = positionMaxVector(localPositions);
+  model.accessors.back().type = Accessor::Type::VEC3;
+
+  int32_t meshIndex = static_cast<int32_t>(model.meshes.size());
+  model.meshes.back().primitives.emplace_back();
+  model.meshes.back().primitives.back().attributes["POSITION"] = accessorIndex;
+  model.meshes.back().primitives.back().mode = MeshPrimitive::Mode::POINTS;
+  model.meshes.back().primitives.back().material = 0;
+
+  model.nodes.emplace_back();
+  model.nodes.back().mesh = meshIndex;
+  CesiumGltfContent::GltfUtilities::setNodeTransform(
+      model.nodes.back(),
+      enuToFixedFrame);
+}
 } // namespace
 
 ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
@@ -393,6 +454,7 @@ ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
 
   gatherLines(geoJson, *result.model, enuToFixedFrame);
   gatherPolygons(geoJson, *result.model, enuToFixedFrame);
+  gatherPoints(geoJson, *result.model, enuToFixedFrame);
   return result;
 }
 
