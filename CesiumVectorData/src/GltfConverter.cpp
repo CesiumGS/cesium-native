@@ -123,7 +123,7 @@ void transformIntoFrame(
       });
 }
 
-void gatherLines(
+int32_t gatherLines(
     const GeoJsonDocument& geoJson,
     Model& model,
     const glm::dmat4& enuToFixedFrame) {
@@ -148,6 +148,9 @@ void gatherLines(
           lineStringCoords.end());
     }
   }
+  if (cartoCoordinates.empty()) {
+    return -1;
+  }
   std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
   transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
   int32_t bufferIndex = static_cast<int32_t>(model.buffers.size());
@@ -160,72 +163,69 @@ void gatherLines(
         glm::vec3(localPosition.x, localPosition.y, localPosition.z);
   }
   int32_t bufferViewIndex = static_cast<int32_t>(model.bufferViews.size());
-  model.bufferViews.emplace_back();
-  model.bufferViews.back().buffer = bufferIndex;
-  model.bufferViews.back().byteOffset = 0;
-  model.bufferViews.back().byteLength = static_cast<int64_t>(bytes.size());
-  model.bufferViews.back().target = BufferView::Target::ARRAY_BUFFER;
+  BufferView& linesBufferView = model.bufferViews.emplace_back();
+  linesBufferView.buffer = bufferIndex;
+  linesBufferView.byteOffset = 0;
+  linesBufferView.byteLength = static_cast<int64_t>(bytes.size());
+  linesBufferView.target = BufferView::Target::ARRAY_BUFFER;
   int64_t accessorByteOffset = 0;
   size_t elementCount = 0;
   int32_t meshIndex = static_cast<int32_t>(model.meshes.size());
-  model.meshes.emplace_back();
+  Mesh& linesMesh = model.meshes.emplace_back();
   for (auto lineStringItr = root.allOfType<GeoJsonLineString>().begin();
        lineStringItr != root.allOfType<GeoJsonLineString>().end();
        ++lineStringItr) {
     int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
-    model.accessors.emplace_back();
-    model.accessors.back().bufferView = bufferViewIndex;
-    model.accessors.back().byteOffset = accessorByteOffset;
-    model.accessors.back().componentType = Accessor::ComponentType::FLOAT;
-    model.accessors.back().count =
+    Accessor& linesAccessor = model.accessors.emplace_back();
+    linesAccessor.bufferView = bufferViewIndex;
+    linesAccessor.byteOffset = accessorByteOffset;
+    linesAccessor.componentType = Accessor::ComponentType::FLOAT;
+    linesAccessor.count =
         static_cast<int64_t>(lineStringItr->coordinates.size());
-    model.accessors.back().type = Accessor::Type::VEC3;
+    linesAccessor.type = Accessor::Type::VEC3;
     std::span<glm::dvec3> stringCoords{
         &localPositions[elementCount],
         lineStringItr->coordinates.size()};
-    model.accessors.back().min = positionMinVector(stringCoords);
-    model.accessors.back().max = positionMaxVector(stringCoords);
-    accessorByteOffset += model.accessors.back().count * 4 * 3;
+    linesAccessor.min = positionMinVector(stringCoords);
+    linesAccessor.max = positionMaxVector(stringCoords);
+    accessorByteOffset += linesAccessor.count * 4 * 3;
     elementCount += lineStringItr->coordinates.size();
-    model.meshes.back().primitives.emplace_back();
-    model.meshes.back().primitives.back().attributes["POSITION"] =
-        accessorIndex;
-    model.meshes.back().primitives.back().mode =
-        MeshPrimitive::Mode::LINE_STRIP;
-    model.meshes.back().primitives.back().material = 0;
+    linesMesh.primitives.emplace_back();
+    linesMesh.primitives.back().attributes["POSITION"] = accessorIndex;
+    linesMesh.primitives.back().mode = MeshPrimitive::Mode::LINE_STRIP;
+    linesMesh.primitives.back().material = 0;
   }
   for (auto multiLineItr = root.allOfType<GeoJsonMultiLineString>().begin();
        multiLineItr != root.allOfType<GeoJsonMultiLineString>().end();
        ++multiLineItr) {
     for (const auto& lineStringCoords : multiLineItr->coordinates) {
       int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
-      model.accessors.emplace_back();
-      model.accessors.back().bufferView = bufferViewIndex;
-      model.accessors.back().byteOffset = accessorByteOffset;
-      model.accessors.back().componentType = Accessor::ComponentType::FLOAT;
-      model.accessors.back().count =
-          static_cast<int64_t>(lineStringCoords.size());
-      model.accessors.back().type = Accessor::Type::VEC3;
+      Accessor& linesAccessor = model.accessors.emplace_back();
+      linesAccessor.bufferView = bufferViewIndex;
+      linesAccessor.byteOffset = accessorByteOffset;
+      linesAccessor.componentType = Accessor::ComponentType::FLOAT;
+      linesAccessor.count = static_cast<int64_t>(lineStringCoords.size());
+      linesAccessor.type = Accessor::Type::VEC3;
       std::span<glm::dvec3> stringCoords{
           &localPositions[elementCount],
           lineStringCoords.size()};
-      model.accessors.back().min = positionMinVector(stringCoords);
-      model.accessors.back().max = positionMaxVector(stringCoords);
-      accessorByteOffset += model.accessors.back().count * 4 * 3;
+      linesAccessor.min = positionMinVector(stringCoords);
+      linesAccessor.max = positionMaxVector(stringCoords);
+      accessorByteOffset += linesAccessor.count * 4 * 3;
       elementCount += lineStringCoords.size();
-      model.meshes.back().primitives.emplace_back();
-      model.meshes.back().primitives.back().attributes["POSITION"] =
-          accessorIndex;
-      model.meshes.back().primitives.back().mode =
-          MeshPrimitive::Mode::LINE_STRIP;
-      model.meshes.back().primitives.back().material = 0;
+      linesMesh.primitives.emplace_back();
+      linesMesh.primitives.back().attributes["POSITION"] = accessorIndex;
+      linesMesh.primitives.back().mode = MeshPrimitive::Mode::LINE_STRIP;
+      linesMesh.primitives.back().material = 0;
     }
   }
+  int32_t nodeIndex = static_cast<int32_t>(model.nodes.size());
   model.nodes.emplace_back();
   model.nodes.back().mesh = meshIndex;
   CesiumGltfContent::GltfUtilities::setNodeTransform(
       model.nodes.back(),
       enuToFixedFrame);
+  return nodeIndex;
 }
 
 std::vector<uint64_t>
@@ -251,7 +251,7 @@ triangulatePolygon(const CesiumVectorData::GeoJsonPolygon& polygonIn) {
   return triangulatePolygon(polygonIn.coordinates);
 }
 
-void gatherPolygons(
+int32_t gatherPolygons(
     const GeoJsonDocument& geoJson,
     Model& model,
     const glm::dmat4& enuToFixedFrame) {
@@ -282,6 +282,9 @@ void gatherPolygons(
             contour.end());
       }
     }
+  }
+  if (cartoCoordinates.empty()) {
+    return -1;
   }
   std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
   transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
@@ -334,46 +337,48 @@ void gatherPolygons(
       allIndices.data(),
       sizeof(uint32_t) * allIndices.size());
   int32_t indexBufferViewIndex = static_cast<int32_t>(model.bufferViews.size());
-  model.bufferViews.emplace_back();
-  model.bufferViews.back().buffer = indexBufferIndex;
-  model.bufferViews.back().byteOffset = 0;
-  model.bufferViews.back().byteLength = static_cast<int64_t>(indexBytes.size());
-  model.bufferViews.back().target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
-  ;
+  BufferView& polyBufferView = model.bufferViews.emplace_back();
+  polyBufferView.buffer = indexBufferIndex;
+  polyBufferView.byteOffset = 0;
+  polyBufferView.byteLength = static_cast<int64_t>(indexBytes.size());
+  polyBufferView.target = BufferView::Target::ELEMENT_ARRAY_BUFFER;
 
   int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
-  model.accessors.emplace_back();
-  model.accessors.back().bufferView = bufferViewIndex;
-  model.accessors.back().byteOffset = 0;
-  model.accessors.back().componentType = Accessor::ComponentType::FLOAT;
-  model.accessors.back().count = static_cast<int64_t>(localPositions.size());
-  model.accessors.back().min = positionMinVector(localPositions);
-  model.accessors.back().max = positionMaxVector(localPositions);
-  model.accessors.back().type = Accessor::Type::VEC3;
+  Accessor& coordAccessor = model.accessors.emplace_back();
+  coordAccessor.bufferView = bufferViewIndex;
+  coordAccessor.byteOffset = 0;
+  coordAccessor.componentType = Accessor::ComponentType::FLOAT;
+  coordAccessor.count = static_cast<int64_t>(localPositions.size());
+  coordAccessor.min = positionMinVector(localPositions);
+  coordAccessor.max = positionMaxVector(localPositions);
+  coordAccessor.type = Accessor::Type::VEC3;
 
   int32_t indexAccessorIndex = static_cast<int32_t>(model.accessors.size());
-  model.accessors.emplace_back();
-  model.accessors.back().bufferView = indexBufferViewIndex;
-  model.accessors.back().byteOffset = 0;
-  model.accessors.back().componentType = Accessor::ComponentType::UNSIGNED_INT;
-  model.accessors.back().count = static_cast<int64_t>(allIndices.size());
-  model.accessors.back().type = Accessor::Type::SCALAR;
+  Accessor& indexAccessor = model.accessors.emplace_back();
+  indexAccessor.bufferView = indexBufferViewIndex;
+  indexAccessor.byteOffset = 0;
+  indexAccessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
+  indexAccessor.count = static_cast<int64_t>(allIndices.size());
+  indexAccessor.type = Accessor::Type::SCALAR;
 
   int32_t meshIndex = static_cast<int32_t>(model.meshes.size());
-  model.meshes.back().primitives.emplace_back();
-  model.meshes.back().primitives.back().attributes["POSITION"] = accessorIndex;
-  model.meshes.back().primitives.back().indices = indexAccessorIndex;
-  model.meshes.back().primitives.back().mode = MeshPrimitive::Mode::TRIANGLES;
-  model.meshes.back().primitives.back().material = 0;
+  Mesh& polyMesh = model.meshes.emplace_back();
+  polyMesh.primitives.emplace_back();
+  polyMesh.primitives.back().attributes["POSITION"] = accessorIndex;
+  polyMesh.primitives.back().indices = indexAccessorIndex;
+  polyMesh.primitives.back().mode = MeshPrimitive::Mode::TRIANGLES;
+  polyMesh.primitives.back().material = 0;
 
+  int32_t nodeIndex = static_cast<int32_t>(model.nodes.size());
   model.nodes.emplace_back();
   model.nodes.back().mesh = meshIndex;
   CesiumGltfContent::GltfUtilities::setNodeTransform(
       model.nodes.back(),
       enuToFixedFrame);
+  return nodeIndex;
 }
 
-void gatherPoints(
+int32_t gatherPoints(
     const GeoJsonDocument& geoJson,
     Model& model,
     const glm::dmat4& enuToFixedFrame) {
@@ -393,6 +398,9 @@ void gatherPoints(
         multiPointItr->coordinates.begin(),
         multiPointItr->coordinates.end());
   }
+  if (cartoCoordinates.empty()) {
+    return -1;
+  }
   std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
   transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
   int32_t bufferIndex = static_cast<int32_t>(model.buffers.size());
@@ -405,32 +413,35 @@ void gatherPoints(
         glm::vec3(localPosition.x, localPosition.y, localPosition.z);
   }
   int32_t bufferViewIndex = static_cast<int32_t>(model.bufferViews.size());
-  model.bufferViews.emplace_back();
-  model.bufferViews.back().buffer = bufferIndex;
-  model.bufferViews.back().byteOffset = 0;
-  model.bufferViews.back().byteLength = static_cast<int64_t>(bytes.size());
-  model.bufferViews.back().target = BufferView::Target::ARRAY_BUFFER;
+  BufferView& pointsBufferView = model.bufferViews.emplace_back();
+  pointsBufferView.buffer = bufferIndex;
+  pointsBufferView.byteOffset = 0;
+  pointsBufferView.byteLength = static_cast<int64_t>(bytes.size());
+  pointsBufferView.target = BufferView::Target::ARRAY_BUFFER;
   int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
-  model.accessors.emplace_back();
-  model.accessors.back().bufferView = bufferViewIndex;
-  model.accessors.back().byteOffset = 0;
-  model.accessors.back().componentType = Accessor::ComponentType::FLOAT;
-  model.accessors.back().count = static_cast<int64_t>(localPositions.size());
-  model.accessors.back().min = positionMinVector(localPositions);
-  model.accessors.back().max = positionMaxVector(localPositions);
-  model.accessors.back().type = Accessor::Type::VEC3;
+  Accessor& pointsAccessor = model.accessors.emplace_back();
+  pointsAccessor.bufferView = bufferViewIndex;
+  pointsAccessor.byteOffset = 0;
+  pointsAccessor.componentType = Accessor::ComponentType::FLOAT;
+  pointsAccessor.count = static_cast<int64_t>(localPositions.size());
+  pointsAccessor.min = positionMinVector(localPositions);
+  pointsAccessor.max = positionMaxVector(localPositions);
+  pointsAccessor.type = Accessor::Type::VEC3;
 
   int32_t meshIndex = static_cast<int32_t>(model.meshes.size());
-  model.meshes.back().primitives.emplace_back();
-  model.meshes.back().primitives.back().attributes["POSITION"] = accessorIndex;
-  model.meshes.back().primitives.back().mode = MeshPrimitive::Mode::POINTS;
-  model.meshes.back().primitives.back().material = 0;
+  Mesh& pointsMesh = model.meshes.emplace_back();
+  pointsMesh.primitives.emplace_back();
+  pointsMesh.primitives.back().attributes["POSITION"] = accessorIndex;
+  pointsMesh.primitives.back().mode = MeshPrimitive::Mode::POINTS;
+  pointsMesh.primitives.back().material = 0;
 
+  int32_t nodeIndex = static_cast<int32_t>(model.nodes.size());
   model.nodes.emplace_back();
   model.nodes.back().mesh = meshIndex;
   CesiumGltfContent::GltfUtilities::setNodeTransform(
       model.nodes.back(),
       enuToFixedFrame);
+  return nodeIndex;
 }
 } // namespace
 
@@ -450,10 +461,17 @@ ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
   pbr.metallicFactor = 0.0;
   pbr.roughnessFactor = 1.0;
   material.doubleSided = true;
-
-  gatherLines(geoJson, *result.model, enuToFixedFrame);
-  gatherPolygons(geoJson, *result.model, enuToFixedFrame);
-  gatherPoints(geoJson, *result.model, enuToFixedFrame);
+  size_t rootNodeIndex = result.model->nodes.size();
+  result.model->nodes.emplace_back();
+  auto maybeAddNode = [&model = *result.model,
+                       rootNodeIndex](int32_t featureNode) {
+    if (featureNode >= 0) {
+      model.nodes[rootNodeIndex].children.push_back(featureNode);
+    }
+  };
+  maybeAddNode(gatherLines(geoJson, *result.model, enuToFixedFrame));
+  maybeAddNode(gatherPolygons(geoJson, *result.model, enuToFixedFrame));
+  maybeAddNode(gatherPoints(geoJson, *result.model, enuToFixedFrame));
   return result;
 }
 
