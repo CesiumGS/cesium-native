@@ -4,6 +4,7 @@
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialPBRMetallicRoughness.h>
+#include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
