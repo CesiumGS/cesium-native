@@ -27,13 +27,13 @@ struct CESIUMVECTORDATA_API ConverterResult {
  */
 class CESIUMVECTORDATA_API GltfConverter {
 public:
-/**
- * @brief Convert geoJSON document to a result which includes a glTF Model
- * object.
- *
- * @param geoJson The GeoJSON document.
- * @returns A result object that includes the glTF Model and any errors.
- */
+  /**
+   * @brief Convert geoJSON document to a result which includes a glTF Model
+   * object.
+   *
+   * @param geoJson The GeoJSON document.
+   * @returns A result object that includes the glTF Model and any errors.
+   */
   ConverterResult operator()(const GeoJsonDocument& geoJson);
 };
 } // namespace CesiumVectorData
