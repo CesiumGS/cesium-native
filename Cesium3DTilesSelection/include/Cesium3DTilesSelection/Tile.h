@@ -3,8 +3,10 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+#include <Cesium3DTilesSelection/ThreadSafety.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileID.h>
+#include <Cesium3DTilesSelection/TileObserver.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <CesiumUtility/DoublyLinkedList.h>
@@ -234,14 +236,15 @@ public:
   /**
    * @brief Returns the parent of this tile in the tile hierarchy.
    *
-   * This will be the `nullptr` if this is the root tile.
+   * This will be `nullptr` if this is the root tile. The returned pointer is
+   * non-owning — the caller must not store it beyond the tile's lifetime.
    *
-   * @return The parent.
+   * @return The parent, or `nullptr`.
    */
-  Tile* getParent() noexcept { return this->_pParent; }
+  Tile* getParent() noexcept { return this->_pParent.get(); }
 
   /** @copydoc Tile::getParent() */
-  const Tile* getParent() const noexcept { return this->_pParent; }
+  const Tile* getParent() const noexcept { return this->_pParent.get(); }
 
   /**
    * @brief Returns a *view* on the children of this tile.
@@ -499,12 +502,12 @@ public:
   }
 
   /**
-   * @brief Get the content of the tile.
+   * @brief Get the content of the tile. [main-thread]
    */
-  const TileContent& getContent() const noexcept { return _content; }
+  const TileContent& getContent() const noexcept { return _content.get(); }
 
-  /** @copydoc Tile::getContent() const */
-  TileContent& getContent() noexcept { return _content; }
+  /** @copydoc Tile::getContent() const [main-thread] */
+  TileContent& getContent() noexcept { return _content.get(); }
 
   /**
    * @brief Determines if this tile is currently renderable.
@@ -532,7 +535,7 @@ public:
   TilesetContentLoader* getLoader() const noexcept;
 
   /**
-   * @brief Returns the {@link TileLoadState} of this tile.
+   * @brief Returns the {@link TileLoadState} of this tile. [main-thread]
    */
   TileLoadState getState() const noexcept;
 
@@ -684,7 +687,10 @@ private:
   void setMightHaveLatentChildren(bool mightHaveLatentChildren) noexcept;
 
   // Position in bounding-volume hierarchy.
-  Tile* _pParent;
+  // Non-owning: the child observes the parent but does not extend its lifetime.
+  // Reference-count bookkeeping (addReference/releaseReference) is performed
+  // explicitly in Tile.cpp whenever the child's own reference count changes.
+  TileObserver<Tile> _pParent;
   std::vector<Tile> _children;
 
   // Properties from tileset.json.
@@ -697,11 +703,13 @@ private:
   TileRefine _refine;
   glm::dmat4x4 _transform;
 
-  // tile content
+  // tile content — both fields are [main-thread-only]; access via
+  // getContent() / getState() / setState() which enforce the threading
+  // contract in debug builds via MainThreadOnly<T>.
   CesiumUtility::DoublyLinkedListPointers<Tile> _unusedTilesLinks;
-  TileContent _content;
+  MainThreadOnly<TileContent> _content;
   TilesetContentLoader* _pLoader;
-  TileLoadState _loadState;
+  MainThreadOnly<TileLoadState> _loadState;
   bool _mightHaveLatentChildren;
 
   // mapped raster overlay
