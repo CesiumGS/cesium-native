@@ -3,10 +3,12 @@
 #include <Cesium3DTilesSelection/ViewState.h>
 
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
 
+class Tile;
 class TilesetViewGroup;
 
 /**
@@ -29,6 +31,19 @@ public:
    * @brief The computed fog density for each frustum.
    */
   std::vector<double> fogDensities;
+
+  /**
+   * @brief [main-thread] Callback invoked once per visited tile to advance its
+   * content state machine (unloading, content-loaded finalization, latent
+   * children creation).  Populated by Tileset::updateViewGroup before the
+   * traversal begins.
+   *
+   * Keeping this as a callback rather than a direct TilesetContentManager
+   * reference means the traversal functions (_visitTileIfNeeded, _visitTile,
+   * etc.) have no compile-time dependency on TilesetContentManager, making
+   * them independently testable.
+   */
+  std::function<void(Tile&)> tileStateUpdater;
 };
 
 } // namespace Cesium3DTilesSelection
