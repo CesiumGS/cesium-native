@@ -19,7 +19,7 @@ void MockTilesetContentManagerTestFixture::setTileShouldContinueUpdating(
 void MockTilesetContentManagerTestFixture::setTileContent(
     Cesium3DTilesSelection::Tile& tile,
     Cesium3DTilesSelection::TileContent&& content) {
-  tile._content = std::move(content);
+  tile._content.get() = std::move(content);
 };
 
 } // namespace Cesium3DTilesSelection
