@@ -99,20 +99,6 @@ ViewState makeFarViewState() {
   return ViewState(camPos, camDir, camUp, viewport, hFov, vFov, ellipsoid);
 }
 
-// Build a ViewState from very close in so the root does NOT meet SSE and
-// children would be needed. Works with EllipsoidTilesetLoader.
-ViewState makeCloseViewState() {
-  const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
-  Cartographic camCarto{0.0, 0.0, 100.0};
-  glm::dvec3 camPos = ellipsoid.cartographicToCartesian(camCarto);
-  glm::dvec3 camDir = glm::normalize(-camPos);
-  glm::dvec3 camUp{0.0, 0.0, 1.0};
-  glm::dvec2 viewport{1280.0, 720.0};
-  double hFov = Math::degreesToRadians(60.0);
-  double vFov = 2.0 * std::atan(std::tan(hFov * 0.5) / (1280.0 / 720.0));
-  return ViewState(camPos, camDir, camUp, viewport, hFov, vFov, ellipsoid);
-}
-
 } // namespace
 
 TEST_CASE("selectTiles is callable as a free function") {
