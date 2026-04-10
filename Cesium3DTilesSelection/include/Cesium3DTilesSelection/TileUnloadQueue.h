@@ -22,7 +22,9 @@ public:
 
   TileUnloadQueue(const TileUnloadQueue&) = delete;
   TileUnloadQueue& operator=(const TileUnloadQueue&) = delete;
+  /** @brief Move constructor. */
   TileUnloadQueue(TileUnloadQueue&&) noexcept = default;
+  /** @brief Move assignment. */
   TileUnloadQueue& operator=(TileUnloadQueue&&) noexcept = default;
 
   /**

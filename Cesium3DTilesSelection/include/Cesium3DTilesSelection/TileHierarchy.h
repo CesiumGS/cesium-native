@@ -22,7 +22,9 @@ public:
 
   TileHierarchy(const TileHierarchy&) = delete;
   TileHierarchy& operator=(const TileHierarchy&) = delete;
+  /** @brief Move constructor. */
   TileHierarchy(TileHierarchy&&) noexcept = default;
+  /** @brief Move assignment. */
   TileHierarchy& operator=(TileHierarchy&&) noexcept = default;
 
   /** @brief Returns the root tile, or nullptr when not yet loaded.

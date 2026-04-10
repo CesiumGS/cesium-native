@@ -18,7 +18,9 @@ class TileOcclusionRendererProxy;
  * algorithm. Holds only references — no ownership.
  */
 struct TileSelectionContext {
+  /** @brief The tileset configuration options. */
   const TilesetOptions& options;
+  /** @brief The external interfaces (asset accessor, task processor, etc.). */
   const TilesetExternals& externals;
 };
 

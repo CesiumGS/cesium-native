@@ -72,9 +72,13 @@ public:
   // trivially moveable) can be moved during tile tree construction, which
   // happens on the main thread.  Thread-id on copy/move keeps the owner as the
   // constructing thread (the main thread).
+  /** @brief Copy constructor. Retains the owner thread of the source. */
   MainThreadOnly(const MainThreadOnly&) = default;
+  /** @brief Move constructor. Retains the owner thread of the source. */
   MainThreadOnly(MainThreadOnly&&) noexcept = default;
+  /** @brief Copy assignment. Retains the owner thread. */
   MainThreadOnly& operator=(const MainThreadOnly&) = default;
+  /** @brief Move assignment. Retains the owner thread. */
   MainThreadOnly& operator=(MainThreadOnly&&) noexcept = default;
   ~MainThreadOnly() = default;
 

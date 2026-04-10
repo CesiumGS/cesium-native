@@ -43,9 +43,13 @@ public:
   constexpr TileObserver(std::nullptr_t) noexcept : _ptr(nullptr) {}
 
   // Non-owning — no special copy/move/destructor semantics needed.
+  /** @brief Copy constructor. */
   TileObserver(const TileObserver&) noexcept = default;
+  /** @brief Move constructor. */
   TileObserver(TileObserver&&) noexcept = default;
+  /** @brief Copy assignment. */
   TileObserver& operator=(const TileObserver&) noexcept = default;
+  /** @brief Move assignment. */
   TileObserver& operator=(TileObserver&&) noexcept = default;
   ~TileObserver() noexcept = default;
 
@@ -87,23 +91,28 @@ public:
   operator==(const TileObserver& lhs, const TileObserver& rhs) noexcept {
     return lhs._ptr == rhs._ptr;
   }
+  /** @brief Inequality comparison. */
   friend constexpr bool
   operator!=(const TileObserver& lhs, const TileObserver& rhs) noexcept {
     return lhs._ptr != rhs._ptr;
   }
 
+  /** @brief Equality comparison with nullptr. */
   friend constexpr bool
   operator==(const TileObserver& lhs, std::nullptr_t) noexcept {
     return lhs._ptr == nullptr;
   }
+  /** @brief Inequality comparison with nullptr. */
   friend constexpr bool
   operator!=(const TileObserver& lhs, std::nullptr_t) noexcept {
     return lhs._ptr != nullptr;
   }
+  /** @brief Equality comparison with nullptr (reversed order). */
   friend constexpr bool
   operator==(std::nullptr_t, const TileObserver& rhs) noexcept {
     return rhs._ptr == nullptr;
   }
+  /** @brief Inequality comparison with nullptr (reversed order). */
   friend constexpr bool
   operator!=(std::nullptr_t, const TileObserver& rhs) noexcept {
     return rhs._ptr != nullptr;
@@ -114,6 +123,7 @@ public:
   operator==(const TileObserver& lhs, const T* rhs) noexcept {
     return lhs._ptr == rhs;
   }
+  /** @brief Raw-pointer inequality. */
   friend constexpr bool
   operator!=(const TileObserver& lhs, const T* rhs) noexcept {
     return lhs._ptr != rhs;
