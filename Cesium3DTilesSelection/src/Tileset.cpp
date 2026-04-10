@@ -1,7 +1,6 @@
 #include "TilesetContentManager.h"
 #include "TilesetHeightQuery.h"
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/ITileExcluder.h>
 #include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
@@ -10,8 +9,6 @@
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
-#include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
@@ -19,6 +16,7 @@
 #include <Cesium3DTilesSelection/TilesetFrameState.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <Cesium3DTilesSelection/TilesetSelection.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
@@ -26,28 +24,19 @@
 #include <CesiumAsync/Promise.h>
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeospatial/Cartographic.h>
-#include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumUtility/Math.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <glm/common.hpp>
-#include <glm/exponential.hpp>
-#include <glm/ext/vector_double3.hpp>
-#include <glm/geometric.hpp>
 
 #include <algorithm>
-#include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <limits>
 #include <memory>
 #include <optional>
-#include <span>
 #include <string>
 #include <unordered_set>
 #include <utility>
