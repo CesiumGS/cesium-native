@@ -17,8 +17,7 @@ namespace Cesium3DTilesSelection {
  * @brief Owns the raster overlay collection and the upsampler.
  *
  * This is the single point of ownership for all overlay-related resources.
- * In the current design tiles hold references into data owned here; Phase 4
- * will make those non-owning references explicit at the type level.
+ * In the current design tiles hold references into data owned here.
  *
  * The upsampler is a `TilesetContentLoader` specialisation whose `setOwner()`
  * must be called by the containing `TilesetContentManager` after construction,
