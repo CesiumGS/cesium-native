@@ -25,7 +25,7 @@ using namespace CesiumNativeTests;
 TEST_CASE("VectorRasterizer::rasterize") {
   const std::filesystem::path dir(
       std::filesystem::path(CesiumVectorData_TEST_DATA_DIR) / "rasterized");
-  const std::filesystem::path thisDir = std::filesystem::current_path();
+  const std::filesystem::path thisDir = CESIUM_NATIVE_TEMP_DIR;
 
   GlobeRectangle rect{
       0.0,
@@ -57,7 +57,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         triangle,
         VectorStyle{Color{0, 255, 255, 255}}.polygon);
     rasterizer.finalize();
-    writeImageToTgaFile(*asset, "triangle.tga");
+    writeImageToTgaFile(*asset, thisDir / "triangle.tga");
     checkFilesEqual(dir / "triangle.tga", thisDir / "triangle.tga");
   }
 
@@ -108,7 +108,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         rasterizer.finalize();
 
         const std::string fileName = fmt::format("tile-{}-{}.tga", i, j);
-        writeImageToTgaFile(*tile, fileName);
+        writeImageToTgaFile(*tile, thisDir / fileName);
         checkFilesEqual(dir / fileName, thisDir / fileName);
 
         for (size_t x = 0; x < (size_t)128; x++) {
@@ -148,7 +148,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         polyline,
         VectorStyle{Color{81, 33, 255, 255}}.line);
     rasterizer.finalize();
-    writeImageToTgaFile(*asset, "polyline.tga");
+    writeImageToTgaFile(*asset, thisDir / "polyline.tga");
     checkFilesEqual(dir / "polyline.tga", thisDir / "polyline.tga");
   }
 
@@ -183,7 +183,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         triangle,
         VectorStyle{Color{255, 127, 100, 255}}.polygon);
     rasterizer.finalize();
-    writeImageToTgaFile(*asset, "triangle-scaled.tga");
+    writeImageToTgaFile(*asset, thisDir / "triangle-scaled.tga");
     checkFilesEqual(
         dir / "triangle-scaled.tga",
         thisDir / "triangle-scaled.tga");
@@ -220,7 +220,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         composite,
         VectorStyle{Color{255, 50, 12, 255}}.polygon);
     rasterizer.finalize();
-    writeImageToTgaFile(*asset, "polygon-holes.tga");
+    writeImageToTgaFile(*asset, thisDir / "polygon-holes.tga");
     checkFilesEqual(dir / "polygon-holes.tga", thisDir / "polygon-holes.tga");
   }
 
@@ -259,7 +259,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     rasterizer.drawPolygon(composite, style.polygon);
     rasterizer.finalize();
-    writeImageToTgaFile(*asset, "polygon-holes-outline.tga");
+    writeImageToTgaFile(*asset, thisDir / "polygon-holes-outline.tga");
     checkFilesEqual(
         dir / "polygon-holes-outline.tga",
         thisDir / "polygon-holes-outline.tga");
@@ -315,7 +315,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         VectorStyle{Color{0x55, 0xbb, 0xff, 0xff}}.polygon);
     rasterizer.finalize();
 
-    writeImageToTgaFile(*asset, "antimeridian.tga");
+    writeImageToTgaFile(*asset, thisDir / "antimeridian.tga");
     checkFilesEqual(dir / "antimeridian.tga", thisDir / "antimeridian.tga");
   }
 
@@ -353,7 +353,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
       rasterizer.finalize();
     }
 
-    writeImageToTgaFile(*asset, "mipmap.tga");
+    writeImageToTgaFile(*asset, thisDir / "mipmap.tga");
     checkFilesEqual(dir / "mipmap-mip0.tga", thisDir / "mipmap-mip0.tga");
     checkFilesEqual(dir / "mipmap-mip1.tga", thisDir / "mipmap-mip1.tga");
     checkFilesEqual(dir / "mipmap-mip2.tga", thisDir / "mipmap-mip2.tga");
@@ -405,7 +405,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.drawPolyline(polyline, style.line);
     rasterizer.finalize();
 
-    writeImageToTgaFile(*asset, "styling.tga");
+    writeImageToTgaFile(*asset, thisDir / "styling.tga");
     checkFilesEqual(dir / "styling.tga", thisDir / "styling.tga");
   }
 
@@ -478,7 +478,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.drawPolyline(line, style);
     rasterizer.finalize();
 
-    writeImageToTgaFile(*asset, "line-meters.tga");
+    writeImageToTgaFile(*asset, thisDir / "line-meters.tga");
     checkFilesEqual(dir / "line-meters.tga", thisDir / "line-meters.tga");
   }
 
@@ -512,7 +512,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     rasterizer.drawPolyline(line2, style);
     rasterizer.finalize();
 
-    writeImageToTgaFile(*asset, "lines-touching.tga");
+    writeImageToTgaFile(*asset, thisDir / "lines-touching.tga");
     checkFilesEqual(dir / "lines-touching.tga", thisDir / "lines-touching.tga");
   }
 }
@@ -576,7 +576,9 @@ TEST_CASE("VectorRasterizer::rasterize benchmark" * doctest::skip(true)) {
     total += time;
     std::cout << "rasterized 1000 triangles in " << time.count()
               << " microseconds\n";
-    writeImageToTgaFile(*asset, "rand.tga");
+    writeImageToTgaFile(
+        *asset,
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) / "rand.tga");
   }
 
   double seconds =
