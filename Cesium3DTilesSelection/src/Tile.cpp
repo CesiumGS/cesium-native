@@ -239,22 +239,22 @@ bool Tile::isRenderable() const noexcept {
 }
 
 bool Tile::isRenderContent() const noexcept {
-  return this->_content.get().isRenderContent();
+  return this->_content.isRenderContent();
 }
 
 bool Tile::isExternalContent() const noexcept {
-  return this->_content.get().isExternalContent();
+  return this->_content.isExternalContent();
 }
 
 bool Tile::isEmptyContent() const noexcept {
-  return this->_content.get().isEmptyContent();
+  return this->_content.isEmptyContent();
 }
 
 TilesetContentLoader* Tile::getLoader() const noexcept {
   return this->_pLoader;
 }
 
-TileLoadState Tile::getState() const noexcept { return this->_loadState.get(); }
+TileLoadState Tile::getState() const noexcept { return this->_loadState; }
 
 namespace {
 
@@ -315,7 +315,7 @@ void Tile::setParent(Tile* pParent) noexcept {
     }
   }
 
-  this->_pParent.reset(pParent);
+  this->_pParent = pParent;
 
   if (this->getReferenceCount() > 0) {
     // Add a reference to the new parent, or to the
@@ -328,9 +328,7 @@ void Tile::setParent(Tile* pParent) noexcept {
   }
 }
 
-void Tile::setState(TileLoadState state) noexcept {
-  this->_loadState.get() = state;
-}
+void Tile::setState(TileLoadState state) noexcept { this->_loadState = state; }
 
 bool Tile::getMightHaveLatentChildren() const noexcept {
   return this->_mightHaveLatentChildren;
@@ -478,7 +476,7 @@ int32_t Tile::getReferenceCount() const noexcept {
 }
 
 bool Tile::hasReferencingContent() const noexcept {
-  return !this->_content.get().isUnknownContent() &&
+  return !this->_content.isUnknownContent() &&
          TileIdUtilities::isLoadable(this->_id);
 }
 

@@ -1,13 +1,11 @@
 #pragma once
 
 #include "RasterOverlayUpsampler.h"
-#include "TileOverlaySystem.h"
 
 #include <Cesium3DTilesSelection/CesiumIonTilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
-#include <Cesium3DTilesSelection/TileHierarchy.h>
 #include <Cesium3DTilesSelection/TileUnloadQueue.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
@@ -233,13 +231,11 @@ private:
   TilesetExternals _externals;
   std::vector<CesiumAsync::IAssetAccessor::THeader> _requestHeaders;
   std::unique_ptr<TilesetContentLoader> _pLoader;
-  /// @brief Owns the tile tree root. Single owner; children are owned by their
-  /// parent tile. Access on main thread only.
-  TileHierarchy _hierarchy;
+  std::unique_ptr<Tile> _pRootTile;
   std::optional<CesiumUtility::Credit> _userCredit;
   std::vector<CesiumUtility::Credit> _tilesetCredits;
-  /// @brief Owns the raster overlay collection and upsampler.
-  TileOverlaySystem _overlays;
+  RasterOverlayCollection _rasterOverlayCollection;
+  RasterOverlayUpsampler _upsampler;
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;

@@ -656,12 +656,14 @@ TilesetContentManager::TilesetContentManager(
     : _externals{externals},
       _requestHeaders{tilesetOptions.requestHeaders},
       _pLoader{nullptr},
+      _pRootTile{nullptr},
       _userCredit(),
       _tilesetCredits{},
-      _overlays(
+      _rasterOverlayCollection(
           LoadedTileEnumerator(nullptr),
           externals,
           tilesetOptions.ellipsoid),
+      _upsampler(),
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -684,7 +686,7 @@ TilesetContentManager::TilesetContentManager(
       externals.pCreditSystem,
       this->_creditSource);
 
-  this->_overlays.getUpsampler().setOwner(*this);
+  this->_upsampler.setOwner(*this);
 }
 
 /* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
@@ -1147,7 +1149,7 @@ void TilesetContentManager::loadTileContent(
     Tile& tile,
     const TilesetOptions& tilesetOptions) {
   CESIUM_ASSERT(this->_pLoader != nullptr);
-  CESIUM_ASSERT(this->_hierarchy.getRoot() != nullptr);
+  CESIUM_ASSERT(this->_pRootTile != nullptr);
 
   CESIUM_TRACE("TilesetContentManager::loadTileContent");
 
@@ -1217,7 +1219,7 @@ void TilesetContentManager::loadTileContent(
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
-      this->_overlays.getCollection().addTileOverlays(tile, tilesetOptions);
+      this->_rasterOverlayCollection.addTileOverlays(tile, tilesetOptions);
 
   // begin loading tile
   notifyTileStartLoading(&tile);
@@ -1233,8 +1235,8 @@ void TilesetContentManager::loadTileContent(
       tile};
 
   TilesetContentLoader* pLoader;
-  if (tile.getLoader() == &this->_overlays.getUpsampler()) {
-    pLoader = &this->_overlays.getUpsampler();
+  if (tile.getLoader() == &this->_upsampler) {
+    pLoader = &this->_upsampler;
   } else {
     pLoader = this->_pLoader.get();
   }
@@ -1475,8 +1477,8 @@ UnloadTileContentResult TilesetContentManager::unloadTileContent(Tile& tile) {
 void TilesetContentManager::unloadAll() {
   // TODO: use the linked-list of loaded tiles instead of walking the entire
   // tile tree.
-  if (this->_hierarchy.getRoot()) {
-    unloadTileRecursively(*this->_hierarchy.getRoot(), *this);
+  if (this->_pRootTile) {
+    unloadTileRecursively(*this->_pRootTile, *this);
   }
 }
 
@@ -1509,7 +1511,7 @@ bool TilesetContentManager::waitUntilIdle(
 
     rasterOverlayTilesLoading = 0;
     for (const auto& pActivated :
-         this->_overlays.getCollection().getActivatedOverlays()) {
+         this->_rasterOverlayCollection.getActivatedOverlays()) {
       rasterOverlayTilesLoading += pActivated->getNumberOfTilesLoading();
     }
 
@@ -1523,11 +1525,11 @@ bool TilesetContentManager::waitUntilIdle(
 }
 
 const Tile* TilesetContentManager::getRootTile() const noexcept {
-  return this->_hierarchy.getRoot();
+  return this->_pRootTile.get();
 }
 
 Tile* TilesetContentManager::getRootTile() noexcept {
-  return this->_hierarchy.getRoot();
+  return this->_pRootTile.get();
 }
 
 const std::vector<CesiumAsync::IAssetAccessor::THeader>&
@@ -1542,12 +1544,12 @@ TilesetContentManager::getRequestHeaders() noexcept {
 
 const RasterOverlayCollection&
 TilesetContentManager::getRasterOverlayCollection() const noexcept {
-  return this->_overlays.getCollection();
+  return this->_rasterOverlayCollection;
 }
 
 RasterOverlayCollection&
 TilesetContentManager::getRasterOverlayCollection() noexcept {
-  return this->_overlays.getCollection();
+  return this->_rasterOverlayCollection;
 }
 
 const Credit* TilesetContentManager::getUserCredit() const noexcept {
@@ -1579,7 +1581,7 @@ int32_t TilesetContentManager::getNumberOfTilesLoaded() const noexcept {
 int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   int64_t bytes = this->_tilesDataUsed;
   for (const auto& pActivated :
-       this->_overlays.getCollection().getActivatedOverlays()) {
+       this->_rasterOverlayCollection.getActivatedOverlays()) {
     bytes += pActivated->getTileDataBytes();
   }
 
@@ -2120,9 +2122,7 @@ void TilesetContentManager::updateDoneState(
   const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent) {
     TileRasterOverlayStatus status =
-        this->_overlays.getCollection().updateTileOverlays(
-            tile,
-            tilesetOptions);
+        this->_rasterOverlayCollection.updateTileOverlays(tile, tilesetOptions);
 
     if (status.firstIndexWithMissingProjection) {
       // The mesh doesn't have the right texture coordinates for this
@@ -2147,10 +2147,7 @@ void TilesetContentManager::updateDoneState(
     // have raster tiles that are not the most detailed available, create fake
     // children to hang more detailed rasters on by subdividing this tile.
     if (doSubdivide && tile.getChildren().empty()) {
-      createQuadtreeSubdividedChildren(
-          ellipsoid,
-          tile,
-          this->_overlays.getUpsampler());
+      createQuadtreeSubdividedChildren(ellipsoid, tile, this->_upsampler);
     }
   } else {
     // We can't hang raster images on a tile without geometry, and their
@@ -2255,10 +2252,10 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
 
   this->_requestHeaders = std::move(result.requestHeaders);
   this->_pLoader = std::move(result.pLoader);
-  this->_hierarchy.setRoot(std::move(result.pRootTile));
+  this->_pRootTile = std::move(result.pRootTile);
 
-  this->_overlays.getCollection().setLoadedTileEnumerator(
-      LoadedTileEnumerator(this->_hierarchy.getRoot()));
+  this->_rasterOverlayCollection.setLoadedTileEnumerator(
+      LoadedTileEnumerator(this->_pRootTile.get()));
   this->_pLoader->setOwner(*this);
 }
 

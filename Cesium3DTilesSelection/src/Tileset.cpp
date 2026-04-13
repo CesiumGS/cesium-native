@@ -423,13 +423,12 @@ const ViewUpdateResult& Tileset::updateViewGroup(
 
   if (!frustums.empty()) {
     viewGroup.startNewFrame(*this, frameState);
-    TileSelectionContext ctx{this->_options, this->_externals};
-    ViewUpdateResult selectionResult = selectTiles(
-        ctx,
-        frameState,
-        *pRootTile,
+    TileSelectionContext ctx{
+        this->_options,
+        this->_externals,
         this->_distances,
-        this->_childOcclusionProxies);
+        this->_childOcclusionProxies};
+    ViewUpdateResult selectionResult = selectTiles(ctx, frameState, *pRootTile);
     result = std::move(selectionResult);
     viewGroup.finishFrame(*this, frameState);
   } else {

@@ -22,6 +22,16 @@ struct TileSelectionContext {
   const TilesetOptions& options;
   /** @brief The external interfaces (asset accessor, task processor, etc.). */
   const TilesetExternals& externals;
+  /**
+   * @brief Caller-owned scratch buffer reused across frames to avoid
+   * per-frame heap allocation. Contents on entry are unspecified.
+   */
+  std::vector<double>& scratchDistances;
+  /**
+   * @brief Caller-owned scratch buffer reused across frames to avoid
+   * per-frame heap allocation. Contents on entry are unspecified.
+   */
+  std::vector<const TileOcclusionRendererProxy*>& scratchOcclusionProxies;
 };
 
 /**
@@ -33,22 +43,17 @@ struct TileSelectionContext {
  * Side effects are limited to explicit reference parameters:
  * - `frameState.viewGroup` receives traversal state updates and load queue
  *   entries.
- * - `scratchDistances` and `scratchOcclusionProxies` are reused across
- *   frames to avoid per-frame heap allocation; their contents on entry are
- *   unspecified.
+ * - `ctx.scratchDistances` and `ctx.scratchOcclusionProxies` are reused
+ *   across frames to avoid per-frame heap allocation.
  *
- * @param ctx      Configuration and external dependencies.
+ * @param ctx      Configuration, external dependencies, and scratch buffers.
  * @param frameState Per-frame view parameters and the view group to update.
  * @param rootTile Root of the tile hierarchy to traverse.
- * @param scratchDistances Caller-owned scratch buffer.
- * @param scratchOcclusionProxies Caller-owned scratch buffer.
  * @return The frame's render result and statistics.
  */
 CESIUM3DTILESSELECTION_API ViewUpdateResult selectTiles(
     const TileSelectionContext& ctx,
     const TilesetFrameState& frameState,
-    Tile& rootTile,
-    std::vector<double>& scratchDistances,
-    std::vector<const TileOcclusionRendererProxy*>& scratchOcclusionProxies);
+    Tile& rootTile);
 
 } // namespace Cesium3DTilesSelection

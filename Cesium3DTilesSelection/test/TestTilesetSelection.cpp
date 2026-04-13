@@ -139,11 +139,14 @@ TEST_CASE("selectTiles is callable as a free function") {
   std::vector<double> scratchDistances;
   std::vector<const TileOcclusionRendererProxy*> scratchOcclusion;
 
-  TileSelectionContext ctx{options, externals};
+  TileSelectionContext ctx{
+      options,
+      externals,
+      scratchDistances,
+      scratchOcclusion};
 
   viewGroup.startNewFrame(*pTileset, frameState);
-  ViewUpdateResult result =
-      selectTiles(ctx, frameState, *pRoot, scratchDistances, scratchOcclusion);
+  ViewUpdateResult result = selectTiles(ctx, frameState, *pRoot);
   viewGroup.finishFrame(*pTileset, frameState);
 
   // From far away the root tile (or its immediate children) should be
@@ -200,11 +203,14 @@ TEST_CASE("selectTiles result matches updateViewGroup result") {
   std::vector<double> scratchDistances;
   std::vector<const TileOcclusionRendererProxy*> scratchOcclusion;
 
-  TileSelectionContext ctx{options, externals};
+  TileSelectionContext ctx{
+      options,
+      externals,
+      scratchDistances,
+      scratchOcclusion};
 
   viewGroup.startNewFrame(*pTileset, frameState);
-  ViewUpdateResult freeResult =
-      selectTiles(ctx, frameState, *pRoot, scratchDistances, scratchOcclusion);
+  ViewUpdateResult freeResult = selectTiles(ctx, frameState, *pRoot);
   viewGroup.finishFrame(*pTileset, frameState);
 
   // Tile counts must agree between the two paths.
