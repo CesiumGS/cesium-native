@@ -1,9 +1,3 @@
-// TilesetSelection.cpp
-//
-// Implements the tile LOD selection / traversal algorithm as pure free
-// functions.  No dependency on the Tileset class — all context is passed
-// through explicit parameters.
-
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/ITileExcluder.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
@@ -49,10 +43,9 @@ using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 
+// Internal types used by selectTiles and traversal helpers.
 namespace {
 
-// Internal context — bundles all inputs for the recursive traversal helpers.
-// References only; no ownership.
 struct TraversalContext {
   const TilesetOptions& options;
   const TilesetExternals& externals;
@@ -61,7 +54,6 @@ struct TraversalContext {
   std::vector<const TileOcclusionRendererProxy*>& childOcclusionProxies;
 };
 
-// Internal per-subtree summary returned by each visit function.
 struct TraversalDetails {
   bool allAreRenderable = true;
   bool anyWereRenderedLastFrame = false;
@@ -75,7 +67,33 @@ struct CullResult {
 
 enum class VisitTileAction { Render, Refine };
 
-// Small helpers (previously in anonymous namespace in Tileset.cpp)
+// Forward declaration of the top-level recursive entry point.
+TraversalDetails visitTileIfNeeded(
+    const TraversalContext& ctx,
+    uint32_t depth,
+    bool ancestorMeetsSse,
+    Tile& tile,
+    ViewUpdateResult& result);
+
+} // namespace
+
+ViewUpdateResult selectTiles(
+    const TileSelectionContext& ctx,
+    const TilesetFrameState& frameState,
+    Tile& rootTile) {
+  TraversalContext tctx{
+      ctx.options,
+      ctx.externals,
+      frameState,
+      ctx.scratchDistances,
+      ctx.scratchOcclusionProxies};
+
+  ViewUpdateResult result;
+  visitTileIfNeeded(tctx, 0, false, rootTile, result);
+  return result;
+}
+
+namespace {
 
 TileSelectionState getPreviousState(
     const TilesetViewGroup& viewGroup,
@@ -871,25 +889,5 @@ TraversalDetails visitTileIfNeeded(
 }
 
 } // anonymous namespace
-
-// Public entry point
-ViewUpdateResult selectTiles(
-    const TileSelectionContext& ctx,
-    const TilesetFrameState& frameState,
-    Tile& rootTile,
-    std::vector<double>& scratchDistances,
-    std::vector<const TileOcclusionRendererProxy*>& scratchOcclusionProxies) {
-
-  TraversalContext tctx{
-      ctx.options,
-      ctx.externals,
-      frameState,
-      scratchDistances,
-      scratchOcclusionProxies};
-
-  ViewUpdateResult result;
-  visitTileIfNeeded(tctx, 0, false, rootTile, result);
-  return result;
-}
 
 } // namespace Cesium3DTilesSelection
