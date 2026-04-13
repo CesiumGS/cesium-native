@@ -33,7 +33,7 @@ public:
   std::vector<double> fogDensities;
 
   /**
-   * @brief [main-thread] Callback invoked once per visited tile to advance its
+   * @brief Callback invoked once per visited tile to advance its
    * content state machine (unloading, content-loaded finalization, latent
    * children creation).  Populated by Tileset::updateViewGroup before the
    * traversal begins.
