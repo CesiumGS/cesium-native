@@ -659,7 +659,7 @@ TilesetContentManager::TilesetContentManager(
       _pRootTile{nullptr},
       _userCredit(),
       _tilesetCredits{},
-      _rasterOverlayCollection(
+      _overlayCollection(
           LoadedTileEnumerator(nullptr),
           externals,
           tilesetOptions.ellipsoid),
@@ -1219,7 +1219,7 @@ void TilesetContentManager::loadTileContent(
 
   // map raster overlay to tile
   std::vector<CesiumGeospatial::Projection> projections =
-      this->_rasterOverlayCollection.addTileOverlays(tile, tilesetOptions);
+      this->_overlayCollection.addTileOverlays(tile, tilesetOptions);
 
   // begin loading tile
   notifyTileStartLoading(&tile);
@@ -1511,7 +1511,7 @@ bool TilesetContentManager::waitUntilIdle(
 
     rasterOverlayTilesLoading = 0;
     for (const auto& pActivated :
-         this->_rasterOverlayCollection.getActivatedOverlays()) {
+         this->_overlayCollection.getActivatedOverlays()) {
       rasterOverlayTilesLoading += pActivated->getNumberOfTilesLoading();
     }
 
@@ -1544,12 +1544,12 @@ TilesetContentManager::getRequestHeaders() noexcept {
 
 const RasterOverlayCollection&
 TilesetContentManager::getRasterOverlayCollection() const noexcept {
-  return this->_rasterOverlayCollection;
+  return this->_overlayCollection;
 }
 
 RasterOverlayCollection&
 TilesetContentManager::getRasterOverlayCollection() noexcept {
-  return this->_rasterOverlayCollection;
+  return this->_overlayCollection;
 }
 
 const Credit* TilesetContentManager::getUserCredit() const noexcept {
@@ -1581,7 +1581,7 @@ int32_t TilesetContentManager::getNumberOfTilesLoaded() const noexcept {
 int64_t TilesetContentManager::getTotalDataUsed() const noexcept {
   int64_t bytes = this->_tilesDataUsed;
   for (const auto& pActivated :
-       this->_rasterOverlayCollection.getActivatedOverlays()) {
+       this->_overlayCollection.getActivatedOverlays()) {
     bytes += pActivated->getTileDataBytes();
   }
 
@@ -2122,7 +2122,7 @@ void TilesetContentManager::updateDoneState(
   const TileRenderContent* pRenderContent = content.getRenderContent();
   if (pRenderContent) {
     TileRasterOverlayStatus status =
-        this->_rasterOverlayCollection.updateTileOverlays(tile, tilesetOptions);
+        this->_overlayCollection.updateTileOverlays(tile, tilesetOptions);
 
     if (status.firstIndexWithMissingProjection) {
       // The mesh doesn't have the right texture coordinates for this
@@ -2254,7 +2254,7 @@ void TilesetContentManager::propagateTilesetContentLoaderResult(
   this->_pLoader = std::move(result.pLoader);
   this->_pRootTile = std::move(result.pRootTile);
 
-  this->_rasterOverlayCollection.setLoadedTileEnumerator(
+  this->_overlayCollection.setLoadedTileEnumerator(
       LoadedTileEnumerator(this->_pRootTile.get()));
   this->_pLoader->setOwner(*this);
 }

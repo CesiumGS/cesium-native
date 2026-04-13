@@ -234,7 +234,7 @@ private:
   std::unique_ptr<Tile> _pRootTile;
   std::optional<CesiumUtility::Credit> _userCredit;
   std::vector<CesiumUtility::Credit> _tilesetCredits;
-  RasterOverlayCollection _rasterOverlayCollection;
+  RasterOverlayCollection _overlayCollection;
   RasterOverlayUpsampler _upsampler;
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
