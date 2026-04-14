@@ -31,57 +31,6 @@ using namespace CesiumVectorData;
 const size_t BENCHMARK_ITERATIONS = 100000;
 
 namespace {
-CesiumGltf::ImageAsset rasterizeOverlayTile(
-    const GlobeRectangle& rectangle,
-    const glm::dvec2& imageSize,
-    const std::filesystem::path& testDataPath,
-    const GeoJsonDocumentRasterOverlayOptions& overlayOptions) {
-  AsyncSystem asyncSystem(
-      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
-
-  Result<GeoJsonDocument> docResult =
-      GeoJsonDocument::fromGeoJson(readFile(testDataPath));
-  CHECK(!docResult.errors.hasErrors());
-  CHECK(docResult.errors.warnings.empty());
-  REQUIRE(docResult.value);
-
-  IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay;
-  pOverlay.emplace(
-      asyncSystem,
-      "overlay0",
-      std::make_shared<GeoJsonDocument>(std::move(*docResult.value)),
-      overlayOptions);
-
-  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
-      std::make_shared<CesiumNativeTests::SimpleAssetAccessor>(
-          std::map<
-              std::string,
-              std::shared_ptr<CesiumNativeTests::SimpleAssetRequest>>());
-
-  IntrusivePointer<ActivatedRasterOverlay> pActivated = pOverlay->activate(
-      RasterOverlayExternals{
-          .pAssetAccessor = pAssetAccessor,
-          .pPrepareRendererResources = nullptr,
-          .asyncSystem = asyncSystem,
-          .pCreditSystem = nullptr,
-          .pLogger = spdlog::default_logger()},
-      Ellipsoid::WGS84);
-
-  pActivated->getReadyEvent().waitInMainThread();
-
-  REQUIRE(pActivated->getTileProvider() != nullptr);
-  GeographicProjection projection(Ellipsoid::WGS84);
-  const CesiumGeometry::Rectangle& tileRect = projection.project(rectangle);
-
-  IntrusivePointer<RasterOverlayTile> pTile =
-      pActivated->getTile(tileRect, imageSize);
-  pActivated->loadTile(*pTile);
-  while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
-    asyncSystem.dispatchMainThreadTasks();
-  }
-  return *pTile->getImage();
-}
-
 CesiumGltf::ImageAsset rasterizeOverlayTileFromDocument(
     const GlobeRectangle& rectangle,
     const glm::dvec2& imageSize,
@@ -127,6 +76,24 @@ CesiumGltf::ImageAsset rasterizeOverlayTileFromDocument(
   return *pTile->getImage();
 }
 
+CesiumGltf::ImageAsset rasterizeOverlayTile(
+    const GlobeRectangle& rectangle,
+    const glm::dvec2& imageSize,
+    const std::filesystem::path& testDataPath,
+    const GeoJsonDocumentRasterOverlayOptions& overlayOptions) {
+  Result<GeoJsonDocument> docResult =
+      GeoJsonDocument::fromGeoJson(readFile(testDataPath));
+  CHECK(!docResult.errors.hasErrors());
+  CHECK(docResult.errors.warnings.empty());
+  REQUIRE(docResult.value);
+
+  return rasterizeOverlayTileFromDocument(
+      rectangle,
+      imageSize,
+      std::move(*docResult.value),
+      overlayOptions);
+}
+
 bool imageHasPixelWithColor(
     const CesiumGltf::ImageAsset& image,
     uint8_t r,
@@ -135,11 +102,14 @@ bool imageHasPixelWithColor(
     uint8_t a) {
   REQUIRE(image.channels == 4);
   REQUIRE(image.bytesPerChannel == 1);
+  REQUIRE(
+      static_cast<size_t>(
+          image.width * image.height * image.channels *
+          image.bytesPerChannel) == image.pixelData.size());
   for (int32_t y = 0; y < image.height; y++) {
     for (int32_t x = 0; x < image.width; x++) {
       size_t idx = static_cast<size_t>((y * image.width + x) * 4);
-      if (idx + 3 < image.pixelData.size() &&
-          static_cast<uint8_t>(image.pixelData[idx]) == r &&
+      if (static_cast<uint8_t>(image.pixelData[idx]) == r &&
           static_cast<uint8_t>(image.pixelData[idx + 1]) == g &&
           static_cast<uint8_t>(image.pixelData[idx + 2]) == b &&
           static_cast<uint8_t>(image.pixelData[idx + 3]) == a) {
