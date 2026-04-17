@@ -59,12 +59,12 @@ struct GltfConverterImpl {
 double GltfConverterImpl::heightOffset = 10.0;
 
 int32_t GltfConverterImpl::makeBufferView(int32_t buffer, int target) {
-  int32_t bufferViewIndex = static_cast<int32_t>(model.bufferViews.size());
+  int32_t bufferViewIndex = int32_t(model.bufferViews.size());
   BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = buffer;
   bufferView.byteOffset = 0;
-  bufferView.byteLength = static_cast<int64_t>(
-      model.buffers[static_cast<size_t>(buffer)].cesium.data.size());
+  bufferView.byteLength =
+      int64_t(model.buffers[size_t(buffer)].cesium.data.size());
   bufferView.target = target;
   return bufferViewIndex;
 }
@@ -75,7 +75,7 @@ int32_t GltfConverterImpl::makeAccessor(
     int64_t count,
     int componentType,
     const std::string& accessorType) {
-  int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
+  int32_t accessorIndex = int32_t(model.accessors.size());
   Accessor& accessor = model.accessors.emplace_back();
   accessor.bufferView = bufferView;
   accessor.byteOffset = byteOffset;
@@ -204,7 +204,7 @@ int32_t GltfConverterImpl::gatherLines() {
   }
   std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
   transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
-  int32_t bufferIndex = static_cast<int32_t>(model.buffers.size());
+  int32_t bufferIndex = int32_t(model.buffers.size());
   model.buffers.emplace_back();
   std::vector<std::byte>& bytes = model.buffers.back().cesium.data;
   bytes.resize(localPositions.size() * sizeof(glm::vec3));
@@ -217,7 +217,7 @@ int32_t GltfConverterImpl::gatherLines() {
       makeBufferView(bufferIndex, BufferView::Target::ARRAY_BUFFER);
   int64_t accessorByteOffset = 0;
   size_t elementCount = 0;
-  int32_t meshIndex = static_cast<int32_t>(model.meshes.size());
+  int32_t meshIndex = int32_t(model.meshes.size());
   Mesh& linesMesh = model.meshes.emplace_back();
   for (auto lineStringItr = root.allOfType<GeoJsonLineString>().begin();
        lineStringItr != root.allOfType<GeoJsonLineString>().end();
@@ -225,16 +225,15 @@ int32_t GltfConverterImpl::gatherLines() {
     int32_t accessorIndex = makeAccessor(
         bufferViewIndex,
         accessorByteOffset,
-        static_cast<int64_t>(lineStringItr->coordinates.size()));
+        int64_t(lineStringItr->coordinates.size()));
     std::span<glm::dvec3> stringCoords{
         &localPositions[elementCount],
         lineStringItr->coordinates.size()};
-    model.accessors[static_cast<size_t>(accessorIndex)].min =
+    model.accessors[size_t(accessorIndex)].min =
         positionMinVector(stringCoords);
-    model.accessors[static_cast<size_t>(accessorIndex)].max =
+    model.accessors[size_t(accessorIndex)].max =
         positionMaxVector(stringCoords);
-    accessorByteOffset +=
-        model.accessors[static_cast<size_t>(accessorIndex)].count * 4 * 3;
+    accessorByteOffset += model.accessors[size_t(accessorIndex)].count * 4 * 3;
     elementCount += lineStringItr->coordinates.size();
     linesMesh.primitives.emplace_back();
     linesMesh.primitives.back().attributes["POSITION"] = accessorIndex;
@@ -245,12 +244,12 @@ int32_t GltfConverterImpl::gatherLines() {
        multiLineItr != root.allOfType<GeoJsonMultiLineString>().end();
        ++multiLineItr) {
     for (const auto& lineStringCoords : multiLineItr->coordinates) {
-      int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
+      int32_t accessorIndex = int32_t(model.accessors.size());
       Accessor& linesAccessor = model.accessors.emplace_back();
       linesAccessor.bufferView = bufferViewIndex;
       linesAccessor.byteOffset = accessorByteOffset;
       linesAccessor.componentType = Accessor::ComponentType::FLOAT;
-      linesAccessor.count = static_cast<int64_t>(lineStringCoords.size());
+      linesAccessor.count = int64_t(lineStringCoords.size());
       linesAccessor.type = Accessor::Type::VEC3;
       std::span<glm::dvec3> stringCoords{
           &localPositions[elementCount],
@@ -265,7 +264,7 @@ int32_t GltfConverterImpl::gatherLines() {
       linesMesh.primitives.back().material = 0;
     }
   }
-  int32_t nodeIndex = static_cast<int32_t>(model.nodes.size());
+  int32_t nodeIndex = int32_t(model.nodes.size());
   model.nodes.emplace_back();
   model.nodes.back().mesh = meshIndex;
   CesiumGltfContent::GltfUtilities::setNodeTransform(
@@ -331,7 +330,7 @@ int32_t GltfConverterImpl::gatherPolygons() {
   }
   std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
   transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
-  int32_t bufferIndex = static_cast<int32_t>(model.buffers.size());
+  int32_t bufferIndex = int32_t(model.buffers.size());
   model.buffers.emplace_back();
   std::vector<std::byte>& bytes = model.buffers.back().cesium.data;
   bytes.resize(localPositions.size() * sizeof(glm::vec3));
@@ -351,7 +350,7 @@ int32_t GltfConverterImpl::gatherPolygons() {
        ++polyItr) {
     std::vector<uint64_t> triangulated = triangulatePolygon(*polyItr);
     for (auto index : triangulated) {
-      allIndices.push_back(static_cast<uint32_t>(allVertexCounter + index));
+      allIndices.push_back(uint32_t(allVertexCounter + index));
     }
     allVertexCounter += polyItr->coordinates.size();
   }
@@ -361,13 +360,13 @@ int32_t GltfConverterImpl::gatherPolygons() {
     for (const auto& polygon : multiPolyItr->coordinates) {
       std::vector<uint64_t> triangulated = triangulatePolygon(polygon);
       for (auto index : triangulated) {
-        allIndices.push_back(static_cast<uint32_t>(allVertexCounter + index));
+        allIndices.push_back(uint32_t(allVertexCounter + index));
       }
       allVertexCounter += polygon.size();
     }
   }
 
-  int32_t indexBufferIndex = static_cast<int32_t>(model.buffers.size());
+  int32_t indexBufferIndex = int32_t(model.buffers.size());
   model.buffers.emplace_back();
   std::vector<std::byte>& indexBytes = model.buffers.back().cesium.data;
   indexBytes.resize(sizeof(uint32_t) * allIndices.size());
@@ -378,25 +377,25 @@ int32_t GltfConverterImpl::gatherPolygons() {
   int32_t indexBufferViewIndex = makeBufferView(
       indexBufferIndex,
       BufferView::Target::ELEMENT_ARRAY_BUFFER);
-  int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
+  int32_t accessorIndex = int32_t(model.accessors.size());
   Accessor& coordAccessor = model.accessors.emplace_back();
   coordAccessor.bufferView = bufferViewIndex;
   coordAccessor.byteOffset = 0;
   coordAccessor.componentType = Accessor::ComponentType::FLOAT;
-  coordAccessor.count = static_cast<int64_t>(localPositions.size());
+  coordAccessor.count = int64_t(localPositions.size());
   coordAccessor.min = positionMinVector(localPositions);
   coordAccessor.max = positionMaxVector(localPositions);
   coordAccessor.type = Accessor::Type::VEC3;
 
-  int32_t indexAccessorIndex = static_cast<int32_t>(model.accessors.size());
+  int32_t indexAccessorIndex = int32_t(model.accessors.size());
   Accessor& indexAccessor = model.accessors.emplace_back();
   indexAccessor.bufferView = indexBufferViewIndex;
   indexAccessor.byteOffset = 0;
   indexAccessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
-  indexAccessor.count = static_cast<int64_t>(allIndices.size());
+  indexAccessor.count = int64_t(allIndices.size());
   indexAccessor.type = Accessor::Type::SCALAR;
 
-  int32_t meshIndex = static_cast<int32_t>(model.meshes.size());
+  int32_t meshIndex = int32_t(model.meshes.size());
   Mesh& polyMesh = model.meshes.emplace_back();
   polyMesh.primitives.emplace_back();
   polyMesh.primitives.back().attributes["POSITION"] = accessorIndex;
@@ -404,7 +403,7 @@ int32_t GltfConverterImpl::gatherPolygons() {
   polyMesh.primitives.back().mode = MeshPrimitive::Mode::TRIANGLES;
   polyMesh.primitives.back().material = 0;
 
-  int32_t nodeIndex = static_cast<int32_t>(model.nodes.size());
+  int32_t nodeIndex = int32_t(model.nodes.size());
   model.nodes.emplace_back();
   model.nodes.back().mesh = meshIndex;
   CesiumGltfContent::GltfUtilities::setNodeTransform(
@@ -435,7 +434,7 @@ int32_t GltfConverterImpl::gatherPoints() {
   }
   std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
   transformIntoFrame(enuToFixedFrame, cartoCoordinates, localPositions);
-  int32_t bufferIndex = static_cast<int32_t>(model.buffers.size());
+  int32_t bufferIndex = int32_t(model.buffers.size());
   model.buffers.emplace_back();
   std::vector<std::byte>& bytes = model.buffers.back().cesium.data;
   bytes.resize(localPositions.size() * sizeof(glm::vec3));
@@ -446,24 +445,24 @@ int32_t GltfConverterImpl::gatherPoints() {
   }
   int32_t bufferViewIndex =
       makeBufferView(bufferIndex, BufferView::Target::ARRAY_BUFFER);
-  int32_t accessorIndex = static_cast<int32_t>(model.accessors.size());
+  int32_t accessorIndex = int32_t(model.accessors.size());
   Accessor& pointsAccessor = model.accessors.emplace_back();
   pointsAccessor.bufferView = bufferViewIndex;
   pointsAccessor.byteOffset = 0;
   pointsAccessor.componentType = Accessor::ComponentType::FLOAT;
-  pointsAccessor.count = static_cast<int64_t>(localPositions.size());
+  pointsAccessor.count = int64_t(localPositions.size());
   pointsAccessor.min = positionMinVector(localPositions);
   pointsAccessor.max = positionMaxVector(localPositions);
   pointsAccessor.type = Accessor::Type::VEC3;
 
-  int32_t meshIndex = static_cast<int32_t>(model.meshes.size());
+  int32_t meshIndex = int32_t(model.meshes.size());
   Mesh& pointsMesh = model.meshes.emplace_back();
   pointsMesh.primitives.emplace_back();
   pointsMesh.primitives.back().attributes["POSITION"] = accessorIndex;
   pointsMesh.primitives.back().mode = MeshPrimitive::Mode::POINTS;
   pointsMesh.primitives.back().material = 0;
 
-  int32_t nodeIndex = static_cast<int32_t>(model.nodes.size());
+  int32_t nodeIndex = int32_t(model.nodes.size());
   model.nodes.emplace_back();
   model.nodes.back().mesh = meshIndex;
   CesiumGltfContent::GltfUtilities::setNodeTransform(
