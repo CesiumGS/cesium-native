@@ -863,9 +863,9 @@ TileLoadResult parseJsonContentInWorkerThread(
           pAssetAccessor,
           std::move(pCompletedRequest));
     } else {
-      CesiumVectorData::GltfConverter geoJsonCoverter;
+
       CesiumVectorData::ConverterResult converterResult =
-          geoJsonCoverter(*geoJson.value);
+          CesiumVectorData::GltfConverter::convert(*geoJson.value);
       if (converterResult.model.has_value() &&
           !converterResult.errors.hasErrors()) {
         return TileLoadResult{

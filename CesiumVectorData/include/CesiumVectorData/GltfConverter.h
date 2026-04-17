@@ -34,6 +34,6 @@ public:
    * @param geoJson The GeoJSON document.
    * @returns A result object that includes the glTF Model and any errors.
    */
-  ConverterResult operator()(const GeoJsonDocument& geoJson);
+  static ConverterResult convert(const GeoJsonDocument& geoJson);
 };
 } // namespace CesiumVectorData
