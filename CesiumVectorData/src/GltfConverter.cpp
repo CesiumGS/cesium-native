@@ -465,6 +465,8 @@ ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
   size_t rootNodeIndex = result.model->nodes.size();
   result.model->nodes.emplace_back();
   auto maybeAddNode = [&model = *result.model,
+  // International orange
+  material.emissiveFactor = {0xff / 255.0, 0x4f / 255.0, 0.0};
                        rootNodeIndex](int32_t featureNode) {
     if (featureNode >= 0) {
       model.nodes[rootNodeIndex].children.push_back(featureNode);
