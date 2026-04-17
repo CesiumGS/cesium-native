@@ -71,22 +71,26 @@ std::vector<double> positionMaxVector(const std::span<glm::dvec3> coords) {
 glm::dvec3 computeCentroid(const GeoJsonObject& root) {
   size_t numCoords = 0;
   glm::dvec3 sum(0.0, 0.0, 0.0);
-
-  auto pointsItr = root.points().begin();
-  while (pointsItr != root.points().end()) {
+  auto pointsProvider = root.points();
+  for (auto pointsItr = pointsProvider.begin();
+       pointsItr != pointsProvider.end();
+       ++pointsItr) {
     numCoords++;
-    sum += *(pointsItr++);
+    sum += *pointsItr;
   }
-  auto linesItr = root.lines().begin();
-  while (linesItr != root.lines().end()) {
+  auto linesProvider = root.lines();
+  for (auto linesItr = linesProvider.begin();
+       linesItr != linesProvider.end();
+       ++linesItr) {
     for (const auto& coord : *linesItr) {
       numCoords++;
       sum += coord;
     }
-    linesItr++;
   }
-  auto polysItr = root.polygons().begin();
-  while (polysItr != root.polygons().end()) {
+  auto polysProvider = root.polygons();
+  for (auto polysItr = polysProvider.begin();
+       polysItr != polysProvider.end();
+       ++polysItr) {
     const auto& polyRings = *polysItr;
     for (const auto& ring : polyRings) {
       for (const auto& coord : ring) {
@@ -94,7 +98,6 @@ glm::dvec3 computeCentroid(const GeoJsonObject& root) {
         sum += coord;
       }
     }
-    polysItr++;
   }
   if (numCoords > 0) {
     sum /= static_cast<double>(numCoords);
