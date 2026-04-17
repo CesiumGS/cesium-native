@@ -33,6 +33,22 @@ using namespace CesiumVectorData;
 
 namespace CesiumVectorData {
 namespace {
+struct GltfConverterImpl {
+  const GeoJsonDocument& geoJson;
+  Model model;
+  glm::dmat4 enuToFixedFrame;
+  GltfConverterImpl(const GeoJsonDocument& inGeoJson)
+      : geoJson(inGeoJson), enuToFixedFrame(1.0) {
+  }
+  static double heightOffset;
+  // Gather a feature type from GeoJson into a mesh in a node.
+  int32_t gatherLines();
+  int32_t gatherPolygons();
+  int32_t gatherPoints();
+};
+
+double GltfConverterImpl::heightOffset = 10.0;
+
 glm::dvec3 positionMin(const std::span<glm::dvec3> coords) {
   if (coords.empty()) {
     return {0.0, 0.0, 0.0};
@@ -119,7 +135,7 @@ void transformIntoFrame(
         CesiumGeospatial::Cartographic cartographic(Cartographic::fromDegrees(
             cartoDegrees.x,
             cartoDegrees.y,
-            cartoDegrees.z));
+            cartoDegrees.z + GltfConverterImpl::heightOffset));
         auto cartesian =
             CesiumGeospatial::Ellipsoid::WGS84.cartographicToCartesian(
                 cartographic);
@@ -127,10 +143,7 @@ void transformIntoFrame(
       });
 }
 
-int32_t gatherLines(
-    const GeoJsonDocument& geoJson,
-    Model& model,
-    const glm::dmat4& enuToFixedFrame) {
+int32_t GltfConverterImpl::gatherLines() {
   const GeoJsonObject& root = geoJson.rootObject;
   // Look for linestrings, count objects and coordinates
   std::vector<glm::dvec3> cartoCoordinates;
@@ -255,10 +268,7 @@ triangulatePolygon(const CesiumVectorData::GeoJsonPolygon& polygonIn) {
   return triangulatePolygon(polygonIn.coordinates);
 }
 
-int32_t gatherPolygons(
-    const GeoJsonDocument& geoJson,
-    Model& model,
-    const glm::dmat4& enuToFixedFrame) {
+int32_t GltfConverterImpl::gatherPolygons() {
   const GeoJsonObject& root = geoJson.rootObject;
   std::vector<glm::dvec3> cartoCoordinates;
   // GeoJson polygons contain an outer counter and possible inner contours. The
@@ -382,10 +392,7 @@ int32_t gatherPolygons(
   return nodeIndex;
 }
 
-int32_t gatherPoints(
-    const GeoJsonDocument& geoJson,
-    Model& model,
-    const glm::dmat4& enuToFixedFrame) {
+int32_t GltfConverterImpl::gatherPoints() {
   const GeoJsonObject& root = geoJson.rootObject;
   // Look for points, count objects and coordinates
   std::vector<glm::dvec3> cartoCoordinates;
@@ -449,35 +456,40 @@ int32_t gatherPoints(
 }
 } // namespace
 
-ConverterResult GltfConverter::operator()(const GeoJsonDocument& geoJson) {
+ConverterResult GltfConverter::convert(const GeoJsonDocument& geoJson) {
   ConverterResult result;
-  const GeoJsonObject& root = geoJson.rootObject;
+  GltfConverterImpl converter(geoJson);
+  const GeoJsonObject& root = converter.geoJson.rootObject;
   glm::dvec3 centroid = computeCentroid(root);
   //  local to global cartesian
-  glm::dmat4 enuToFixedFrame = GlobeTransforms::eastNorthUpToFixedFrame(
+  converter.enuToFixedFrame = GlobeTransforms::eastNorthUpToFixedFrame(
       Ellipsoid::WGS84.cartographicToCartesian(
           Cartographic::fromDegrees(centroid.x, centroid.y, centroid.z)));
   result.model.emplace();
-  result.model->asset.version = "2.0";
-  CesiumGltf::Material& material = result.model->materials.emplace_back();
+  converter.model.asset.version = "2.0";
+  CesiumGltf::Material& material = converter.model.materials.emplace_back();
   CesiumGltf::MaterialPBRMetallicRoughness& pbr =
       material.pbrMetallicRoughness.emplace();
   pbr.metallicFactor = 0.0;
   pbr.roughnessFactor = 1.0;
+  pbr.baseColorFactor[0] = 0.0;
+  pbr.baseColorFactor[1] = 0.0;
+  pbr.baseColorFactor[2] = 0.0;
   material.doubleSided = true;
-  size_t rootNodeIndex = result.model->nodes.size();
-  result.model->nodes.emplace_back();
-  auto maybeAddNode = [&model = *result.model,
   // International orange
   material.emissiveFactor = {0xff / 255.0, 0x4f / 255.0, 0.0};
+  size_t rootNodeIndex = converter.model.nodes.size();
+  converter.model.nodes.emplace_back();
+  auto maybeAddNode = [&model = converter.model,
                        rootNodeIndex](int32_t featureNode) {
     if (featureNode >= 0) {
       model.nodes[rootNodeIndex].children.push_back(featureNode);
     }
   };
-  maybeAddNode(gatherLines(geoJson, *result.model, enuToFixedFrame));
-  maybeAddNode(gatherPolygons(geoJson, *result.model, enuToFixedFrame));
-  maybeAddNode(gatherPoints(geoJson, *result.model, enuToFixedFrame));
+  maybeAddNode(converter.gatherLines());
+  maybeAddNode(converter.gatherPolygons());
+  maybeAddNode(converter.gatherPoints());
+  result.model = std::move(converter.model);
   return result;
 }
 
