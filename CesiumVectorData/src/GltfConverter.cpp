@@ -25,6 +25,8 @@
 #include <cstdint>
 #include <cstring>
 #include <span>
+#include <string>
+#include <utility>
 #include <vector>
 
 using namespace CesiumGeospatial;
