@@ -10,7 +10,6 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltfContent/GltfUtilities.h>
-#include <CesiumUtility/Math.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
@@ -124,11 +123,10 @@ std::vector<double> positionMaxVector(const std::span<glm::dvec3> coords) {
 Cartographic computeCentroid(const GeoJsonObject& root) {
   BoundingRegionBuilder regionBuilder;
   auto expand = [&regionBuilder](const glm::dvec3& cartoDegrees) {
-    regionBuilder.expandToIncludePosition(
-        Cartographic::fromDegrees(
-            cartoDegrees.x,
-            cartoDegrees.y,
-            cartoDegrees.z));
+    regionBuilder.expandToIncludePosition(Cartographic::fromDegrees(
+        cartoDegrees.x,
+        cartoDegrees.y,
+        cartoDegrees.z));
   };
   auto pointsProvider = root.points();
   for (auto& coord : pointsProvider) {
@@ -150,7 +148,8 @@ Cartographic computeCentroid(const GeoJsonObject& root) {
   }
   BoundingRegion coordsRegion = regionBuilder.toRegion();
   Cartographic center = coordsRegion.getRectangle().computeCenter();
-  center.height = (coordsRegion.getMinimumHeight() + coordsRegion.getMaximumHeight()) / 2.0;
+  center.height =
+      (coordsRegion.getMinimumHeight() + coordsRegion.getMaximumHeight()) / 2.0;
   return center;
 }
 
