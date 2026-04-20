@@ -1,4 +1,7 @@
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/BufferView.h>
@@ -7,6 +10,7 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/Math.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
@@ -117,42 +121,37 @@ std::vector<double> positionMaxVector(const std::span<glm::dvec3> coords) {
   return {result[0], result[1], result[2]};
 }
 
-// This finds the average of geographic coordinates, but it's not a great way to
-// find the actual average coordinate of the data.
-
-glm::dvec3 computeCentroid(const GeoJsonObject& root) {
-  size_t numCoords = 0;
-  glm::dvec3 sum(0.0, 0.0, 0.0);
+Cartographic computeCentroid(const GeoJsonObject& root) {
+  BoundingRegionBuilder regionBuilder;
+  auto expand = [&regionBuilder](const glm::dvec3& cartoDegrees) {
+    regionBuilder.expandToIncludePosition(
+        Cartographic::fromDegrees(
+            cartoDegrees.x,
+            cartoDegrees.y,
+            cartoDegrees.z));
+  };
   auto pointsProvider = root.points();
-  for (auto pointsItr = pointsProvider.begin();
-       pointsItr != pointsProvider.end();
-       ++pointsItr) {
-    numCoords++;
-    sum += *pointsItr;
+  for (auto& coord : pointsProvider) {
+    expand(coord);
   }
   auto linesProvider = root.lines();
-  for (auto linesItr = linesProvider.begin(); linesItr != linesProvider.end();
-       ++linesItr) {
-    for (const auto& coord : *linesItr) {
-      numCoords++;
-      sum += coord;
+  for (auto& lineCoords : linesProvider) {
+    for (const auto& coord : lineCoords) {
+      expand(coord);
     }
   }
   auto polysProvider = root.polygons();
-  for (auto polysItr = polysProvider.begin(); polysItr != polysProvider.end();
-       ++polysItr) {
-    const auto& polyRings = *polysItr;
+  for (const auto& polyRings : polysProvider) {
     for (const auto& ring : polyRings) {
       for (const auto& coord : ring) {
-        numCoords++;
-        sum += coord;
+        expand(coord);
       }
     }
   }
-  if (numCoords > 0) {
-    sum /= static_cast<double>(numCoords);
-  }
-  return sum;
+  BoundingRegion coordsRegion = regionBuilder.toRegion();
+  Cartographic center = coordsRegion.getRectangle().computeCenter();
+  center.height = (coordsRegion.getMinimumHeight() + coordsRegion.getMaximumHeight()) / 2.0;
+  return center;
 }
 
 void transformIntoFrame(
@@ -476,11 +475,10 @@ ConverterResult GltfConverter::convert(const GeoJsonDocument& geoJson) {
   ConverterResult result;
   GltfConverterImpl converter(geoJson);
   const GeoJsonObject& root = converter.geoJson.rootObject;
-  glm::dvec3 centroid = computeCentroid(root);
+  Cartographic centroid = computeCentroid(root);
   //  local to global cartesian
   converter.enuToFixedFrame = GlobeTransforms::eastNorthUpToFixedFrame(
-      Ellipsoid::WGS84.cartographicToCartesian(
-          Cartographic::fromDegrees(centroid.x, centroid.y, centroid.z)));
+      Ellipsoid::WGS84.cartographicToCartesian(centroid));
   result.model.emplace();
   converter.model.asset.version = "2.0";
   CesiumGltf::Material& material = converter.model.materials.emplace_back();
