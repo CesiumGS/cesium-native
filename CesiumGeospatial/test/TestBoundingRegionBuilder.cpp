@@ -1,3 +1,4 @@
+#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -181,5 +182,109 @@ TEST_CASE("BoundingRegionBuilder::expandToIncludeGlobeRectangle") {
         rectangle,
         GlobeRectangle::fromDegrees(170.0, -20.0, -160.0, 30.0),
         Math::Epsilon15));
+  }
+}
+
+TEST_CASE("BoundingRegionBuilder::expandToIncludeBoundingRegion") {
+  SUBCASE("expands to include rectangle") {
+    BoundingRegionBuilder builder;
+    bool modified = builder.expandToIncludeBoundingRegion(
+        BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.0));
+    BoundingRegion region = builder.toRegion();
+    CHECK(BoundingRegion::equalsEpsilon(
+        region,
+        BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.0),
+        Math::Epsilon15));
+    CHECK(modified);
+
+    SUBCASE("does nothing if the rectangle is already included") {
+      modified = builder.expandToIncludeBoundingRegion(
+          BoundingRegion(GlobeRectangle(0.15, 0.25, 0.25, 0.35), -1.0, 2.0));
+      region = builder.toRegion();
+      CHECK(BoundingRegion::equalsEpsilon(
+          region,
+          BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.0),
+          Math::Epsilon15));
+      CHECK_FALSE(modified);
+    }
+
+    SUBCASE("expands to include rectangle") {
+      modified = builder.expandToIncludeBoundingRegion(
+          BoundingRegion(GlobeRectangle(0.05, 0.15, 0.35, 0.45), -1.0, 2.0));
+      region = builder.toRegion();
+      CHECK(BoundingRegion::equalsEpsilon(
+          region,
+          BoundingRegion(GlobeRectangle(0.05, 0.15, 0.35, 0.45), -1.0, 2.0),
+          Math::Epsilon15));
+      CHECK(modified);
+    }
+  }
+
+  SUBCASE("expands to include min height") {
+    BoundingRegionBuilder builder;
+    bool modified = builder.expandToIncludeBoundingRegion(
+        BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.0));
+    BoundingRegion region = builder.toRegion();
+    CHECK(BoundingRegion::equalsEpsilon(
+        region,
+        BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.0),
+        Math::Epsilon15));
+    CHECK(modified);
+
+    SUBCASE("does nothing if min height is already included") {
+      modified = builder.expandToIncludeBoundingRegion(
+          BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -0.5, 2.0));
+      region = builder.toRegion();
+      CHECK(BoundingRegion::equalsEpsilon(
+          region,
+          BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.0),
+          Math::Epsilon15));
+      CHECK_FALSE(modified);
+    }
+
+    SUBCASE("expands to include min height") {
+      modified = builder.expandToIncludeBoundingRegion(
+          BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.5, 2.0));
+      region = builder.toRegion();
+      CHECK(BoundingRegion::equalsEpsilon(
+          region,
+          BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.5, 2.0),
+          Math::Epsilon15));
+      CHECK(modified);
+    }
+  }
+
+  SUBCASE("expands to include max height") {
+    BoundingRegionBuilder builder;
+    bool modified = builder.expandToIncludeBoundingRegion(
+        BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.0));
+    BoundingRegion region = builder.toRegion();
+    CHECK(BoundingRegion::equalsEpsilon(
+        region,
+        BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.0),
+        Math::Epsilon15));
+    CHECK(modified);
+
+    SUBCASE("does nothing if max height is already included") {
+      modified = builder.expandToIncludeBoundingRegion(
+          BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 1.5));
+      region = builder.toRegion();
+      CHECK(BoundingRegion::equalsEpsilon(
+          region,
+          BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.0),
+          Math::Epsilon15));
+      CHECK_FALSE(modified);
+    }
+
+    SUBCASE("expands to include max height") {
+      modified = builder.expandToIncludeBoundingRegion(
+          BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.5));
+      region = builder.toRegion();
+      CHECK(BoundingRegion::equalsEpsilon(
+          region,
+          BoundingRegion(GlobeRectangle(0.1, 0.2, 0.3, 0.4), -1.0, 2.5),
+          Math::Epsilon15));
+      CHECK(modified);
+    }
   }
 }

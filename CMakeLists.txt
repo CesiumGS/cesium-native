@@ -7,7 +7,7 @@ endif()
 get_filename_component(toolchainFile "${CMAKE_TOOLCHAIN_FILE}" NAME)
 if(toolchainFile STREQUAL "Emscripten.cmake")
     set(CESIUM_TARGET_WASM ON)
-    # Include the toolchain directly as ezvcpkg will overwrite the 
+    # Include the toolchain directly as ezvcpkg will overwrite the
     # toolchain before it's loaded
     include(${CMAKE_TOOLCHAIN_FILE})
 endif()
@@ -194,7 +194,7 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.58.0
+    VERSION 0.59.0
     LANGUAGES CXX C
 )
 

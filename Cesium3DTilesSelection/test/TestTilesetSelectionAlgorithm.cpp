@@ -568,6 +568,13 @@ TEST_CASE("Test replace refinement for render") {
   }
 
   SUBCASE(
+      "updateViewGroupOffline does its own dispatching of main thread tasks "
+      " so it doesn't get stuck") {
+    ViewState viewState = zoomToTileset(tileset);
+    tileset.updateViewGroupOffline(tileset.getDefaultViewGroup(), {viewState});
+  }
+
+  SUBCASE(
       "updateViewGroupOffline does not get stuck in an endless loop when no "
       "frustums are given") {
     std::vector<ViewState> empty;
