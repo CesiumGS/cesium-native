@@ -1,26 +1,13 @@
 #pragma once
 
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 
 namespace CesiumVectorData {
 
-/**
- * @brief The result of converting a GeoJSON file to a glTF model.
- */
-struct CESIUMVECTORDATA_API ConverterResult {
-  /**
-   * @brief The gltf model converted from GeoJSON. This is empty if
-   * there are errors during the conversion
-   */
-  std::optional<CesiumGltf::Model> model;
-
-  /**
-   * @brief The error and warning list when converting to a gltf
-   * model. This is empty if there are no errors during the conversion
-   */
-  CesiumUtility::ErrorList errors;
-};
+using ConverterResult = CesiumUtility::Result<CesiumGltf::Model>;
 
 /**
  * @brief Functional for converting GeoJSON documents to glTF.
@@ -32,8 +19,11 @@ public:
    * object.
    *
    * @param geoJson The GeoJSON document.
+   * @param ellipsoid The ellipsoid for GeoJSON coordinates
    * @returns A result object that includes the glTF Model and any errors.
    */
-  static ConverterResult convert(const GeoJsonDocument& geoJson);
+  static ConverterResult convert(
+      const GeoJsonDocument& geoJson,
+      const CesiumGeospatial::Ellipsoid& ellipsoid);
 };
 } // namespace CesiumVectorData
