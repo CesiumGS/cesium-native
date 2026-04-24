@@ -27,6 +27,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <span>
 #include <string>
 #include <utility>
@@ -177,13 +178,32 @@ void transformIntoFrame(
       });
 }
 
+std::vector<uint32_t> lineStringToLines(size_t startIndex, size_t count) {
+  if (count < 2) {
+    return {};
+  }
+  std::vector<uint32_t> result;
+  result.reserve((count - 1) * 2);
+  for (size_t i = startIndex; i < startIndex + count; ++i) {
+      result.push_back(uint32_t(i));
+      result.push_back(uint32_t(i + 1));
+    }
+  return result;
+}
+
 int32_t GltfConverterImpl::gatherLines() {
   const GeoJsonObject& root = this->geoJson.rootObject;
   // Look for linestrings, count objects and coordinates
   std::vector<glm::dvec3> cartoCoordinates;
+  std::vector<uint32_t> allIndices;
   for (auto lineStringItr = root.allOfType<GeoJsonLineString>().begin();
        lineStringItr != root.allOfType<GeoJsonLineString>().end();
        ++lineStringItr) {
+    auto stringIndices = lineStringToLines(
+        cartoCoordinates.size(),
+        std::distance(lineStringItr->coordinates.begin(),
+                      lineStringItr->coordinates.end()));
+    allIndices.insert(allIndices.end(), stringIndices.begin(), stringIndices.end());
     cartoCoordinates.insert(
         cartoCoordinates.end(),
         lineStringItr->coordinates.begin(),
@@ -193,6 +213,11 @@ int32_t GltfConverterImpl::gatherLines() {
        multiLineItr != root.allOfType<GeoJsonMultiLineString>().end();
        ++multiLineItr) {
     for (const auto& lineStringCoords : multiLineItr->coordinates) {
+      auto stringIndices = lineStringToLines(
+          cartoCoordinates.size(),
+          std::distance(lineStringCoords.begin(),
+                        lineStringCoords.end()));
+      allIndices.insert(allIndices.end(), stringIndices.begin(), stringIndices.end());
       cartoCoordinates.insert(
           cartoCoordinates.end(),
           lineStringCoords.begin(),
@@ -219,10 +244,42 @@ int32_t GltfConverterImpl::gatherLines() {
   }
   int32_t bufferViewIndex =
       makeBufferView(bufferIndex, BufferView::Target::ARRAY_BUFFER);
+#if 0
   int64_t accessorByteOffset = 0;
   size_t elementCount = 0;
+#endif
   int32_t meshIndex = int32_t(this->model.meshes.size());
   Mesh& linesMesh = this->model.meshes.emplace_back();
+  int32_t indexBufferIndex = int32_t(this->model.buffers.size());
+  this->model.buffers.emplace_back();
+  std::vector<std::byte>& indexBytes = this->model.buffers.back().cesium.data;
+  indexBytes.resize(sizeof(uint32_t) * allIndices.size());
+  std::memcpy(
+      indexBytes.data(),
+      allIndices.data(),
+      sizeof(uint32_t) * allIndices.size());
+  int32_t indexBufferViewIndex = makeBufferView(
+      indexBufferIndex,
+      BufferView::Target::ELEMENT_ARRAY_BUFFER);
+  int32_t accessorIndex = int32_t(this->model.accessors.size());
+  Accessor& coordAccessor = this->model.accessors.emplace_back();
+  coordAccessor.bufferView = bufferViewIndex;
+  coordAccessor.byteOffset = 0;
+  coordAccessor.componentType = Accessor::ComponentType::FLOAT;
+  coordAccessor.count = int64_t(localPositions.size());
+  coordAccessor.min = positionMinVector(localPositions);
+  coordAccessor.max = positionMaxVector(localPositions);
+  coordAccessor.type = Accessor::Type::VEC3;
+
+  int32_t indexAccessorIndex = int32_t(this->model.accessors.size());
+  Accessor& indexAccessor = this->model.accessors.emplace_back();
+  indexAccessor.bufferView = indexBufferViewIndex;
+  indexAccessor.byteOffset = 0;
+  indexAccessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
+  indexAccessor.count = int64_t(allIndices.size());
+  indexAccessor.type = Accessor::Type::SCALAR;
+
+#if 0
   for (auto lineStringItr = root.allOfType<GeoJsonLineString>().begin();
        lineStringItr != root.allOfType<GeoJsonLineString>().end();
        ++lineStringItr) {
@@ -269,6 +326,13 @@ int32_t GltfConverterImpl::gatherLines() {
       linesMesh.primitives.back().material = 0;
     }
   }
+#endif
+  linesMesh.primitives.emplace_back();
+  linesMesh.primitives.back().attributes["POSITION"] = accessorIndex;
+  linesMesh.primitives.back().indices = indexAccessorIndex;
+  linesMesh.primitives.back().mode = MeshPrimitive::Mode::LINES;
+  linesMesh.primitives.back().material = 0;
+
   int32_t nodeIndex = int32_t(this->model.nodes.size());
   this->model.nodes.emplace_back();
   this->model.nodes.back().mesh = meshIndex;
@@ -498,14 +562,13 @@ ConverterResult GltfConverter::convert(
   CesiumGltf::Material& material = converter.model.materials.emplace_back();
   CesiumGltf::MaterialPBRMetallicRoughness& pbr =
       material.pbrMetallicRoughness.emplace();
+  // International orange
+  std::array orange{0xff / 255.0, 0x4f / 255.0, 0.0};
   pbr.metallicFactor = 0.0;
   pbr.roughnessFactor = 1.0;
-  pbr.baseColorFactor[0] = 0.0;
-  pbr.baseColorFactor[1] = 0.0;
-  pbr.baseColorFactor[2] = 0.0;
+  pbr.baseColorFactor.assign(orange.begin(), orange.end());
   material.doubleSided = true;
-  // International orange
-  material.emissiveFactor = {0xff / 255.0, 0x4f / 255.0, 0.0};
+  material.emissiveFactor.assign(orange.begin(), orange.end());
   size_t rootNodeIndex = converter.model.nodes.size();
   converter.model.nodes.emplace_back();
   auto maybeAddNode = [&model = converter.model,
