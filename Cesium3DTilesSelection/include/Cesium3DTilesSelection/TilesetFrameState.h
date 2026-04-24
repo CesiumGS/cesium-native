@@ -33,15 +33,9 @@ public:
   std::vector<double> fogDensities;
 
   /**
-   * @brief Callback invoked once per visited tile to advance its
-   * content state machine (unloading, content-loaded finalization, latent
-   * children creation).  Populated by Tileset::updateViewGroup before the
-   * traversal begins.
-   *
-   * Keeping this as a callback rather than a direct TilesetContentManager
-   * reference means the traversal functions (_visitTileIfNeeded, _visitTile,
-   * etc.) have no compile-time dependency on TilesetContentManager, making
-   * them independently testable.
+   * @brief Called once per visited tile to advance its content state (loading,
+   * finalization, child creation). Set by Tileset::updateViewGroup; may be
+   * null when testing selectTiles directly.
    */
   std::function<void(Tile&)> tileStateUpdater;
 };
