@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added `BoundingRegionBuilder::expandToIncludeBoundingRegion`.
+- Added support for [`3DTILES_content_conditional`](https://github.com/CesiumGS/3d-tiles/pull/834) in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
 
 ##### Fixes :wrench:
 
