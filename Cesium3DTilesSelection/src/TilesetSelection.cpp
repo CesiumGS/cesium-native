@@ -43,7 +43,6 @@ using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 
-// Internal types used by selectTiles and traversal helpers.
 namespace {
 
 struct TraversalContext {

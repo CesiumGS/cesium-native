@@ -482,11 +482,11 @@ private:
   TilesetOptions _options;
 
   // Holds computed distances, to avoid allocating them on the heap during tile
-  // selection. Passed by reference into selectTiles().
+  // selection.
   std::vector<double> _distances;
 
-  // Holds the occlusion proxies of the children of a tile. Passed by reference
-  // into selectTiles() to avoid per-frame allocation.
+  // Holds the occlusion proxies of the children of a tile, to avoid
+  // per-frame allocation.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>

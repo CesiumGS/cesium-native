@@ -250,7 +250,7 @@ private:
   CesiumAsync::Promise<void> _rootTileAvailablePromise;
   CesiumAsync::SharedFuture<void> _rootTileAvailableFuture;
 
-  /// @brief Tracks tiles eligible for content eviction (LRU order).
+  // Tracks tiles eligible for content eviction in LRU order.
   TileUnloadQueue _unloadQueue;
 
   std::vector<TileLoadRequester*> _requesters;
