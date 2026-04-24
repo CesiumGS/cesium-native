@@ -469,23 +469,6 @@ public:
   Tileset& operator=(const Tileset& rhs) = delete;
 
 private:
-  /**
-   * @brief When called on an additive-refined tile, queues it for load and adds
-   * it to the render list.
-   *
-   * For replacement-refined tiles, this method does nothing and returns false.
-   *
-   * @param tile The tile to potentially load and render.
-   * @param result The current view update result.
-   * @param tilePriority The load priority of this tile.
-   * priority.
-   * @param tileSse The screen space error of this tile.
-   * @param queuedForLoad True if this tile has already been queued for loading.
-   * @return true The additive-refined tile was queued for load and added to the
-   * render list.
-   * @return false The non-additive-refined tile was ignored.
-   */
-
   void _unloadCachedTiles(double timeBudget) noexcept;
 
   void _updateLodTransitions(
