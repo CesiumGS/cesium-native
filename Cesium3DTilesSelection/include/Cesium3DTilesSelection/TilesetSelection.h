@@ -21,9 +21,11 @@ struct TileSelectionContext {
   const TilesetOptions& options;
   /** @brief External interfaces (asset accessor, task processor, etc.). */
   const TilesetExternals& externals;
-  /** @brief Scratch buffer reused across frames. Contents on entry are unspecified. */
+  /** @brief Scratch buffer reused across frames. Contents on entry are
+   * unspecified. */
   std::vector<double>& scratchDistances;
-  /** @brief Scratch buffer reused across frames. Contents on entry are unspecified. */
+  /** @brief Scratch buffer reused across frames. Contents on entry are
+   * unspecified. */
   std::vector<const TileOcclusionRendererProxy*>& scratchOcclusionProxies;
 };
 
