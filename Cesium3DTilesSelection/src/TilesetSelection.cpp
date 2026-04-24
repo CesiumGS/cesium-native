@@ -419,9 +419,8 @@ checkOcclusion(const TraversalContext& ctx, const Tile& tile) {
     }
   }
 
-  auto& childOcclusionProxies =
-      const_cast<std::vector<const TileOcclusionRendererProxy*>&>(
-          ctx.childOcclusionProxies);
+  std::vector<const TileOcclusionRendererProxy*>& childOcclusionProxies =
+      ctx.childOcclusionProxies;
   childOcclusionProxies.clear();
   childOcclusionProxies.reserve(tile.getChildren().size());
   for (const Tile& child : tile.getChildren()) {
