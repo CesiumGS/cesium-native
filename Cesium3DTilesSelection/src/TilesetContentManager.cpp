@@ -1708,7 +1708,7 @@ void TilesetContentManager::unloadCachedBytes(
 
     const UnloadTileContentResult removed = this->unloadTileContent(*pTile);
     if (removed != UnloadTileContentResult::Keep) {
-      this->_unloadQueue.remove(*pTile);
+      this->_unloadQueue.markIneligible(*pTile);
     }
 
     if (removed == UnloadTileContentResult::RemoveAndClearChildren) {
@@ -1732,15 +1732,14 @@ void TilesetContentManager::unloadCachedBytes(
 }
 
 void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
-  // Iterate through all children, calling this method recursively to make sure
-  // children are all removed from _tilesEligibleForContentUnloading.
+  // Recursively remove all children from the unload queue before clearing them.
   for (Tile& child : pTile->getChildren()) {
     CESIUM_ASSERT(
         !TileIdUtilities::isLoadable(child.getTileID()) ||
         child.getState() == TileLoadState::Unloaded);
     CESIUM_ASSERT(child.getReferenceCount() == 0);
     CESIUM_ASSERT(!child.hasReferencingContent());
-    this->_unloadQueue.remove(child);
+    this->_unloadQueue.markIneligible(child);
     this->clearChildrenRecursively(&child);
     child.setParent(nullptr);
   }
