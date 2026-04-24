@@ -234,7 +234,7 @@ public:
   /**
    * @brief Returns the parent of this tile in the tile hierarchy.
    *
-   * This will be the `nullptr` if this is the root tile.
+   * This will be `nullptr` if this is the root tile.
    *
    * @return The parent.
    */
