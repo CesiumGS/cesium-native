@@ -67,7 +67,6 @@ struct CullResult {
 
 enum class VisitTileAction { Render, Refine };
 
-// Forward declaration of the top-level recursive entry point.
 TraversalDetails visitTileIfNeeded(
     const TraversalContext& ctx,
     uint32_t depth,
@@ -77,10 +76,11 @@ TraversalDetails visitTileIfNeeded(
 
 } // namespace
 
-ViewUpdateResult selectTiles(
+void selectTiles(
     const TileSelectionContext& ctx,
     const TilesetFrameState& frameState,
-    Tile& rootTile) {
+    Tile& rootTile,
+    ViewUpdateResult& result) {
   TraversalContext tctx{
       ctx.options,
       ctx.externals,
@@ -88,9 +88,7 @@ ViewUpdateResult selectTiles(
       ctx.scratchDistances,
       ctx.scratchOcclusionProxies};
 
-  ViewUpdateResult result;
   visitTileIfNeeded(tctx, 0, false, rootTile, result);
-  return result;
 }
 
 namespace {
@@ -281,7 +279,6 @@ bool mustContinueRefiningToDeeperTiles(
          !tile.isRenderable();
 }
 
-// Forward declarations of recursive traversal helpers
 TraversalDetails visitTileIfNeeded(
     const TraversalContext& ctx,
     uint32_t depth,
@@ -786,7 +783,6 @@ TraversalDetails visitTile(
   return traversalDetails;
 }
 
-// visitTileIfNeeded  (the outermost recursive entry point)
 TraversalDetails visitTileIfNeeded(
     const TraversalContext& ctx,
     uint32_t depth,

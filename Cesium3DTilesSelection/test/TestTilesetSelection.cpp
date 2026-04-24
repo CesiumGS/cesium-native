@@ -1,8 +1,4 @@
-// TestTilesetSelection.cpp
-//
-// Unit tests for the selectTiles() free function. These tests construct
-// minimal in-memory tile trees and invoke the selection algorithm directly,
-// without file I/O or async machinery beyond what TilesetViewGroup requires.
+// Unit tests for the selectTiles() free function.
 
 #include "SimplePrepareRendererResource.h"
 
@@ -103,8 +99,7 @@ ViewState makeFarViewState() {
 
 TEST_CASE("selectTiles is callable as a free function") {
   // Verify that selectTiles() can be invoked directly without going through
-  // Tileset::updateViewGroup. This is the isolation guarantee introduced by
-  // the Phase B refactoring.
+  // Tileset::updateViewGroup.
 
   TilesetExternals externals = makeExternals();
   TilesetOptions options;
@@ -146,7 +141,8 @@ TEST_CASE("selectTiles is callable as a free function") {
       scratchOcclusion};
 
   viewGroup.startNewFrame(*pTileset, frameState);
-  ViewUpdateResult result = selectTiles(ctx, frameState, *pRoot);
+  ViewUpdateResult result;
+  selectTiles(ctx, frameState, *pRoot, result);
   viewGroup.finishFrame(*pTileset, frameState);
 
   // From far away the root tile (or its immediate children) should be
@@ -196,8 +192,7 @@ TEST_CASE("selectTiles result matches updateViewGroup result") {
       viewGroup,
       frustums,
       std::move(fogDensities),
-      // Mirror what updateViewGroup does — call updateTileContent via the
-      // tileStateUpdater so tile states advance identically.
+      // No tileStateUpdater needed — tiles are already loaded.
       {}};
 
   std::vector<double> scratchDistances;
@@ -210,7 +205,8 @@ TEST_CASE("selectTiles result matches updateViewGroup result") {
       scratchOcclusion};
 
   viewGroup.startNewFrame(*pTileset, frameState);
-  ViewUpdateResult freeResult = selectTiles(ctx, frameState, *pRoot);
+  ViewUpdateResult freeResult;
+  selectTiles(ctx, frameState, *pRoot, freeResult);
   viewGroup.finishFrame(*pTileset, frameState);
 
   // Tile counts must agree between the two paths.

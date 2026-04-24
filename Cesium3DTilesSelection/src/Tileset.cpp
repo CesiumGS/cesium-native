@@ -428,8 +428,7 @@ const ViewUpdateResult& Tileset::updateViewGroup(
         this->_externals,
         this->_distances,
         this->_childOcclusionProxies};
-    ViewUpdateResult selectionResult = selectTiles(ctx, frameState, *pRootTile);
-    result = std::move(selectionResult);
+    selectTiles(ctx, frameState, *pRootTile, result);
     viewGroup.finishFrame(*this, frameState);
   } else {
     result = ViewUpdateResult();
