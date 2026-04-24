@@ -214,6 +214,7 @@ struct QuadtreeNode {
 struct Quadtree {
   GlobeRectangle rectangle = GlobeRectangle::EMPTY;
   uint32_t rootId = 0;
+  VectorStyle defaultStyle;
   std::vector<QuadtreeNode> nodes;
   std::vector<QuadtreeGeometryData> data;
   /**
@@ -368,11 +369,12 @@ struct GeoJsonChildVisitor {
     for (const GeoJsonObject& feature : collection.features) {
       const GeoJsonFeature* pFeature = feature.getIf<GeoJsonFeature>();
       if (pFeature && pFeature->geometry) {
-        const std::optional<VectorStyle>& geometryStyle = feature.getStyle();
+        const std::optional<VectorStyle>& geometryStyle =
+            pFeature->geometry->getStyle();
         const std::optional<VectorStyle>& featureStyle =
             geometryStyle ? geometryStyle : pFeature->style;
         const std::optional<VectorStyle>& collectionStyle =
-            featureStyle ? featureStyle : pFeature->style;
+            featureStyle ? featureStyle : collection.style;
         addPrimitivesToData(
             pFeature->geometry.get(),
             data,
@@ -407,7 +409,7 @@ void addPrimitivesToData(
     const VectorStyle& style,
     const Ellipsoid& ellipsoid) {
   std::optional<GlobeRectangle> rect;
-  double maxLineWidthPixels;
+  double maxLineWidthPixels = 0.0;
   std::visit(
       RectangleAndLineWidthFromObjectVisitor{
           rect,
@@ -555,28 +557,24 @@ uint32_t buildQuadtreeNode(
   return resultId;
 }
 
-Quadtree buildQuadtree(
+void buildQuadtree(
+    Quadtree& tree,
     const std::shared_ptr<GeoJsonDocument>& document,
     const VectorStyle& defaultStyle,
     const Ellipsoid& ellipsoid) {
+  tree.defaultStyle = defaultStyle;
+
   BoundingRegionBuilder builder;
-  std::vector<QuadtreeGeometryData> data;
   const std::optional<VectorStyle>& rootObjectStyle =
       document->rootObject.getStyle();
   addPrimitivesToData(
       &document->rootObject,
-      data,
+      tree.data,
       builder,
-      rootObjectStyle ? *rootObjectStyle : defaultStyle,
+      rootObjectStyle ? *rootObjectStyle : tree.defaultStyle,
       ellipsoid);
 
-  Quadtree tree{
-      builder.toGlobeRectangle(),
-      0,
-      std::vector<QuadtreeNode>(),
-      std::move(data),
-      std::vector<uint32_t>(),
-      std::vector<uint32_t>()};
+  tree.rectangle = builder.toGlobeRectangle();
 
   std::vector<uint32_t> dataIndices;
   dataIndices.reserve(tree.data.size());
@@ -598,8 +596,6 @@ Quadtree buildQuadtree(
       QuadtreeTileID(0, 0, 0));
   // Add last entry so [i + 1] is always valid
   tree.dataNodeIndicesBegin.emplace_back((uint32_t)tree.dataIndices.size());
-
-  return tree;
 }
 
 void rasterizeQuadtreeNode(
@@ -684,8 +680,7 @@ class CESIUMRASTEROVERLAYS_API GeoJsonDocumentRasterOverlayTileProvider final
 
 private:
   std::shared_ptr<GeoJsonDocument> _pDocument;
-  VectorStyle _defaultStyle;
-  Quadtree _tree;
+  std::shared_ptr<Quadtree> _pTree;
   Ellipsoid _ellipsoid;
   uint32_t _mipLevels;
 
@@ -703,14 +698,15 @@ public:
                 GeographicProjection(geoJsonOptions.ellipsoid),
                 GlobeRectangle::MAXIMUM)),
         _pDocument(std::move(pDocument)),
-        _defaultStyle(geoJsonOptions.defaultStyle),
-        _tree(),
+        _pTree(),
         _ellipsoid(geoJsonOptions.ellipsoid),
         _mipLevels(geoJsonOptions.mipLevels) {
     CESIUM_ASSERT(this->_pDocument);
-    this->_tree = buildQuadtree(
+    this->_pTree = std::make_shared<Quadtree>();
+    buildQuadtree(
+        *this->_pTree,
         this->_pDocument,
-        this->_defaultStyle,
+        geoJsonOptions.defaultStyle,
         geoJsonOptions.ellipsoid);
   }
 
@@ -719,19 +715,23 @@ public:
     // Choose the texture size according to the geometry screen size and raster
     // SSE, but no larger than the maximum texture size.
     const RasterOverlayOptions& options = this->getOwner().getOptions();
-    glm::ivec2 textureSize = glm::min(
-        glm::ivec2(
-            overlayTile.getTargetScreenPixels() /
-            options.maximumScreenSpaceError),
-        glm::ivec2(options.maximumTextureSize));
+    glm::ivec2 textureSize = glm::max(
+        glm::min(
+            glm::ivec2(
+                overlayTile.getTargetScreenPixels() /
+                options.maximumScreenSpaceError),
+            glm::ivec2(options.maximumTextureSize)),
+        glm::ivec2(1));
 
     return this->getAsyncSystem().runInWorkerThread(
-        [&tree = this->_tree,
+        [pTree = this->_pTree,
+         pDocument = this->_pDocument,
          ellipsoid = this->_ellipsoid,
          projection = this->getProjection(),
          rectangle = overlayTile.getRectangle(),
          textureSize,
          mipLevels = this->_mipLevels]() -> LoadedRasterOverlayImage {
+          const Quadtree& tree = *pTree;
           const CesiumGeospatial::GlobeRectangle tileRectangle =
               CesiumGeospatial::unprojectRectangleSimple(projection, rectangle);
 

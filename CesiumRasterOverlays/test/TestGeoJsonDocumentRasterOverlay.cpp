@@ -31,25 +31,19 @@ using namespace CesiumVectorData;
 const size_t BENCHMARK_ITERATIONS = 100000;
 
 namespace {
-CesiumGltf::ImageAsset rasterizeOverlayTile(
+CesiumGltf::ImageAsset rasterizeOverlayTileFromDocument(
     const GlobeRectangle& rectangle,
     const glm::dvec2& imageSize,
-    const std::filesystem::path& testDataPath,
+    GeoJsonDocument&& document,
     const GeoJsonDocumentRasterOverlayOptions& overlayOptions) {
   AsyncSystem asyncSystem(
       std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
-
-  Result<GeoJsonDocument> docResult =
-      GeoJsonDocument::fromGeoJson(readFile(testDataPath));
-  CHECK(!docResult.errors.hasErrors());
-  CHECK(docResult.errors.warnings.empty());
-  REQUIRE(docResult.value);
 
   IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay;
   pOverlay.emplace(
       asyncSystem,
       "overlay0",
-      std::make_shared<GeoJsonDocument>(std::move(*docResult.value)),
+      std::make_shared<GeoJsonDocument>(std::move(document)),
       overlayOptions);
 
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
@@ -80,6 +74,72 @@ CesiumGltf::ImageAsset rasterizeOverlayTile(
     asyncSystem.dispatchMainThreadTasks();
   }
   return *pTile->getImage();
+}
+
+CesiumGltf::ImageAsset rasterizeOverlayTile(
+    const GlobeRectangle& rectangle,
+    const glm::dvec2& imageSize,
+    const std::filesystem::path& testDataPath,
+    const GeoJsonDocumentRasterOverlayOptions& overlayOptions) {
+  Result<GeoJsonDocument> docResult =
+      GeoJsonDocument::fromGeoJson(readFile(testDataPath));
+  CHECK(!docResult.errors.hasErrors());
+  CHECK(docResult.errors.warnings.empty());
+  REQUIRE(docResult.value);
+
+  return rasterizeOverlayTileFromDocument(
+      rectangle,
+      imageSize,
+      std::move(*docResult.value),
+      overlayOptions);
+}
+
+bool imageHasPixelWithColor(
+    const CesiumGltf::ImageAsset& image,
+    uint8_t r,
+    uint8_t g,
+    uint8_t b,
+    uint8_t a) {
+  REQUIRE(image.channels == 4);
+  REQUIRE(image.bytesPerChannel == 1);
+  REQUIRE(
+      static_cast<size_t>(
+          image.width * image.height * image.channels *
+          image.bytesPerChannel) == image.pixelData.size());
+  for (int32_t y = 0; y < image.height; y++) {
+    for (int32_t x = 0; x < image.width; x++) {
+      size_t idx = static_cast<size_t>((y * image.width + x) * 4);
+      if (static_cast<uint8_t>(image.pixelData[idx]) == r &&
+          static_cast<uint8_t>(image.pixelData[idx + 1]) == g &&
+          static_cast<uint8_t>(image.pixelData[idx + 2]) == b &&
+          static_cast<uint8_t>(image.pixelData[idx + 3]) == a) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+GeoJsonDocument createFeatureCollectionWithLineString(
+    const std::optional<VectorStyle>& geometryStyle,
+    const std::optional<VectorStyle>& featureStyle,
+    const std::optional<VectorStyle>& collectionStyle) {
+  GeoJsonLineString lineString;
+  lineString.coordinates = {
+      glm::dvec3(0.0, 0.0, 0.0),
+      glm::dvec3(5.0, 0.0, 0.0)};
+  lineString.style = geometryStyle;
+
+  GeoJsonFeature feature;
+  feature.geometry =
+      std::make_unique<GeoJsonObject>(GeoJsonObject{std::move(lineString)});
+  feature.style = featureStyle;
+
+  GeoJsonFeatureCollection collection;
+  collection.features.push_back(GeoJsonObject{std::move(feature)});
+  collection.style = collectionStyle;
+
+  return GeoJsonDocument(GeoJsonObject{std::move(collection)}, {});
 }
 } // namespace
 
@@ -206,9 +266,13 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
   // to 2.
   CHECK(image.width == 128);
   CHECK(image.height == 128);
-  CesiumNativeTests::writeImageToTgaFile(image, "out-equator-meridian.tga");
+  CesiumNativeTests::writeImageToTgaFile(
+      image,
+      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+          "out-equator-meridian.tga");
   CesiumNativeTests::checkFilesEqual(
-      std::filesystem::current_path() / "out-equator-meridian.tga",
+      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+          "out-equator-meridian.tga",
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
           "equator-meridian.tga");
 }
@@ -247,14 +311,16 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
   CHECK(image.height == 128);
   CesiumNativeTests::writeImageToTgaFile(
       image,
-      "out-equator-meridian-meters.tga");
+      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+          "out-equator-meridian-meters.tga");
   // equator-meridian-meters *should* be identical to equator-meridian, except
   // that because of floating point imprecision the line width gets calculated
   // to be 1.999999999989966 instead of 2 and so it's not a perfect solid two
   // pixel line. But this is more or less "working as intended" and it would be
   // a lot of work to fix without any benefit to the end user.
   CesiumNativeTests::checkFilesEqual(
-      std::filesystem::current_path() / "out-equator-meridian-meters.tga",
+      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+          "out-equator-meridian-meters.tga",
       std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
           "equator-meridian-meters.tga");
 }
@@ -286,9 +352,11 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
     CHECK(image.height == 32);
     CesiumNativeTests::writeImageToTgaFile(
         image,
-        "out-equator-antimeridian-1.tga");
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-1.tga");
     CesiumNativeTests::checkFilesEqual(
-        std::filesystem::current_path() / "out-equator-antimeridian-1.tga",
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-1.tga",
         std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
             "equator-antimeridian.tga");
   }
@@ -304,9 +372,11 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
     CHECK(image.height == 32);
     CesiumNativeTests::writeImageToTgaFile(
         image,
-        "out-equator-antimeridian-2.tga");
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-2.tga");
     CesiumNativeTests::checkFilesEqual(
-        std::filesystem::current_path() / "out-equator-antimeridian-2.tga",
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-2.tga",
         std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
             "equator-antimeridian.tga");
   }
@@ -322,10 +392,161 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
     CHECK(image.height == 32);
     CesiumNativeTests::writeImageToTgaFile(
         image,
-        "out-equator-antimeridian-3.tga");
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-3.tga");
     CesiumNativeTests::checkFilesEqual(
-        std::filesystem::current_path() / "out-equator-antimeridian-3.tga",
+        std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+            "out-equator-antimeridian-3.tga",
         std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
             "equator-antimeridian.tga");
   }
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection uses geometry style "
+          "over feature and collection styles") {
+  const VectorStyle geometryStyle{
+      LineStyle{
+          ColorStyle{Color{0, 255, 0, 255}, ColorMode::Normal},
+          2.0,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+  const VectorStyle featureStyle{
+      LineStyle{
+          ColorStyle{Color{0, 0, 255, 255}, ColorMode::Normal},
+          2.0,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+  const VectorStyle collectionStyle{
+      LineStyle{
+          ColorStyle{Color{255, 255, 0, 255}, ColorMode::Normal},
+          2.0,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  GeoJsonDocument doc = createFeatureCollectionWithLineString(
+      geometryStyle,
+      featureStyle,
+      collectionStyle);
+
+  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+      glm::dvec2(256, 256),
+      std::move(doc),
+      options);
+
+  CHECK(imageHasPixelWithColor(image, 0, 255, 0, 255));
+  CHECK_FALSE(imageHasPixelWithColor(image, 0, 0, 255, 255));
+  CHECK_FALSE(imageHasPixelWithColor(image, 255, 255, 0, 255));
+  CHECK_FALSE(imageHasPixelWithColor(image, 255, 0, 0, 255));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection falls back to "
+          "feature style when geometry has no style") {
+  const VectorStyle featureStyle{
+      LineStyle{
+          ColorStyle{Color{0, 0, 255, 255}, ColorMode::Normal},
+          2.0,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+  const VectorStyle collectionStyle{
+      LineStyle{
+          ColorStyle{Color{255, 255, 0, 255}, ColorMode::Normal},
+          2.0,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  GeoJsonDocument doc = createFeatureCollectionWithLineString(
+      std::nullopt,
+      featureStyle,
+      collectionStyle);
+
+  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+      glm::dvec2(256, 256),
+      std::move(doc),
+      options);
+
+  CHECK(imageHasPixelWithColor(image, 0, 0, 255, 255));
+  CHECK_FALSE(imageHasPixelWithColor(image, 255, 255, 0, 255));
+  CHECK_FALSE(imageHasPixelWithColor(image, 255, 0, 0, 255));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection falls back to "
+          "collection style when geometry and feature have no style") {
+  const VectorStyle collectionStyle{
+      LineStyle{
+          ColorStyle{Color{255, 255, 0, 255}, ColorMode::Normal},
+          2.0,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  GeoJsonDocument doc = createFeatureCollectionWithLineString(
+      std::nullopt,
+      std::nullopt,
+      collectionStyle);
+
+  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+      glm::dvec2(256, 256),
+      std::move(doc),
+      options);
+
+  CHECK(imageHasPixelWithColor(image, 255, 255, 0, 255));
+  CHECK_FALSE(imageHasPixelWithColor(image, 255, 0, 0, 255));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection falls back to "
+          "default style when no styles are set") {
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  GeoJsonDocument doc = createFeatureCollectionWithLineString(
+      std::nullopt,
+      std::nullopt,
+      std::nullopt);
+
+  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+      glm::dvec2(256, 256),
+      std::move(doc),
+      options);
+
+  CHECK(imageHasPixelWithColor(image, 255, 0, 0, 255));
 }

@@ -1,12 +1,33 @@
 # Change Log
 
-### ? - ?
+### v0.60.0 - 2026-05-01
+
+##### Additions :tada:
+
+- Added `BoundingRegionBuilder::expandToIncludeBoundingRegion`.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `CesiumRasterOverlays::GeoJsonDocumentRasterOverlay` where styles set on geometry objects within a FeatureCollection were not applied. The FeatureCollection visitor now checks the geometry's style instead of the Feature wrapper's style, and the fallback chain correctly consults the collection-level style.
+
+### v0.59.0 - 2026-04-01
+
+##### Breaking Changes :mega:
+
+- `Tileset::updateViewGroupOffline`, `Tileset::updateViewGroup`, and `Tileset::loadTiles` no longer call `AsyncSystem::dispatchMainThreadTasks`. Client applications must call that function themselves from their main thread.
+
+##### Additions :tada:
+
+- Added a constructor overload for `Cesium3DTilesSelection::ITwinCesiumCuratedContentLoaderFactory` to override the iTwin Cesium Curated Content base URL. This makes it possible to connect to alternate servers (e.g., staging, QA, mock servers).
+- Added `ViewUpdateResult::tileScreenSpaceErrorThisFrame`, which stores the screen space errors computed for tiles in `tilesToRenderThisFrame`.
+- Added `CesiumGltf::ExtensionExtPrimitiveVoxels::MODE`, representing the primitive mode constant used by the extension.
 
 ##### Fixes :wrench:
 
 - `Cesium3DTilesetSelection::Tileset::getRootTileAvailableEvent` will now resolve even when a `Tileset` is constructed with invalid source parameters, instead of hanging indefinitely.
 - Fixed compilation error with MSVC when using custom `CesiumITwinClient::PagedList` types.
-- Ability to override the iTwin Cesium Curated Content base URL used by `iTwinCesiumCuratedContentLoaderFactory` to make it possible to connect to alternate servers (e.g., staging, QA, mock servers).
+- Fixed a "maybe uninitialized" error in `GeoJsonDocumentRasterOverlay` signaled by gcc 15.2.
+- Fixed crashes in `GeoJsonDocumentRasterOverlay` caused by the `GeoJsonDocumentRasterOverlayTileProvider` being freed before actions on the worker thread completed.
 
 ### v0.58.0 - 2026-03-02
 

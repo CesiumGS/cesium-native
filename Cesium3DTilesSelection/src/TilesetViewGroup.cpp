@@ -128,6 +128,7 @@ void TilesetViewGroup::startNewFrame(
   this->_updateResult.maxDepthVisited = 0;
 
   this->_updateResult.tilesToRenderThisFrame.clear();
+  this->_updateResult.tileScreenSpaceErrorThisFrame.clear();
 
   if (!tileset.getOptions().enableLodTransitionPeriod) {
     this->_updateResult.tilesFadingOut.clear();

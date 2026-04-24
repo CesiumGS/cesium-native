@@ -162,7 +162,8 @@
       "overrideName": "ExtensionExtImplicitCylinderRegion"
     },
     "EXT_primitive_voxels glTF Mesh Primitive extension": {
-      "overrideName": "ExtensionExtPrimitiveVoxels"
+      "overrideName": "ExtensionExtPrimitiveVoxels",
+      "toBeInherited": true
     },
     "KHR_gaussian_splatting glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionKhrGaussianSplatting",

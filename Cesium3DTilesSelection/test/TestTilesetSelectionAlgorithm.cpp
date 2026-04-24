@@ -93,8 +93,9 @@ static void initializeTileset(Tileset& tileset) {
       horizontalFieldOfView,
       verticalFieldOfView,
       Ellipsoid::WGS84);
-
+  tileset.getExternals().asyncSystem.dispatchMainThreadTasks();
   tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+  tileset.getExternals().asyncSystem.dispatchMainThreadTasks();
   tileset.loadTiles();
 }
 
@@ -219,9 +220,11 @@ TEST_CASE("Test replace refinement for render") {
     // Check 1st and 2nd frame. Root should meet sse and render. No transitions
     // are expected here
     for (int frame = 0; frame < 2; ++frame) {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result = tileset.updateViewGroup(
           tileset.getDefaultViewGroup(),
           {zoomOutViewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       // Check tile state. Ensure root meet sse
@@ -281,8 +284,10 @@ TEST_CASE("Test replace refinement for render") {
     // 1st frame. Root doesn't meet sse, so it goes to children. But because
     // children haven't started loading, root should be rendered.
     {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       // Check tile state. Ensure root doesn't meet sse, but children does.
@@ -309,8 +314,10 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. Because children receive failed response, so they will be
     // rendered as empty tiles.
     {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       // Check tile state. Ensure root doesn't meet sse, but children does
@@ -354,9 +361,11 @@ TEST_CASE("Test replace refinement for render") {
     // 1st frame. Root doesn't meet sse, but none of the children finish
     // loading. So we will render root
     {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result = tileset.updateViewGroup(
           tileset.getDefaultViewGroup(),
           {zoomInViewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       // check tiles status. All the children should have loading status
@@ -388,9 +397,11 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. All the children finish loading, so they are ready to be
     // rendered (except ll.b3dm tile since it doesn't meet sse)
     {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result = tileset.updateViewGroup(
           tileset.getDefaultViewGroup(),
           {zoomInViewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       // check tiles status. All the children should have loading status
@@ -448,6 +459,7 @@ TEST_CASE("Test replace refinement for render") {
       ViewUpdateResult result = tileset.updateViewGroup(
           tileset.getDefaultViewGroup(),
           {zoomOutViewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       // check tiles status. All the children should have loading status
@@ -495,8 +507,10 @@ TEST_CASE("Test replace refinement for render") {
     // none of the children are loaded, root will be rendered instead and
     // children transition from unloaded to loading in the mean time
     {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       // Check tile state. Ensure root doesn't meet sse, but children does
@@ -522,8 +536,10 @@ TEST_CASE("Test replace refinement for render") {
     // 2nd frame. Children are finished loading and ready to be rendered. Root
     // shouldn't be rendered in this frame
     {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       // check tile states
@@ -549,6 +565,13 @@ TEST_CASE("Test replace refinement for render") {
       REQUIRE(result.tilesCulled == 0);
       REQUIRE(result.culledTilesVisited == 0);
     }
+  }
+
+  SUBCASE(
+      "updateViewGroupOffline does its own dispatching of main thread tasks "
+      " so it doesn't get stuck") {
+    ViewState viewState = zoomToTileset(tileset);
+    tileset.updateViewGroupOffline(tileset.getDefaultViewGroup(), {viewState});
   }
 
   SUBCASE(
@@ -620,8 +643,10 @@ TEST_CASE("Test additive refinement") {
     // 1st frame. Root, its child, and its four grandchildren will all be
     // rendered because they meet SSE, even though they're not loaded yet.
     {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       const std::vector<Tile::ConstPointer>& ttr =
@@ -656,8 +681,10 @@ TEST_CASE("Test additive refinement") {
 
     // 2nd frame
     {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       const std::vector<Tile::ConstPointer>& ttr =
@@ -715,6 +742,7 @@ TEST_CASE("Test additive refinement") {
     {
       ViewUpdateResult result =
           tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       REQUIRE(result.tilesToRenderThisFrame.size() == 8);
@@ -786,8 +814,10 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   // 1st frame. Root doesn't meet sse, so load children. But they are
   // non-renderable, so render root only
   {
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
     ViewUpdateResult result =
         tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
     tileset.loadTiles();
 
     for (const Tile& child : root->getChildren()) {
@@ -805,8 +835,10 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
   // 2nd frame. Root doesn't meet sse, so load children. Even one of the
   // children is failed, render all of them even there is a hole
   {
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
     ViewUpdateResult result =
         tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
     tileset.loadTiles();
 
     REQUIRE(root->isRenderable());
@@ -904,9 +936,11 @@ TEST_CASE("Test multiple frustums") {
 
     // frame 1
     {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result = tileset.updateViewGroup(
           tileset.getDefaultViewGroup(),
           {viewState, zoomOutViewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       // Check tile state. Ensure root meets sse for only the zoomed out
@@ -926,9 +960,11 @@ TEST_CASE("Test multiple frustums") {
 
     // frame 2
     {
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       ViewUpdateResult result = tileset.updateViewGroup(
           tileset.getDefaultViewGroup(),
           {viewState, zoomOutViewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
       // Check tile state. Ensure root meets sse for only the zoomed out
@@ -996,8 +1032,8 @@ TEST_CASE("Test multiple frustums") {
       ViewUpdateResult result = tileset.updateViewGroup(
           tileset.getDefaultViewGroup(),
           {zoomInViewState1, zoomInViewState2});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
-
       // check result
       // The grand child and the second child are the only ones rendered.
       // The third and fourth children of the root are culled.
@@ -1288,6 +1324,7 @@ TEST_CASE("Makes metadata available on external tilesets") {
     tileset.updateViewGroup(
         tileset.getDefaultViewGroup(),
         {zoomToTileViewState});
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
     tileset.loadTiles();
     pExternalContent = pExternal->getContent().getExternalContent();
   }
@@ -1745,6 +1782,7 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
          tileset.computeLoadProgress() < 100.0f) {
     updateResult =
         tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+    tilesetExternals.asyncSystem.dispatchMainThreadTasks();
     tileset.loadTiles();
   }
 
@@ -1765,6 +1803,7 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
       Ellipsoid::WGS84);
   updateResult =
       tileset.updateViewGroup(tileset.getDefaultViewGroup(), {zoomedOut});
+  tilesetExternals.asyncSystem.dispatchMainThreadTasks();
   tileset.loadTiles();
 
   // Only the root tile (plus the tileset.json) is visible now, and the other
