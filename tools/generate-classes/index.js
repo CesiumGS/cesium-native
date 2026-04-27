@@ -207,10 +207,10 @@ function processSchemas() {
 
   while (schemas.length > 0) {
     const schema = schemas.pop();
-    if (processed[schema.sourcePath]) {
+    if (processed[schema.title]) {
       continue;
     }
-    processed[schema.sourcePath] = true;
+    processed[schema.title] = true;
 
     if ((options.config.classes[schema.title] || {}).manuallyDefined) {
       continue;

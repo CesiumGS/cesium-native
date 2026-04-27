@@ -1,6 +1,16 @@
 # Change Log
 
-### v0.59.0 - 2026-03-31
+### v0.60.0 - 2026-05-01
+
+##### Additions :tada:
+
+- Added `BoundingRegionBuilder::expandToIncludeBoundingRegion`.
+
+##### Fixes :wrench:
+
+- Fixed a bug in `CesiumRasterOverlays::GeoJsonDocumentRasterOverlay` where styles set on geometry objects within a FeatureCollection were not applied. The FeatureCollection visitor now checks the geometry's style instead of the Feature wrapper's style, and the fallback chain correctly consults the collection-level style.
+
+### v0.59.0 - 2026-04-01
 
 ##### Breaking Changes :mega:
 
