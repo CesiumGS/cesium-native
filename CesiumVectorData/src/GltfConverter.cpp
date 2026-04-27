@@ -184,7 +184,7 @@ std::vector<uint32_t> lineStringToLines(size_t startIndex, size_t count) {
   }
   std::vector<uint32_t> result;
   result.reserve((count - 1) * 2);
-  for (size_t i = startIndex; i < startIndex + count; ++i) {
+  for (size_t i = startIndex; i < startIndex + count - 1; ++i) {
       result.push_back(uint32_t(i));
       result.push_back(uint32_t(i + 1));
     }
@@ -201,8 +201,8 @@ int32_t GltfConverterImpl::gatherLines() {
        ++lineStringItr) {
     auto stringIndices = lineStringToLines(
         cartoCoordinates.size(),
-        std::distance(lineStringItr->coordinates.begin(),
-                      lineStringItr->coordinates.end()));
+        size_t(std::distance(lineStringItr->coordinates.begin(),
+                             lineStringItr->coordinates.end())));
     allIndices.insert(allIndices.end(), stringIndices.begin(), stringIndices.end());
     cartoCoordinates.insert(
         cartoCoordinates.end(),
@@ -215,8 +215,8 @@ int32_t GltfConverterImpl::gatherLines() {
     for (const auto& lineStringCoords : multiLineItr->coordinates) {
       auto stringIndices = lineStringToLines(
           cartoCoordinates.size(),
-          std::distance(lineStringCoords.begin(),
-                        lineStringCoords.end()));
+          size_t(std::distance(lineStringCoords.begin(),
+                               lineStringCoords.end())));
       allIndices.insert(allIndices.end(), stringIndices.begin(), stringIndices.end());
       cartoCoordinates.insert(
           cartoCoordinates.end(),
@@ -244,10 +244,6 @@ int32_t GltfConverterImpl::gatherLines() {
   }
   int32_t bufferViewIndex =
       makeBufferView(bufferIndex, BufferView::Target::ARRAY_BUFFER);
-#if 0
-  int64_t accessorByteOffset = 0;
-  size_t elementCount = 0;
-#endif
   int32_t meshIndex = int32_t(this->model.meshes.size());
   Mesh& linesMesh = this->model.meshes.emplace_back();
   int32_t indexBufferIndex = int32_t(this->model.buffers.size());
@@ -261,25 +257,25 @@ int32_t GltfConverterImpl::gatherLines() {
   int32_t indexBufferViewIndex = makeBufferView(
       indexBufferIndex,
       BufferView::Target::ELEMENT_ARRAY_BUFFER);
-  int32_t accessorIndex = int32_t(this->model.accessors.size());
-  Accessor& coordAccessor = this->model.accessors.emplace_back();
-  coordAccessor.bufferView = bufferViewIndex;
-  coordAccessor.byteOffset = 0;
-  coordAccessor.componentType = Accessor::ComponentType::FLOAT;
-  coordAccessor.count = int64_t(localPositions.size());
-  coordAccessor.min = positionMinVector(localPositions);
-  coordAccessor.max = positionMaxVector(localPositions);
-  coordAccessor.type = Accessor::Type::VEC3;
+  int32_t accessorIndex = makeAccessor(
+      bufferViewIndex,
+      0,
+      int64_t(localPositions.size()));
+  this->model.accessors[size_t(accessorIndex)].min =
+      positionMinVector(localPositions);
+  this->model.accessors[size_t(accessorIndex)].max =
+      positionMaxVector(localPositions);
 
-  int32_t indexAccessorIndex = int32_t(this->model.accessors.size());
-  Accessor& indexAccessor = this->model.accessors.emplace_back();
-  indexAccessor.bufferView = indexBufferViewIndex;
-  indexAccessor.byteOffset = 0;
-  indexAccessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
-  indexAccessor.count = int64_t(allIndices.size());
-  indexAccessor.type = Accessor::Type::SCALAR;
-
+  int32_t indexAccessorIndex = makeAccessor(
+      indexBufferViewIndex,
+      0,
+      int64_t(allIndices.size()),
+      Accessor::ComponentType::UNSIGNED_INT,
+      Accessor::Type::SCALAR);
 #if 0
+  int64_t accessorByteOffset = 0;
+  size_t elementCount = 0;
+
   for (auto lineStringItr = root.allOfType<GeoJsonLineString>().begin();
        lineStringItr != root.allOfType<GeoJsonLineString>().end();
        ++lineStringItr) {
