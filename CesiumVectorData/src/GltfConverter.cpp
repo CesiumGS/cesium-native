@@ -182,9 +182,9 @@ std::vector<uint32_t> lineStringToLines(size_t startIndex, size_t count) {
   std::vector<uint32_t> result;
   result.reserve((count - 1) * 2);
   for (size_t i = startIndex; i < startIndex + count - 1; ++i) {
-      result.push_back(uint32_t(i));
-      result.push_back(uint32_t(i + 1));
-    }
+    result.push_back(uint32_t(i));
+    result.push_back(uint32_t(i + 1));
+  }
   return result;
 }
 
@@ -198,9 +198,13 @@ int32_t GltfConverterImpl::gatherLines() {
        ++lineStringItr) {
     auto stringIndices = lineStringToLines(
         cartoCoordinates.size(),
-        size_t(std::distance(lineStringItr->coordinates.begin(),
-                             lineStringItr->coordinates.end())));
-    allIndices.insert(allIndices.end(), stringIndices.begin(), stringIndices.end());
+        size_t(std::distance(
+            lineStringItr->coordinates.begin(),
+            lineStringItr->coordinates.end())));
+    allIndices.insert(
+        allIndices.end(),
+        stringIndices.begin(),
+        stringIndices.end());
     cartoCoordinates.insert(
         cartoCoordinates.end(),
         lineStringItr->coordinates.begin(),
@@ -212,9 +216,12 @@ int32_t GltfConverterImpl::gatherLines() {
     for (const auto& lineStringCoords : multiLineItr->coordinates) {
       auto stringIndices = lineStringToLines(
           cartoCoordinates.size(),
-          size_t(std::distance(lineStringCoords.begin(),
-                               lineStringCoords.end())));
-      allIndices.insert(allIndices.end(), stringIndices.begin(), stringIndices.end());
+          size_t(
+              std::distance(lineStringCoords.begin(), lineStringCoords.end())));
+      allIndices.insert(
+          allIndices.end(),
+          stringIndices.begin(),
+          stringIndices.end());
       cartoCoordinates.insert(
           cartoCoordinates.end(),
           lineStringCoords.begin(),
@@ -254,10 +261,8 @@ int32_t GltfConverterImpl::gatherLines() {
   int32_t indexBufferViewIndex = makeBufferView(
       indexBufferIndex,
       BufferView::Target::ELEMENT_ARRAY_BUFFER);
-  int32_t accessorIndex = makeAccessor(
-      bufferViewIndex,
-      0,
-      int64_t(localPositions.size()));
+  int32_t accessorIndex =
+      makeAccessor(bufferViewIndex, 0, int64_t(localPositions.size()));
   this->model.accessors[size_t(accessorIndex)].min =
       positionMinVector(localPositions);
   this->model.accessors[size_t(accessorIndex)].max =

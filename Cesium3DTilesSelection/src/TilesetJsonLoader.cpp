@@ -127,10 +127,12 @@ CesiumGeometry::Axis obtainGltfUpAxis(
     const rapidjson::Document& tileset,
     const std::shared_ptr<spdlog::logger>& pLogger) {
 
-  if (const auto extensionsRequiredIt = tileset.FindMember("extensionsRequired");
+  if (const auto extensionsRequiredIt =
+          tileset.FindMember("extensionsRequired");
       extensionsRequiredIt != tileset.MemberEnd()) {
     const rapidjson::Value& extensionsRequired = extensionsRequiredIt->value;
-    if (extensionsRequired.FindMember("MAXAR_content_geojson") != extensionsRequired.MemberEnd()) {
+    if (extensionsRequired.FindMember("MAXAR_content_geojson") !=
+        extensionsRequired.MemberEnd()) {
       return CesiumGeometry::Axis::Z;
     }
   }
