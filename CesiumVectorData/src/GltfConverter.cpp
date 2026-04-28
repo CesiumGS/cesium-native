@@ -48,7 +48,6 @@ struct GltfConverterImpl {
       const GeoJsonDocument& inGeoJson,
       const CesiumGeospatial::Ellipsoid& inEllipsoid)
       : geoJson(inGeoJson), enuToFixedFrame(1.0), ellipsoid(inEllipsoid) {}
-  static double heightOffset;
   // Gather a feature type from GeoJson into a mesh in a node.
   int32_t gatherLines();
   int32_t gatherPolygons();
@@ -62,8 +61,6 @@ struct GltfConverterImpl {
       int componentType = Accessor::ComponentType::FLOAT,
       const std::string& accessorType = Accessor::Type::VEC3);
 };
-
-double GltfConverterImpl::heightOffset = 10.0;
 
 int32_t GltfConverterImpl::makeBufferView(int32_t buffer, int target) {
   int32_t bufferViewIndex = int32_t(this->model.bufferViews.size());
@@ -172,7 +169,7 @@ void transformIntoFrame(
         CesiumGeospatial::Cartographic cartographic(Cartographic::fromDegrees(
             cartoDegrees.x,
             cartoDegrees.y,
-            cartoDegrees.z + GltfConverterImpl::heightOffset));
+            cartoDegrees.z));
         auto cartesian = ellipsoid.cartographicToCartesian(cartographic);
         return glm::dvec3(toLocal * glm::dvec4(cartesian, 1.0));
       });
