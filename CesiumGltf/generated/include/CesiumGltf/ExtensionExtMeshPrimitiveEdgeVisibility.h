@@ -14,13 +14,13 @@ namespace CesiumGltf {
  * @brief glTF extension encoding the visibility of the edges of a triangles
  * primitive
  */
-struct CESIUMGLTF_API ExtensionMeshPrimitiveEdgeVisibility final
+struct CESIUMGLTF_API ExtensionExtMeshPrimitiveEdgeVisibility final
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
   static constexpr const char* TypeName =
-      "ExtensionMeshPrimitiveEdgeVisibility";
+      "ExtensionExtMeshPrimitiveEdgeVisibility";
   /** @brief The official name of the extension. This should be the same as its
    * key in the `extensions` object. */
   static constexpr const char* ExtensionName =
@@ -70,7 +70,7 @@ struct CESIUMGLTF_API ExtensionMeshPrimitiveEdgeVisibility final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionMeshPrimitiveEdgeVisibility));
+    accum += int64_t(sizeof(ExtensionExtMeshPrimitiveEdgeVisibility));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
     accum +=

@@ -35,6 +35,7 @@
 #include <CesiumGltf/ExtensionExtInstanceFeaturesFeatureId.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionExtMeshPrimitiveEdgeVisibility.h>
 #include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
@@ -44,7 +45,6 @@
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
-#include <CesiumGltf/ExtensionMeshPrimitiveEdgeVisibility.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue.h>
@@ -233,7 +233,7 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::ExtensionMeshPrimitiveEdgeVisibility& obj,
+    const CesiumGltf::ExtensionExtMeshPrimitiveEdgeVisibility& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1238,7 +1238,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::ExtensionMeshPrimitiveEdgeVisibility& obj,
+    const CesiumGltf::ExtensionExtMeshPrimitiveEdgeVisibility& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -3021,8 +3021,8 @@ void ExtensionKhrGaussianSplattingCompressionSpz2JsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionMeshPrimitiveEdgeVisibilityJsonWriter::write(
-    const CesiumGltf::ExtensionMeshPrimitiveEdgeVisibility& obj,
+void ExtensionExtMeshPrimitiveEdgeVisibilityJsonWriter::write(
+    const CesiumGltf::ExtensionExtMeshPrimitiveEdgeVisibility& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
