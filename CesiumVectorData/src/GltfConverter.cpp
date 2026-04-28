@@ -332,9 +332,6 @@ int32_t GltfConverterImpl::gatherLines() {
   int32_t nodeIndex = int32_t(this->model.nodes.size());
   this->model.nodes.emplace_back();
   this->model.nodes.back().mesh = meshIndex;
-  CesiumGltfContent::GltfUtilities::setNodeTransform(
-      this->model.nodes.back(),
-      this->enuToFixedFrame);
   return nodeIndex;
 }
 
@@ -475,9 +472,6 @@ int32_t GltfConverterImpl::gatherPolygons() {
   int32_t nodeIndex = int32_t(this->model.nodes.size());
   this->model.nodes.emplace_back();
   this->model.nodes.back().mesh = meshIndex;
-  CesiumGltfContent::GltfUtilities::setNodeTransform(
-      this->model.nodes.back(),
-      this->enuToFixedFrame);
   return nodeIndex;
 }
 
@@ -538,9 +532,6 @@ int32_t GltfConverterImpl::gatherPoints() {
   int32_t nodeIndex = int32_t(this->model.nodes.size());
   this->model.nodes.emplace_back();
   this->model.nodes.back().mesh = meshIndex;
-  CesiumGltfContent::GltfUtilities::setNodeTransform(
-      this->model.nodes.back(),
-      this->enuToFixedFrame);
   return nodeIndex;
 }
 } // namespace
@@ -567,6 +558,9 @@ ConverterResult GltfConverter::convert(
   material.emissiveFactor.assign(orange.begin(), orange.end());
   size_t rootNodeIndex = converter.model.nodes.size();
   converter.model.nodes.emplace_back();
+  CesiumGltfContent::GltfUtilities::setNodeTransform(
+      converter.model.nodes[rootNodeIndex],
+      converter.enuToFixedFrame);
   auto maybeAddNode = [&model = converter.model,
                        rootNodeIndex](int32_t featureNode) {
     if (featureNode >= 0) {
