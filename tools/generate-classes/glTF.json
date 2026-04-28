@@ -174,6 +174,9 @@
     },
     "KHR_gaussian_splatting_compression_spz_2 glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionKhrGaussianSplattingCompressionSpz2"
+    },
+    "EXT_mesh_primitive_edge_visibility glTF Mesh Primitive Extension": {
+      "overrideName": "ExtensionMeshPrimitiveEdgeVisibility"
     }
   },
   "extensions": [
@@ -311,6 +314,13 @@
       "schema": "Khronos/KHR_gaussian_splatting_compression_spz_2/schema/mesh.primitive.KHR_gaussian_splatting_compression_spz_2.schema.json",
       "attachTo": [
         "mesh.primitive.KHR_gaussian_splatting"
+      ]
+    },
+    {
+      "extensionName": "EXT_mesh_primitive_edge_visibility",
+      "schema": "Vendor/EXT_mesh_primitive_edge_visibility/schema/primitive.EXT_mesh_primitive_edge_visibility.schema.json",
+      "attachTo": [
+        "mesh.primitive"
       ]
     }
   ]
