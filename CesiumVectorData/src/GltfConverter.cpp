@@ -274,57 +274,6 @@ int32_t GltfConverterImpl::gatherLines() {
       int64_t(allIndices.size()),
       Accessor::ComponentType::UNSIGNED_INT,
       Accessor::Type::SCALAR);
-#if 0
-  int64_t accessorByteOffset = 0;
-  size_t elementCount = 0;
-
-  for (auto lineStringItr = root.allOfType<GeoJsonLineString>().begin();
-       lineStringItr != root.allOfType<GeoJsonLineString>().end();
-       ++lineStringItr) {
-    int32_t accessorIndex = makeAccessor(
-        bufferViewIndex,
-        accessorByteOffset,
-        int64_t(lineStringItr->coordinates.size()));
-    std::span<glm::dvec3> stringCoords{
-        &localPositions[elementCount],
-        lineStringItr->coordinates.size()};
-    this->model.accessors[size_t(accessorIndex)].min =
-        positionMinVector(stringCoords);
-    this->model.accessors[size_t(accessorIndex)].max =
-        positionMaxVector(stringCoords);
-    accessorByteOffset +=
-        this->model.accessors[size_t(accessorIndex)].count * 4 * 3;
-    elementCount += lineStringItr->coordinates.size();
-    linesMesh.primitives.emplace_back();
-    linesMesh.primitives.back().attributes["POSITION"] = accessorIndex;
-    linesMesh.primitives.back().mode = MeshPrimitive::Mode::LINE_STRIP;
-    linesMesh.primitives.back().material = 0;
-  }
-  for (auto multiLineItr = root.allOfType<GeoJsonMultiLineString>().begin();
-       multiLineItr != root.allOfType<GeoJsonMultiLineString>().end();
-       ++multiLineItr) {
-    for (const auto& lineStringCoords : multiLineItr->coordinates) {
-      int32_t accessorIndex = int32_t(this->model.accessors.size());
-      Accessor& linesAccessor = this->model.accessors.emplace_back();
-      linesAccessor.bufferView = bufferViewIndex;
-      linesAccessor.byteOffset = accessorByteOffset;
-      linesAccessor.componentType = Accessor::ComponentType::FLOAT;
-      linesAccessor.count = int64_t(lineStringCoords.size());
-      linesAccessor.type = Accessor::Type::VEC3;
-      std::span<glm::dvec3> stringCoords{
-          &localPositions[elementCount],
-          lineStringCoords.size()};
-      linesAccessor.min = positionMinVector(stringCoords);
-      linesAccessor.max = positionMaxVector(stringCoords);
-      accessorByteOffset += linesAccessor.count * 4 * 3;
-      elementCount += lineStringCoords.size();
-      linesMesh.primitives.emplace_back();
-      linesMesh.primitives.back().attributes["POSITION"] = accessorIndex;
-      linesMesh.primitives.back().mode = MeshPrimitive::Mode::LINE_STRIP;
-      linesMesh.primitives.back().material = 0;
-    }
-  }
-#endif
   linesMesh.primitives.emplace_back();
   linesMesh.primitives.back().attributes["POSITION"] = accessorIndex;
   linesMesh.primitives.back().indices = indexAccessorIndex;
