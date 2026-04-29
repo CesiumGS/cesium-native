@@ -4,6 +4,7 @@
 
 #include <Cesium3DTiles/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
+#include <CesiumUtility/JsonValue.h>
 
 #include <string>
 #include <vector>
@@ -28,7 +29,7 @@ struct CESIUM3DTILES_API Extension3dTilesContentConditionalDimensionsValue final
   /**
    * @brief keySet
    */
-  std::vector<std::string> keySet;
+  std::vector<CesiumUtility::JsonValue> keySet;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -42,7 +43,8 @@ struct CESIUM3DTILES_API Extension3dTilesContentConditionalDimensionsValue final
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
     accum += int64_t(this->name.capacity() * sizeof(char));
-    accum += int64_t(sizeof(std::string) * this->keySet.capacity());
+    accum +=
+        int64_t(sizeof(CesiumUtility::JsonValue) * this->keySet.capacity());
     return accum;
   }
 };

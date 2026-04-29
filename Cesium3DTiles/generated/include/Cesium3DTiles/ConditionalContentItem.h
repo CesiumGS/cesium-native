@@ -4,6 +4,7 @@
 
 #include <Cesium3DTiles/Content.h>
 #include <Cesium3DTiles/Library.h>
+#include <CesiumUtility/JsonValue.h>
 
 #include <string>
 #include <unordered_map>
@@ -22,7 +23,7 @@ struct CESIUM3DTILES_API ConditionalContentItem final : public Content {
   /**
    * @brief keys
    */
-  std::unordered_map<std::string, std::string> keys;
+  std::unordered_map<std::string, CesiumUtility::JsonValue> keys;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -36,10 +37,10 @@ struct CESIUM3DTILES_API ConditionalContentItem final : public Content {
     accum += Content::getSizeBytes() - int64_t(sizeof(Content));
     accum += int64_t(
         this->keys.bucket_count() *
-        (sizeof(std::string) + sizeof(std::string)));
+        (sizeof(std::string) + sizeof(CesiumUtility::JsonValue)));
     for (const auto& [k, v] : this->keys) {
       accum += int64_t(k.capacity() * sizeof(char) - sizeof(std::string));
-      accum += int64_t(v.capacity() * sizeof(char));
+      accum += int64_t(sizeof(CesiumUtility::JsonValue));
     }
     return accum;
   }

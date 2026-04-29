@@ -6,7 +6,7 @@
 
 #include <Cesium3DTiles/ConditionalContentItem.h>
 #include <CesiumJsonReader/DictionaryJsonHandler.h>
-#include <CesiumJsonReader/StringJsonHandler.h>
+#include <CesiumJsonReader/JsonObjectJsonHandler.h>
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
@@ -33,8 +33,9 @@ protected:
 
 private:
   Cesium3DTiles::ConditionalContentItem* _pObject = nullptr;
-  CesiumJsonReader::
-      DictionaryJsonHandler<std::string, CesiumJsonReader::StringJsonHandler>
-          _keys;
+  CesiumJsonReader::DictionaryJsonHandler<
+      CesiumUtility::JsonValue,
+      CesiumJsonReader::JsonObjectJsonHandler>
+      _keys;
 };
 } // namespace Cesium3DTilesReader

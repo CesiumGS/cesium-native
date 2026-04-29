@@ -5,6 +5,7 @@
 #include <Cesium3DTiles/Extension3dTilesContentConditionalDimensionsValue.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/JsonObjectJsonHandler.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
@@ -37,8 +38,9 @@ private:
   Cesium3DTiles::Extension3dTilesContentConditionalDimensionsValue* _pObject =
       nullptr;
   CesiumJsonReader::StringJsonHandler _name;
-  CesiumJsonReader::
-      ArrayJsonHandler<std::string, CesiumJsonReader::StringJsonHandler>
-          _keySet;
+  CesiumJsonReader::ArrayJsonHandler<
+      CesiumUtility::JsonValue,
+      CesiumJsonReader::JsonObjectJsonHandler>
+      _keySet;
 };
 } // namespace Cesium3DTilesReader
