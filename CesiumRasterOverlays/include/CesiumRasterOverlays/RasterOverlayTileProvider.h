@@ -263,6 +263,10 @@ public:
   virtual void
   addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
 
+  virtual bool isTickable() { return false; }
+
+  virtual void tick() {}
+
 protected:
   /**
    * @brief Loads an image from a URL and optionally some request headers.

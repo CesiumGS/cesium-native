@@ -27,7 +27,7 @@ public:
       const std::string& url, // todo: accept factory instead of url
       const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions = {});
 
-  virtual ~VectorTilesRasterOverlay() override;
+  virtual ~VectorTilesRasterOverlay() override = default;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumRasterOverlays::CreateRasterOverlayTileProviderParameters&
