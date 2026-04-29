@@ -399,8 +399,10 @@ int32_t GltfConverterImpl::gatherPolygons() {
       BufferView::Target::ELEMENT_ARRAY_BUFFER);
   int32_t accessorIndex =
       makeAccessor(bufferViewIndex, 0, int64_t(localPositions.size()));
-  this->model.accessors[accessorIndex].min = positionMinVector(localPositions);
-  this->model.accessors[accessorIndex].max = positionMaxVector(localPositions);
+  this->model.accessors[size_t(accessorIndex)].min =
+      positionMinVector(localPositions);
+  this->model.accessors[size_t(accessorIndex)].max =
+      positionMaxVector(localPositions);
   int32_t indexAccessorIndex = makeAccessor(
       indexBufferViewIndex,
       0,
@@ -459,8 +461,10 @@ int32_t GltfConverterImpl::gatherPoints() {
       makeBufferView(bufferIndex, BufferView::Target::ARRAY_BUFFER);
   int32_t accessorIndex =
       makeAccessor(bufferViewIndex, 0, int64_t(localPositions.size()));
-  this->model.accessors[accessorIndex].min = positionMinVector(localPositions);
-  this->model.accessors[accessorIndex].max = positionMaxVector(localPositions);
+  this->model.accessors[size_t(accessorIndex)].min =
+      positionMinVector(localPositions);
+  this->model.accessors[size_t(accessorIndex)].max =
+      positionMaxVector(localPositions);
   int32_t meshIndex = int32_t(this->model.meshes.size());
   Mesh& pointsMesh = this->model.meshes.emplace_back();
   pointsMesh.primitives.emplace_back();
