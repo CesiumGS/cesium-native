@@ -7,6 +7,9 @@
 
 namespace CesiumVectorData {
 
+/**
+ * @brief The result of converting a GeoJSON document to glTF.
+ */
 using ConverterResult = CesiumUtility::Result<CesiumGltf::Model>;
 
 /**
@@ -15,7 +18,7 @@ using ConverterResult = CesiumUtility::Result<CesiumGltf::Model>;
 class CESIUMVECTORDATA_API GltfConverter {
 public:
   /**
-   * @brief Convert geoJSON document to a result which includes a glTF Model
+   * @brief Convert geoJSON document to a result containing a glTF Model
    * object.
    *
    * @param geoJson The GeoJSON document.
