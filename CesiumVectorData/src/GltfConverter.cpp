@@ -10,6 +10,7 @@
 #include <CesiumGltf/MaterialPBRMetallicRoughness.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/Scene.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
@@ -54,16 +55,16 @@ struct GltfConverterImpl {
   int32_t gatherPolygons();
   int32_t gatherPoints();
   // Create a buffer view from a whole buffer
-  int32_t makeBufferView(int32_t buffer, int target);
+  int32_t makeBufferView(int32_t buffer, int32_t target);
   int32_t makeAccessor(
       int32_t bufferView,
       int64_t byteOffset,
       int64_t count,
-      int componentType = Accessor::ComponentType::FLOAT,
+      int32_t componentType = Accessor::ComponentType::FLOAT,
       const std::string& accessorType = Accessor::Type::VEC3);
 };
 
-int32_t GltfConverterImpl::makeBufferView(int32_t buffer, int target) {
+int32_t GltfConverterImpl::makeBufferView(int32_t buffer, int32_t target) {
   int32_t bufferViewIndex = int32_t(this->model.bufferViews.size());
   BufferView& bufferView = this->model.bufferViews.emplace_back();
   bufferView.buffer = buffer;
@@ -78,7 +79,7 @@ int32_t GltfConverterImpl::makeAccessor(
     int32_t bufferView,
     int64_t byteOffset,
     int64_t count,
-    int componentType,
+    int32_t componentType,
     const std::string& accessorType) {
   int32_t accessorIndex = int32_t(this->model.accessors.size());
   Accessor& accessor = this->model.accessors.emplace_back();
@@ -498,8 +499,8 @@ ConverterResult GltfConverter::convert(
   converter.enuToFixedFrame = GlobeTransforms::eastNorthUpToFixedFrame(
       ellipsoid.cartographicToCartesian(centroid));
   converter.model.asset.version = "2.0";
-  CesiumGltf::Material& material = converter.model.materials.emplace_back();
-  CesiumGltf::MaterialPBRMetallicRoughness& pbr =
+  Material& material = converter.model.materials.emplace_back();
+  MaterialPBRMetallicRoughness& pbr =
       material.pbrMetallicRoughness.emplace();
   // International orange
   std::array orange{0xff / 255.0, 0x4f / 255.0, 0.0};
@@ -522,6 +523,9 @@ ConverterResult GltfConverter::convert(
   maybeAddNode(converter.gatherLines());
   maybeAddNode(converter.gatherPolygons());
   maybeAddNode(converter.gatherPoints());
+  Scene& scene = converter.model.scenes.emplace_back();
+  scene.nodes.push_back(int32_t(rootNodeIndex));
+  converter.model.scene = int32_t(converter.model.scenes.size() - 1);
   return {std::move(converter.model)};
 }
 
