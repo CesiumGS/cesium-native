@@ -1,3 +1,4 @@
+#include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -495,7 +496,7 @@ ConverterResult GltfConverter::convert(
   converter.model.nodes.emplace_back();
   CesiumGltfContent::GltfUtilities::setNodeTransform(
       converter.model.nodes[rootNodeIndex],
-      converter.enuToFixedFrame);
+      CesiumGeometry::Transforms::Z_UP_TO_Y_UP * converter.enuToFixedFrame);
   auto maybeAddNode = [&model = converter.model,
                        rootNodeIndex](int32_t featureNode) {
     if (featureNode >= 0) {

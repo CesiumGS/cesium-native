@@ -126,21 +126,6 @@ struct ExternalContentInitializer {
 CesiumGeometry::Axis obtainGltfUpAxis(
     const rapidjson::Document& tileset,
     const std::shared_ptr<spdlog::logger>& pLogger) {
-
-  if (const auto extensionsRequiredIt =
-          tileset.FindMember("extensionsRequired");
-      extensionsRequiredIt != tileset.MemberEnd()) {
-    const rapidjson::Value& extensionsRequired = extensionsRequiredIt->value;
-    if (extensionsRequired.IsArray()) {
-      for (const auto& v : extensionsRequired.GetArray()) {
-        if (v.IsString() &&
-            !std::strcmp(v.GetString(), "MAXAR_content_geojson")) {
-          return CesiumGeometry::Axis::Z;
-        }
-      }
-    }
-  }
-
   const auto assetIt = tileset.FindMember("asset");
   if (assetIt == tileset.MemberEnd()) {
     return CesiumGeometry::Axis::Y;
@@ -882,7 +867,7 @@ TileLoadResult parseJsonContentInWorkerThread(
           !converterResult.errors.hasErrors()) {
         return TileLoadResult{
             std::move(*converterResult.value),
-            CesiumGeometry::Axis::Z,
+            CesiumGeometry::Axis::Y,
             std::nullopt,
             std::nullopt,
             std::nullopt,
