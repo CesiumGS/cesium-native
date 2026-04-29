@@ -91,7 +91,7 @@ int32_t GltfConverterImpl::makeAccessor(
   return accessorIndex;
 }
 
-glm::dvec3 positionMin(const std::span<glm::dvec3> coords) {
+glm::dvec3 positionMin(std::span<const glm::dvec3> coords) {
   if (coords.empty()) {
     return {0.0, 0.0, 0.0};
   }
@@ -102,7 +102,7 @@ glm::dvec3 positionMin(const std::span<glm::dvec3> coords) {
   return minCoord;
 }
 
-std::vector<double> positionMinVector(const std::span<glm::dvec3> coords) {
+std::vector<double> positionMinVector(std::span<const glm::dvec3> coords) {
   glm::dvec3 result = positionMin(coords);
   return {result[0], result[1], result[2]};
 }
@@ -288,25 +288,25 @@ int32_t GltfConverterImpl::gatherLines() {
   return nodeIndex;
 }
 
-std::vector<uint64_t>
+std::vector<uint32_t>
 triangulatePolygon(const std::vector<std::vector<glm::dvec3>>& polygonIn) {
-  using N = uint64_t;
   using Point = std::array<double, 2>;
   std::vector<std::vector<Point>> polygon;
-
+  polygon.reserve(polygonIn.size());
   for (const auto& ring : polygonIn) {
     polygon.emplace_back();
+    polygon.back().reserve(ring.size());
     for (const auto& coord : ring) {
       polygon.back().push_back(Point{{coord[0], coord[1]}});
     }
   }
 
-  std::vector<N> indices = mapbox::earcut<N>(polygon);
+  std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(polygon);
 
   return indices;
 }
 
-std::vector<uint64_t>
+std::vector<uint32_t>
 triangulatePolygon(const CesiumVectorData::GeoJsonPolygon& polygonIn) {
   return triangulatePolygon(polygonIn.coordinates);
 }
@@ -367,7 +367,7 @@ int32_t GltfConverterImpl::gatherPolygons() {
   for (auto polyItr = root.allOfType<GeoJsonPolygon>().begin();
        polyItr != root.allOfType<GeoJsonPolygon>().end();
        ++polyItr) {
-    std::vector<uint64_t> triangulated = triangulatePolygon(*polyItr);
+    std::vector<uint32_t> triangulated = triangulatePolygon(*polyItr);
     for (auto index : triangulated) {
       allIndices.push_back(uint32_t(allVertexCounter + index));
     }
@@ -377,7 +377,7 @@ int32_t GltfConverterImpl::gatherPolygons() {
        multiPolyItr != root.allOfType<GeoJsonMultiPolygon>().end();
        ++multiPolyItr) {
     for (const auto& polygon : multiPolyItr->coordinates) {
-      std::vector<uint64_t> triangulated = triangulatePolygon(polygon);
+      std::vector<uint32_t> triangulated = triangulatePolygon(polygon);
       for (auto index : triangulated) {
         allIndices.push_back(uint32_t(allVertexCounter + index));
       }
@@ -396,24 +396,16 @@ int32_t GltfConverterImpl::gatherPolygons() {
   int32_t indexBufferViewIndex = makeBufferView(
       indexBufferIndex,
       BufferView::Target::ELEMENT_ARRAY_BUFFER);
-  int32_t accessorIndex = int32_t(this->model.accessors.size());
-  Accessor& coordAccessor = this->model.accessors.emplace_back();
-  coordAccessor.bufferView = bufferViewIndex;
-  coordAccessor.byteOffset = 0;
-  coordAccessor.componentType = Accessor::ComponentType::FLOAT;
-  coordAccessor.count = int64_t(localPositions.size());
-  coordAccessor.min = positionMinVector(localPositions);
-  coordAccessor.max = positionMaxVector(localPositions);
-  coordAccessor.type = Accessor::Type::VEC3;
-
-  int32_t indexAccessorIndex = int32_t(this->model.accessors.size());
-  Accessor& indexAccessor = this->model.accessors.emplace_back();
-  indexAccessor.bufferView = indexBufferViewIndex;
-  indexAccessor.byteOffset = 0;
-  indexAccessor.componentType = Accessor::ComponentType::UNSIGNED_INT;
-  indexAccessor.count = int64_t(allIndices.size());
-  indexAccessor.type = Accessor::Type::SCALAR;
-
+  int32_t accessorIndex =
+      makeAccessor(bufferViewIndex, 0, int64_t(localPositions.size()));
+  this->model.accessors[accessorIndex].min = positionMinVector(localPositions);
+  this->model.accessors[accessorIndex].max = positionMaxVector(localPositions);
+  int32_t indexAccessorIndex = makeAccessor(
+      indexBufferViewIndex,
+      0,
+      int64_t(allIndices.size()),
+      Accessor::ComponentType::UNSIGNED_INT,
+      Accessor::Type::SCALAR);
   int32_t meshIndex = int32_t(this->model.meshes.size());
   Mesh& polyMesh = this->model.meshes.emplace_back();
   polyMesh.primitives.emplace_back();
@@ -421,7 +413,6 @@ int32_t GltfConverterImpl::gatherPolygons() {
   polyMesh.primitives.back().indices = indexAccessorIndex;
   polyMesh.primitives.back().mode = MeshPrimitive::Mode::TRIANGLES;
   polyMesh.primitives.back().material = 0;
-
   int32_t nodeIndex = int32_t(this->model.nodes.size());
   this->model.nodes.emplace_back();
   this->model.nodes.back().mesh = meshIndex;
@@ -465,23 +456,16 @@ int32_t GltfConverterImpl::gatherPoints() {
   }
   int32_t bufferViewIndex =
       makeBufferView(bufferIndex, BufferView::Target::ARRAY_BUFFER);
-  int32_t accessorIndex = int32_t(this->model.accessors.size());
-  Accessor& pointsAccessor = this->model.accessors.emplace_back();
-  pointsAccessor.bufferView = bufferViewIndex;
-  pointsAccessor.byteOffset = 0;
-  pointsAccessor.componentType = Accessor::ComponentType::FLOAT;
-  pointsAccessor.count = int64_t(localPositions.size());
-  pointsAccessor.min = positionMinVector(localPositions);
-  pointsAccessor.max = positionMaxVector(localPositions);
-  pointsAccessor.type = Accessor::Type::VEC3;
-
+  int32_t accessorIndex =
+      makeAccessor(bufferViewIndex, 0, int64_t(localPositions.size()));
+  this->model.accessors[accessorIndex].min = positionMinVector(localPositions);
+  this->model.accessors[accessorIndex].max = positionMaxVector(localPositions);
   int32_t meshIndex = int32_t(this->model.meshes.size());
   Mesh& pointsMesh = this->model.meshes.emplace_back();
   pointsMesh.primitives.emplace_back();
   pointsMesh.primitives.back().attributes["POSITION"] = accessorIndex;
   pointsMesh.primitives.back().mode = MeshPrimitive::Mode::POINTS;
   pointsMesh.primitives.back().material = 0;
-
   int32_t nodeIndex = int32_t(this->model.nodes.size());
   this->model.nodes.emplace_back();
   this->model.nodes.back().mesh = meshIndex;
@@ -501,13 +485,12 @@ ConverterResult GltfConverter::convert(
   converter.model.asset.version = "2.0";
   Material& material = converter.model.materials.emplace_back();
   MaterialPBRMetallicRoughness& pbr = material.pbrMetallicRoughness.emplace();
-  // International orange
-  std::array orange{0xff / 255.0, 0x4f / 255.0, 0.0};
+  std::array white{255.0, 255.0, 255.0};
   pbr.metallicFactor = 0.0;
   pbr.roughnessFactor = 1.0;
-  pbr.baseColorFactor.assign(orange.begin(), orange.end());
+  pbr.baseColorFactor.assign(white.begin(), white.end());
   material.doubleSided = true;
-  material.emissiveFactor.assign(orange.begin(), orange.end());
+  material.emissiveFactor.assign(white.begin(), white.end());
   size_t rootNodeIndex = converter.model.nodes.size();
   converter.model.nodes.emplace_back();
   CesiumGltfContent::GltfUtilities::setNodeTransform(

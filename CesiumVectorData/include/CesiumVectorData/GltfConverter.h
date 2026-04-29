@@ -13,7 +13,7 @@ namespace CesiumVectorData {
 using ConverterResult = CesiumUtility::Result<CesiumGltf::Model>;
 
 /**
- * @brief Functional for converting GeoJSON documents to glTF.
+ * @brief Convert GeoJSON documents to glTF.
  */
 class CESIUMVECTORDATA_API GltfConverter {
 public:
@@ -22,7 +22,7 @@ public:
    * object.
    *
    * @param geoJson The GeoJSON document.
-   * @param ellipsoid The ellipsoid for GeoJSON coordinates
+   * @param ellipsoid The ellipsoid for GeoJSON coordinates.
    * @returns A result object that includes the glTF Model and any errors.
    */
   static ConverterResult convert(
