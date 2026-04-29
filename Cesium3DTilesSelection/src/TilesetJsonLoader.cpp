@@ -131,9 +131,13 @@ CesiumGeometry::Axis obtainGltfUpAxis(
           tileset.FindMember("extensionsRequired");
       extensionsRequiredIt != tileset.MemberEnd()) {
     const rapidjson::Value& extensionsRequired = extensionsRequiredIt->value;
-    if (extensionsRequired.FindMember("MAXAR_content_geojson") !=
-        extensionsRequired.MemberEnd()) {
-      return CesiumGeometry::Axis::Z;
+    if (extensionsRequired.IsArray()) {
+      for (const auto& v : extensionsRequired.GetArray()) {
+        if (v.IsString() &&
+            !std::strcmp(v.GetString(), "MAXAR_content_geojson")) {
+          return CesiumGeometry::Axis::Z;
+        }
+      }
     }
   }
 
