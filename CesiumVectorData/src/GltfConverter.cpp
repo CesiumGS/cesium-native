@@ -500,8 +500,7 @@ ConverterResult GltfConverter::convert(
       ellipsoid.cartographicToCartesian(centroid));
   converter.model.asset.version = "2.0";
   Material& material = converter.model.materials.emplace_back();
-  MaterialPBRMetallicRoughness& pbr =
-      material.pbrMetallicRoughness.emplace();
+  MaterialPBRMetallicRoughness& pbr = material.pbrMetallicRoughness.emplace();
   // International orange
   std::array orange{0xff / 255.0, 0x4f / 255.0, 0.0};
   pbr.metallicFactor = 0.0;
