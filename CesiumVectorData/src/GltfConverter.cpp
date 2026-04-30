@@ -61,8 +61,8 @@ struct GltfConverterImpl {
       int32_t bufferView,
       int64_t byteOffset,
       int64_t count,
-      int32_t componentType = Accessor::ComponentType::FLOAT,
-      const std::string& accessorType = Accessor::Type::VEC3);
+      int32_t componentType,
+      const std::string& accessorType);
 };
 
 int32_t GltfConverterImpl::makeBufferView(int32_t buffer, int32_t target) {
@@ -264,8 +264,12 @@ int32_t GltfConverterImpl::gatherLines() {
   int32_t indexBufferViewIndex = makeBufferView(
       indexBufferIndex,
       BufferView::Target::ELEMENT_ARRAY_BUFFER);
-  int32_t accessorIndex =
-      makeAccessor(bufferViewIndex, 0, int64_t(localPositions.size()));
+  int32_t accessorIndex = makeAccessor(
+      bufferViewIndex,
+      0,
+      int64_t(localPositions.size()),
+      Accessor::ComponentType::FLOAT,
+      Accessor::Type::VEC3);
   this->model.accessors[size_t(accessorIndex)].min =
       positionMinVector(localPositions);
   this->model.accessors[size_t(accessorIndex)].max =
@@ -295,38 +299,32 @@ triangulatePolygon(const std::vector<std::vector<glm::dvec3>>& polygonIn) {
   std::vector<std::vector<Point>> polygon;
   polygon.reserve(polygonIn.size());
   for (const auto& ring : polygonIn) {
-    polygon.emplace_back();
-    polygon.back().reserve(ring.size());
-    for (const auto& coord : ring) {
-      polygon.back().push_back(Point{{coord[0], coord[1]}});
+    auto& ringCopy = polygon.emplace_back();
+    ringCopy.reserve(ring.size() - 1);
+    // The last coordinate of a GeoJson polygon ring is identical to the first,
+    // and earcut should work without it.
+    for (size_t i = 0; i < ring.size() - 1; i++) {
+      ringCopy.push_back(Point{ring[i][0], ring[i][1]});
     }
   }
-
-  std::vector<uint32_t> indices = mapbox::earcut<uint32_t>(polygon);
-
-  return indices;
-}
-
-std::vector<uint32_t>
-triangulatePolygon(const CesiumVectorData::GeoJsonPolygon& polygonIn) {
-  return triangulatePolygon(polygonIn.coordinates);
+  return mapbox::earcut<uint32_t>(polygon);
 }
 
 int32_t GltfConverterImpl::gatherPolygons() {
+  using PolygonRing = std::vector<glm::dvec3>;
+
   const GeoJsonObject& root = this->geoJson.rootObject;
-  std::vector<glm::dvec3> cartoCoordinates;
-  // GeoJson polygons contain an outer counter and possible inner contours. The
-  // first and last coordinates must be identical. An optimization would be to
-  // only include that coordinate once, but for now we will put both values into
-  // the big array of coordinates.
+  std::vector<glm::dvec3> cartographicPositions;
   for (auto polyItr = root.allOfType<GeoJsonPolygon>().begin();
        polyItr != root.allOfType<GeoJsonPolygon>().end();
        ++polyItr) {
     for (const auto& contour : polyItr->coordinates) {
-      cartoCoordinates.insert(
-          cartoCoordinates.end(),
+      cartographicPositions.insert(
+          cartographicPositions.end(),
           contour.begin(),
           contour.end());
+      // The last coordinate is identical to the first.
+      cartographicPositions.pop_back();
     }
   }
   for (auto multiPolyItr = root.allOfType<GeoJsonMultiPolygon>().begin();
@@ -334,91 +332,119 @@ int32_t GltfConverterImpl::gatherPolygons() {
        ++multiPolyItr) {
     for (const auto& polygon : multiPolyItr->coordinates) {
       for (const auto& contour : polygon) {
-        cartoCoordinates.insert(
-            cartoCoordinates.end(),
+        cartographicPositions.insert(
+            cartographicPositions.end(),
             contour.begin(),
             contour.end());
+        // The last coordinate is identical to the first.
+        cartographicPositions.pop_back();
       }
-    }
-  }
-  if (cartoCoordinates.empty()) {
-    return -1;
-  }
-  std::vector<glm::dvec3> localPositions(cartoCoordinates.size());
-  transformIntoFrame(
-      this->enuToFixedFrame,
-      cartoCoordinates,
-      localPositions,
-      this->ellipsoid);
-  int32_t bufferIndex = int32_t(this->model.buffers.size());
-  this->model.buffers.emplace_back();
-  std::vector<std::byte>& bytes = this->model.buffers.back().cesium.data;
-  bytes.resize(localPositions.size() * sizeof(glm::vec3));
-  glm::vec3* position32 = reinterpret_cast<glm::vec3*>(bytes.data());
-  for (const auto& localPosition : localPositions) {
-    *position32++ =
-        glm::vec3(localPosition.x, localPosition.y, localPosition.z);
-  }
-  int32_t bufferViewIndex =
-      makeBufferView(bufferIndex, BufferView::Target::ARRAY_BUFFER);
-  // The polygons are now triangulated, which returns indices to
-  // vertices. Create an additional buffer for the indices.
-  std::vector<uint32_t> allIndices;
-  size_t allVertexCounter = 0;
-  for (auto polyItr = root.allOfType<GeoJsonPolygon>().begin();
-       polyItr != root.allOfType<GeoJsonPolygon>().end();
-       ++polyItr) {
-    std::vector<uint32_t> triangulated = triangulatePolygon(*polyItr);
-    for (auto index : triangulated) {
-      allIndices.push_back(uint32_t(allVertexCounter + index));
-    }
-    allVertexCounter += polyItr->coordinates.size();
-  }
-  for (auto multiPolyItr = root.allOfType<GeoJsonMultiPolygon>().begin();
-       multiPolyItr != root.allOfType<GeoJsonMultiPolygon>().end();
-       ++multiPolyItr) {
-    for (const auto& polygon : multiPolyItr->coordinates) {
-      std::vector<uint32_t> triangulated = triangulatePolygon(polygon);
-      for (auto index : triangulated) {
-        allIndices.push_back(uint32_t(allVertexCounter + index));
-      }
-      allVertexCounter += polygon.size();
     }
   }
 
-  int32_t indexBufferIndex = int32_t(this->model.buffers.size());
-  this->model.buffers.emplace_back();
-  std::vector<std::byte>& indexBytes = this->model.buffers.back().cesium.data;
-  indexBytes.resize(sizeof(uint32_t) * allIndices.size());
-  std::memcpy(
-      indexBytes.data(),
-      allIndices.data(),
-      sizeof(uint32_t) * allIndices.size());
-  int32_t indexBufferViewIndex = makeBufferView(
-      indexBufferIndex,
-      BufferView::Target::ELEMENT_ARRAY_BUFFER);
-  int32_t accessorIndex =
-      makeAccessor(bufferViewIndex, 0, int64_t(localPositions.size()));
-  this->model.accessors[size_t(accessorIndex)].min =
-      positionMinVector(localPositions);
-  this->model.accessors[size_t(accessorIndex)].max =
-      positionMaxVector(localPositions);
-  int32_t indexAccessorIndex = makeAccessor(
-      indexBufferViewIndex,
+  if (cartographicPositions.empty()) {
+    return -1;
+  }
+
+  std::vector<glm::dvec3> localPositions(cartographicPositions.size());
+  transformIntoFrame(
+      this->enuToFixedFrame,
+      cartographicPositions,
+      localPositions,
+      this->ellipsoid);
+
+  int32_t positionBufferIndex = int32_t(this->model.buffers.size());
+  Buffer& positionBuffer = this->model.buffers.emplace_back();
+
+  std::vector<std::byte>& positionBytes = positionBuffer.cesium.data;
+  positionBytes.resize(localPositions.size() * sizeof(glm::vec3));
+
+  // The double-precision positions must be converted to single-precision to
+  // conform to the glTF spec.
+  glm::vec3* pPosition = reinterpret_cast<glm::vec3*>(positionBytes.data());
+  for (const glm::dvec3& localPosition : localPositions) {
+    *pPosition++ = glm::vec3(localPosition.x, localPosition.y, localPosition.z);
+  }
+
+  int32_t positionBufferViewIndex =
+      makeBufferView(positionBufferIndex, BufferView::Target::ARRAY_BUFFER);
+  int32_t positionAccessorIndex = makeAccessor(
+      positionBufferViewIndex,
       0,
-      int64_t(allIndices.size()),
+      int64_t(localPositions.size()),
+      Accessor::ComponentType::FLOAT,
+      Accessor::Type::VEC3);
+  this->model.accessors[size_t(positionAccessorIndex)].min =
+      positionMinVector(localPositions);
+  this->model.accessors[size_t(positionAccessorIndex)].max =
+      positionMaxVector(localPositions);
+
+  // Generate indices for the triangulated polygons.
+  std::vector<uint32_t> indices;
+  uint32_t vertexCount = 0;
+  for (auto polygonIt = root.allOfType<GeoJsonPolygon>().begin();
+       polygonIt != root.allOfType<GeoJsonPolygon>().end();
+       ++polygonIt) {
+    const std::vector<PolygonRing>& polygonRings = polygonIt->coordinates;
+    std::vector<uint32_t> triangulatedIndices =
+        triangulatePolygon(polygonRings);
+    for (uint32_t index : triangulatedIndices) {
+      indices.push_back(vertexCount + index);
+    }
+
+    // Sum up the vertex count from each polygon.
+    for (const PolygonRing& polygon : polygonRings) {
+      vertexCount += uint32_t(polygon.size() - 1);
+    }
+  }
+
+  for (auto multiPolygonIt = root.allOfType<GeoJsonMultiPolygon>().begin();
+       multiPolygonIt != root.allOfType<GeoJsonMultiPolygon>().end();
+       ++multiPolygonIt) {
+    for (const std::vector<PolygonRing>& polygonRings :
+         multiPolygonIt->coordinates) {
+      std::vector<uint32_t> triangulatedIndices =
+          triangulatePolygon(polygonRings);
+      for (uint32_t index : triangulatedIndices) {
+        indices.push_back(uint32_t(vertexCount + index));
+      }
+
+      // Sum up the vertex count from each polygon.
+      for (const PolygonRing& polygon : polygonRings) {
+        vertexCount += uint32_t(polygon.size() - 1);
+      }
+    }
+  }
+
+  int32_t indicesBufferIndex = int32_t(this->model.buffers.size());
+  Buffer& indicesBuffer = this->model.buffers.emplace_back();
+  std::vector<std::byte>& indicesBytes = indicesBuffer.cesium.data;
+  indicesBytes.resize(sizeof(uint32_t) * indices.size());
+  std::memcpy(
+      indicesBytes.data(),
+      indices.data(),
+      sizeof(uint32_t) * indices.size());
+
+  int32_t indicesBufferViewIndex = makeBufferView(
+      indicesBufferIndex,
+      BufferView::Target::ELEMENT_ARRAY_BUFFER);
+  int32_t indexAccessorIndex = makeAccessor(
+      indicesBufferViewIndex,
+      0,
+      int64_t(indices.size()),
       Accessor::ComponentType::UNSIGNED_INT,
       Accessor::Type::SCALAR);
+
   int32_t meshIndex = int32_t(this->model.meshes.size());
-  Mesh& polyMesh = this->model.meshes.emplace_back();
-  polyMesh.primitives.emplace_back();
-  polyMesh.primitives.back().attributes["POSITION"] = accessorIndex;
-  polyMesh.primitives.back().indices = indexAccessorIndex;
-  polyMesh.primitives.back().mode = MeshPrimitive::Mode::TRIANGLES;
-  polyMesh.primitives.back().material = 0;
+  Mesh& mesh = this->model.meshes.emplace_back();
+  MeshPrimitive& primitive = mesh.primitives.emplace_back();
+  primitive.attributes["POSITION"] = positionAccessorIndex;
+  primitive.indices = indexAccessorIndex;
+  primitive.mode = MeshPrimitive::Mode::TRIANGLES;
+  primitive.material = 0;
+
   int32_t nodeIndex = int32_t(this->model.nodes.size());
-  this->model.nodes.emplace_back();
-  this->model.nodes.back().mesh = meshIndex;
+  this->model.nodes.emplace_back().mesh = meshIndex;
   return nodeIndex;
 }
 
@@ -459,16 +485,20 @@ int32_t GltfConverterImpl::gatherPoints() {
   }
   int32_t bufferViewIndex =
       makeBufferView(bufferIndex, BufferView::Target::ARRAY_BUFFER);
-  int32_t accessorIndex =
-      makeAccessor(bufferViewIndex, 0, int64_t(localPositions.size()));
-  this->model.accessors[size_t(accessorIndex)].min =
+  int32_t positionAccessorIndex = makeAccessor(
+      bufferViewIndex,
+      0,
+      int64_t(localPositions.size()),
+      Accessor::ComponentType::FLOAT,
+      Accessor::Type::VEC3);
+  this->model.accessors[size_t(positionAccessorIndex)].min =
       positionMinVector(localPositions);
-  this->model.accessors[size_t(accessorIndex)].max =
+  this->model.accessors[size_t(positionAccessorIndex)].max =
       positionMaxVector(localPositions);
   int32_t meshIndex = int32_t(this->model.meshes.size());
   Mesh& pointsMesh = this->model.meshes.emplace_back();
   pointsMesh.primitives.emplace_back();
-  pointsMesh.primitives.back().attributes["POSITION"] = accessorIndex;
+  pointsMesh.primitives.back().attributes["POSITION"] = positionAccessorIndex;
   pointsMesh.primitives.back().mode = MeshPrimitive::Mode::POINTS;
   pointsMesh.primitives.back().material = 0;
   int32_t nodeIndex = int32_t(this->model.nodes.size());
