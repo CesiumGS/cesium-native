@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added `BoundingRegionBuilder::expandToIncludeBoundingRegion`.
+- Added support for 3D Tiles `MAXAR_tileset_geojson` extension, which allows GeoJSON files as tile content. The GeoJSON is translated to glTF. 
 
 ##### Fixes :wrench:
 
