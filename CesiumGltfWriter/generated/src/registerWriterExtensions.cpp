@@ -32,6 +32,7 @@
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionExtMeshPrimitiveEdgeVisibility.h>
 #include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
@@ -92,6 +93,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionKhrGaussianSplattingJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::MeshPrimitive,
+      ExtensionExtMeshPrimitiveEdgeVisibilityJsonWriter>();
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionExtInstanceFeaturesJsonWriter>();
