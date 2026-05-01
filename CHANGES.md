@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ? 
+
+##### Additions :tada:
+
+- Added support for [`3DTILES_content_conditional`](https://github.com/CesiumGS/3d-tiles/pull/834) in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
+
 ### v0.60.0 - 2026-05-01
 
 ##### Additions :tada:
