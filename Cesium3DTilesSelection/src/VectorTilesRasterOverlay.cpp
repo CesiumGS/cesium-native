@@ -75,6 +75,7 @@ class VectorTilesLoadRequester : public TileLoadRequester {
 
   const Tile* getNextTileToLoadInMainThread() override { return nullptr; }
 
+public:
   VectorTilesLoadRequester(
       std::shared_ptr<SharedTileSelectionState> pSharedTileSelectionState)
       : _weight(1.0),
@@ -97,6 +98,7 @@ private:
 
   std::shared_ptr<SharedTileSelectionState> _pSharedTileSelectionState =
       std::make_shared<SharedTileSelectionState>();
+  VectorTilesLoadRequester _loadRequester{_pSharedTileSelectionState};
 
 private:
   struct LoadTileImageInformation {
@@ -122,10 +124,11 @@ private:
         std::move(requestedTileIds)};
     CesiumAsync::Future<void> future = request.promise.getFuture();
 
-    this->_pSharedTileSelectionState->loadRequestsMutex.lock();
+    // TODO: fix mutex
+    //this->_pSharedTileSelectionState->loadRequestsMutex.lock();
     this->_pSharedTileSelectionState->loadRequests.emplace_back(
         std::move(request));
-    this->_pSharedTileSelectionState->loadRequestsMutex.unlock();
+    //this->_pSharedTileSelectionState->loadRequestsMutex.unlock();
 
     return future;
   }
@@ -142,12 +145,12 @@ private:
   }
 
   void visit(Tile& tile, LoadTileImageInformation& loadInfo) {
-    if (tile.isRenderContent() && meetsSse(tile, loadInfo)) {
-      if (tile.getState() < TileLoadState::ContentLoaded) {
-        loadInfo.tileLoadTasks.emplace_back(
-            &tile,
-            TileLoadPriorityGroup::Normal);
-      }
+    if(tile.getState() < TileLoadState::ContentLoaded) {
+      loadInfo.tileLoadTasks.emplace_back(&tile, TileLoadPriorityGroup::Normal);
+      return;
+    }
+
+    if (tile.isRenderContent() && (meetsSse(tile, loadInfo) || tile.getChildren().empty())) {
       loadInfo.tilesToRender.emplace_back(&tile);
     } else {
       for (Tile& child : tile.getChildren()) {
@@ -270,6 +273,7 @@ public:
 
     this->_pTilesetContentManager =
         TilesetContentManager::createFromUrl(externals, TilesetOptions{}, url);
+    this->_pTilesetContentManager->registerTileRequester(this->_loadRequester);
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
@@ -312,10 +316,15 @@ public:
         this->_options);
 
     // Check and resolve load requests if possible.
-    this->_pSharedTileSelectionState->loadRequestsMutex.lock();
+    //this->_pSharedTileSelectionState->loadRequestsMutex.lock();
     for (const std::pair<IntrusivePointer<Tile>, uint64_t>& pair :
          this->_pSharedTileSelectionState->tilesWaitingForWorker) {
-      if (pair.first->getState() < TileLoadState::ContentLoaded) {
+      TileLoadState state = pair.first->getState();
+      if(state == TileLoadState::FailedTemporarily) {
+        this->_pSharedTileSelectionState->workerThreadLoadQueue.enqueue(
+            {TileLoadTask{pair.first.get(), TileLoadPriorityGroup::Urgent, 1.0},
+             pair.second});
+      } else if (state < TileLoadState::ContentLoaded) {
         continue;
       }
 
@@ -329,6 +338,16 @@ public:
       }
     }
 
+    // Erase restarted waiting tiles.
+    this->_pSharedTileSelectionState->tilesWaitingForWorker.erase(
+        std::remove_if(
+            this->_pSharedTileSelectionState->tilesWaitingForWorker.begin(),
+            this->_pSharedTileSelectionState->tilesWaitingForWorker.end(),
+            [](const std::pair<IntrusivePointer<Tile>, uint64_t>& pair) {
+              return pair.first->getState() == TileLoadState::FailedTemporarily;
+            }),
+        this->_pSharedTileSelectionState->tilesWaitingForWorker.end());
+
     // Erase completed load requests.
     this->_pSharedTileSelectionState->loadRequests.erase(
         std::remove_if(
@@ -338,7 +357,7 @@ public:
               return request.requestedTileIds.empty();
             }),
         this->_pSharedTileSelectionState->loadRequests.end());
-    this->_pSharedTileSelectionState->loadRequestsMutex.unlock();
+    //this->_pSharedTileSelectionState->loadRequestsMutex.unlock();
 
     // Erase tiles waiting for worker that are done.
     this->_pSharedTileSelectionState->tilesWaitingForWorker.erase(
