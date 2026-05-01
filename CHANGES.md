@@ -1,11 +1,17 @@
 # Change Log
 
+### ? - ? 
+
+##### Additions :tada:
+
+- Added support for [`3DTILES_content_conditional`](https://github.com/CesiumGS/3d-tiles/pull/834) in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
+
 ### v0.60.0 - 2026-05-01
 
 ##### Additions :tada:
 
 - Added `BoundingRegionBuilder::expandToIncludeBoundingRegion`.
-- Added support for [`3DTILES_content_conditional`](https://github.com/CesiumGS/3d-tiles/pull/834) in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
+- Added support for 3D Tiles `MAXAR_tileset_geojson` extension, which allows GeoJSON files as tile content. The GeoJSON is translated to glTF. 
 
 ##### Fixes :wrench:
 
