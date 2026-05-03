@@ -732,8 +732,10 @@ TEST_CASE("GltfReader::loadGltf") {
 
   SUBCASE("loads glTF") {
     GltfReader reader{};
+    GltfReaderOptions options{};
+    options.freeCompressedData = false;
     Future<GltfReaderResult> future =
-        reader.loadGltf(asyncSystem, uri, {}, pMockAssetAccessor);
+        reader.loadGltf(asyncSystem, uri, {}, pMockAssetAccessor, options);
     GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
     REQUIRE(result.model);
     CHECK(result.errors.empty());
@@ -781,6 +783,8 @@ TEST_CASE("GltfReader::postprocessGltf") {
   GltfReaderOptions options;
   GltfReader reader;
   GltfReaderResult readerResult;
+
+  options.freeCompressedData = false;
 
   SUBCASE("returns immediately if there is no model") {
     reader.postprocessGltf(readerResult, options);
