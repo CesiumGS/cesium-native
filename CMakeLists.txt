@@ -389,6 +389,16 @@ find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+# spz's installed spzConfig.cmake calls find_dependency(ZLIB), which uses CMake's
+# FindZLIB module. The vcpkg zlib 1.3.2 port builds the static library with a
+# Windows-specific "s" suffix (zs.lib), which FindZLIB doesn't search for by
+# default. The vcpkg cmake wrapper that handles this is only active when the vcpkg
+# toolchain is loaded, but in the cesium-unreal context this CMakeLists.txt is
+# included via add_subdirectory after the parent toolchain is already set, so the
+# wrapper never runs. Pre-populating these cache variables replicates what the
+# wrapper would have done, allowing FindZLIB to succeed.
+find_library(ZLIB_LIBRARY_RELEASE NAMES z zs PATHS "${PACKAGE_BUILD_DIR}/lib" NO_DEFAULT_PATH)
+find_library(ZLIB_LIBRARY_DEBUG NAMES z zd zsd PATHS "${PACKAGE_BUILD_DIR}/debug/lib" NO_DEFAULT_PATH)
 find_package(spz CONFIG REQUIRED)
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
