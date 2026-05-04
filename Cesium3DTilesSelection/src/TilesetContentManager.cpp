@@ -663,6 +663,7 @@ TilesetContentManager::TilesetContentManager(
           LoadedTileEnumerator(nullptr),
           externals,
           tilesetOptions.ellipsoid),
+      _upsampler(),
       _tileLoadsInProgress{0},
       _loadedTilesCount{0},
       _tilesDataUsed{0},
@@ -674,7 +675,6 @@ TilesetContentManager::TilesetContentManager(
       _rootTileAvailablePromise{externals.asyncSystem.createPromise<void>()},
       _rootTileAvailableFuture{
           this->_rootTileAvailablePromise.getFuture().share()},
-      _tilesEligibleForContentUnloading(),
       _requesters(),
       _roundRobinValueWorker(0.0),
       _roundRobinValueMain(0.0),
@@ -1669,14 +1669,11 @@ void TilesetContentManager::finishLoading(
 }
 
 void TilesetContentManager::markTileIneligibleForContentUnloading(Tile& tile) {
-  this->_tilesEligibleForContentUnloading.remove(tile);
+  this->_unloadQueue.markIneligible(tile);
 }
 
 void TilesetContentManager::markTileEligibleForContentUnloading(Tile& tile) {
-  // If the tile is not yet in the list, add it to the end (most recently used).
-  if (!this->_tilesEligibleForContentUnloading.contains(tile)) {
-    this->_tilesEligibleForContentUnloading.insertAtTail(tile);
-  }
+  this->_unloadQueue.markEligible(tile);
 
   // If the Tileset has already been destroyed, unload this unused Tile
   // immediately to allow the TilesetContentManager destruction process to
@@ -1689,7 +1686,7 @@ void TilesetContentManager::markTileEligibleForContentUnloading(Tile& tile) {
 void TilesetContentManager::unloadCachedBytes(
     int64_t maximumCachedBytes,
     double timeBudgetMilliseconds) {
-  Tile* pTile = this->_tilesEligibleForContentUnloading.head();
+  Tile* pTile = this->_unloadQueue.head();
 
   // A time budget of 0.0 indicates we shouldn't throttle cache unloads. So set
   // the end time to the max time_point in that case.
@@ -1707,11 +1704,11 @@ void TilesetContentManager::unloadCachedBytes(
       break;
     }
 
-    Tile* pNext = this->_tilesEligibleForContentUnloading.next(*pTile);
+    Tile* pNext = this->_unloadQueue.next(*pTile);
 
     const UnloadTileContentResult removed = this->unloadTileContent(*pTile);
     if (removed != UnloadTileContentResult::Keep) {
-      this->_tilesEligibleForContentUnloading.remove(*pTile);
+      this->_unloadQueue.markIneligible(*pTile);
     }
 
     if (removed == UnloadTileContentResult::RemoveAndClearChildren) {
@@ -1735,15 +1732,14 @@ void TilesetContentManager::unloadCachedBytes(
 }
 
 void TilesetContentManager::clearChildrenRecursively(Tile* pTile) noexcept {
-  // Iterate through all children, calling this method recursively to make sure
-  // children are all removed from _tilesEligibleForContentUnloading.
+  // Recursively remove all children from the unload queue before clearing them.
   for (Tile& child : pTile->getChildren()) {
     CESIUM_ASSERT(
         !TileIdUtilities::isLoadable(child.getTileID()) ||
         child.getState() == TileLoadState::Unloaded);
     CESIUM_ASSERT(child.getReferenceCount() == 0);
     CESIUM_ASSERT(!child.hasReferencingContent());
-    this->_tilesEligibleForContentUnloading.remove(child);
+    this->_unloadQueue.markIneligible(child);
     this->clearChildrenRecursively(&child);
     child.setParent(nullptr);
   }
