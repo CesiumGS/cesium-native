@@ -10,7 +10,7 @@ struct CESIUMGLTF_API ExtensionExtMeshPrimitiveEdgeVisibility final
   /**
    * @brief Known values for the visibility specified for a single edge.
    */
-  struct VisibilityType {
+  struct Visibility {
     /** @brief Hidden edge - the edge should never be drawn */
     static constexpr uint8_t HIDDEN = 0;
 
