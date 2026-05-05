@@ -36,6 +36,8 @@ struct ExtensionExtImplicitCylinderRegion;
 struct ExtensionExtPrimitiveVoxels;
 struct ExtensionKhrGaussianSplatting;
 struct ExtensionKhrGaussianSplattingCompressionSpz2;
+struct ExtensionExtMeshPrimitiveEdgeVisibility;
+struct LineString;
 struct Padding;
 struct Shape;
 struct Cylinder;
@@ -427,6 +429,29 @@ struct ExtensionKhrGaussianSplattingCompressionSpz2JsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionKhrGaussianSplattingCompressionSpz2& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionExtMeshPrimitiveEdgeVisibilityJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtMeshPrimitiveEdgeVisibility;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName =
+      "EXT_mesh_primitive_edge_visibility";
+
+  static void write(
+      const CesiumGltf::ExtensionExtMeshPrimitiveEdgeVisibility& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct LineStringJsonWriter {
+  using ValueType = CesiumGltf::LineString;
+
+  static void write(
+      const CesiumGltf::LineString& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
