@@ -30,18 +30,18 @@ SchemaWriterResult SchemaWriter::writeSchema(
       this->getExtensions();
 
   SchemaWriterResult result;
-  std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
+  std::unique_ptr<CesiumJsonWriter::JsonWriter> pWriter;
 
   if (options.prettyPrint) {
-    writer = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
+    pWriter = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
   } else {
-    writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
+    pWriter = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
-  SchemaJsonWriter::write(schema, *writer, context);
-  result.schemaBytes = writer->toBytes();
-  result.errors = writer->getErrors();
-  result.warnings = writer->getWarnings();
+  SchemaJsonWriter::write(schema, *pWriter, context);
+  result.schemaBytes = pWriter->toBytes();
+  result.errors = pWriter->getErrors();
+  result.warnings = pWriter->getWarnings();
 
   return result;
 }

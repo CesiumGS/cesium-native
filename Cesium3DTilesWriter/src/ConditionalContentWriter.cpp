@@ -34,18 +34,18 @@ ConditionalContentWriter::writeConditionalContent(
       this->getExtensions();
 
   ConditionalContentWriterResult result;
-  std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
+  std::unique_ptr<CesiumJsonWriter::JsonWriter> pWriter;
 
   if (options.prettyPrint) {
-    writer = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
+    pWriter = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
   } else {
-    writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
+    pWriter = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
-  ConditionalContentJsonWriter::write(conditionalContent, *writer, context);
-  result.conditionalContentBytes = writer->toBytes();
-  result.errors = writer->getErrors();
-  result.warnings = writer->getWarnings();
+  ConditionalContentJsonWriter::write(conditionalContent, *pWriter, context);
+  result.conditionalContentBytes = pWriter->toBytes();
+  result.errors = pWriter->getErrors();
+  result.warnings = pWriter->getWarnings();
 
   return result;
 }

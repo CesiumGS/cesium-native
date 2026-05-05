@@ -11,13 +11,13 @@ struct ConditionalContent;
 namespace Cesium3DTilesWriter {
 
 /**
- * @brief The result of writing a ConditionalContent with
- * {@link ConditionalContentWriter::writeConditionalContent}.
+ * @brief The result of writing a @ref Cesium3DTiles::ConditionalContent with
+ * @ref ConditionalContentWriter::writeConditionalContent.
  */
 struct CESIUM3DTILESWRITER_API ConditionalContentWriterResult {
   /**
-   * @brief The final generated std::vector<std::byte> of the ConditionalContent
-   * JSON.
+   * @brief The final generated std::vector<std::byte> of the conditional
+   * content JSON.
    */
   std::vector<std::byte> conditionalContentBytes;
 
@@ -33,17 +33,17 @@ struct CESIUM3DTILESWRITER_API ConditionalContentWriterResult {
 };
 
 /**
- * @brief Options for how to write a ConditionalContent.
+ * @brief Options for how to write a @ref Cesium3DTiles::ConditionalContent.
  */
 struct CESIUM3DTILESWRITER_API ConditionalContentWriterOptions {
   /**
-   * @brief If the ConditionalContent JSON should be pretty printed.
+   * @brief If the conditional content JSON should be pretty printed.
    */
   bool prettyPrint = false;
 };
 
 /**
- * @brief Writes ConditionalContents.
+ * @brief Writes @ref Cesium3DTiles::ConditionalContent.
  */
 class CESIUM3DTILESWRITER_API ConditionalContentWriter {
 public:
@@ -53,24 +53,24 @@ public:
   ConditionalContentWriter();
 
   /**
-   * @brief Gets the context used to control how ConditionalContent extensions
+   * @brief Gets the context used to control how conditional content extensions
    * are written.
    */
   CesiumJsonWriter::ExtensionWriterContext& getExtensions();
 
   /**
-   * @brief Gets the context used to control how ConditionalContent extensions
+   * @brief Gets the context used to control how conditional content extensions
    * are written.
    */
   const CesiumJsonWriter::ExtensionWriterContext& getExtensions() const;
 
   /**
-   * @brief Serializes the provided ConditionalContent object into a byte vector
-   * using the provided flags to convert.
+   * @brief Serializes the provided conditional content object into a byte
+   * vector using the provided flags to convert.
    *
-   * @param conditionalContent The ConditionalContent.
-   * @param options Options for how to write the ConditionalContent.
-   * @return The result of writing the ConditionalContent.
+   * @param conditionalContent The conditional content.
+   * @param options Options for how to write the conditional content.
+   * @return The result of writing the conditional content.
    */
   ConditionalContentWriterResult writeConditionalContent(
       const Cesium3DTiles::ConditionalContent& conditionalContent,

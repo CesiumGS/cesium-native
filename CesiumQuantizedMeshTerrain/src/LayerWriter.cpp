@@ -30,18 +30,18 @@ LayerWriterResult LayerWriter::write(
       this->getExtensions();
 
   LayerWriterResult result;
-  std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
+  std::unique_ptr<CesiumJsonWriter::JsonWriter> pWriter;
 
   if (options.prettyPrint) {
-    writer = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
+    pWriter = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
   } else {
-    writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
+    pWriter = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
-  LayerJsonWriter::write(layer, *writer, context);
-  result.bytes = writer->toBytes();
-  result.errors = writer->getErrors();
-  result.warnings = writer->getWarnings();
+  LayerJsonWriter::write(layer, *pWriter, context);
+  result.bytes = pWriter->toBytes();
+  result.errors = pWriter->getErrors();
+  result.warnings = pWriter->getWarnings();
 
   return result;
 }
