@@ -184,34 +184,28 @@ std::vector<uint32_t> lineStringToLines(size_t startIndex, size_t count) {
 void GltfConverterImpl::gatherLines() {
   const GeoJsonObject& root = this->geoJson.rootObject;
   // Look for linestrings, count objects and coordinates
-  for (auto lineStringItr = root.allOfType<GeoJsonLineString>().begin();
-       lineStringItr != root.allOfType<GeoJsonLineString>().end();
-       ++lineStringItr) {
+  auto doLinestring = [this](const std::vector<glm::dvec3>& lineStringCoords) {
     auto stringIndices = lineStringToLines(
         this->globalCoordinates.size(),
-        lineStringItr->coordinates.size());
-    this->lineIndices.insert(
+        lineStringCoords.size());
+        this->lineIndices.insert(
         this->lineIndices.end(),
         stringIndices.begin(),
         stringIndices.end());
-    for (const glm::dvec3& cartoDegrees : lineStringItr->coordinates) {
-      addCoordinateDegrees(cartoDegrees);
-    }
+        for (const glm::dvec3& cartoDegrees : lineStringCoords) {
+          addCoordinateDegrees(cartoDegrees);
+        }
+  };
+  for (auto lineStringItr = root.allOfType<GeoJsonLineString>().begin();
+       lineStringItr != root.allOfType<GeoJsonLineString>().end();
+       ++lineStringItr) {
+    doLinestring(lineStringItr->coordinates);
   }
   for (auto multiLineItr = root.allOfType<GeoJsonMultiLineString>().begin();
        multiLineItr != root.allOfType<GeoJsonMultiLineString>().end();
        ++multiLineItr) {
     for (const auto& lineStringCoords : multiLineItr->coordinates) {
-      auto stringIndices = lineStringToLines(
-          this->globalCoordinates.size(),
-          lineStringCoords.size());
-      this->lineIndices.insert(
-          this->lineIndices.end(),
-          stringIndices.begin(),
-          stringIndices.end());
-      for (const glm::dvec3& cartoDegrees : lineStringCoords) {
-        addCoordinateDegrees(cartoDegrees);
-      }
+      doLinestring(lineStringCoords);
     }
   }
 }
@@ -274,12 +268,9 @@ triangulatePolygon(const std::vector<std::vector<glm::dvec3>>& polygonIn) {
 
 void GltfConverterImpl::gatherPolygons() {
   using PolygonRing = std::vector<glm::dvec3>;
+  using Polygon = std::vector<PolygonRing>;
   uint32_t elementBase = uint32_t(this->globalCoordinates.size());
-  const GeoJsonObject& root = this->geoJson.rootObject;
-  for (auto polygonIt = root.allOfType<GeoJsonPolygon>().begin();
-       polygonIt != root.allOfType<GeoJsonPolygon>().end();
-       ++polygonIt) {
-    const std::vector<PolygonRing>& polygonRings = polygonIt->coordinates;
+  auto doPolygon = [this, &elementBase](const Polygon& polygonRings) {
     for (const auto& contour : polygonRings) {
       // The last coordinate is identical to the first.
       for (size_t i = 0; i < contour.size() - 1; ++i) {
@@ -295,26 +286,20 @@ void GltfConverterImpl::gatherPolygons() {
     for (const PolygonRing& polygon : polygonRings) {
       elementBase += uint32_t(polygon.size() - 1);
     }
+  };
+  const GeoJsonObject& root = this->geoJson.rootObject;
+  for (auto polygonIt = root.allOfType<GeoJsonPolygon>().begin();
+       polygonIt != root.allOfType<GeoJsonPolygon>().end();
+       ++polygonIt) {
+    const std::vector<PolygonRing>& polygonRings = polygonIt->coordinates;
+    doPolygon(polygonRings);
   }
   for (auto multiPolygonIt = root.allOfType<GeoJsonMultiPolygon>().begin();
        multiPolygonIt != root.allOfType<GeoJsonMultiPolygon>().end();
        ++multiPolygonIt) {
     for (const std::vector<PolygonRing>& polygonRings :
          multiPolygonIt->coordinates) {
-      for (const auto& contour : polygonRings) {
-        for (size_t i = 0; i < contour.size() - 1; ++i) {
-          this->addCoordinateDegrees(contour[i]);
-        }
-      }
-      std::vector<uint32_t> triangulatedIndices =
-          triangulatePolygon(polygonRings);
-      for (uint32_t index : triangulatedIndices) {
-        this->polyIndices.push_back(elementBase + index);
-      }
-      // Sum up the vertex count from each polygon.
-      for (const PolygonRing& polygon : polygonRings) {
-        elementBase += uint32_t(polygon.size() - 1);
-      }
+      doPolygon(polygonRings);
     }
   }
 }
@@ -326,19 +311,22 @@ int32_t GltfConverterImpl::finalizePolygons() {
 void GltfConverterImpl::gatherPoints() {
   const GeoJsonObject& root = this->geoJson.rootObject;
   uint32_t element = uint32_t(this->globalCoordinates.size());
+  auto doPoint = [this, &element](const glm::dvec3& cartoDegrees) {
+    addCoordinateDegrees(cartoDegrees);
+    this->pointIndices.push_back(element++);
+
+  };
   // Look for points, count objects and coordinates
   for (auto pointsItr = root.allOfType<GeoJsonPoint>().begin();
        pointsItr != root.allOfType<GeoJsonPoint>().end();
        ++pointsItr) {
-    addCoordinateDegrees(pointsItr->coordinates);
-    this->pointIndices.push_back(element++);
+    doPoint(pointsItr->coordinates);
   }
   for (auto multiPointItr = root.allOfType<GeoJsonMultiPoint>().begin();
        multiPointItr != root.allOfType<GeoJsonMultiPoint>().end();
        ++multiPointItr) {
     for (const glm::dvec3& cartoDegrees : multiPointItr->coordinates) {
-      addCoordinateDegrees(cartoDegrees);
-      this->pointIndices.push_back(element++);
+      doPoint(cartoDegrees);
     }
   }
 }
