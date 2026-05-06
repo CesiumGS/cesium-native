@@ -1,6 +1,7 @@
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/TileLoadResult.h"
 #include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGltf/AccessorUtility.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/MeshPrimitive.h"
 #include "CesiumGltfContent/GltfUtilities.h"
@@ -76,6 +77,10 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
         const CesiumGltf::AccessorView<glm::vec3> positionView(
             model,
             primitive.attributes.at("POSITION"));
+        const CesiumGltf::IndexAccessorType indicesView = CesiumGltf::getIndexAccessorView(model, primitive);
+        const int64_t numIndices = std::visit(CesiumGltf::NumIndicesFromAccessor{}, indicesView);
+        const int64_t maxIndex = std::visit(CesiumGltf::MaxIndexValueFromAccessor{}, indicesView);
+
         if (positionView.status() != CesiumGltf::AccessorViewStatus::Valid) {
           errors.emplaceError(
               "Cannot create valid position accessor for primitive.");
@@ -95,18 +100,33 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
           return;
         }
 
-        if (primitive.mode >= CesiumGltf::MeshPrimitive::Mode::LINES &&
-            primitive.mode <= CesiumGltf::MeshPrimitive::Mode::LINE_STRIP) {
-          if (primitive.mode != CesiumGltf::MeshPrimitive::Mode::LINE_STRIP) {
-            errors.emplaceWarning(fmt::format(
-                "Line primitives should have the LINE_STRIP (mode 3) mode, "
-                "found line with mode {}.",
-                primitive.mode));
+        if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::LINE_STRIP) {
+          if(numIndices < 2) {
+            errors.emplaceError("Primitive mode LINE_STRIP requires at least two indices.");
             return;
           }
+
           std::vector<CesiumGeospatial::Cartographic> polyline;
-          for (int64_t i = 0; i < positionView.size(); i++) {
-            const glm::vec3 position = positionView[i];
+          for (int64_t i = 0; i < numIndices; i++) {
+            const int64_t idx = std::visit(CesiumGltf::IndexFromAccessor{i}, indicesView);
+            if(idx == maxIndex) {
+              // Primitive restart.
+              if(polyline.size() >= 2) {
+                content->polylines.emplace_back(std::move(polyline));
+                polyline.clear();
+              } else {
+                errors.emplaceError("Primitive restart index encountered but current polyline has less than 2 points.");
+              }
+
+              continue;
+            }
+
+            if(idx < 0 || idx >= positionView.size()) {
+              errors.emplaceError(fmt::format("Index {} out of bounds for position accessor size {}", idx, positionView.size()));
+              return;
+            }
+
+            const glm::vec3 position = positionView[idx];
             const glm::dvec4 transformedPosition =
                 rootTransform * nodeTransform * glm::dvec4(position, 1.0);
             polyline.emplace_back(
@@ -114,7 +134,12 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
                     .cartesianToCartographic(glm::dvec3(transformedPosition))
                     .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0}));
           }
-          content->polylines.emplace_back(std::move(polyline));
+
+          if(polyline.size() >= 2) {
+            content->polylines.emplace_back(std::move(polyline));
+          } else if(polyline.size() == 1) {
+            errors.emplaceWarning("LINE_STRIP primitive ended with a single point unassigned to a line.");
+          }
         }
 
         if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {

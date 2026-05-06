@@ -155,6 +155,44 @@ IndexAccessorType
 getIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
+ * Visitor that returns the number of indices contained in an IndexAccessorType
+ * variant.
+ */
+struct NumIndicesFromAccessor {
+  /**
+   * @brief Attempts to obtain a number of indices from an empty
+   * IndexAccessorType, resulting in 0.
+   */
+  int64_t operator()(std::monostate) { return 0; }
+
+  /**
+   * @brief Attempts to obtain a number of indices from an \ref AccessorView.
+   */
+  template <typename T> int64_t operator()(const AccessorView<T>& value) {
+    return value.size();
+  }
+};
+
+/**
+ * @brief Returns the maximum possible index value for the given
+ * IndexAccessorType.
+ */
+struct MaxIndexValueFromAccessor {
+  /**
+   * @brief Attempts to obtain a maximum index value from an empty
+   * IndexAccessorType, resulting in -1.
+   */
+  int64_t operator()(std::monostate) { return -1; }
+
+  /**
+   * @brief Attempts to obtain a maximum index value from an \ref AccessorView.
+   */
+  template <typename T> int64_t operator()(const AccessorView<T>& /*value*/) {
+    return static_cast<int64_t>(std::numeric_limits<T>::max());
+  }
+};
+
+/**
  * Visitor that retrieves the vertex indices from the given accessor type
  * corresponding to a given face index. These indices are returned as an array
  * of int64_ts. This should be initialized with the index of the face, the
