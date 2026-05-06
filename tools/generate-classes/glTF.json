@@ -177,6 +177,9 @@
     },
     "EXT_mesh_primitive_edge_visibility glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionExtMeshPrimitiveEdgeVisibility"
+    },
+    "KHR_billboard glTF Node Extension": {
+      "overrideName": "ExtensionKhrBillboard"
     }
   },
   "extensions": [
@@ -322,6 +325,10 @@
       "attachTo": [
         "mesh.primitive"
       ]
+    },
+    {
+      "extensionName": "KHR_billboard",
+      "schema": "Khronos/KHR_billboard/schema/node.KHR_billboard.schema.json"
     }
   ]
 }
