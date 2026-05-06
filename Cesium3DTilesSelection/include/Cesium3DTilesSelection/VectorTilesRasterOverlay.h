@@ -1,3 +1,4 @@
+#include "CesiumVectorData/VectorStyle.h"
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 
@@ -25,6 +26,7 @@ public:
   VectorTilesRasterOverlay(
       const std::string& name,
       const std::string& url, // todo: accept factory instead of url
+      const CesiumVectorData::VectorStyle& defaultStyle = {},
       const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions = {});
 
   virtual ~VectorTilesRasterOverlay() override = default;
@@ -35,5 +37,6 @@ public:
 
 private:
   std::string _url;
+  CesiumVectorData::VectorStyle _defaultStyle;
 };
 } // namespace Cesium3DTilesSelection

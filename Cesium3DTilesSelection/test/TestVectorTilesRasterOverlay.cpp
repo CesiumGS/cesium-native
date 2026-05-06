@@ -6,11 +6,13 @@
 #include "CesiumGeospatial/GlobeRectangle.h"
 #include "CesiumNativeTests/FileAccessor.h"
 #include "CesiumNativeTests/SimpleTaskProcessor.h"
+#include "CesiumNativeTests/writeTga.h"
 #include "CesiumRasterOverlays/ActivatedRasterOverlay.h"
 #include "CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h"
 #include "CesiumRasterOverlays/RasterOverlayExternals.h"
 #include "CesiumRasterOverlays/RasterOverlayTile.h"
 #include "CesiumUtility/IntrusivePointer.h"
+#include "CesiumVectorData/VectorStyle.h"
 #include <Cesium3DTilesSelection/VectorTilesRasterOverlay.h>
 
 #include <doctest/doctest.h>
@@ -45,6 +47,7 @@ TEST_CASE("Test VectorTilesRasterOverlay") {
       "overlay0",
       "file:////mnt/d/Dev/vector/data/patterns-newyork-segments/"
       "patterns-newyork-segments_part_1/tileset.json",
+      CesiumVectorData::VectorStyle{CesiumUtility::Color(255, 0, 0, 255)},
       RasterOverlayOptions{});
 
   IntrusivePointer<CesiumRasterOverlays::ActivatedRasterOverlay> pActivated = pOverlay->activate(
@@ -71,4 +74,5 @@ TEST_CASE("Test VectorTilesRasterOverlay") {
   }
   
   REQUIRE(pTile->getImage()->width > 1);
+  CesiumNativeTests::writeImageToTgaFile(*pTile->getImage(), "vector-tile-test.tga");
 }

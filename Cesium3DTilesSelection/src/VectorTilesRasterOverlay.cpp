@@ -1,3 +1,12 @@
+#include "Cesium3DTilesSelection/IPrepareRendererResources.h"
+#include "Cesium3DTilesSelection/TileLoadResult.h"
+#include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGltf/AccessorView.h"
+#include "CesiumGltf/MeshPrimitive.h"
+#include "CesiumGltfContent/GltfUtilities.h"
+#include "CesiumUtility/ErrorList.h"
+#include "CesiumVectorData/VectorRasterizer.h"
+#include "CesiumVectorData/VectorStyle.h"
 #include "TilesetContentManager.h"
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
@@ -18,6 +27,7 @@
 #include <CesiumUtility/TreeTraversalState.h>
 
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
+#include <fmt/format.h>
 
 #include <cstdint>
 #include <mutex>
@@ -29,6 +39,92 @@ using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
+struct VectorRenderContent {
+  CesiumVectorData::VectorStyle style;
+
+  std::vector<CesiumGeospatial::Cartographic> points;
+  std::vector<std::vector<CesiumGeospatial::Cartographic>> polylines;
+  std::vector<std::vector<std::vector<CesiumGeospatial::Cartographic>>>
+      polygons;
+};
+
+CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
+    CesiumGltf::Model& model,
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    const glm::dmat4x4& gltfTransform,
+    const CesiumVectorData::VectorStyle& defaultStyle) {
+
+  glm::dmat4x4 rootTransform =
+      CesiumGltfContent::GltfUtilities::applyRtcCenter(model, gltfTransform);
+  rootTransform = CesiumGltfContent::GltfUtilities::applyGltfUpAxisTransform(
+      model,
+      rootTransform);
+
+  CesiumUtility::ErrorList errors;
+
+  VectorRenderContent* content = new VectorRenderContent();
+  content->style = defaultStyle;
+
+  model.forEachPrimitiveInScene(
+      -1,
+      [content, rootTransform, &errors, &ellipsoid](
+          const CesiumGltf::Model& model,
+          const CesiumGltf::Node& /*node*/,
+          const CesiumGltf::Mesh& /*mesh*/,
+          CesiumGltf::MeshPrimitive& primitive,
+          const glm::dmat4& nodeTransform) mutable {
+        const CesiumGltf::AccessorView<glm::vec3> positionView(
+            model,
+            primitive.attributes.at("POSITION"));
+        if (positionView.status() != CesiumGltf::AccessorViewStatus::Valid) {
+          errors.emplaceError(
+              "Cannot create valid position accessor for primitive.");
+          return;
+        }
+
+        if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::POINTS) {
+          for (int64_t i = 0; i < positionView.size(); i++) {
+            const glm::vec3 position = positionView[i];
+            const glm::dvec4 transformedPosition =
+                rootTransform * nodeTransform * glm::dvec4(position, 1.0);
+            content->points.emplace_back(
+                ellipsoid
+                    .cartesianToCartographic(glm::dvec3(transformedPosition))
+                    .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0}));
+          }
+          return;
+        }
+
+        if (primitive.mode >= CesiumGltf::MeshPrimitive::Mode::LINES &&
+            primitive.mode <= CesiumGltf::MeshPrimitive::Mode::LINE_STRIP) {
+          if (primitive.mode != CesiumGltf::MeshPrimitive::Mode::LINE_STRIP) {
+            errors.emplaceWarning(fmt::format(
+                "Line primitives should have the LINE_STRIP (mode 3) mode, "
+                "found line with mode {}.",
+                primitive.mode));
+            return;
+          }
+          std::vector<CesiumGeospatial::Cartographic> polyline;
+          for (int64_t i = 0; i < positionView.size(); i++) {
+            const glm::vec3 position = positionView[i];
+            const glm::dvec4 transformedPosition =
+                rootTransform * nodeTransform * glm::dvec4(position, 1.0);
+            polyline.emplace_back(
+                ellipsoid
+                    .cartesianToCartographic(glm::dvec3(transformedPosition))
+                    .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0}));
+          }
+          content->polylines.emplace_back(std::move(polyline));
+        }
+
+        if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
+          // TODO: figure out what's going on with that polygon extension
+        }
+      });
+
+  return {content, errors};
+}
+
 struct LoadRequest {
   CesiumAsync::Promise<void> promise;
   std::set<uint64_t> requestedTileIds;
@@ -86,6 +182,105 @@ private:
   std::shared_ptr<SharedTileSelectionState> _pSharedTileSelectionState;
 };
 
+class VectorTilesPrepareRendererResources : public IPrepareRendererResources {
+public:
+  virtual CesiumAsync::Future<TileLoadResultAndRenderResources>
+  prepareInLoadThread(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      TileLoadResult&& tileLoadResult,
+      const glm::dmat4& transform,
+      const std::any& /*rendererOptions*/) override {
+    CesiumGltf::Model* pModel =
+        std::get_if<CesiumGltf::Model>(&tileLoadResult.contentKind);
+    if (pModel == nullptr) {
+      return asyncSystem.createResolvedFuture(
+          TileLoadResultAndRenderResources{std::move(tileLoadResult), nullptr});
+    }
+
+    Result<VectorRenderContent*> vectorizationResult = vectorizeModel(
+        *pModel,
+        tileLoadResult.ellipsoid,
+        transform,
+        this->defaultStyle);
+    if (vectorizationResult.errors.hasErrors()) {
+      if (vectorizationResult.value) {
+        delete *vectorizationResult.value;
+      }
+
+      vectorizationResult.errors.log(
+          this->pLogger,
+          "Errors when vectorizing model:");
+      return asyncSystem.createResolvedFuture(
+          TileLoadResultAndRenderResources{std::move(tileLoadResult), nullptr});
+    }
+
+    return asyncSystem.createResolvedFuture(TileLoadResultAndRenderResources{
+        std::move(tileLoadResult),
+        vectorizationResult.value ? *vectorizationResult.value : nullptr});
+  }
+
+  void* prepareInMainThread(Tile& /*tile*/, void* pLoadThreadResult) override {
+    // No main thread preparation for vector tiles.
+    return pLoadThreadResult;
+  }
+
+  void free(
+      Tile& /*tile*/,
+      void* pLoadThreadResult,
+      void* pMainThreadResult) noexcept override {
+    if (pLoadThreadResult != nullptr) {
+      VectorRenderContent* pContent =
+          static_cast<VectorRenderContent*>(pLoadThreadResult);
+      delete pContent;
+    }
+
+    if (pMainThreadResult != nullptr) {
+      VectorRenderContent* pContent =
+          static_cast<VectorRenderContent*>(pMainThreadResult);
+      delete pContent;
+    }
+  }
+
+  void attachRasterInMainThread(
+      const Tile& /*tile*/,
+      int32_t /*overlayTextureCoordinateID*/,
+      const CesiumRasterOverlays::RasterOverlayTile& /*rasterTile*/,
+      void* /*pMainThreadRendererResources*/,
+      const glm::dvec2& /*translation*/,
+      const glm::dvec2& /*scale*/) override {}
+
+  void detachRasterInMainThread(
+      const Tile& /*tile*/,
+      int32_t /*overlayTextureCoordinateID*/,
+      const CesiumRasterOverlays::RasterOverlayTile& /*rasterTile*/,
+      void* /*pMainThreadRendererResources*/) noexcept override {}
+
+  virtual void* prepareRasterInLoadThread(
+      CesiumGltf::ImageAsset& /*image*/,
+      const std::any& /*rendererOptions*/) override {
+    return nullptr;
+  }
+
+  virtual void* prepareRasterInMainThread(
+      RasterOverlayTile& /*rasterTile*/,
+      void* /*pLoadThreadResult*/) override {
+    return nullptr;
+  }
+
+  virtual void freeRaster(
+      const RasterOverlayTile& /*rasterTile*/,
+      void* /*pLoadThreadResult*/,
+      void* /*pMainThreadResult*/) noexcept override {}
+
+  VectorTilesPrepareRendererResources(
+      std::shared_ptr<spdlog::logger> pLogger,
+      CesiumVectorData::VectorStyle defaultStyle)
+      : defaultStyle(std::move(defaultStyle)), pLogger(std::move(pLogger)) {}
+
+  CesiumVectorData::VectorStyle defaultStyle;
+  std::shared_ptr<spdlog::logger> pLogger;
+};
+
 class VectorTilesRasterOverlayTileProvider final
     : public RasterOverlayTileProvider {
 private:
@@ -99,6 +294,8 @@ private:
   std::shared_ptr<SharedTileSelectionState> _pSharedTileSelectionState =
       std::make_shared<SharedTileSelectionState>();
   VectorTilesLoadRequester _loadRequester{_pSharedTileSelectionState};
+  std::shared_ptr<VectorTilesPrepareRendererResources>
+      _pPrepareRendererResources;
 
 private:
   struct LoadTileImageInformation {
@@ -125,10 +322,10 @@ private:
     CesiumAsync::Future<void> future = request.promise.getFuture();
 
     // TODO: fix mutex
-    //this->_pSharedTileSelectionState->loadRequestsMutex.lock();
+    // this->_pSharedTileSelectionState->loadRequestsMutex.lock();
     this->_pSharedTileSelectionState->loadRequests.emplace_back(
         std::move(request));
-    //this->_pSharedTileSelectionState->loadRequestsMutex.unlock();
+    // this->_pSharedTileSelectionState->loadRequestsMutex.unlock();
 
     return future;
   }
@@ -145,12 +342,13 @@ private:
   }
 
   void visit(Tile& tile, LoadTileImageInformation& loadInfo) {
-    if(tile.getState() < TileLoadState::ContentLoaded) {
+    if (tile.getState() < TileLoadState::ContentLoaded) {
       loadInfo.tileLoadTasks.emplace_back(&tile, TileLoadPriorityGroup::Normal);
       return;
     }
 
-    if (tile.isRenderContent() && (meetsSse(tile, loadInfo) || tile.getChildren().empty())) {
+    if (tile.isRenderContent() &&
+        (meetsSse(tile, loadInfo) || tile.getChildren().empty())) {
       loadInfo.tilesToRender.emplace_back(&tile);
     } else {
       for (Tile& child : tile.getChildren()) {
@@ -209,48 +407,78 @@ private:
       const CesiumGeospatial::GlobeRectangle& tileRectangle,
       const glm::ivec2& textureSize) {
     return this->findAndLoadTiles(tileRectangle, textureSize)
-        .thenInWorkerThread(
-            [textureSize, rectangle](LoadTileImageInformation&& loadInfo) {
-              // part 4 - rasterizing the tile
-              LoadedRasterOverlayImage result;
-              if (loadInfo.tilesToRender.empty()) {
-                // No tiles to render, so return an empty image.
-                result.rectangle = rectangle;
-                result.moreDetailAvailable = false;
-                result.pImage.emplace();
-                result.pImage->width = 1;
-                result.pImage->height = 1;
-                result.pImage->channels = 4;
-                result.pImage->bytesPerChannel = 1;
-                result.pImage->pixelData = {
-                    std::byte{0x00},
-                    std::byte{0x00},
-                    std::byte{0x00},
-                    std::byte{0x00}};
-              } else {
-                result.moreDetailAvailable = true;
-                result.pImage.emplace();
-                result.pImage->width = textureSize.x;
-                result.pImage->height = textureSize.y;
-                result.pImage->channels = 4;
-                result.pImage->bytesPerChannel = 1;
-                result.pImage->pixelData.resize(
-                    (size_t)(result.pImage->width * result.pImage->height *
-                             result.pImage->channels *
-                             result.pImage->bytesPerChannel),
-                    std::byte{0});
-                // TODO: rasterize here
+        .thenInWorkerThread([textureSize,
+                             rectangle,
+                             tileRectangle,
+                             ellipsoid = this->_options.ellipsoid](
+                                LoadTileImageInformation&& loadInfo) {
+          // part 4 - rasterizing the tile
+          LoadedRasterOverlayImage result;
+          if (loadInfo.tilesToRender.empty()) {
+            // No tiles to render, so return an empty image.
+            result.rectangle = rectangle;
+            result.moreDetailAvailable = false;
+            result.pImage.emplace();
+            result.pImage->width = 1;
+            result.pImage->height = 1;
+            result.pImage->channels = 4;
+            result.pImage->bytesPerChannel = 1;
+            result.pImage->pixelData = {
+                std::byte{0x00},
+                std::byte{0x00},
+                std::byte{0x00},
+                std::byte{0x00}};
+          } else {
+            result.moreDetailAvailable = true;
+            result.pImage.emplace();
+            result.pImage->width = textureSize.x;
+            result.pImage->height = textureSize.y;
+            result.pImage->channels = 4;
+            result.pImage->bytesPerChannel = 1;
+            result.pImage->pixelData.resize(
+                (size_t)(result.pImage->width * result.pImage->height *
+                         result.pImage->channels *
+                         result.pImage->bytesPerChannel),
+                std::byte{0});
+            CesiumVectorData::VectorRasterizer rasterizer(
+                tileRectangle,
+                result.pImage,
+                0,
+                ellipsoid);
+
+            for (const Tile::ConstPointer& pTile : loadInfo.tilesToRender) {
+              const TileRenderContent* pRenderContent =
+                  pTile->getContent().getRenderContent();
+              if (pRenderContent == nullptr) {
+                continue;
               }
 
-              return result;
-            });
+              const VectorRenderContent* pVectorContent =
+                  static_cast<const VectorRenderContent*>(
+                      pRenderContent->getRenderResources());
+              if (pVectorContent == nullptr) {
+                continue;
+              }
+
+              for (const std::vector<CesiumGeospatial::Cartographic>& polyline :
+                   pVectorContent->polylines) {
+                rasterizer.drawPolyline(polyline, pVectorContent->style.line);
+              }
+            }
+
+            rasterizer.finalize();
+          }
+
+          return result;
+        });
   }
 
 public:
   VectorTilesRasterOverlayTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
       const CreateRasterOverlayTileProviderParameters& parameters,
-      const std::string& url)
+      const std::string& url,
+      const CesiumVectorData::VectorStyle& defaultStyle)
       : RasterOverlayTileProvider(
             pCreator,
             parameters,
@@ -260,10 +488,13 @@ public:
                 CesiumGeospatial::GeographicProjection(
                     CesiumGeospatial::Ellipsoid::WGS84),
                 CesiumGeospatial::GlobeRectangle::MAXIMUM)),
-        _options() {
+        _options(),
+        _pPrepareRendererResources(
+            std::make_shared<VectorTilesPrepareRendererResources>(
+                parameters.externals.pLogger, defaultStyle)) {
     const TilesetExternals externals{
         parameters.externals.pAssetAccessor,
-        nullptr,
+        this->_pPrepareRendererResources,
         parameters.externals.asyncSystem,
         parameters.externals.pCreditSystem,
         parameters.externals.pLogger,
@@ -314,13 +545,15 @@ public:
   virtual void tick() override {
     this->_pTilesetContentManager->processWorkerThreadLoadRequests(
         this->_options);
+    this->_pTilesetContentManager->processMainThreadLoadRequests(
+        this->_options);
 
     // Check and resolve load requests if possible.
-    //this->_pSharedTileSelectionState->loadRequestsMutex.lock();
+    // this->_pSharedTileSelectionState->loadRequestsMutex.lock();
     for (const std::pair<IntrusivePointer<Tile>, uint64_t>& pair :
          this->_pSharedTileSelectionState->tilesWaitingForWorker) {
       TileLoadState state = pair.first->getState();
-      if(state == TileLoadState::FailedTemporarily) {
+      if (state == TileLoadState::FailedTemporarily) {
         this->_pSharedTileSelectionState->workerThreadLoadQueue.enqueue(
             {TileLoadTask{pair.first.get(), TileLoadPriorityGroup::Urgent, 1.0},
              pair.second});
@@ -357,7 +590,7 @@ public:
               return request.requestedTileIds.empty();
             }),
         this->_pSharedTileSelectionState->loadRequests.end());
-    //this->_pSharedTileSelectionState->loadRequestsMutex.unlock();
+    // this->_pSharedTileSelectionState->loadRequestsMutex.unlock();
 
     // Erase tiles waiting for worker that are done.
     this->_pSharedTileSelectionState->tilesWaitingForWorker.erase(
@@ -377,8 +610,9 @@ public:
 VectorTilesRasterOverlay::VectorTilesRasterOverlay(
     const std::string& name,
     const std::string& url,
+    const CesiumVectorData::VectorStyle& defaultStyle,
     const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions)
-    : CesiumRasterOverlays::RasterOverlay(name, overlayOptions), _url(url) {}
+    : CesiumRasterOverlays::RasterOverlay(name, overlayOptions), _url(url), _defaultStyle(defaultStyle) {}
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 VectorTilesRasterOverlay::createTileProvider(
@@ -391,7 +625,8 @@ VectorTilesRasterOverlay::createTileProvider(
               new VectorTilesRasterOverlayTileProvider(
                   thiz,
                   parameters,
-                  this->_url)));
+                  this->_url,
+                  this->_defaultStyle)));
 }
 
 } // namespace Cesium3DTilesSelection

@@ -1,3 +1,10 @@
+#include "CesiumGltf/AccessorView.h"
+#include "CesiumGltf/Mesh.h"
+#include "CesiumGltf/MeshPrimitive.h"
+#include "CesiumGltf/Node.h"
+#include "CesiumGltfContent/GltfUtilities.h"
+#include "CesiumUtility/ExtensibleObject.h"
+
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -19,6 +26,7 @@
 #include <blend2d/geometry.h>
 #include <blend2d/path.h>
 #include <blend2d/rgba.h>
+#include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_double2.hpp>
 
 #include <algorithm>
@@ -220,6 +228,33 @@ void VectorRasterizer::drawPolyline(
       BLRgba32(style.getColor(seedForObject(points, 31)).toRgba32()));
 }
 
+void VectorRasterizer::drawPolyline(
+    const std::vector<CesiumGeospatial::Cartographic>& points,
+    const LineStyle& style) {
+  if (this->_finalized) {
+    return;
+  }
+
+  std::vector<BLPoint> vertices;
+  vertices.reserve(points.size());
+
+  for (const CesiumGeospatial::Cartographic& vertex : points) {
+    BLPoint point = radiansToPoint(
+        vertex.longitude,
+        vertex.latitude,
+        this->_bounds,
+        this->_context);
+    vertices.emplace_back(point);
+  }
+
+  setStrokeWidth(this->_context, style, this->_ellipsoid, this->_bounds);
+
+  this->_context.strokePolyline(
+      vertices.data(),
+      vertices.size(),
+      BLRgba32(style.getColor(seedForObject(points, 31)).toRgba32()));
+}
+
 void VectorRasterizer::drawGeoJsonObject(
     const GeoJsonObject& geoJsonObject,
     const VectorStyle& style) {
@@ -275,8 +310,8 @@ VectorRasterizer::finalize() {
   // We need to swap the channels to fix the values.
   // Blend2D provides BLPixelConverter for these sorts of operations, which
   // should be faster because it has SIMD support. But the current
-  // implementation seems to perform well as-is, likely thanks to the compiler's
-  // vectorization.
+  // implementation seems to perform well as-is, likely thanks to the
+  // compiler's vectorization.
   std::byte* pData =
       this->_mipLevel == 0
           ? this->_imageAsset->pixelData.data()
