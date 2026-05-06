@@ -34,7 +34,7 @@
     "Content for 3DTILES_content_conditional": {
       "overrideName": "ConditionalContent"
     },
-    "One item of the dynamic content for 3DTILES_content_conditional": {
+    "One item of the conditional content for 3DTILES_content_conditional": {
       "overrideName": "ConditionalContentItem"
     },
     "Metadata Entity": {

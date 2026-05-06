@@ -21,7 +21,9 @@ struct CESIUM3DTILES_API ConditionalContentItem final : public Content {
   static constexpr const char* TypeName = "ConditionalContentItem";
 
   /**
-   * @brief keys
+   * @brief Properties that define the conditions based on which the item can
+   * become active. The names of these properties correspond to the 'dimensions'
+   * that are defined in the top-level extension object.
    */
   std::unordered_map<std::string, CesiumUtility::JsonValue> keys;
 

@@ -22,12 +22,13 @@ struct CESIUM3DTILES_API Extension3dTilesContentConditionalDimensionsValue final
       "Extension3dTilesContentConditionalDimensionsValue";
 
   /**
-   * @brief name
+   * @brief The name of the property that is used for defining the condition, to
+   * be used as one of the keys in the conditional content array items.
    */
   std::string name;
 
   /**
-   * @brief keySet
+   * @brief The set of all values that appear in any condition.
    */
   std::vector<CesiumUtility::JsonValue> keySet;
 

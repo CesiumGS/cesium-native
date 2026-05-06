@@ -11,7 +11,8 @@
 namespace Cesium3DTiles {
 /**
  * @brief Defines the structure of the extension object that is stored as the
- * 3DTILES_content_conditional extension in a tileset JSON
+ * 3DTILES_content_conditional extension in a tileset JSON, and that summarizes
+ * the conditions that appear in the contents.
  */
 struct CESIUM3DTILES_API Extension3dTilesContentConditional final
     : public CesiumUtility::ExtensibleObject {
@@ -24,7 +25,8 @@ struct CESIUM3DTILES_API Extension3dTilesContentConditional final
   static constexpr const char* ExtensionName = "3DTILES_content_conditional";
 
   /**
-   * @brief dimensions
+   * @brief The dimensions of the conditions, each consisting of the name and
+   * domain of the respective property.
    */
   std::vector<Cesium3DTiles::Extension3dTilesContentConditionalDimensionsValue>
       dimensions;

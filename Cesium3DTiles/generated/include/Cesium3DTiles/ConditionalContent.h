@@ -21,7 +21,8 @@ struct CESIUM3DTILES_API ConditionalContent final
   static constexpr const char* TypeName = "ConditionalContent";
 
   /**
-   * @brief conditionalContents
+   * @brief The array of content objects that have additional conditions
+   * associated with them, based on which they are activated.
    */
   std::vector<Cesium3DTiles::ConditionalContentItem> conditionalContents;
 
