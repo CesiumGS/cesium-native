@@ -77,9 +77,12 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
         const CesiumGltf::AccessorView<glm::vec3> positionView(
             model,
             primitive.attributes.at("POSITION"));
-        const CesiumGltf::IndexAccessorType indicesView = CesiumGltf::getIndexAccessorView(model, primitive);
-        const int64_t numIndices = std::visit(CesiumGltf::NumIndicesFromAccessor{}, indicesView);
-        const int64_t maxIndex = std::visit(CesiumGltf::MaxIndexValueFromAccessor{}, indicesView);
+        const CesiumGltf::IndexAccessorType indicesView =
+            CesiumGltf::getIndexAccessorView(model, primitive);
+        const int64_t numIndices =
+            std::visit(CesiumGltf::NumIndicesFromAccessor{}, indicesView);
+        const int64_t maxIndex =
+            std::visit(CesiumGltf::MaxIndexValueFromAccessor{}, indicesView);
 
         if (positionView.status() != CesiumGltf::AccessorViewStatus::Valid) {
           errors.emplaceError(
@@ -101,28 +104,34 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
         }
 
         if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::LINE_STRIP) {
-          if(numIndices < 2) {
-            errors.emplaceError("Primitive mode LINE_STRIP requires at least two indices.");
+          if (numIndices < 2) {
+            errors.emplaceError(
+                "Primitive mode LINE_STRIP requires at least two indices.");
             return;
           }
 
           std::vector<CesiumGeospatial::Cartographic> polyline;
           for (int64_t i = 0; i < numIndices; i++) {
-            const int64_t idx = std::visit(CesiumGltf::IndexFromAccessor{i}, indicesView);
-            if(idx == maxIndex) {
+            const int64_t idx =
+                std::visit(CesiumGltf::IndexFromAccessor{i}, indicesView);
+            if (idx == maxIndex) {
               // Primitive restart.
-              if(polyline.size() >= 2) {
+              if (polyline.size() >= 2) {
                 content->polylines.emplace_back(std::move(polyline));
                 polyline.clear();
               } else {
-                errors.emplaceError("Primitive restart index encountered but current polyline has less than 2 points.");
+                errors.emplaceError("Primitive restart index encountered but "
+                                    "current polyline has less than 2 points.");
               }
 
               continue;
             }
 
-            if(idx < 0 || idx >= positionView.size()) {
-              errors.emplaceError(fmt::format("Index {} out of bounds for position accessor size {}", idx, positionView.size()));
+            if (idx < 0 || idx >= positionView.size()) {
+              errors.emplaceError(fmt::format(
+                  "Index {} out of bounds for position accessor size {}",
+                  idx,
+                  positionView.size()));
               return;
             }
 
@@ -135,10 +144,11 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
                     .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0}));
           }
 
-          if(polyline.size() >= 2) {
+          if (polyline.size() >= 2) {
             content->polylines.emplace_back(std::move(polyline));
-          } else if(polyline.size() == 1) {
-            errors.emplaceWarning("LINE_STRIP primitive ended with a single point unassigned to a line.");
+          } else if (polyline.size() == 1) {
+            errors.emplaceWarning("LINE_STRIP primitive ended with a single "
+                                  "point unassigned to a line.");
           }
         }
 
@@ -346,11 +356,9 @@ private:
         std::move(requestedTileIds)};
     CesiumAsync::Future<void> future = request.promise.getFuture();
 
-    // TODO: fix mutex
-    // this->_pSharedTileSelectionState->loadRequestsMutex.lock();
+    std::scoped_lock<std::mutex> lock(this->_pSharedTileSelectionState->loadRequestsMutex);
     this->_pSharedTileSelectionState->loadRequests.emplace_back(
         std::move(request));
-    // this->_pSharedTileSelectionState->loadRequestsMutex.unlock();
 
     return future;
   }
@@ -516,7 +524,8 @@ public:
         _options(),
         _pPrepareRendererResources(
             std::make_shared<VectorTilesPrepareRendererResources>(
-                parameters.externals.pLogger, defaultStyle)) {
+                parameters.externals.pLogger,
+                defaultStyle)) {
     const TilesetExternals externals{
         parameters.externals.pAssetAccessor,
         this->_pPrepareRendererResources,
@@ -574,48 +583,49 @@ public:
         this->_options);
 
     // Check and resolve load requests if possible.
-    // this->_pSharedTileSelectionState->loadRequestsMutex.lock();
-    for (const std::pair<IntrusivePointer<Tile>, uint64_t>& pair :
-         this->_pSharedTileSelectionState->tilesWaitingForWorker) {
-      TileLoadState state = pair.first->getState();
-      if (state == TileLoadState::FailedTemporarily) {
-        this->_pSharedTileSelectionState->workerThreadLoadQueue.enqueue(
-            {TileLoadTask{pair.first.get(), TileLoadPriorityGroup::Urgent, 1.0},
-             pair.second});
-      } else if (state < TileLoadState::ContentLoaded) {
-        continue;
-      }
+    std::vector<CesiumAsync::Promise<void>> promisesToResolve;
+    {
+      std::scoped_lock<std::mutex> lock(
+          this->_pSharedTileSelectionState->loadRequestsMutex);
+      for (const std::pair<IntrusivePointer<Tile>, uint64_t>& pair :
+           this->_pSharedTileSelectionState->tilesWaitingForWorker) {
+        TileLoadState state = pair.first->getState();
+        if (state == TileLoadState::FailedTemporarily) {
+          this->_pSharedTileSelectionState->workerThreadLoadQueue.enqueue(
+              {TileLoadTask{
+                   pair.first.get(),
+                   TileLoadPriorityGroup::Urgent,
+                   1.0},
+               pair.second});
+        } else if (state < TileLoadState::ContentLoaded) {
+          continue;
+        }
 
-      for (LoadRequest& request :
-           this->_pSharedTileSelectionState->loadRequests) {
-        if (request.requestedTileIds.erase(pair.second) > 0) {
-          if (request.requestedTileIds.empty()) {
-            request.promise.resolve();
+        for (LoadRequest& request :
+             this->_pSharedTileSelectionState->loadRequests) {
+          if (request.requestedTileIds.erase(pair.second) > 0) {
+            if (request.requestedTileIds.empty()) {
+              // Keep list of promises to resolve until after we've unlocked the mutex.
+              promisesToResolve.emplace_back(std::move(request.promise));
+            }
           }
         }
       }
+
+      // Erase completed load requests.
+      this->_pSharedTileSelectionState->loadRequests.erase(
+          std::remove_if(
+              this->_pSharedTileSelectionState->loadRequests.begin(),
+              this->_pSharedTileSelectionState->loadRequests.end(),
+              [](const LoadRequest& request) {
+                return request.requestedTileIds.empty();
+              }),
+          this->_pSharedTileSelectionState->loadRequests.end());
     }
 
-    // Erase restarted waiting tiles.
-    this->_pSharedTileSelectionState->tilesWaitingForWorker.erase(
-        std::remove_if(
-            this->_pSharedTileSelectionState->tilesWaitingForWorker.begin(),
-            this->_pSharedTileSelectionState->tilesWaitingForWorker.end(),
-            [](const std::pair<IntrusivePointer<Tile>, uint64_t>& pair) {
-              return pair.first->getState() == TileLoadState::FailedTemporarily;
-            }),
-        this->_pSharedTileSelectionState->tilesWaitingForWorker.end());
-
-    // Erase completed load requests.
-    this->_pSharedTileSelectionState->loadRequests.erase(
-        std::remove_if(
-            this->_pSharedTileSelectionState->loadRequests.begin(),
-            this->_pSharedTileSelectionState->loadRequests.end(),
-            [](const LoadRequest& request) {
-              return request.requestedTileIds.empty();
-            }),
-        this->_pSharedTileSelectionState->loadRequests.end());
-    // this->_pSharedTileSelectionState->loadRequestsMutex.unlock();
+    for(CesiumAsync::Promise<void>& promise : promisesToResolve) {
+      promise.resolve();
+    }
 
     // Erase tiles waiting for worker that are done.
     this->_pSharedTileSelectionState->tilesWaitingForWorker.erase(
@@ -623,7 +633,8 @@ public:
             this->_pSharedTileSelectionState->tilesWaitingForWorker.begin(),
             this->_pSharedTileSelectionState->tilesWaitingForWorker.end(),
             [](const std::pair<IntrusivePointer<Tile>, uint64_t>& pair) {
-              return pair.first->getState() >= TileLoadState::ContentLoaded;
+              return pair.first->getState() >= TileLoadState::ContentLoaded ||
+                     pair.first->getState() == TileLoadState::FailedTemporarily;
             }),
         this->_pSharedTileSelectionState->tilesWaitingForWorker.end());
   }
@@ -637,7 +648,9 @@ VectorTilesRasterOverlay::VectorTilesRasterOverlay(
     const std::string& url,
     const CesiumVectorData::VectorStyle& defaultStyle,
     const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions)
-    : CesiumRasterOverlays::RasterOverlay(name, overlayOptions), _url(url), _defaultStyle(defaultStyle) {}
+    : CesiumRasterOverlays::RasterOverlay(name, overlayOptions),
+      _url(url),
+      _defaultStyle(defaultStyle) {}
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 VectorTilesRasterOverlay::createTileProvider(

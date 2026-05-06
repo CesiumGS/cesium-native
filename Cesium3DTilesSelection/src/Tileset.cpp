@@ -1,3 +1,4 @@
+#include "CesiumRasterOverlays/ActivatedRasterOverlay.h"
 #include "TilesetContentManager.h"
 #include "TilesetHeightQuery.h"
 
@@ -472,6 +473,11 @@ void Tileset::loadTiles() {
   this->_pTilesetContentManager->processWorkerThreadLoadRequests(
       this->_options);
   this->_pTilesetContentManager->processMainThreadLoadRequests(this->_options);
+  for (const IntrusivePointer<ActivatedRasterOverlay>& pOverlay :
+       this->_pTilesetContentManager->getRasterOverlayCollection()
+           .getActivatedOverlays()) {
+    pOverlay->tick();
+  }
 }
 
 void Tileset::registerLoadRequester(TileLoadRequester& requester) {
