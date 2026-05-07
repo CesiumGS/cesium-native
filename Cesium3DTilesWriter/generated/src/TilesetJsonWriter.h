@@ -14,7 +14,14 @@ struct Extension3dTilesBoundingVolumeS2;
 struct Extension3dTilesEllipsoid;
 struct Extension3dTilesBoundingVolumeCylinder;
 struct ExtensionContent3dTilesContentVoxels;
+struct Extension3dTilesContentConditional;
+struct Extension3dTilesContentConditionalDimensionsValue;
 struct Padding;
+struct ConditionalContent;
+struct ConditionalContentItem;
+struct Content;
+struct MetadataEntity;
+struct BoundingVolume;
 struct Statistics;
 struct ClassStatistics;
 struct PropertyStatistics;
@@ -24,7 +31,6 @@ struct EnumValue;
 struct Class;
 struct ClassProperty;
 struct Subtree;
-struct MetadataEntity;
 struct Availability;
 struct PropertyTable;
 struct PropertyTableProperty;
@@ -34,8 +40,6 @@ struct Tileset;
 struct Tile;
 struct ImplicitTiling;
 struct Subtrees;
-struct Content;
-struct BoundingVolume;
 struct GroupMetadata;
 struct Properties;
 struct Asset;
@@ -96,11 +100,80 @@ struct ExtensionContent3dTilesContentVoxelsJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
+struct Extension3dTilesContentConditionalJsonWriter {
+  using ValueType = Cesium3DTiles::Extension3dTilesContentConditional;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "3DTILES_content_conditional";
+
+  static void write(
+      const Cesium3DTiles::Extension3dTilesContentConditional& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct Extension3dTilesContentConditionalDimensionsValueJsonWriter {
+  using ValueType =
+      Cesium3DTiles::Extension3dTilesContentConditionalDimensionsValue;
+
+  static void write(
+      const Cesium3DTiles::Extension3dTilesContentConditionalDimensionsValue&
+          obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct PaddingJsonWriter {
   using ValueType = Cesium3DTiles::Padding;
 
   static void write(
       const Cesium3DTiles::Padding& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ConditionalContentJsonWriter {
+  using ValueType = Cesium3DTiles::ConditionalContent;
+
+  static void write(
+      const Cesium3DTiles::ConditionalContent& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ConditionalContentItemJsonWriter {
+  using ValueType = Cesium3DTiles::ConditionalContentItem;
+
+  static void write(
+      const Cesium3DTiles::ConditionalContentItem& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ContentJsonWriter {
+  using ValueType = Cesium3DTiles::Content;
+
+  static void write(
+      const Cesium3DTiles::Content& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct MetadataEntityJsonWriter {
+  using ValueType = Cesium3DTiles::MetadataEntity;
+
+  static void write(
+      const Cesium3DTiles::MetadataEntity& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct BoundingVolumeJsonWriter {
+  using ValueType = Cesium3DTiles::BoundingVolume;
+
+  static void write(
+      const Cesium3DTiles::BoundingVolume& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
@@ -186,15 +259,6 @@ struct SubtreeJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct MetadataEntityJsonWriter {
-  using ValueType = Cesium3DTiles::MetadataEntity;
-
-  static void write(
-      const Cesium3DTiles::MetadataEntity& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
 struct AvailabilityJsonWriter {
   using ValueType = Cesium3DTiles::Availability;
 
@@ -272,24 +336,6 @@ struct SubtreesJsonWriter {
 
   static void write(
       const Cesium3DTiles::Subtrees& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
-struct ContentJsonWriter {
-  using ValueType = Cesium3DTiles::Content;
-
-  static void write(
-      const Cesium3DTiles::Content& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
-struct BoundingVolumeJsonWriter {
-  using ValueType = Cesium3DTiles::BoundingVolume;
-
-  static void write(
-      const Cesium3DTiles::BoundingVolume& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
