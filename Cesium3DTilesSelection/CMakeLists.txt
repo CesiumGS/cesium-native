@@ -60,5 +60,4 @@ target_link_libraries(Cesium3DTilesSelection
         nonstd::expected-lite
 PRIVATE
         tinyxml2::tinyxml2
-        concurrentqueue::concurrentqueue
 )

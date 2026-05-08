@@ -48,8 +48,7 @@
       "platform": "!ios&!wasm32"
     },
     "spz",
-    "zlib",
-    "concurrentqueue"
+    "zlib"
   ]
 }
 

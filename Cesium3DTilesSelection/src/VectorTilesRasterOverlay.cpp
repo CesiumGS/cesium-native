@@ -27,7 +27,6 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/TreeTraversalState.h>
 
-#include <concurrentqueue/moodycamel/concurrentqueue.h>
 #include <fmt/format.h>
 
 #include <cstdint>
@@ -166,8 +165,7 @@ struct LoadRequest {
 };
 
 struct SharedTileSelectionState {
-  moodycamel::ConcurrentQueue<std::pair<TileLoadTask, uint64_t>>
-      workerThreadLoadQueue;
+  std::vector<std::pair<TileLoadTask, uint64_t>> workerThreadLoadQueue;
   // Does not need to be concurrent because it is only accessed by the
   // TilesetContentManager and the methods calling the TilesetContentManager.
   std::vector<std::pair<IntrusivePointer<Tile>, uint64_t>>
@@ -182,21 +180,23 @@ class VectorTilesLoadRequester : public TileLoadRequester {
   virtual double getWeight() const override { return this->_weight; }
 
   virtual bool hasMoreTilesToLoadInWorkerThread() const override {
-    return this->_pSharedTileSelectionState->workerThreadLoadQueue
-               .size_approx() > 0;
+    return !this->_pSharedTileSelectionState->workerThreadLoadQueue.empty();
   }
 
   const Tile* getNextTileToLoadInWorkerThread() override {
-    std::pair<TileLoadTask, uint64_t> taskAndId;
-    if (!this->_pSharedTileSelectionState->workerThreadLoadQueue.try_dequeue(
-            taskAndId)) {
+    if (this->_pSharedTileSelectionState->workerThreadLoadQueue.empty()) {
       return nullptr;
     }
+
+    std::pair<TileLoadTask, uint64_t>& taskAndId =
+        this->_pSharedTileSelectionState->workerThreadLoadQueue.back();
 
     this->_pSharedTileSelectionState->tilesWaitingForWorker.emplace_back(
         taskAndId.first.pTile,
         taskAndId.second);
-    return taskAndId.first.pTile;
+    const Tile::Pointer pTile = taskAndId.first.pTile;
+    this->_pSharedTileSelectionState->workerThreadLoadQueue.pop_back();
+    return pTile;
   }
 
   bool hasMoreTilesToLoadInMainThread() const override {
@@ -346,8 +346,9 @@ private:
     std::set<uint64_t> requestedTileIds;
     for (const TileLoadTask& task : tasks) {
       uint64_t id = this->_pSharedTileSelectionState->_nextId++;
-      this->_pSharedTileSelectionState->workerThreadLoadQueue.enqueue(
-          {task, id});
+      this->_pSharedTileSelectionState->workerThreadLoadQueue.emplace_back(
+          task,
+          id);
       requestedTileIds.insert(id);
     }
 
@@ -598,12 +599,12 @@ public:
            this->_pSharedTileSelectionState->tilesWaitingForWorker) {
         TileLoadState state = pair.first->getState();
         if (state == TileLoadState::FailedTemporarily) {
-          this->_pSharedTileSelectionState->workerThreadLoadQueue.enqueue(
-              {TileLoadTask{
-                   pair.first.get(),
-                   TileLoadPriorityGroup::Urgent,
-                   1.0},
-               pair.second});
+          this->_pSharedTileSelectionState->workerThreadLoadQueue.emplace_back(
+              TileLoadTask{
+                  pair.first.get(),
+                  TileLoadPriorityGroup::Urgent,
+                  1.0},
+              pair.second);
         } else if (state < TileLoadState::ContentLoaded) {
           continue;
         }
