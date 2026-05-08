@@ -356,7 +356,8 @@ private:
         std::move(requestedTileIds)};
     CesiumAsync::Future<void> future = request.promise.getFuture();
 
-    std::scoped_lock<std::mutex> lock(this->_pSharedTileSelectionState->loadRequestsMutex);
+    std::scoped_lock<std::mutex> lock(
+        this->_pSharedTileSelectionState->loadRequestsMutex);
     this->_pSharedTileSelectionState->loadRequests.emplace_back(
         std::move(request));
 
@@ -426,7 +427,7 @@ private:
       // external content and now we need to check their children.
       return this
           ->addLoadRequest(this->getAsyncSystem(), loadInfo.tileLoadTasks)
-          .thenImmediately([this, tileRectangle, textureSize]() mutable {
+          .thenInWorkerThread([this, tileRectangle, textureSize]() mutable {
             return this->findAndLoadTiles(tileRectangle, textureSize);
           });
     }
@@ -496,6 +497,12 @@ private:
               for (const std::vector<CesiumGeospatial::Cartographic>& polyline :
                    pVectorContent->polylines) {
                 rasterizer.drawPolyline(polyline, pVectorContent->style.line);
+              }
+
+              if (!pVectorContent->points.empty()) {
+                rasterizer.drawPoints(
+                    pVectorContent->points,
+                    pVectorContent->style.point);
               }
             }
 
@@ -605,7 +612,8 @@ public:
              this->_pSharedTileSelectionState->loadRequests) {
           if (request.requestedTileIds.erase(pair.second) > 0) {
             if (request.requestedTileIds.empty()) {
-              // Keep list of promises to resolve until after we've unlocked the mutex.
+              // Keep list of promises to resolve until after we've unlocked the
+              // mutex.
               promisesToResolve.emplace_back(std::move(request.promise));
             }
           }
@@ -623,7 +631,7 @@ public:
           this->_pSharedTileSelectionState->loadRequests.end());
     }
 
-    for(CesiumAsync::Promise<void>& promise : promisesToResolve) {
+    for (CesiumAsync::Promise<void>& promise : promisesToResolve) {
       promise.resolve();
     }
 

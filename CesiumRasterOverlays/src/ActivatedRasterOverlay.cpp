@@ -78,10 +78,10 @@ void ActivatedRasterOverlay::setTileProvider(
 
   bool hadValue = this->_pTileProvider != nullptr;
   this->_pTileProvider = pTileProvider;
-  if(this->_pTileProvider != nullptr) {
+  if (this->_pTileProvider != nullptr) {
     this->_isTickable = this->_pTileProvider->isTickable();
   }
-  
+
   if (!hadValue && this->_pTileProvider != nullptr) {
     this->_readyPromise.resolve();
   }

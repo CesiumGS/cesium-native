@@ -1,4 +1,5 @@
 #include "CesiumVectorData/VectorStyle.h"
+
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 

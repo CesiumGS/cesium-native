@@ -255,6 +255,98 @@ void VectorRasterizer::drawPolyline(
       BLRgba32(style.getColor(seedForObject(points, 31)).toRgba32()));
 }
 
+namespace {
+void drawPointsImpl(
+    BLContext& context,
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    const GlobeRectangle& bounds,
+    const std::vector<BLPoint>& vertices,
+    const std::vector<size_t>& seeds,
+    const PointStyle& style) {
+  if (style.fill) {
+    for (size_t i = 0; i < vertices.size(); i++) {
+      context.fillCircle(
+          BLCircle(vertices[i].x, vertices[i].y, style.radius),
+          BLRgba32(style.fill->getColor(seeds[i]).toRgba32()));
+    }
+  }
+
+  if (style.outline) {
+    setStrokeWidth(context, *style.outline, ellipsoid, bounds);
+
+    for (size_t i = 0; i < vertices.size(); i++) {
+      context.strokeCircle(
+          BLCircle(vertices[i].x, vertices[i].y, style.radius),
+          BLRgba32(style.outline->getColor(seeds[i] ^ 31).toRgba32()));
+    }
+  }
+}
+} // namespace
+
+void VectorRasterizer::drawPoints(
+    const std::vector<glm::dvec3>& points,
+    const PointStyle& style) {
+  if (this->_finalized) {
+    return;
+  }
+
+  std::vector<BLPoint> vertices;
+  vertices.reserve(points.size());
+
+  std::vector<size_t> seeds;
+  seeds.reserve(points.size());
+
+  for (const glm::dvec3& vertex : points) {
+    BLPoint point = radiansToPoint(
+        CesiumUtility::Math::degreesToRadians(vertex.x),
+        CesiumUtility::Math::degreesToRadians(vertex.y),
+        this->_bounds,
+        this->_context);
+    vertices.emplace_back(point);
+    seeds.emplace_back(seedForObject(vertex, 17));
+  }
+
+  drawPointsImpl(
+      this->_context,
+      this->_ellipsoid,
+      this->_bounds,
+      vertices,
+      seeds,
+      style);
+}
+
+void VectorRasterizer::drawPoints(
+    const std::vector<CesiumGeospatial::Cartographic>& points,
+    const PointStyle& style) {
+  if (this->_finalized) {
+    return;
+  }
+
+  std::vector<BLPoint> vertices;
+  vertices.reserve(points.size());
+
+  std::vector<size_t> seeds;
+  seeds.reserve(points.size());
+
+  for (const CesiumGeospatial::Cartographic& vertex : points) {
+    BLPoint point = radiansToPoint(
+        vertex.longitude,
+        vertex.latitude,
+        this->_bounds,
+        this->_context);
+    vertices.emplace_back(point);
+    seeds.emplace_back(seedForObject(vertex, 17));
+  }
+
+  drawPointsImpl(
+      this->_context,
+      this->_ellipsoid,
+      this->_bounds,
+      vertices,
+      seeds,
+      style);
+}
+
 void VectorRasterizer::drawGeoJsonObject(
     const GeoJsonObject& geoJsonObject,
     const VectorStyle& style) {
@@ -278,8 +370,12 @@ void VectorRasterizer::drawGeoJsonObject(
         rasterizer.drawPolygon(polygon, style.polygon);
       }
     }
-    void operator()(const GeoJsonPoint& /*catchAll*/) {}
-    void operator()(const GeoJsonMultiPoint& /*catchAll*/) {}
+    void operator()(const GeoJsonPoint& point) {
+      rasterizer.drawPoints({point.coordinates}, style.point);
+    }
+    void operator()(const GeoJsonMultiPoint& points) {
+      rasterizer.drawPoints(points.coordinates, style.point);
+    }
     void operator()(const GeoJsonFeature& /*catchAll*/) {}
     void operator()(const GeoJsonFeatureCollection& /*catchAll*/) {}
     void operator()(const GeoJsonGeometryCollection& /*catchAll*/) {}
