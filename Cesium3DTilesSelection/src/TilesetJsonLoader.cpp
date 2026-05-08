@@ -41,6 +41,8 @@
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Uri.h>
+#include <CesiumVectorData/GeoJsonDocument.h>
+#include <CesiumVectorData/GltfConverter.h>
 
 #include <fmt/format.h>
 #include <glm/common.hpp>
@@ -770,26 +772,9 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
     ExternalContentInitializer&& externalContentInitializer,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  // create external tileset
-  const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
-  const auto& responseData = pResponse->data();
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    rapidjson::Document&& tilesetJson) {
   const auto& tileUrl = pCompletedRequest->url();
-
-  rapidjson::Document tilesetJson;
-  tilesetJson.Parse(
-      reinterpret_cast<const char*>(responseData.data()),
-      responseData.size());
-  if (tilesetJson.HasParseError()) {
-    SPDLOG_LOGGER_ERROR(
-        pLogger,
-        "Error when parsing tileset JSON, error code {} at byte offset {}",
-        tilesetJson.GetParseError(),
-        tilesetJson.GetErrorOffset());
-    return TileLoadResult::createFailedResult(
-        pAssetAccessor,
-        std::move(pCompletedRequest));
-  }
 
   // Save the parsed external tileset into custom data.
   // We will propagate it back to tile later in the main
@@ -841,6 +826,76 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       ellipsoid};
 }
 
+TileLoadResult parseJsonContentInWorkerThread(
+    const glm::dmat4& tileTransform,
+    CesiumGeometry::Axis upAxis,
+    TileRefine tileRefine,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
+    ExternalContentInitializer&& externalContentInitializer,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
+  const auto& responseData = pResponse->data();
+
+  rapidjson::Document jsonContent;
+  jsonContent.Parse(
+      reinterpret_cast<const char*>(responseData.data()),
+      responseData.size());
+  if (jsonContent.HasParseError()) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Error when parsing JSON content, error code {} at byte offset {}",
+        jsonContent.GetParseError(),
+        jsonContent.GetErrorOffset());
+    return TileLoadResult::createFailedResult(
+        pAssetAccessor,
+        std::move(pCompletedRequest));
+  }
+  if (const auto typeIt = jsonContent.FindMember("type");
+      typeIt != jsonContent.MemberEnd()) {
+    auto geoJson = CesiumVectorData::GeoJsonDocument::fromGeoJson(jsonContent);
+    if (!geoJson.value.has_value() || geoJson.errors.hasErrors()) {
+      SPDLOG_LOGGER_ERROR(pLogger, "Error parsing GeoJson document");
+      return TileLoadResult::createFailedResult(
+          pAssetAccessor,
+          std::move(pCompletedRequest));
+    } else {
+      CesiumVectorData::ConverterResult converterResult =
+          CesiumVectorData::GltfConverter::convert(*geoJson.value, ellipsoid);
+      if (converterResult.value.has_value() &&
+          !converterResult.errors.hasErrors()) {
+        return TileLoadResult{
+            std::move(*converterResult.value),
+            CesiumGeometry::Axis::Y,
+            std::nullopt,
+            std::nullopt,
+            std::nullopt,
+            pAssetAccessor,
+            std::move(pCompletedRequest),
+            {},
+            TileLoadResultState::Success,
+            ellipsoid};
+      } else {
+        SPDLOG_LOGGER_ERROR(pLogger, "Error converting GeoJson to glTF");
+        return TileLoadResult::createFailedResult(
+            pAssetAccessor,
+            std::move(pCompletedRequest));
+      }
+    }
+  } else {
+    return parseExternalTilesetInWorkerThread(
+        tileTransform,
+        upAxis,
+        tileRefine,
+        pLogger,
+        pAssetAccessor,
+        std::move(pCompletedRequest),
+        std::move(externalContentInitializer),
+        ellipsoid,
+        std::move(jsonContent));
+  }
+}
 } // namespace
 
 TilesetJsonLoader::TilesetJsonLoader(
@@ -1153,9 +1208,10 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                             ellipsoid};
                       });
             } else {
-              // not a renderable content, then it must be external tileset
+              // Not renderable content, then it must be external tileset or
+              // GeoJSON.
               return asyncSystem.createResolvedFuture(
-                  parseExternalTilesetInWorkerThread(
+                  parseJsonContentInWorkerThread(
                       tileTransform,
                       upAxis,
                       tileRefine,

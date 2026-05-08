@@ -1,7 +1,7 @@
 #include "TilesetJsonWriter.h"
 #include "registerWriterExtensions.h"
 
-#include <Cesium3DTilesWriter/SchemaWriter.h>
+#include <Cesium3DTilesWriter/ConditionalContentWriter.h>
 #include <CesiumJsonWriter/JsonWriter.h>
 #include <CesiumJsonWriter/PrettyJsonWriter.h>
 #include <CesiumUtility/Tracing.h>
@@ -10,26 +10,30 @@
 
 namespace Cesium3DTilesWriter {
 
-SchemaWriter::SchemaWriter() { registerWriterExtensions(this->_context); }
+ConditionalContentWriter::ConditionalContentWriter() {
+  registerWriterExtensions(this->_context);
+}
 
-CesiumJsonWriter::ExtensionWriterContext& SchemaWriter::getExtensions() {
+CesiumJsonWriter::ExtensionWriterContext&
+ConditionalContentWriter::getExtensions() {
   return this->_context;
 }
 
 const CesiumJsonWriter::ExtensionWriterContext&
-SchemaWriter::getExtensions() const {
+ConditionalContentWriter::getExtensions() const {
   return this->_context;
 }
 
-SchemaWriterResult SchemaWriter::writeSchema(
-    const Cesium3DTiles::Schema& schema,
-    const SchemaWriterOptions& options) const {
-  CESIUM_TRACE("SchemaWriter::writeSchema");
+ConditionalContentWriterResult
+ConditionalContentWriter::writeConditionalContent(
+    const Cesium3DTiles::ConditionalContent& conditionalContent,
+    const ConditionalContentWriterOptions& options) const {
+  CESIUM_TRACE("ConditionalContentWriter::writeConditionalContent");
 
   const CesiumJsonWriter::ExtensionWriterContext& context =
       this->getExtensions();
 
-  SchemaWriterResult result;
+  ConditionalContentWriterResult result;
   std::unique_ptr<CesiumJsonWriter::JsonWriter> pWriter;
 
   if (options.prettyPrint) {
@@ -38,8 +42,8 @@ SchemaWriterResult SchemaWriter::writeSchema(
     pWriter = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
-  SchemaJsonWriter::write(schema, *pWriter, context);
-  result.schemaBytes = pWriter->toBytes();
+  ConditionalContentJsonWriter::write(conditionalContent, *pWriter, context);
+  result.conditionalContentBytes = pWriter->toBytes();
   result.errors = pWriter->getErrors();
   result.warnings = pWriter->getWarnings();
 
