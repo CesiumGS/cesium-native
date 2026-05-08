@@ -161,19 +161,16 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
 
 struct LoadRequest {
   CesiumAsync::Promise<void> promise;
-  std::set<uint64_t> requestedTileIds;
+  std::set<Tile::ConstPointer> requestedTiles;
 };
 
 struct SharedTileSelectionState {
-  std::vector<std::pair<TileLoadTask, uint64_t>> workerThreadLoadQueue;
+  std::vector<TileLoadTask> workerThreadLoadQueue;
   // Does not need to be concurrent because it is only accessed by the
   // TilesetContentManager and the methods calling the TilesetContentManager.
-  std::vector<std::pair<IntrusivePointer<Tile>, uint64_t>>
-      tilesWaitingForWorker;
+  std::vector<Tile::Pointer> tilesWaitingForWorker;
   std::mutex loadRequestsMutex;
   std::vector<LoadRequest> loadRequests;
-
-  std::atomic<uint64_t> _nextId;
 };
 
 class VectorTilesLoadRequester : public TileLoadRequester {
@@ -188,13 +185,12 @@ class VectorTilesLoadRequester : public TileLoadRequester {
       return nullptr;
     }
 
-    std::pair<TileLoadTask, uint64_t>& taskAndId =
+    TileLoadTask& task =
         this->_pSharedTileSelectionState->workerThreadLoadQueue.back();
 
     this->_pSharedTileSelectionState->tilesWaitingForWorker.emplace_back(
-        taskAndId.first.pTile,
-        taskAndId.second);
-    const Tile::Pointer pTile = taskAndId.first.pTile;
+        task.pTile);
+    const Tile::Pointer pTile = task.pTile;
     this->_pSharedTileSelectionState->workerThreadLoadQueue.pop_back();
     return pTile;
   }
@@ -343,18 +339,16 @@ private:
   CesiumAsync::Future<void> addLoadRequest(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::vector<TileLoadTask>& tasks) {
-    std::set<uint64_t> requestedTileIds;
+    std::set<Tile::ConstPointer> requestedTiles;
     for (const TileLoadTask& task : tasks) {
-      uint64_t id = this->_pSharedTileSelectionState->_nextId++;
       this->_pSharedTileSelectionState->workerThreadLoadQueue.emplace_back(
-          task,
-          id);
-      requestedTileIds.insert(id);
+          task);
+      requestedTiles.insert(task.pTile);
     }
 
     LoadRequest request{
         asyncSystem.createPromise<void>(),
-        std::move(requestedTileIds)};
+        std::move(requestedTiles)};
     CesiumAsync::Future<void> future = request.promise.getFuture();
 
     std::scoped_lock<std::mutex> lock(
@@ -595,24 +589,22 @@ public:
     {
       std::scoped_lock<std::mutex> lock(
           this->_pSharedTileSelectionState->loadRequestsMutex);
-      for (const std::pair<IntrusivePointer<Tile>, uint64_t>& pair :
+      for (const Tile::Pointer& pTile :
            this->_pSharedTileSelectionState->tilesWaitingForWorker) {
-        TileLoadState state = pair.first->getState();
+        TileLoadState state = pTile->getState();
         if (state == TileLoadState::FailedTemporarily) {
           this->_pSharedTileSelectionState->workerThreadLoadQueue.emplace_back(
-              TileLoadTask{
-                  pair.first.get(),
-                  TileLoadPriorityGroup::Urgent,
-                  1.0},
-              pair.second);
+              pTile.get(),
+              TileLoadPriorityGroup::Urgent,
+              1.0);
         } else if (state < TileLoadState::ContentLoaded) {
           continue;
         }
 
         for (LoadRequest& request :
              this->_pSharedTileSelectionState->loadRequests) {
-          if (request.requestedTileIds.erase(pair.second) > 0) {
-            if (request.requestedTileIds.empty()) {
+          if (request.requestedTiles.erase(pTile) > 0) {
+            if (request.requestedTiles.empty()) {
               // Keep list of promises to resolve until after we've unlocked the
               // mutex.
               promisesToResolve.emplace_back(std::move(request.promise));
@@ -627,7 +619,7 @@ public:
               this->_pSharedTileSelectionState->loadRequests.begin(),
               this->_pSharedTileSelectionState->loadRequests.end(),
               [](const LoadRequest& request) {
-                return request.requestedTileIds.empty();
+                return request.requestedTiles.empty();
               }),
           this->_pSharedTileSelectionState->loadRequests.end());
     }
@@ -641,9 +633,9 @@ public:
         std::remove_if(
             this->_pSharedTileSelectionState->tilesWaitingForWorker.begin(),
             this->_pSharedTileSelectionState->tilesWaitingForWorker.end(),
-            [](const std::pair<IntrusivePointer<Tile>, uint64_t>& pair) {
-              return pair.first->getState() >= TileLoadState::ContentLoaded ||
-                     pair.first->getState() == TileLoadState::FailedTemporarily;
+            [](const Tile::Pointer& pTile) {
+              return pTile->getState() >= TileLoadState::ContentLoaded ||
+                     pTile->getState() == TileLoadState::FailedTemporarily;
             }),
         this->_pSharedTileSelectionState->tilesWaitingForWorker.end());
   }
