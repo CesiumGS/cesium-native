@@ -443,9 +443,9 @@ private:
                                 LoadTileImageInformation&& loadInfo) {
           // part 4 - rasterizing the tile
           LoadedRasterOverlayImage result;
+          result.rectangle = rectangle;
           if (loadInfo.tilesToRender.empty()) {
             // No tiles to render, so return an empty image.
-            result.rectangle = rectangle;
             result.moreDetailAvailable = false;
             result.pImage.emplace();
             result.pImage->width = 1;
