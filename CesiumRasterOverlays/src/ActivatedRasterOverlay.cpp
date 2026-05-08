@@ -78,9 +78,6 @@ void ActivatedRasterOverlay::setTileProvider(
 
   bool hadValue = this->_pTileProvider != nullptr;
   this->_pTileProvider = pTileProvider;
-  if (this->_pTileProvider != nullptr) {
-    this->_isTickable = this->_pTileProvider->isTickable();
-  }
 
   if (!hadValue && this->_pTileProvider != nullptr) {
     this->_readyPromise.resolve();
@@ -348,9 +345,13 @@ void ActivatedRasterOverlay::finalizeTileLoad(bool isThrottledLoad) noexcept {
 }
 
 void ActivatedRasterOverlay::tick() {
-  if (this->_pTileProvider != nullptr && this->_isTickable) {
+  if (this->_pTileProvider != nullptr) {
     this->_pTileProvider->tick();
   }
+}
+
+bool ActivatedRasterOverlay::isTickable() const noexcept {
+  return this->_pTileProvider != nullptr && this->_pTileProvider->isTickable();
 }
 
 RasterOverlayTileLoadResult::RasterOverlayTileLoadResult(

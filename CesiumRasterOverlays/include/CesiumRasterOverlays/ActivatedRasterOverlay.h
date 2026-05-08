@@ -261,6 +261,8 @@ public:
 
   void tick();
 
+  bool isTickable() const noexcept;
+
 private:
   CesiumAsync::Future<RasterOverlayTileLoadResult>
   doLoad(RasterOverlayTile& tile, bool isThrottledLoad);
@@ -301,7 +303,6 @@ private:
 
   CesiumAsync::Promise<void> _readyPromise;
   CesiumAsync::SharedFuture<void> _readyEvent;
-  bool _isTickable = false;
 };
 
 } // namespace CesiumRasterOverlays

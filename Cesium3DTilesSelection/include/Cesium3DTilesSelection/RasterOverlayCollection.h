@@ -229,6 +229,8 @@ public:
    */
   size_t size() const noexcept;
 
+  void tick() noexcept;
+
 private:
   struct GetOverlayFunctor {
     CesiumUtility::IntrusivePointer<const CesiumRasterOverlays::RasterOverlay>
@@ -244,6 +246,9 @@ private:
   std::vector<CesiumUtility::IntrusivePointer<
       CesiumRasterOverlays::ActivatedRasterOverlay>>
       _activatedOverlays;
+  std::vector<CesiumUtility::IntrusivePointer<
+      CesiumRasterOverlays::ActivatedRasterOverlay>>
+      _tickableOverlays;
 
   CESIUM_TRACE_DECLARE_TRACK_SET(_loadingSlots, "Raster Overlay Loading Slot")
 };

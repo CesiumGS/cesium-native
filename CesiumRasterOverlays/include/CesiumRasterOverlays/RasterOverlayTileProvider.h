@@ -263,7 +263,7 @@ public:
   virtual void
   addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
 
-  virtual bool isTickable() { return false; }
+  virtual bool isTickable() const noexcept { return false; }
 
   virtual void tick() {}
 

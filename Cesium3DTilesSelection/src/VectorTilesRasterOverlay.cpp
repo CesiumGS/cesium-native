@@ -640,7 +640,7 @@ public:
         this->_pSharedTileSelectionState->tilesWaitingForWorker.end());
   }
 
-  virtual bool isTickable() override { return true; }
+  virtual bool isTickable() const noexcept override { return true; }
 };
 } // namespace
 
