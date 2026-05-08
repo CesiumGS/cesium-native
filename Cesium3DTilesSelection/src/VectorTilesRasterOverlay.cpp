@@ -422,7 +422,7 @@ private:
       // external content and now we need to check their children.
       return this
           ->addLoadRequest(this->getAsyncSystem(), loadInfo.tileLoadTasks)
-          .thenInWorkerThread([this, tileRectangle, textureSize]() mutable {
+          .thenImmediately([this, tileRectangle, textureSize]() mutable {
             return this->findAndLoadTiles(tileRectangle, textureSize);
           });
     }
