@@ -20,6 +20,7 @@
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTablePropertyView.h>
 #include <CesiumGltf/PropertyTableView.h>
@@ -898,5 +899,30 @@ TEST_CASE("Test loading individual tile of tileset json") {
         CHECK(expectedEnum[i][static_cast<size_t>(j)] == (*value)[j]);
       }
     }
+  }
+
+  SUBCASE("Tile with GeoJson content") {
+    auto loaderResult = createTilesetJsonLoader(
+        testDataPath / "ContentGeojson" / "tileset.json");
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+    auto& childTile = pRootTile->getChildren()[0];
+    const auto& tileID = std::get<std::string>(childTile.getTileID());
+    CHECK(tileID == "1.geojson");
+
+    // check tile content
+    auto tileLoadResult = loadTileContent(
+        testDataPath / "ContentGeojson" / tileID,
+        *loaderResult.pLoader,
+        childTile);
+    Model* pModel = std::get_if<CesiumGltf::Model>(&tileLoadResult.contentKind);
+    REQUIRE(pModel);
+    CHECK(tileLoadResult.state == TileLoadResultState::Success);
+    CHECK(!tileLoadResult.tileInitializer);
+    CHECK(!pModel->meshes.empty());
+    CHECK(!pModel->meshes[0].primitives.empty());
+    CHECK(pModel->meshes[0].primitives[0].mode == MeshPrimitive::Mode::LINES);
   }
 }
