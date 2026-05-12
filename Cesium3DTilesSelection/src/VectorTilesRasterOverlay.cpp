@@ -78,6 +78,7 @@ CesiumUtility::Result<std::vector<std::vector<int64_t>>> calculateRingsFromTrian
     int64_t offset,
     int64_t length) {
   std::set<std::pair<int64_t, int64_t>> edges;
+  int64_t minIndex = std::numeric_limits<int64_t>::max();
   // Build edges from triangles.
   for (int64_t i = offset; i < offset + length; i += 3) {
     int64_t idx0 =
@@ -90,13 +91,18 @@ CesiumUtility::Result<std::vector<std::vector<int64_t>>> calculateRingsFromTrian
     edges.emplace(idx0, idx1);
     edges.emplace(idx1, idx2);
     edges.emplace(idx2, idx0);
+    minIndex = std::min({minIndex, idx0, idx1, idx2});
   }
 
   if(edges.empty()) {
     return {ErrorList::error("No edges found in the input triangles.")};
   }
 
-  std::vector<std::pair<int64_t, int64_t>> boundaryEdges;
+  // Vector of edge destinations indexed by edge source (after subtracting minIndex to save space).
+  std::vector<int64_t> boundaryEdges;
+  boundaryEdges.resize(static_cast<size_t>(length), 0);
+
+  std::vector<bool> edgesAssigned(static_cast<size_t>(length), true);
 
   // Remove edges that are shared by two triangles, leaving only the boundary
   // edges.
@@ -106,40 +112,34 @@ CesiumUtility::Result<std::vector<std::vector<int64_t>>> calculateRingsFromTrian
       edges.erase(edge);
       edges.erase({edge.second, edge.first});
     } else {
-      boundaryEdges.emplace_back(edge);
+      boundaryEdges[static_cast<size_t>(edge.first - minIndex)] = edge.second - minIndex;
       edges.erase(edge);
+      // Mark this edge as unassigned so we can use it as a starting point for ring construction later.
+      edgesAssigned[static_cast<size_t>(edge.first - minIndex)] = false;
     }
-  }
-
-  if(boundaryEdges.empty()) {
-    return {ErrorList::error("No boundary edges found in the input triangles.")};
   }
 
   std::vector<std::vector<int64_t>> rings;
 
   while(!boundaryEdges.empty()) {
-    std::pair<int64_t, int64_t> edge = boundaryEdges.back();
-    boundaryEdges.pop_back();
-
-    std::vector<int64_t> ring{edge.first, edge.second};
-    while (ring.back() != edge.first) {
-      auto it = std::find_if(
-          boundaryEdges.begin(),
-          boundaryEdges.end(),
-          [&ring](const std::pair<int64_t, int64_t>& e) {
-            return e.first == ring.back();
-          });
-
-      if (it == boundaryEdges.end()) {
-        // This should never happen if the input triangles are valid.
-        return {ErrorList::error(fmt::format(
-            "Invalid triangle mesh - cannot find next edge for vertex {} in "
-            "ring.",
-            ring.back()))};
+    int64_t edgeSrcIndex = -1;
+    for(int64_t i = 0; i < length; i++) {
+      if(!edgesAssigned[static_cast<size_t>(i)]) {
+        edgeSrcIndex = i;
+        break;
       }
+    }
 
-      ring.push_back(it->second);
-      boundaryEdges.erase(it);
+    if(edgeSrcIndex == -1) {
+      break;
+    }
+
+    edgesAssigned[static_cast<size_t>(edgeSrcIndex)] = true;
+
+    std::vector<int64_t> ring{edgeSrcIndex + minIndex, boundaryEdges[static_cast<size_t>(edgeSrcIndex)] + minIndex};
+    while (ring.back() != edgeSrcIndex + minIndex) {
+      ring.push_back(boundaryEdges[static_cast<size_t>(ring.back() - minIndex)] + minIndex);
+      edgesAssigned[static_cast<size_t>(ring.back() - minIndex)] = true;
     }
 
     rings.push_back(ring);
@@ -304,6 +304,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
             content->polygons.emplace_back(
                 std::move(vertices),
                 std::move(indices));
+            startIndex = endIndex;
           }
         } else {
           errors.emplaceWarning(fmt::format(
