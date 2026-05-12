@@ -77,17 +77,23 @@ triangulatePolygon(const std::vector<std::vector<glm::dvec3>>& polygonIn) {
 struct GltfConverterImpl {
   const GeoJsonDocument& geoJson;
   Model model;
-  // Accumlated as the data is traversed, then used to transform coordinates
+  // Accumulated as the data is traversed, then used to transform coordinates
   // into a local frame.
   BoundingRegionBuilder regionBuilder;
   glm::dmat4 enuToFixedFrame;
   CesiumGeospatial::Ellipsoid ellipsoid;
   std::vector<glm::dvec3> globalCoordinates;
+  // The feature ID that is associated with each vertex in the document
+  std::vector<uint32_t> featureIds;
+
   std::vector<uint32_t> lineIndices;
   std::vector<uint32_t> polyIndices;
   std::vector<uint32_t> pointIndices;
-  // The Feature ID of each vertex
-  std::vector<uint32_t> featureIds;
+
+  // two-map mapping between GeoJSON features and glTF Feature IDs
+  std::unordered_map<const GeoJsonObject*, uint32_t> gltfFeatureIds;
+  std::vector<const GeoJsonObject*> geoJsonFeatures;
+  
   int32_t positionBufferIndex = -1;
   int32_t positionAccessorIndex = -1;
   int32_t elementBufferIndex = -1;
@@ -102,10 +108,13 @@ struct GltfConverterImpl {
     gltfFeatureIds[nullptr] = 0;
     geoJsonFeatures.push_back(nullptr);
   }
-  void addCoordinateDegrees(const glm::dvec3& coord) {
-    expandRegion(coord);
-    this->globalCoordinates.push_back(this->ellipsoid.cartographicToCartesian(
-        Cartographic::fromDegrees(coord.x, coord.y, coord.z)));
+  void addGeoJsonCoordinate(const glm::dvec3& coord, uint32_t featureId) {
+    Cartographic cesiumCoord =
+        Cartographic::fromDegrees(coord.x, coord.y, coord.z);
+    this->regionBuilder.expandToIncludePosition(cesiumCoord);
+    this->globalCoordinates.push_back(
+        this->ellipsoid.cartographicToCartesian(cesiumCoord));
+    this->featureIds.push_back(featureId);
   }
   int32_t finalizeLines();
   int32_t finalizePolygons();
@@ -127,19 +136,13 @@ struct GltfConverterImpl {
       int64_t count,
       int32_t componentType,
       const std::string& accessorType);
-  void expandRegion(const glm::dvec3& cartoDegrees) {
-    this->regionBuilder.expandToIncludePosition(Cartographic::fromDegrees(
-        cartoDegrees.x,
-        cartoDegrees.y,
-        cartoDegrees.z));
-  };
   template <typename GeoJsonType>
   void visitGeometry(const GeoJsonType&, const GeoJsonObject*) {}
 
-  void doLinestring(
+  void processLinestring(
       const std::vector<glm::dvec3>& lineStringCoords,
       const GeoJsonObject* pFeature) {
-    auto stringIndices = lineStringToLines(
+    std::vector<uint32_t> stringIndices = lineStringToLines(
         this->globalCoordinates.size(),
         lineStringCoords.size());
     this->lineIndices.insert(
@@ -148,36 +151,34 @@ struct GltfConverterImpl {
         stringIndices.end());
     uint32_t featureId = getFeatureId(pFeature);
     for (const glm::dvec3& cartoDegrees : lineStringCoords) {
-      addCoordinateDegrees(cartoDegrees);
-      this->featureIds.push_back(featureId);
+      addGeoJsonCoordinate(cartoDegrees, featureId);
     }
   }
 
   void visitGeometry(
       const GeoJsonLineString& object,
       const GeoJsonObject* pFeature) {
-    doLinestring(object.coordinates, pFeature);
+    processLinestring(object.coordinates, pFeature);
   }
 
   void visitGeometry(
       const GeoJsonMultiLineString& object,
       const GeoJsonObject* pFeature) {
     for (const auto& lineStringCoords : object.coordinates) {
-      doLinestring(lineStringCoords, pFeature);
+      processLinestring(lineStringCoords, pFeature);
     }
   }
 
   using PolygonRing = std::vector<glm::dvec3>;
   using Polygon = std::vector<PolygonRing>;
 
-  void doPolygon(const Polygon& polygonRings, const GeoJsonObject* pFeature) {
+  void processPolygon(const Polygon& polygonRings, const GeoJsonObject* pFeature) {
     uint32_t elementBase = uint32_t(this->globalCoordinates.size());
     uint32_t featureId = getFeatureId(pFeature);
-    for (const auto& contour : polygonRings) {
+    for (const PolygonRing& contour : polygonRings) {
       // The last coordinate is identical to the first.
       for (size_t i = 0; i < contour.size() - 1; ++i) {
-        this->addCoordinateDegrees(contour[i]);
-        this->featureIds.push_back(featureId);
+        this->addGeoJsonCoordinate(contour[i], featureId);
       }
     }
     std::vector<uint32_t> triangulatedIndices =
@@ -189,39 +190,36 @@ struct GltfConverterImpl {
 
   void
   visitGeometry(const GeoJsonPolygon& object, const GeoJsonObject* pFeature) {
-    doPolygon(object.coordinates, pFeature);
+    processPolygon(object.coordinates, pFeature);
   }
 
   void visitGeometry(
       const GeoJsonMultiPolygon& object,
       const GeoJsonObject* pFeature) {
     for (const std::vector<PolygonRing>& polygonRings : object.coordinates) {
-      doPolygon(polygonRings, pFeature);
+      processPolygon(polygonRings, pFeature);
     }
   }
 
-  void doPoint(const glm::dvec3& cartoDegrees, const GeoJsonObject* pFeature) {
+  void
+  processPoint(const glm::dvec3& cartoDegrees, const GeoJsonObject* pFeature) {
     uint32_t featureId = getFeatureId(pFeature);
     this->pointIndices.push_back(uint32_t(this->globalCoordinates.size()));
-    addCoordinateDegrees(cartoDegrees);
-    this->featureIds.push_back(featureId);
+    addGeoJsonCoordinate(cartoDegrees, featureId);
   }
 
   void
   visitGeometry(const GeoJsonPoint& object, const GeoJsonObject* pFeature) {
-    doPoint(object.coordinates, pFeature);
+    processPoint(object.coordinates, pFeature);
   }
 
   void visitGeometry(
       const GeoJsonMultiPoint& object,
       const GeoJsonObject* pFeature) {
     for (const auto& cartoDegrees : object.coordinates) {
-      doPoint(cartoDegrees, pFeature);
+      processPoint(cartoDegrees, pFeature);
     }
   }
-
-  std::unordered_map<const GeoJsonObject*, uint32_t> gltfFeatureIds;
-  std::vector<const GeoJsonObject*> geoJsonFeatures;
 
   uint32_t getFeatureId(const GeoJsonObject* pFeatureObject) {
     auto mapIt = this->gltfFeatureIds.find(pFeatureObject);
@@ -336,7 +334,7 @@ int32_t GltfConverterImpl::finalizePrimitive(
   ExtensionExtMeshFeatures& extension =
       primitive.addExtension<ExtensionExtMeshFeatures>();
   FeatureId& featureId = extension.featureIds.emplace_back();
-  featureId.attribute = this->featureIdAccessorIndex;
+  featureId.attribute = 0;
   featureId.featureCount = int64_t(this->gltfFeatureIds.size());
   featureId.nullFeatureId = 0;
   int32_t nodeIndex = int32_t(this->model.nodes.size());
@@ -370,13 +368,13 @@ void GltfConverterImpl::preparePositions() {
   Buffer& positionBuffer = this->model.buffers.emplace_back();
   size_t numCoords = this->globalCoordinates.size();
   positionBuffer.cesium.data.resize(sizeof(glm::vec3) * numCoords);
-  glm::vec3* const position32Base =
+  glm::vec3* const pPosition32Base =
       reinterpret_cast<glm::vec3*>(positionBuffer.cesium.data.data());
-  glm::vec3* position32 = position32Base;
+  glm::vec3* pPosition32 = pPosition32Base;
   for (const auto& position : this->globalCoordinates) {
     glm::dvec3 localPosition = glm::dvec3(toLocal * glm::dvec4(position, 1.0));
     // Convert to float
-    *position32++ =
+    *pPosition32++ =
         glm::vec3(localPosition.x, localPosition.y, localPosition.z);
   }
   int32_t positionBufferViewIndex = makeBufferView(
@@ -390,7 +388,7 @@ void GltfConverterImpl::preparePositions() {
       Accessor::Type::VEC3);
   Accessor& positionAccessor =
       this->model.accessors[size_t(this->positionAccessorIndex)];
-  std::span<const glm::vec3> positionSpan(position32Base, numCoords);
+  std::span<const glm::vec3> positionSpan(pPosition32Base, numCoords);
   positionAccessor.min = positionMinVector(positionSpan);
   positionAccessor.max = positionMaxVector(positionSpan);
   this->elementBufferIndex = int32_t(this->model.buffers.size());
