@@ -71,9 +71,11 @@ struct VectorRenderContent {
  * and connecting the edges starting from (0, 1), we get (0, 1, 2, 3,
  * 0) as our ring.
  *
- * This works for polygons with holes, though we have to account for multiple rings.
+ * This works for polygons with holes, though we have to account for multiple
+ * rings.
  */
-CesiumUtility::Result<std::vector<std::vector<int64_t>>> calculateRingsFromTriangles(
+CesiumUtility::Result<std::vector<std::vector<int64_t>>>
+calculateRingsFromTriangles(
     const CesiumGltf::IndexAccessorType& indicesAccessor,
     int64_t offset,
     int64_t length) {
@@ -94,11 +96,12 @@ CesiumUtility::Result<std::vector<std::vector<int64_t>>> calculateRingsFromTrian
     minIndex = std::min({minIndex, idx0, idx1, idx2});
   }
 
-  if(edges.empty()) {
+  if (edges.empty()) {
     return {ErrorList::error("No edges found in the input triangles.")};
   }
 
-  // Vector of edge destinations indexed by edge source (after subtracting minIndex to save space).
+  // Vector of edge destinations indexed by edge source (after subtracting
+  // minIndex to save space).
   std::vector<int64_t> boundaryEdges;
   boundaryEdges.resize(static_cast<size_t>(length), 0);
 
@@ -112,33 +115,39 @@ CesiumUtility::Result<std::vector<std::vector<int64_t>>> calculateRingsFromTrian
       edges.erase(edge);
       edges.erase({edge.second, edge.first});
     } else {
-      boundaryEdges[static_cast<size_t>(edge.first - minIndex)] = edge.second - minIndex;
+      boundaryEdges[static_cast<size_t>(edge.first - minIndex)] =
+          edge.second - minIndex;
       edges.erase(edge);
-      // Mark this edge as unassigned so we can use it as a starting point for ring construction later.
+      // Mark this edge as unassigned so we can use it as a starting point for
+      // ring construction later.
       edgesAssigned[static_cast<size_t>(edge.first - minIndex)] = false;
     }
   }
 
   std::vector<std::vector<int64_t>> rings;
 
-  while(!boundaryEdges.empty()) {
+  while (!boundaryEdges.empty()) {
     int64_t edgeSrcIndex = -1;
-    for(int64_t i = 0; i < length; i++) {
-      if(!edgesAssigned[static_cast<size_t>(i)]) {
+    for (int64_t i = 0; i < length; i++) {
+      if (!edgesAssigned[static_cast<size_t>(i)]) {
         edgeSrcIndex = i;
         break;
       }
     }
 
-    if(edgeSrcIndex == -1) {
+    if (edgeSrcIndex == -1) {
       break;
     }
 
     edgesAssigned[static_cast<size_t>(edgeSrcIndex)] = true;
 
-    std::vector<int64_t> ring{edgeSrcIndex + minIndex, boundaryEdges[static_cast<size_t>(edgeSrcIndex)] + minIndex};
+    std::vector<int64_t> ring{
+        edgeSrcIndex + minIndex,
+        boundaryEdges[static_cast<size_t>(edgeSrcIndex)] + minIndex};
     while (ring.back() != edgeSrcIndex + minIndex) {
-      ring.push_back(boundaryEdges[static_cast<size_t>(ring.back() - minIndex)] + minIndex);
+      ring.push_back(
+          boundaryEdges[static_cast<size_t>(ring.back() - minIndex)] +
+          minIndex);
       edgesAssigned[static_cast<size_t>(ring.back() - minIndex)] = true;
     }
 
@@ -257,9 +266,9 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
           }
 
           int64_t startIndex = 0;
-          while(startIndex < numIndices) {
+          while (startIndex < numIndices) {
             int64_t endIndex = numIndices - 1;
-            for(int64_t i = startIndex; i < endIndex; i++) {
+            for (int64_t i = startIndex; i < endIndex; i++) {
               const int64_t idx =
                   std::visit(CesiumGltf::IndexFromAccessor{i}, indicesView);
               if (idx == maxIndex) {
@@ -268,7 +277,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
               }
             }
 
-            if(endIndex == startIndex) {
+            if (endIndex == startIndex) {
               break;
             }
 
@@ -278,23 +287,28 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
             std::vector<uint32_t> indices;
             indices.reserve(static_cast<size_t>(endIndex - startIndex));
 
-            CesiumUtility::Result<std::vector<std::vector<int64_t>>> ringsResult = 
-                calculateRingsFromTriangles(indicesView, startIndex, endIndex - startIndex);
+            CesiumUtility::Result<std::vector<std::vector<int64_t>>>
+                ringsResult = calculateRingsFromTriangles(
+                    indicesView,
+                    startIndex,
+                    endIndex - startIndex);
             if (ringsResult.errors.hasErrors()) {
               errors.merge(ringsResult.errors);
               return;
             }
 
-            for(const std::vector<int64_t>& ring : *ringsResult.value) {
-              for(const int64_t& idx : ring) {
+            for (const std::vector<int64_t>& ring : *ringsResult.value) {
+              for (const int64_t& idx : ring) {
                 indices.emplace_back(static_cast<uint32_t>(idx));
                 const glm::vec3 position = positionView[idx];
                 const glm::dvec4 transformedPosition =
                     rootTransform * nodeTransform * glm::dvec4(position, 1.0);
                 const CesiumGeospatial::Cartographic cartographicPosition =
                     ellipsoid
-                        .cartesianToCartographic(glm::dvec3(transformedPosition))
-                        .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0});
+                        .cartesianToCartographic(
+                            glm::dvec3(transformedPosition))
+                        .value_or(
+                            CesiumGeospatial::Cartographic{0.0, 0.0, 0.0});
                 vertices.emplace_back(
                     cartographicPosition.longitude,
                     cartographicPosition.latitude);

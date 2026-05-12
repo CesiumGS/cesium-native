@@ -98,7 +98,8 @@ TEST_CASE("Test VectorTilesRasterOverlay") {
 TEST_CASE("Test VectorTilesRasterOverlay polygons") {
   /*const std::filesystem::path dataPath =
       std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR);*/
-  const std::filesystem::path inputPath = "/mnt/d/Dev/vector/data/nyc_poly/tileset.json";
+  const std::filesystem::path inputPath =
+      "/mnt/d/Dev/vector/data/nyc_poly/tileset.json";
   /*const std::filesystem::path referencePath =
       dataPath / "ViennaStreets" / "rasterized.tga";*/
   const std::filesystem::path tempOutPath =
@@ -108,13 +109,13 @@ TEST_CASE("Test VectorTilesRasterOverlay polygons") {
 
   // A rough rectangle around the Albertgarten in Vienna, as an arbitrary
   // testing area.
-    const CesiumGeospatial::BoundingRegion& tileRegion =
+  const CesiumGeospatial::BoundingRegion& tileRegion =
       Cesium3DTilesContent::ImplicitTilingUtilities::computeBoundingVolume(
           CesiumGeospatial::BoundingRegion{
               CesiumGeospatial::GlobeRectangle{
                   -1.2960028825865837,
-                  0.7068309334853016, 
-                  -1.2863087490444578, 
+                  0.7068309334853016,
+                  -1.2863087490444578,
                   0.7141023380205147},
               0,
               0.005,
@@ -124,7 +125,6 @@ TEST_CASE("Test VectorTilesRasterOverlay polygons") {
   const CesiumGeospatial::GlobeRectangle& tileGlobeRectangle =
       tileRegion.getRectangle();
 
-
   std::shared_ptr<CesiumNativeTests::FileAccessor> pAssetAccessor =
       std::make_shared<CesiumNativeTests::FileAccessor>(
           CesiumNativeTests::FileAccessor{});
@@ -133,9 +133,9 @@ TEST_CASE("Test VectorTilesRasterOverlay polygons") {
 
   CreateRasterOverlayTileProviderParameters parameters{
       {pAssetAccessor, nullptr, asyncSystem}};
-    RasterOverlayOptions options;
-    options.maximumScreenSpaceError = 1.0;
-    
+  RasterOverlayOptions options;
+  options.maximumScreenSpaceError = 1.0;
+
   IntrusivePointer<VectorTilesRasterOverlay> pOverlay;
   pOverlay.emplace(
       "overlay0",
@@ -173,5 +173,5 @@ TEST_CASE("Test VectorTilesRasterOverlay polygons") {
   REQUIRE(pTile->getImage()->width > 1);
   CesiumNativeTests::writeImageToTgaFile(*pTile->getImage(), tempOutPath);
 
-  //CesiumNativeTests::checkFilesEqual(tempOutPath, referencePath);
+  // CesiumNativeTests::checkFilesEqual(tempOutPath, referencePath);
 }

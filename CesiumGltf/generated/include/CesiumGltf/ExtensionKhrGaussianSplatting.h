@@ -22,8 +22,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   static constexpr const char* ExtensionName = "KHR_gaussian_splatting";
 
   /**
-   * @brief Known values for Property specifying parameters regarding the kernel
-   * used to generate the Gaussians.
+   * @brief Known values for The kernel used to generate the Gaussians.
    */
   struct Kernel {
     /** @brief `ellipse` */
@@ -31,8 +30,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   };
 
   /**
-   * @brief Known values for Property specifying the color space of the
-   * spherical harmonics.
+   * @brief Known values for The color space of the reconstructed color values.
    */
   struct ColorSpace {
     /** @brief `srgb_rec709_display` */
@@ -43,9 +41,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   };
 
   /**
-   * @brief Known values for Optional property specifying how to project the
-   * Gaussians to achieve a perspective correct value. This property defaults to
-   * perspective.
+   * @brief Known values for The projection method for rendering the Gaussians.
    */
   struct Projection {
     /** @brief `perspective` */
@@ -53,8 +49,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   };
 
   /**
-   * @brief Known values for Optional property specifying how to sort the
-   * Gaussians during rendering. This property defaults to cameraDistance.
+   * @brief Known values for The sorting method for rendering the Gaussians.
    */
   struct SortingMethod {
     /** @brief `cameraDistance` */
@@ -62,8 +57,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   };
 
   /**
-   * @brief Property specifying parameters regarding the kernel used to generate
-   * the Gaussians.
+   * @brief The kernel used to generate the Gaussians.
    *
    * Known values are defined in {@link Kernel}.
    *
@@ -71,7 +65,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   std::string kernel = Kernel::ellipse;
 
   /**
-   * @brief Property specifying the color space of the spherical harmonics.
+   * @brief The color space of the reconstructed color values.
    *
    * Known values are defined in {@link ColorSpace}.
    *
@@ -79,8 +73,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   std::string colorSpace = ColorSpace::srgb_rec709_display;
 
   /**
-   * @brief Optional property specifying how to project the Gaussians to achieve
-   * a perspective correct value. This property defaults to perspective.
+   * @brief The projection method for rendering the Gaussians.
    *
    * Known values are defined in {@link Projection}.
    *
@@ -88,8 +81,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   std::string projection = Projection::perspective;
 
   /**
-   * @brief Optional property specifying how to sort the Gaussians during
-   * rendering. This property defaults to cameraDistance.
+   * @brief The sorting method for rendering the Gaussians.
    *
    * Known values are defined in {@link SortingMethod}.
    *

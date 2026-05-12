@@ -122,7 +122,9 @@ CartographicPolygon::CartographicPolygon(const std::vector<glm::dvec2>& polygon)
       _indices(triangulatePolygon(polygon)),
       _boundingRectangle(computeBoundingRectangle(polygon)) {}
 
-CartographicPolygon::CartographicPolygon(std::vector<glm::dvec2>&& polygon, std::vector<uint32_t>&& indices)
+CartographicPolygon::CartographicPolygon(
+    std::vector<glm::dvec2>&& polygon,
+    std::vector<uint32_t>&& indices)
     : _vertices(std::move(polygon)),
       _indices(std::move(indices)),
       _boundingRectangle(computeBoundingRectangle(this->_vertices)) {}

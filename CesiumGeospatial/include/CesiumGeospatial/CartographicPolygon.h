@@ -41,7 +41,9 @@ public:
    * @param indices An array of indices representing a triangle decomposition of
    * the polygon. The indices are in reference to the `vertices` array.
    */
-  CartographicPolygon(std::vector<glm::dvec2>&& vertices, std::vector<uint32_t>&& indices);
+  CartographicPolygon(
+      std::vector<glm::dvec2>&& vertices,
+      std::vector<uint32_t>&& indices);
 
   /**
    * @brief Returns the longitude-latitude vertices that define the
