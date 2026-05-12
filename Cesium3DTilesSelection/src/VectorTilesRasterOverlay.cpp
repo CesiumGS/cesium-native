@@ -1,6 +1,7 @@
 #include "Cesium3DTilesSelection/IPrepareRendererResources.h"
 #include "Cesium3DTilesSelection/TileLoadResult.h"
 #include "CesiumGeospatial/Cartographic.h"
+#include "CesiumGeospatial/CartographicPolygon.h"
 #include "CesiumGltf/AccessorUtility.h"
 #include "CesiumGltf/AccessorView.h"
 #include "CesiumGltf/MeshPrimitive.h"
@@ -29,6 +30,7 @@
 
 #include <fmt/format.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <mutex>
 #include <set>
@@ -44,9 +46,107 @@ struct VectorRenderContent {
 
   std::vector<CesiumGeospatial::Cartographic> points;
   std::vector<std::vector<CesiumGeospatial::Cartographic>> polylines;
-  std::vector<std::vector<std::vector<CesiumGeospatial::Cartographic>>>
-      polygons;
+  std::vector<CesiumGeospatial::CartographicPolygon> polygons;
 };
+
+/**
+ * @brief Calculates the rings of a polygon from the triangles of a glTF
+ * TRIANGLES primitive. This only works if triangles have consistent winding
+ * order (which they should!).
+ *
+ * Consider the following:
+ *        0          3
+ *        /----------/
+ *       / \        /
+ *      /   \      /
+ *     /     \    /
+ *    /       \  /
+ *   /---------\/
+ *   1         2
+ *
+ * Following CCW winding order, the triangles would be {0, 1, 2} and {0, 2, 3}.
+ * We can break this down into edges: (0, 1), (1, 2), (2, 0), (0, 2), (2, 3),
+ * and (3, 0). We can see that (0, 2) and (2, 0) are interior edges as they are
+ * shared by two triangles in opposite directions. Eliminating (0, 2) and (2, 0)
+ * and connecting the edges starting from (0, 1), we get (0, 1, 2, 3,
+ * 0) as our ring.
+ *
+ * This works for polygons with holes, though we have to account for multiple rings.
+ */
+CesiumUtility::Result<std::vector<std::vector<int64_t>>> calculateRingsFromTriangles(
+    const CesiumGltf::IndexAccessorType& indicesAccessor,
+    int64_t offset,
+    int64_t length) {
+  std::set<std::pair<int64_t, int64_t>> edges;
+  // Build edges from triangles.
+  for (int64_t i = offset; i < offset + length; i += 3) {
+    int64_t idx0 =
+        std::visit(CesiumGltf::IndexFromAccessor{i}, indicesAccessor);
+    int64_t idx1 =
+        std::visit(CesiumGltf::IndexFromAccessor{i + 1}, indicesAccessor);
+    int64_t idx2 =
+        std::visit(CesiumGltf::IndexFromAccessor{i + 2}, indicesAccessor);
+
+    edges.emplace(idx0, idx1);
+    edges.emplace(idx1, idx2);
+    edges.emplace(idx2, idx0);
+  }
+
+  if(edges.empty()) {
+    return {ErrorList::error("No edges found in the input triangles.")};
+  }
+
+  std::vector<std::pair<int64_t, int64_t>> boundaryEdges;
+
+  // Remove edges that are shared by two triangles, leaving only the boundary
+  // edges.
+  while (!edges.empty()) {
+    const std::pair<int64_t, int64_t> edge = *edges.begin();
+    if (edges.contains({edge.second, edge.first})) {
+      edges.erase(edge);
+      edges.erase({edge.second, edge.first});
+    } else {
+      boundaryEdges.emplace_back(edge);
+      edges.erase(edge);
+    }
+  }
+
+  if(boundaryEdges.empty()) {
+    return {ErrorList::error("No boundary edges found in the input triangles.")};
+  }
+
+  std::vector<std::vector<int64_t>> rings;
+
+  while(!boundaryEdges.empty()) {
+    std::pair<int64_t, int64_t> edge = boundaryEdges.back();
+    boundaryEdges.pop_back();
+
+    std::vector<int64_t> ring{edge.first, edge.second};
+    while (ring.back() != edge.first) {
+      auto it = std::find_if(
+          boundaryEdges.begin(),
+          boundaryEdges.end(),
+          [&ring](const std::pair<int64_t, int64_t>& e) {
+            return e.first == ring.back();
+          });
+
+      if (it == boundaryEdges.end()) {
+        // This should never happen if the input triangles are valid.
+        return {ErrorList::error(fmt::format(
+            "Invalid triangle mesh - cannot find next edge for vertex {} in "
+            "ring.",
+            ring.back()))};
+      }
+
+      ring.push_back(it->second);
+      boundaryEdges.erase(it);
+    }
+
+    rings.push_back(ring);
+  }
+
+  return {rings};
+}
 
 CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
     CesiumGltf::Model& model,
@@ -100,9 +200,8 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
                     .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0}));
           }
           return;
-        }
-
-        if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::LINE_STRIP) {
+        } else if (
+            primitive.mode == CesiumGltf::MeshPrimitive::Mode::LINE_STRIP) {
           if (numIndices < 2) {
             errors.emplaceError(
                 "Primitive mode LINE_STRIP requires at least two indices.");
@@ -149,10 +248,68 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
             errors.emplaceWarning("LINE_STRIP primitive ended with a single "
                                   "point unassigned to a line.");
           }
-        }
+        } else if (
+            primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
+          if (numIndices < 3) {
+            errors.emplaceError(
+                "Primitive mode TRIANGLES requires at least three indices.");
+            return;
+          }
 
-        if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
-          // TODO: figure out what's going on with that polygon extension
+          int64_t startIndex = 0;
+          while(startIndex < numIndices) {
+            int64_t endIndex = numIndices - 1;
+            for(int64_t i = startIndex; i < endIndex; i++) {
+              const int64_t idx =
+                  std::visit(CesiumGltf::IndexFromAccessor{i}, indicesView);
+              if (idx == maxIndex) {
+                endIndex = i;
+                break;
+              }
+            }
+
+            if(endIndex == startIndex) {
+              break;
+            }
+
+            std::vector<glm::dvec2> vertices;
+            vertices.reserve(static_cast<size_t>(endIndex - startIndex));
+
+            std::vector<uint32_t> indices;
+            indices.reserve(static_cast<size_t>(endIndex - startIndex));
+
+            CesiumUtility::Result<std::vector<std::vector<int64_t>>> ringsResult = 
+                calculateRingsFromTriangles(indicesView, startIndex, endIndex - startIndex);
+            if (ringsResult.errors.hasErrors()) {
+              errors.merge(ringsResult.errors);
+              return;
+            }
+
+            for(const std::vector<int64_t>& ring : *ringsResult.value) {
+              for(const int64_t& idx : ring) {
+                indices.emplace_back(static_cast<uint32_t>(idx));
+                const glm::vec3 position = positionView[idx];
+                const glm::dvec4 transformedPosition =
+                    rootTransform * nodeTransform * glm::dvec4(position, 1.0);
+                const CesiumGeospatial::Cartographic cartographicPosition =
+                    ellipsoid
+                        .cartesianToCartographic(glm::dvec3(transformedPosition))
+                        .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0});
+                vertices.emplace_back(
+                    cartographicPosition.longitude,
+                    cartographicPosition.latitude);
+              }
+            }
+
+            content->polygons.emplace_back(
+                std::move(vertices),
+                std::move(indices));
+          }
+        } else {
+          errors.emplaceWarning(fmt::format(
+              "Ignoring primitive with mode {} - only POINTS (0), LINE_STRIP "
+              "(3), and TRIANGLES (4) are supported.",
+              primitive.mode));
         }
       });
 
@@ -487,6 +644,11 @@ private:
                       pRenderContent->getRenderResources());
               if (pVectorContent == nullptr) {
                 continue;
+              }
+
+              for (const CesiumGeospatial::CartographicPolygon& polygon :
+                   pVectorContent->polygons) {
+                rasterizer.drawPolygon(polygon, pVectorContent->style.polygon);
               }
 
               for (const std::vector<CesiumGeospatial::Cartographic>& polyline :
