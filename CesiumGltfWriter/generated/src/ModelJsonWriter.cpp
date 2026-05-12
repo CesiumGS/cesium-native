@@ -1280,17 +1280,25 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
 
-  jsonWriter.Key("count");
-  writeJson(obj.count, jsonWriter, context);
+  if (obj.count > -1) {
+    jsonWriter.Key("count");
+    writeJson(obj.count, jsonWriter, context);
+  }
 
-  jsonWriter.Key("loopIndices");
-  writeJson(obj.loopIndices, jsonWriter, context);
+  if (obj.loopIndices > -1) {
+    jsonWriter.Key("loopIndices");
+    writeJson(obj.loopIndices, jsonWriter, context);
+  }
 
-  jsonWriter.Key("loopIndicesOffsets");
-  writeJson(obj.loopIndicesOffsets, jsonWriter, context);
+  if (obj.loopIndicesOffsets > -1) {
+    jsonWriter.Key("loopIndicesOffsets");
+    writeJson(obj.loopIndicesOffsets, jsonWriter, context);
+  }
 
-  jsonWriter.Key("indicesOffsets");
-  writeJson(obj.indicesOffsets, jsonWriter, context);
+  if (obj.indicesOffsets > -1) {
+    jsonWriter.Key("indicesOffsets");
+    writeJson(obj.indicesOffsets, jsonWriter, context);
+  }
 
   writeExtensibleObject(obj, jsonWriter, context);
 

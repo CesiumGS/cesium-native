@@ -5,6 +5,8 @@
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <cstdint>
+
 namespace CesiumGltf {
 /**
  * @brief glTF extension adding an encoding of polygon primitive topology
@@ -22,28 +24,28 @@ struct CESIUMGLTF_API ExtensionExtMeshPolygon final
   /**
    * @brief Integer number of polygons encoded in the mesh primitive.
    */
-  double count = double();
+  int32_t count = -1;
 
   /**
    * @brief Index of an accessor containing indices of the polygons' exterior
    * and interior loops. The accessor MUST have SCALAR type and an unsigned
    * integer component type.
    */
-  double loopIndices = double();
+  int32_t loopIndices = -1;
 
   /**
    * @brief Index of an accessor containing one integer offset per polygon in
    * the primitive, indicating the first index of the first linear ring
    * associated with that polygon.
    */
-  double loopIndicesOffsets = double();
+  int32_t loopIndicesOffsets = -1;
 
   /**
    * @brief Index of an accessor containing one integer offset per polygon in
    * the primitive, indicating the first index of the first triangle associated
    * with that polygon.
    */
-  double indicesOffsets = double();
+  int32_t indicesOffsets = -1;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents

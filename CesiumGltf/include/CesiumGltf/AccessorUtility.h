@@ -155,6 +155,11 @@ IndexAccessorType
 getIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
+ * Retrieves an indices accessor view of the accessor at the given index.
+ */
+IndexAccessorType getIndexAccessorView(const Model& model, int32_t index);
+
+/**
  * Visitor that returns the number of indices contained in an IndexAccessorType
  * variant.
  */

@@ -4,6 +4,7 @@
 #include "CesiumGeospatial/CartographicPolygon.h"
 #include "CesiumGltf/AccessorUtility.h"
 #include "CesiumGltf/AccessorView.h"
+#include "CesiumGltf/ExtensionExtMeshPolygon.h"
 #include "CesiumGltf/MeshPrimitive.h"
 #include "CesiumGltfContent/GltfUtilities.h"
 #include "CesiumUtility/ErrorList.h"
@@ -74,7 +75,7 @@ struct VectorRenderContent {
  * This works for polygons with holes, though we have to account for multiple
  * rings.
  */
-CesiumUtility::Result<std::vector<std::vector<int64_t>>>
+/*CesiumUtility::Result<std::vector<std::vector<int64_t>>>
 calculateRingsFromTriangles(
     const CesiumGltf::IndexAccessorType& indicesAccessor,
     int64_t offset,
@@ -155,7 +156,7 @@ calculateRingsFromTriangles(
   }
 
   return {rings};
-}
+}*/
 
 CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
     CesiumGltf::Model& model,
@@ -258,67 +259,58 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
                                   "point unassigned to a line.");
           }
         } else if (
-            primitive.mode == CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
-          if (numIndices < 3) {
-            errors.emplaceError(
-                "Primitive mode TRIANGLES requires at least three indices.");
+            primitive.mode >= CesiumGltf::MeshPrimitive::Mode::TRIANGLES &&
+            primitive.mode <= CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN) {
+          const CesiumGltf::ExtensionExtMeshPolygon* pPolygonExtension =
+              primitive.getExtension<CesiumGltf::ExtensionExtMeshPolygon>();
+          if (pPolygonExtension == nullptr) {
+            errors.emplaceWarning(
+                fmt::format("Polygons found but no EXT_mesh_polygon extension "
+                            "present on primitive. Skipping polygon."));
             return;
           }
 
-          int64_t startIndex = 0;
-          while (startIndex < numIndices) {
-            int64_t endIndex = numIndices - 1;
-            for (int64_t i = startIndex; i < endIndex; i++) {
-              const int64_t idx =
-                  std::visit(CesiumGltf::IndexFromAccessor{i}, indicesView);
-              if (idx == maxIndex) {
-                endIndex = i;
-                break;
-              }
-            }
+          CesiumGltf::IndexAccessorType loopIndicesView =
+              CesiumGltf::getIndexAccessorView(
+                  model,
+                  pPolygonExtension->loopIndices);
 
-            if (endIndex == startIndex) {
-              break;
-            }
+          CesiumGltf::IndexAccessorType loopIndicesOffsetsView =
+              CesiumGltf::getIndexAccessorView(
+                  model,
+                  pPolygonExtension->loopIndicesOffsets);
+          const int64_t numPolygons = std::visit(
+              CesiumGltf::NumIndicesFromAccessor{},
+              loopIndicesOffsetsView);
+          const int64_t maxPolygonIndex = std::visit(
+              CesiumGltf::MaxIndexValueFromAccessor{},
+              loopIndicesView);
+          content->polygons.reserve(
+              content->polygons.size() + static_cast<size_t>(numPolygons));
 
+          for(int64_t i = 0; i < numPolygons; i++) {
+            const int64_t loopIndicesOffset =
+                std::visit(CesiumGltf::IndexFromAccessor{i}, loopIndicesOffsetsView);
+            const int64_t nextLoopIndicesOffset = i + 1 < numPolygons ? std::visit(CesiumGltf::IndexFromAccessor{i + 1}, loopIndicesOffsetsView) : numPolygons - 1;
             std::vector<glm::dvec2> vertices;
-            vertices.reserve(static_cast<size_t>(endIndex - startIndex));
+
+            for(int64_t i = loopIndicesOffset; i < nextLoopIndicesOffset; i++) {
+              int64_t loopIndex = std::visit(CesiumGltf::IndexFromAccessor{i}, loopIndicesView);
+              if(loopIndex == maxPolygonIndex) {
+                continue;
+              }
+
+              const glm::vec3 position = positionView[loopIndex];
+              const glm::dvec4 transformedPosition =
+                  rootTransform * nodeTransform * glm::dvec4(position, 1.0);
+              const CesiumGeospatial::Cartographic cartographic = ellipsoid
+                  .cartesianToCartographic(glm::dvec3(transformedPosition))
+                  .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0});
+              vertices.emplace_back(cartographic.longitude, cartographic.latitude);
+            }
 
             std::vector<uint32_t> indices;
-            indices.reserve(static_cast<size_t>(endIndex - startIndex));
-
-            CesiumUtility::Result<std::vector<std::vector<int64_t>>>
-                ringsResult = calculateRingsFromTriangles(
-                    indicesView,
-                    startIndex,
-                    endIndex - startIndex);
-            if (ringsResult.errors.hasErrors()) {
-              errors.merge(ringsResult.errors);
-              return;
-            }
-
-            for (const std::vector<int64_t>& ring : *ringsResult.value) {
-              for (const int64_t& idx : ring) {
-                indices.emplace_back(static_cast<uint32_t>(idx));
-                const glm::vec3 position = positionView[idx];
-                const glm::dvec4 transformedPosition =
-                    rootTransform * nodeTransform * glm::dvec4(position, 1.0);
-                const CesiumGeospatial::Cartographic cartographicPosition =
-                    ellipsoid
-                        .cartesianToCartographic(
-                            glm::dvec3(transformedPosition))
-                        .value_or(
-                            CesiumGeospatial::Cartographic{0.0, 0.0, 0.0});
-                vertices.emplace_back(
-                    cartographicPosition.longitude,
-                    cartographicPosition.latitude);
-              }
-            }
-
-            content->polygons.emplace_back(
-                std::move(vertices),
-                std::move(indices));
-            startIndex = endIndex;
+            content->polygons.emplace_back(std::move(vertices), std::move(indices));
           }
         } else {
           errors.emplaceWarning(fmt::format(

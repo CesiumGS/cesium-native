@@ -3,8 +3,8 @@
 #pragma once
 
 #include <CesiumGltf/ExtensionExtMeshPolygon.h>
-#include <CesiumJsonReader/DoubleJsonHandler.h>
 #include <CesiumJsonReader/ExtensibleObjectJsonHandler.h>
+#include <CesiumJsonReader/IntegerJsonHandler.h>
 
 namespace CesiumJsonReader {
 class JsonReaderOptions;
@@ -42,9 +42,9 @@ protected:
 
 private:
   CesiumGltf::ExtensionExtMeshPolygon* _pObject = nullptr;
-  CesiumJsonReader::DoubleJsonHandler _count;
-  CesiumJsonReader::DoubleJsonHandler _loopIndices;
-  CesiumJsonReader::DoubleJsonHandler _loopIndicesOffsets;
-  CesiumJsonReader::DoubleJsonHandler _indicesOffsets;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _count;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _loopIndices;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _loopIndicesOffsets;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _indicesOffsets;
 };
 } // namespace CesiumGltfReader
