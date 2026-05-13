@@ -325,7 +325,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
 
 struct LoadRequest {
   CesiumAsync::Promise<void> promise;
-  std::set<Tile::ConstPointer> requestedTiles;
+  std::set<Tile*> requestedTiles;
 };
 
 struct SharedTileSelectionState {
@@ -503,11 +503,11 @@ private:
   CesiumAsync::Future<void> addLoadRequest(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::vector<TileLoadTask>& tasks) {
-    std::set<Tile::ConstPointer> requestedTiles;
+    std::set<Tile*> requestedTiles;
     for (const TileLoadTask& task : tasks) {
       this->_pSharedTileSelectionState->workerThreadLoadQueue.emplace_back(
           task);
-      requestedTiles.insert(task.pTile);
+      requestedTiles.insert(&*task.pTile);
     }
 
     LoadRequest request{
@@ -772,7 +772,7 @@ public:
 
         for (LoadRequest& request :
              this->_pSharedTileSelectionState->loadRequests) {
-          if (request.requestedTiles.erase(pTile) > 0) {
+          if (request.requestedTiles.erase(&*pTile) > 0) {
             if (request.requestedTiles.empty()) {
               // Keep list of promises to resolve until after we've unlocked the
               // mutex.
