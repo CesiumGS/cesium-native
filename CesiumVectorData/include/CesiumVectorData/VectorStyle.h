@@ -94,6 +94,22 @@ struct PolygonStyle {
   std::optional<LineStyle> outline;
 };
 
+/** @brief The style used to draw a point. */
+struct PointStyle {
+  /** @brief The radius of the point in pixels. */
+  double radius = 1.0;
+  /**
+   * @brief The color used to fill this point. If `std::nullopt`, the point
+   * will not be filled.
+   */
+  std::optional<ColorStyle> fill;
+  /**
+   * @brief The style used to outline this point. If `std::nullopt`, the
+   * point will not be outlined.
+   */
+  std::optional<LineStyle> outline;
+};
+
 /**
  * @brief Style information to use when drawing vector data.
  */
@@ -106,6 +122,10 @@ struct VectorStyle {
    * @brief The style to use when drawing polygons.
    */
   PolygonStyle polygon;
+  /**
+   * @brief The style to use when drawing points.
+   */
+  PointStyle point;
 
   /**
    * @brief Default constructor for VectorStyle.
@@ -113,9 +133,17 @@ struct VectorStyle {
   VectorStyle() = default;
 
   /**
-   * @brief Initializes style information for all types.
+   * @brief Initializes style information for point and polygon types.
    */
   VectorStyle(const LineStyle& lineStyle, const PolygonStyle& polygonStyle);
+
+  /**
+   * @brief Initializes style information for all types.
+   */
+  VectorStyle(
+      const LineStyle& lineStyle,
+      const PolygonStyle& polygonStyle,
+      const PointStyle& pointStyle);
 
   /**
    * @brief Initializes all styles to the given color.

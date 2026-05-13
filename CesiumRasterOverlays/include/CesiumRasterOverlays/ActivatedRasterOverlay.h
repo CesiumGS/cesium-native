@@ -259,6 +259,10 @@ public:
    */
   bool loadTileThrottled(RasterOverlayTile& tile);
 
+  void tick();
+
+  bool isTickable() const noexcept;
+
 private:
   CesiumAsync::Future<RasterOverlayTileLoadResult>
   doLoad(RasterOverlayTile& tile, bool isThrottledLoad);

@@ -3,10 +3,12 @@
 #include "VectorStyle.h"
 
 #include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/Model.h>
 #include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
@@ -77,6 +79,36 @@ public:
    */
   void
   drawPolyline(const std::vector<glm::dvec3>& points, const LineStyle& style);
+
+  /**
+   * @brief Draws a polyline (a set of multiple line segments) to the canvas.
+   *
+   * @param points The set of points making up the polyline.
+   * @param style The \ref LineStyle to use when drawing the polyline.
+   */
+  void drawPolyline(
+      const std::vector<CesiumGeospatial::Cartographic>& points,
+      const LineStyle& style);
+
+  /**
+   * @brief Draws a set of points to the canvas.
+   *
+   * @param points The set of points to draw. The coordinates should be
+   * specified in degrees.
+   * @param style The \ref PointStyle to use when drawing the points.
+   */
+  void
+  drawPoints(const std::vector<glm::dvec3>& points, const PointStyle& style);
+
+  /**
+   * @brief Draws a set of points to the canvas.
+   *
+   * @param points The set of points to draw.
+   * @param style The \ref PointStyle to use when drawing the points.
+   */
+  void drawPoints(
+      const std::vector<CesiumGeospatial::Cartographic>& points,
+      const PointStyle& style);
 
   /**
    * @brief Rasterizes a `GeoJsonObject` to the canvas.
