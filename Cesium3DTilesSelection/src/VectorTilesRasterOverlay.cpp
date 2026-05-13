@@ -294,8 +294,8 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
             const int64_t nextLoopIndicesOffset = i + 1 < numPolygons ? std::visit(CesiumGltf::IndexFromAccessor{i + 1}, loopIndicesOffsetsView) : numPolygons - 1;
             std::vector<glm::dvec2> vertices;
 
-            for(int64_t i = loopIndicesOffset; i < nextLoopIndicesOffset; i++) {
-              int64_t loopIndex = std::visit(CesiumGltf::IndexFromAccessor{i}, loopIndicesView);
+            for(int64_t j = loopIndicesOffset; j < nextLoopIndicesOffset; j++) {
+              int64_t loopIndex = std::visit(CesiumGltf::IndexFromAccessor{j}, loopIndicesView);
               if(loopIndex == maxPolygonIndex) {
                 continue;
               }
