@@ -328,7 +328,6 @@ double computeSse(
 
 bool meetsSseThreshold(
     const TileSelectionContext& context,
-    const TilesetFrameState& frameState,
     double sse,
     bool culled) noexcept {
   return culled ? !context.options.enforceCulledScreenSpaceError ||
@@ -476,10 +475,8 @@ void fogCull(
   }
 }
 
-TileOcclusionState checkOcclusion(
-    const TileSelectionContext& context,
-    const TilesetFrameState& frameState,
-    const Tile& tile) {
+TileOcclusionState
+checkOcclusion(const TileSelectionContext& context, const Tile& tile) {
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
       context.externals.pTileOcclusionProxyPool;
   if (!pOcclusionPool) {
@@ -564,7 +561,6 @@ TileOcclusionState checkOcclusion(
 }
 
 TraversalDetails createTraversalDetailsForSingleTile(
-    const TileSelectionContext& context,
     const TilesetFrameState& frameState,
     const Tile& tile) {
   TileSelectionState::Result lastFrameResult =
@@ -618,11 +614,10 @@ TraversalDetails renderLeaf(
       tile,
       TileLoadPriorityGroup::Normal,
       tilePriority);
-  return createTraversalDetailsForSingleTile(context, frameState, tile);
+  return createTraversalDetailsForSingleTile(frameState, tile);
 }
 
 TraversalDetails renderInnerTile(
-    const TileSelectionContext& context,
     const TilesetFrameState& frameState,
     Tile& tile,
     double tileSse,
@@ -634,7 +629,7 @@ TraversalDetails renderInnerTile(
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
   addTileToRender(result, tile, tileSse);
-  return createTraversalDetailsForSingleTile(context, frameState, tile);
+  return createTraversalDetailsForSingleTile(frameState, tile);
 }
 
 /**
@@ -876,7 +871,7 @@ TraversalDetails visitTile(
                               (!tileLastRefined || !childLastRefined);
 
   if (shouldCheckOcclusion) {
-    TileOcclusionState occlusion = checkOcclusion(context, frameState, tile);
+    TileOcclusionState occlusion = checkOcclusion(context, tile);
     if (occlusion == TileOcclusionState::Occluded) {
       ++result.tilesOccluded;
       action = VisitTileAction::Render;
@@ -931,7 +926,7 @@ TraversalDetails visitTile(
             TileLoadPriorityGroup::Normal,
             tilePriority);
       }
-      return renderInnerTile(context, frameState, tile, tileSse, result);
+      return renderInnerTile(frameState, tile, tileSse, result);
     }
   }
 
@@ -1111,8 +1106,7 @@ TraversalDetails visitTileIfNeeded(
           tile,
           TileLoadPriorityGroup::Normal,
           tilePriority);
-      traversalDetails =
-          createTraversalDetailsForSingleTile(context, frameState, tile);
+      traversalDetails = createTraversalDetailsForSingleTile(frameState, tile);
     } else if (context.options.preloadSiblings) {
       addTileToLoadQueue(
           context,
@@ -1131,8 +1125,7 @@ TraversalDetails visitTileIfNeeded(
   }
 
   double tileSse = computeSse(context, frameState, tile);
-  bool meetsSse =
-      meetsSseThreshold(context, frameState, tileSse, cullResult.culled);
+  bool meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
 
   TraversalDetails details = visitTile(
       context,
