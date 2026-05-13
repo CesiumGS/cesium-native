@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Upgraded vcpkg to `2026.04.27`.
+
 ##### Additions :tada:
 
 - Added support for [`EXT_mesh_primitive_edge_visibility`](https://github.com/KhronosGroup/glTF/pull/2479) in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
