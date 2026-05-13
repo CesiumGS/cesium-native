@@ -45,14 +45,16 @@ namespace Cesium3DTilesSelection {
 
 namespace {
 
-struct TraversalContext {
-  const TilesetOptions& options;
-  const TilesetExternals& externals;
-  const TilesetFrameState& frameState;
-  std::vector<double>& distances;
-  std::vector<const TileOcclusionRendererProxy*>& childOcclusionProxies;
-};
-
+/**
+ * @brief The result of traversing one branch of the tile hierarchy.
+ *
+ * Instances of this structure are created by the `_visit...` functions,
+ * and summarize the information that was gathered during the traversal
+ * of the respective branch, so that this information can be used by
+ * the parent to decide on the further traversal process.
+ *
+ * @private
+ */
 struct TraversalDetails {
   bool allAreRenderable = true;
   bool anyWereRenderedLastFrame = false;
@@ -67,7 +69,8 @@ struct CullResult {
 enum class VisitTileAction { Render, Refine };
 
 TraversalDetails visitTileIfNeeded(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -76,18 +79,12 @@ TraversalDetails visitTileIfNeeded(
 } // namespace
 
 void selectTiles(
-    const TileSelectionContext& ctx,
+    const TileSelectionContext& context,
     const TilesetFrameState& frameState,
     Tile& rootTile,
     ViewUpdateResult& result) {
-  TraversalContext tctx{
-      ctx.options,
-      ctx.externals,
-      frameState,
-      ctx.scratchDistances,
-      ctx.scratchOcclusionProxies};
 
-  visitTileIfNeeded(tctx, 0, false, rootTile, result);
+  visitTileIfNeeded(context, frameState, 0, false, rootTile, result);
 }
 
 namespace {
@@ -228,13 +225,14 @@ void computeDistances(
 }
 
 void addTileToLoadQueue(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     Tile& tile,
     TileLoadPriorityGroup priorityGroup,
     double priority) {
-  ctx.frameState.viewGroup.addToLoadQueue(
+  frameState.viewGroup.addToLoadQueue(
       TileLoadTask{&tile, priorityGroup, priority},
-      ctx.externals.pGltfModifier);
+      context.externals.pGltfModifier);
 }
 
 void addTileToRender(ViewUpdateResult& result, Tile& tile, double sse) {
@@ -242,10 +240,13 @@ void addTileToRender(ViewUpdateResult& result, Tile& tile, double sse) {
   result.tileScreenSpaceErrorThisFrame.emplace_back(sse);
 }
 
-double computeSse(const TraversalContext& ctx, const Tile& tile) noexcept {
+double computeSse(
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
+    const Tile& tile) noexcept {
   double largestSse = 0.0;
-  const auto& frustums = ctx.frameState.frustums;
-  const auto& distances = ctx.distances;
+  const auto& frustums = frameState.frustums;
+  const auto& distances = context.scratchDistances;
   CESIUM_ASSERT(frustums.size() == distances.size());
   for (size_t i = 0; i < frustums.size(); ++i) {
     const double sse = frustums[i].computeScreenSpaceError(
@@ -259,12 +260,13 @@ double computeSse(const TraversalContext& ctx, const Tile& tile) noexcept {
 }
 
 bool meetsSseThreshold(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     double sse,
     bool culled) noexcept {
-  return culled ? !ctx.options.enforceCulledScreenSpaceError ||
-                      sse < ctx.options.culledScreenSpaceError
-                : sse < ctx.options.maximumScreenSpaceError;
+  return culled ? !context.options.enforceCulledScreenSpaceError ||
+                      sse < context.options.culledScreenSpaceError
+                : sse < context.options.maximumScreenSpaceError;
 }
 
 bool isLeaf(const Tile& tile) noexcept { return tile.getChildren().empty(); }
@@ -278,15 +280,9 @@ bool mustContinueRefiningToDeeperTiles(
          !tile.isRenderable();
 }
 
-TraversalDetails visitTileIfNeeded(
-    const TraversalContext& ctx,
-    uint32_t depth,
-    bool ancestorMeetsSse,
-    Tile& tile,
-    ViewUpdateResult& result);
-
 TraversalDetails visitTile(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     uint32_t depth,
     bool meetsSse,
     bool ancestorMeetsSse,
@@ -296,7 +292,8 @@ TraversalDetails visitTile(
     ViewUpdateResult& result);
 
 TraversalDetails visitVisibleChildrenNearToFar(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
@@ -305,7 +302,8 @@ TraversalDetails visitVisibleChildrenNearToFar(
 // Frustum and fog culling
 
 void frustumCull(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     const Tile& tile,
     bool cullWithChildrenBounds,
     CullResult& cullResult) {
@@ -314,8 +312,8 @@ void frustumCull(
     return;
   }
 
-  const Ellipsoid& ellipsoid = ctx.options.ellipsoid;
-  const std::vector<ViewState>& frustums = ctx.frameState.frustums;
+  const Ellipsoid& ellipsoid = context.options.ellipsoid;
+  const std::vector<ViewState>& frustums = frameState.frustums;
 
   if (cullWithChildrenBounds) {
     if (std::any_of(
@@ -323,8 +321,8 @@ void frustumCull(
             frustums.end(),
             [&ellipsoid,
              children = tile.getChildren(),
-             renderTilesUnderCamera =
-                 ctx.options.renderTilesUnderCamera](const ViewState& frustum) {
+             renderTilesUnderCamera = context.options.renderTilesUnderCamera](
+                const ViewState& frustum) {
               for (const Tile& child : children) {
                 if (isVisibleFromCamera(
                         frustum,
@@ -343,7 +341,8 @@ void frustumCull(
                  frustums.end(),
                  [&ellipsoid,
                   &boundingVolume = tile.getBoundingVolume(),
-                  renderTilesUnderCamera = ctx.options.renderTilesUnderCamera](
+                  renderTilesUnderCamera =
+                      context.options.renderTilesUnderCamera](
                      const ViewState& frustum) {
                    return isVisibleFromCamera(
                        frustum,
@@ -355,20 +354,23 @@ void frustumCull(
   }
 
   cullResult.culled = true;
-  if (ctx.options.enableFrustumCulling) {
+  if (context.options.enableFrustumCulling) {
     cullResult.shouldVisit = false;
   }
 }
 
-void fogCull(const TraversalContext& ctx, CullResult& cullResult) {
+void fogCull(
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
+    CullResult& cullResult) {
 
   if (!cullResult.shouldVisit || cullResult.culled) {
     return;
   }
 
-  const auto& frustums = ctx.frameState.frustums;
-  const auto& fogDensities = ctx.frameState.fogDensities;
-  const auto& distances = ctx.distances;
+  const auto& frustums = frameState.frustums;
+  const auto& fogDensities = frameState.fogDensities;
+  const auto& distances = context.scratchDistances;
 
   bool isFogCulled = true;
   for (size_t i = 0; i < frustums.size(); ++i) {
@@ -380,16 +382,18 @@ void fogCull(const TraversalContext& ctx, CullResult& cullResult) {
 
   if (isFogCulled) {
     cullResult.culled = true;
-    if (ctx.options.enableFogCulling) {
+    if (context.options.enableFogCulling) {
       cullResult.shouldVisit = false;
     }
   }
 }
 
-TileOcclusionState
-checkOcclusion(const TraversalContext& ctx, const Tile& tile) {
+TileOcclusionState checkOcclusion(
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
+    const Tile& tile) {
   const std::shared_ptr<TileOcclusionRendererProxyPool>& pOcclusionPool =
-      ctx.externals.pTileOcclusionProxyPool;
+      context.externals.pTileOcclusionProxyPool;
   if (!pOcclusionPool) {
     return TileOcclusionState::NotOccluded;
   }
@@ -419,7 +423,7 @@ checkOcclusion(const TraversalContext& ctx, const Tile& tile) {
   }
 
   std::vector<const TileOcclusionRendererProxy*>& childOcclusionProxies =
-      ctx.childOcclusionProxies;
+      context.scratchOcclusionProxies;
   childOcclusionProxies.clear();
   childOcclusionProxies.reserve(tile.getChildren().size());
   for (const Tile& child : tile.getChildren()) {
@@ -447,10 +451,11 @@ checkOcclusion(const TraversalContext& ctx, const Tile& tile) {
 }
 
 TraversalDetails createTraversalDetailsForSingleTile(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     const Tile& tile) {
   TileSelectionState::Result lastFrameResult =
-      getPreviousState(ctx.frameState.viewGroup, tile).getResult();
+      getPreviousState(frameState.viewGroup, tile).getResult();
 
   bool isRenderable = tile.isRenderable();
   bool wasRenderedLastFrame =
@@ -461,7 +466,7 @@ TraversalDetails createTraversalDetailsForSingleTile(
     if (tile.getRefine() == TileRefine::Add) {
       wasRenderedLastFrame = true;
     } else {
-      ctx.frameState.viewGroup.getTraversalState().forEachPreviousDescendant(
+      frameState.viewGroup.getTraversalState().forEachPreviousDescendant(
           [&](const Tile::Pointer& /* pTile */,
               const TileSelectionState& state) {
             if (state.getResult() == TileSelectionState::Result::Rendered) {
@@ -479,35 +484,43 @@ TraversalDetails createTraversalDetailsForSingleTile(
 }
 
 TraversalDetails renderLeaf(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     Tile& tile,
     double tilePriority,
     double tileSse,
     ViewUpdateResult& result) {
-  ctx.frameState.viewGroup.getTraversalState().currentState() =
+  frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
   addTileToRender(result, tile, tileSse);
-  addTileToLoadQueue(ctx, tile, TileLoadPriorityGroup::Normal, tilePriority);
-  return createTraversalDetailsForSingleTile(ctx, tile);
+  addTileToLoadQueue(
+      context,
+      frameState,
+      tile,
+      TileLoadPriorityGroup::Normal,
+      tilePriority);
+  return createTraversalDetailsForSingleTile(context, frameState, tile);
 }
 
 TraversalDetails renderInnerTile(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     Tile& tile,
     double tileSse,
     ViewUpdateResult& result) {
   addCurrentTileDescendantsToTilesFadingOutIfPreviouslyRendered(
-      ctx.frameState.viewGroup,
+      frameState.viewGroup,
       tile,
       result);
-  ctx.frameState.viewGroup.getTraversalState().currentState() =
+  frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
   addTileToRender(result, tile, tileSse);
-  return createTraversalDetailsForSingleTile(ctx, tile);
+  return createTraversalDetailsForSingleTile(context, frameState, tile);
 }
 
 bool loadAndRenderAdditiveRefinedTile(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     Tile& tile,
     ViewUpdateResult& result,
     double tilePriority,
@@ -517,7 +530,8 @@ bool loadAndRenderAdditiveRefinedTile(
     addTileToRender(result, tile, tileSse);
     if (!queuedForLoad) {
       addTileToLoadQueue(
-          ctx,
+          context,
+          frameState,
           tile,
           TileLoadPriorityGroup::Normal,
           tilePriority);
@@ -528,7 +542,8 @@ bool loadAndRenderAdditiveRefinedTile(
 }
 
 bool kickDescendantsAndRenderTile(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     Tile& tile,
     ViewUpdateResult& result,
     TraversalDetails& traversalDetails,
@@ -539,7 +554,7 @@ bool kickDescendantsAndRenderTile(
     double tileSse) {
 
   TilesetViewGroup::TraversalState& traversalState =
-      ctx.frameState.viewGroup.getTraversalState();
+      frameState.viewGroup.getTraversalState();
 
   traversalState.forEachCurrentDescendant(
       [](const Tile::Pointer& /*pTile*/, TileSelectionState& selectionState) {
@@ -577,7 +592,7 @@ bool kickDescendantsAndRenderTile(
       TileSelectionState(TileSelectionState::Result::Rendered);
 
   TileSelectionState::Result lastFrameSelectionState =
-      getPreviousState(ctx.frameState.viewGroup, tile).getResult();
+      getPreviousState(frameState.viewGroup, tile).getResult();
   const bool wasRenderedLastFrame =
       lastFrameSelectionState == TileSelectionState::Result::Rendered;
   const bool isRenderable = tile.isRenderable();
@@ -585,16 +600,17 @@ bool kickDescendantsAndRenderTile(
 
   if (!wasReallyRenderedLastFrame &&
       traversalDetails.notYetRenderableCount >
-          ctx.options.loadingDescendantLimit &&
+          context.options.loadingDescendantLimit &&
       !tile.isExternalContent() && !tile.getUnconditionallyRefine()) {
 
     result.tilesKicked += static_cast<uint32_t>(
-        ctx.frameState.viewGroup.restoreTileLoadQueueCheckpoint(
+        frameState.viewGroup.restoreTileLoadQueueCheckpoint(
             loadQueueBeforeChildren));
 
     if (!queuedForLoad) {
       addTileToLoadQueue(
-          ctx,
+          context,
+          frameState,
           tile,
           TileLoadPriorityGroup::Normal,
           tilePriority);
@@ -610,15 +626,21 @@ bool kickDescendantsAndRenderTile(
 }
 
 TraversalDetails visitVisibleChildrenNearToFar(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result) {
   TraversalDetails traversalDetails;
   for (Tile& child : tile.getChildren()) {
-    const TraversalDetails childTraversal =
-        visitTileIfNeeded(ctx, depth + 1, ancestorMeetsSse, child, result);
+    const TraversalDetails childTraversal = visitTileIfNeeded(
+        context,
+        frameState,
+        depth + 1,
+        ancestorMeetsSse,
+        child,
+        result);
     traversalDetails.allAreRenderable &= childTraversal.allAreRenderable;
     traversalDetails.anyWereRenderedLastFrame |=
         childTraversal.anyWereRenderedLastFrame;
@@ -629,7 +651,8 @@ TraversalDetails visitVisibleChildrenNearToFar(
 }
 
 TraversalDetails visitTile(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     uint32_t depth,
     bool meetsSse,
     bool ancestorMeetsSse,
@@ -639,13 +662,13 @@ TraversalDetails visitTile(
     ViewUpdateResult& result) {
 
   TilesetViewGroup::TraversalState& traversalState =
-      ctx.frameState.viewGroup.getTraversalState();
+      frameState.viewGroup.getTraversalState();
 
   ++result.tilesVisited;
   result.maxDepthVisited = glm::max(result.maxDepthVisited, depth);
 
   if (isLeaf(tile)) {
-    return renderLeaf(ctx, tile, tilePriority, tileSse, result);
+    return renderLeaf(context, frameState, tile, tilePriority, tileSse, result);
   }
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
@@ -656,7 +679,7 @@ TraversalDetails visitTile(
                                : VisitTileAction::Render;
 
   TileSelectionState lastFrameSelectionState =
-      getPreviousState(ctx.frameState.viewGroup, tile);
+      getPreviousState(frameState.viewGroup, tile);
   TileSelectionState::Result lastFrameSelectionResult =
       lastFrameSelectionState.getResult();
 
@@ -670,19 +693,20 @@ TraversalDetails visitTile(
         }
       });
 
-  bool shouldCheckOcclusion =
-      ctx.options.enableOcclusionCulling && action == VisitTileAction::Refine &&
-      !unconditionallyRefine && (!tileLastRefined || !childLastRefined);
+  bool shouldCheckOcclusion = context.options.enableOcclusionCulling &&
+                              action == VisitTileAction::Refine &&
+                              !unconditionallyRefine &&
+                              (!tileLastRefined || !childLastRefined);
 
   if (shouldCheckOcclusion) {
-    TileOcclusionState occlusion = checkOcclusion(ctx, tile);
+    TileOcclusionState occlusion = checkOcclusion(context, frameState, tile);
     if (occlusion == TileOcclusionState::Occluded) {
       ++result.tilesOccluded;
       action = VisitTileAction::Render;
       meetsSse = true;
     } else if (
         occlusion == TileOcclusionState::OcclusionUnavailable &&
-        ctx.options.delayRefinementForOcclusion &&
+        context.options.delayRefinementForOcclusion &&
         lastFrameSelectionState.getOriginalResult() !=
             TileSelectionState::Result::Refined) {
       ++result.tilesWaitingForOcclusionResults;
@@ -700,7 +724,8 @@ TraversalDetails visitTile(
       action = VisitTileAction::Refine;
       if (!ancestorMeetsSse) {
         addTileToLoadQueue(
-            ctx,
+            context,
+            frameState,
             tile,
             TileLoadPriorityGroup::Urgent,
             tilePriority);
@@ -710,18 +735,20 @@ TraversalDetails visitTile(
     } else {
       if (!ancestorMeetsSse) {
         addTileToLoadQueue(
-            ctx,
+            context,
+            frameState,
             tile,
             TileLoadPriorityGroup::Normal,
             tilePriority);
       }
-      return renderInnerTile(ctx, tile, tileSse, result);
+      return renderInnerTile(context, frameState, tile, tileSse, result);
     }
   }
 
   // Refine!
   queuedForLoad = loadAndRenderAdditiveRefinedTile(
-                      ctx,
+                      context,
+                      frameState,
                       tile,
                       result,
                       tilePriority,
@@ -732,29 +759,35 @@ TraversalDetails visitTile(
   const size_t firstRenderedDescendantIndex =
       result.tilesToRenderThisFrame.size();
   TilesetViewGroup::LoadQueueCheckpoint loadQueueBeforeChildren =
-      ctx.frameState.viewGroup.saveTileLoadQueueCheckpoint();
+      frameState.viewGroup.saveTileLoadQueueCheckpoint();
 
-  TraversalDetails traversalDetails =
-      visitVisibleChildrenNearToFar(ctx, depth, ancestorMeetsSse, tile, result);
+  TraversalDetails traversalDetails = visitVisibleChildrenNearToFar(
+      context,
+      frameState,
+      depth,
+      ancestorMeetsSse,
+      tile,
+      result);
 
   const TileRenderContent* pRenderContent =
       tile.getContent().getRenderContent();
   bool kickDueToNonReadyDescendant = !traversalDetails.allAreRenderable &&
                                      !traversalDetails.anyWereRenderedLastFrame;
   bool kickDueToTileFadingIn =
-      ctx.options.enableLodTransitionPeriod &&
-      ctx.options.kickDescendantsWhileFadingIn &&
+      context.options.enableLodTransitionPeriod &&
+      context.options.kickDescendantsWhileFadingIn &&
       lastFrameSelectionResult == TileSelectionState::Result::Rendered &&
       pRenderContent && pRenderContent->getLodTransitionFadePercentage() < 1.0f;
 
   bool wantToKick = kickDueToNonReadyDescendant || kickDueToTileFadingIn;
   bool willKick = wantToKick && (traversalDetails.notYetRenderableCount >
-                                     ctx.options.loadingDescendantLimit ||
+                                     context.options.loadingDescendantLimit ||
                                  tile.isRenderable());
 
   if (willKick) {
     queuedForLoad = kickDescendantsAndRenderTile(
-        ctx,
+        context,
+        frameState,
         tile,
         result,
         traversalDetails,
@@ -766,7 +799,7 @@ TraversalDetails visitTile(
   } else {
     if (tile.getRefine() != TileRefine::Add) {
       addCurrentTileToTilesFadingOutIfPreviouslyRendered(
-          ctx.frameState.viewGroup,
+          frameState.viewGroup,
           tile,
           result);
     }
@@ -774,30 +807,36 @@ TraversalDetails visitTile(
         TileSelectionState(TileSelectionState::Result::Refined);
   }
 
-  if (ctx.options.preloadAncestors && !queuedForLoad) {
-    addTileToLoadQueue(ctx, tile, TileLoadPriorityGroup::Preload, tilePriority);
+  if (context.options.preloadAncestors && !queuedForLoad) {
+    addTileToLoadQueue(
+        context,
+        frameState,
+        tile,
+        TileLoadPriorityGroup::Preload,
+        tilePriority);
   }
 
   return traversalDetails;
 }
 
 TraversalDetails visitTileIfNeeded(
-    const TraversalContext& ctx,
+    const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     uint32_t depth,
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result) {
 
   TilesetViewGroup::TraversalState& traversalState =
-      ctx.frameState.viewGroup.getTraversalState();
+      frameState.viewGroup.getTraversalState();
   traversalState.beginNode(&tile);
 
-  computeDistances(tile, ctx.frameState.frustums, ctx.distances);
+  computeDistances(tile, frameState.frustums, context.scratchDistances);
   double tilePriority =
-      computeTilePriority(tile, ctx.frameState.frustums, ctx.distances);
+      computeTilePriority(tile, frameState.frustums, context.scratchDistances);
 
-  if (ctx.frameState.tileStateUpdater) {
-    ctx.frameState.tileStateUpdater(tile);
+  if (frameState.tileStateUpdater) {
+    frameState.tileStateUpdater(tile);
   }
 
   CullResult cullResult{};
@@ -812,7 +851,7 @@ TraversalDetails visitTileIfNeeded(
   }
 
   for (const std::shared_ptr<ITileExcluder>& pExcluder :
-       ctx.options.excluders) {
+       context.options.excluders) {
     if (pExcluder->shouldExclude(tile)) {
       cullResult.culled = true;
       cullResult.shouldVisit = false;
@@ -820,11 +859,12 @@ TraversalDetails visitTileIfNeeded(
     }
   }
 
-  frustumCull(ctx, tile, cullWithChildrenBounds, cullResult);
-  fogCull(ctx, cullResult);
+  frustumCull(context, frameState, tile, cullWithChildrenBounds, cullResult);
+  fogCull(context, frameState, cullResult);
 
   if (!cullResult.shouldVisit && tile.getUnconditionallyRefine()) {
-    if ((ctx.options.forbidHoles && tile.getRefine() == TileRefine::Replace) ||
+    if ((context.options.forbidHoles &&
+         tile.getRefine() == TileRefine::Replace) ||
         tile.getParent() == nullptr) {
       cullResult.shouldVisit = true;
     }
@@ -832,26 +872,30 @@ TraversalDetails visitTileIfNeeded(
 
   if (!cullResult.shouldVisit) {
     addCurrentTileAndDescendantsToTilesFadingOutIfPreviouslyRendered(
-        ctx.frameState.viewGroup,
+        frameState.viewGroup,
         tile,
         result);
 
-    ctx.frameState.viewGroup.getTraversalState().currentState() =
+    frameState.viewGroup.getTraversalState().currentState() =
         TileSelectionState(TileSelectionState::Result::Culled);
     ++result.tilesCulled;
 
     TraversalDetails traversalDetails{};
 
-    if (ctx.options.forbidHoles && tile.getRefine() == TileRefine::Replace) {
+    if (context.options.forbidHoles &&
+        tile.getRefine() == TileRefine::Replace) {
       addTileToLoadQueue(
-          ctx,
+          context,
+          frameState,
           tile,
           TileLoadPriorityGroup::Normal,
           tilePriority);
-      traversalDetails = createTraversalDetailsForSingleTile(ctx, tile);
-    } else if (ctx.options.preloadSiblings) {
+      traversalDetails =
+          createTraversalDetailsForSingleTile(context, frameState, tile);
+    } else if (context.options.preloadSiblings) {
       addTileToLoadQueue(
-          ctx,
+          context,
+          frameState,
           tile,
           TileLoadPriorityGroup::Preload,
           tilePriority);
@@ -865,11 +909,13 @@ TraversalDetails visitTileIfNeeded(
     ++result.culledTilesVisited;
   }
 
-  double tileSse = computeSse(ctx, tile);
-  bool meetsSse = meetsSseThreshold(ctx, tileSse, cullResult.culled);
+  double tileSse = computeSse(context, frameState, tile);
+  bool meetsSse =
+      meetsSseThreshold(context, frameState, tileSse, cullResult.culled);
 
   TraversalDetails details = visitTile(
-      ctx,
+      context,
+      frameState,
       depth,
       meetsSse,
       ancestorMeetsSse,
