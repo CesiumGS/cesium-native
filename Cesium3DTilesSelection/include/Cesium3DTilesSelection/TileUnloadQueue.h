@@ -8,6 +8,8 @@ namespace Cesium3DTilesSelection {
  * @brief LRU list of tiles eligible for content eviction.
  *
  * Head is least-recently-used, tail is most-recently-used.
+ *
+ * @private
  */
 class TileUnloadQueue {
 public:
@@ -24,24 +26,24 @@ public:
    * tracked.
    */
   void markEligible(Tile& tile) noexcept {
-    if (!_queue.contains(tile)) {
-      _queue.insertAtTail(tile);
+    if (!this->_queue.contains(tile)) {
+      this->_queue.insertAtTail(tile);
     }
   }
 
   /** @brief Removes `tile` from the queue. No-op if not present. */
-  void markIneligible(Tile& tile) noexcept { _queue.remove(tile); }
+  void markIneligible(Tile& tile) noexcept { this->_queue.remove(tile); }
 
   /** @brief Returns true if `tile` is currently in the queue. */
   bool contains(const Tile& tile) const noexcept {
-    return _queue.contains(tile);
+    return this->_queue.contains(tile);
   }
 
   /** @brief Returns the least-recently-used tile, or nullptr. */
-  Tile* head() noexcept { return _queue.head(); }
+  Tile* head() noexcept { return this->_queue.head(); }
 
   /** @brief Returns the tile following `tile` in LRU order. */
-  Tile* next(Tile& tile) noexcept { return _queue.next(tile); }
+  Tile* next(Tile& tile) noexcept { return this->_queue.next(tile); }
 
 private:
   Tile::UnusedLinkedList _queue;
