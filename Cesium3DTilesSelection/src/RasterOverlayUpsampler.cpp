@@ -1,6 +1,5 @@
-#include "RasterOverlayUpsampler.h"
-
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
+#include <Cesium3DTilesSelection/RasterOverlayUpsampler.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -22,6 +21,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 
 using namespace CesiumRasterOverlays;
 

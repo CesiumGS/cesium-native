@@ -1,26 +1,27 @@
-#include "Cesium3DTilesContent/ImplicitTilingUtilities.h"
-#include "CesiumAsync/IAssetAccessor.h"
-#include "CesiumGeometry/QuadtreeTileID.h"
-#include "CesiumGeometry/QuadtreeTilingScheme.h"
-#include "CesiumGeometry/Rectangle.h"
-#include "CesiumGeospatial/GlobeRectangle.h"
-#include "CesiumNativeTests/FileAccessor.h"
-#include "CesiumNativeTests/SimpleTaskProcessor.h"
-#include "CesiumNativeTests/checkFilesEqual.h"
-#include "CesiumNativeTests/writeTga.h"
-#include "CesiumRasterOverlays/ActivatedRasterOverlay.h"
-#include "CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h"
-#include "CesiumRasterOverlays/RasterOverlay.h"
-#include "CesiumRasterOverlays/RasterOverlayExternals.h"
-#include "CesiumRasterOverlays/RasterOverlayTile.h"
-#include "CesiumUtility/IntrusivePointer.h"
-#include "CesiumVectorData/VectorStyle.h"
-
-#include <Cesium3DTilesSelection/VectorTilesRasterOverlay.h>
+#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeometry/QuadtreeTilingScheme.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumNativeTests/FileAccessor.h>
+#include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumNativeTests/checkFilesEqual.h>
+#include <CesiumNativeTests/writeTga.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
+#include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
+#include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayExternals.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumVectorData/VectorStyle.h>
+#include <CesiumVectorOverlays/VectorTilesRasterOverlay.h>
 
 #include <doctest/doctest.h>
 
-using Cesium3DTilesSelection::VectorTilesRasterOverlay;
+using CesiumVectorOverlays::VectorTilesRasterOverlay;
 using CesiumAsync::AsyncSystem;
 using CesiumRasterOverlays::CreateRasterOverlayTileProviderParameters;
 using CesiumRasterOverlays::RasterOverlayOptions;
@@ -28,7 +29,7 @@ using CesiumUtility::IntrusivePointer;
 
 TEST_CASE("Test VectorTilesRasterOverlay") {
   const std::filesystem::path dataPath =
-      std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR);
+      std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR);
   const std::filesystem::path inputPath =
       dataPath / "ViennaStreets" / "tileset.json";
   const std::filesystem::path referencePath =
@@ -97,7 +98,7 @@ TEST_CASE("Test VectorTilesRasterOverlay") {
 
 TEST_CASE("Test VectorTilesRasterOverlay polygons") {
   /*const std::filesystem::path dataPath =
-      std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR);*/
+      std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR);*/
   const std::filesystem::path inputPath =
       "/mnt/d/Dev/vector/data/nyc_poly/tileset.json";
   /*const std::filesystem::path referencePath =

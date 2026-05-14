@@ -1,5 +1,3 @@
-#include "TilesetContentManager.h"
-
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
@@ -7,6 +5,7 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
+#include <Cesium3DTilesSelection/TilesetContentManager.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
@@ -19,6 +18,7 @@
 #include <memory>
 #include <optional>
 #include <vector>
+
 
 namespace Cesium3DTilesSelection {
 

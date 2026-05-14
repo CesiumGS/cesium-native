@@ -1,8 +1,8 @@
 #include "SimplePrepareRendererResource.h"
 #include "TestTilesetJsonLoader.h"
-#include "TilesetContentManager.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTilesSelection/TilesetContentManager.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>

@@ -1,33 +1,32 @@
-#include "Cesium3DTilesSelection/IPrepareRendererResources.h"
-#include "Cesium3DTilesSelection/TileLoadResult.h"
-#include "CesiumGeospatial/Cartographic.h"
-#include "CesiumGeospatial/CartographicPolygon.h"
-#include "CesiumGltf/AccessorUtility.h"
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumGltf/ExtensionExtMeshPolygon.h"
-#include "CesiumGltf/MeshPrimitive.h"
-#include "CesiumGltfContent/GltfUtilities.h"
-#include "CesiumUtility/ErrorList.h"
-#include "CesiumVectorData/VectorRasterizer.h"
-#include "CesiumVectorData/VectorStyle.h"
-#include "TilesetContentManager.h"
-
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
+#include <Cesium3DTilesSelection/TilesetContentManager.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
-#include <Cesium3DTilesSelection/VectorTilesRasterOverlay.h>
+#include <CesiumVectorOverlays/VectorTilesRasterOverlay.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/Promise.h>
+#include <CesiumGeospatial/Cartographic.h>
+#include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGltf/AccessorUtility.h>
+#include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionExtMeshPolygon.h>
+#include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/TreeTraversalState.h>
+#include <CesiumVectorData/VectorRasterizer.h>
+#include <CesiumVectorData/VectorStyle.h>
 
 #include <fmt/format.h>
 
@@ -37,10 +36,11 @@
 #include <set>
 #include <utility>
 
+using namespace Cesium3DTilesSelection;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 
-namespace Cesium3DTilesSelection {
+namespace CesiumVectorOverlays {
 namespace {
 struct VectorRenderContent {
   CesiumVectorData::VectorStyle style;
@@ -49,114 +49,6 @@ struct VectorRenderContent {
   std::vector<std::vector<CesiumGeospatial::Cartographic>> polylines;
   std::vector<CesiumGeospatial::CartographicPolygon> polygons;
 };
-
-/**
- * @brief Calculates the rings of a polygon from the triangles of a glTF
- * TRIANGLES primitive. This only works if triangles have consistent winding
- * order (which they should!).
- *
- * Consider the following:
- *        0          3
- *        /----------/
- *       / \        /
- *      /   \      /
- *     /     \    /
- *    /       \  /
- *   /---------\/
- *   1         2
- *
- * Following CCW winding order, the triangles would be {0, 1, 2} and {0, 2, 3}.
- * We can break this down into edges: (0, 1), (1, 2), (2, 0), (0, 2), (2, 3),
- * and (3, 0). We can see that (0, 2) and (2, 0) are interior edges as they are
- * shared by two triangles in opposite directions. Eliminating (0, 2) and (2, 0)
- * and connecting the edges starting from (0, 1), we get (0, 1, 2, 3,
- * 0) as our ring.
- *
- * This works for polygons with holes, though we have to account for multiple
- * rings.
- */
-/*CesiumUtility::Result<std::vector<std::vector<int64_t>>>
-calculateRingsFromTriangles(
-    const CesiumGltf::IndexAccessorType& indicesAccessor,
-    int64_t offset,
-    int64_t length) {
-  std::set<std::pair<int64_t, int64_t>> edges;
-  int64_t minIndex = std::numeric_limits<int64_t>::max();
-  // Build edges from triangles.
-  for (int64_t i = offset; i < offset + length; i += 3) {
-    int64_t idx0 =
-        std::visit(CesiumGltf::IndexFromAccessor{i}, indicesAccessor);
-    int64_t idx1 =
-        std::visit(CesiumGltf::IndexFromAccessor{i + 1}, indicesAccessor);
-    int64_t idx2 =
-        std::visit(CesiumGltf::IndexFromAccessor{i + 2}, indicesAccessor);
-
-    edges.emplace(idx0, idx1);
-    edges.emplace(idx1, idx2);
-    edges.emplace(idx2, idx0);
-    minIndex = std::min({minIndex, idx0, idx1, idx2});
-  }
-
-  if (edges.empty()) {
-    return {ErrorList::error("No edges found in the input triangles.")};
-  }
-
-  // Vector of edge destinations indexed by edge source (after subtracting
-  // minIndex to save space).
-  std::vector<int64_t> boundaryEdges;
-  boundaryEdges.resize(static_cast<size_t>(length), 0);
-
-  std::vector<bool> edgesAssigned(static_cast<size_t>(length), true);
-
-  // Remove edges that are shared by two triangles, leaving only the boundary
-  // edges.
-  while (!edges.empty()) {
-    const std::pair<int64_t, int64_t> edge = *edges.begin();
-    if (edges.contains({edge.second, edge.first})) {
-      edges.erase(edge);
-      edges.erase({edge.second, edge.first});
-    } else {
-      boundaryEdges[static_cast<size_t>(edge.first - minIndex)] =
-          edge.second - minIndex;
-      edges.erase(edge);
-      // Mark this edge as unassigned so we can use it as a starting point for
-      // ring construction later.
-      edgesAssigned[static_cast<size_t>(edge.first - minIndex)] = false;
-    }
-  }
-
-  std::vector<std::vector<int64_t>> rings;
-
-  while (!boundaryEdges.empty()) {
-    int64_t edgeSrcIndex = -1;
-    for (int64_t i = 0; i < length; i++) {
-      if (!edgesAssigned[static_cast<size_t>(i)]) {
-        edgeSrcIndex = i;
-        break;
-      }
-    }
-
-    if (edgeSrcIndex == -1) {
-      break;
-    }
-
-    edgesAssigned[static_cast<size_t>(edgeSrcIndex)] = true;
-
-    std::vector<int64_t> ring{
-        edgeSrcIndex + minIndex,
-        boundaryEdges[static_cast<size_t>(edgeSrcIndex)] + minIndex};
-    while (ring.back() != edgeSrcIndex + minIndex) {
-      ring.push_back(
-          boundaryEdges[static_cast<size_t>(ring.back() - minIndex)] +
-          minIndex);
-      edgesAssigned[static_cast<size_t>(ring.back() - minIndex)] = true;
-    }
-
-    rings.push_back(ring);
-  }
-
-  return {rings};
-}*/
 
 CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
     CesiumGltf::Model& model,
@@ -288,29 +180,41 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
           content->polygons.reserve(
               content->polygons.size() + static_cast<size_t>(numPolygons));
 
-          for(int64_t i = 0; i < numPolygons; i++) {
-            const int64_t loopIndicesOffset =
-                std::visit(CesiumGltf::IndexFromAccessor{i}, loopIndicesOffsetsView);
-            const int64_t nextLoopIndicesOffset = i + 1 < numPolygons ? std::visit(CesiumGltf::IndexFromAccessor{i + 1}, loopIndicesOffsetsView) : numPolygons - 1;
+          for (int64_t i = 0; i < numPolygons; i++) {
+            const int64_t loopIndicesOffset = std::visit(
+                CesiumGltf::IndexFromAccessor{i},
+                loopIndicesOffsetsView);
+            const int64_t nextLoopIndicesOffset =
+                i + 1 < numPolygons ? std::visit(
+                                          CesiumGltf::IndexFromAccessor{i + 1},
+                                          loopIndicesOffsetsView)
+                                    : numPolygons - 1;
             std::vector<glm::dvec2> vertices;
 
-            for(int64_t j = loopIndicesOffset; j < nextLoopIndicesOffset; j++) {
-              int64_t loopIndex = std::visit(CesiumGltf::IndexFromAccessor{j}, loopIndicesView);
-              if(loopIndex == maxPolygonIndex) {
+            for (int64_t j = loopIndicesOffset; j < nextLoopIndicesOffset;
+                 j++) {
+              int64_t loopIndex =
+                  std::visit(CesiumGltf::IndexFromAccessor{j}, loopIndicesView);
+              if (loopIndex == maxPolygonIndex) {
                 continue;
               }
 
               const glm::vec3 position = positionView[loopIndex];
               const glm::dvec4 transformedPosition =
                   rootTransform * nodeTransform * glm::dvec4(position, 1.0);
-              const CesiumGeospatial::Cartographic cartographic = ellipsoid
-                  .cartesianToCartographic(glm::dvec3(transformedPosition))
-                  .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0});
-              vertices.emplace_back(cartographic.longitude, cartographic.latitude);
+              const CesiumGeospatial::Cartographic cartographic =
+                  ellipsoid
+                      .cartesianToCartographic(glm::dvec3(transformedPosition))
+                      .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0});
+              vertices.emplace_back(
+                  cartographic.longitude,
+                  cartographic.latitude);
             }
 
             std::vector<uint32_t> indices;
-            content->polygons.emplace_back(std::move(vertices), std::move(indices));
+            content->polygons.emplace_back(
+                std::move(vertices),
+                std::move(indices));
           }
         } else {
           errors.emplaceWarning(fmt::format(

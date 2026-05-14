@@ -1,10 +1,9 @@
-#include "TilesetContentManager.h"
-
 #include "LayerJsonTerrainLoader.h"
-#include "RasterOverlayUpsampler.h"
 #include "TileContentLoadInfo.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTilesSelection/RasterOverlayUpsampler.h>
+#include <Cesium3DTilesSelection/TilesetContentManager.h>
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierState.h>

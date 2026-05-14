@@ -2,10 +2,15 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- `CesiumRasterOverlays::GeoJsonDocumentRasterOverlay` has been moved to the `CesiumVectorOverlays` library and namespace.
+
 ##### Additions :tada:
 
 - Added support for [`EXT_mesh_primitive_edge_visibility`](https://github.com/KhronosGroup/glTF/pull/2479) in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added support for [`3DTILES_content_conditional`](https://github.com/CesiumGS/3d-tiles/pull/834) in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
+- Added `CesiumVectorOverlays::VectorTilesRasterOverlay` supporting vector data loaded from 3D Tiles tilesets.
 
 ### v0.60.0 - 2026-05-01
 

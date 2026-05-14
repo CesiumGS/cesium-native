@@ -9,7 +9,7 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/writeTga.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
-#include <CesiumRasterOverlays/GeoJsonDocumentRasterOverlay.h>
+#include <CesiumVectorOverlays/GeoJsonDocumentRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
@@ -26,6 +26,7 @@ using namespace CesiumAsync;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 using namespace CesiumRasterOverlays;
+using namespace CesiumVectorOverlays;
 using namespace CesiumVectorData;
 
 const size_t BENCHMARK_ITERATIONS = 100000;
@@ -149,7 +150,7 @@ TEST_CASE(
       std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
 
   const std::filesystem::path testDataPath =
-      std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+      std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR) /
       "vienna-streets.geojson";
   Result<GeoJsonDocument> docResult =
       GeoJsonDocument::fromGeoJson(readFile(testDataPath));
@@ -243,7 +244,7 @@ TEST_CASE(
 TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
           "height set by pixels") {
   const std::filesystem::path testDataPath =
-      std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+      std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR) /
       "equator.geojson";
 
   GeoJsonDocumentRasterOverlayOptions options{
@@ -273,14 +274,14 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
   CesiumNativeTests::checkFilesEqual(
       std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
           "out-equator-meridian.tga",
-      std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+      std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR) /
           "equator-meridian.tga");
 }
 
 TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
           "height set by meters") {
   const std::filesystem::path testDataPath =
-      std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+      std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR) /
       "equator.geojson";
 
   GeoJsonDocumentRasterOverlayOptions options{
@@ -321,14 +322,14 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
   CesiumNativeTests::checkFilesEqual(
       std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
           "out-equator-meridian-meters.tga",
-      std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+      std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR) /
           "equator-meridian-meters.tga");
 }
 
 TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
           "wrapping around the earth") {
   const std::filesystem::path testDataPath =
-      std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+      std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR) /
       "equator.geojson";
 
   GeoJsonDocumentRasterOverlayOptions options{
@@ -357,7 +358,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
     CesiumNativeTests::checkFilesEqual(
         std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
             "out-equator-antimeridian-1.tga",
-        std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+        std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR) /
             "equator-antimeridian.tga");
   }
 
@@ -377,7 +378,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
     CesiumNativeTests::checkFilesEqual(
         std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
             "out-equator-antimeridian-2.tga",
-        std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+        std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR) /
             "equator-antimeridian.tga");
   }
 
@@ -397,7 +398,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
     CesiumNativeTests::checkFilesEqual(
         std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
             "out-equator-antimeridian-3.tga",
-        std::filesystem::path(CesiumRasterOverlays_TEST_DATA_DIR) /
+        std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR) /
             "equator-antimeridian.tga");
   }
 }

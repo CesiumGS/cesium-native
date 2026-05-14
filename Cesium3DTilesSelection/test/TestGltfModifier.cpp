@@ -1,5 +1,5 @@
 #include "MockTilesetContentManager.h"
-#include "TilesetContentManager.h"
+#include <Cesium3DTilesSelection/TilesetContentManager.h>
 
 #include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>

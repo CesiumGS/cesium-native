@@ -1,16 +1,13 @@
-#include "CesiumVectorData/VectorStyle.h"
-
-#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include "Library.h"
+#include <CesiumVectorData/VectorStyle.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 
-namespace Cesium3DTilesSelection {
-class TilesetContentManager;
-
+namespace CesiumVectorOverlays {
 /**
  * @brief A raster overlay made from rasterizing a \ref
  * CesiumVectorData::GeoJsonDocument.
  */
-class CESIUMRASTEROVERLAYS_API VectorTilesRasterOverlay final
+class CESIUMVECTOROVERLAYS_API VectorTilesRasterOverlay final
     : public CesiumRasterOverlays::RasterOverlay {
 
 public:
@@ -40,4 +37,4 @@ private:
   std::string _url;
   CesiumVectorData::VectorStyle _defaultStyle;
 };
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumVectorOverlays

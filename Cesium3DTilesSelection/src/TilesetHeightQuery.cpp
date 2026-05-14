@@ -1,6 +1,6 @@
 #include "TilesetHeightQuery.h"
 
-#include "TilesetContentManager.h"
+#include <Cesium3DTilesSelection/TilesetContentManager.h>
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/ITilesetHeightSampler.h>

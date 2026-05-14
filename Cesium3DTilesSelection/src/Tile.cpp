@@ -1,5 +1,4 @@
-#include "TilesetContentManager.h"
-
+#include <Cesium3DTilesSelection/TilesetContentManager.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
