@@ -28,6 +28,9 @@
     "3DTILES_ellipsoid extension": {
       "overrideName": "Extension3dTilesEllipsoid"
     },
+    "MAXAR_content_geojson tileset extension": {
+      "overrideName": "ExtensionMaxarContentGeojson"
+    },
     "Metadata Entity": {
       "isBaseClass": true
     },
@@ -54,6 +57,10 @@
     {
       "extensionName": "3DTILES_content_voxels",
       "schema": "3DTILES_content_voxels/schema/content.3DTILES_content_voxels.schema.json"
+    },
+    {
+      "extensionName": "MAXAR_content_geojson",
+      "schema": "MAXAR_content_geojson/schema/tileset.MAXAR_content_geojson.schema.json"
     }
   ]
 }
