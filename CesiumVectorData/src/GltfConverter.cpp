@@ -57,12 +57,15 @@ std::vector<uint32_t> lineStringToLines(size_t startIndex, size_t count) {
   return result;
 }
 
+using PolygonRing = std::vector<glm::dvec3>;
+using Polygon = std::vector<PolygonRing>;
+
 std::vector<uint32_t>
-triangulatePolygon(const std::vector<std::vector<glm::dvec3>>& polygonIn) {
+triangulatePolygon(const Polygon& polygonIn) {
   using Point = std::array<double, 2>;
   std::vector<std::vector<Point>> polygon;
   polygon.reserve(polygonIn.size());
-  for (const auto& ring : polygonIn) {
+  for (const PolygonRing& ring : polygonIn) {
     auto& ringCopy = polygon.emplace_back();
     ringCopy.reserve(ring.size() - 1);
     // The last coordinate of a GeoJson polygon ring is identical to the first,
@@ -93,7 +96,7 @@ struct GltfConverterImpl {
   // two-map mapping between GeoJSON features and glTF Feature IDs
   std::unordered_map<const GeoJsonObject*, uint32_t> gltfFeatureIds;
   std::vector<const GeoJsonObject*> geoJsonFeatures;
-  
+
   int32_t positionBufferIndex = -1;
   int32_t positionAccessorIndex = -1;
   int32_t elementBufferIndex = -1;
@@ -164,15 +167,13 @@ struct GltfConverterImpl {
   void visitGeometry(
       const GeoJsonMultiLineString& object,
       const GeoJsonObject* pFeature) {
-    for (const auto& lineStringCoords : object.coordinates) {
+    for (const std::vector<glm::dvec3>& lineStringCoords : object.coordinates) {
       processLinestring(lineStringCoords, pFeature);
     }
   }
 
-  using PolygonRing = std::vector<glm::dvec3>;
-  using Polygon = std::vector<PolygonRing>;
-
-  void processPolygon(const Polygon& polygonRings, const GeoJsonObject* pFeature) {
+  void
+  processPolygon(const Polygon& polygonRings, const GeoJsonObject* pFeature) {
     uint32_t elementBase = uint32_t(this->globalCoordinates.size());
     uint32_t featureId = getFeatureId(pFeature);
     for (const PolygonRing& contour : polygonRings) {

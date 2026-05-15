@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added support for [`EXT_mesh_primitive_edge_visibility`](https://github.com/KhronosGroup/glTF/pull/2479) in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added support for feature ids in glTF translated from `MAXAR_geojson_content` tiles.
 
 ### v0.60.0 - 2026-05-01
 
