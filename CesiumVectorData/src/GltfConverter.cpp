@@ -60,8 +60,7 @@ std::vector<uint32_t> lineStringToLines(size_t startIndex, size_t count) {
 using PolygonRing = std::vector<glm::dvec3>;
 using Polygon = std::vector<PolygonRing>;
 
-std::vector<uint32_t>
-triangulatePolygon(const Polygon& polygonIn) {
+std::vector<uint32_t> triangulatePolygon(const Polygon& polygonIn) {
   using Point = std::array<double, 2>;
   std::vector<std::vector<Point>> polygon;
   polygon.reserve(polygonIn.size());
