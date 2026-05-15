@@ -1,5 +1,5 @@
-#include <Cesium3DTilesSelection/TilesetContentManager.h>
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
+#include <Cesium3DTilesSelection/TilesetContentManager.h>
 #include <CesiumUtility/Assert.h>
 
 #include <utility>

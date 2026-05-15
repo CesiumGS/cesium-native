@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Library.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
@@ -86,8 +87,8 @@ public:
   virtual ~GeoJsonDocumentRasterOverlay() override;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CesiumRasterOverlays::CreateRasterOverlayTileProviderParameters& parameters)
-      const override;
+      const CesiumRasterOverlays::CreateRasterOverlayTileProviderParameters&
+          parameters) const override;
 
 private:
   CesiumAsync::Future<std::shared_ptr<CesiumVectorData::GeoJsonDocument>>

@@ -5,7 +5,6 @@
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/TilesetContentManager.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
-#include <CesiumVectorOverlays/VectorTilesRasterOverlay.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/Promise.h>
 #include <CesiumGeospatial/Cartographic.h>
@@ -27,6 +26,7 @@
 #include <CesiumUtility/TreeTraversalState.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
+#include <CesiumVectorOverlays/VectorTilesRasterOverlay.h>
 
 #include <fmt/format.h>
 
@@ -171,9 +171,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
               CesiumGltf::getIndexAccessorView(
                   model,
                   pPolygonExtension->loopIndicesOffsets);
-          const int64_t numPolygons = std::visit(
-              CesiumGltf::NumIndicesFromAccessor{},
-              loopIndicesOffsetsView);
+          const int64_t numPolygons = pPolygonExtension->count;
           const int64_t maxPolygonIndex = std::visit(
               CesiumGltf::MaxIndexValueFromAccessor{},
               loopIndicesView);
@@ -188,7 +186,9 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
                 i + 1 < numPolygons ? std::visit(
                                           CesiumGltf::IndexFromAccessor{i + 1},
                                           loopIndicesOffsetsView)
-                                    : numPolygons - 1;
+                                    : std::visit(
+                                          CesiumGltf::NumIndicesFromAccessor{},
+                                          loopIndicesView);
             std::vector<glm::dvec2> vertices;
 
             for (int64_t j = loopIndicesOffset; j < nextLoopIndicesOffset;
@@ -585,8 +585,8 @@ public:
   VectorTilesRasterOverlayTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
       const CreateRasterOverlayTileProviderParameters& parameters,
-      const std::string& url,
-      const CesiumVectorData::VectorStyle& defaultStyle)
+      const VectorTilesRasterOverlay::TilesetSource& source,
+      const VectorTilesRasterOverlayOptions& vectorOptions)
       : RasterOverlayTileProvider(
             pCreator,
             parameters,
@@ -600,7 +600,16 @@ public:
         _pPrepareRendererResources(
             std::make_shared<VectorTilesPrepareRendererResources>(
                 parameters.externals.pLogger,
-                defaultStyle)) {
+                vectorOptions.defaultStyle)) {
+    const RasterOverlayOptions& overlayOptions =
+        (parameters.pOwner ? parameters.pOwner : pCreator)->getOptions();
+    this->_options.ellipsoid = overlayOptions.ellipsoid;
+    this->_options.maximumScreenSpaceError =
+        overlayOptions.maximumScreenSpaceError;
+    this->_options.maximumSimultaneousTileLoads =
+        static_cast<uint32_t>(overlayOptions.maximumSimultaneousTileLoads);
+    this->_options.requestHeaders = vectorOptions.requestHeaders;
+
     const TilesetExternals externals{
         parameters.externals.pAssetAccessor,
         this->_pPrepareRendererResources,
@@ -611,8 +620,29 @@ public:
         TilesetSharedAssetSystem::getDefault(),
         nullptr};
 
-    this->_pTilesetContentManager =
-        TilesetContentManager::createFromUrl(externals, TilesetOptions{}, url);
+    struct TilesetContentManagerVisitor {
+      const TilesetExternals& externals;
+      const TilesetOptions& options;
+
+      IntrusivePointer<TilesetContentManager>
+      operator()(const std::string& url) {
+        return TilesetContentManager::createFromUrl(externals, options, url);
+      }
+
+      IntrusivePointer<TilesetContentManager>
+      operator()(const VectorTilesRasterOverlay::TilesetFromIon& ion) {
+        return TilesetContentManager::createFromCesiumIon(
+            externals,
+            options,
+            ion.ionAssetID,
+            ion.ionAccessToken,
+            ion.ionAssetEndpointUrl);
+      }
+    };
+
+    this->_pTilesetContentManager = std::visit(
+        TilesetContentManagerVisitor{externals, this->_options},
+        source);
     this->_pTilesetContentManager->registerTileRequester(this->_loadRequester);
   }
 
@@ -719,26 +749,25 @@ public:
 
 VectorTilesRasterOverlay::VectorTilesRasterOverlay(
     const std::string& name,
-    const std::string& url,
-    const CesiumVectorData::VectorStyle& defaultStyle,
+    const TilesetSource& source,
+    const VectorTilesRasterOverlayOptions& vectorOptions,
     const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions)
     : CesiumRasterOverlays::RasterOverlay(name, overlayOptions),
-      _url(url),
-      _defaultStyle(defaultStyle) {}
+      _vectorOptions(vectorOptions),
+      _source(source) {}
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 VectorTilesRasterOverlay::createTileProvider(
     const CreateRasterOverlayTileProviderParameters& parameters) const {
 
-  IntrusivePointer<const VectorTilesRasterOverlay> thiz = this;
   return parameters.externals.asyncSystem
       .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
           IntrusivePointer<RasterOverlayTileProvider>(
               new VectorTilesRasterOverlayTileProvider(
-                  thiz,
+                  this,
                   parameters,
-                  this->_url,
-                  this->_defaultStyle)));
+                  this->_source,
+                  this->_vectorOptions)));
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace CesiumVectorOverlays

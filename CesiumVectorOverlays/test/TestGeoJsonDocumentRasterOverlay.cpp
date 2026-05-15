@@ -9,10 +9,10 @@
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/writeTga.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
-#include <CesiumVectorOverlays/GeoJsonDocumentRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
+#include <CesiumVectorOverlays/GeoJsonDocumentRasterOverlay.h>
 
 #include <doctest/doctest.h>
 #include <spdlog/spdlog.h>

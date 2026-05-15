@@ -22,7 +22,6 @@
 #include <variant>
 #include <vector>
 
-
 using namespace CesiumRasterOverlays;
 
 namespace Cesium3DTilesSelection {

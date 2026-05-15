@@ -17,7 +17,6 @@
 
 #include <vector>
 
-
 namespace Cesium3DTilesSelection {
 
 /**

@@ -12,8 +12,6 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
-#include <CesiumVectorOverlays/GeoJsonDocumentRasterOverlay.h>
-#include <CesiumVectorOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -26,6 +24,8 @@
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
+#include <CesiumVectorOverlays/GeoJsonDocumentRasterOverlay.h>
+#include <CesiumVectorOverlays/Library.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
@@ -851,4 +851,4 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
           });
 }
 
-} // namespace CesiumRasterOverlays
+} // namespace CesiumVectorOverlays

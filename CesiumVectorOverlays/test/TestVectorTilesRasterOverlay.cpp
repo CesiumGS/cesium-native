@@ -3,9 +3,9 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/Rectangle.h>
-#include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/GeographicProjection.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumNativeTests/FileAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/checkFilesEqual.h>
@@ -21,13 +21,13 @@
 
 #include <doctest/doctest.h>
 
-using CesiumVectorOverlays::VectorTilesRasterOverlay;
 using CesiumAsync::AsyncSystem;
 using CesiumRasterOverlays::CreateRasterOverlayTileProviderParameters;
 using CesiumRasterOverlays::RasterOverlayOptions;
 using CesiumUtility::IntrusivePointer;
+using CesiumVectorOverlays::VectorTilesRasterOverlay;
 
-TEST_CASE("Test VectorTilesRasterOverlay") {
+TEST_CASE("Test VectorTilesRasterOverlay polylines") {
   const std::filesystem::path dataPath =
       std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR);
   const std::filesystem::path inputPath =
@@ -35,7 +35,8 @@ TEST_CASE("Test VectorTilesRasterOverlay") {
   const std::filesystem::path referencePath =
       dataPath / "ViennaStreets" / "rasterized.tga";
   const std::filesystem::path tempOutPath =
-      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) / "vector-tile-test.tga";
+      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+      "vector-tile-polylines.tga";
 
   const glm::dvec2 imageSize(256, 256);
 
@@ -60,7 +61,9 @@ TEST_CASE("Test VectorTilesRasterOverlay") {
   pOverlay.emplace(
       "overlay0",
       "file:///" + inputPath.string(),
-      CesiumVectorData::VectorStyle{CesiumUtility::Color(255, 0, 0, 255)},
+      CesiumVectorOverlays::VectorTilesRasterOverlayOptions{
+          CesiumVectorData::VectorStyle{CesiumUtility::Color(255, 0, 0, 255)},
+          {}},
       RasterOverlayOptions{});
 
   IntrusivePointer<CesiumRasterOverlays::ActivatedRasterOverlay> pActivated =
@@ -97,16 +100,17 @@ TEST_CASE("Test VectorTilesRasterOverlay") {
 }
 
 TEST_CASE("Test VectorTilesRasterOverlay polygons") {
-  /*const std::filesystem::path dataPath =
-      std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR);*/
+  const std::filesystem::path dataPath =
+      std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR);
   const std::filesystem::path inputPath =
-      "/mnt/d/Dev/vector/data/nyc_poly/tileset.json";
-  /*const std::filesystem::path referencePath =
-      dataPath / "ViennaStreets" / "rasterized.tga";*/
+      dataPath / "switzerland" / "tileset.json";
+  const std::filesystem::path referencePath =
+      dataPath / "switzerland" / "rasterized.tga";
   const std::filesystem::path tempOutPath =
-      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) / "vector-poly-test.tga";
+      std::filesystem::path(CESIUM_NATIVE_TEMP_DIR) /
+      "vector-tile-polygons.tga";
 
-  const glm::dvec2 imageSize(2048, 2048);
+  const glm::dvec2 imageSize(256, 256);
 
   // A rough rectangle around the Albertgarten in Vienna, as an arbitrary
   // testing area.
@@ -114,14 +118,14 @@ TEST_CASE("Test VectorTilesRasterOverlay polygons") {
       Cesium3DTilesContent::ImplicitTilingUtilities::computeBoundingVolume(
           CesiumGeospatial::BoundingRegion{
               CesiumGeospatial::GlobeRectangle{
-                  -1.2960028825865837,
-                  0.7068309334853016,
-                  -1.2863087490444578,
-                  0.7141023380205147},
+                  0.10511435661024317,
+                  0.7989584641142331,
+                  0.18225951525130435,
+                  0.8348054325550944},
               0,
               0.005,
               CesiumGeospatial::Ellipsoid::WGS84},
-          CesiumGeometry::QuadtreeTileID(3, 5, 3),
+          CesiumGeometry::QuadtreeTileID(1, 0, 0),
           CesiumGeospatial::Ellipsoid::WGS84);
   const CesiumGeospatial::GlobeRectangle& tileGlobeRectangle =
       tileRegion.getRectangle();
@@ -135,13 +139,14 @@ TEST_CASE("Test VectorTilesRasterOverlay polygons") {
   CreateRasterOverlayTileProviderParameters parameters{
       {pAssetAccessor, nullptr, asyncSystem}};
   RasterOverlayOptions options;
-  options.maximumScreenSpaceError = 1.0;
 
   IntrusivePointer<VectorTilesRasterOverlay> pOverlay;
   pOverlay.emplace(
       "overlay0",
       "file:///" + inputPath.string(),
-      CesiumVectorData::VectorStyle{CesiumUtility::Color(255, 0, 0, 255)},
+      CesiumVectorOverlays::VectorTilesRasterOverlayOptions{
+          CesiumVectorData::VectorStyle{CesiumUtility::Color(255, 0, 0, 255)},
+          {}},
       options);
 
   IntrusivePointer<CesiumRasterOverlays::ActivatedRasterOverlay> pActivated =
@@ -174,5 +179,5 @@ TEST_CASE("Test VectorTilesRasterOverlay polygons") {
   REQUIRE(pTile->getImage()->width > 1);
   CesiumNativeTests::writeImageToTgaFile(*pTile->getImage(), tempOutPath);
 
-  // CesiumNativeTests::checkFilesEqual(tempOutPath, referencePath);
+  CesiumNativeTests::checkFilesEqual(tempOutPath, referencePath);
 }

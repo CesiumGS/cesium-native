@@ -19,7 +19,6 @@
 #include <optional>
 #include <vector>
 
-
 namespace Cesium3DTilesSelection {
 
 GltfModifier::GltfModifier()
