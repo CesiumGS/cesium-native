@@ -176,12 +176,10 @@ public:
    * Cesium's memory-budget system rather than maintaining its own cache.
    *
    * This is called from the main thread, inside
-   * {@link TilesetContentManager::unloadTileContent}, after renderer resources
+   * `TilesetContentManager::unloadTileContent`, after renderer resources
    * have been freed but before the tile's state is reset to Unloaded.
    *
    * The default implementation is a no-op.
-   *
-   * @param tile The tile whose content was just unloaded.
    */
   virtual void onTileContentUnloaded(const Tile& /*tile*/) noexcept {}
 
