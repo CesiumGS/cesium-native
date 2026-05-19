@@ -49,7 +49,7 @@ ITwinRealityDataContentLoaderFactory::ITwinRealityDataContentLoaderFactory(
           iTwinId,
           iTwinAccessToken,
           defaultRealityDataBaseUrl,
-          tokenRefreshCallback) {}
+          std::move(tokenRefreshCallback)) {}
 
 ITwinRealityDataContentLoaderFactory::ITwinRealityDataContentLoaderFactory(
     const std::string& realityDataId,
@@ -69,6 +69,7 @@ ITwinRealityDataContentLoaderFactory::ITwinRealityDataContentLoaderFactory(
 }
 
 bool ITwinRealityDataContentLoaderFactory::isValid() const {
-  return !this->_realityDataId.empty() && !this->_iTwinAccessToken.empty();
+  return !this->_realityDataId.empty() && !this->_iTwinAccessToken.empty() &&
+         !this->_iTwinRealityDataBaseURL.empty();
 }
 } // namespace Cesium3DTilesSelection
