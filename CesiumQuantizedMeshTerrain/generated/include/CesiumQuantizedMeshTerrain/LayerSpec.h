@@ -68,8 +68,8 @@ struct CESIUMQUANTIZEDMESHTERRAIN_API LayerSpec
   int64_t minzoom = 0;
 
   /**
-   * @brief The levels at metadata is found in tiles. For example, if this value
-   * is 10, then metadata is found at levels 0, 10, 20, etc.
+   * @brief The levels at which metadata is found in tiles. For example, if this
+   * value is 10, then metadata is found at levels 0, 10, 20, etc.
    */
   std::optional<int64_t> metadataAvailability;
 
