@@ -34,6 +34,7 @@ option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
 option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
 option(CESIUM_DISABLE_LIBJPEG_TURBO "Disable cesium-native's use of libjpeg-turbo. JPEG images will be decoded with STB instead." OFF)
 option(CESIUM_WASM64 "Enable 64-bit WebAssembly target" OFF)
+option(CESIUM_ENABLE_I3S "Enable I3S support" OFF)
 
 if (CESIUM_TARGET_WASM)
     # Make sure curl is disabled on wasm builds, as it is not supported.
@@ -440,6 +441,13 @@ add_subdirectory(CesiumVectorData)
 
 if(NOT CESIUM_DISABLE_CURL)
     add_subdirectory(CesiumCurl)
+endif()
+
+if(CESIUM_ENABLE_I3S)
+    add_subdirectory(CesiumI3S)
+    add_subdirectory(CesiumI3SReader)
+    add_subdirectory(CesiumI3SContent)
+    add_subdirectory(CesiumI3SSelection)
 endif()
 
 # Private Targets
