@@ -169,6 +169,23 @@ public:
           CESIUM_DEFAULT_ELLIPSOID) = 0;
 
   /**
+   * @brief Called when a tile's content has been fully unloaded.
+   *
+   * Loaders that maintain auxiliary in-memory data keyed on tile IDs should
+   * override this to release those resources so that the loader participates in
+   * Cesium's memory-budget system rather than maintaining its own cache.
+   *
+   * This is called from the main thread, inside
+   * {@link TilesetContentManager::unloadTileContent}, after renderer resources
+   * have been freed but before the tile's state is reset to Unloaded.
+   *
+   * The default implementation is a no-op.
+   *
+   * @param tile The tile whose content was just unloaded.
+   */
+  virtual void onTileContentUnloaded(const Tile& /*tile*/) noexcept {}
+
+  /**
    * @brief Gets an interface that can be used to efficiently query heights from
    * this tileset.
    *
