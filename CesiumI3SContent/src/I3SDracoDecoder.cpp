@@ -31,7 +31,7 @@ namespace {
 
 // Read all float32 values for a single vec3 attribute into a vector.
 std::vector<glm::vec3>
-readVec3Attribute(const draco::PointAttribute& attr, int32_t vertexCount) {
+readVec3Attribute(const draco::PointAttribute& attr, uint32_t vertexCount) {
   std::vector<glm::vec3> out(static_cast<size_t>(vertexCount));
   for (draco::PointIndex pi(0); pi < vertexCount; ++pi) {
     const draco::AttributeValueIndex vi = attr.mapped_index(pi);
@@ -42,7 +42,7 @@ readVec3Attribute(const draco::PointAttribute& attr, int32_t vertexCount) {
 
 // Read all float32 values for a single vec2 attribute into a vector.
 std::vector<glm::vec2>
-readVec2Attribute(const draco::PointAttribute& attr, int32_t vertexCount) {
+readVec2Attribute(const draco::PointAttribute& attr, uint32_t vertexCount) {
   std::vector<glm::vec2> out(static_cast<size_t>(vertexCount));
   for (draco::PointIndex pi(0); pi < vertexCount; ++pi) {
     const draco::AttributeValueIndex vi = attr.mapped_index(pi);
@@ -53,7 +53,7 @@ readVec2Attribute(const draco::PointAttribute& attr, int32_t vertexCount) {
 
 // Read all uint8 RGBA values for a color attribute into a vector.
 std::vector<glm::u8vec4>
-readColorAttribute(const draco::PointAttribute& attr, int32_t vertexCount) {
+readColorAttribute(const draco::PointAttribute& attr, uint32_t vertexCount) {
   std::vector<glm::u8vec4> out(
       static_cast<size_t>(vertexCount),
       {255, 255, 255, 255});
@@ -68,7 +68,7 @@ readColorAttribute(const draco::PointAttribute& attr, int32_t vertexCount) {
 
 // Read all uint32 values for a scalar attribute (feature indices).
 std::vector<uint32_t>
-readUInt32Attribute(const draco::PointAttribute& attr, int32_t vertexCount) {
+readUInt32Attribute(const draco::PointAttribute& attr, uint32_t vertexCount) {
   std::vector<uint32_t> out(static_cast<size_t>(vertexCount), 0u);
   for (draco::PointIndex pi(0); pi < vertexCount; ++pi) {
     const draco::AttributeValueIndex vi = attr.mapped_index(pi);
@@ -106,8 +106,8 @@ DecodedGeometry I3SDracoDecoder::decode(std::span<const std::byte> data) {
   }
 
   std::unique_ptr<draco::Mesh> pMesh = std::move(decodeResult).value();
-  const int32_t vertexCount = pMesh->num_points();
-  const int32_t faceCount = pMesh->num_faces();
+  const uint32_t vertexCount = pMesh->num_points();
+  const uint32_t faceCount = pMesh->num_faces();
 
   if (vertexCount == 0) {
     return result;

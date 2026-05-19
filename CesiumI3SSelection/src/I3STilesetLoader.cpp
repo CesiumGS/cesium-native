@@ -718,7 +718,7 @@ void I3STilesetLoader::onTileContentUnloaded(const Tile& tile) noexcept {
     // (e.g. a pre-fetched page that was never claimed).
     return;
   }
-  if (--it->second == 0) {
+  if (--it->second == 0u) {
     this->_pageRefCounts.erase(it);
     this->_nodePageCache.erase(pageIndex);
   }

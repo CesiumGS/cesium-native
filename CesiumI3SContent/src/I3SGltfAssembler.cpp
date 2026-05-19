@@ -431,7 +431,7 @@ CesiumGltf::Model I3SGltfAssembler::assemble(
   }
 
   // _FEATURE_ID_0 + extensions
-  if (!geometry.featureIds.empty() && geometry.featureCount > 0) {
+  if (!geometry.featureIds.empty() && geometry.featureCount > 0u) {
     const int32_t fidAccessorIndex =
         addFeatureIdFloatAccessor(model, geometry.featureIds);
     addFeatureExtensions(
