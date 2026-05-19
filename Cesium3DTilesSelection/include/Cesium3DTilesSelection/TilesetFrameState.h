@@ -3,10 +3,12 @@
 #include <Cesium3DTilesSelection/ViewState.h>
 
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 namespace Cesium3DTilesSelection {
 
+class Tile;
 class TilesetViewGroup;
 
 /**
@@ -29,6 +31,13 @@ public:
    * @brief The computed fog density for each frustum.
    */
   std::vector<double> fogDensities;
+
+  /**
+   * @brief Called once per visited tile to advance its content state (loading,
+   * finalization, child creation). Set by Tileset::updateViewGroup; may be
+   * null when testing selectTiles directly.
+   */
+  std::function<void(Tile&)> tileStateUpdater;
 };
 
 } // namespace Cesium3DTilesSelection
