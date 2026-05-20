@@ -438,7 +438,8 @@ ITwinRealityDataContentLoader::ITwinRealityDataContentLoader(
       _tokenRefreshCallback(std::move(tokenRefreshCallback)) {}
 
 ITwinRealityDataContentLoader::~ITwinRealityDataContentLoader() {
-  this->_pRealityDataAccessor->notifyLoaderIsBeingDestroyed();
+  if (this->_pRealityDataAccessor)
+    this->_pRealityDataAccessor->notifyLoaderIsBeingDestroyed();
 }
 
 CesiumAsync::Future<std::string>
