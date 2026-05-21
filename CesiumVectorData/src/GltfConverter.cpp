@@ -27,10 +27,12 @@
 #include <glm/matrix.hpp>
 #include <mapbox/earcut.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <span>
 #include <string>
 #include <unordered_map>
@@ -124,6 +126,8 @@ struct GltfConverterImpl {
   int32_t
   finalizePrimitive(const std::vector<uint32_t>& elements, int32_t mode);
   void preparePositions();
+  void createFeatureIdAccessor(size_t numCoords);
+
   // Create a buffer view from a whole buffer
   int32_t makeBufferView(int32_t buffer, int32_t target);
   // A more nuanced view
@@ -402,13 +406,36 @@ void GltfConverterImpl::preparePositions() {
       BufferView::Target::ELEMENT_ARRAY_BUFFER,
       0,
       int64_t(elementByteSize));
+  createFeatureIdAccessor(numCoords);
+}
+
+void GltfConverterImpl::createFeatureIdAccessor(size_t numCoords) {
+  auto maxFeatureItr =
+      std::max_element(this->featureIds.begin(), this->featureIds.end());
   this->featureIdBufferIndex = int32_t(this->model.buffers.size());
   Buffer& featureIdBuffer = this->model.buffers.emplace_back();
   featureIdBuffer.cesium.data.resize(sizeof(uint32_t) * numCoords);
-  std::memcpy(
-      featureIdBuffer.cesium.data.data(),
-      this->featureIds.data(),
-      sizeof(uint32_t) * numCoords);
+  int32_t componentType = 0;
+  if (*maxFeatureItr <= std::numeric_limits<uint16_t>::max()) {
+    if (*maxFeatureItr <= std::numeric_limits<uint8_t>::max()) {
+      componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    } else {
+      componentType = Accessor::ComponentType::UNSIGNED_SHORT;
+    }
+    // Due to alignment requirements, the memory representation is the same for
+    // UNSIGNED_BYTE, UNSIGNED_SHORT, and the source UNSIGNED_INT.
+    std::memcpy(
+        featureIdBuffer.cesium.data.data(),
+        this->featureIds.data(),
+        sizeof(uint32_t) * numCoords);
+  } else {
+    componentType = Accessor::ComponentType::FLOAT;
+    float* featureDest =
+        reinterpret_cast<float*>(featureIdBuffer.cesium.data.data());
+    for (size_t i = 0; i < numCoords; ++i) {
+      featureDest[i] = static_cast<float>(this->featureIds[i]);
+    }
+  }
   this->featureIdBufferViewIndex = makeBufferView(
       this->featureIdBufferIndex,
       BufferView::Target::ARRAY_BUFFER);
@@ -416,7 +443,7 @@ void GltfConverterImpl::preparePositions() {
       this->featureIdBufferViewIndex,
       0,
       int64_t(numCoords),
-      Accessor::ComponentType::UNSIGNED_INT,
+      componentType,
       Accessor::Type::SCALAR);
 }
 } // namespace

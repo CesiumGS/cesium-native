@@ -1,5 +1,6 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorUtility.h>
+#include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
@@ -50,20 +51,14 @@ TEST_CASE("Conversion from geoJSON to glTF") {
           int32_t positionAccessor = prim.attributes.at("POSITION");
           int64_t positionCount =
               model.accessors[uint32_t(positionAccessor)].count;
-          // It would be better to use CesiumGltf::getFeatureIdAccessorView,
-          // but that is strict about not allowing UNSIGNED_INT accessors for
-          // feature IDs, which the converter returns. Need to decide which
-          // way to go on this.
-          const std::string attributeName =
-              "_FEATURE_ID_" + std::to_string(attribute);
-          int32_t featureAccessor = prim.attributes.at(attributeName);
-          createAccessorView(
-              model,
-              featureAccessor,
+          FeatureIdAccessorType featureIdView =
+              getFeatureIdAccessorView(model, prim, int32_t(attribute));
+          std::visit(
               [positionCount](auto&& view) {
-                CHECK(view.status() == AccessorViewStatus::Valid);
+                REQUIRE(view.status() == AccessorViewStatus::Valid);
                 CHECK(view.size() == positionCount);
-              });
+              },
+              featureIdView);
         });
   }
 }
