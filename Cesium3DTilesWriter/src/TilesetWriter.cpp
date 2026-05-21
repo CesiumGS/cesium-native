@@ -30,18 +30,18 @@ TilesetWriterResult TilesetWriter::writeTileset(
       this->getExtensions();
 
   TilesetWriterResult result;
-  std::unique_ptr<CesiumJsonWriter::JsonWriter> writer;
+  std::unique_ptr<CesiumJsonWriter::JsonWriter> pWriter;
 
   if (options.prettyPrint) {
-    writer = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
+    pWriter = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
   } else {
-    writer = std::make_unique<CesiumJsonWriter::JsonWriter>();
+    pWriter = std::make_unique<CesiumJsonWriter::JsonWriter>();
   }
 
-  TilesetJsonWriter::write(tileset, *writer, context);
-  result.tilesetBytes = writer->toBytes();
-  result.errors = writer->getErrors();
-  result.warnings = writer->getWarnings();
+  TilesetJsonWriter::write(tileset, *pWriter, context);
+  result.tilesetBytes = pWriter->toBytes();
+  result.errors = pWriter->getErrors();
+  result.warnings = pWriter->getWarnings();
 
   return result;
 }

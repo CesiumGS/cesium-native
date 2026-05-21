@@ -28,6 +28,15 @@
     "3DTILES_ellipsoid extension": {
       "overrideName": "Extension3dTilesEllipsoid"
     },
+    "3DTILES_content_conditional extension": {
+      "overrideName": "Extension3dTilesContentConditional"
+    },
+    "Content for 3DTILES_content_conditional": {
+      "overrideName": "ConditionalContent"
+    },
+    "One item of the conditional content for 3DTILES_content_conditional": {
+      "overrideName": "ConditionalContentItem"
+    },
     "MAXAR_content_geojson tileset extension": {
       "overrideName": "ExtensionMaxarContentGeojson"
     },
@@ -36,6 +45,9 @@
     },
     "Buffer": {
       "toBeInherited": true
+    },
+    "Content": {
+      "isBaseClass": true
     }
   },
   "extensions": [
@@ -57,6 +69,10 @@
     {
       "extensionName": "3DTILES_content_voxels",
       "schema": "3DTILES_content_voxels/schema/content.3DTILES_content_voxels.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_content_conditional",
+      "schema": "3DTILES_content_conditional/schema/tileset.3DTILES_content_conditional.schema.json"
     },
     {
       "extensionName": "MAXAR_content_geojson",

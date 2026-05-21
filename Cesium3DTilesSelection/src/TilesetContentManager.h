@@ -6,6 +6,7 @@
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileUnloadQueue.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
@@ -233,8 +234,8 @@ private:
   std::unique_ptr<Tile> _pRootTile;
   std::optional<CesiumUtility::Credit> _userCredit;
   std::vector<CesiumUtility::Credit> _tilesetCredits;
-  RasterOverlayUpsampler _upsampler;
   RasterOverlayCollection _overlayCollection;
+  RasterOverlayUpsampler _upsampler;
   int32_t _tileLoadsInProgress;
   int32_t _loadedTilesCount;
   int64_t _tilesDataUsed;
@@ -249,10 +250,8 @@ private:
   CesiumAsync::Promise<void> _rootTileAvailablePromise;
   CesiumAsync::SharedFuture<void> _rootTileAvailableFuture;
 
-  // These tiles are not currently used, so their content may be unloaded. The
-  // tiles at the head of the list are the least recently used, and the ones at
-  // the tail are the most recently used.
-  Tile::UnusedLinkedList _tilesEligibleForContentUnloading;
+  // Tracks tiles eligible for content eviction in LRU order.
+  TileUnloadQueue _unloadQueue;
 
   std::vector<TileLoadRequester*> _requesters;
   double _roundRobinValueWorker;
