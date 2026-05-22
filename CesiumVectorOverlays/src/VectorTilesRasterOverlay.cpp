@@ -453,7 +453,7 @@ private:
   void visit(Tile& tile, LoadTileImageInformation& loadInfo) {
     if (tile.getState() < TileLoadState::ContentLoaded) {
       loadInfo.tileLoadTasks.emplace_back(
-          TileLoadTask{&tile, TileLoadPriorityGroup::Normal});
+          TileLoadTask{&tile, TileLoadPriorityGroup::Normal, 1.0});
       return;
     }
 
