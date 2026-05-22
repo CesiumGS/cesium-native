@@ -31,8 +31,7 @@ RasterOverlayCollection::RasterOverlayCollection(
     : _loadedTiles(loadedTiles),
       _externals{externals},
       _ellipsoid(ellipsoid),
-      _activatedOverlays(),
-      _tickableOverlays() {}
+      _activatedOverlays() {}
 
 RasterOverlayCollection::~RasterOverlayCollection() noexcept {
   for (int64_t i = static_cast<int64_t>(this->_activatedOverlays.size()) - 1;
@@ -64,10 +63,6 @@ void RasterOverlayCollection::add(
           .pCreditSystem = this->_externals.pCreditSystem,
           .pLogger = this->_externals.pLogger},
       this->_ellipsoid));
-
-  if (this->_activatedOverlays.back()->isTickable()) {
-    this->_tickableOverlays.emplace_back(this->_activatedOverlays.back());
-  }
 
   CesiumRasterOverlays::RasterOverlayTile* pPlaceholderTile =
       this->_activatedOverlays.back()->getPlaceholderTile();
@@ -156,16 +151,6 @@ void RasterOverlayCollection::remove(
   }
 
   this->_activatedOverlays.erase(it);
-
-  it = std::find(
-      this->_tickableOverlays.begin(),
-      this->_tickableOverlays.end(),
-      pActivated);
-  if (it == this->_tickableOverlays.end()) {
-    return;
-  }
-
-  this->_tickableOverlays.erase(it);
 }
 
 std::vector<CesiumGeospatial::Projection>
@@ -272,12 +257,6 @@ RasterOverlayCollection::end() const noexcept {
 
 size_t RasterOverlayCollection::size() const noexcept {
   return this->_activatedOverlays.size();
-}
-
-void RasterOverlayCollection::tick() noexcept {
-  for (const auto& pOverlay : this->_tickableOverlays) {
-    pOverlay->tick();
-  }
 }
 
 } // namespace Cesium3DTilesSelection

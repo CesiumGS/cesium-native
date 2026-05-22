@@ -259,9 +259,13 @@ public:
    */
   bool loadTileThrottled(RasterOverlayTile& tile);
 
+  /**
+   * @brief Ticks the underlying raster overlay. This should be called
+   * frequently, such as once per frame, so that raster overlays can perform
+   * necessary updates. `Tileset` will call this method on all attached raster
+   * overlays automatically.
+   */
   void tick();
-
-  bool isTickable() const noexcept;
 
 private:
   CesiumAsync::Future<RasterOverlayTileLoadResult>

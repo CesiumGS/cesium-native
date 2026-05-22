@@ -350,10 +350,6 @@ void ActivatedRasterOverlay::tick() {
   }
 }
 
-bool ActivatedRasterOverlay::isTickable() const noexcept {
-  return this->_pTileProvider != nullptr && this->_pTileProvider->isTickable();
-}
-
 RasterOverlayTileLoadResult::RasterOverlayTileLoadResult(
     const CesiumUtility::IntrusivePointer<ActivatedRasterOverlay>& pActivated_,
     const CesiumUtility::IntrusivePointer<RasterOverlayTile>& pTile_) noexcept
