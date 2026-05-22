@@ -176,7 +176,8 @@
       "overrideName": "ExtensionKhrGaussianSplattingCompressionSpz2"
     },
     "EXT_mesh_primitive_edge_visibility glTF Mesh Primitive Extension": {
-      "overrideName": "ExtensionExtMeshPrimitiveEdgeVisibility"
+      "overrideName": "ExtensionExtMeshPrimitiveEdgeVisibility",
+      "toBeInherited": true
     },
     "EXT_mesh_polygon glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionExtMeshPolygon"

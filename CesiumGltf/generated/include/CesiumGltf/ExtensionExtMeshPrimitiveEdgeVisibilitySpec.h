@@ -14,7 +14,7 @@ namespace CesiumGltf {
  * @brief glTF extension encoding the visibility of the edges of a triangles
  * primitive
  */
-struct CESIUMGLTF_API ExtensionExtMeshPrimitiveEdgeVisibility final
+struct CESIUMGLTF_API ExtensionExtMeshPrimitiveEdgeVisibilitySpec
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
@@ -70,7 +70,7 @@ struct CESIUMGLTF_API ExtensionExtMeshPrimitiveEdgeVisibility final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionExtMeshPrimitiveEdgeVisibility));
+    accum += int64_t(sizeof(ExtensionExtMeshPrimitiveEdgeVisibilitySpec));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
     accum +=
@@ -80,5 +80,12 @@ struct CESIUMGLTF_API ExtensionExtMeshPrimitiveEdgeVisibility final
     }
     return accum;
   }
+
+protected:
+  /**
+   * @brief This class is not meant to be instantiated directly. Use {@link ExtensionExtMeshPrimitiveEdgeVisibility} instead.
+   */
+  ExtensionExtMeshPrimitiveEdgeVisibilitySpec() = default;
+  friend struct ExtensionExtMeshPrimitiveEdgeVisibility;
 };
 } // namespace CesiumGltf
