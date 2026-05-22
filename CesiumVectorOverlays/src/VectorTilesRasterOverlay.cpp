@@ -452,7 +452,8 @@ private:
 
   void visit(Tile& tile, LoadTileImageInformation& loadInfo) {
     if (tile.getState() < TileLoadState::ContentLoaded) {
-      loadInfo.tileLoadTasks.emplace_back(&tile, TileLoadPriorityGroup::Normal);
+      loadInfo.tileLoadTasks.emplace_back(
+          TileLoadTask{&tile, TileLoadPriorityGroup::Normal});
       return;
     }
 
@@ -717,9 +718,7 @@ public:
       TileLoadState state = pTile->getState();
       if (state == TileLoadState::FailedTemporarily) {
         this->_pSharedTileSelectionState->workerThreadLoadQueue.emplace_back(
-            pTile.get(),
-            TileLoadPriorityGroup::Urgent,
-            1.0);
+            TileLoadTask{pTile.get(), TileLoadPriorityGroup::Urgent, 1.0});
       } else if (state < TileLoadState::ContentLoaded) {
         continue;
       }
