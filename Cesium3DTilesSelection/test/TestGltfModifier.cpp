@@ -1,4 +1,5 @@
 #include "MockTilesetContentManager.h"
+#include "TilesetContentManager.h"
 
 #include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
@@ -6,7 +7,6 @@
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
-#include <Cesium3DTilesSelection/TilesetContentManager.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>

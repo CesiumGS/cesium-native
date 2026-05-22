@@ -205,6 +205,13 @@ public:
   const Tile* getRootTile() const noexcept;
 
   /**
+   * @brief Gets the root tile of this tileset.
+   *
+   * This may be `nullptr` if there is currently no root tile.
+   */
+  Tile* getRootTile() noexcept;
+
+  /**
    * @brief Returns the {@link RasterOverlayCollection} of this tileset.
    */
   RasterOverlayCollection& getOverlays() noexcept;
@@ -436,6 +443,21 @@ public:
    * there is no work to do.
    */
   void loadTiles();
+
+  /**
+   * @brief Updates the content of the given tile based on its current state.
+   *
+   * This may involve steps such as updating tile properties based on content,
+   * creating tile children, handling tile unloading, and more.
+   *
+   * @note This is automatically called as part of the normal tile selection
+   * process, such as when using \ref updateViewGroup or \ref
+   * updateViewGroupOffline. This method should only be called manually when
+   * tile selection is being driven by code external to the `Tileset`.
+   *
+   * @param tile The tile to update.
+   */
+  void updateTileContent(Tile& tile);
 
   /**
    * @brief Registers a tile load requester with this Tileset. Registered tile

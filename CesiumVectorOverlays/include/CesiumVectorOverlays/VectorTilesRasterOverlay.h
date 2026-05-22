@@ -30,41 +30,39 @@ class CESIUMVECTOROVERLAYS_API VectorTilesRasterOverlay final
 
 public:
   /**
-   * @brief Parameters for loading a vector tiles tileset from ion.
-   */
-  struct TilesetFromIon {
-    /**
-     * @brief The Ion asset ID.
-     */
-    uint32_t ionAssetID;
-    /**
-     * @brief The Ion access token.
-     */
-    std::string ionAccessToken;
-    /**
-     * @brief The Ion asset endpoint URL.
-     */
-    std::string ionAssetEndpointUrl = "https://api.cesium.com/";
-  };
-
-  /**
-   * @brief A source for a tileset, which can be either a URL or an Ion asset.
-   */
-  using TilesetSource = std::variant<std::string, TilesetFromIon>;
-
-  /**
-   * @brief Creates a new VectorTilesRasterOverlay.
+   * @brief Creates a new VectorTilesRasterOverlay from a URL.
    *
    * @param asyncSystem The async system to use.
    * @param name The user-given name of this layer.
-   * @param source The source of the tileset.
+   * @param url The URL of the tileset to load.
    * @param vectorOptions Options to configure this
    * VectorTilesRasterOverlay.
    * @param overlayOptions Options to use for this RasterOverlay.
    */
   VectorTilesRasterOverlay(
       const std::string& name,
-      const TilesetSource& source,
+      const std::string& url,
+      const VectorTilesRasterOverlayOptions& vectorOptions = {},
+      const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions = {});
+
+  /**
+   * @brief Creates a new VectorTilesRasterOverlay from a Cesium ion asset.
+   *
+   * @param asyncSystem The async system to use.
+   * @param name The user-given name of this layer.
+   * @param ionAssetID The Ion asset ID of the tileset.
+   * @param ionAccessToken The Ion access token to use to access the tileset.
+   * @param ionAssetEndpointUrl The Ion asset endpoint URL to use to access the
+   * tileset.
+   * @param vectorOptions Options to configure this
+   * VectorTilesRasterOverlay.
+   * @param overlayOptions Options to use for this RasterOverlay.
+   */
+  VectorTilesRasterOverlay(
+      const std::string& name,
+      int64_t ionAssetID,
+      const std::string& ionAccessToken,
+      const std::string& ionAssetEndpointUrl = "https://api.cesium.com/",
       const VectorTilesRasterOverlayOptions& vectorOptions = {},
       const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions = {});
 
@@ -76,6 +74,10 @@ public:
 
 private:
   VectorTilesRasterOverlayOptions _vectorOptions;
-  TilesetSource _source;
+  bool _useIon = false;
+  std::string _url;
+  int64_t _ionAssetID;
+  std::string _ionAccessToken;
+  std::string _ionAssetEndpointUrl;
 };
 } // namespace CesiumVectorOverlays

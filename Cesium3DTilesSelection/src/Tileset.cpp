@@ -1,3 +1,4 @@
+#include "TilesetContentManager.h"
 #include "TilesetHeightQuery.h"
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
@@ -14,7 +15,6 @@
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
-#include <Cesium3DTilesSelection/TilesetContentManager.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetFrameState.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
@@ -179,6 +179,10 @@ const CesiumUtility::CreditSource& Tileset::getCreditSource() const noexcept {
 }
 
 const Tile* Tileset::getRootTile() const noexcept {
+  return this->_pTilesetContentManager->getRootTile();
+}
+
+Tile* Tileset::getRootTile() noexcept {
   return this->_pTilesetContentManager->getRootTile();
 }
 
@@ -478,6 +482,10 @@ void Tileset::loadTiles() {
            .getActivatedOverlays()) {
     pOverlay->tick();
   }
+}
+
+void Tileset::updateTileContent(Tile& tile) {
+  this->_pTilesetContentManager->updateTileContent(tile, this->_options);
 }
 
 void Tileset::registerLoadRequester(TileLoadRequester& requester) {

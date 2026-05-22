@@ -3,7 +3,7 @@
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
-#include <Cesium3DTilesSelection/TilesetContentManager.h>
+#include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/Promise.h>
@@ -32,7 +32,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <mutex>
 #include <set>
 #include <utility>
 
@@ -234,10 +233,7 @@ struct LoadRequest {
 
 struct SharedTileSelectionState {
   std::vector<TileLoadTask> workerThreadLoadQueue;
-  // Does not need to be concurrent because it is only accessed by the
-  // TilesetContentManager and the methods calling the TilesetContentManager.
   std::vector<Tile::Pointer> tilesWaitingForWorker;
-  std::mutex loadRequestsMutex;
   std::vector<LoadRequest> loadRequests;
 };
 
@@ -386,8 +382,7 @@ private:
   using TraversalState =
       CesiumUtility::TreeTraversalState<Tile::Pointer, TileSelectionState>;
 
-  CesiumUtility::IntrusivePointer<TilesetContentManager>
-      _pTilesetContentManager;
+  std::shared_ptr<Tileset> _pTileset;
   TilesetOptions _options;
 
   std::shared_ptr<SharedTileSelectionState> _pSharedTileSelectionState =
@@ -418,9 +413,6 @@ private:
         asyncSystem.createPromise<void>(),
         std::move(requestedTiles)};
     CesiumAsync::Future<void> future = request.promise.getFuture();
-
-    std::scoped_lock<std::mutex> lock(
-        this->_pSharedTileSelectionState->loadRequestsMutex);
     this->_pSharedTileSelectionState->loadRequests.emplace_back(
         std::move(request));
 
@@ -428,7 +420,7 @@ private:
   }
 
   bool meetsSse(const Tile& tile, LoadTileImageInformation& loadInfo) {
-    // TODO: is this SSE calculation actually correct?
+    // TODO: is this SSE calculation actually correct
     const double geometricError = tile.getGeometricError();
     const double pixelsPerMeter = (double)loadInfo.textureSize.y /
                                   (loadInfo.tileRectangle.computeHeight() *
@@ -455,7 +447,7 @@ private:
   }
 
   void visitIfNeeded(Tile& tile, LoadTileImageInformation& loadInfo) {
-    this->_pTilesetContentManager->updateTileContent(tile, _options);
+    this->_pTileset->updateTileContent(tile);
 
     const std::optional<CesiumGeospatial::GlobeRectangle> rectangle =
         estimateGlobeRectangle(
@@ -475,7 +467,7 @@ private:
       const CesiumGeospatial::GlobeRectangle& tileRectangle,
       const glm::ivec2& textureSize) {
     LoadTileImageInformation loadInfo{tileRectangle, textureSize, {}, {}};
-    Tile* pRootTile = this->_pTilesetContentManager->getRootTile();
+    Tile* pRootTile = this->_pTileset->getRootTile();
 
     if (pRootTile == nullptr) {
       return this->getAsyncSystem()
@@ -490,7 +482,7 @@ private:
       // external content and now we need to check their children.
       return this
           ->addLoadRequest(this->getAsyncSystem(), loadInfo.tileLoadTasks)
-          .thenImmediately([this, tileRectangle, textureSize]() mutable {
+          .thenInMainThread([this, tileRectangle, textureSize]() mutable {
             return this->findAndLoadTiles(tileRectangle, textureSize);
           });
     }
@@ -585,7 +577,6 @@ public:
   VectorTilesRasterOverlayTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
       const CreateRasterOverlayTileProviderParameters& parameters,
-      const VectorTilesRasterOverlay::TilesetSource& source,
       const VectorTilesRasterOverlayOptions& vectorOptions)
       : RasterOverlayTileProvider(
             pCreator,
@@ -609,7 +600,17 @@ public:
     this->_options.maximumSimultaneousTileLoads =
         static_cast<uint32_t>(overlayOptions.maximumSimultaneousTileLoads);
     this->_options.requestHeaders = vectorOptions.requestHeaders;
+  }
 
+  VectorTilesRasterOverlayTileProvider(
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters,
+      const std::string& url,
+      const VectorTilesRasterOverlayOptions& vectorOptions)
+      : VectorTilesRasterOverlayTileProvider(
+            pCreator,
+            parameters,
+            vectorOptions) {
     const TilesetExternals externals{
         parameters.externals.pAssetAccessor,
         this->_pPrepareRendererResources,
@@ -620,30 +621,38 @@ public:
         TilesetSharedAssetSystem::getDefault(),
         nullptr};
 
-    struct TilesetContentManagerVisitor {
-      const TilesetExternals& externals;
-      const TilesetOptions& options;
+    this->_pTileset = std::make_shared<Tileset>(externals, url, this->_options);
+    this->_pTileset->registerLoadRequester(this->_loadRequester);
+  }
 
-      IntrusivePointer<TilesetContentManager>
-      operator()(const std::string& url) {
-        return TilesetContentManager::createFromUrl(externals, options, url);
-      }
+  VectorTilesRasterOverlayTileProvider(
+      const IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters,
+      int64_t ionAssetID,
+      const std::string& ionAccessToken,
+      const std::string& ionAssetEndpointUrl,
+      const VectorTilesRasterOverlayOptions& vectorOptions)
+      : VectorTilesRasterOverlayTileProvider(
+            pCreator,
+            parameters,
+            vectorOptions) {
+    const TilesetExternals externals{
+        parameters.externals.pAssetAccessor,
+        this->_pPrepareRendererResources,
+        parameters.externals.asyncSystem,
+        parameters.externals.pCreditSystem,
+        parameters.externals.pLogger,
+        nullptr,
+        TilesetSharedAssetSystem::getDefault(),
+        nullptr};
 
-      IntrusivePointer<TilesetContentManager>
-      operator()(const VectorTilesRasterOverlay::TilesetFromIon& ion) {
-        return TilesetContentManager::createFromCesiumIon(
-            externals,
-            options,
-            ion.ionAssetID,
-            ion.ionAccessToken,
-            ion.ionAssetEndpointUrl);
-      }
-    };
-
-    this->_pTilesetContentManager = std::visit(
-        TilesetContentManagerVisitor{externals, this->_options},
-        source);
-    this->_pTilesetContentManager->registerTileRequester(this->_loadRequester);
+    this->_pTileset = std::make_shared<Tileset>(
+        externals,
+        ionAssetID,
+        ionAccessToken,
+        this->_options,
+        ionAssetEndpointUrl);
+    this->_pTileset->registerLoadRequester(this->_loadRequester);
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
@@ -661,12 +670,12 @@ public:
             overlayTile.getRectangle());
 
     // part 1 - selecting from scratch
-    if (this->_pTilesetContentManager->getRootTile() == nullptr) {
-      return this->_pTilesetContentManager->getRootTileAvailableEvent()
-          .thenInWorkerThread([this,
-                               rectangle = overlayTile.getRectangle(),
-                               tileRectangle,
-                               textureSize]() mutable {
+    if (this->_pTileset->getRootTile() == nullptr) {
+      return this->_pTileset->getRootTileAvailableEvent().thenInMainThread(
+          [this,
+           rectangle = overlayTile.getRectangle(),
+           tileRectangle,
+           textureSize]() mutable {
             return this->loadTileImageFromTileset(
                 rectangle,
                 tileRectangle,
@@ -674,44 +683,33 @@ public:
           });
     }
 
-    return loadTileImageFromTileset(
+    return this->loadTileImageFromTileset(
         overlayTile.getRectangle(),
         tileRectangle,
         textureSize);
   }
 
-  // TODO: how does this get called?
   virtual void tick() override {
-    this->_pTilesetContentManager->processWorkerThreadLoadRequests(
-        this->_options);
-    this->_pTilesetContentManager->processMainThreadLoadRequests(
-        this->_options);
+    this->_pTileset->loadTiles();
 
     // Check and resolve load requests if possible.
-    std::vector<CesiumAsync::Promise<void>> promisesToResolve;
-    {
-      std::scoped_lock<std::mutex> lock(
-          this->_pSharedTileSelectionState->loadRequestsMutex);
-      for (const Tile::Pointer& pTile :
-           this->_pSharedTileSelectionState->tilesWaitingForWorker) {
-        TileLoadState state = pTile->getState();
-        if (state == TileLoadState::FailedTemporarily) {
-          this->_pSharedTileSelectionState->workerThreadLoadQueue.emplace_back(
-              pTile.get(),
-              TileLoadPriorityGroup::Urgent,
-              1.0);
-        } else if (state < TileLoadState::ContentLoaded) {
-          continue;
-        }
+    for (const Tile::Pointer& pTile :
+         this->_pSharedTileSelectionState->tilesWaitingForWorker) {
+      TileLoadState state = pTile->getState();
+      if (state == TileLoadState::FailedTemporarily) {
+        this->_pSharedTileSelectionState->workerThreadLoadQueue.emplace_back(
+            pTile.get(),
+            TileLoadPriorityGroup::Urgent,
+            1.0);
+      } else if (state < TileLoadState::ContentLoaded) {
+        continue;
+      }
 
-        for (LoadRequest& request :
-             this->_pSharedTileSelectionState->loadRequests) {
-          if (request.requestedTiles.erase(&*pTile) > 0) {
-            if (request.requestedTiles.empty()) {
-              // Keep list of promises to resolve until after we've unlocked the
-              // mutex.
-              promisesToResolve.emplace_back(std::move(request.promise));
-            }
+      for (LoadRequest& request :
+           this->_pSharedTileSelectionState->loadRequests) {
+        if (request.requestedTiles.erase(&*pTile) > 0) {
+          if (request.requestedTiles.empty()) {
+            request.promise.resolve();
           }
         }
       }
@@ -725,10 +723,6 @@ public:
                 return request.requestedTiles.empty();
               }),
           this->_pSharedTileSelectionState->loadRequests.end());
-    }
-
-    for (CesiumAsync::Promise<void>& promise : promisesToResolve) {
-      promise.resolve();
     }
 
     // Erase tiles waiting for worker that are done.
@@ -749,16 +743,44 @@ public:
 
 VectorTilesRasterOverlay::VectorTilesRasterOverlay(
     const std::string& name,
-    const TilesetSource& source,
+    const std::string& url,
     const VectorTilesRasterOverlayOptions& vectorOptions,
     const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions)
     : CesiumRasterOverlays::RasterOverlay(name, overlayOptions),
       _vectorOptions(vectorOptions),
-      _source(source) {}
+      _useIon(false),
+      _url(url) {}
+
+VectorTilesRasterOverlay::VectorTilesRasterOverlay(
+    const std::string& name,
+    int64_t ionAssetID,
+    const std::string& ionAccessToken,
+    const std::string& ionAssetEndpointUrl,
+    const VectorTilesRasterOverlayOptions& vectorOptions,
+    const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions)
+    : CesiumRasterOverlays::RasterOverlay(name, overlayOptions),
+      _vectorOptions(vectorOptions),
+      _useIon(true),
+      _ionAssetID(ionAssetID),
+      _ionAccessToken(ionAccessToken),
+      _ionAssetEndpointUrl(ionAssetEndpointUrl) {}
 
 CesiumAsync::Future<RasterOverlay::CreateTileProviderResult>
 VectorTilesRasterOverlay::createTileProvider(
     const CreateRasterOverlayTileProviderParameters& parameters) const {
+
+  if (this->_useIon) {
+    return parameters.externals.asyncSystem
+        .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
+            IntrusivePointer<RasterOverlayTileProvider>(
+                new VectorTilesRasterOverlayTileProvider(
+                    this,
+                    parameters,
+                    this->_ionAssetID,
+                    this->_ionAccessToken,
+                    this->_ionAssetEndpointUrl,
+                    this->_vectorOptions)));
+  }
 
   return parameters.externals.asyncSystem
       .createResolvedFuture<RasterOverlay::CreateTileProviderResult>(
@@ -766,7 +788,7 @@ VectorTilesRasterOverlay::createTileProvider(
               new VectorTilesRasterOverlayTileProvider(
                   this,
                   parameters,
-                  this->_source,
+                  this->_url,
                   this->_vectorOptions)));
 }
 

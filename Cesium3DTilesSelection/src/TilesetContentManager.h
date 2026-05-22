@@ -1,8 +1,9 @@
 #pragma once
 
+#include "RasterOverlayUpsampler.h"
+
 #include <Cesium3DTilesSelection/CesiumIonTilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
-#include <Cesium3DTilesSelection/RasterOverlayUpsampler.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
