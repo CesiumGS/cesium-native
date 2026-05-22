@@ -46,7 +46,7 @@ struct VectorRenderContent {
 
   std::vector<CesiumGeospatial::Cartographic> points;
   std::vector<std::vector<CesiumGeospatial::Cartographic>> polylines;
-  std::vector<CesiumGeospatial::CartographicPolygon> polygons;
+  std::vector<std::vector<CesiumGeospatial::Cartographic>> polygons;
 };
 
 CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
@@ -150,8 +150,10 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
                                   "point unassigned to a line.");
           }
         } else if (
-            primitive.mode >= CesiumGltf::MeshPrimitive::Mode::TRIANGLES &&
-            primitive.mode <= CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN) {
+            // Previous versions of EXT_mesh_polygon use TRIANGLES, current
+            // version uses LINE_LOOP.
+            primitive.mode == CesiumGltf::MeshPrimitive::Mode::LINE_LOOP ||
+            primitive.mode >= CesiumGltf::MeshPrimitive::Mode::TRIANGLES) {
           const CesiumGltf::ExtensionExtMeshPolygon* pPolygonExtension =
               primitive.getExtension<CesiumGltf::ExtensionExtMeshPolygon>();
           if (pPolygonExtension == nullptr) {
@@ -188,7 +190,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
                                     : std::visit(
                                           CesiumGltf::NumIndicesFromAccessor{},
                                           loopIndicesView);
-            std::vector<glm::dvec2> vertices;
+            std::vector<CesiumGeospatial::Cartographic> vertices;
 
             for (int64_t j = loopIndicesOffset; j < nextLoopIndicesOffset;
                  j++) {
@@ -205,20 +207,15 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
                   ellipsoid
                       .cartesianToCartographic(glm::dvec3(transformedPosition))
                       .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0});
-              vertices.emplace_back(
-                  cartographic.longitude,
-                  cartographic.latitude);
+              vertices.emplace_back(cartographic);
             }
 
-            std::vector<uint32_t> indices;
-            content->polygons.emplace_back(
-                std::move(vertices),
-                std::move(indices));
+            content->polygons.emplace_back(std::move(vertices));
           }
         } else {
           errors.emplaceWarning(fmt::format(
               "Ignoring primitive with mode {} - only POINTS (0), LINE_STRIP "
-              "(3), and TRIANGLES (4) are supported.",
+              "(3), LINE_LOOP (5), and TRIANGLES (4) are supported.",
               primitive.mode));
         }
       });
@@ -228,7 +225,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
 
 struct LoadRequest {
   CesiumAsync::Promise<void> promise;
-  std::set<Tile*> requestedTiles;
+  std::vector<Tile*> requestedTiles;
 };
 
 struct SharedTileSelectionState {
@@ -402,12 +399,14 @@ private:
   CesiumAsync::Future<void> addLoadRequest(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::vector<TileLoadTask>& tasks) {
-    std::set<Tile*> requestedTiles;
+    std::vector<Tile*> requestedTiles;
     for (const TileLoadTask& task : tasks) {
       this->_pSharedTileSelectionState->workerThreadLoadQueue.emplace_back(
           task);
-      requestedTiles.insert(&*task.pTile);
+      requestedTiles.push_back(&*task.pTile);
     }
+
+    std::sort(requestedTiles.begin(), requestedTiles.end());
 
     LoadRequest request{
         asyncSystem.createPromise<void>(),
@@ -549,10 +548,9 @@ private:
                 continue;
               }
 
-              for (const CesiumGeospatial::CartographicPolygon& polygon :
-                   pVectorContent->polygons) {
-                rasterizer.drawPolygon(polygon, pVectorContent->style.polygon);
-              }
+              rasterizer.drawPolygon(
+                  pVectorContent->polygons,
+                  pVectorContent->style.polygon);
 
               for (const std::vector<CesiumGeospatial::Cartographic>& polyline :
                    pVectorContent->polylines) {
@@ -707,7 +705,12 @@ public:
 
       for (LoadRequest& request :
            this->_pSharedTileSelectionState->loadRequests) {
-        if (request.requestedTiles.erase(&*pTile) > 0) {
+        auto it = std::find(
+            request.requestedTiles.begin(),
+            request.requestedTiles.end(),
+            &*pTile);
+        if (it != request.requestedTiles.end()) {
+          request.requestedTiles.erase(it);
           if (request.requestedTiles.empty()) {
             request.promise.resolve();
           }

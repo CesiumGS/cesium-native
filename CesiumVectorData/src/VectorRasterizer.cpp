@@ -1,9 +1,4 @@
-#include "CesiumGltf/AccessorView.h"
-#include "CesiumGltf/Mesh.h"
-#include "CesiumGltf/MeshPrimitive.h"
-#include "CesiumGltf/Node.h"
-#include "CesiumGltfContent/GltfUtilities.h"
-#include "CesiumUtility/ExtensibleObject.h"
+#include "CesiumGeospatial/Cartographic.h"
 
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -174,6 +169,61 @@ void VectorRasterizer::drawPolygon(
       path.lineTo(radiansToPoint(
           CesiumUtility::Math::degreesToRadians(it->x),
           CesiumUtility::Math::degreesToRadians(it->y),
+          this->_bounds,
+          this->_context));
+    }
+
+    path.close();
+  }
+
+  if (style.fill) {
+    this->_context.fillPath(
+        path,
+        BLRgba32(style.fill->getColor(seedForObject(polygon, 13)).toRgba32()));
+  }
+
+  if (style.outline) {
+    setStrokeWidth(
+        this->_context,
+        *style.outline,
+        this->_ellipsoid,
+        this->_bounds);
+
+    this->_context.strokePath(
+        path,
+        BLRgba32(
+            style.outline->getColor(seedForObject(polygon, 31)).toRgba32()));
+  }
+}
+
+void VectorRasterizer::drawPolygon(
+    const std::vector<std::vector<Cartographic>>& polygon,
+    const PolygonStyle& style) {
+  if (this->_finalized || (!style.fill && !style.outline)) {
+    return;
+  }
+
+  BLPath path;
+
+  for (const std::vector<Cartographic>& ring : polygon) {
+    if (ring.empty())
+      continue;
+
+    auto it = ring.rbegin();
+    auto end = ring.rend();
+
+    Cartographic firstPoint = *it;
+    path.moveTo(radiansToPoint(
+        firstPoint.longitude,
+        firstPoint.latitude,
+        this->_bounds,
+        this->_context));
+    ++it;
+
+    for (; it != end; ++it) {
+      path.lineTo(radiansToPoint(
+          it->longitude,
+          it->latitude,
           this->_bounds,
           this->_context));
     }

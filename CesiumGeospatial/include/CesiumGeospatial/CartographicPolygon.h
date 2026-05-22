@@ -33,19 +33,6 @@ public:
   CartographicPolygon(const std::vector<glm::dvec2>& polygon);
 
   /**
-   * @brief Constructs a 2D polygon that can be rasterized onto {@link Cesium3DTilesSelection::Tileset}
-   * objects.
-   *
-   * @param vertices An array of longitude-latitude points in radians defining
-   * the perimeter of the 2D polygon.
-   * @param indices An array of indices representing a triangle decomposition of
-   * the polygon. The indices are in reference to the `vertices` array.
-   */
-  CartographicPolygon(
-      std::vector<glm::dvec2>&& vertices,
-      std::vector<uint32_t>&& indices);
-
-  /**
    * @brief Returns the longitude-latitude vertices that define the
    * perimeter of the selected polygon.
    *

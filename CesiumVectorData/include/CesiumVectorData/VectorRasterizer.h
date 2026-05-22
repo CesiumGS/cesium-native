@@ -71,6 +71,19 @@ public:
       const PolygonStyle& style);
 
   /**
+   * @brief Draws a set of linear rings representing a polygon and its holes to
+   * the canvas.
+   *
+   * @param polygon The polygon to draw. It is assumed to have right-hand
+   * winding order (exterior rings are counterclockwise, holes are clockwise) as
+   * is the case in GeoJSON. The coordinates should be specified in degrees.
+   * @param style The \ref PolygonStyle to use when drawing the polygon.
+   */
+  void drawPolygon(
+      const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygon,
+      const PolygonStyle& style);
+
+  /**
    * @brief Draws a polyline (a set of multiple line segments) to the canvas.
    *
    * @param points The set of points making up the polyline. The coordinates
