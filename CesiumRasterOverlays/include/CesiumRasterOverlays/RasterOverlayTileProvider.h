@@ -263,8 +263,11 @@ public:
   virtual void
   addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
 
-  virtual bool isTickable() const noexcept { return false; }
-
+  /**
+   * @brief Called on a regular basis, such as once per frame. This can be
+   * implemented to perform operations such as polling that can't be easily
+   * handled with a Future.
+   */
   virtual void tick() {}
 
 protected:

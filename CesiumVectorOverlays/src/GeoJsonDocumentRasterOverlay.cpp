@@ -676,7 +676,7 @@ void rasterizeVectorData(
 }
 } // namespace
 
-class CESIUMRASTEROVERLAYS_API GeoJsonDocumentRasterOverlayTileProvider final
+class CESIUMVECTOROVERLAYS_API GeoJsonDocumentRasterOverlayTileProvider final
     : public RasterOverlayTileProvider {
 
 private:

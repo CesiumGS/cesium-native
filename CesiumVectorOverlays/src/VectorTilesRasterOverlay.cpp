@@ -1,9 +1,13 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
+#include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
+#include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/Tileset.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/Promise.h>
@@ -12,9 +16,12 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionExtMeshPolygon.h>
+#include <CesiumGltf/ImageAsset.h>
+#include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
@@ -23,17 +30,31 @@
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/TreeTraversalState.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
 #include <CesiumVectorOverlays/VectorTilesRasterOverlay.h>
 
 #include <fmt/format.h>
+#include <glm/common.hpp>
+#include <glm/ext/matrix_double4x4.hpp>
+#include <glm/ext/vector_double2.hpp>
+#include <glm/ext/vector_double3.hpp>
+#include <glm/ext/vector_double4.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_int2.hpp>
+#include <spdlog/logger.h>
 
+#include <algorithm>
+#include <any>
 #include <cstddef>
 #include <cstdint>
-#include <set>
+#include <memory>
+#include <string>
 #include <utility>
+#include <variant>
+#include <vector>
 
 using namespace Cesium3DTilesSelection;
 using namespace CesiumRasterOverlays;
@@ -73,7 +94,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
           CesiumGltf::MeshPrimitive& primitive,
-          const glm::dmat4& nodeTransform) mutable {
+          const glm::dmat4x4& nodeTransform) mutable {
         const CesiumGltf::AccessorView<glm::vec3> positionView(
             model,
             primitive.attributes.at("POSITION"));
@@ -739,8 +760,6 @@ public:
             }),
         this->_pSharedTileSelectionState->tilesWaitingForWorker.end());
   }
-
-  virtual bool isTickable() const noexcept override { return true; }
 };
 } // namespace
 

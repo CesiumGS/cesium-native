@@ -32,7 +32,6 @@ public:
   /**
    * @brief Creates a new VectorTilesRasterOverlay from a URL.
    *
-   * @param asyncSystem The async system to use.
    * @param name The user-given name of this layer.
    * @param url The URL of the tileset to load.
    * @param vectorOptions Options to configure this
@@ -48,7 +47,6 @@ public:
   /**
    * @brief Creates a new VectorTilesRasterOverlay from a Cesium ion asset.
    *
-   * @param asyncSystem The async system to use.
    * @param name The user-given name of this layer.
    * @param ionAssetID The Ion asset ID of the tileset.
    * @param ionAccessToken The Ion access token to use to access the tileset.

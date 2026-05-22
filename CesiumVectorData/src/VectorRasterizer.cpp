@@ -1,5 +1,4 @@
-#include "CesiumGeospatial/Cartographic.h"
-
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -21,7 +20,6 @@
 #include <blend2d/geometry.h>
 #include <blend2d/path.h>
 #include <blend2d/rgba.h>
-#include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_double2.hpp>
 
 #include <algorithm>
