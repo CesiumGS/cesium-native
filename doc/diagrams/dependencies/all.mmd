@@ -64,6 +64,7 @@ graph TD
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumQuantizedMeshTerrain[CesiumQuantizedMeshTerrain]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumRasterOverlays[CesiumRasterOverlays]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumUtility[CesiumUtility]
+  Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumVectorData[CesiumVectorData]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> draco_draco{{draco::draco}}
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> libmorton_libmorton{{libmorton::libmorton}}
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> nonstd_expected-lite{{nonstd::expected-lite}}
@@ -89,6 +90,15 @@ graph TD
   CesiumRasterOverlays[CesiumRasterOverlays] --> nonstd_expected-lite{{nonstd::expected-lite}}
   CesiumRasterOverlays[CesiumRasterOverlays] --> spdlog_spdlog{{spdlog::spdlog}}
   CesiumRasterOverlays[CesiumRasterOverlays] --> tinyxml2_tinyxml2{{tinyxml2::tinyxml2}}
+  CesiumVectorData[CesiumVectorData] --> CesiumAsync[CesiumAsync]
+  CesiumVectorData[CesiumVectorData] --> CesiumGeometry[CesiumGeometry]
+  CesiumVectorData[CesiumVectorData] --> CesiumGeospatial[CesiumGeospatial]
+  CesiumVectorData[CesiumVectorData] --> CesiumGltf[CesiumGltf]
+  CesiumVectorData[CesiumVectorData] --> CesiumGltfContent[CesiumGltfContent]
+  CesiumVectorData[CesiumVectorData] --> CesiumUtility[CesiumUtility]
+  CesiumVectorData[CesiumVectorData] --> asmjit_asmjit{{asmjit::asmjit}}
+  CesiumVectorData[CesiumVectorData] --> blend2d_blend2d{{blend2d::blend2d}}
+  CesiumVectorData[CesiumVectorData] --> earcut{{earcut}}
   Cesium3DTilesWriter[Cesium3DTilesWriter] --> Cesium3DTiles[Cesium3DTiles]
   Cesium3DTilesWriter[Cesium3DTilesWriter] --> CesiumJsonWriter[CesiumJsonWriter]
   CesiumClientCommon[CesiumClientCommon] --> CesiumAsync[CesiumAsync]
@@ -109,15 +119,6 @@ graph TD
   CesiumITwinClient[CesiumITwinClient] --> CesiumUtility[CesiumUtility]
   CesiumITwinClient[CesiumITwinClient] --> CesiumVectorData[CesiumVectorData]
   CesiumITwinClient[CesiumITwinClient] --> modp_b64_modp_b64{{modp_b64::modp_b64}}
-  CesiumVectorData[CesiumVectorData] --> CesiumAsync[CesiumAsync]
-  CesiumVectorData[CesiumVectorData] --> CesiumGeometry[CesiumGeometry]
-  CesiumVectorData[CesiumVectorData] --> CesiumGeospatial[CesiumGeospatial]
-  CesiumVectorData[CesiumVectorData] --> CesiumGltf[CesiumGltf]
-  CesiumVectorData[CesiumVectorData] --> CesiumGltfContent[CesiumGltfContent]
-  CesiumVectorData[CesiumVectorData] --> CesiumUtility[CesiumUtility]
-  CesiumVectorData[CesiumVectorData] --> asmjit_asmjit{{asmjit::asmjit}}
-  CesiumVectorData[CesiumVectorData] --> blend2d_blend2d{{blend2d::blend2d}}
-  CesiumVectorData[CesiumVectorData] --> earcut{{earcut}}
   CesiumIonClient[CesiumIonClient] --> CesiumAsync[CesiumAsync]
   CesiumIonClient[CesiumIonClient] --> CesiumClientCommon[CesiumClientCommon]
   CesiumIonClient[CesiumIonClient] --> CesiumGeospatial[CesiumGeospatial]
@@ -131,47 +132,47 @@ graph TD
   CesiumVectorOverlays[CesiumVectorOverlays] --> CesiumRasterOverlays[CesiumRasterOverlays]
   CesiumVectorOverlays[CesiumVectorOverlays] --> CesiumUtility[CesiumUtility]
   CesiumVectorOverlays[CesiumVectorOverlays] --> CesiumVectorData[CesiumVectorData]
-  class ada_ada,glm_glm,spdlog_spdlog,zlib-ng_zlib,libmorton_libmorton,Async_,unofficial_sqlite3_sqlite3,earcut,s2_s2,KTX_ktx,WebP_webp,WebP_webpdecoder,draco_draco,libjpeg-turbo_turbojpeg-static,meshoptimizer_meshoptimizer,modp_b64_modp_b64,spz_spz,nonstd_expected-lite,tinyxml2_tinyxml2,OpenSSL_Crypto,httplib_httplib,picosha2_picosha2,CURL_libcurl_static,asmjit_asmjit,blend2d_blend2d dependencyNode
-  class CesiumUtility,Cesium3DTiles,Cesium3DTilesReader,CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,Cesium3DTilesContent,CesiumJsonReader,CesiumQuantizedMeshTerrain,CesiumRasterOverlays,Cesium3DTilesSelection,CesiumJsonWriter,Cesium3DTilesWriter,CesiumClientCommon,CesiumCurl,CesiumGltfWriter,CesiumVectorData,CesiumITwinClient,CesiumIonClient,CesiumVectorOverlays libraryNode
+  class ada_ada,glm_glm,spdlog_spdlog,zlib-ng_zlib,libmorton_libmorton,Async_,unofficial_sqlite3_sqlite3,earcut,s2_s2,KTX_ktx,WebP_webp,WebP_webpdecoder,draco_draco,libjpeg-turbo_turbojpeg-static,meshoptimizer_meshoptimizer,modp_b64_modp_b64,spz_spz,nonstd_expected-lite,tinyxml2_tinyxml2,asmjit_asmjit,blend2d_blend2d,OpenSSL_Crypto,httplib_httplib,picosha2_picosha2,CURL_libcurl_static dependencyNode
+  class CesiumUtility,Cesium3DTiles,Cesium3DTilesReader,CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,Cesium3DTilesContent,CesiumJsonReader,CesiumQuantizedMeshTerrain,CesiumRasterOverlays,CesiumVectorData,Cesium3DTilesSelection,CesiumJsonWriter,Cesium3DTilesWriter,CesiumClientCommon,CesiumCurl,CesiumGltfWriter,CesiumITwinClient,CesiumIonClient,CesiumVectorOverlays libraryNode
   linkStyle 0 stroke:#ff0029,stroke-width:8px
   linkStyle 1 stroke:#377eb8,stroke-width:8px
-  linkStyle 2,20,60,80 stroke:#66a61e,stroke-width:8px
+  linkStyle 2,20,61,81 stroke:#66a61e,stroke-width:8px
   linkStyle 3 stroke:#984ea3,stroke-width:8px
-  linkStyle 4,13,19,22,23,25,28,34,56,68,69,78,85,99,107,114,122 stroke:#00d2d5,stroke-width:8px
-  linkStyle 5,15,46,82 stroke:#ff7f00,stroke-width:8px
+  linkStyle 4,13,19,22,23,25,28,34,56,69,70,79,88,95,109,115,123 stroke:#00d2d5,stroke-width:8px
+  linkStyle 5,15,46,92 stroke:#ff7f00,stroke-width:8px
   linkStyle 6,48 stroke:#af8d00,stroke-width:8px
-  linkStyle 7,16,29,35,49,62,70,84,91,95,102,111,116 stroke:#7f80cd,stroke-width:8px
-  linkStyle 8,24,30,50,71,97,103,117 stroke:#b3e900,stroke-width:8px
-  linkStyle 9,31,51,63,72,98,104,113,118 stroke:#c42e60,stroke-width:8px
-  linkStyle 10,32,36,52,64,73,92,105,119 stroke:#a65628,stroke-width:8px
-  linkStyle 11,65,74,106,120 stroke:#f781bf,stroke-width:8px
-  linkStyle 12,33,53,75 stroke:#8dd3c7,stroke-width:8px
-  linkStyle 14,58 stroke:#bebada,stroke-width:8px
-  linkStyle 17,37,66,76 stroke:#fb8072,stroke-width:8px
+  linkStyle 7,16,29,35,49,63,71,83,94,101,105,112,117 stroke:#7f80cd,stroke-width:8px
+  linkStyle 8,24,30,50,72,84,107,118 stroke:#b3e900,stroke-width:8px
+  linkStyle 9,31,51,64,73,85,108,114,119 stroke:#c42e60,stroke-width:8px
+  linkStyle 10,32,36,52,65,74,86,102,120 stroke:#a65628,stroke-width:8px
+  linkStyle 11,66,75,87,121 stroke:#f781bf,stroke-width:8px
+  linkStyle 12,33,53,76 stroke:#8dd3c7,stroke-width:8px
+  linkStyle 14,59 stroke:#bebada,stroke-width:8px
+  linkStyle 17,37,67,77 stroke:#fb8072,stroke-width:8px
   linkStyle 18 stroke:#80b1d3,stroke-width:8px
   linkStyle 21 stroke:#fdb462,stroke-width:8px
-  linkStyle 26,110 stroke:#fccde5,stroke-width:8px
+  linkStyle 26,91 stroke:#fccde5,stroke-width:8px
   linkStyle 27 stroke:#bc80bd,stroke-width:8px
   linkStyle 38 stroke:#ffed6f,stroke-width:8px
   linkStyle 39 stroke:#c4eaff,stroke-width:8px
   linkStyle 40 stroke:#cf8c00,stroke-width:8px
-  linkStyle 41,57 stroke:#1b9e77,stroke-width:8px
+  linkStyle 41,58 stroke:#1b9e77,stroke-width:8px
   linkStyle 42 stroke:#d95f02,stroke-width:8px
   linkStyle 43 stroke:#e7298a,stroke-width:8px
-  linkStyle 44,88,94,101 stroke:#e6ab02,stroke-width:8px
+  linkStyle 44,98,104,111 stroke:#e6ab02,stroke-width:8px
   linkStyle 45 stroke:#a6761d,stroke-width:8px
   linkStyle 47 stroke:#0097ff,stroke-width:8px
   linkStyle 54 stroke:#00d067,stroke-width:8px
-  linkStyle 55,121 stroke:#000000,stroke-width:8px
-  linkStyle 59,79 stroke:#252525,stroke-width:8px
-  linkStyle 61,81 stroke:#525252,stroke-width:8px
-  linkStyle 67,77,83,93 stroke:#737373,stroke-width:8px
-  linkStyle 86 stroke:#969696,stroke-width:8px
-  linkStyle 87 stroke:#bdbdbd,stroke-width:8px
-  linkStyle 89 stroke:#f43600,stroke-width:8px
-  linkStyle 90 stroke:#4ba93b,stroke-width:8px
-  linkStyle 96,112 stroke:#5779bb,stroke-width:8px
-  linkStyle 100,123 stroke:#927acc,stroke-width:8px
-  linkStyle 108 stroke:#97ee3f,stroke-width:8px
-  linkStyle 109 stroke:#bf3947,stroke-width:8px
-  linkStyle 115 stroke:#9f5b00,stroke-width:8px
+  linkStyle 55,122 stroke:#000000,stroke-width:8px
+  linkStyle 57,110,124 stroke:#252525,stroke-width:8px
+  linkStyle 60,80 stroke:#525252,stroke-width:8px
+  linkStyle 62,82 stroke:#737373,stroke-width:8px
+  linkStyle 68,78,93,103 stroke:#969696,stroke-width:8px
+  linkStyle 89 stroke:#bdbdbd,stroke-width:8px
+  linkStyle 90 stroke:#f43600,stroke-width:8px
+  linkStyle 96 stroke:#4ba93b,stroke-width:8px
+  linkStyle 97 stroke:#5779bb,stroke-width:8px
+  linkStyle 99 stroke:#927acc,stroke-width:8px
+  linkStyle 100 stroke:#97ee3f,stroke-width:8px
+  linkStyle 106,113 stroke:#bf3947,stroke-width:8px
+  linkStyle 116 stroke:#9f5b00,stroke-width:8px
