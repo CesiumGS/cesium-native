@@ -13,6 +13,8 @@
 
 #include <doctest/doctest.h>
 
+#include <numbers>
+
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -100,5 +102,48 @@ TEST_CASE("getOrientedBoundingBoxFromBoundingVolume") {
     CHECK(
         s2.computeBoundingRegion().getBoundingBox().getHalfAxes() ==
         newObb.getHalfAxes());
+  }
+}
+
+TEST_CASE("testIntersection") {
+  SUBCASE("OrientedBoundingBox") {
+    // Simple tests with oriented bounding boxes
+    // Two boxes rotated 45 degrees around Z in opposite directions
+    using namespace std::numbers;
+    glm::dmat3 counterclockwise(
+        {sqrt2 / 2.0, sqrt2 / 2.0, 0.0},
+        {-sqrt2 / 2.0, sqrt2 / 2.0, 0.0},
+        {0.0, 0.0, 1.0});
+    glm::dmat3 clockwise(
+        {sqrt2 / 2.0, -sqrt2 / 2.0, 0.0},
+        {sqrt2 / 2.0, sqrt2 / 2.0, 0.0},
+        {0.0, 0.0, 1.0});
+    OrientedBoundingBox obb0({-2.0, 0.0, 0.0}, counterclockwise);
+    OrientedBoundingBox obb1({2.0, 0.0, 0.0}, clockwise);
+    CHECK(!testIntersection(obb0, obb1));
+    OrientedBoundingBox obb2({-1.0, 0.0, 0.0}, counterclockwise);
+    OrientedBoundingBox obb3({1.0, 0.0, 0.0}, clockwise);
+    CHECK(testIntersection(obb2, obb3));
+  }
+  SUBCASE("BoundingRegions") {
+    // A "nautical mile" square in Philadelphia
+    BoundingRegion phl(
+        GlobeRectangle(
+            -1.3120159199172432,
+            0.6969344194233807,
+            -1.311257041597562,
+            0.6975161958407122),
+        0.0,
+        300.0);
+    // A nautical mile square in NYC
+    BoundingRegion nyc(
+        GlobeRectangle(
+            -1.2921574402846652,
+            0.710289268896309,
+            -1.2913899085981675,
+            0.7108710453136404),
+        0.0,
+        300.0);
+    CHECK(!testIntersection(phl, nyc));
   }
 }
