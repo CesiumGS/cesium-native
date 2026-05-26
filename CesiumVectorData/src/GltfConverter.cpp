@@ -430,15 +430,17 @@ void GltfConverterImpl::createFeatureIdAccessor(size_t numCoords) {
         sizeof(uint32_t) * numCoords);
   } else {
     componentType = Accessor::ComponentType::FLOAT;
-    float* featureDest =
+    float* pFeatureDest =
         reinterpret_cast<float*>(featureIdBuffer.cesium.data.data());
     for (size_t i = 0; i < numCoords; ++i) {
-      featureDest[i] = static_cast<float>(this->featureIds[i]);
+      pFeatureDest[i] = static_cast<float>(this->featureIds[i]);
     }
   }
   this->featureIdBufferViewIndex = makeBufferView(
       this->featureIdBufferIndex,
       BufferView::Target::ARRAY_BUFFER);
+  // Again, alignment of vertex attributes is 4 bytes.
+  this->model.bufferViews[size_t(this->featureIdBufferViewIndex)].byteStride = 4;
   this->featureIdAccessorIndex = makeAccessor(
       this->featureIdBufferViewIndex,
       0,
