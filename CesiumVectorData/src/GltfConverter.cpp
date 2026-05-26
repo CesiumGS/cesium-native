@@ -87,14 +87,22 @@ struct GltfConverterImpl {
   glm::dmat4 enuToFixedFrame;
   CesiumGeospatial::Ellipsoid ellipsoid;
   std::vector<glm::dvec3> globalCoordinates;
-  // The feature ID that is associated with each vertex in the document
+  // The feature ID that is associated with each vertex in the document. The
+  // contents will be stored in the resulting glTF, but the values may be
+  // translated to 32 bit floats.
   std::vector<uint32_t> featureIds;
 
-  std::vector<uint32_t> lineIndices;
-  std::vector<uint32_t> polyIndices;
-  std::vector<uint32_t> pointIndices;
+  struct VectorPrimitive {
+    std::vector<uint32_t> elements;
+    int64_t uniqueFeatures;
+    int32_t gltfMode;
+  };
 
-  // two-map mapping between GeoJSON features and glTF Feature IDs
+  VectorPrimitive lines = {{}, 0, MeshPrimitive::Mode::LINES};
+  VectorPrimitive polys = {{}, 0, MeshPrimitive::Mode::TRIANGLES};
+  VectorPrimitive points = {{}, 0, MeshPrimitive::Mode::POINTS};
+
+  // two-way mapping between GeoJSON features and glTF Feature IDs
   std::unordered_map<const GeoJsonObject*, uint32_t> gltfFeatureIds;
   std::vector<const GeoJsonObject*> geoJsonFeatures;
 
@@ -123,8 +131,7 @@ struct GltfConverterImpl {
   int32_t finalizeLines();
   int32_t finalizePolygons();
   int32_t finalizePoints();
-  int32_t
-  finalizePrimitive(const std::vector<uint32_t>& elements, int32_t mode);
+  int32_t finalizePrimitive(const VectorPrimitive& vectorPrimitive);
   void preparePositions();
   void createFeatureIdAccessor(size_t numCoords);
 
@@ -151,11 +158,11 @@ struct GltfConverterImpl {
     std::vector<uint32_t> stringIndices = lineStringToLines(
         this->globalCoordinates.size(),
         lineStringCoords.size());
-    this->lineIndices.insert(
-        this->lineIndices.end(),
+    this->lines.elements.insert(
+        this->lines.elements.end(),
         stringIndices.begin(),
         stringIndices.end());
-    uint32_t featureId = getFeatureId(pFeature);
+    uint32_t featureId = getFeatureId(pFeature, this->lines);
     for (const glm::dvec3& cartoDegrees : lineStringCoords) {
       addGeoJsonCoordinate(cartoDegrees, featureId);
     }
@@ -178,7 +185,7 @@ struct GltfConverterImpl {
   void
   processPolygon(const Polygon& polygonRings, const GeoJsonObject* pFeature) {
     uint32_t elementBase = uint32_t(this->globalCoordinates.size());
-    uint32_t featureId = getFeatureId(pFeature);
+    uint32_t featureId = getFeatureId(pFeature, this->polys);
     for (const PolygonRing& contour : polygonRings) {
       // The last coordinate is identical to the first.
       for (size_t i = 0; i < contour.size() - 1; ++i) {
@@ -188,7 +195,7 @@ struct GltfConverterImpl {
     std::vector<uint32_t> triangulatedIndices =
         triangulatePolygon(polygonRings);
     for (uint32_t index : triangulatedIndices) {
-      this->polyIndices.push_back(elementBase + index);
+      this->polys.elements.push_back(elementBase + index);
     }
   }
 
@@ -207,8 +214,8 @@ struct GltfConverterImpl {
 
   void
   processPoint(const glm::dvec3& cartoDegrees, const GeoJsonObject* pFeature) {
-    uint32_t featureId = getFeatureId(pFeature);
-    this->pointIndices.push_back(uint32_t(this->globalCoordinates.size()));
+    uint32_t featureId = getFeatureId(pFeature, this->points);
+    this->points.elements.push_back(uint32_t(this->globalCoordinates.size()));
     addGeoJsonCoordinate(cartoDegrees, featureId);
   }
 
@@ -225,12 +232,15 @@ struct GltfConverterImpl {
     }
   }
 
-  uint32_t getFeatureId(const GeoJsonObject* pFeatureObject) {
+  uint32_t getFeatureId(
+      const GeoJsonObject* pFeatureObject,
+      VectorPrimitive& vectorPrimitive) {
     auto mapIt = this->gltfFeatureIds.find(pFeatureObject);
     if (mapIt == this->gltfFeatureIds.end()) {
       uint32_t featureId = uint32_t(this->geoJsonFeatures.size());
       gltfFeatureIds.insert(std::make_pair(pFeatureObject, featureId));
       this->geoJsonFeatures.push_back(pFeatureObject);
+      vectorPrimitive.uniqueFeatures++;
       return featureId;
     }
     return mapIt->second;
@@ -307,10 +317,9 @@ std::vector<double> positionMaxVector(std::span<const glm::vec3> coords) {
   return {result[0], result[1], result[2]};
 }
 
-int32_t GltfConverterImpl::finalizePrimitive(
-    const std::vector<uint32_t>& elements,
-    int32_t mode) {
-  if (elements.empty()) {
+int32_t
+GltfConverterImpl::finalizePrimitive(const VectorPrimitive& vectorPrimitive) {
+  if (vectorPrimitive.elements.empty()) {
     return -1;
   }
   int32_t meshIndex = int32_t(this->model.meshes.size());
@@ -318,28 +327,29 @@ int32_t GltfConverterImpl::finalizePrimitive(
   std::vector<std::byte>& elementBytes =
       this->model.buffers[size_t(this->elementBufferIndex)].cesium.data;
   size_t elementBase = elementBytes.size();
-  elementBytes.resize(elementBase + sizeof(uint32_t) * elements.size());
+  elementBytes.resize(
+      elementBase + sizeof(uint32_t) * vectorPrimitive.elements.size());
   std::memcpy(
       elementBytes.data() + elementBase,
-      elements.data(),
-      sizeof(uint32_t) * elements.size());
+      vectorPrimitive.elements.data(),
+      sizeof(uint32_t) * vectorPrimitive.elements.size());
   int32_t elementAccessorIndex = makeAccessor(
       this->elementBufferViewIndex,
       int64_t(elementBase),
-      int64_t(elements.size()),
+      int64_t(vectorPrimitive.elements.size()),
       Accessor::ComponentType::UNSIGNED_INT,
       Accessor::Type::SCALAR);
   MeshPrimitive& primitive = primitiveMesh.primitives.emplace_back();
   primitive.attributes["POSITION"] = this->positionAccessorIndex;
   primitive.attributes["_FEATURE_ID_0"] = this->featureIdAccessorIndex;
   primitive.indices = elementAccessorIndex;
-  primitive.mode = mode;
+  primitive.mode = vectorPrimitive.gltfMode;
   primitive.material = 0;
   ExtensionExtMeshFeatures& extension =
       primitive.addExtension<ExtensionExtMeshFeatures>();
   FeatureId& featureId = extension.featureIds.emplace_back();
   featureId.attribute = 0;
-  featureId.featureCount = int64_t(this->gltfFeatureIds.size());
+  featureId.featureCount = vectorPrimitive.uniqueFeatures;
   featureId.nullFeatureId = 0;
   int32_t nodeIndex = int32_t(this->model.nodes.size());
   this->model.nodes.emplace_back();
@@ -348,15 +358,15 @@ int32_t GltfConverterImpl::finalizePrimitive(
 }
 
 int32_t GltfConverterImpl::finalizeLines() {
-  return finalizePrimitive(this->lineIndices, MeshPrimitive::Mode::LINES);
+  return finalizePrimitive(this->lines);
 }
 
 int32_t GltfConverterImpl::finalizePolygons() {
-  return finalizePrimitive(this->polyIndices, MeshPrimitive::Mode::TRIANGLES);
+  return finalizePrimitive(this->polys);
 }
 
 int32_t GltfConverterImpl::finalizePoints() {
-  return finalizePrimitive(this->pointIndices, MeshPrimitive::Mode::POINTS);
+  return finalizePrimitive(this->points);
 }
 
 void GltfConverterImpl::preparePositions() {
@@ -397,9 +407,9 @@ void GltfConverterImpl::preparePositions() {
   positionAccessor.max = positionMaxVector(positionSpan);
   this->elementBufferIndex = int32_t(this->model.buffers.size());
   Buffer& elementBuffer = this->model.buffers.emplace_back();
-  size_t elementByteSize =
-      sizeof(uint32_t) * (this->lineIndices.size() + this->polyIndices.size() +
-                          this->pointIndices.size());
+  size_t elementByteSize = sizeof(uint32_t) * (this->lines.elements.size() +
+                                               this->polys.elements.size() +
+                                               this->points.elements.size());
   elementBuffer.cesium.data.reserve(elementByteSize);
   this->elementBufferViewIndex = this->makeBufferView(
       this->elementBufferIndex,
@@ -440,7 +450,8 @@ void GltfConverterImpl::createFeatureIdAccessor(size_t numCoords) {
       this->featureIdBufferIndex,
       BufferView::Target::ARRAY_BUFFER);
   // Again, alignment of vertex attributes is 4 bytes.
-  this->model.bufferViews[size_t(this->featureIdBufferViewIndex)].byteStride = 4;
+  this->model.bufferViews[size_t(this->featureIdBufferViewIndex)].byteStride =
+      4;
   this->featureIdAccessorIndex = makeAccessor(
       this->featureIdBufferViewIndex,
       0,

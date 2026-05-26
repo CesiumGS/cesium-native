@@ -17,6 +17,7 @@
 #include <glm/common.hpp>
 
 #include <filesystem>
+#include <set>
 
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
@@ -54,9 +55,14 @@ TEST_CASE("Conversion from geoJSON to glTF") {
           FeatureIdAccessorType featureIdView =
               getFeatureIdAccessorView(model, prim, int32_t(attribute));
           std::visit(
-              [positionCount](auto&& view) {
+              [positionCount, &featureId](auto&& view) {
                 REQUIRE(view.status() == AccessorViewStatus::Valid);
                 CHECK(view.size() == positionCount);
+                std::set<uint32_t> uniqueFeatures;
+                for (int64_t i = 0; i < view.size(); ++i) {
+                  uniqueFeatures.insert(uint32_t(view[i]));
+                }
+                CHECK(uniqueFeatures.size() == size_t(featureId.featureCount));
               },
               featureIdView);
         });
