@@ -24,8 +24,6 @@
 #include <CesiumAsync/Promise.h>
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeospatial/Cartographic.h>
-#include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Assert.h>
