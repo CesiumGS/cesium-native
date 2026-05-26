@@ -92,15 +92,15 @@ struct GltfConverterImpl {
   // translated to 32 bit floats.
   std::vector<uint32_t> featureIds;
 
-  struct VectorPrimitive {
+  template <int32_t GltfMode> struct VectorPrimitive {
     std::vector<uint32_t> elements;
-    int64_t uniqueFeatures;
-    int32_t gltfMode;
+    int64_t uniqueFeatures = 0;
+    static constexpr int32_t gltfMode = GltfMode;
   };
 
-  VectorPrimitive lines = {{}, 0, MeshPrimitive::Mode::LINES};
-  VectorPrimitive polys = {{}, 0, MeshPrimitive::Mode::TRIANGLES};
-  VectorPrimitive points = {{}, 0, MeshPrimitive::Mode::POINTS};
+  VectorPrimitive<MeshPrimitive::Mode::LINES> lines;
+  VectorPrimitive<MeshPrimitive::Mode::TRIANGLES> polys;
+  VectorPrimitive<MeshPrimitive::Mode::POINTS> points;
 
   // two-way mapping between GeoJSON features and glTF Feature IDs
   std::unordered_map<const GeoJsonObject*, uint32_t> gltfFeatureIds;
@@ -131,7 +131,8 @@ struct GltfConverterImpl {
   int32_t finalizeLines();
   int32_t finalizePolygons();
   int32_t finalizePoints();
-  int32_t finalizePrimitive(const VectorPrimitive& vectorPrimitive);
+  template <int32_t GltfMode>
+  int32_t finalizePrimitive(const VectorPrimitive<GltfMode>& vectorPrimitive);
   void preparePositions();
   void createFeatureIdAccessor(size_t numCoords);
 
@@ -232,9 +233,10 @@ struct GltfConverterImpl {
     }
   }
 
+  template <int32_t GltfMode>
   uint32_t getFeatureId(
       const GeoJsonObject* pFeatureObject,
-      VectorPrimitive& vectorPrimitive) {
+      VectorPrimitive<GltfMode>& vectorPrimitive) {
     auto mapIt = this->gltfFeatureIds.find(pFeatureObject);
     if (mapIt == this->gltfFeatureIds.end()) {
       uint32_t featureId = uint32_t(this->geoJsonFeatures.size());
@@ -317,8 +319,9 @@ std::vector<double> positionMaxVector(std::span<const glm::vec3> coords) {
   return {result[0], result[1], result[2]};
 }
 
-int32_t
-GltfConverterImpl::finalizePrimitive(const VectorPrimitive& vectorPrimitive) {
+template <int32_t GltfMode>
+int32_t GltfConverterImpl::finalizePrimitive(
+    const VectorPrimitive<GltfMode>& vectorPrimitive) {
   if (vectorPrimitive.elements.empty()) {
     return -1;
   }
