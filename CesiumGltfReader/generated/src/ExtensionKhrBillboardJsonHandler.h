@@ -10,35 +10,51 @@
 #include <CesiumJsonReader/StringJsonHandler.h>
 
 namespace CesiumJsonReader {
-  class JsonReaderOptions;
+class JsonReaderOptions;
 } // namespace CesiumJsonReader
 
 namespace CesiumGltfReader {
-  class ExtensionKhrBillboardJsonHandler : public CesiumJsonReader::ExtensibleObjectJsonHandler, public CesiumJsonReader::IExtensionJsonHandler {
-  public:
-    using ValueType = CesiumGltf::ExtensionKhrBillboard;
+class ExtensionKhrBillboardJsonHandler
+    : public CesiumJsonReader::ExtensibleObjectJsonHandler,
+      public CesiumJsonReader::IExtensionJsonHandler {
+public:
+  using ValueType = CesiumGltf::ExtensionKhrBillboard;
 
-    static constexpr const char* ExtensionName = "KHR_billboard";
+  static constexpr const char* ExtensionName = "KHR_billboard";
 
-    explicit ExtensionKhrBillboardJsonHandler(const CesiumJsonReader::JsonReaderOptions& options) noexcept;
-    void reset(IJsonHandler* pParentHandler, CesiumGltf::ExtensionKhrBillboard* pObject);
+  explicit ExtensionKhrBillboardJsonHandler(
+      const CesiumJsonReader::JsonReaderOptions& options) noexcept;
+  void reset(
+      IJsonHandler* pParentHandler,
+      CesiumGltf::ExtensionKhrBillboard* pObject);
 
-    IJsonHandler* readObjectKey(const std::string_view& str) override;
+  IJsonHandler* readObjectKey(const std::string_view& str) override;
 
-    void reset(IJsonHandler* pParentHandler, CesiumUtility::ExtensibleObject& o, const std::string_view& extensionName) override;
+  void reset(
+      IJsonHandler* pParentHandler,
+      CesiumUtility::ExtensibleObject& o,
+      const std::string_view& extensionName) override;
 
-    IJsonHandler& getHandler() override { return *this; }
+  IJsonHandler& getHandler() override { return *this; }
 
-  protected:
-    IJsonHandler* readObjectKeyExtensionKhrBillboard(const std::string& objectType, const std::string_view& str, CesiumGltf::ExtensionKhrBillboard& o);
+protected:
+  IJsonHandler* readObjectKeyExtensionKhrBillboard(
+      const std::string& objectType,
+      const std::string_view& str,
+      CesiumGltf::ExtensionKhrBillboard& o);
 
-  private:
-
-    CesiumGltf::ExtensionKhrBillboard* _pObject = nullptr;
-    CesiumJsonReader::BoolJsonHandler _overlay;
-    CesiumJsonReader::ArrayJsonHandler<std::string, CesiumJsonReader::StringJsonHandler> _rotationAxis;
-    CesiumJsonReader::BoolJsonHandler _scaleWithDistance;
-    CesiumJsonReader::ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler> _up;
-    CesiumJsonReader::ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler> _viewDirection;
-  };
-}  // namespace CesiumGltfReader
+private:
+  CesiumGltf::ExtensionKhrBillboard* _pObject = nullptr;
+  CesiumJsonReader::BoolJsonHandler _overlay;
+  CesiumJsonReader::
+      ArrayJsonHandler<std::string, CesiumJsonReader::StringJsonHandler>
+          _rotationAxis;
+  CesiumJsonReader::BoolJsonHandler _scaleWithDistance;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _up;
+  CesiumJsonReader::
+      ArrayJsonHandler<double, CesiumJsonReader::DoubleJsonHandler>
+          _viewDirection;
+};
+} // namespace CesiumGltfReader
