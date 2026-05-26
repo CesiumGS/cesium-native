@@ -1,4 +1,5 @@
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
+#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
@@ -21,13 +22,14 @@
 
 #include <doctest/doctest.h>
 
-using CesiumAsync::AsyncSystem;
-using CesiumRasterOverlays::CreateRasterOverlayTileProviderParameters;
-using CesiumRasterOverlays::RasterOverlayOptions;
-using CesiumUtility::IntrusivePointer;
-using CesiumVectorOverlays::VectorTilesRasterOverlay;
+using namespace CesiumAsync;
+using namespace CesiumRasterOverlays;
+using namespace CesiumUtility;
+using namespace CesiumVectorOverlays;
 
 TEST_CASE("Test VectorTilesRasterOverlay polylines") {
+  Cesium3DTilesContent::registerAllTileContentTypes();
+
   const std::filesystem::path dataPath =
       std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR);
   const std::filesystem::path inputPath =
@@ -100,6 +102,8 @@ TEST_CASE("Test VectorTilesRasterOverlay polylines") {
 }
 
 TEST_CASE("Test VectorTilesRasterOverlay polygons") {
+  Cesium3DTilesContent::registerAllTileContentTypes();
+
   const std::filesystem::path dataPath =
       std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR);
   const std::filesystem::path inputPath =
