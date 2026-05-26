@@ -180,6 +180,7 @@
     },
     "KHR_billboard glTF Node Extension": {
       "overrideName": "ExtensionKhrBillboard"
+      "toBeInherited": true
     }
   },
   "extensions": [

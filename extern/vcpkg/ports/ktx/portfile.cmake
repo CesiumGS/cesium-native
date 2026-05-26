@@ -1,6 +1,6 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO kring/KTX-Software # KhronosGroup/KTX-Software
+    REPO CesiumGS/KTX-Software # KhronosGroup/KTX-Software
     REF "v${VERSION}"
     SHA512 9986aa911b5bd52d5aabe465578a0bd3906fb07b846bace3ebd0c72bd3d021a71abd307c3089674833dc695e87ec4cd136ee67881a38939bc5f42d731253234b
     HEAD_REF master
