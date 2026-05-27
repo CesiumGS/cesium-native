@@ -451,24 +451,48 @@ private:
            this->_options.maximumScreenSpaceError;
   }
 
-  void visit(Tile& tile, LoadTileImageInformation& loadInfo) {
+  enum class VisitResult {
+    // More tiles must be loaded before we can render anything.
+    LoadingRequired,
+    // This tile or its children can be rendered.
+    Renderable,
+    // There is no renderable content in this tile or its children.
+    NotVisible
+  };
+
+  VisitResult visit(Tile& tile, LoadTileImageInformation& loadInfo) {
     if (tile.getState() < TileLoadState::ContentLoaded) {
       loadInfo.tileLoadTasks.emplace_back(
           TileLoadTask{&tile, TileLoadPriorityGroup::Normal, 1.0});
-      return;
+      return VisitResult::LoadingRequired;
     }
 
     if (tile.isRenderContent() &&
         (meetsSse(tile, loadInfo) || tile.getChildren().empty())) {
       loadInfo.tilesToRender.emplace_back(&tile);
-    } else {
-      for (Tile& child : tile.getChildren()) {
-        this->visitIfNeeded(child, loadInfo);
+      return VisitResult::Renderable;
+    }
+
+    bool needParent = true;
+
+    for (Tile& child : tile.getChildren()) {
+      VisitResult result = this->visitIfNeeded(child, loadInfo);
+      if (result != VisitResult::NotVisible) {
+        needParent = false;
       }
     }
+
+    if (needParent && tile.isRenderContent()) {
+      // Even though this tile may not have met SSE, none of its children can be
+      // rendered, so we need to use it.
+      loadInfo.tilesToRender.emplace_back(&tile);
+      return VisitResult::Renderable;
+    }
+
+    return needParent ? VisitResult::NotVisible : VisitResult::Renderable;
   }
 
-  void visitIfNeeded(Tile& tile, LoadTileImageInformation& loadInfo) {
+  VisitResult visitIfNeeded(Tile& tile, LoadTileImageInformation& loadInfo) {
     this->_pTileset->updateTileContent(tile);
 
     const std::optional<CesiumGeospatial::GlobeRectangle> rectangle =
@@ -477,12 +501,14 @@ private:
             this->_options.ellipsoid);
     if (!rectangle) {
       // Invalid bounding rect, nothing to do with this.
-      return;
+      return VisitResult::NotVisible;
     }
 
     if (rectangle->computeIntersection(loadInfo.tileRectangle)) {
-      this->visit(tile, loadInfo);
+      return this->visit(tile, loadInfo);
     }
+
+    return VisitResult::NotVisible;
   }
 
   CesiumAsync::Future<LoadTileImageInformation> findAndLoadTiles(
