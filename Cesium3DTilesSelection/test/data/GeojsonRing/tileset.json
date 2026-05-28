@@ -1,0 +1,27 @@
+{
+  "asset": {
+    "version": "1.0"
+  },
+  "geometricError": 100,
+  "refine": "REPLACE",
+  "root": {
+    "boundingVolume": {
+      "region": [
+        1.7453292519943295,
+        0.0,
+        1.7976891295541595,
+        0.05235987755982989,
+        0.0,
+        1.0]
+    },
+    "content": {
+      "uri": "dinagat.geojson"
+    }
+  },
+  "extensionsRequired": [
+    "MAXAR_content_geojson"
+  ],
+  "extensionsUsed": [
+    "MAXAR_content_geojson"
+  ]
+}
