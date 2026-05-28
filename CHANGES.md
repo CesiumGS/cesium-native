@@ -11,6 +11,7 @@
 - Added support for [`EXT_mesh_primitive_edge_visibility`](https://github.com/KhronosGroup/glTF/pull/2479) in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added support for [`3DTILES_content_conditional`](https://github.com/CesiumGS/3d-tiles/pull/834) in `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter`.
 - Added `CesiumVectorOverlays::VectorTilesRasterOverlay` supporting vector data loaded from 3D Tiles tilesets.
+- `GeoJsonDocumentRasterOverlay` and `VectorTilesRasterOverlay` can now display points.
 
 ### v0.60.0 - 2026-05-01
 

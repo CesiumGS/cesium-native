@@ -133,7 +133,7 @@ struct VectorStyle {
   VectorStyle() = default;
 
   /**
-   * @brief Initializes style information for point and polygon types.
+   * @brief Initializes style information for line and polygon types.
    */
   VectorStyle(const LineStyle& lineStyle, const PolygonStyle& polygonStyle);
 

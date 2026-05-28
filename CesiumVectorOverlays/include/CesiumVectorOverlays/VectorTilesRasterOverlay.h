@@ -22,8 +22,7 @@ struct VectorTilesRasterOverlayOptions {
 };
 
 /**
- * @brief A raster overlay made from rasterizing a \ref
- * CesiumVectorData::GeoJsonDocument.
+ * @brief A raster overlay made from rasterizing a vector tiles tileset.
  */
 class CESIUMVECTOROVERLAYS_API VectorTilesRasterOverlay final
     : public CesiumRasterOverlays::RasterOverlay {
@@ -48,9 +47,9 @@ public:
    * @brief Creates a new VectorTilesRasterOverlay from a Cesium ion asset.
    *
    * @param name The user-given name of this layer.
-   * @param ionAssetID The Ion asset ID of the tileset.
-   * @param ionAccessToken The Ion access token to use to access the tileset.
-   * @param ionAssetEndpointUrl The Ion asset endpoint URL to use to access the
+   * @param ionAssetID The ion asset ID of the tileset.
+   * @param ionAccessToken The ion access token to use to access the tileset.
+   * @param ionAssetEndpointUrl The ion asset endpoint URL to use to access the
    * tileset.
    * @param vectorOptions Options to configure this
    * VectorTilesRasterOverlay.

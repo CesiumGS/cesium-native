@@ -85,12 +85,12 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
 
   CesiumUtility::ErrorList errors;
 
-  VectorRenderContent* content = new VectorRenderContent();
-  content->style = defaultStyle;
+  VectorRenderContent* pContent = new VectorRenderContent();
+  pContent->style = defaultStyle;
 
   model.forEachPrimitiveInScene(
       -1,
-      [content, rootTransform, &errors, &ellipsoid](
+      [pContent, rootTransform, &errors, &ellipsoid](
           const CesiumGltf::Model& model,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
@@ -117,7 +117,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
             const glm::vec3 position = positionView[i];
             const glm::dvec4 transformedPosition =
                 rootTransform * nodeTransform * glm::dvec4(position, 1.0);
-            content->points.emplace_back(
+            pContent->points.emplace_back(
                 ellipsoid
                     .cartesianToCartographic(glm::dvec3(transformedPosition))
                     .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0}));
@@ -138,7 +138,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
             if (idx == maxIndex) {
               // Primitive restart.
               if (polyline.size() >= 2) {
-                content->polylines.emplace_back(std::move(polyline));
+                pContent->polylines.emplace_back(std::move(polyline));
                 polyline.clear();
               } else {
                 errors.emplaceError("Primitive restart index encountered but "
@@ -166,7 +166,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
           }
 
           if (polyline.size() >= 2) {
-            content->polylines.emplace_back(std::move(polyline));
+            pContent->polylines.emplace_back(std::move(polyline));
           } else if (polyline.size() == 1) {
             errors.emplaceWarning("LINE_STRIP primitive ended with a single "
                                   "point unassigned to a line.");
@@ -198,8 +198,8 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
           const int64_t maxPolygonIndex = std::visit(
               CesiumGltf::MaxIndexValueFromAccessor{},
               loopIndicesView);
-          content->polygons.reserve(
-              content->polygons.size() + static_cast<size_t>(numPolygons));
+          pContent->polygons.reserve(
+              pContent->polygons.size() + static_cast<size_t>(numPolygons));
 
           for (int64_t i = 0; i < numPolygons; i++) {
             const int64_t loopIndicesOffset = std::visit(
@@ -232,7 +232,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
               vertices.emplace_back(cartographic);
             }
 
-            content->polygons.emplace_back(std::move(vertices));
+            pContent->polygons.emplace_back(std::move(vertices));
           }
         } else {
           errors.emplaceWarning(fmt::format(
@@ -242,7 +242,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
         }
       });
 
-  return {content, errors};
+  return {pContent, errors};
 }
 
 struct LoadRequest {
@@ -441,7 +441,6 @@ private:
   }
 
   bool meetsSse(const Tile& tile, LoadTileImageInformation& loadInfo) {
-    // TODO: is this SSE calculation actually correct
     const double geometricError = tile.getGeometricError();
     const double pixelsPerMeter = (double)loadInfo.textureSize.y /
                                   (loadInfo.tileRectangle.computeHeight() *
