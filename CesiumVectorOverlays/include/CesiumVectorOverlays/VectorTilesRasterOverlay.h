@@ -63,8 +63,6 @@ public:
       const VectorTilesRasterOverlayOptions& vectorOptions = {},
       const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions = {});
 
-  virtual ~VectorTilesRasterOverlay() override = default;
-
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
       const CesiumRasterOverlays::CreateRasterOverlayTileProviderParameters&
           parameters) const override;
