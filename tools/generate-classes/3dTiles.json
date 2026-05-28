@@ -37,6 +37,9 @@
     "One item of the conditional content for 3DTILES_content_conditional": {
       "overrideName": "ConditionalContentItem"
     },
+    "MAXAR_content_geojson tileset extension": {
+      "overrideName": "ExtensionMaxarContentGeoJson"
+    },
     "Metadata Entity": {
       "isBaseClass": true
     },
@@ -70,6 +73,10 @@
     {
       "extensionName": "3DTILES_content_conditional",
       "schema": "3DTILES_content_conditional/schema/tileset.3DTILES_content_conditional.schema.json"
+    },
+    {
+      "extensionName": "MAXAR_content_geojson",
+      "schema": "MAXAR_content_geojson/schema/tileset.MAXAR_content_geojson.schema.json"
     }
   ]
 }

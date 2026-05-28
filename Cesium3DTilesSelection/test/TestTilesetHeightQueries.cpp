@@ -356,4 +356,28 @@ TEST_CASE("Tileset height queries") {
         0.0,
         Math::Epsilon1));
   }
+
+  SUBCASE("GeoJSON tiles with holes in polygons") {
+    std::string url =
+        "file://" +
+        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+            (testDataPath / "GeojsonRing" / "tileset.json").u8string()));
+    Tileset tileset(externals, url);
+
+    Future<SampleHeightResult> future = tileset.sampleHeightMostDetailed(
+        // Within the ring contents
+        {Cartographic::fromDegrees(100.5, 0.1, 100.0),
+
+         // The middle of the hole
+         Cartographic::fromDegrees(100.5, .5, 100.0)});
+
+    while (!future.isReady()) {
+      externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
+    }
+
+    SampleHeightResult results = future.waitInMainThread();
+    CHECK(results.sampleSuccess[0]);
+    CHECK(!results.sampleSuccess[1]);
+  }
 }
