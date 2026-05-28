@@ -6,10 +6,11 @@ The following raster overlay types are currently included in Cesium Native:
 
 * [BingMapsRasterOverlay](\ref CesiumRasterOverlays::BingMapsRasterOverlay)
 * [DebugColorizeTilesRasterOverlay](\ref CesiumRasterOverlays::DebugColorizeTilesRasterOverlay)
-* [GeoJsonDocumentRasterOverlay](\ref CesiumRasterOverlays::GeoJsonDocumentRasterOverlay)
+* [GeoJsonDocumentRasterOverlay](\ref CesiumVectorOverlays::GeoJsonDocumentRasterOverlay)
 * [IonRasterOverlay](\ref CesiumRasterOverlays::IonRasterOverlay)
 * [TileMapServiceRasterOverlay](\ref CesiumRasterOverlays::TileMapServiceRasterOverlay)
 * [UrlTemplateRasterOverlay](\ref CesiumRasterOverlays::UrlTemplateRasterOverlay)
+* [VectorTilesRasterOverlay](\ref CesiumVectorOverlays::VectorTilesRasterOverlay)
 * [WebMapServiceRasterOverlay](\ref CesiumRasterOverlays::WebMapServiceRasterOverlay)
 * [WebMapTileServiceRasterOverlay](\ref CesiumRasterOverlays::WebMapTileServiceRasterOverlay)
 

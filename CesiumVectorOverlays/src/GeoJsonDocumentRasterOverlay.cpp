@@ -12,8 +12,6 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/ImageAsset.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
-#include <CesiumRasterOverlays/GeoJsonDocumentRasterOverlay.h>
-#include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -26,6 +24,8 @@
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
+#include <CesiumVectorOverlays/GeoJsonDocumentRasterOverlay.h>
+#include <CesiumVectorOverlays/Library.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
@@ -47,11 +47,12 @@ using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 using namespace CesiumVectorData;
+using namespace CesiumRasterOverlays;
 
 // We won't generate any quadtree nodes past this depth.
 const uint32_t DEPTH_LIMIT = 8;
 
-namespace CesiumRasterOverlays {
+namespace CesiumVectorOverlays {
 
 namespace {
 /**
@@ -675,7 +676,7 @@ void rasterizeVectorData(
 }
 } // namespace
 
-class CESIUMRASTEROVERLAYS_API GeoJsonDocumentRasterOverlayTileProvider final
+class CESIUMVECTOROVERLAYS_API GeoJsonDocumentRasterOverlayTileProvider final
     : public RasterOverlayTileProvider {
 
 private:
@@ -850,4 +851,4 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
           });
 }
 
-} // namespace CesiumRasterOverlays
+} // namespace CesiumVectorOverlays

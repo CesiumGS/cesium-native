@@ -24,6 +24,7 @@
 #include <CesiumAsync/Promise.h>
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeospatial/Cartographic.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
@@ -167,6 +168,10 @@ const CesiumUtility::CreditSource& Tileset::getCreditSource() const noexcept {
 }
 
 const Tile* Tileset::getRootTile() const noexcept {
+  return this->_pTilesetContentManager->getRootTile();
+}
+
+Tile* Tileset::getRootTile() noexcept {
   return this->_pTilesetContentManager->getRootTile();
 }
 
@@ -472,6 +477,15 @@ void Tileset::loadTiles() {
   this->_pTilesetContentManager->processWorkerThreadLoadRequests(
       this->_options);
   this->_pTilesetContentManager->processMainThreadLoadRequests(this->_options);
+  for (const IntrusivePointer<ActivatedRasterOverlay>& pOverlay :
+       this->_pTilesetContentManager->getRasterOverlayCollection()
+           .getActivatedOverlays()) {
+    pOverlay->tick();
+  }
+}
+
+void Tileset::updateTileContent(Tile& tile) {
+  this->_pTilesetContentManager->updateTileContent(tile, this->_options);
 }
 
 void Tileset::registerLoadRequester(TileLoadRequester& requester) {

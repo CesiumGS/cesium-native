@@ -23,6 +23,7 @@ if(DOXYGEN_FOUND)
         ../CesiumClientCommon/include
         ../CesiumIonClient/include
         ../CesiumITwinClient/include
+        ../CesiumVectorOverlays/include
         ../CesiumVectorData/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
@@ -82,7 +83,7 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "../README.md")
     set(DOXYGEN_USE_MATHJAX YES)
 
-    set(DOXYGEN_DOT_GRAPH_MAX_NODES 100)
+    set(DOXYGEN_DOT_GRAPH_MAX_NODES 200)
     set(DOXYGEN_WARN_AS_ERROR FAIL_ON_WARNINGS_PRINT)
     list(APPEND DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/")
     list(APPEND DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_LIST_DIR}/img")

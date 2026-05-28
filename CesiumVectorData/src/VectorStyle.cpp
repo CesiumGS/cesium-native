@@ -33,4 +33,9 @@ VectorStyle::VectorStyle(
     const LineStyle& lineStyle,
     const PolygonStyle& polygonStyle)
     : line(lineStyle), polygon(polygonStyle) {}
+VectorStyle::VectorStyle(
+    const LineStyle& lineStyle,
+    const PolygonStyle& polygonStyle,
+    const PointStyle& pointStyle)
+    : line(lineStyle), polygon(polygonStyle), point(pointStyle) {}
 } // namespace CesiumVectorData

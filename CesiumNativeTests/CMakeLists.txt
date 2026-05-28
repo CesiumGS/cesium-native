@@ -20,6 +20,7 @@ set(cesium_native_targets
     CesiumIonClient
     CesiumITwinClient
     CesiumVectorData
+    CesiumVectorOverlays
     CesiumQuantizedMeshTerrain
     CesiumRasterOverlays
     CesiumUtility

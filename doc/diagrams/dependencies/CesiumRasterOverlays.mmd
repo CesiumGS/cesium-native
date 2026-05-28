@@ -12,8 +12,11 @@ graph TD
   CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumGltf[CesiumGltf]
   CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumGltfContent[CesiumGltfContent]
   CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumGltfReader[CesiumGltfReader]
+  CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumJsonReader[CesiumJsonReader]
+  CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumJsonWriter[CesiumJsonWriter]
   CesiumRasterOverlays[CesiumRasterOverlays] --> CesiumUtility[CesiumUtility]
   CesiumRasterOverlays[CesiumRasterOverlays] --> nonstd_expected-lite{{nonstd::expected-lite}}
+  CesiumRasterOverlays[CesiumRasterOverlays] --> spdlog_spdlog{{spdlog::spdlog}}
   CesiumRasterOverlays[CesiumRasterOverlays] --> tinyxml2_tinyxml2{{tinyxml2::tinyxml2}}
-  class nonstd_expected-lite,tinyxml2_tinyxml2 dependencyNode
-  class CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,CesiumUtility,CesiumRasterOverlays libraryNode
+  class nonstd_expected-lite,spdlog_spdlog,tinyxml2_tinyxml2 dependencyNode
+  class CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,CesiumJsonReader,CesiumJsonWriter,CesiumUtility,CesiumRasterOverlays libraryNode

@@ -152,6 +152,41 @@ TEST_CASE("VectorRasterizer::rasterize") {
     checkFilesEqual(dir / "polyline.tga", thisDir / "polyline.tga");
   }
 
+  SUBCASE("Renders points") {
+    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    asset.emplace();
+    asset->width = 256;
+    asset->height = 256;
+    asset->channels = 4;
+    asset->bytesPerChannel = 1;
+    asset->pixelData.resize(
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        std::byte{255});
+
+    VectorRasterizer rasterizer(GlobeRectangle{0, 0, 1, 1}, asset);
+
+    std::vector<Cartographic> points{
+        Cartographic(0, 0, 0),
+        Cartographic(1, 1, 0),
+        Cartographic(0, 1, 0),
+        Cartographic(1, 0, 0),
+        Cartographic(0.5, 0.5, 0),
+        Cartographic(0.25, 0.75, 0),
+        Cartographic(0.75, 0.75, 0),
+        Cartographic(0.25, 0.25, 0),
+        Cartographic(0.75, 0.25, 0)};
+
+    rasterizer.drawPoints(
+        points,
+        PointStyle{
+            16.0,
+            ColorStyle{Color{200, 123, 38, 255}, ColorMode::Normal},
+            std::nullopt});
+    rasterizer.finalize();
+    writeImageToTgaFile(*asset, thisDir / "points.tga");
+    checkFilesEqual(dir / "points.tga", thisDir / "points.tga");
+  }
+
   SUBCASE("Transforms bounds properly") {
     GlobeRectangle rect2(
         Math::degreesToRadians(0.25),
