@@ -8,7 +8,7 @@
 #include "Extension3dTilesContentConditionalJsonHandler.h"
 #include "Extension3dTilesEllipsoidJsonHandler.h"
 #include "ExtensionContent3dTilesContentVoxelsJsonHandler.h"
-#include "ExtensionMaxarContentGeojsonJsonHandler.h"
+#include "ExtensionMaxarContentGeoJsonJsonHandler.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/Content.h>
@@ -33,7 +33,7 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       Extension3dTilesContentConditionalJsonHandler>();
   options.registerExtension<
       Cesium3DTiles::Tileset,
-      ExtensionMaxarContentGeojsonJsonHandler>();
+      ExtensionMaxarContentGeoJsonJsonHandler>();
   options.registerExtension<
       Cesium3DTiles::Content,
       ExtensionContent3dTilesContentVoxelsJsonHandler>();

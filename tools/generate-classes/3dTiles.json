@@ -38,7 +38,7 @@
       "overrideName": "ConditionalContentItem"
     },
     "MAXAR_content_geojson tileset extension": {
-      "overrideName": "ExtensionMaxarContentGeojson"
+      "overrideName": "ExtensionMaxarContentGeoJson"
     },
     "Metadata Entity": {
       "isBaseClass": true

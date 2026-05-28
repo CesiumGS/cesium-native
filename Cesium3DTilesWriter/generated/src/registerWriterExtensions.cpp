@@ -16,7 +16,7 @@
 #include <Cesium3DTiles/Extension3dTilesContentConditional.h>
 #include <Cesium3DTiles/Extension3dTilesEllipsoid.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
-#include <Cesium3DTiles/ExtensionMaxarContentGeojson.h>
+#include <Cesium3DTiles/ExtensionMaxarContentGeoJson.h>
 // NOLINTEND(misc-include-cleaner)
 
 namespace Cesium3DTilesWriter {
@@ -38,7 +38,7 @@ void registerWriterExtensions(
       Extension3dTilesContentConditionalJsonWriter>();
   context.registerExtension<
       Cesium3DTiles::Tileset,
-      ExtensionMaxarContentGeojsonJsonWriter>();
+      ExtensionMaxarContentGeoJsonJsonWriter>();
   context.registerExtension<
       Cesium3DTiles::Content,
       ExtensionContent3dTilesContentVoxelsJsonWriter>();
