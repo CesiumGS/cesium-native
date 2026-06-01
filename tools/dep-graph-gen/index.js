@@ -54,7 +54,8 @@ nodes.forEach(n => {
 });
 
 function formatLibraryNameAsId(libraryName) {
-  return libraryName.replace(/(::|\+\+)/g, "_");
+  // libcurl for some reason has a multiline library name - just take the first line.
+  return libraryName.split("\\n")[0].replace(/(::|\+\+)/g, "_");
 }
 
 const includedRegex = new RegExp(argv.targets);
@@ -87,7 +88,8 @@ graph TD
     (dependencyLinks[n] || []).forEach(l => {
       const toNodeId = formatLibraryNameAsId(l);
       const isImportant = includedRegex.test(l);
-      const toLabel = isImportant ? `[${l}]` : `{{${l}}}`;
+      const formattedLabel = l.split("\\n")[0];
+      const toLabel = isImportant ? `[${formattedLabel}]` : `{{${formattedLabel}}}`;
       output += `  ${fromNodeId}[${n}] --> ${toNodeId}${toLabel}\n`;
       if (isImportant) {
         classes["libraryNode"][toNodeId] = true;

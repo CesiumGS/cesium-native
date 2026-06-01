@@ -263,6 +263,13 @@ public:
   virtual void
   addCredits(CesiumUtility::CreditReferencer& creditReferencer) noexcept;
 
+  /**
+   * @brief Called on a regular basis, such as once per frame. This can be
+   * implemented to perform operations such as polling that can't be easily
+   * handled with a Future.
+   */
+  virtual void tick() {}
+
 protected:
   /**
    * @brief Loads an image from a URL and optionally some request headers.

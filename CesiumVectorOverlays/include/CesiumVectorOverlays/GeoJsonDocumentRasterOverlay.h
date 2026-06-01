@@ -1,10 +1,11 @@
 #pragma once
 
+#include "Library.h"
+
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/Color.h>
@@ -18,7 +19,7 @@
 #include <memory>
 #include <string>
 
-namespace CesiumRasterOverlays {
+namespace CesiumVectorOverlays {
 
 /**
  * @brief A set of options for configuring a GeoJsonDocumentRasterOverlay.
@@ -45,8 +46,8 @@ struct GeoJsonDocumentRasterOverlayOptions {
  * @brief A raster overlay made from rasterizing a \ref
  * CesiumVectorData::GeoJsonDocument.
  */
-class CESIUMRASTEROVERLAYS_API GeoJsonDocumentRasterOverlay final
-    : public RasterOverlay {
+class CESIUMVECTOROVERLAYS_API GeoJsonDocumentRasterOverlay final
+    : public CesiumRasterOverlays::RasterOverlay {
 
 public:
   /**
@@ -64,7 +65,7 @@ public:
       const std::string& name,
       const std::shared_ptr<CesiumVectorData::GeoJsonDocument>& document,
       const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
-      const RasterOverlayOptions& overlayOptions = {});
+      const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions = {});
 
   /**
    * @brief Creates a new GeoJsonDocumentRasterOverlay from a future.
@@ -81,17 +82,17 @@ public:
       CesiumAsync::Future<std::shared_ptr<CesiumVectorData::GeoJsonDocument>>&&
           documentFuture,
       const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
-      const RasterOverlayOptions& overlayOptions = {});
+      const CesiumRasterOverlays::RasterOverlayOptions& overlayOptions = {});
 
   virtual ~GeoJsonDocumentRasterOverlay() override;
 
   virtual CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
-      const CreateRasterOverlayTileProviderParameters& parameters)
-      const override;
+      const CesiumRasterOverlays::CreateRasterOverlayTileProviderParameters&
+          parameters) const override;
 
 private:
   CesiumAsync::Future<std::shared_ptr<CesiumVectorData::GeoJsonDocument>>
       _documentFuture;
   GeoJsonDocumentRasterOverlayOptions _options;
 };
-} // namespace CesiumRasterOverlays
+} // namespace CesiumVectorOverlays

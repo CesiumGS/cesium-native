@@ -117,12 +117,15 @@ FeatureIdAccessorType getFeatureIdAccessorView(
 
 IndexAccessorType
 getIndexAccessorView(const Model& model, const MeshPrimitive& primitive) {
-  if (primitive.indices < 0) {
+  return getIndexAccessorView(model, primitive.indices);
+}
+
+IndexAccessorType getIndexAccessorView(const Model& model, int32_t index) {
+  if (index < 0) {
     return IndexAccessorType();
   }
 
-  const Accessor* pAccessor =
-      model.getSafe<Accessor>(&model.accessors, primitive.indices);
+  const Accessor* pAccessor = model.getSafe<Accessor>(&model.accessors, index);
   if (!pAccessor || pAccessor->type != Accessor::Type::SCALAR ||
       pAccessor->normalized) {
     return AccessorView<uint8_t>();

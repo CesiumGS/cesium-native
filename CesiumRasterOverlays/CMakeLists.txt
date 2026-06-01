@@ -49,7 +49,6 @@ target_link_libraries(CesiumRasterOverlays
         CesiumJsonReader
         CesiumJsonWriter
         CesiumUtility
-        CesiumVectorData
         nonstd::expected-lite
         spdlog::spdlog
     PRIVATE

@@ -178,6 +178,9 @@
     "EXT_mesh_primitive_edge_visibility glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionExtMeshPrimitiveEdgeVisibility",
       "toBeInherited": true
+    },
+    "EXT_mesh_polygon glTF Mesh Primitive Extension": {
+      "overrideName": "ExtensionExtMeshPolygon"
     }
   },
   "extensions": [
@@ -320,6 +323,13 @@
     {
       "extensionName": "EXT_mesh_primitive_edge_visibility",
       "schema": "Vendor/EXT_mesh_primitive_edge_visibility/schema/primitive.EXT_mesh_primitive_edge_visibility.schema.json",
+      "attachTo": [
+        "mesh.primitive"
+      ]
+    },
+    {
+      "extensionName": "EXT_mesh_polygon",
+      "schema": "Vendor/EXT_mesh_polygon/EXT_mesh_polygon.schema.json",
       "attachTo": [
         "mesh.primitive"
       ]

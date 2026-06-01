@@ -84,6 +84,7 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | **CesiumRasterOverlays**       | Classes for raster overlays, which allow draping massive 2D textures over a model.                              |
 | **CesiumUtility**              | Utility functions for JSON parsing, URI processing, credits, etc.                                               |
 | **CesiumVectorData**           | Classes for loading vector data such as GeoJSON.                                                                |
+| **CesiumVectorOverlays**       | Raster overlays for displaying vector data.                                                                     |
 
 ## 📗License
 
