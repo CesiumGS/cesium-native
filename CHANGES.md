@@ -1,14 +1,16 @@
 # Change Log
 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Upgraded vcpkg to `2026.04.27`.
+
 ### v0.61.0 - 2026-06-01
 
 ##### Breaking Changes :mega:
 
 - `CesiumRasterOverlays::GeoJsonDocumentRasterOverlay` has been moved to the `CesiumVectorOverlays` library and namespace.
-
-##### Breaking Changes :mega:
-
-- Upgraded vcpkg to `2026.04.27`.
 
 ##### Additions :tada:
 
