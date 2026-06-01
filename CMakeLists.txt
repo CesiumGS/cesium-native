@@ -194,7 +194,7 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.60.0
+    VERSION 0.61.0
     LANGUAGES CXX C
 )
 
@@ -447,6 +447,7 @@ add_subdirectory(CesiumIonClient)
 add_subdirectory(CesiumITwinClient)
 add_subdirectory(CesiumQuantizedMeshTerrain)
 add_subdirectory(CesiumVectorData)
+add_subdirectory(CesiumVectorOverlays)
 
 if(NOT CESIUM_DISABLE_CURL)
     add_subdirectory(CesiumCurl)

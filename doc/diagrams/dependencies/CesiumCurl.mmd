@@ -6,7 +6,7 @@ title: CesiumCurl Dependency Graph
 graph TD
   classDef dependencyNode fill:#fff,stroke:#ccc,color:#666,font-weight:bold,font-size:28px
   classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px
-  CesiumCurl[CesiumCurl] --> CURL_libcurl{{CURL::libcurl}}
+  CesiumCurl[CesiumCurl] --> CURL_libcurl_static{{CURL::libcurl_static}}
   CesiumCurl[CesiumCurl] --> CesiumAsync[CesiumAsync]
-  class CURL_libcurl dependencyNode
+  class CURL_libcurl_static dependencyNode
   class CesiumAsync,CesiumCurl libraryNode

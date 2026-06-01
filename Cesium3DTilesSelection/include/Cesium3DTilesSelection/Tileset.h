@@ -10,6 +10,7 @@
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetLoadFailureDetails.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <Cesium3DTilesSelection/TilesetSelection.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <Cesium3DTilesSelection/ViewUpdateResult.h>
@@ -203,6 +204,13 @@ public:
    * This may be `nullptr` if there is currently no root tile.
    */
   const Tile* getRootTile() const noexcept;
+
+  /**
+   * @brief Gets the root tile of this tileset.
+   *
+   * This may be `nullptr` if there is currently no root tile.
+   */
+  Tile* getRootTile() noexcept;
 
   /**
    * @brief Returns the {@link RasterOverlayCollection} of this tileset.
@@ -438,6 +446,21 @@ public:
   void loadTiles();
 
   /**
+   * @brief Updates the content of the given tile based on its current state.
+   *
+   * This may involve steps such as updating tile properties based on content,
+   * creating tile children, handling tile unloading, and more.
+   *
+   * @note This is automatically called as part of the normal tile selection
+   * process, such as when using \ref updateViewGroup or \ref
+   * updateViewGroupOffline. This method should only be called manually when
+   * tile selection is being driven by code external to the `Tileset`.
+   *
+   * @param tile The tile to update.
+   */
+  void updateTileContent(Tile& tile);
+
+  /**
    * @brief Registers a tile load requester with this Tileset. Registered tile
    * load requesters get to influence which tiles are loaded when
    * {@link loadTiles} is called.
@@ -468,149 +491,6 @@ public:
   Tileset& operator=(const Tileset& rhs) = delete;
 
 private:
-  /**
-   * @brief The result of traversing one branch of the tile hierarchy.
-   *
-   * Instances of this structure are created by the `_visit...` functions,
-   * and summarize the information that was gathered during the traversal
-   * of the respective branch, so that this information can be used by
-   * the parent to decide on the further traversal process.
-   */
-  struct TraversalDetails {
-    /**
-     * @brief Whether all selected tiles in this tile's subtree are renderable.
-     *
-     * This is `true` if all selected (i.e. not culled or refined) tiles in this
-     * tile's subtree are renderable. If the subtree is renderable, we'll render
-     * it; no drama.
-     */
-    bool allAreRenderable = true;
-
-    /**
-     * @brief Whether any tile in this tile's subtree was rendered in the last
-     * frame.
-     *
-     * This is `true` if any tiles in this tile's subtree were rendered last
-     * frame. If any were, we must render the subtree rather than this tile,
-     * because rendering this tile would cause detail to vanish that was visible
-     * last frame, and that's no good.
-     */
-    bool anyWereRenderedLastFrame = false;
-
-    /**
-     * @brief The number of selected tiles in this tile's subtree that are not
-     * yet renderable.
-     *
-     * Counts the number of selected tiles in this tile's subtree that are
-     * not yet ready to be rendered because they need more loading. Note that
-     * this value will _not_ necessarily be zero when
-     * `allAreRenderable` is `true`, for subtle reasons.
-     * When `allAreRenderable` and `anyWereRenderedLastFrame` are both `false`,
-     * we will render this tile instead of any tiles in its subtree and the
-     * `allAreRenderable` value for this tile will reflect only whether _this_
-     * tile is renderable. The `notYetRenderableCount` value, however, will
-     * still reflect the total number of tiles that we are waiting on, including
-     * the ones that we're not rendering. `notYetRenderableCount` is only reset
-     * when a subtree is removed from the render queue because the
-     * `notYetRenderableCount` exceeds the
-     * {@link TilesetOptions::loadingDescendantLimit}.
-     */
-    uint32_t notYetRenderableCount = 0;
-  };
-
-  TraversalDetails _renderLeaf(
-      const TilesetFrameState& frameState,
-      Tile& tile,
-      double tilePriority,
-      double tileSse,
-      ViewUpdateResult& result);
-  TraversalDetails _renderInnerTile(
-      const TilesetFrameState& frameState,
-      Tile& tile,
-      double tileSse,
-      ViewUpdateResult& result);
-  bool _kickDescendantsAndRenderTile(
-      const TilesetFrameState& frameState,
-      Tile& tile,
-      ViewUpdateResult& result,
-      TraversalDetails& traversalDetails,
-      size_t firstRenderedDescendantIndex,
-      const TilesetViewGroup::LoadQueueCheckpoint& loadQueueBeforeChildren,
-      bool queuedForLoad,
-      double tilePriority,
-      double tileSse);
-  TileOcclusionState _checkOcclusion(const Tile& tile);
-
-  TraversalDetails _visitTile(
-      const TilesetFrameState& frameState,
-      uint32_t depth,
-      bool meetsSse,
-      bool ancestorMeetsSse,
-      Tile& tile,
-      double tilePriority,
-      double tileSse,
-      ViewUpdateResult& result);
-
-  struct CullResult {
-    // whether we should visit this tile
-    bool shouldVisit = true;
-    // whether this tile was culled (Note: we might still want to visit it)
-    bool culled = false;
-  };
-
-  // TODO: abstract these into a composable culling interface.
-  void _frustumCull(
-      const Tile& tile,
-      const TilesetFrameState& frameState,
-      bool cullWithChildrenBounds,
-      CullResult& cullResult);
-  void _fogCull(
-      const TilesetFrameState& frameState,
-      const std::vector<double>& distances,
-      CullResult& cullResult);
-  double _computeSse(
-      const std::vector<ViewState>& frustums,
-      const Tile& tile,
-      const std::vector<double>& distances) const noexcept;
-  bool _meetsSseThreshold(double sse, bool culled) const noexcept;
-
-  TraversalDetails _visitTileIfNeeded(
-      const TilesetFrameState& frameState,
-      uint32_t depth,
-      bool ancestorMeetsSse,
-      Tile& tile,
-      ViewUpdateResult& result);
-  TraversalDetails _visitVisibleChildrenNearToFar(
-      const TilesetFrameState& frameState,
-      uint32_t depth,
-      bool ancestorMeetsSse,
-      Tile& tile,
-      ViewUpdateResult& result);
-
-  /**
-   * @brief When called on an additive-refined tile, queues it for load and adds
-   * it to the render list.
-   *
-   * For replacement-refined tiles, this method does nothing and returns false.
-   *
-   * @param tile The tile to potentially load and render.
-   * @param result The current view update result.
-   * @param tilePriority The load priority of this tile.
-   * priority.
-   * @param tileSse The screen space error of this tile.
-   * @param queuedForLoad True if this tile has already been queued for loading.
-   * @return true The additive-refined tile was queued for load and added to the
-   * render list.
-   * @return false The non-additive-refined tile was ignored.
-   */
-  bool _loadAndRenderAdditiveRefinedTile(
-      const TilesetFrameState& frameState,
-      Tile& tile,
-      ViewUpdateResult& result,
-      double tilePriority,
-      double tileSse,
-      bool queuedForLoad);
-
   void _unloadCachedTiles(double timeBudget) noexcept;
 
   void _updateLodTransitions(
@@ -627,8 +507,8 @@ private:
   // selection.
   std::vector<double> _distances;
 
-  // Holds the occlusion proxies of the children of a tile. Store them in this
-  // scratch variable so that it can allocate only when growing bigger.
+  // Holds the occlusion proxies of the children of a tile, to avoid
+  // per-frame allocation.
   std::vector<const TileOcclusionRendererProxy*> _childOcclusionProxies;
 
   CesiumUtility::IntrusivePointer<TilesetContentManager>
@@ -637,16 +517,6 @@ private:
   std::list<TilesetHeightRequest> _heightRequests;
 
   TilesetViewGroup _defaultViewGroup;
-
-  void addTileToLoadQueue(
-      const TilesetFrameState& frameState,
-      Tile& tile,
-      TileLoadPriorityGroup priorityGroup,
-      double priority);
-
-  static TraversalDetails createTraversalDetailsForSingleTile(
-      const TilesetFrameState& frameState,
-      const Tile& tile);
 };
 
 } // namespace Cesium3DTilesSelection
