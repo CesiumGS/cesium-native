@@ -16,6 +16,13 @@
 #include <utility>
 #include <vector>
 
+
+#if defined(_MSC_VER)
+#include <intrin.h>
+#elif defined(__x86_64__) || defined(__i386__)
+#include <x86intrin.h>
+#endif
+
 using namespace CesiumGeometry;
 
 namespace CesiumGeospatial {
@@ -57,7 +64,21 @@ triangulatePolygon(const std::vector<glm::dvec2>& polygon) {
 
   localPolygons.emplace_back(std::move(localPolygon));
 
+  // Save the current MXCSR state and disable DAZ (bit 6) and FTZ (bit 15)
+  // before calling mapbox::earcut. These flags, enabled by UE5 in packaged
+  // builds, cause earcut's floating-point predicates to produce incorrect
+  // triangulation results by flushing denormal values to zero.
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+  unsigned int _oldMxcsr = _mm_getcsr();
+  _mm_setcsr(_oldMxcsr & ~((1u << 6) | (1u << 15)));
+#endif
+
   indices = mapbox::earcut<uint32_t>(localPolygons);
+
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+  _mm_setcsr(_oldMxcsr);
+#endif
+
   return indices;
 }
 
