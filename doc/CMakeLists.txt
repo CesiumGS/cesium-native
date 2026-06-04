@@ -11,6 +11,7 @@ if(DOXYGEN_FOUND)
         ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
         ../CesiumAsync/include
+        ../CesiumClientCommon/include
         ../CesiumCurl/include
         ../CesiumGeometry/include
         ../CesiumGeospatial/include
@@ -20,17 +21,18 @@ if(DOXYGEN_FOUND)
         ../CesiumGltfReader/include
         ../CesiumGltfReader/generated/include
         ../CesiumGltfWriter/include
-        ../CesiumClientCommon/include
+        ../CesiumImage/include
+        ../CesiumIonClient/include
         ../CesiumIonClient/include
         ../CesiumITwinClient/include
-        ../CesiumVectorOverlays/include
-        ../CesiumVectorData/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
         ../CesiumQuantizedMeshTerrain/include
         ../CesiumQuantizedMeshTerrain/generated/include
         ../CesiumRasterOverlays/include
         ../CesiumUtility/include
+        ../CesiumVectorData/include
+        ../CesiumVectorOverlays/include
     )
 
     set(DOXYGEN_STRIP_FROM_INC_PATH ${LIB_DIRS})

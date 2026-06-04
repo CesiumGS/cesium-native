@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - Upgraded vcpkg to `2026.04.27`.
+- Moved `CesiumGltf::ImageAsset`, `CesiumGltf::Ktx2TranscodeTargets`, `CesiumGltfReader::ImageDecoder`, and `CesiumGltfContent::ImageManipulation` to a new `CesiumImage` library.
 
 ##### Additions :tada:
 

@@ -250,20 +250,21 @@ public:
 
   /**
    * @brief Reads an Image from a buffer.
-   * @deprecated Use @ref ImageDecoder::readImage  instead.
+   * @deprecated Use @ref ImageDecoder::readImage instead.
    */
-  [[deprecated("Use ImageDecoder::readImage instead.")]]
-  static CesiumImage::ImageReaderResult readImage(
-      const std::span<const std::byte>& data,
-      const CesiumImage::Ktx2TranscodeTargets& ktx2TranscodeTargets);
+  [[deprecated("Use ImageDecoder::readImage instead.")]] static CesiumImage::
+      ImageReaderResult
+      readImage(
+          const std::span<const std::byte>& data,
+          const CesiumImage::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
   /**
    * @brief Generate mipmaps for this image.
-   * @deprecated Use @ref ImageDecoder::generateMipMaps  instead.
+   * @deprecated Use @ref ImageDecoder::generateMipMaps instead.
    */
-  [[deprecated("Use ImageDecoder::generateMipMaps instead.")]]
-  static std::optional<std::string>
-  generateMipMaps(CesiumImage::ImageAsset& image);
+  [[deprecated("Use ImageDecoder::generateMipMaps instead.")]] static std::
+      optional<std::string>
+      generateMipMaps(CesiumImage::ImageAsset& image);
 
 private:
   CesiumJsonReader::JsonReaderOptions _context;

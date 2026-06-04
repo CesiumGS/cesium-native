@@ -74,7 +74,7 @@ public:
    * @brief Serializes the provided model into a glTF JSON byte vector.
    *
    * Ignores internal data such as @ref CesiumImage::BufferCesium
-   * and @ref CesiumIMage::ImageAsset when serializing the glTF. Internal
+   * and @ref CesiumImage::ImageAsset when serializing the glTF. Internal
    * data must either be converted to data uris or saved as external files. The
    * buffer.uri and image.uri fields must be set accordingly prior to calling
    * this function.

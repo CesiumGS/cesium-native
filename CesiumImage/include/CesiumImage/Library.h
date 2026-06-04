@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @brief Classes that support reading, decoding, and maniuplating images.
+ * @brief Classes that support reading, decoding, and manipulating images.
  *
  * @mermaid-interactive{dependencies/CesiumImage}
  */

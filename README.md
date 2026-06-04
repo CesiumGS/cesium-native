@@ -77,6 +77,7 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | **CesiumGltfReader**           | glTF deserialization / decoding, including glTF extension support (`KHR_draco_mesh_compression` etc).           |
 | **CesiumGltfWriter**           | glTF serialization / encoding, including glTF extension support.                                                |
 | **CesiumIonClient**            | Functions to access [Cesium ion](https://cesium.com/cesium-ion/) accounts and 3D tilesets using ion's REST API. |
+| **CesiumImage**                | Classes that support reading, decoding, and manipulating images. |
 | **CesiumITwinClient**          | Functions to access the [Bentley iTwin](https://www.bentley.com/software/itwin-platform/) platform.             |
 | **CesiumJsonReader**           | Reads JSON from a buffer into statically-typed classes.                                                         |
 | **CesiumJsonWriter**           | Writes JSON from statically-typed classes into a buffer.                                                        |

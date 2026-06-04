@@ -41,8 +41,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -70,8 +69,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     CartographicPolygon triangle(std::vector<glm::dvec2>{
@@ -97,8 +95,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
         tile->channels = 4;
         tile->bytesPerChannel = 1;
         tile->pixelData.resize(
-            (size_t)(tile->width * tile->height * tile->channels *
-                     tile->bytesPerChannel),
+            (size_t)(tile->width * tile->height * tile->channels * tile->bytesPerChannel),
             std::byte{255});
         VectorRasterizer rasterizer(
             GlobeRectangle(
@@ -133,8 +130,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -164,8 +160,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(GlobeRectangle{0, 0, 1, 1}, asset);
@@ -205,8 +200,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect2, asset);
@@ -238,8 +232,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -274,8 +267,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -316,8 +308,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     GlobeRectangle antiRect{
@@ -412,8 +403,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     CartographicPolygon square(std::vector<glm::dvec2>{
@@ -496,8 +486,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     // With a unit sphere, this means that the area covered by the rect is
@@ -536,8 +525,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels *
-                 asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
         std::byte{255});
 
     const LineStyle style{
@@ -583,8 +571,7 @@ TEST_CASE("VectorRasterizer::rasterize benchmark" * doctest::skip(true)) {
   asset->channels = 4;
   asset->bytesPerChannel = 1;
   asset->pixelData.resize(
-      (size_t)(asset->width * asset->height * asset->channels *
-               asset->bytesPerChannel),
+      (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
       std::byte{255});
 
   for (int i = 0; i < 100; i++) {
