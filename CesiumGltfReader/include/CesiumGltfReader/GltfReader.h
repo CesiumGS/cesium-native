@@ -4,12 +4,12 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfSharedAssetSystem.h>
-#include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumGltfReader/Library.h>
+#include <CesiumImage/ImageAsset.h>
+#include <CesiumImage/ImageDecoder.h>
+#include <CesiumImage/Ktx2TranscodeTargets.h>
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
@@ -113,7 +113,7 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * @brief For each possible input transmission format, this struct names
    * the ideal target gpu-compressed pixel format to transcode to.
    */
-  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
+  CesiumImage::Ktx2TranscodeTargets ktx2TranscodeTargets;
 
   /**
    * The shared asset system that will be used to store all of the shared assets
@@ -250,21 +250,20 @@ public:
 
   /**
    * @brief Reads an Image from a buffer.
-   * @deprecated Use {@link ImageDecoder::readImage} instead.
+   * @deprecated Use @ref ImageDecoder::readImage  instead.
    */
-  [[deprecated(
-      "Use ImageDecoder::readImage instead.")]] static ImageReaderResult
-  readImage(
+  [[deprecated("Use ImageDecoder::readImage instead.")]]
+  static CesiumImage::ImageReaderResult readImage(
       const std::span<const std::byte>& data,
-      const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
+      const CesiumImage::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
   /**
    * @brief Generate mipmaps for this image.
-   * @deprecated Use {@link ImageDecoder::generateMipMaps} instead.
+   * @deprecated Use @ref ImageDecoder::generateMipMaps  instead.
    */
-  [[deprecated("Use ImageDecoder::generateMipMaps instead.")]] static std::
-      optional<std::string>
-      generateMipMaps(CesiumGltf::ImageAsset& image);
+  [[deprecated("Use ImageDecoder::generateMipMaps instead.")]]
+  static std::optional<std::string>
+  generateMipMaps(CesiumImage::ImageAsset& image);
 
 private:
   CesiumJsonReader::JsonReaderOptions _context;

@@ -20,8 +20,8 @@
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumImage/Ktx2TranscodeTargets.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
@@ -146,7 +146,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
+    CesiumImage::Ktx2TranscodeTargets ktx2TranscodeTargets,
     bool applyTextureTransform,
     const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
         pSharedAssetSystem,

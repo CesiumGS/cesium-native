@@ -1,17 +1,14 @@
 #pragma once
 
-#include <CesiumGltfContent/Library.h>
+#include <CesiumImage/Library.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 
-// Forward declarations
-namespace CesiumGltf {
-struct ImageAsset;
-}
+namespace CesiumImage {
 
-namespace CesiumGltfContent {
+struct ImageAsset;
 
 /**
  * @brief Specifies a rectangle of pixels in an image.
@@ -41,7 +38,7 @@ struct PixelRectangle {
 /**
  * @brief A collection of utility functions for image manipulation operations.
  */
-class CESIUMGLTFCONTENT_API ImageManipulation {
+class CESIUMIMAGE_API ImageManipulation {
 public:
   /**
    * @brief Directly copies pixels from a source to a target, without validating
@@ -95,9 +92,9 @@ public:
    * incompatible formats.
    */
   static bool blitImage(
-      CesiumGltf::ImageAsset& target,
+      ImageAsset& target,
       const PixelRectangle& targetPixels,
-      const CesiumGltf::ImageAsset& source,
+      const ImageAsset& source,
       const PixelRectangle& sourcePixels);
 
   /**
@@ -107,7 +104,7 @@ public:
    * @return The byte buffer containing the image. If the buffer is empty, the
    * image could not be written.
    */
-  static std::vector<std::byte> savePng(const CesiumGltf::ImageAsset& image);
+  static std::vector<std::byte> savePng(const ImageAsset& image);
 
   /**
    * @brief Saves an image to an existing byte buffer in PNG format.
@@ -117,8 +114,7 @@ public:
    * the end of the buffer. If the buffer size is unchanged on return the image
    * could not be written.
    */
-  static void
-  savePng(const CesiumGltf::ImageAsset& image, std::vector<std::byte>& output);
+  static void savePng(const ImageAsset& image, std::vector<std::byte>& output);
 };
 
-} // namespace CesiumGltfContent
+} // namespace CesiumImage

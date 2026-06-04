@@ -56,12 +56,12 @@ target_link_libraries(CesiumGltfReader
     PUBLIC
         CesiumAsync
         CesiumGltf
+        CesiumImage
         CesiumJsonReader
         draco::draco
     PRIVATE
         meshoptimizer::meshoptimizer
         modp_b64::modp_b64
-        KTX::ktx
         spz::spz
         WebP::webp
         WebP::webpdecoder

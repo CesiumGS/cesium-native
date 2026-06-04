@@ -2,7 +2,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/GeographicProjection.h>
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/DebugColorizeTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -19,7 +19,7 @@
 
 using namespace CesiumRasterOverlays;
 using namespace CesiumGeospatial;
-using namespace CesiumGltf;
+using namespace CesiumImage;
 using namespace CesiumUtility;
 
 namespace {

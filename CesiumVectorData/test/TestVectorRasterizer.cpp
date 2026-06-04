@@ -1,6 +1,6 @@
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/checkFilesEqual.h>
 #include <CesiumNativeTests/writeTga.h>
 #include <CesiumUtility/Color.h>
@@ -34,14 +34,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
       Math::degreesToRadians(1.0)};
 
   SUBCASE("Renders a single triangle") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
     asset->height = 256;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -62,14 +63,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("Triangle as tiles lines up") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
     asset->height = 256;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     CartographicPolygon triangle(std::vector<glm::dvec2>{
@@ -88,14 +90,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
 
     for (size_t i = 0; i < 2; i++) {
       for (size_t j = 0; j < 2; j++) {
-        CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> tile;
+        CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> tile;
         tile.emplace();
         tile->width = 128;
         tile->height = 128;
         tile->channels = 4;
         tile->bytesPerChannel = 1;
         tile->pixelData.resize(
-            (size_t)(tile->width * tile->height * tile->channels * tile->bytesPerChannel),
+            (size_t)(tile->width * tile->height * tile->channels *
+                     tile->bytesPerChannel),
             std::byte{255});
         VectorRasterizer rasterizer(
             GlobeRectangle(
@@ -123,14 +126,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("Renders a polyline") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
     asset->height = 256;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -153,14 +157,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("Renders points") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
     asset->height = 256;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(GlobeRectangle{0, 0, 1, 1}, asset);
@@ -193,14 +198,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
         Math::degreesToRadians(0.25),
         Math::degreesToRadians(0.75),
         Math::degreesToRadians(0.5));
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
     asset->height = 256;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect2, asset);
@@ -225,14 +231,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("Polygon with holes") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
     asset->height = 256;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -260,14 +267,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("Polygon with holes and outline") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
     asset->height = 256;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     VectorRasterizer rasterizer(rect, asset);
@@ -301,14 +309,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("Proper antimeridian handling") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
     asset->height = 256;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     GlobeRectangle antiRect{
@@ -355,7 +364,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("Mip levels") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
     asset->height = 256;
@@ -396,14 +405,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("Styling") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 256;
     asset->height = 256;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     CartographicPolygon square(std::vector<glm::dvec2>{
@@ -445,7 +455,7 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("Random color uses the same color across calls") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 1;
     asset->height = 1;
@@ -479,14 +489,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("LineWidthMode::Meters produces the proper result") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 100;
     asset->height = 100;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     // With a unit sphere, this means that the area covered by the rect is
@@ -518,14 +529,15 @@ TEST_CASE("VectorRasterizer::rasterize") {
   }
 
   SUBCASE("Can handle two lines touching without a gap") {
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
     asset.emplace();
     asset->width = 64;
     asset->height = 64;
     asset->channels = 4;
     asset->bytesPerChannel = 1;
     asset->pixelData.resize(
-        (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+        (size_t)(asset->width * asset->height * asset->channels *
+                 asset->bytesPerChannel),
         std::byte{255});
 
     const LineStyle style{
@@ -564,14 +576,15 @@ TEST_CASE("VectorRasterizer::rasterize benchmark" * doctest::skip(true)) {
 
   std::chrono::microseconds total(0);
 
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> asset;
+  CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> asset;
   asset.emplace();
   asset->width = 256;
   asset->height = 256;
   asset->channels = 4;
   asset->bytesPerChannel = 1;
   asset->pixelData.resize(
-      (size_t)(asset->width * asset->height * asset->channels * asset->bytesPerChannel),
+      (size_t)(asset->width * asset->height * asset->channels *
+               asset->bytesPerChannel),
       std::byte{255});
 
   for (int i = 0; i < 100; i++) {
