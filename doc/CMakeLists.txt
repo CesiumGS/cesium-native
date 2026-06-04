@@ -23,7 +23,6 @@ if(DOXYGEN_FOUND)
         ../CesiumGltfWriter/include
         ../CesiumImage/include
         ../CesiumIonClient/include
-        ../CesiumIonClient/include
         ../CesiumITwinClient/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
