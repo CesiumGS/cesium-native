@@ -10,6 +10,7 @@
 ##### Additions :tada:
 
 - Added a constructor overload for `Cesium3DTilesSelection::ITwinRealityDataContentLoaderFactory` to override the iTwin Cesium Reality Data base URL. This makes it possible to connect to alternate servers (e.g., staging, QA, mock servers).
+- Added `removeAccessorIfUnused`, `removeBufferViewIfUnused`, and `removeBufferIfUnused` to `CesiumGltfContent::GltfUtilities`.
 
 ### v0.61.0 - 2026-06-01
 
