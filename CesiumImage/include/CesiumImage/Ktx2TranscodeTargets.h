@@ -98,10 +98,10 @@ enum class CESIUMIMAGE_API GpuCompressedPixelFormat {
 
 /**
  * @brief Represents the status of support for all
- * {@link GpuCompressedPixelFormat}s on a client platform.
+ * @ref GpuCompressedPixelFormat s on a client platform.
  *
- * Clients can use this struct to convey which gpu compressed pixel formats are
- * supported. This can be used to construct a {@link Ktx2TranscodeTargets}.
+ * Clients can use this struct to convey which GPU compressed pixel formats are
+ * supported. This can be used to construct a @ref Ktx2TranscodeTargets.
  *
  * Each entry in the struct is a bool that represents whether the gpu
  * compressed pixel format with the corresponding name is supported.

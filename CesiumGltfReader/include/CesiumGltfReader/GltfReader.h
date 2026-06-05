@@ -23,8 +23,7 @@
 namespace CesiumGltfReader {
 
 /**
- * @brief The result of reading a glTF model with
- * {@link GltfReader::readGltf}.
+ * @brief The result of reading a glTF model with @ref GltfReader::readGltf.
  */
 struct CESIUMGLTFREADER_API GltfReaderResult {
   /**
@@ -62,11 +61,11 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool clearDecodedDataUrls = true;
 
   /**
-   * @brief Whether embedded images in {@link CesiumGltf::Model::buffers} should be
+   * @brief Whether embedded images in @ref CesiumGltf::Model::buffers should be
    * automatically decoded as part of the load process.
    *
-   * The {@link CesiumGltf::ImageSpec::mimeType} property is ignored, and instead the
-   * [stb_image](https://github.com/nothings/stb) library is used to decode
+   * The @ref CesiumGltf::ImageSpec::mimeType property is ignored, and instead
+   * the [stb_image](https://github.com/nothings/stb) library is used to decode
    * images in `JPG`, `PNG`, `TGA`, `BMP`, `PSD`, `GIF`, `HDR`, or `PIC` format.
    */
   bool decodeEmbeddedImages = true;
@@ -229,7 +228,7 @@ public:
   postprocessGltf(GltfReaderResult& readGltf, const GltfReaderOptions& options);
 
   /**
-   * @brief Accepts the result of {@link readGltf} and resolves any remaining
+   * @brief Accepts the result of @ref readGltf and resolves any remaining
    * external buffers and images.
    *
    * @param asyncSystem The async system to use for resolving external data.
@@ -250,7 +249,7 @@ public:
 
   /**
    * @brief Reads an Image from a buffer.
-   * @deprecated Use @ref ImageDecoder::readImage instead.
+   * @deprecated Use @ref CesiumImage::ImageDecoder::readImage instead.
    */
   [[deprecated("Use ImageDecoder::readImage instead.")]] static CesiumImage::
       ImageReaderResult
@@ -260,7 +259,7 @@ public:
 
   /**
    * @brief Generate mipmaps for this image.
-   * @deprecated Use @ref ImageDecoder::generateMipMaps instead.
+   * @deprecated Use @ref CesiumImage::ImageDecoder::generateMipMaps instead.
    */
   [[deprecated("Use ImageDecoder::generateMipMaps instead.")]] static std::
       optional<std::string>
