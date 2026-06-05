@@ -25,7 +25,7 @@ class Ray;
 namespace CesiumGltfContent {
 /**
  * A collection of utility functions that are used to process and transform a
- * gltf model
+ * gltf model.
  */
 struct CESIUMGLTFCONTENT_API GltfUtilities {
   /**
@@ -202,6 +202,17 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   static void removeUnusedImages(
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedImageIndices = {});
+
+  ///**
+  // * @brief Removes the accessor from the specified index if it is unused by the
+  // * given glTF model.
+  // *
+  // * @param gltf The glTF to remove the unused accessor from.
+  // * @param accessorIndex The index of the accessor.
+  // * @returns True if the accessor was successfully removed, false otherwise.
+  // */
+  //static bool
+  //removeAccessorIfUnused(CesiumGltf::Model& gltf, int32_t accessorIndex);
 
   /**
    * @brief Removes unused accessors from the given glTF model.

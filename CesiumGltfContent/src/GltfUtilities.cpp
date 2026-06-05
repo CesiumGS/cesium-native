@@ -19,6 +19,7 @@
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
+#include <CesiumGltf/ExtensionExtMeshPrimitiveEdgeVisibility.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
@@ -756,61 +757,90 @@ void findClosestIndexedRayHit(
 } // namespace
 
 namespace {
-
+/**
+ * @brief Calls the provided callback function on all texture indices in the
+ * given model.
+ * @tparam Func The type of the callback function. Expected to accept an index
+ * and return true if the visit should exit early, false otherwise.
+ * @param gltf The specified glTF.
+ * @param callback The callback function.
+ */
 struct VisitTextureIds {
   template <typename Func> void operator()(Model& gltf, Func&& callback) {
     // Find textures in materials
     for (Material& material : gltf.materials) {
-      if (material.emissiveTexture)
-        callback(material.emissiveTexture->index);
-      if (material.normalTexture)
-        callback(material.normalTexture->index);
+      if (auto& texture = material.emissiveTexture;
+          texture && callback(texture->index)) {
+        return;
+      }
+      if (auto& texture = material.normalTexture;
+          texture && callback(texture->index)) {
+        return;
+      }
       if (material.pbrMetallicRoughness) {
-        if (material.pbrMetallicRoughness->baseColorTexture)
-          callback(material.pbrMetallicRoughness->baseColorTexture->index);
-        if (material.pbrMetallicRoughness->metallicRoughnessTexture)
-          callback(
-              material.pbrMetallicRoughness->metallicRoughnessTexture->index);
+        if (auto& texture = material.pbrMetallicRoughness->baseColorTexture;
+            texture && callback(texture->index)) {
+          return;
+        }
+        if (auto& texture =
+                material.pbrMetallicRoughness->metallicRoughnessTexture;
+            texture && callback(texture->index)) {
+          return;
+        }
       }
     }
 
     // Find textures in metadata
     for (Mesh& mesh : gltf.meshes) {
       for (MeshPrimitive& primitive : mesh.primitives) {
-        ExtensionExtMeshFeatures* pMeshFeatures =
+        auto* pMeshFeatures =
             primitive.getExtension<ExtensionExtMeshFeatures>();
         if (pMeshFeatures) {
           for (FeatureId& featureId : pMeshFeatures->featureIds) {
-            if (featureId.texture)
-              callback(featureId.texture->index);
+            if (featureId.texture && callback(featureId.texture->index)) {
+              return;
+            }
           }
         }
       }
     }
 
-    ExtensionModelExtStructuralMetadata* pMetadata =
-        gltf.getExtension<ExtensionModelExtStructuralMetadata>();
+    auto* pMetadata = gltf.getExtension<ExtensionModelExtStructuralMetadata>();
     if (pMetadata) {
       for (PropertyTexture& propertyTexture : pMetadata->propertyTextures) {
         for (auto& pair : propertyTexture.properties) {
-          callback(pair.second.index);
+          if (callback(pair.second.index)) {
+            return;
+          }
         }
       }
     }
   }
 };
 
+/**
+ * @brief Calls the provided callback function on all sampler indices in the
+ * given model.
+ * @tparam Func The type of the callback function. Expected to accept an index
+ * and return true if the visit should exit early, false otherwise.
+ * @param gltf The specified glTF.
+ * @param callback The callback function.
+ */
 struct VisitSamplerIds {
   template <typename Func> void operator()(Model& gltf, Func&& callback) {
     // Find samplers in textures
     for (Texture& texture : gltf.textures) {
-      callback(texture.sampler);
+      if (callback(texture.sampler)) {
+        return;
+      }
     }
   }
 };
 
-// Get a map of old IDs to new ones after all the unused IDs have been
-// removed. A removed ID will map to -1.
+/**
+ * @brief Get a map of old IDs to new ones after all the unused IDs have been
+ * removed. A removed ID will map to -1.
+ */
 std::vector<int32_t> getIndexMap(const std::vector<bool>& usedIndices) {
   std::vector<int32_t> indexMap;
   indexMap.reserve(usedIndices.size());
@@ -828,61 +858,116 @@ std::vector<int32_t> getIndexMap(const std::vector<bool>& usedIndices) {
   return indexMap;
 }
 
+/**
+ * @brief Calls the provided callback function on all image indices in the
+ * given model.
+ * @tparam Func The type of the callback function. Expected to accept an index
+ * and return true if the visit should exit early, false otherwise.
+ * @param gltf The specified glTF.
+ * @param callback The callback function.
+ */
 struct VisitImageIds {
   template <typename Func> void operator()(Model& gltf, Func&& callback) {
     // Find images in textures
     for (Texture& texture : gltf.textures) {
-      callback(texture.source);
+      if (callback(texture.source)) {
+        return;
+      }
 
-      ExtensionKhrTextureBasisu* pBasis =
-          texture.getExtension<ExtensionKhrTextureBasisu>();
-      if (pBasis)
-        callback(pBasis->source);
+      auto* pBasis = texture.getExtension<ExtensionKhrTextureBasisu>();
+      if (pBasis && callback(pBasis->source)) {
+        return;
+      }
 
-      ExtensionTextureWebp* pWebP =
-          texture.getExtension<ExtensionTextureWebp>();
-      if (pWebP)
-        callback(pWebP->source);
+      auto* pWebP = texture.getExtension<ExtensionTextureWebp>();
+      if (pWebP && callback(pWebP->source)) {
+        return;
+      }
     }
   }
 };
 
+template <typename Func>
+bool visitCesiumTileEdges(
+    ExtensionCesiumTileEdges& extension,
+    Func&& callback) {
+  bool returnedEarly = callback(extension.left) || callback(extension.bottom) ||
+                       callback(extension.right) || callback(extension.top);
+  return returnedEarly;
+}
+
+template <typename Func>
+bool visitExtMeshPrimitiveEdgeVisibility(
+    ExtensionExtMeshPrimitiveEdgeVisibility& extension,
+    Func&& callback) {
+  bool returnedEarly =
+      callback(extension.visibility) || callback(extension.silhouetteNormals);
+
+  if (!returnedEarly) {
+    for (CesiumGltf::LineString& lineString : extension.lineStrings) {
+      if (callback(lineString.indices)) {
+        returnedEarly = true;
+        break;
+      }
+    }
+  }
+  return returnedEarly;
+}
+
+/**
+ * @brief Calls the provided callback function on all accessor indices in the
+ * given model.
+ * @tparam Func The type of the callback function. Expected to accept an index
+ * and return true if the visit should exit early, false otherwise.
+ * @param gltf The specified glTF.
+ * @param callback The callback function.
+ */
 struct VisitAccessorIds {
   template <typename Func> void operator()(Model& gltf, Func&& callback) {
     for (Mesh& mesh : gltf.meshes) {
       for (MeshPrimitive& primitive : mesh.primitives) {
-        callback(primitive.indices);
+        if (callback(primitive.indices)) {
+          return;
+        }
 
         for (auto& pair : primitive.attributes) {
-          callback(pair.second);
+          if (callback(pair.second)) {
+            return;
+          }
         }
 
-        ExtensionCesiumTileEdges* pTileEdges =
-            primitive.getExtension<ExtensionCesiumTileEdges>();
-        if (pTileEdges) {
-          callback(pTileEdges->left);
-          callback(pTileEdges->bottom);
-          callback(pTileEdges->right);
-          callback(pTileEdges->top);
+        auto* pTileEdges = primitive.getExtension<ExtensionCesiumTileEdges>();
+        if (pTileEdges && visitCesiumTileEdges(*pTileEdges, callback)) {
+          return;
         }
 
-        ExtensionCesiumPrimitiveOutline* pPrimitiveOutline =
+        auto* pPrimitiveOutline =
             primitive.getExtension<ExtensionCesiumPrimitiveOutline>();
-        if (pPrimitiveOutline) {
-          callback(pPrimitiveOutline->indices);
+        if (pPrimitiveOutline && callback(pPrimitiveOutline->indices)) {
+          return;
+        }
+
+        auto* pEdgeVisibility =
+            primitive.getExtension<ExtensionExtMeshPrimitiveEdgeVisibility>();
+        if (pEdgeVisibility &&
+            visitExtMeshPrimitiveEdgeVisibility(*pEdgeVisibility, callback)) {
+          return;
         }
       }
     }
 
     for (Animation& animation : gltf.animations) {
       for (AnimationSampler& sampler : animation.samplers) {
-        callback(sampler.input);
-        callback(sampler.output);
+        if (callback(sampler.input) || callback(sampler.output)) {
+          return;
+        }
       }
     }
 
     for (Skin& skin : gltf.skins) {
-      callback(skin.inverseBindMatrices);
+      if (callback(skin.inverseBindMatrices)) {
+        return;
+      }
     }
 
     for (Node& node : gltf.nodes) {
@@ -890,34 +975,50 @@ struct VisitAccessorIds {
           node.getExtension<ExtensionExtMeshGpuInstancing>();
       if (pInstancing) {
         for (auto& pair : pInstancing->attributes) {
-          callback(pair.second);
+          if (callback(pair.second)) {
+            return;
+          }
         }
       }
     }
   }
 };
 
+/**
+ * @brief Calls the provided callback function on all buffer view indices in the
+ * given model.
+ * @tparam Func The type of the callback function. Expected to accept an index
+ * and return true if the visit should exit early, false otherwise.
+ * @param gltf The specified glTF.
+ * @param callback The callback function.
+ */
 struct VisitBufferViewIds {
   template <typename Func> void operator()(Model& gltf, Func&& callback) {
     for (Accessor& accessor : gltf.accessors) {
-      callback(accessor.bufferView);
+      if (callback(accessor.bufferView)) {
+        return;
+      }
 
       if (accessor.sparse) {
-        callback(accessor.sparse->indices.bufferView);
-        callback(accessor.sparse->values.bufferView);
+        if (callback(accessor.sparse->indices.bufferView) ||
+            callback(accessor.sparse->values.bufferView)) {
+          return;
+        }
       }
     }
 
     for (Image& image : gltf.images) {
-      callback(image.bufferView);
+      if (callback(image.bufferView)) {
+        return;
+      }
     }
 
     for (Mesh& mesh : gltf.meshes) {
       for (MeshPrimitive& primitive : mesh.primitives) {
-        ExtensionKhrDracoMeshCompression* pDraco =
+        auto* pDraco =
             primitive.getExtension<ExtensionKhrDracoMeshCompression>();
-        if (pDraco) {
-          callback(pDraco->bufferView);
+        if (pDraco && callback(pDraco->bufferView)) {
+          return;
         }
       }
     }
@@ -927,46 +1028,100 @@ struct VisitBufferViewIds {
     if (pMetadata) {
       for (PropertyTable& propertyTable : pMetadata->propertyTables) {
         for (auto& pair : propertyTable.properties) {
-          callback(pair.second.values);
-          callback(pair.second.arrayOffsets);
-          callback(pair.second.stringOffsets);
+          if (callback(pair.second.values) ||
+              callback(pair.second.arrayOffsets) ||
+              callback(pair.second.stringOffsets)) {
+            return;
+          }
         }
       }
     }
   }
 };
 
+/**
+ * @brief Calls the provided callback function on all buffer indices in the
+ * given model.
+ * @tparam Func The type of the callback function. Expected to accept an index
+ * and return true if the visit should exit early, false otherwise.
+ * @param gltf The specified glTF.
+ * @param callback The callback function.
+ */
 struct VisitBufferIds {
   template <typename Func> void operator()(Model& gltf, Func&& callback) {
     for (BufferView& bufferView : gltf.bufferViews) {
-      callback(bufferView.buffer);
+      if (callback(bufferView.buffer)) {
+        return;
+      }
 
       ExtensionBufferViewExtMeshoptCompression* pMeshOpt =
           bufferView.getExtension<ExtensionBufferViewExtMeshoptCompression>();
-      if (pMeshOpt) {
-        callback(pMeshOpt->buffer);
+      if (pMeshOpt && callback(pMeshOpt->buffer)) {
+        return;
       }
     }
   }
 };
 
+/**
+ * @brief Calls the provided callback function on all mesh indices in the
+ * given model.
+ * @tparam Func The type of the callback function. Expected to accept an index
+ * and return true if the visit should exit early, false otherwise.
+ * @param gltf The specified glTF.
+ * @param callback The callback function.
+ */
 struct VisitMeshIds {
   template <typename Func> void operator()(Model& gltf, Func&& callback) {
     for (Node& node : gltf.nodes) {
-      callback(node.mesh);
+      if (callback(node.mesh)) {
+        return;
+      }
     }
   }
 };
 
+/**
+ * @brief Calls the provided callback function on all material indices in the
+ * given model.
+ * @tparam Func The type of the callback function. Expected to accept an index
+ * and return true if the visit should exit early, false otherwise.
+ * @param gltf The specified glTF.
+ * @param callback The callback function.
+ */
 struct VisitMaterialIds {
   template <typename Func> void operator()(Model& gltf, Func&& callback) {
     for (Mesh& mesh : gltf.meshes) {
       for (MeshPrimitive& primitive : mesh.primitives) {
-        callback(primitive.material);
+        if (callback(primitive.material)) {
+          return;
+        }
       }
     }
   }
 };
+
+// template <typename T, typename TVisitFunction>
+// bool removeIfUnused(
+//     Model& gltf,
+//     int32_t index,
+//     std::vector<T>& elements,
+//     TVisitFunction&& visitFunction) {
+//
+//   // Determine if the element is used.
+// if(index < 0 || size_t(index) > elements.size()) return false;
+//
+// bool found = false;
+// visitFunction(gltf, [index](int32_t elementIndex) {
+//  if(elementIndex == index) {
+//    found = true;
+// return true;
+//  }
+// return false;
+// }
+//
+// 
+// }
 
 template <typename T, typename TVisitFunction>
 void removeUnusedElements(
@@ -983,8 +1138,11 @@ void removeUnusedElements(
 
   // Determine which elements are used.
   visitFunction(gltf, [&usedElements](int32_t elementIndex) {
-    if (elementIndex >= 0 && size_t(elementIndex) < usedElements.size())
+    if (elementIndex >= 0 && size_t(elementIndex) < usedElements.size()) {
       usedElements[size_t(elementIndex)] = true;
+    }
+    // Always continue to visit other elements.
+    return false;
   });
 
   // Update the element indices based on the unused indices being removed.
@@ -995,6 +1153,8 @@ void removeUnusedElements(
       CESIUM_ASSERT(newIndex >= 0);
       elementIndex = newIndex;
     }
+    // Always continue to visit other elements.
+    return false;
   });
 
   // Remove the unused elements.
@@ -1041,6 +1201,12 @@ void GltfUtilities::removeUnusedImages(
       gltf.images,
       VisitImageIds());
 }
+
+//bool GltfUtilities::removeAccessorIfUnused(
+//    CesiumGltf::Model& gltf,
+//    int32_t accessorIndex) {
+//  VisitAccessorIds();
+//}
 
 void GltfUtilities::removeUnusedAccessors(
     CesiumGltf::Model& gltf,
