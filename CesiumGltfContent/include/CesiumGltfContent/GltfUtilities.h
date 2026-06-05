@@ -203,19 +203,23 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       CesiumGltf::Model& gltf,
       const std::vector<int32_t>& extraUsedImageIndices = {});
 
-  ///**
-  // * @brief Removes the accessor from the specified index if it is unused by the
-  // * given glTF model.
-  // *
-  // * @param gltf The glTF to remove the unused accessor from.
-  // * @param accessorIndex The index of the accessor.
-  // * @returns True if the accessor was successfully removed, false otherwise.
-  // */
-  //static bool
-  //removeAccessorIfUnused(CesiumGltf::Model& gltf, int32_t accessorIndex);
+  /**
+   * @brief Removes the accessor from the specified index if it is unused by the
+   * given glTF model. This will not remove any associated @ref
+   * CesiumGltf::BufferView or @ref CesiumGltf::Buffer that becomes unused
+   * after the accessor is removed.
+   *
+   * @param gltf The glTF to remove the unused accessor from.
+   * @param accessorIndex The index of the accessor.
+   * @returns True if the accessor was successfully removed, false otherwise.
+   */
+  static bool
+  removeAccessorIfUnused(CesiumGltf::Model& gltf, int32_t accessorIndex);
 
   /**
-   * @brief Removes unused accessors from the given glTF model.
+   * @brief Removes unused accessors from the given glTF model. This will not
+   * remove any associated @ref CesiumGltf::BufferView or @ref
+   * CesiumGltf::Buffer that becomes unused after the accessor is removed.
    *
    * @param gltf The glTF to remove unused accessors from.
    * @param extraUsedAccessorIndices Indices of accessors that should be
@@ -227,7 +231,21 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       const std::vector<int32_t>& extraUsedAccessorIndices = {});
 
   /**
-   * @brief Removes unused buffer views from the given glTF model.
+   * @brief Removes the buffer view from the specified index if it is unused by
+   * the given glTF model. This will not remove any associated @ref
+   * CesiumGltf::Buffer that becomes unused.
+   *
+   * @param gltf The glTF to remove the unused buffer view from.
+   * @param bufferViewIndex The index of the buffer view.
+   * @returns True if the buffer view was successfully removed, false otherwise.
+   */
+  static bool
+  removeBufferViewIfUnused(CesiumGltf::Model& gltf, int32_t bufferViewIndex);
+
+  /**
+   * @brief Removes unused buffer views from the given glTF model. This will not
+   * remove any associated @ref CesiumGltf::Buffer that becomes unused after the
+   * buffer view is removed.
    *
    * @param gltf The glTF to remove unused buffer views from.
    * @param extraUsedBufferViewIndices Indices of buffer views that should be
@@ -239,7 +257,20 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
       const std::vector<int32_t>& extraUsedBufferViewIndices = {});
 
   /**
-   * @brief Removes unused buffers from the given glTF model.
+   * @brief Removes the buffer from the specified index if it is unused by
+   * the given glTF model.
+   *
+   * @param gltf The glTF to remove the unused buffer from.
+   * @param bufferIndex The index of the buffer.
+   * @returns True if the buffer was successfully removed, false otherwise.
+   */
+  static bool
+  removeBufferIfUnused(CesiumGltf::Model& gltf, int32_t bufferIndex);
+
+  /**
+   * @brief Removes unused buffers from the given glTF model. This will not
+   * remove any associated @ref CesiumGltf::Buffer that becomes unused after the
+   * buffer view is removed.
    *
    * @param gltf The glTF to remove unused buffers from.
    * @param extraUsedBufferIndices Indices of buffers that should be

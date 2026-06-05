@@ -1101,27 +1101,45 @@ struct VisitMaterialIds {
   }
 };
 
-// template <typename T, typename TVisitFunction>
-// bool removeIfUnused(
-//     Model& gltf,
-//     int32_t index,
-//     std::vector<T>& elements,
-//     TVisitFunction&& visitFunction) {
-//
-//   // Determine if the element is used.
-// if(index < 0 || size_t(index) > elements.size()) return false;
-//
-// bool found = false;
-// visitFunction(gltf, [index](int32_t elementIndex) {
-//  if(elementIndex == index) {
-//    found = true;
-// return true;
-//  }
-// return false;
-// }
-//
-// 
-// }
+template <typename T, typename TVisitFunction>
+bool removeIfUnused(
+    Model& gltf,
+    int32_t index,
+    std::vector<T>& elements,
+    TVisitFunction&& visitFunction) {
+  if (index < 0 || size_t(index) >= elements.size()) {
+    return false;
+  }
+
+  // Determine if the element is used.
+  bool found = false;
+  visitFunction(gltf, [&found, index](int32_t elementIndex) {
+    found = (elementIndex == index);
+    return found;
+  });
+
+  if (found) {
+    return false;
+  }
+
+  std::vector<bool> usedElements(elements.size(), true);
+  usedElements[index] = false;
+
+  std::vector<int32_t> indexMap = getIndexMap(usedElements);
+  visitFunction(gltf, [&indexMap](int32_t& elementIndex) {
+    if (elementIndex >= 0 && size_t(elementIndex) < indexMap.size()) {
+      int32_t newIndex = indexMap[size_t(elementIndex)];
+      CESIUM_ASSERT(newIndex >= 0);
+      elementIndex = newIndex;
+    }
+    // Always continue to visit other elements.
+    return false;
+  });
+
+  // Remove the unused element.
+  elements.erase(elements.begin() + index);
+  return true;
+}
 
 template <typename T, typename TVisitFunction>
 void removeUnusedElements(
@@ -1202,11 +1220,15 @@ void GltfUtilities::removeUnusedImages(
       VisitImageIds());
 }
 
-//bool GltfUtilities::removeAccessorIfUnused(
-//    CesiumGltf::Model& gltf,
-//    int32_t accessorIndex) {
-//  VisitAccessorIds();
-//}
+bool GltfUtilities::removeAccessorIfUnused(
+    CesiumGltf::Model& gltf,
+    int32_t accessorIndex) {
+  return removeIfUnused(
+      gltf,
+      accessorIndex,
+      gltf.accessors,
+      VisitAccessorIds());
+}
 
 void GltfUtilities::removeUnusedAccessors(
     CesiumGltf::Model& gltf,
@@ -1218,6 +1240,16 @@ void GltfUtilities::removeUnusedAccessors(
       VisitAccessorIds());
 }
 
+bool GltfUtilities::removeBufferViewIfUnused(
+    CesiumGltf::Model& gltf,
+    int32_t bufferViewIndex) {
+  return removeIfUnused(
+      gltf,
+      bufferViewIndex,
+      gltf.bufferViews,
+      VisitBufferViewIds());
+}
+
 void GltfUtilities::removeUnusedBufferViews(
     CesiumGltf::Model& gltf,
     const std::vector<int32_t>& extraUsedBufferViewIndices) {
@@ -1226,6 +1258,12 @@ void GltfUtilities::removeUnusedBufferViews(
       extraUsedBufferViewIndices,
       gltf.bufferViews,
       VisitBufferViewIds());
+}
+
+bool GltfUtilities::removeBufferIfUnused(
+    CesiumGltf::Model& gltf,
+    int32_t bufferIndex) {
+  return removeIfUnused(gltf, bufferIndex, gltf.buffers, VisitBufferIds());
 }
 
 void GltfUtilities::removeUnusedBuffers(

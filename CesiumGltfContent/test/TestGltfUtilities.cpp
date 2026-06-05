@@ -1,6 +1,8 @@
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
+#include <CesiumGltf/ExtensionCesiumTileEdges.h>
+#include <CesiumGltf/ExtensionExtMeshPrimitiveEdgeVisibility.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltfContent/GltfUtilities.h>
@@ -307,6 +309,103 @@ TEST_CASE("GltfUtilities::removeUnusedImages") {
   }
 }
 
+TEST_CASE("GltfUtilities::removeAccessorIfUnused") {
+  Model m;
+
+  SUBCASE("does not attempt to remove invalid accessor") {
+    m.accessors.emplace_back();
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, -1));
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, 1));
+    CHECK_FALSE(m.accessors.empty());
+  }
+
+  SUBCASE("removes unused") {
+    m.accessors.emplace_back();
+    CHECK(GltfUtilities::removeAccessorIfUnused(m, 0));
+    CHECK(m.accessors.empty());
+  }
+
+  SUBCASE("does not removed used") {
+    m.accessors.emplace_back();
+    m.meshes.emplace_back().primitives.emplace_back().attributes["POSITION"] =
+        0;
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, 0));
+    CHECK_FALSE(m.accessors.empty());
+  }
+
+  SUBCASE("updates indices when removing") {
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+
+    m.meshes.emplace_back().primitives.emplace_back().attributes["POSITION"] =
+        1;
+
+    CHECK(GltfUtilities::removeAccessorIfUnused(m, 0));
+    CHECK(m.accessors.size() == 1);
+
+    REQUIRE(m.meshes.size() == 1);
+    REQUIRE(m.meshes[0].primitives.size() == 1);
+
+    auto it = m.meshes[0].primitives[0].attributes.find("POSITION");
+    REQUIRE(it != m.meshes[0].primitives[0].attributes.end());
+    CHECK(it->second == 0);
+  }
+
+  SUBCASE("does not remove accessor used by CESIUM_tile_edges") {
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    auto& extension = m.meshes.emplace_back()
+                          .primitives.emplace_back()
+                          .addExtension<ExtensionCesiumTileEdges>();
+    extension.top = 0;
+    extension.left = 1;
+    extension.bottom = 3;
+    extension.right = 4;
+
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, 0));
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, 1));
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, 3));
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, 4));
+    REQUIRE_EQ(m.accessors.size(), 5);
+
+    CHECK(GltfUtilities::removeAccessorIfUnused(m, 2));
+    CHECK_EQ(m.accessors.size(), 4);
+    CHECK_EQ(extension.top, 0);
+    CHECK_EQ(extension.left, 1);
+    CHECK_EQ(extension.bottom, 2);
+    CHECK_EQ(extension.right, 3);
+  }
+
+  SUBCASE(
+      "does not remove accessor used by EXT_mesh_primitive_edge_visibility") {
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    auto& extension =
+        m.meshes.emplace_back()
+            .primitives.emplace_back()
+            .addExtension<ExtensionExtMeshPrimitiveEdgeVisibility>();
+    extension.visibility = 0;
+    extension.silhouetteNormals = 2;
+    extension.lineStrings.emplace_back().indices = 3;
+
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, 0));
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, 2));
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, 3));
+    REQUIRE_EQ(m.accessors.size(), 4);
+
+    CHECK(GltfUtilities::removeAccessorIfUnused(m, 1));
+    CHECK_EQ(m.accessors.size(), 3);
+    CHECK_EQ(extension.visibility, 0);
+    CHECK_EQ(extension.silhouetteNormals, 1);
+    CHECK_EQ(extension.lineStrings[0].indices, 2);
+  }
+}
+
 TEST_CASE("GltfUtilities::removeUnusedAccessors") {
   Model m;
 
@@ -340,6 +439,49 @@ TEST_CASE("GltfUtilities::removeUnusedAccessors") {
     auto it = m.meshes[0].primitives[0].attributes.find("POSITION");
     REQUIRE(it != m.meshes[0].primitives[0].attributes.end());
     CHECK(it->second == 0);
+  }
+
+  SUBCASE("does not remove accessors used by CESIUM_tile_edges") {
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    auto& extension = m.meshes.emplace_back()
+                          .primitives.emplace_back()
+                          .addExtension<ExtensionCesiumTileEdges>();
+    extension.top = 0;
+    extension.left = 1;
+    extension.bottom = 3;
+    extension.right = 4;
+
+    GltfUtilities::removeUnusedAccessors(m);
+    CHECK_EQ(m.accessors.size(), 4);
+    CHECK_EQ(extension.top, 0);
+    CHECK_EQ(extension.left, 1);
+    CHECK_EQ(extension.bottom, 2);
+    CHECK_EQ(extension.right, 3);
+  }
+
+  SUBCASE(
+      "does not remove accessors used by EXT_mesh_primitive_edge_visibility") {
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    auto& extension =
+        m.meshes.emplace_back()
+            .primitives.emplace_back()
+            .addExtension<ExtensionExtMeshPrimitiveEdgeVisibility>();
+    extension.visibility = 0;
+    extension.silhouetteNormals = 2;
+    extension.lineStrings.emplace_back().indices = 3;
+
+    GltfUtilities::removeUnusedAccessors(m);
+    CHECK_EQ(m.accessors.size(), 3);
+    CHECK_EQ(extension.visibility, 0);
+    CHECK_EQ(extension.silhouetteNormals, 1);
+    CHECK_EQ(extension.lineStrings[0].indices, 2);
   }
 }
 
