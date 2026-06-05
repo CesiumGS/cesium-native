@@ -105,6 +105,63 @@ jobs:
         with:
           name: ReferenceDocumentation
           path: build/doc/html
+
+  Coverage:
+    name: "Coverage (Ubuntu GCC)"
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install latest CMake 3 and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.6"
+
+      - name: Install coverage tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcovr jq
+
+      - name: Add VCPKG_ROOT
+        run: |
+          echo "VCPKG_ROOT=${VCPKG_INSTALLATION_ROOT}" >> "$GITHUB_ENV"
+
+      - name: Configure coverage build
+        run: |
+          cp doc/cmake-presets/CMakeUserPresets.json .
+          cmake --preset=vcpkg-linux -DCMAKE_BUILD_TYPE=Debug -DCESIUM_COVERAGE_ENABLED=ON
+
+      - name: Run coverage target
+        run: |
+          cmake --build build --target cesium-native-tests-coverage --parallel
+
+      - name: Generate machine-readable coverage summary
+        run: |
+          gcovr --json-summary --json-summary-pretty \
+            -r . \
+            -e ".*/extern/.*" \
+            -e ".*/generated/.*" \
+            -e ".*/test/.*" \
+            -e ".*/build.*" \
+            --object-directory build \
+            -o build/coverage-summary.json
+
+      - name: Upload HTML coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: CoverageReportHtml
+          path: build/cesium-native-tests-coverage
+
+      - name: Upload current coverage summary
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-current-summary
+          path: build/coverage-summary.json
   WindowsBuild:
     strategy:
       fail-fast: false
