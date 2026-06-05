@@ -1,8 +1,11 @@
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
+#include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtMeshPrimitiveEdgeVisibility.h>
+#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltfContent/GltfUtilities.h>
@@ -341,14 +344,14 @@ TEST_CASE("GltfUtilities::removeAccessorIfUnused") {
         1;
 
     CHECK(GltfUtilities::removeAccessorIfUnused(m, 0));
-    CHECK(m.accessors.size() == 1);
+    CHECK_EQ(m.accessors.size(), 1);
 
-    REQUIRE(m.meshes.size() == 1);
-    REQUIRE(m.meshes[0].primitives.size() == 1);
+    REQUIRE_EQ(m.meshes.size(), 1);
+    REQUIRE_EQ(m.meshes[0].primitives.size(), 1);
 
     auto it = m.meshes[0].primitives[0].attributes.find("POSITION");
-    REQUIRE(it != m.meshes[0].primitives[0].attributes.end());
-    CHECK(it->second == 0);
+    REQUIRE_NE(it, m.meshes[0].primitives[0].attributes.end());
+    CHECK_EQ(it->second, 0);
   }
 
   SUBCASE("does not remove accessor used by CESIUM_tile_edges") {
@@ -379,6 +382,22 @@ TEST_CASE("GltfUtilities::removeAccessorIfUnused") {
     CHECK_EQ(extension.right, 3);
   }
 
+  SUBCASE("does not remove accessor used by CESIUM_primitive_outline") {
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+    auto& extension = m.meshes.emplace_back()
+                          .primitives.emplace_back()
+                          .addExtension<ExtensionCesiumPrimitiveOutline>();
+    extension.indices = 1;
+
+    CHECK_FALSE(GltfUtilities::removeAccessorIfUnused(m, 1));
+    REQUIRE_EQ(m.accessors.size(), 2);
+
+    CHECK(GltfUtilities::removeAccessorIfUnused(m, 0));
+    CHECK_EQ(m.accessors.size(), 1);
+    CHECK_EQ(extension.indices, 0);
+  }
+
   SUBCASE(
       "does not remove accessor used by EXT_mesh_primitive_edge_visibility") {
     m.accessors.emplace_back();
@@ -402,6 +421,8 @@ TEST_CASE("GltfUtilities::removeAccessorIfUnused") {
     CHECK_EQ(m.accessors.size(), 3);
     CHECK_EQ(extension.visibility, 0);
     CHECK_EQ(extension.silhouetteNormals, 1);
+
+    REQUIRE_EQ(extension.lineStrings.size(), 1);
     CHECK_EQ(extension.lineStrings[0].indices, 2);
   }
 }
@@ -420,7 +441,7 @@ TEST_CASE("GltfUtilities::removeUnusedAccessors") {
     m.meshes.emplace_back().primitives.emplace_back().attributes["POSITION"] =
         0;
     GltfUtilities::removeUnusedAccessors(m);
-    CHECK(!m.accessors.empty());
+    CHECK_FALSE(m.accessors.empty());
   }
 
   SUBCASE("updates indices when removing") {
@@ -431,14 +452,14 @@ TEST_CASE("GltfUtilities::removeUnusedAccessors") {
         1;
 
     GltfUtilities::removeUnusedAccessors(m);
-    CHECK(m.accessors.size() == 1);
+    CHECK_EQ(m.accessors.size(), 1);
 
-    REQUIRE(m.meshes.size() == 1);
-    REQUIRE(m.meshes[0].primitives.size() == 1);
+    REQUIRE_EQ(m.meshes.size(), 1);
+    REQUIRE_EQ(m.meshes[0].primitives.size(), 1);
 
     auto it = m.meshes[0].primitives[0].attributes.find("POSITION");
-    REQUIRE(it != m.meshes[0].primitives[0].attributes.end());
-    CHECK(it->second == 0);
+    REQUIRE_NE(it, m.meshes[0].primitives[0].attributes.end());
+    CHECK_EQ(it->second, 0);
   }
 
   SUBCASE("does not remove accessors used by CESIUM_tile_edges") {
@@ -447,6 +468,7 @@ TEST_CASE("GltfUtilities::removeUnusedAccessors") {
     m.accessors.emplace_back();
     m.accessors.emplace_back();
     m.accessors.emplace_back();
+
     auto& extension = m.meshes.emplace_back()
                           .primitives.emplace_back()
                           .addExtension<ExtensionCesiumTileEdges>();
@@ -463,12 +485,27 @@ TEST_CASE("GltfUtilities::removeUnusedAccessors") {
     CHECK_EQ(extension.right, 3);
   }
 
+  SUBCASE("does not remove accessor used by CESIUM_primitive_outline") {
+    m.accessors.emplace_back();
+    m.accessors.emplace_back();
+
+    auto& extension = m.meshes.emplace_back()
+                          .primitives.emplace_back()
+                          .addExtension<ExtensionCesiumPrimitiveOutline>();
+    extension.indices = 1;
+
+    GltfUtilities::removeUnusedAccessors(m);
+    CHECK_EQ(m.accessors.size(), 1);
+    CHECK_EQ(extension.indices, 0);
+  }
+
   SUBCASE(
       "does not remove accessors used by EXT_mesh_primitive_edge_visibility") {
     m.accessors.emplace_back();
     m.accessors.emplace_back();
     m.accessors.emplace_back();
     m.accessors.emplace_back();
+
     auto& extension =
         m.meshes.emplace_back()
             .primitives.emplace_back()
@@ -481,7 +518,82 @@ TEST_CASE("GltfUtilities::removeUnusedAccessors") {
     CHECK_EQ(m.accessors.size(), 3);
     CHECK_EQ(extension.visibility, 0);
     CHECK_EQ(extension.silhouetteNormals, 1);
+
+    REQUIRE_EQ(extension.lineStrings.size(), 1);
     CHECK_EQ(extension.lineStrings[0].indices, 2);
+  }
+}
+
+TEST_CASE("GltfUtilities::removeBufferViewIfUnused") {
+  Model m;
+
+  SUBCASE("removes unused") {
+    m.bufferViews.emplace_back();
+    CHECK(GltfUtilities::removeBufferViewIfUnused(m, 0));
+    CHECK(m.bufferViews.empty());
+  }
+
+  SUBCASE("does not removed used") {
+    m.bufferViews.emplace_back();
+    m.accessors.emplace_back().bufferView = 0;
+    CHECK_FALSE(GltfUtilities::removeBufferViewIfUnused(m, 0));
+    CHECK_FALSE(m.bufferViews.empty());
+  }
+
+  SUBCASE("updates indices when removing") {
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+
+    m.accessors.emplace_back().bufferView = 1;
+
+    CHECK(GltfUtilities::removeBufferViewIfUnused(m, 0));
+    CHECK_EQ(m.bufferViews.size(), 1);
+
+    REQUIRE_EQ(m.accessors.size(), 1);
+    CHECK_EQ(m.accessors[0].bufferView, 0);
+  }
+
+  SUBCASE("does not remove buffer view used by KHR_draco_mesh_compression") {
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+
+    auto& extension = m.meshes.emplace_back()
+                          .primitives.emplace_back()
+                          .addExtension<ExtensionKhrDracoMeshCompression>();
+    extension.bufferView = 1;
+    CHECK_FALSE(GltfUtilities::removeBufferViewIfUnused(m, 1));
+    REQUIRE_EQ(m.bufferViews.size(), 2);
+
+    CHECK(GltfUtilities::removeBufferViewIfUnused(m, 0));
+    CHECK_EQ(m.bufferViews.size(), 1);
+    CHECK_EQ(extension.bufferView, 0);
+  }
+
+  SUBCASE("does not remove buffer view used by EXT_structural_metadata") {
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+
+    auto& extension = m.addExtension<ExtensionModelExtStructuralMetadata>();
+    CesiumGltf::PropertyTable& propertyTable =
+        extension.propertyTables.emplace_back();
+    CesiumGltf::PropertyTableProperty& property =
+        propertyTable.properties["test"];
+    property.values = 0;
+    property.arrayOffsets = 2;
+    property.stringOffsets = 3;
+
+    CHECK_FALSE(GltfUtilities::removeBufferViewIfUnused(m, 0));
+    CHECK_FALSE(GltfUtilities::removeBufferViewIfUnused(m, 2));
+    CHECK_FALSE(GltfUtilities::removeBufferViewIfUnused(m, 3));
+    REQUIRE_EQ(m.bufferViews.size(), 4);
+
+    CHECK(GltfUtilities::removeBufferViewIfUnused(m, 1));
+    CHECK_EQ(m.bufferViews.size(), 3);
+    CHECK_EQ(property.values, 0);
+    CHECK_EQ(property.arrayOffsets, 1);
+    CHECK_EQ(property.stringOffsets, 2);
   }
 }
 
@@ -513,6 +625,87 @@ TEST_CASE("GltfUtilities::removeUnusedBufferViews") {
     REQUIRE(m.accessors.size() == 1);
     CHECK(m.accessors[0].bufferView == 0);
   }
+
+  SUBCASE("does not remove buffer view used by KHR_draco_mesh_compression") {
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+
+    auto& extension = m.meshes.emplace_back()
+                          .primitives.emplace_back()
+                          .addExtension<ExtensionKhrDracoMeshCompression>();
+    extension.bufferView = 1;
+    GltfUtilities::removeUnusedBufferViews(m);
+    CHECK_EQ(m.bufferViews.size(), 1);
+    CHECK_EQ(extension.bufferView, 0);
+  }
+
+  SUBCASE("does not remove buffer view used by EXT_structural_metadata") {
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+    m.bufferViews.emplace_back();
+
+    auto& extension = m.addExtension<ExtensionModelExtStructuralMetadata>();
+    CesiumGltf::PropertyTable& propertyTable =
+        extension.propertyTables.emplace_back();
+    CesiumGltf::PropertyTableProperty& property =
+        propertyTable.properties["test"];
+    property.values = 0;
+    property.arrayOffsets = 2;
+    property.stringOffsets = 3;
+
+    GltfUtilities::removeUnusedBufferViews(m);
+    CHECK_EQ(m.bufferViews.size(), 3);
+    CHECK_EQ(property.values, 0);
+    CHECK_EQ(property.arrayOffsets, 1);
+    CHECK_EQ(property.stringOffsets, 2);
+  }
+}
+
+TEST_CASE("GltfUtilities::removeBufferIfUnused") {
+  Model m;
+
+  SUBCASE("removes unused") {
+    m.buffers.emplace_back();
+    CHECK(GltfUtilities::removeBufferIfUnused(m, 0));
+    CHECK(m.buffers.empty());
+  }
+
+  SUBCASE("does not removed used") {
+    m.buffers.emplace_back();
+    m.bufferViews.emplace_back().buffer = 0;
+    CHECK_FALSE(GltfUtilities::removeBufferIfUnused(m, 0));
+    CHECK_FALSE(m.buffers.empty());
+  }
+
+  SUBCASE("updates indices when removing") {
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+
+    m.bufferViews.emplace_back().buffer = 1;
+
+    CHECK(GltfUtilities::removeBufferIfUnused(m, 0));
+    CHECK_EQ(m.buffers.size(), 1);
+
+    REQUIRE_EQ(m.bufferViews.size(), 1);
+    CHECK_EQ(m.bufferViews[0].buffer, 0);
+  }
+
+  SUBCASE("does not remove buffer used by EXT_meshopt_compression") {
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+    auto& extension =
+        m.bufferViews.emplace_back()
+            .addExtension<ExtensionBufferViewExtMeshoptCompression>();
+    extension.buffer = 1;
+
+    CHECK_FALSE(GltfUtilities::removeBufferIfUnused(m, 1));
+    REQUIRE_EQ(m.buffers.size(), 2);
+
+    CHECK(GltfUtilities::removeBufferIfUnused(m, 0));
+    CHECK_EQ(m.buffers.size(), 1);
+    CHECK_EQ(extension.buffer, 0);
+  }
 }
 
 TEST_CASE("GltfUtilities::removeUnusedBuffers") {
@@ -528,16 +721,7 @@ TEST_CASE("GltfUtilities::removeUnusedBuffers") {
     m.buffers.emplace_back();
     m.bufferViews.emplace_back().buffer = 0;
     GltfUtilities::removeUnusedBuffers(m);
-    CHECK(!m.buffers.empty());
-  }
-
-  SUBCASE("does not remove buffer used by EXT_meshopt_compression") {
-    m.buffers.emplace_back();
-    m.bufferViews.emplace_back()
-        .addExtension<ExtensionBufferViewExtMeshoptCompression>()
-        .buffer = 0;
-    GltfUtilities::removeUnusedBuffers(m);
-    CHECK(!m.buffers.empty());
+    CHECK_FALSE(m.buffers.empty());
   }
 
   SUBCASE("updates indices when removing") {
@@ -547,10 +731,22 @@ TEST_CASE("GltfUtilities::removeUnusedBuffers") {
     m.bufferViews.emplace_back().buffer = 1;
 
     GltfUtilities::removeUnusedBuffers(m);
-    CHECK(m.buffers.size() == 1);
+    CHECK_EQ(m.buffers.size(), 1);
 
-    REQUIRE(m.bufferViews.size() == 1);
-    CHECK(m.bufferViews[0].buffer == 0);
+    REQUIRE_EQ(m.bufferViews.size(), 1);
+    CHECK_EQ(m.bufferViews[0].buffer, 0);
+  }
+
+  SUBCASE("does not remove buffer used by EXT_meshopt_compression") {
+    m.buffers.emplace_back();
+    m.buffers.emplace_back();
+    auto& extension =
+        m.bufferViews.emplace_back()
+            .addExtension<ExtensionBufferViewExtMeshoptCompression>();
+    extension.buffer = 1;
+    GltfUtilities::removeUnusedBuffers(m);
+    CHECK_EQ(m.buffers.size(), 1);
+    CHECK_EQ(extension.buffer, 0);
   }
 }
 
