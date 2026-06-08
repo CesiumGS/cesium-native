@@ -129,6 +129,15 @@ jobs:
         run: |
           echo "VCPKG_ROOT=${VCPKG_INSTALLATION_ROOT}" >> "$GITHUB_ENV"
 
+      - name: Make more swap space available
+        run: |
+          sudo swapoff -a
+          sudo fallocate -l 10G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          sudo swapon --show
+
       - name: Configure coverage build
         run: |
           cp doc/cmake-presets/CMakeUserPresets.json .
@@ -136,7 +145,7 @@ jobs:
 
       - name: Run coverage target
         run: |
-          cmake --build build --target cesium-native-tests-coverage --parallel
+          cmake --build build --target cesium-native-tests-coverage --parallel 2
 
       - name: Generate machine-readable coverage summary
         run: |
