@@ -43,6 +43,36 @@ struct CESIUMGLTFREADER_API GltfReaderResult {
 };
 
 /**
+ * @brief Options for handling values of @ref CesiumGltf::MeshPrimitive::Mode
+ * that appear in a glTF mesh primitive. This is useful when specific primitive
+ * modes are not supported in a client.
+ */
+struct CESIUMGLTFREADER_API MeshPrimitiveModeOptions {
+  /**
+   * @brief Whether to convert @ref CesiumGltf::MeshPrimitive::Mode::LINE_STRIP
+   * primitives to @ref CesiumGltf::MeshPrimitive::Mode::LINES.
+   */
+  bool convertLineStrip = false;
+  /**
+   * @brief Whether to convert @ref CesiumGltf::MeshPrimitive::Mode::LINE_LOOP
+   * primitives to @ref CesiumGltf::MeshPrimitive::Mode::LINES.
+   */
+  bool convertLineLoop = false;
+  /**
+   * @brief Whether to convert @ref
+   * CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP primitives to @ref
+   * CesiumGltf::MeshPrimitive::Mode::TRIANGLES.
+   */
+  bool convertTriangleStrip = false;
+  /**
+   * @brief Whether to convert @ref
+   * CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN primitives to @ref
+   * CesiumGltf::MeshPrimitive::Mode::TRIANGLES.
+   */
+  bool convertTriangleFan = false;
+};
+
+/**
  * @brief Options for how to read a glTF.
  */
 struct CESIUMGLTFREADER_API GltfReaderOptions {
@@ -103,7 +133,7 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool dequantizeMeshData = true;
 
   /**
-   * @brief  Whether the texture coordinates of a texture are transformed or
+   * @brief Whether the texture coordinates of a texture are transformed or
    * not, according to the KHR_texture_transform extension
    */
   bool applyTextureTransform = true;
@@ -126,6 +156,12 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * be properly resolved. If false, any external schemas will be ignored.
    */
   bool resolveExternalStructuralMetadata = true;
+
+  /**
+   * @brief Options for handling values of @ref CesiumGltf::MeshPrimitive::Mode
+   * that appear in a glTF mesh primitive.
+   */
+  MeshPrimitiveModeOptions primitiveModeOptions;
 };
 
 /**

@@ -1,5 +1,6 @@
 #include "ModelJsonHandler.h"
 #include "applyKhrTextureTransform.h"
+#include "convertPrimitiveModes.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
@@ -380,6 +381,10 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
           model.extensionsUsed.end(),
           "KHR_texture_transform") != model.extensionsUsed.end()) {
     applyKhrTextureTransform(model);
+  }
+
+  if (requiresPrimitiveModeConversion(options.primitiveModeOptions)) {
+    convertPrimitiveModes(model, options.primitiveModeOptions);
   }
 }
 
