@@ -123,7 +123,13 @@ jobs:
       - name: Install coverage tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcovr jq
+          sudo apt-get install -y jq python3-pip
+
+      - name: Install pinned gcovr
+        run: |
+          python3 -m pip install --user --upgrade gcovr==8.4
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          gcovr --version
 
       - name: Add VCPKG_ROOT
         run: |
