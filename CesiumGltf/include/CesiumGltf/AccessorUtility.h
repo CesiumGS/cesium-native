@@ -147,20 +147,26 @@ typedef std::variant<
     IndexAccessorType;
 
 /**
- * Retrieves an accessor view for the indices of the given glTF primitive from
- * the model. The primitive may not specify any indices; if so, std::monostate
- * is returned.
+ * @brief Retrieves an accessor view for the indices of the given glTF primitive
+ * from the model. The primitive may not specify any indices; if so,
+ * std::monostate is returned.
  */
 IndexAccessorType
 getIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
- * Retrieves an indices accessor view of the accessor at the given index.
+ * @brief Retrieves an indices accessor view of the accessor at the given index.
  */
 IndexAccessorType getIndexAccessorView(const Model& model, int32_t index);
 
 /**
- * Visitor that returns the number of indices contained in an IndexAccessorType
+ * @brief Retrieves an indices accessor view of given accessor.
+ */
+IndexAccessorType
+getIndexAccessorView(const Model& model, const Accessor& accessor);
+
+/**
+ * @brief Visitor that returns the number of indices contained in an IndexAccessorType
  * variant.
  */
 struct NumIndicesFromAccessor {

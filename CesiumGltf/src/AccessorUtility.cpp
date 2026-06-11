@@ -126,18 +126,23 @@ IndexAccessorType getIndexAccessorView(const Model& model, int32_t index) {
   }
 
   const Accessor* pAccessor = model.getSafe<Accessor>(&model.accessors, index);
-  if (!pAccessor || pAccessor->type != Accessor::Type::SCALAR ||
-      pAccessor->normalized) {
+  return pAccessor ? getIndexAccessorView(model, *pAccessor)
+                   : AccessorView<uint8_t>();
+}
+
+IndexAccessorType
+getIndexAccessorView(const Model& model, const Accessor& accessor) {
+  if (accessor.type != Accessor::Type::SCALAR || accessor.normalized) {
     return AccessorView<uint8_t>();
   }
 
-  switch (pAccessor->componentType) {
+  switch (accessor.componentType) {
   case Accessor::ComponentType::UNSIGNED_BYTE:
-    return AccessorView<uint8_t>(model, *pAccessor);
+    return AccessorView<uint8_t>(model, accessor);
   case Accessor::ComponentType::UNSIGNED_SHORT:
-    return AccessorView<uint16_t>(model, *pAccessor);
+    return AccessorView<uint16_t>(model, accessor);
   case Accessor::ComponentType::UNSIGNED_INT:
-    return AccessorView<uint32_t>(model, *pAccessor);
+    return AccessorView<uint32_t>(model, accessor);
   default:
     return AccessorView<uint8_t>();
   }
