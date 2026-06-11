@@ -127,6 +127,13 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * be properly resolved. If false, any external schemas will be ignored.
    */
   bool resolveExternalStructuralMetadata = true;
+
+  /**
+   * @brief Whether to free compressed data storage after it is decompressed.
+   * "Compressed data" includes Draco compressed data and images in JPEG / PNG
+   * format.
+   */
+  bool freeCompressedData = false;
 };
 
 /**

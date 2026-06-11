@@ -568,7 +568,11 @@ TEST_CASE("Writes glb") {
 
   // Now read the glb back
   CesiumGltfReader::GltfReader reader;
-  CesiumGltfReader::GltfReaderResult readResult = reader.readGltf(glbBytes);
+  CesiumGltfReader::GltfReaderOptions options{};
+  options.freeCompressedData = false;
+
+  CesiumGltfReader::GltfReaderResult readResult =
+      reader.readGltf(glbBytes, options);
 
   REQUIRE(readResult.errors.empty());
   REQUIRE(readResult.warnings.empty());
