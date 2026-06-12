@@ -3,7 +3,7 @@
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
-#include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <Cesium3DTilesSelection/TilesetContentOptions.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>

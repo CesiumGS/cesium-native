@@ -1,4 +1,5 @@
 #include <Cesium3DTilesSelection/TilesetContentOptions.h>
+#include <CesiumGltfReader/GltfReader.h>
 
 namespace Cesium3DTilesSelection {
 
