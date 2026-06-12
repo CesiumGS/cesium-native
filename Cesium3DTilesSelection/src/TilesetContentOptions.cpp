@@ -10,6 +10,7 @@ TilesetContentOptions::toGltfReaderOptions() const {
   options.ktx2TranscodeTargets = this->ktx2TranscodeTargets;
   options.applyTextureTransform = this->applyTextureTransform;
   options.primitiveModeOptions = this->primitiveModeOptions;
+  return options;
 }
 
 } // namespace Cesium3DTilesSelection

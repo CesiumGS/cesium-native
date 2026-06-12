@@ -2,25 +2,22 @@
 
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorUtility.h>
-#include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
-#include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/VertexAttributeSemantics.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <limits>
-#include <memory>
-#include <span>
 #include <string>
 #include <utility>
+#include <variant>
 
 namespace CesiumGltfReader {
 
