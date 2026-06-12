@@ -105,7 +105,7 @@ std::vector<T> convertLineLoopIndices(const PrimitiveIndicesView& indicesView) {
   // Example: Given a line loop with three indices A-B-C, its segments are
   // A-B, B-C, C-A, requiring six indices.
   std::vector<T> data;
-  data.reserve(2 * numIndices);
+  data.reserve(2 * size_t(numIndices));
 
   for (int64_t i = 0; i < numIndices - 1; ++i) {
     data.push_back(static_cast<T>(indicesView[i]));
@@ -126,7 +126,7 @@ convertLineStripIndices(const PrimitiveIndicesView& indicesView) {
   // Example: Given a line strip with four indices A-B-C-D, its segments are
   // A-B, B-C, C-D, requiring six indices.
   std::vector<T> data;
-  data.reserve(2 * (numIndices - 1));
+  data.reserve(2 * size_t(numIndices - 1));
 
   for (int64_t i = 0; i < numIndices - 1; ++i) {
     data.push_back(static_cast<T>(indicesView[i]));
@@ -142,7 +142,7 @@ convertTriangleStripIndices(const PrimitiveIndicesView& indicesView) {
   int64_t numIndices = indicesView.numIndices;
   // After the first two indices, every index corresponds to a new triangle.
   std::vector<T> data;
-  data.reserve(3 * (numIndices - 2));
+  data.reserve(3 * size_t(numIndices - 2));
   for (int64_t i = 0; i < numIndices - 2; ++i) {
     if (i % 2) {
       data.push_back(static_cast<T>(indicesView[i + 2]));
@@ -163,7 +163,7 @@ convertTriangleFanIndices(const PrimitiveIndicesView& indicesView) {
   int64_t numIndices = indicesView.numIndices;
   // After the first two indices, every index corresponds to a new triangle.
   std::vector<T> data;
-  data.reserve(3 * (numIndices - 2));
+  data.reserve(3 * size_t(numIndices - 2));
   for (int64_t i = 2; i < numIndices; ++i) {
     data.push_back(static_cast<T>(indicesView[0]));
     data.push_back(static_cast<T>(indicesView[i - 1]));
@@ -225,9 +225,9 @@ void replacePrimitiveIndices(
   CesiumGltf::Accessor& accessor = model.accessors.emplace_back();
   accessor.type = CesiumGltf::Accessor::Type::SCALAR;
   accessor.componentType = componentType;
-  accessor.count = int64_t(
-      data.size() /
-      CesiumGltf::Accessor::computeByteSizeOfComponent(componentType));
+  accessor.count =
+      int64_t(data.size()) /
+      CesiumGltf::Accessor::computeByteSizeOfComponent(componentType);
   accessor.bufferView = int32_t(model.bufferViews.size());
 
   CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();

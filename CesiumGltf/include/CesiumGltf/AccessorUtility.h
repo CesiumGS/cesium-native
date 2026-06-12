@@ -166,8 +166,8 @@ IndexAccessorType
 getIndexAccessorView(const Model& model, const Accessor& accessor);
 
 /**
- * @brief Visitor that returns the number of indices contained in an IndexAccessorType
- * variant.
+ * @brief Visitor that returns the number of indices contained in an
+ * IndexAccessorType variant.
  */
 struct NumIndicesFromAccessor {
   /**
