@@ -1,5 +1,3 @@
-#pragma once
-
 #include <Cesium3DTilesSelection/TilesetContentOptions.h>
 
 namespace Cesium3DTilesSelection {
