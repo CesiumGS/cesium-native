@@ -11,6 +11,7 @@
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentOptions.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
@@ -21,7 +22,6 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltfReader/GltfReader.h>
-#include <CesiumImage/Ktx2TranscodeTargets.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
