@@ -1172,11 +1172,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                   tileTransform,
                   requestHeaders,
                   upAxis};
-              CesiumGltfReader::GltfReaderOptions gltfOptions;
-              gltfOptions.ktx2TranscodeTargets =
-                  contentOptions.ktx2TranscodeTargets;
-              gltfOptions.applyTextureTransform =
-                  contentOptions.applyTextureTransform;
+              CesiumGltfReader::GltfReaderOptions gltfOptions =
+                  contentOptions.toGltfReaderOptions();
               if (pSharedAssetSystem) {
                 gltfOptions.pSharedAssetSystem = pSharedAssetSystem;
               }

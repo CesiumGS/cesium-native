@@ -140,7 +140,7 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
 
   /**
    * @brief For each possible input transmission format, this struct names
-   * the ideal target gpu-compressed pixel format to transcode to.
+   * the ideal target GPU-compressed pixel format to transcode to.
    */
   CesiumImage::Ktx2TranscodeTargets ktx2TranscodeTargets;
 

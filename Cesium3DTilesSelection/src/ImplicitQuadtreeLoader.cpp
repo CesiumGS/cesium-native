@@ -156,8 +156,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    CesiumImage::Ktx2TranscodeTargets ktx2TranscodeTargets,
-    bool applyTextureTransform,
+    const Cesium3DTilesSelection::TilesetContentOptions& contentOptions,
     const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
         pSharedAssetSystem,
     const glm::dmat4& tileTransform,
@@ -165,8 +164,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
       .thenInWorkerThread([ellipsoid,
                            pLogger,
-                           ktx2TranscodeTargets,
-                           applyTextureTransform,
+                           contentOptions,
                            pSharedAssetSystem,
                            asyncSystem,
                            pAssetAccessor,
@@ -211,9 +209,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
 
         if (converter) {
           // Convert to gltf
-          CesiumGltfReader::GltfReaderOptions gltfOptions;
-          gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
-          gltfOptions.applyTextureTransform = applyTextureTransform;
+          CesiumGltfReader::GltfReaderOptions gltfOptions =
+              contentOptions.toGltfReaderOptions();
           if (pSharedAssetSystem) {
             gltfOptions.pSharedAssetSystem = pSharedAssetSystem;
           }
@@ -382,8 +379,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       pAssetAccessor,
       tileUrl,
       requestHeaders,
-      contentOptions.ktx2TranscodeTargets,
-      contentOptions.applyTextureTransform,
+      contentOptions,
       loadInput.pSharedAssetSystem,
       tile.getTransform(),
       ellipsoid);
