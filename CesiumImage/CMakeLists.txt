@@ -52,3 +52,17 @@ target_link_libraries(CesiumImage
     PRIVATE
         KTX::ktx
 )
+
+if(CESIUM_DISABLE_LIBJPEG_TURBO)
+    target_compile_definitions(
+        CesiumImage
+        PRIVATE
+            CESIUM_DISABLE_LIBJPEG_TURBO
+    )
+else()
+    target_link_libraries(
+        CesiumImage
+        PRIVATE
+            $<IF:$<TARGET_EXISTS:libjpeg-turbo::turbojpeg>,libjpeg-turbo::turbojpeg,libjpeg-turbo::turbojpeg-static>
+    )
+endif()
