@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - Upgraded vcpkg to `2026.04.27`.
+- `forEachTile` and `forEachContent` now take an additional `refine` argument in the callback function.
 
 ##### Additions :tada:
 

@@ -19,7 +19,8 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
   typedef void ForEachTileCallback(
       Tileset& tileset,
       Tile& tile,
-      const glm::dmat4& transform);
+      const glm::dmat4& transform,
+      const std::string& refine);
 
   /**
    * @brief Apply the given callback to all tiles.
@@ -37,7 +38,8 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
   typedef void ForEachTileConstCallback(
       const Tileset& tileset,
       const Tile& tile,
-      const glm::dmat4& transform);
+      const glm::dmat4& transform,
+      const std::string& refine);
 
   /** @copydoc Tileset::forEachTile */
   void forEachTile(std::function<ForEachTileConstCallback>&& callback) const;
@@ -49,7 +51,8 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
       Tileset& tileset,
       Tile& tile,
       Content& content,
-      const glm::dmat4& transform);
+      const glm::dmat4& transform,
+      const std::string& refine);
 
   /**
    * @brief Apply the given callback to all contents.
@@ -68,7 +71,8 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
       const Tileset& tileset,
       const Tile& tile,
       const Content& content,
-      const glm::dmat4& transform);
+      const glm::dmat4& transform,
+      const std::string& refine);
 
   /** @copydoc Tileset::forEachContent */
   void
