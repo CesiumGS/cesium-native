@@ -24,6 +24,7 @@
 #include <CesiumUtility/StringHelpers.h>
 
 #include <doctest/doctest.h>
+#include <fmt/format.h>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
@@ -34,7 +35,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
-#include <format>
 #include <limits>
 #include <map>
 #include <memory>
@@ -487,7 +487,7 @@ std::vector<std::byte>
 generateBinaryGltf(int32_t primitiveMode, const std::vector<uint8_t>& indices) {
   using namespace std::string_literals;
 
-  std::string json = R"(
+  constexpr std::string_view jsonTemplate = R"(
     {{
       "accessors": [
         {{
@@ -531,13 +531,12 @@ generateBinaryGltf(int32_t primitiveMode, const std::vector<uint8_t>& indices) {
     binary.resize(binary.size() + (4 - remainder));
   }
 
-  json = std::vformat(
-      std::string_view(json),
-      std::make_format_args(
-          indexCount,
-          indicesByteLength,
-          indicesByteLength,
-          primitiveMode));
+  std::string json = fmt::format(
+      jsonTemplate,
+      indexCount,
+      indicesByteLength,
+      indicesByteLength,
+      primitiveMode);
   if (size_t remainder = json.size() % 4; remainder > 0) {
     // Align to 4-byte boundary with trailing space characters.
     json.resize(json.size() + (4 - remainder), 0x20);
@@ -570,7 +569,7 @@ generateBinaryGltf(int32_t primitiveMode, const std::vector<uint8_t>& indices) {
 }
 } // namespace
 
-TEST_CASE("Handles primitive restart") {
+TEST_CASE("Handles primitive restart during primitive mode conversion") {
   GltfReader reader;
 
   SUBCASE("for line loop") {
