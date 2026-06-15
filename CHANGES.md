@@ -5,10 +5,18 @@
 ##### Breaking Changes :mega:
 
 - Upgraded vcpkg to `2026.04.27`.
+- `PositionAccessorType` and `NormalAccessorType` are now variant types to support quantized attributes enabled by `KHR_mesh_quantization`.
+- The `AccessorView` constructor overload that takes raw buffer data now requires an additional `normalized` argument.
+- The `getQuaternionAccessorView` overload that takes an accessor pointer now takes an accessor reference.
 
 ##### Additions :tada:
 
 - Added a constructor overload for `Cesium3DTilesSelection::ITwinRealityDataContentLoaderFactory` to override the iTwin Cesium Reality Data base URL. This makes it possible to connect to alternate servers (e.g., staging, QA, mock servers).
+- Added `PositionFromAccessor` visitor for reading positions from a `PositionAccessorType`.
+- Added `NormalFromAccessor` visitor for reading normals from a `NormalAccessorType`.
+- Added `QuaternionFromAccessor` visitor for reading quaternions from a `QuaternionAccessorType`.
+- Updated `TexCoordAccessorType` to support additional quantized variants enabled by `KHR_mesh_quantization`.
+- Added `AccessorView::normalized()` getter.
 
 ### v0.61.0 - 2026-06-01
 
