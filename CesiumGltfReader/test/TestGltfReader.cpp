@@ -521,8 +521,9 @@ generateBinaryGltf(int32_t primitiveMode, const std::vector<uint8_t>& indices) {
     }}
   )";
 
+  size_t indexCount = indices.size();
   uint32_t indicesByteLength =
-      static_cast<uint32_t>(indices.size() * sizeof(uint8_t));
+      static_cast<uint32_t>(indexCount * sizeof(uint8_t));
   std::vector<std::byte> binary(indicesByteLength);
   std::memcpy(binary.data(), indices.data(), indicesByteLength);
   if (size_t remainder = binary.size() % 4; remainder > 0) {
@@ -533,7 +534,7 @@ generateBinaryGltf(int32_t primitiveMode, const std::vector<uint8_t>& indices) {
   json = std::vformat(
       std::string_view(json),
       std::make_format_args(
-          indices.size(),
+          indexCount,
           indicesByteLength,
           indicesByteLength,
           primitiveMode));
@@ -694,7 +695,6 @@ TEST_CASE("Handles primitive restart") {
     }
   }
 
-  
   SUBCASE("for triangle fan") {
     // clang-format off
     std::vector<uint8_t> indices{
