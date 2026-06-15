@@ -122,6 +122,11 @@ std::vector<T> convertLineLoopIndices(const PrimitiveIndicesView& indicesView) {
 
     if (index1 == primitiveRestartConstant) {
       CESIUM_ASSERT(nextIndex != loopStart);
+
+      // Complete the loop before starting a new one.
+      data.push_back(index0);
+      data.push_back(static_cast<T>(indicesView[loopStart]));
+
       loopStart = nextIndex + 1;
       continue;
     }
