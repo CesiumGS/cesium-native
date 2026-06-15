@@ -611,6 +611,130 @@ TEST_CASE("Handles primitive restart") {
       REQUIRE_EQ(indicesView[i], expected[size_t(i)]);
     }
   }
+
+  SUBCASE("for line strip") {
+    // clang-format off
+    std::vector<uint8_t> indices{
+      255,
+      0, 1, 2, 3, 255,
+      4, 5, 6, 255,
+      7, 8, 9, 10, 255};
+    // clang-format on
+    std::vector<std::byte> file = generateBinaryGltf(
+        CesiumGltf::MeshPrimitive::Mode::LINE_STRIP,
+        indices);
+
+    GltfReaderOptions options;
+    options.primitiveModeOptions.convertLineStrip = true;
+
+    GltfReaderResult result = reader.readGltf(file, options);
+    REQUIRE(result.model);
+    const Model& model = result.model.value();
+
+    REQUIRE_EQ(model.meshes.size(), 1);
+    REQUIRE_EQ(model.meshes[0].primitives.size(), 1);
+
+    const CesiumGltf::MeshPrimitive& primitive = model.meshes[0].primitives[0];
+    CHECK_EQ(primitive.mode, CesiumGltf::MeshPrimitive::Mode::LINES);
+    REQUIRE_EQ(primitive.indices, int32_t(model.accessors.size() - 1));
+
+    CesiumGltf::AccessorView<uint8_t> indicesView(model, primitive.indices);
+    REQUIRE_EQ(indicesView.status(), CesiumGltf::AccessorViewStatus::Valid);
+
+    // clang-format off
+    std::vector<uint8_t> expected{
+      0, 1, 1, 2, 2, 3,
+      4, 5, 5, 6,
+      7, 8, 8, 9, 9, 10};
+    // clang-format on
+    REQUIRE_EQ(indicesView.size(), int64_t(expected.size()));
+    for (int64_t i = 0; i < indicesView.size(); i++) {
+      REQUIRE_EQ(indicesView[i], expected[size_t(i)]);
+    }
+  }
+
+  SUBCASE("for triangle strip") {
+    // clang-format off
+    std::vector<uint8_t> indices{
+      255,
+      0, 1, 2, 3, 255,
+      4, 5, 6, 255,
+      7, 8, 9, 10, 255};
+    // clang-format on
+    std::vector<std::byte> file = generateBinaryGltf(
+        CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP,
+        indices);
+
+    GltfReaderOptions options;
+    options.primitiveModeOptions.convertTriangleStrip = true;
+
+    GltfReaderResult result = reader.readGltf(file, options);
+    REQUIRE(result.model);
+    const Model& model = result.model.value();
+
+    REQUIRE_EQ(model.meshes.size(), 1);
+    REQUIRE_EQ(model.meshes[0].primitives.size(), 1);
+
+    const CesiumGltf::MeshPrimitive& primitive = model.meshes[0].primitives[0];
+    CHECK_EQ(primitive.mode, CesiumGltf::MeshPrimitive::Mode::TRIANGLES);
+    REQUIRE_EQ(primitive.indices, int32_t(model.accessors.size() - 1));
+
+    CesiumGltf::AccessorView<uint8_t> indicesView(model, primitive.indices);
+    REQUIRE_EQ(indicesView.status(), CesiumGltf::AccessorViewStatus::Valid);
+
+    // clang-format off
+    std::vector<uint8_t> expected{
+      0, 1, 2, 3, 2, 1,
+      4, 5, 6,
+      7, 8, 9, 10, 9, 8};
+    // clang-format on
+    REQUIRE_EQ(indicesView.size(), int64_t(expected.size()));
+    for (int64_t i = 0; i < indicesView.size(); i++) {
+      REQUIRE_EQ(indicesView[i], expected[size_t(i)]);
+    }
+  }
+
+  
+  SUBCASE("for triangle fan") {
+    // clang-format off
+    std::vector<uint8_t> indices{
+      255,
+      0, 1, 2, 3, 255,
+      4, 5, 6, 255,
+      7, 8, 9, 10, 255};
+    // clang-format on
+    std::vector<std::byte> file = generateBinaryGltf(
+        CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN,
+        indices);
+
+    GltfReaderOptions options;
+    options.primitiveModeOptions.convertTriangleFan = true;
+
+    GltfReaderResult result = reader.readGltf(file, options);
+    REQUIRE(result.model);
+    const Model& model = result.model.value();
+
+    REQUIRE_EQ(model.meshes.size(), 1);
+    REQUIRE_EQ(model.meshes[0].primitives.size(), 1);
+
+    const CesiumGltf::MeshPrimitive& primitive = model.meshes[0].primitives[0];
+    CHECK_EQ(primitive.mode, CesiumGltf::MeshPrimitive::Mode::TRIANGLES);
+    REQUIRE_EQ(primitive.indices, int32_t(model.accessors.size() - 1));
+
+    CesiumGltf::AccessorView<uint8_t> indicesView(model, primitive.indices);
+    REQUIRE_EQ(indicesView.status(), CesiumGltf::AccessorViewStatus::Valid);
+
+    // clang-format off
+    std::vector<uint8_t> expected{
+      0, 1, 2, 0, 2, 3,
+      4, 5, 6,
+      7, 8, 9, 7, 9, 10};
+    // clang-format on
+    REQUIRE_EQ(indicesView.size(), int64_t(expected.size()));
+    for (int64_t i = 0; i < indicesView.size(); i++) {
+      REQUIRE_EQ(indicesView[i], expected[size_t(i)]);
+    }
+  }
 }
 
 TEST_CASE("Nested extras deserializes properly") {
