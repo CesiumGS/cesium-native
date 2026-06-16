@@ -80,16 +80,16 @@ getPositionAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
  * Visitor that retrieves the position from the given accessor type
- * as a glm::dvec3.
+ * as a `glm::dvec3`.
  *
- * There are technically no invalid position values, so we use std::nullopt to
+ * There are technically no invalid position values, so `std::nullopt` is used to
  * denote an erroneous value.
  */
 struct PositionFromAccessor {
   /**
    * @brief Attempts to obtain a `glm::dvec3` at the given index from an
-   * accessor over a vec3. The values will be cast to `double` and normalized
-   * based on `std::numeric_limits<T>::max()`. If the index is invalid,
+   * accessor over a vec3. The values will be cast to `double` and, if applicable,
+   * normalized based on `std::numeric_limits<T>::max()`. If the index is invalid,
    * `std::nullopt` is returned instead.
    */
   template <typename T>
@@ -135,16 +135,16 @@ getNormalAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
  * Visitor that retrieves the normal from the given accessor type
- * as a glm::dvec3.
+ * as a `glm::dvec3`.
  *
- * There are technically no invalid normal values, so we use std::nullopt to
+ * There are technically no invalid normal values, so `std::nullopt` is used to
  * denote an erroneous value.
  */
 struct NormalFromAccessor {
   /**
    * @brief Attempts to obtain a `glm::dvec3` at the given index from an
-   * accessor over a vec3. The values will be cast to `double` and normalized
-   * based on `std::numeric_limits<T>::max()`. If the index is invalid,
+   * accessor over a vec3. The values will be cast to `double` and, if applicable,
+   * normalized based on `std::numeric_limits<T>::max()`. If the index is invalid,
    * `std::nullopt` is returned instead.
    */
   template <typename T>
@@ -465,7 +465,11 @@ TexCoordAccessorType getTexCoordAccessorView(
  * as a glm::dvec2. This should be initialized with the target index.
  *
  * There are technically no invalid UV values because of clamp / wrap
- * behavior, so we use std::nullopt to denote an erroneous value.
+* Visitor that retrieves the texture coordinates from the given accessor type
+* as a `glm::dvec2`. This should be initialized with the target index.
+*
+* There are technically no invalid UV values because of clamp / wrap
+* behavior, so `std::nullopt` is used to denote an erroneous value.
  */
 struct TexCoordFromAccessor {
   /**
@@ -513,7 +517,7 @@ typedef std::variant<
  * @param model The model containing the quaternion accessor.
  * @param accessor An accessor from which the quaternion will be obtained.
  * @returns A quaternion accessor view from the data in `accessor`. If no
- * quaternion could be obtained, the default value for \ref
+ * such view could be obtained, the default value for \ref
  * QuaternionAccessorType will be returned instead.
  */
 QuaternionAccessorType
@@ -527,7 +531,7 @@ getQuaternionAccessorView(const Model& model, const Accessor& accessor);
  * @param accessorIndex An index to the accessor from which the quaternion will
  * be obtained.
  * @returns A quaternion accessor view from the data in the accessor at
- * `accessorIndex`. If no quaternion could be obtained, the default value for
+ * `accessorIndex`. If no such view could be obtained, the default value for
  * \ref QuaternionAccessorType will be returned instead.
  */
 QuaternionAccessorType
@@ -540,8 +544,8 @@ getQuaternionAccessorView(const Model& model, int32_t accessorIndex);
 struct QuaternionFromAccessor {
   /**
    * @brief Attempts to obtain a `glm::dquat` at the given index from an
-   * accessor over a vec4. The values will be cast to `double` and normalized
-   * based on `std::numeric_limits<T>::max()`. If the index is invalid,
+   * accessor over a vec4. The values will be cast to `double` and, if applicable,
+   * normalized based on `std::numeric_limits<T>::max()`. If the index is invalid,
    * `std::nullopt` is returned instead.
    */
   template <typename T>
