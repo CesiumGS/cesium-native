@@ -1,0 +1,37 @@
+{
+  "asset": {
+    "version": "1.1"
+  },
+  "geometricError": 483.3927636059636,
+  "root": {
+    "boundingVolume": {
+      "region": [-1.3119622831702027, 0.6971256303552095, -1.3117679393791828, 0.6973001632804089, 0.0, 0.005]
+    },
+    "geometricError": 241.6963818029818,
+    "refine": "REPLACE",
+    "children": [{
+        "boundingVolume": {
+          "region": [-1.3119622831702027, 0.6971256303552095, -1.3117679393791828, 0.6973001632804089, 0.0, 0.005]
+        },
+        "geometricError": 120.8481909014909,
+        "refine": "REPLACE",
+        "content": {
+          "uri": "0/tiles/{level}/{x}/{y}.glb",
+          "extensions": {
+            "3DTILES_content_gltf_vector": {
+              "vector": true
+            }
+          }
+        },
+        "implicitTiling": {
+          "subdivisionScheme": "QUADTREE",
+          "subtreeLevels": 3,
+          "availableLevels": 4,
+          "subtrees": {
+            "uri": "0/subtrees/{level}/{x}/{y}.subtree"
+          }
+        }
+      }]
+  },
+  "extensionsUsed": ["3DTILES_content_gltf_vector"]
+}
