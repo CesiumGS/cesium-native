@@ -7,6 +7,7 @@
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/FeatureId.h>
 #include <CesiumGltf/Material.h>
@@ -15,6 +16,7 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/JsonHelpers.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
@@ -33,6 +35,7 @@
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <optional>
 #include <span>
 #include <string>
 #include <unordered_map>
@@ -42,6 +45,7 @@
 
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 using namespace CesiumVectorData;
 
 namespace CesiumVectorData {
@@ -505,6 +509,63 @@ ConverterResult GltfConverter::convert(
   scene.nodes.push_back(int32_t(rootNodeIndex));
   converter.model.scene = int32_t(converter.model.scenes.size() - 1);
   return {std::move(converter.model)};
+}
+
+// Should probably be in CesiumUtility
+
+namespace {
+std::optional<std::string>
+getStringProperty(const rapidjson::Value& json, const std::string& key) {
+  const auto it = json.FindMember(key.c_str());
+  if (it == json.MemberEnd() || !it->value.IsString()) {
+    return std::nullopt;
+  }
+  return it->value.GetString();
+}
+} // namespace
+
+ConvertSchemaResult
+GltfConverter::convertSchema(const rapidjson::Document& schemaJson) {
+  Schema schema;
+  std::optional<std::string> className = getStringProperty(schemaJson, "name");
+  if (!className) {
+    return {ErrorList::error("No schema class name")};
+  }
+  std::string classKey =
+      JsonHelpers::getStringOrDefault(schemaJson, "semantic", "geoJsonClass");
+  Class geoJsonClass;
+  geoJsonClass.name = *className;
+  auto propertiesIt = schemaJson.FindMember("properties");
+  if (propertiesIt == schemaJson.MemberEnd()) {
+    return {ErrorList::error("no properties in schema")};
+  }
+  if (!propertiesIt->value.IsArray()) {
+    return {ErrorList::error("schema properties are not an array")};
+  }
+  const auto& props = propertiesIt->value;
+  for (rapidjson::SizeType i = 0; i < props.Size(); ++i) {
+    const auto& metaProperty = props[i];
+    if (metaProperty.IsObject()) {
+      std::optional<std::string> propName =
+          getStringProperty(metaProperty, "id");
+      std::optional<std::string> propType =
+          getStringProperty(metaProperty, "type");
+      if (propName && propType) {
+        ClassProperty metaClass;
+        metaClass.name = *propName;
+        if (propType == "String") {
+          metaClass.type = ClassProperty::Type::STRING;
+        } else if (propType == "Float") {
+          metaClass.componentType = ClassProperty::ComponentType::FLOAT32;
+        } else if (propType == "Integer") {
+          metaClass.componentType = ClassProperty::ComponentType::INT32;
+        }
+        geoJsonClass.properties[*propName] = std::move(metaClass);
+      }
+    }
+  }
+  schema.classes[classKey] = std::move(geoJsonClass);
+  return schema;
 }
 
 } // namespace CesiumVectorData

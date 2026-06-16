@@ -7,6 +7,7 @@
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
+#include <Cesium3DTiles/ExtensionMaxarContentGeoJson.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
@@ -40,6 +41,7 @@
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GltfConverter.h>
@@ -248,6 +250,53 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
   }
 
   return std::nullopt;
+}
+
+using JsonFetcherResult = Result<rapidjson::Document>;
+
+CesiumAsync::Future<JsonFetcherResult> getJson(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::string& jsonUrl,
+    std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders) {
+  return pAssetAccessor->get(asyncSystem, jsonUrl, requestHeaders)
+      .thenInWorkerThread(
+          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
+            auto pResponse = pCompletedRequest->response();
+            const std::string& jsonUrl = pCompletedRequest->url();
+            if (!pResponse) {
+              ErrorList errors;
+              errors.emplaceError(fmt::format(
+                  "Did not receive a valid response for json {}",
+                  jsonUrl));
+              return JsonFetcherResult(errors);
+            }
+            uint16_t statusCode = pResponse->statusCode();
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              ErrorList errors;
+              errors.emplaceError(fmt::format(
+                  "Received status code {} for tile content {}",
+                  statusCode,
+                  jsonUrl));
+              return JsonFetcherResult(errors);
+              ;
+            }
+            rapidjson::Document jsonContent;
+            const auto& responseData = pResponse->data();
+            jsonContent.Parse(
+                reinterpret_cast<const char*>(responseData.data()),
+                responseData.size());
+            if (jsonContent.HasParseError()) {
+              ErrorList errors;
+              errors.emplaceError(fmt::format(
+                  "Error when parsing JSON content, error code {} at byte "
+                  "offset {}",
+                  jsonContent.GetParseError(),
+                  jsonContent.GetErrorOffset()));
+              return JsonFetcherResult(errors);
+            }
+            return JsonFetcherResult(std::move(jsonContent));
+          });
 }
 
 void createImplicitQuadtreeLoader(
@@ -1038,8 +1087,27 @@ TilesetJsonLoader::createLoader(
         tilesetJsonUrl,
         std::move(tilesetJson),
         *pExternal);
+    if (pExternal->metadata.metadata &&
+        pExternal->metadata.metadata
+            ->hasExtension<ExtensionMaxarContentGeoJson>()) {
+      const JsonValue* extensionJson =
+          pExternal->metadata.metadata->getGenericExtension(
+              ExtensionMaxarContentGeoJson::TypeName);
+      if (extensionJson) {
+        if (const JsonValue* pSchemaUriValue =
+                extensionJson->getValuePtrForKey("propertiesSchemaUri")) {
+          if (pSchemaUriValue->isString()) {
+            result.pLoader->_sharedSchemaUrl = CesiumUtility::Uri::resolve(
+                tilesetJsonUrl,
+                pSchemaUriValue->getString());
+          }
+        }
+      }
+    }
   }
-
+  std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaderVector(
+      requestHeaders.begin(),
+      requestHeaders.end());
   return asyncSystem.createResolvedFuture(std::move(result))
       .thenInWorkerThread([asyncSystem, pAssetAccessor](
                               TilesetContentLoaderResult<TilesetJsonLoader>&&
@@ -1064,6 +1132,51 @@ TilesetJsonLoader::createLoader(
             .thenImmediately([result = std::move(result)]() mutable {
               return std::move(result);
             });
+      })
+      .thenInWorkerThread([asyncSystem,
+                           pAssetAccessor,
+                           tilesetJsonUrl,
+                           requestHeaders = std::move(requestHeaderVector)](
+                              TilesetContentLoaderResult<TilesetJsonLoader>&&
+                                  result) mutable {
+        TileExternalContent* pExternal =
+            result.pRootTile->getContent().getExternalContent();
+        if (pExternal->metadata.metadata &&
+            pExternal->metadata.metadata
+                ->hasExtension<ExtensionMaxarContentGeoJson>()) {
+          const JsonValue* extensionJson =
+              pExternal->metadata.metadata->getGenericExtension(
+                  ExtensionMaxarContentGeoJson::ExtensionName);
+          if (extensionJson) {
+            if (const JsonValue* pSchemaUriValue =
+                    extensionJson->getValuePtrForKey("propertiesSchemaUri")) {
+              if (pSchemaUriValue->isString()) {
+                return getJson(
+                           asyncSystem,
+                           pAssetAccessor,
+                           CesiumUtility::Uri::resolve(
+                               tilesetJsonUrl,
+                               pSchemaUriValue->getString()),
+                           std::move(requestHeaders))
+                    .thenInWorkerThread(
+                        [result = std::move(result)](
+                            JsonFetcherResult&& jsonResult) mutable {
+                          if (jsonResult.value) {
+                            CesiumVectorData::ConvertSchemaResult schemaResult =
+                                CesiumVectorData::GltfConverter::convertSchema(
+                                    *jsonResult.value);
+                            if (schemaResult.value) {
+                              result.pLoader->_externalSchema =
+                                  *schemaResult.value;
+                            }
+                          }
+                          return std::move(result);
+                        });
+              }
+            }
+          }
+        }
+        return asyncSystem.createResolvedFuture(std::move(result));
       });
 }
 
@@ -1241,6 +1354,10 @@ const std::string& TilesetJsonLoader::getBaseUrl() const noexcept {
 
 CesiumGeometry::Axis TilesetJsonLoader::getUpAxis() const noexcept {
   return _upAxis;
+}
+
+const std::string& TilesetJsonLoader::getSharedSchemaUrl() const noexcept {
+  return this->_sharedSchemaUrl;
 }
 
 void TilesetJsonLoader::addChildLoader(
