@@ -4,11 +4,26 @@
 #include <CesiumGltf/MeshPrimitive.h>
 
 #include <glm/common.hpp>
+#include <glm/ext/quaternion_double.hpp>
 
 #include <array>
+#include <type_traits>
 #include <variant>
 
 namespace CesiumGltf {
+
+namespace CesiumImpl {
+template <typename T> double denormalize(T value) {
+  if constexpr (std::is_floating_point_v<T>) {
+    return double(value);
+  } else if constexpr (std::is_signed_v<T>) {
+    return glm::max(double(value) / std::numeric_limits<T>::max(), -1.0);
+  } else {
+    return double(value) / std::numeric_limits<T>::max();
+  }
+}
+} // namespace CesiumImpl
+
 /**
  * @brief Visitor that retrieves the count of elements in the given accessor
  * type as an int64_t.
@@ -45,9 +60,15 @@ struct StatusFromAccessor {
 };
 
 /**
- * Type definition for position accessor.
+ * Type definition for all kinds of position (POSITION) accessors.
  */
-typedef AccessorView<AccessorTypes::VEC3<float>> PositionAccessorType;
+typedef std::variant<
+    AccessorView<AccessorTypes::VEC3<int8_t>>,
+    AccessorView<AccessorTypes::VEC3<uint8_t>>,
+    AccessorView<AccessorTypes::VEC3<int16_t>>,
+    AccessorView<AccessorTypes::VEC3<uint16_t>>,
+    AccessorView<AccessorTypes::VEC3<float>>>
+    PositionAccessorType;
 
 /**
  * Retrieves an accessor view for the position attribute from the given glTF
@@ -58,9 +79,51 @@ PositionAccessorType
 getPositionAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
- * Type definition for normal accessor.
+ * Visitor that retrieves the position from the given accessor type
+ * as a `glm::dvec3`.
+ *
+ * There are technically no invalid position values, so `std::nullopt` is used
+ * to denote an erroneous value.
  */
-typedef AccessorView<AccessorTypes::VEC3<float>> NormalAccessorType;
+struct PositionFromAccessor {
+  /**
+   * @brief Attempts to obtain a `glm::dvec3` at the given index from an
+   * accessor over a vec3. The values will be cast to `double` and, if
+   * applicable, normalized based on `std::numeric_limits<T>::max()`. If the
+   * index is invalid, `std::nullopt` is returned instead.
+   */
+  template <typename T>
+  std::optional<glm::dvec3>
+  operator()(const AccessorView<AccessorTypes::VEC3<T>>& value) {
+    if (index < 0 || index >= value.size()) {
+      return std::nullopt;
+    }
+
+    if (value.normalized()) {
+      return glm::dvec3(
+          CesiumImpl::denormalize(value[index].value[0]),
+          CesiumImpl::denormalize(value[index].value[1]),
+          CesiumImpl::denormalize(value[index].value[2]));
+    } else {
+      return glm::dvec3(
+          value[index].value[0],
+          value[index].value[1],
+          value[index].value[2]);
+    }
+  }
+
+  /** @brief The index of the position to obtain. */
+  int64_t index;
+};
+
+/**
+ * Type definition for all kinds of normal (NORMAL) accessors.
+ */
+typedef std::variant<
+    AccessorView<AccessorTypes::VEC3<int8_t>>,
+    AccessorView<AccessorTypes::VEC3<int16_t>>,
+    AccessorView<AccessorTypes::VEC3<float>>>
+    NormalAccessorType;
 
 /**
  * Retrieves an accessor view for the normal attribute from the given glTF
@@ -69,6 +132,44 @@ typedef AccessorView<AccessorTypes::VEC3<float>> NormalAccessorType;
  */
 NormalAccessorType
 getNormalAccessorView(const Model& model, const MeshPrimitive& primitive);
+
+/**
+ * Visitor that retrieves the normal from the given accessor type
+ * as a `glm::dvec3`.
+ *
+ * There are technically no invalid normal values, so `std::nullopt` is used to
+ * denote an erroneous value.
+ */
+struct NormalFromAccessor {
+  /**
+   * @brief Attempts to obtain a `glm::dvec3` at the given index from an
+   * accessor over a vec3. The values will be cast to `double` and, if
+   * applicable, normalized based on `std::numeric_limits<T>::max()`. If the
+   * index is invalid, `std::nullopt` is returned instead.
+   */
+  template <typename T>
+  std::optional<glm::dvec3>
+  operator()(const AccessorView<AccessorTypes::VEC3<T>>& value) {
+    if (index < 0 || index >= value.size()) {
+      return std::nullopt;
+    }
+
+    if (value.normalized()) {
+      return glm::dvec3(
+          CesiumImpl::denormalize(value[index].value[0]),
+          CesiumImpl::denormalize(value[index].value[1]),
+          CesiumImpl::denormalize(value[index].value[2]));
+    } else {
+      return glm::dvec3(
+          value[index].value[0],
+          value[index].value[1],
+          value[index].value[2]);
+    }
+  }
+
+  /** @brief The index of the normal to obtain. */
+  int64_t index;
+};
 
 /**
  * Type definition for all kinds of feature ID attribute accessors.
@@ -342,7 +443,9 @@ struct IndexFromAccessor {
  * Type definition for all kinds of texture coordinate (TEXCOORD_n) accessors.
  */
 typedef std::variant<
+    AccessorView<AccessorTypes::VEC2<int8_t>>,
     AccessorView<AccessorTypes::VEC2<uint8_t>>,
+    AccessorView<AccessorTypes::VEC2<int16_t>>,
     AccessorView<AccessorTypes::VEC2<uint16_t>>,
     AccessorView<AccessorTypes::VEC2<float>>>
     TexCoordAccessorType;
@@ -359,26 +462,12 @@ TexCoordAccessorType getTexCoordAccessorView(
 
 /**
  * Visitor that retrieves the texture coordinates from the given accessor type
- * as a glm::dvec2. This should be initialized with the target index.
+ * as a `glm::dvec2`. This should be initialized with the target index.
  *
  * There are technically no invalid UV values because of clamp / wrap
- * behavior, so we use std::nullopt to denote an erroneous value.
+ * behavior, so `std::nullopt` is used to denote an erroneous value.
  */
 struct TexCoordFromAccessor {
-  /**
-   * @brief Attempts to obtain a `glm::dvec2` at the given index from an
-   * accessor over a vec2 of floats. If the index is invalid, `std::nullopt` is
-   * returned instead.
-   */
-  std::optional<glm::dvec2>
-  operator()(const AccessorView<AccessorTypes::VEC2<float>>& value) {
-    if (index < 0 || index >= value.size()) {
-      return std::nullopt;
-    }
-
-    return glm::dvec2(value[index].value[0], value[index].value[1]);
-  }
-
   /**
    * @brief Attempts to obtain a `glm::dvec2` at the given index from an
    * accessor over a vec2. The values will be cast to `double` and normalized
@@ -392,14 +481,13 @@ struct TexCoordFromAccessor {
       return std::nullopt;
     }
 
-    double u = static_cast<double>(value[index].value[0]);
-    double v = static_cast<double>(value[index].value[1]);
-
-    // TODO: do normalization logic in accessor view?
-    u /= std::numeric_limits<T>::max();
-    v /= std::numeric_limits<T>::max();
-
-    return glm::dvec2(u, v);
+    if (value.normalized()) {
+      return glm::dvec2(
+          CesiumImpl::denormalize(value[index].value[0]),
+          CesiumImpl::denormalize(value[index].value[1]));
+    } else {
+      return glm::dvec2(value[index].value[0], value[index].value[1]);
+    }
   }
 
   /** @brief The index of texcoords to obtain. */
@@ -411,10 +499,10 @@ struct TexCoordFromAccessor {
  * ExtMeshGpuInstancing rotations and animation samplers.
  */
 typedef std::variant<
-    AccessorView<AccessorTypes::VEC4<uint8_t>>,
     AccessorView<AccessorTypes::VEC4<int8_t>>,
-    AccessorView<AccessorTypes::VEC4<uint16_t>>,
+    AccessorView<AccessorTypes::VEC4<uint8_t>>,
     AccessorView<AccessorTypes::VEC4<int16_t>>,
+    AccessorView<AccessorTypes::VEC4<uint16_t>>,
     AccessorView<AccessorTypes::VEC4<float>>>
     QuaternionAccessorType;
 
@@ -422,26 +510,65 @@ typedef std::variant<
  * @brief Obtains a \ref QuaternionAccessorType from the given \ref Accessor on
  * the given \ref Model.
  *
- * @param model The model containing the quaternion.
+ * @param model The model containing the quaternion accessor.
  * @param accessor An accessor from which the quaternion will be obtained.
- * @returns A quaternion from the data in `accessor`. If no quaternion could be
- * obtained, the default value for \ref QuaternionAccessorType will be returned
- * instead.
- */
-QuaternionAccessorType
-getQuaternionAccessorView(const Model& model, const Accessor* accessor);
-
-/**
- * @brief Obtains a \ref QuaternionAccessorType from the given \ref Accessor on
- * the given \ref Model.
- *
- * @param model The model containing the quaternion.
- * @param accessorIndex An index to the accessor from which the quaternion will
- * be obtained.
- * @returns A quaternion from the data in the accessor at `accessorIndex`. If no
- * quaternion could be obtained, the default value for \ref
+ * @returns A quaternion accessor view from the data in `accessor`. If no
+ * such view could be obtained, the default value for \ref
  * QuaternionAccessorType will be returned instead.
  */
 QuaternionAccessorType
+getQuaternionAccessorView(const Model& model, const Accessor& accessor);
+
+/**
+ * @brief Obtains a \ref QuaternionAccessorType from the given accessor index on
+ * the given \ref Model.
+ *
+ * @param model The model containing the quaternion accessor.
+ * @param accessorIndex An index to the accessor from which the quaternion will
+ * be obtained.
+ * @returns A quaternion accessor view from the data in the accessor at
+ * `accessorIndex`. If no such view could be obtained, the default value for
+ * \ref QuaternionAccessorType will be returned instead.
+ */
+QuaternionAccessorType
 getQuaternionAccessorView(const Model& model, int32_t accessorIndex);
+
+/**
+ * Visitor that retrieves the quaternion from the given accessor type
+ * as a glm::dquat.
+ */
+struct QuaternionFromAccessor {
+  /**
+   * @brief Attempts to obtain a `glm::dquat` at the given index from an
+   * accessor over a vec4. The values will be cast to `double` and, if
+   * applicable, normalized based on `std::numeric_limits<T>::max()`. If the
+   * index is invalid, `std::nullopt` is returned instead.
+   */
+  template <typename T>
+  std::optional<glm::dquat>
+  operator()(const AccessorView<AccessorTypes::VEC4<T>>& value) {
+    if (index < 0 || index >= value.size()) {
+      return std::nullopt;
+    }
+
+    if (value.normalized()) {
+      // glm quat constructor is w,x,y,z
+      return glm::dquat(
+          CesiumImpl::denormalize(value[index].value[3]),
+          CesiumImpl::denormalize(value[index].value[0]),
+          CesiumImpl::denormalize(value[index].value[1]),
+          CesiumImpl::denormalize(value[index].value[2]));
+    } else {
+      // glm quat constructor is w,x,y,z
+      return glm::dquat(
+          value[index].value[3],
+          value[index].value[0],
+          value[index].value[1],
+          value[index].value[2]);
+    }
+  }
+
+  /** @brief The index of the quaternion to obtain. */
+  int64_t index;
+};
 } // namespace CesiumGltf
