@@ -26,9 +26,14 @@ public:
       : _accessor(accessorView) {}
 
   /** @copydoc AccessorView::AccessorView(const std::byte*, int64_t, int64_t,
-   * int64_t) */
-  AccessorWriter(std::byte* pData, int64_t stride, int64_t offset, int64_t size)
-      : _accessor(pData, stride, offset, size) {}
+   * int64_t, bool) */
+  AccessorWriter(
+      std::byte* pData,
+      int64_t stride,
+      int64_t offset,
+      int64_t size,
+      bool normalized)
+      : _accessor(pData, stride, offset, size, normalized) {}
 
   /** @copydoc AccessorView::AccessorView(const Model&,const Accessor&) */
   AccessorWriter(Model& model, const Accessor& accessor)
@@ -46,6 +51,9 @@ public:
 
   /** @copydoc AccessorView::size */
   int64_t size() const noexcept { return this->_accessor.size(); }
+
+  /** @copydoc AccessorView::normalized */
+  bool normalized() const noexcept { return this->_accessor->normalized(); }
 
   /**
    * @brief Gets the status of this accessor writer.
