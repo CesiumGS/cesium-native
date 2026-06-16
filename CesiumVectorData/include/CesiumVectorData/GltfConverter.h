@@ -14,6 +14,11 @@ namespace CesiumVectorData {
  * @brief The result of converting a GeoJSON document to glTF.
  */
 using ConverterResult = CesiumUtility::Result<CesiumGltf::Model>;
+
+/**
+ * @brief The result of converting a MAXAR_content_geojson schema to a glTF
+ * schema.
+ */
 using ConvertSchemaResult = CesiumUtility::Result<CesiumGltf::Schema>;
 
 /**
@@ -34,6 +39,8 @@ public:
       const CesiumGeospatial::Ellipsoid& ellipsoid);
   /**
    * @brief Convert MAXAR_content_geojson schema into a glTF schema.
+   * @param schemaJson The schema supplied with a GeoJson tileset
+   * @returns A result object that includes the converted schema and any errors.
    */
   static ConvertSchemaResult
   convertSchema(const rapidjson::Document& schemaJson);

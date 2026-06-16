@@ -7,6 +7,7 @@
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Class.h>
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/FeatureId.h>
@@ -15,7 +16,9 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Scene.h>
+#include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
@@ -28,6 +31,8 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/matrix.hpp>
 #include <mapbox/earcut.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/fwd.h>
 
 #include <algorithm>
 #include <array>
