@@ -689,30 +689,30 @@ std::vector<glm::dmat4> getMeshGpuInstancingTransforms(
     return instances;
   };
 
-  const Accessor* translations = getInstanceAccessor("TRANSLATION");
-  const Accessor* rotations = getInstanceAccessor("ROTATION");
-  const Accessor* scales = getInstanceAccessor("SCALE");
+  const Accessor* pTranslations = getInstanceAccessor("TRANSLATION");
+  const Accessor* pRotations = getInstanceAccessor("ROTATION");
+  const Accessor* pScales = getInstanceAccessor("SCALE");
   int64_t count = 0;
-  if (translations) {
-    count = translations->count;
+  if (pTranslations) {
+    count = pTranslations->count;
   }
-  if (rotations) {
+  if (pRotations) {
     if (count == 0) {
-      count = rotations->count;
-    } else if (count != rotations->count) {
+      count = pRotations->count;
+    } else if (count != pRotations->count) {
       return errorOut(fmt::format(
           "instance rotation count {} not consistent with {}",
-          rotations->count,
+          pRotations->count,
           count));
     }
   }
-  if (scales) {
+  if (pScales) {
     if (count == 0) {
-      count = scales->count;
-    } else if (count != scales->count) {
+      count = pScales->count;
+    } else if (count != pScales->count) {
       return errorOut(fmt::format(
           "instance scale count {} not consistent with {}",
-          scales->count,
+          pScales->count,
           count));
     }
   }
@@ -720,10 +720,10 @@ std::vector<glm::dmat4> getMeshGpuInstancingTransforms(
     return errorOut("No valid instance data");
   }
   instances.resize(static_cast<size_t>(count), glm::dmat4(1.0));
-  if (translations) {
+  if (pTranslations) {
     AccessorView<CesiumGltf::AccessorTypes::VEC3<float>> translationAccessor(
         model,
-        *translations);
+        *pTranslations);
     if (translationAccessor.status() == AccessorViewStatus::Valid) {
       for (unsigned i = 0; i < count; ++i) {
         auto transVec = toGlm<glm::dvec3>(translationAccessor[i]);
@@ -733,8 +733,8 @@ std::vector<glm::dmat4> getMeshGpuInstancingTransforms(
       return errorOut("invalid accessor for instance translations");
     }
   }
-  if (rotations) {
-    auto quatAccessorView = getQuaternionAccessorView(model, *rotations);
+  if (pRotations) {
+    auto quatAccessorView = getQuaternionAccessorView(model, *pRotations);
     std::visit(
         [&](auto&& arg) {
           for (unsigned i = 0; i < count; ++i) {
@@ -744,10 +744,10 @@ std::vector<glm::dmat4> getMeshGpuInstancingTransforms(
         },
         quatAccessorView);
   }
-  if (scales) {
+  if (pScales) {
     AccessorView<CesiumGltf::AccessorTypes::VEC3<float>> scaleAccessor(
         model,
-        *scales);
+        *pScales);
     if (scaleAccessor.status() == AccessorViewStatus::Valid) {
       for (unsigned i = 0; i < count; ++i) {
         auto scaleFactors = toGlm<glm::dvec3>(scaleAccessor[i]);
