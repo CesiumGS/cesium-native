@@ -6,7 +6,7 @@
 
 - Upgraded vcpkg to `2026.04.27`.
 - `PositionAccessorType` and `NormalAccessorType` are now variant types to support quantized attributes enabled by `KHR_mesh_quantization`.
-- The `AccessorView` constructor overload that takes raw buffer data now requires an additional `normalized` argument.
+- The `AccessorView` and `AccessorWriter` constructor overloads that take raw buffer data now require an additional `normalized` argument.
 - The `getQuaternionAccessorView` overload that takes an accessor pointer now takes an accessor reference.
 
 ##### Additions :tada:
@@ -16,7 +16,7 @@
 - Added `NormalFromAccessor` visitor for reading normals from a `NormalAccessorType`.
 - Added `QuaternionFromAccessor` visitor for reading quaternions from a `QuaternionAccessorType`.
 - Updated `TexCoordAccessorType` to support additional quantized variants enabled by `KHR_mesh_quantization`.
-- Added `AccessorView::normalized()` getter.
+- Added `AccessorView::normalized()` and `AccessorWRiter::normalized()` getters.
 
 ### v0.61.0 - 2026-06-01
 
