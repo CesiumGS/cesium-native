@@ -1490,7 +1490,7 @@ TEST_CASE("Test getQuaternionAccessorView") {
   }
 }
 
-TEST_CASE("Test PositionFromAccessor") {
+TEST_CASE("Test QuaternionFromAccessor") {
   Model model;
   std::vector<glm::quat> quaternions0{
       glm::quat(0, 1, 0, 0),
