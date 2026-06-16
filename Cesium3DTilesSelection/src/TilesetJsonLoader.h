@@ -34,7 +34,7 @@ public:
 
   CesiumGeometry::Axis getUpAxis() const noexcept;
 
-  const std::string& getSharedSchemaUrl() const noexcept;
+  const CesiumGltf::Schema& getExternalSchema() const noexcept;
 
   void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);
 
@@ -62,7 +62,6 @@ private:
   std::string _baseUrl;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
-  std::string _sharedSchemaUrl;
   CesiumGltf::Schema _externalSchema;
 
   /**
