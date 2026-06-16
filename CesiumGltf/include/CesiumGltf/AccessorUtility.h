@@ -575,4 +575,93 @@ struct QuaternionFromAccessor {
   /** @brief The index of the quaternion to obtain. */
   int64_t index;
 };
+
+/**
+ * Type definition for all kinds of color (COLOR_n) accessors.
+ */
+typedef std::variant<
+    AccessorView<AccessorTypes::VEC3<uint8_t>>,
+    AccessorView<AccessorTypes::VEC3<uint16_t>>,
+    AccessorView<AccessorTypes::VEC3<float>>,
+    AccessorView<AccessorTypes::VEC4<uint8_t>>,
+    AccessorView<AccessorTypes::VEC4<uint16_t>>,
+    AccessorView<AccessorTypes::VEC4<float>>>
+    ColorAccessorType;
+
+/**
+ * Retrieves an accessor view for the color attribute from the given glTF
+ * primitive and model. This verifies that the accessor is of a valid type. If
+ * not, the returned accessor view will be invalid.
+ */
+ColorAccessorType getColorAccessorView(
+    const Model& model,
+    const MeshPrimitive& primitive,
+    int32_t colorSetIndex);
+
+/**
+ * Visitor that retrieves the color from the given accessor type
+ * as a `glm::dvec4`.
+ */
+struct ColorFromAccessor {
+  /**
+   * @brief Attempts to obtain a `glm::dvec4` at the given index from an
+   * accessor over a vec3. The values will be cast to `double` and, if
+   * applicable, normalized based on `std::numeric_limits<T>::max()`. The fourth
+   * component will be set to 1.0. If the index is invalid, `std::nullopt` is
+   * returned instead.
+   */
+  template <typename T>
+  std::optional<glm::dvec4>
+  operator()(const AccessorView<AccessorTypes::VEC3<T>>& value) {
+    if (index < 0 || index >= value.size()) {
+      return std::nullopt;
+    }
+
+    if (value.normalized()) {
+      return glm::dvec4(
+          CesiumImpl::denormalize(value[index].value[0]),
+          CesiumImpl::denormalize(value[index].value[1]),
+          CesiumImpl::denormalize(value[index].value[2]),
+          1.0);
+    } else {
+      return glm::dvec4(
+          value[index].value[0],
+          value[index].value[1],
+          value[index].value[2],
+          1.0);
+    }
+  }
+
+  /**
+   * @brief Attempts to obtain a `glm::dvec4` at the given index from an
+   * accessor over a vec4. The values will be cast to `double` and, if
+   * applicable, normalized based on `std::numeric_limits<T>::max()`. If the
+   * index is invalid, `std::nullopt` is returned instead.
+   */
+  template <typename T>
+  std::optional<glm::dvec4>
+  operator()(const AccessorView<AccessorTypes::VEC4<T>>& value) {
+    if (index < 0 || index >= value.size()) {
+      return std::nullopt;
+    }
+
+    if (value.normalized()) {
+      return glm::dvec4(
+          CesiumImpl::denormalize(value[index].value[0]),
+          CesiumImpl::denormalize(value[index].value[1]),
+          CesiumImpl::denormalize(value[index].value[2]),
+          CesiumImpl::denormalize(value[index].value[3]));
+    } else {
+      return glm::dvec4(
+          value[index].value[0],
+          value[index].value[1],
+          value[index].value[2],
+          value[index].value[3]);
+    }
+  }
+
+  /** @brief The index of the color to obtain. */
+  int64_t index;
+};
+
 } // namespace CesiumGltf

@@ -1619,12 +1619,12 @@ TEST_CASE("Test QuaternionFromAccessor") {
   }
 
   SUBCASE("Retrieves from valid signed normalized accessor and index") {
-    QuaternionAccessorType positionAccessor =
+    QuaternionAccessorType quaternionAccessor =
         getQuaternionAccessorView(model, model.accessors[2]);
     for (size_t i = 0; i < quaternions2.size(); i++) {
       auto maybeQuaternion = std::visit(
           QuaternionFromAccessor{static_cast<int64_t>(i)},
-          positionAccessor);
+          quaternionAccessor);
       REQUIRE(maybeQuaternion);
       // glm quat constructor is w,x,y,z
       auto expected = glm::dquat(
@@ -1637,6 +1637,398 @@ TEST_CASE("Test QuaternionFromAccessor") {
       expected.z = glm::max(expected.z / 127.0, -1.0);
       expected.w = glm::max(expected.w / 127.0, -1.0);
       REQUIRE(*maybeQuaternion == expected);
+    }
+  }
+}
+
+TEST_CASE("Test getColorAccessorView") {
+  auto addColorAttribute = []<typename T>(
+                               CesiumGltf::Model& model,
+                               CesiumGltf::MeshPrimitive& primitive,
+                               const std::vector<T>& colors,
+                               const std::string& type,
+                               int32_t componentType,
+                               bool normalized,
+                               int32_t setIndex) {
+    {
+      Buffer& buffer = model.buffers.emplace_back();
+      buffer.cesium.data.resize(colors.size() * sizeof(T));
+      std::memcpy(
+          buffer.cesium.data.data(),
+          colors.data(),
+          buffer.cesium.data.size());
+      buffer.byteLength = int64_t(buffer.cesium.data.size());
+
+      BufferView& bufferView = model.bufferViews.emplace_back();
+      bufferView.buffer = int32_t(model.buffers.size() - 1);
+      bufferView.byteLength = buffer.byteLength;
+
+      Accessor& accessor = model.accessors.emplace_back();
+      accessor.bufferView = int32_t(model.bufferViews.size() - 1);
+      accessor.componentType = componentType;
+      accessor.type = type;
+      accessor.count = int64_t(colors.size());
+      accessor.normalized = normalized;
+
+      std::string name = std::format("COLOR_{}", setIndex);
+      primitive.attributes.emplace(name, model.accessors.size() - 1);
+    }
+  };
+
+  Model model;
+  MeshPrimitive& primitive =
+      model.meshes.emplace_back().primitives.emplace_back();
+
+  std::vector<glm::u8vec3> colors0{glm::u8vec3(0, 128, 255)};
+  std::vector<glm::u8vec4> colors1{glm::u8vec4(0, 128, 255, 128)};
+  std::vector<glm::u16vec3> colors2{glm::u16vec3(0, 32767, 65535)};
+  std::vector<glm::u16vec4> colors3{glm::u16vec4(0, 32767, 65535, 32767)};
+  std::vector<glm::vec3> colors4{glm::fvec3(0, 0.5, 1.0)};
+  std::vector<glm::vec4> colors5{glm::fvec4(0, 0.5, 1.0, 0.5)};
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors0,
+      CesiumGltf::Accessor::Type::VEC3,
+      CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE,
+      true,
+      0);
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors1,
+      CesiumGltf::Accessor::Type::VEC4,
+      CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE,
+      true,
+      1);
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors2,
+      CesiumGltf::Accessor::Type::VEC3,
+      CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT,
+      true,
+      2);
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors3,
+      CesiumGltf::Accessor::Type::VEC4,
+      CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT,
+      true,
+      3);
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors4,
+      CesiumGltf::Accessor::Type::VEC3,
+      CesiumGltf::Accessor::ComponentType::FLOAT,
+      false,
+      4);
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors5,
+      CesiumGltf::Accessor::Type::VEC4,
+      CesiumGltf::Accessor::ComponentType::FLOAT,
+      false,
+      5);
+
+  SUBCASE("Handles invalid color set index") {
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 6);
+    REQUIRE(
+        std::visit(StatusFromAccessor{}, colorAccessor) !=
+        AccessorViewStatus::Valid);
+    REQUIRE(std::visit(CountFromAccessor{}, colorAccessor) == 0);
+  }
+
+  SUBCASE("Handles invalid accessor type") {
+    model.accessors[0].type = Accessor::Type::SCALAR;
+
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 0);
+    REQUIRE(
+        std::visit(StatusFromAccessor{}, colorAccessor) !=
+        AccessorViewStatus::Valid);
+    REQUIRE(std::visit(CountFromAccessor{}, colorAccessor) == 0);
+
+    model.accessors[0].type = Accessor::Type::VEC3;
+  }
+
+  SUBCASE("Handles unsupported accessor component type") {
+    model.accessors[0].componentType = Accessor::ComponentType::BYTE;
+
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 0);
+    REQUIRE(
+        std::visit(StatusFromAccessor{}, colorAccessor) !=
+        AccessorViewStatus::Valid);
+    REQUIRE(std::visit(CountFromAccessor{}, colorAccessor) == 0);
+
+    model.accessors[0].componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+  }
+
+  SUBCASE("Handles invalid un-normalized color") {
+    model.accessors[0].normalized = false;
+
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 0);
+    REQUIRE(
+        std::visit(StatusFromAccessor{}, colorAccessor) !=
+        AccessorViewStatus::Valid);
+    REQUIRE(std::visit(CountFromAccessor{}, colorAccessor) == 0);
+
+    model.accessors[0].normalized = true;
+  }
+
+  SUBCASE("Creates from valid color sets") {
+    ColorAccessorType colorAccessor0 =
+        getColorAccessorView(model, primitive, 0);
+    REQUIRE(
+        std::visit(StatusFromAccessor{}, colorAccessor0) ==
+        AccessorViewStatus::Valid);
+    REQUIRE(std::visit(CountFromAccessor{}, colorAccessor0) == colors0.size());
+
+    ColorAccessorType colorAccessor1 =
+        getColorAccessorView(model, primitive, 1);
+    REQUIRE(
+        std::visit(StatusFromAccessor{}, colorAccessor1) ==
+        AccessorViewStatus::Valid);
+    REQUIRE(std::visit(CountFromAccessor{}, colorAccessor1) == colors1.size());
+
+    ColorAccessorType colorAccessor2 =
+        getColorAccessorView(model, primitive, 2);
+    REQUIRE(
+        std::visit(StatusFromAccessor{}, colorAccessor2) ==
+        AccessorViewStatus::Valid);
+    REQUIRE(std::visit(CountFromAccessor{}, colorAccessor2) == colors2.size());
+
+    ColorAccessorType colorAccessor3 =
+        getColorAccessorView(model, primitive, 3);
+    REQUIRE(
+        std::visit(StatusFromAccessor{}, colorAccessor3) ==
+        AccessorViewStatus::Valid);
+    REQUIRE(std::visit(CountFromAccessor{}, colorAccessor3) == colors3.size());
+
+    ColorAccessorType colorAccessor4 =
+        getColorAccessorView(model, primitive, 4);
+    REQUIRE(
+        std::visit(StatusFromAccessor{}, colorAccessor4) ==
+        AccessorViewStatus::Valid);
+    REQUIRE(std::visit(CountFromAccessor{}, colorAccessor4) == colors4.size());
+
+    ColorAccessorType colorAccessor5 =
+        getColorAccessorView(model, primitive, 5);
+    REQUIRE(
+        std::visit(StatusFromAccessor{}, colorAccessor5) ==
+        AccessorViewStatus::Valid);
+    REQUIRE(std::visit(CountFromAccessor{}, colorAccessor5) == colors5.size());
+  }
+}
+
+TEST_CASE("Test ColorFromAccessor") {
+  auto addColorAttribute = []<typename T>(
+                               CesiumGltf::Model& model,
+                               CesiumGltf::MeshPrimitive& primitive,
+                               const std::vector<T>& colors,
+                               const std::string& type,
+                               int32_t componentType,
+                               bool normalized,
+                               int32_t setIndex) {
+    {
+      Buffer& buffer = model.buffers.emplace_back();
+      buffer.cesium.data.resize(colors.size() * sizeof(T));
+      std::memcpy(
+          buffer.cesium.data.data(),
+          colors.data(),
+          buffer.cesium.data.size());
+      buffer.byteLength = int64_t(buffer.cesium.data.size());
+
+      BufferView& bufferView = model.bufferViews.emplace_back();
+      bufferView.buffer = int32_t(model.buffers.size() - 1);
+      bufferView.byteLength = buffer.byteLength;
+
+      Accessor& accessor = model.accessors.emplace_back();
+      accessor.bufferView = int32_t(model.bufferViews.size() - 1);
+      accessor.componentType = componentType;
+      accessor.type = type;
+      accessor.count = int64_t(colors.size());
+      accessor.normalized = normalized;
+
+      std::string name = std::format("COLOR_{}", setIndex);
+      primitive.attributes.emplace(name, model.accessors.size() - 1);
+    }
+  };
+
+  Model model;
+  MeshPrimitive& primitive =
+      model.meshes.emplace_back().primitives.emplace_back();
+
+  std::vector<glm::u8vec3> colors0{glm::u8vec3(0, 128, 255)};
+  std::vector<glm::u8vec4> colors1{glm::u8vec4(0, 128, 255, 128)};
+  std::vector<glm::u16vec3> colors2{glm::u16vec3(0, 32767, 65535)};
+  std::vector<glm::u16vec4> colors3{glm::u16vec4(0, 32767, 65535, 32767)};
+  std::vector<glm::vec3> colors4{glm::fvec3(0, 0.5, 1.0)};
+  std::vector<glm::vec4> colors5{glm::fvec4(0, 0.5, 1.0, 0.5)};
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors0,
+      CesiumGltf::Accessor::Type::VEC3,
+      CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE,
+      true,
+      0);
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors1,
+      CesiumGltf::Accessor::Type::VEC4,
+      CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE,
+      true,
+      1);
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors2,
+      CesiumGltf::Accessor::Type::VEC3,
+      CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT,
+      true,
+      2);
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors3,
+      CesiumGltf::Accessor::Type::VEC4,
+      CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT,
+      true,
+      3);
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors4,
+      CesiumGltf::Accessor::Type::VEC3,
+      CesiumGltf::Accessor::ComponentType::FLOAT,
+      false,
+      4);
+
+  addColorAttribute(
+      model,
+      primitive,
+      colors5,
+      CesiumGltf::Accessor::Type::VEC4,
+      CesiumGltf::Accessor::ComponentType::FLOAT,
+      false,
+      5);
+
+  SUBCASE("Handles invalid accessor") {
+    ColorAccessorType colorAccessor;
+    REQUIRE(!std::visit(ColorFromAccessor{0}, colorAccessor));
+  }
+
+  SUBCASE("Handles invalid index") {
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 0);
+    REQUIRE(!std::visit(ColorFromAccessor{-1}, colorAccessor));
+    REQUIRE(!std::visit(ColorFromAccessor{10}, colorAccessor));
+  }
+
+  SUBCASE("Retrieves from valid accessor: UNSIGNED_BYTE, VEC3, normalized") {
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 0);
+
+    for (size_t i = 0; i < colors0.size(); i++) {
+      auto maybeColor =
+          std::visit(ColorFromAccessor{int64_t(i)}, colorAccessor);
+      REQUIRE(maybeColor);
+      auto expected = glm::dvec4(
+          colors0[i][0] / 255.0,
+          colors0[i][1] / 255.0,
+          colors0[i][2] / 255.0,
+          1.0);
+      CHECK(*maybeColor == expected);
+    }
+  }
+
+  SUBCASE("Retrieves from valid accessor: UNSIGNED_BYTE, VEC4, normalized") {
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 1);
+
+    for (size_t i = 0; i < colors1.size(); i++) {
+      auto maybeColor =
+          std::visit(ColorFromAccessor{int64_t(i)}, colorAccessor);
+      REQUIRE(maybeColor);
+      auto expected = glm::dvec4(
+          colors1[i][0] / 255.0,
+          colors1[i][1] / 255.0,
+          colors1[i][2] / 255.0,
+          colors1[i][3] / 255.0);
+      CHECK(*maybeColor == expected);
+    }
+  }
+
+  SUBCASE("Retrieves from valid accessor: UNSIGNED_SHORT, VEC3, normalized") {
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 2);
+
+    for (size_t i = 0; i < colors2.size(); i++) {
+      auto maybeColor =
+          std::visit(ColorFromAccessor{int64_t(i)}, colorAccessor);
+      REQUIRE(maybeColor);
+      auto expected = glm::dvec4(
+          colors2[i][0] / 65535.0,
+          colors2[i][1] / 65535.0,
+          colors2[i][2] / 65535.0,
+          1.0);
+      CHECK(*maybeColor == expected);
+    }
+  }
+
+  SUBCASE("Retrieves from valid accessor: UNSIGNED_SHORT, VEC4, normalized") {
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 3);
+
+    for (size_t i = 0; i < colors3.size(); i++) {
+      auto maybeColor =
+          std::visit(ColorFromAccessor{int64_t(i)}, colorAccessor);
+      REQUIRE(maybeColor);
+      auto expected = glm::dvec4(
+          colors3[i][0] / 65535.0,
+          colors3[i][1] / 65535.0,
+          colors3[i][2] / 65535.0,
+          colors3[i][3] / 65535.0);
+      CHECK(*maybeColor == expected);
+    }
+  }
+
+  SUBCASE("Retrieves from valid accessor: FLOAT, VEC3") {
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 4);
+
+    for (size_t i = 0; i < colors4.size(); i++) {
+      auto maybeColor =
+          std::visit(ColorFromAccessor{int64_t(i)}, colorAccessor);
+      REQUIRE(maybeColor);
+      auto expected =
+          glm::dvec4(colors4[i][0], colors4[i][1], colors4[i][2], 1.0);
+      CHECK(*maybeColor == expected);
+    }
+  }
+
+  SUBCASE("Retrieves from valid accessor: FLOAT, VEC4") {
+    ColorAccessorType colorAccessor = getColorAccessorView(model, primitive, 5);
+
+    for (size_t i = 0; i < colors5.size(); i++) {
+      auto maybeColor =
+          std::visit(ColorFromAccessor{int64_t(i)}, colorAccessor);
+      REQUIRE(maybeColor);
+      auto expected = glm::dvec4(
+          colors5[i][0],
+          colors5[i][1],
+          colors5[i][2],
+          colors5[i][3]);
+      CHECK(*maybeColor == expected);
     }
   }
 }
