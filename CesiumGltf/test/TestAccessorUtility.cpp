@@ -1671,7 +1671,7 @@ TEST_CASE("Test getColorAccessorView") {
       accessor.normalized = normalized;
 
       std::string name = fmt::format("COLOR_{}", setIndex);
-      primitive.attributes.emplace(name, model.accessors.size() - 1);
+      primitive.attributes.emplace(name, int32_t(model.accessors.size() - 1));
     }
   };
 
@@ -1859,7 +1859,7 @@ TEST_CASE("Test ColorFromAccessor") {
       accessor.normalized = normalized;
 
       std::string name = fmt::format("COLOR_{}", setIndex);
-      primitive.attributes.emplace(name, model.accessors.size() - 1);
+      primitive.attributes.emplace(name, int32_t(model.accessors.size() - 1));
     }
   };
 
