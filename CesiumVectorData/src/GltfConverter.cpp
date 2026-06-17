@@ -32,7 +32,7 @@
 #include <glm/matrix.hpp>
 #include <mapbox/earcut.hpp>
 #include <rapidjson/document.h>
-#include <rapidjson/fwd.h>
+#include <rapidjson/rapidjson.h>
 
 #include <algorithm>
 #include <array>
