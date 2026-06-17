@@ -23,6 +23,7 @@
 #include <Cesium3DTiles/Extension3dTilesEllipsoid.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTiles/ExtensionMaxarContentGeoJson.h>
+#include <Cesium3DTiles/ExtensionMetadataEntityMaxarContentGeoJson.h>
 #include <Cesium3DTiles/GroupMetadata.h>
 #include <Cesium3DTiles/ImplicitTiling.h>
 #include <Cesium3DTiles/MetadataEntity.h>
@@ -83,6 +84,11 @@ void writeJson(
 
 void writeJson(
     const Cesium3DTiles::ExtensionMaxarContentGeoJson& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const Cesium3DTiles::ExtensionMetadataEntityMaxarContentGeoJson& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -544,6 +550,22 @@ void writeJson(
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const Cesium3DTiles::ExtensionMetadataEntityMaxarContentGeoJson& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.propertiesSchemaUri) {
+    jsonWriter.Key("propertiesSchemaUri");
+    writeJson(obj.propertiesSchemaUri, jsonWriter, context);
+  }
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -1422,6 +1444,13 @@ void Extension3dTilesContentConditionalJsonWriter::write(
 
 void ExtensionMaxarContentGeoJsonJsonWriter::write(
     const Cesium3DTiles::ExtensionMaxarContentGeoJson& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionMetadataEntityMaxarContentGeoJsonJsonWriter::write(
+    const Cesium3DTiles::ExtensionMetadataEntityMaxarContentGeoJson& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

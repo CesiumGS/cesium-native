@@ -40,6 +40,9 @@
     "MAXAR_content_geojson tileset extension": {
       "overrideName": "ExtensionMaxarContentGeoJson"
     },
+    "MAXAR_content_geojson extension": {
+      "overrideName": "ExtensionMetadataEntityMaxarContentGeoJson"
+    },
     "Metadata Entity": {
       "isBaseClass": true
     },
@@ -77,6 +80,10 @@
     {
       "extensionName": "MAXAR_content_geojson",
       "schema": "MAXAR_content_geojson/schema/tileset.MAXAR_content_geojson.schema.json"
+    },
+    {
+      "extensionName": "MAXAR_content_geojson",
+      "schema": "MAXAR_content_geojson/schema/metadataEntity.MAXAR_content_geojson.schema.json"
     }
   ]
 }

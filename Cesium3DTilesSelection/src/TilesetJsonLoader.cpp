@@ -8,6 +8,7 @@
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTiles/ExtensionMaxarContentGeoJson.h>
+#include <Cesium3DTiles/ExtensionMetadataEntityMaxarContentGeoJson.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
@@ -1088,21 +1089,13 @@ TilesetJsonLoader::createLoader(
         tilesetJsonUrl,
         std::move(tilesetJson),
         *pExternal);
-    if (pExternal->metadata.metadata &&
-        pExternal->metadata.metadata
-            ->hasExtension<ExtensionMaxarContentGeoJson>()) {
-      const JsonValue* extensionJson =
-          pExternal->metadata.metadata->getGenericExtension(
-              ExtensionMaxarContentGeoJson::ExtensionName);
-      if (extensionJson) {
-        if (const JsonValue* pSchemaUriValue =
-                extensionJson->getValuePtrForKey("propertiesSchemaUri")) {
-          if (pSchemaUriValue->isString()) {
-            foreignSchemaUrl = CesiumUtility::Uri::resolve(
-                tilesetJsonUrl,
-                pSchemaUriValue->getString());
-          }
-        }
+    if (pExternal->metadata.metadata) {
+      auto* pMaxarGeoJsonExtension =
+          pExternal->metadata.metadata->getExtension<ExtensionMetadataEntityMaxarContentGeoJson>();
+      if (pMaxarGeoJsonExtension && pMaxarGeoJsonExtension->propertiesSchemaUri) {
+        foreignSchemaUrl = CesiumUtility::Uri::resolve(
+            tilesetJsonUrl,
+            *pMaxarGeoJsonExtension->propertiesSchemaUri);
       }
     }
   }

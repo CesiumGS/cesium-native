@@ -7,6 +7,7 @@
 
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/Content.h>
+#include <Cesium3DTiles/MetadataEntity.h>
 #include <Cesium3DTiles/Tileset.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
@@ -17,6 +18,7 @@
 #include <Cesium3DTiles/Extension3dTilesEllipsoid.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
 #include <Cesium3DTiles/ExtensionMaxarContentGeoJson.h>
+#include <Cesium3DTiles/ExtensionMetadataEntityMaxarContentGeoJson.h>
 // NOLINTEND(misc-include-cleaner)
 
 namespace Cesium3DTilesWriter {
@@ -42,5 +44,8 @@ void registerWriterExtensions(
   context.registerExtension<
       Cesium3DTiles::Content,
       ExtensionContent3dTilesContentVoxelsJsonWriter>();
+  context.registerExtension<
+      Cesium3DTiles::MetadataEntity,
+      ExtensionMetadataEntityMaxarContentGeoJsonJsonWriter>();
 }
 } // namespace Cesium3DTilesWriter
