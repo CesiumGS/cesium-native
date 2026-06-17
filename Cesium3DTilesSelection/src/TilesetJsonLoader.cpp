@@ -7,7 +7,6 @@
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
-#include <Cesium3DTiles/ExtensionTilesetMaxarContentGeoJson.h>
 #include <Cesium3DTiles/ExtensionMetadataEntityMaxarContentGeoJson.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
