@@ -74,7 +74,8 @@ public:
     } else {
       CesiumGltf::PositionAccessorType positionView =
           CesiumGltf::getPositionAccessorView(model, primitive);
-      this->numIndices = positionView.size();
+      this->numIndices =
+          std::visit(CesiumGltf::CountFromAccessor{}, positionView);
     }
 
     this->componentType =
