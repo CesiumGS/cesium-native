@@ -49,6 +49,6 @@ The `--ff-only` flags ensure that no new commits are created in the process. We 
 
 | Days Until Release | Release Tasks |
 | --- | ---------------- |
-| T-2 | * All pending PRs merged <br> * Begin `cesium-native` release <br> * Update `cesium-native` in all runtimes and perform regression testing |
-| T-1 | * Create commits for `cesium-unity` and `cesium-unreal` <br> * Debug any CI issues | 
+| T-2 | * All pending PRs merged in all repos <br> * Begin `cesium-native` release <br> * Update `cesium-native` in all runtimes and perform regression testing |
+| T-1 | * Create release commits for `cesium-unity` and `cesium-unreal` <br> * Debug any CI issues * Prepare GitHub release drafts | 
 | T-0 | * Publish releases |
