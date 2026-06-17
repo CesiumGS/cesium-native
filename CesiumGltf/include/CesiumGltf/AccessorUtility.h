@@ -60,7 +60,7 @@ struct StatusFromAccessor {
 };
 
 /**
- * Type definition for all kinds of position (POSITION) accessors.
+ * Type definition for all kinds of position (`POSITION`) accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC3<int8_t>>,
@@ -71,9 +71,14 @@ typedef std::variant<
     PositionAccessorType;
 
 /**
- * Retrieves an accessor view for the position attribute from the given glTF
- * primitive and model. This verifies that the accessor is of a valid type. If
- * not, the returned accessor view will be invalid.
+ * @brief Retrieves an accessor view for the position attribute from the given
+ * glTF primitive and model. This verifies that the accessor is of a valid type.
+ * If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ *
+ * @returns A position accessor view.
  */
 PositionAccessorType
 getPositionAccessorView(const Model& model, const MeshPrimitive& primitive);
@@ -117,7 +122,7 @@ struct PositionFromAccessor {
 };
 
 /**
- * Type definition for all kinds of normal (NORMAL) accessors.
+ * Type definition for all kinds of normal (`NORMAL`) accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC3<int8_t>>,
@@ -126,9 +131,14 @@ typedef std::variant<
     NormalAccessorType;
 
 /**
- * Retrieves an accessor view for the normal attribute from the given glTF
- * primitive and model. This verifies that the accessor is of a valid type. If
- * not, the returned accessor view will be invalid.
+ * @brief Retrieves an accessor view for the normal attribute from the given
+ * glTF primitive and model. This verifies that the accessor is of a valid type.
+ * If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ *
+ * @returns A normal accessor view.
  */
 NormalAccessorType
 getNormalAccessorView(const Model& model, const MeshPrimitive& primitive);
@@ -172,7 +182,8 @@ struct NormalFromAccessor {
 };
 
 /**
- * Type definition for all kinds of feature ID attribute accessors.
+ * Type definition for all kinds of feature ID (`_FEATURE_ID_n`) attribute
+ * accessors.
  */
 typedef std::variant<
     AccessorView<int8_t>,
@@ -184,25 +195,39 @@ typedef std::variant<
     FeatureIdAccessorType;
 
 /**
- * Retrieves an accessor view for the specified feature ID attribute from the
- * given glTF primitive and model. This verifies that the accessor is of a valid
- * type. If not, the returned accessor view will be invalid.
+ * @brief Retrieves an accessor view for the specified feature ID attribute from
+ * the given glTF primitive and model. This verifies that the accessor is of a
+ * valid type. If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ * @param featureIdSetIndex The set index of the attribute, i.e. `n` for
+ * `_FEATURE_ID_n`.
+ *
+ * @returns A feature ID accessor view.
  */
 FeatureIdAccessorType getFeatureIdAccessorView(
     const Model& model,
     const MeshPrimitive& primitive,
-    int32_t featureIdAttributeIndex);
+    int32_t featureIdSetIndex);
 
 /**
- * Retrieves an accessor view for the specified feature ID attribute from the
- * given glTF node and model, if the node contains an EXT_mesh_gpu_instancing
- * property. This verifies that the accessor is of a valid type. If not, the
- * returned accessor view will be invalid.
+ * @brief Retrieves an accessor view for the specified feature ID attribute from
+ * the given glTF node and model, if the node contains an
+ * EXT_mesh_gpu_instancing property. This verifies that the accessor is of a
+ * valid type. If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param node The node.
+ * @param featureIdSetIndex The set index of the attribute, i.e. `n` for
+ * `_FEATURE_ID_n`.
+ *
+ * @returns A feature ID accessor view.
  */
 FeatureIdAccessorType getFeatureIdAccessorView(
     const Model& model,
     const Node& node,
-    int32_t featureIdAttributeIndex);
+    int32_t featureIdSetIndex);
 
 /**
  * Visitor that retrieves the feature ID from the given accessor type as an
@@ -248,15 +273,25 @@ typedef std::variant<
     IndexAccessorType;
 
 /**
- * Retrieves an accessor view for the indices of the given glTF primitive from
- * the model. The primitive may not specify any indices; if so, std::monostate
- * is returned.
+ * @brief Retrieves an accessor view for the indices of the given glTF primitive
+ * from the model. The primitive may not specify any indices; if so,
+ * std::monostate is returned.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ *
+ * @returns An index accessor view.
  */
 IndexAccessorType
 getIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
- * Retrieves an indices accessor view of the accessor at the given index.
+ * @brief Retrieves an index accessor view of the accessor at the given index.
+ *
+ * @param model The model.
+ * @param index The accessor index.
+ *
+ * @returns An index accessor view.
  */
 IndexAccessorType getIndexAccessorView(const Model& model, int32_t index);
 
@@ -440,7 +475,7 @@ struct IndexFromAccessor {
 };
 
 /**
- * Type definition for all kinds of texture coordinate (TEXCOORD_n) accessors.
+ * Type definition for all kinds of texture coordinate (`TEXCOORD_n`) accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC2<int8_t>>,
@@ -451,9 +486,16 @@ typedef std::variant<
     TexCoordAccessorType;
 
 /**
- * Retrieves an accessor view for the specified texture coordinate set from
- * the given glTF primitive and model. This verifies that the accessor is of a
- * valid type. If not, the returned accessor view will be invalid.,
+ * @brief Retrieves an accessor view for the specified texture coordinate set
+ * from the given glTF primitive and model. This verifies that the accessor is
+ * of a valid type. If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ * @param textureCoordinateSetIndex The set index of the attribute, i.e. `n` for
+ * `TEXCOORD_n`.
+ *
+ * @returns A texture coordinate accessor view.
  */
 TexCoordAccessorType getTexCoordAccessorView(
     const Model& model,
@@ -577,7 +619,7 @@ struct QuaternionFromAccessor {
 };
 
 /**
- * Type definition for all kinds of color (COLOR_n) accessors.
+ * Type definition for all kinds of color (`COLOR_n`) accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC3<uint8_t>>,
@@ -589,9 +631,15 @@ typedef std::variant<
     ColorAccessorType;
 
 /**
- * Retrieves an accessor view for the color attribute from the given glTF
- * primitive and model. This verifies that the accessor is of a valid type. If
- * not, the returned accessor view will be invalid.
+ * @brief Retrieves an accessor view for the specified color attribute
+ * from the given glTF primitive and model. This verifies that the accessor is
+ * of a valid type. If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ * @param colorSetIndex The set index of the attribute, i.e. `n` for `COLOR_n`.
+ *
+ * @returns A color accessor view.
  */
 ColorAccessorType getColorAccessorView(
     const Model& model,

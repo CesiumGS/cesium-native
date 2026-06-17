@@ -1641,40 +1641,41 @@ TEST_CASE("Test QuaternionFromAccessor") {
   }
 }
 
+namespace {
+template <typename T>
+void addColorAttribute(
+    CesiumGltf::Model& model,
+    CesiumGltf::MeshPrimitive& primitive,
+    const std::vector<T>& colors,
+    const std::string& type,
+    int32_t componentType,
+    bool normalized,
+    int32_t setIndex) {
+  Buffer& buffer = model.buffers.emplace_back();
+  buffer.cesium.data.resize(colors.size() * sizeof(T));
+  std::memcpy(
+      buffer.cesium.data.data(),
+      colors.data(),
+      buffer.cesium.data.size());
+  buffer.byteLength = int64_t(buffer.cesium.data.size());
+
+  BufferView& bufferView = model.bufferViews.emplace_back();
+  bufferView.buffer = int32_t(model.buffers.size() - 1);
+  bufferView.byteLength = buffer.byteLength;
+
+  Accessor& accessor = model.accessors.emplace_back();
+  accessor.bufferView = int32_t(model.bufferViews.size() - 1);
+  accessor.componentType = componentType;
+  accessor.type = type;
+  accessor.count = int64_t(colors.size());
+  accessor.normalized = normalized;
+
+  std::string name = fmt::format("COLOR_{}", setIndex);
+  primitive.attributes.emplace(name, int32_t(model.accessors.size() - 1));
+}
+} // namespace
+
 TEST_CASE("Test getColorAccessorView") {
-  auto addColorAttribute = []<typename T>(
-                               CesiumGltf::Model& model,
-                               CesiumGltf::MeshPrimitive& primitive,
-                               const std::vector<T>& colors,
-                               const std::string& type,
-                               int32_t componentType,
-                               bool normalized,
-                               int32_t setIndex) {
-    {
-      Buffer& buffer = model.buffers.emplace_back();
-      buffer.cesium.data.resize(colors.size() * sizeof(T));
-      std::memcpy(
-          buffer.cesium.data.data(),
-          colors.data(),
-          buffer.cesium.data.size());
-      buffer.byteLength = int64_t(buffer.cesium.data.size());
-
-      BufferView& bufferView = model.bufferViews.emplace_back();
-      bufferView.buffer = int32_t(model.buffers.size() - 1);
-      bufferView.byteLength = buffer.byteLength;
-
-      Accessor& accessor = model.accessors.emplace_back();
-      accessor.bufferView = int32_t(model.bufferViews.size() - 1);
-      accessor.componentType = componentType;
-      accessor.type = type;
-      accessor.count = int64_t(colors.size());
-      accessor.normalized = normalized;
-
-      std::string name = fmt::format("COLOR_{}", setIndex);
-      primitive.attributes.emplace(name, int32_t(model.accessors.size() - 1));
-    }
-  };
-
   Model model;
   MeshPrimitive& primitive =
       model.meshes.emplace_back().primitives.emplace_back();
@@ -1830,39 +1831,6 @@ TEST_CASE("Test getColorAccessorView") {
 }
 
 TEST_CASE("Test ColorFromAccessor") {
-  auto addColorAttribute = []<typename T>(
-                               CesiumGltf::Model& model,
-                               CesiumGltf::MeshPrimitive& primitive,
-                               const std::vector<T>& colors,
-                               const std::string& type,
-                               int32_t componentType,
-                               bool normalized,
-                               int32_t setIndex) {
-    {
-      Buffer& buffer = model.buffers.emplace_back();
-      buffer.cesium.data.resize(colors.size() * sizeof(T));
-      std::memcpy(
-          buffer.cesium.data.data(),
-          colors.data(),
-          buffer.cesium.data.size());
-      buffer.byteLength = int64_t(buffer.cesium.data.size());
-
-      BufferView& bufferView = model.bufferViews.emplace_back();
-      bufferView.buffer = int32_t(model.buffers.size() - 1);
-      bufferView.byteLength = buffer.byteLength;
-
-      Accessor& accessor = model.accessors.emplace_back();
-      accessor.bufferView = int32_t(model.bufferViews.size() - 1);
-      accessor.componentType = componentType;
-      accessor.type = type;
-      accessor.count = int64_t(colors.size());
-      accessor.normalized = normalized;
-
-      std::string name = fmt::format("COLOR_{}", setIndex);
-      primitive.attributes.emplace(name, int32_t(model.accessors.size() - 1));
-    }
-  };
-
   Model model;
   MeshPrimitive& primitive =
       model.meshes.emplace_back().primitives.emplace_back();

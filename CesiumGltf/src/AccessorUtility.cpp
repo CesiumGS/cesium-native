@@ -296,7 +296,9 @@ ColorAccessorType getColorAccessorView(
     default:
       return ColorAccessorType();
     }
-  } else if (pAccessor->type == Accessor::Type::VEC4) {
+  }
+
+  if (pAccessor->type == Accessor::Type::VEC4) {
     switch (pAccessor->componentType) {
     case Accessor::ComponentType::UNSIGNED_BYTE:
       if (pAccessor->normalized) {
