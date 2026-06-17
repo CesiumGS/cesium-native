@@ -60,7 +60,7 @@ struct StatusFromAccessor {
 };
 
 /**
- * Type definition for all kinds of position (`POSITION`) accessors.
+ * @brief Type definition for all kinds of position (`POSITION`) accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC3<int8_t>>,
@@ -84,7 +84,7 @@ PositionAccessorType
 getPositionAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
- * Visitor that retrieves the position from the given accessor type
+ * @brief Visitor that retrieves the position from the given accessor type
  * as a `glm::dvec3`.
  *
  * There are technically no invalid position values, so `std::nullopt` is used
@@ -122,7 +122,7 @@ struct PositionFromAccessor {
 };
 
 /**
- * Type definition for all kinds of normal (`NORMAL`) accessors.
+ * @brief Type definition for all kinds of normal (`NORMAL`) accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC3<int8_t>>,
@@ -144,7 +144,7 @@ NormalAccessorType
 getNormalAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
- * Visitor that retrieves the normal from the given accessor type
+ * @brief Visitor that retrieves the normal from the given accessor type
  * as a `glm::dvec3`.
  *
  * There are technically no invalid normal values, so `std::nullopt` is used to
@@ -182,8 +182,8 @@ struct NormalFromAccessor {
 };
 
 /**
- * Type definition for all kinds of feature ID (`_FEATURE_ID_n`) attribute
- * accessors.
+ * @brief Type definition for all kinds of feature ID (`_FEATURE_ID_n`)
+ * attribute accessors.
  */
 typedef std::variant<
     AccessorView<int8_t>,
@@ -230,8 +230,8 @@ FeatureIdAccessorType getFeatureIdAccessorView(
     int32_t featureIdSetIndex);
 
 /**
- * Visitor that retrieves the feature ID from the given accessor type as an
- * int64_t. This should be initialized with the index of the vertex whose
+ * @brief Visitor that retrieves the feature ID from the given accessor type as
+ * an int64_t. This should be initialized with the index of the vertex whose
  * feature ID is being queried.
  *
  * -1 is used to indicate errors retrieving the feature ID, e.g., if the given
@@ -261,7 +261,7 @@ struct FeatureIdFromAccessor {
 };
 
 /**
- * Type definition for all kinds of index accessors. std::monostate
+ * @brief Type definition for all kinds of index accessors. std::monostate
  * indicates a nonexistent accessor, which can happen (and is valid) if the
  * primitive vertices are defined without an index buffer.
  */
@@ -334,7 +334,7 @@ struct MaxIndexValueFromAccessor {
 };
 
 /**
- * Visitor that retrieves the vertex indices from the given accessor type
+ * @brief Visitor that retrieves the vertex indices from the given accessor type
  * corresponding to a given face index. These indices are returned as an array
  * of int64_ts. This should be initialized with the index of the face, the
  * total number of vertices in the primitive, and the
@@ -447,9 +447,9 @@ struct IndicesForFaceFromAccessor {
 }; // namespace CesiumGltf
 
 /**
- * Visitor that retrieves the vertex index from the given accessor type as an
- * int64_t. This should be initialized with the index (within the
- * accessor itself) of the vertex index.
+ * @brief Visitor that retrieves the vertex index from the given accessor type
+ * as an int64_t. This should be initialized with the index (within the accessor
+ * itself) of the vertex index.
  *
  * -1 is used to indicate errors retrieving the index, e.g., if the given
  * index was out-of-bounds.
@@ -475,7 +475,8 @@ struct IndexFromAccessor {
 };
 
 /**
- * Type definition for all kinds of texture coordinate (`TEXCOORD_n`) accessors.
+ * @brief Type definition for all kinds of texture coordinate (`TEXCOORD_n`)
+ * accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC2<int8_t>>,
@@ -503,8 +504,8 @@ TexCoordAccessorType getTexCoordAccessorView(
     int32_t textureCoordinateSetIndex);
 
 /**
- * Visitor that retrieves the texture coordinates from the given accessor type
- * as a glm::dvec2. This should be initialized with the target index.
+ * @brief Visitor that retrieves the texture coordinates from the given accessor
+ * type as a glm::dvec2. This should be initialized with the target index.
  *
  * There are technically no invalid UV values because of clamp / wrap
  * Visitor that retrieves the texture coordinates from the given accessor type
@@ -580,7 +581,7 @@ QuaternionAccessorType
 getQuaternionAccessorView(const Model& model, int32_t accessorIndex);
 
 /**
- * Visitor that retrieves the quaternion from the given accessor type
+ * @brief Visitor that retrieves the quaternion from the given accessor type
  * as a glm::dquat.
  */
 struct QuaternionFromAccessor {
@@ -619,7 +620,7 @@ struct QuaternionFromAccessor {
 };
 
 /**
- * Type definition for all kinds of color (`COLOR_n`) accessors.
+ * @brief Type definition for all kinds of color (`COLOR_n`) accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC3<uint8_t>>,
@@ -647,7 +648,7 @@ ColorAccessorType getColorAccessorView(
     int32_t colorSetIndex);
 
 /**
- * Visitor that retrieves the color from the given accessor type
+ * @brief Visitor that retrieves the color from the given accessor type
  * as a `glm::dvec4`.
  */
 struct ColorFromAccessor {
