@@ -505,11 +505,7 @@ TexCoordAccessorType getTexCoordAccessorView(
 
 /**
  * @brief Visitor that retrieves the texture coordinates from the given accessor
- * type as a glm::dvec2. This should be initialized with the target index.
- *
- * There are technically no invalid UV values because of clamp / wrap
- * Visitor that retrieves the texture coordinates from the given accessor type
- * as a `glm::dvec2`. This should be initialized with the target index.
+ * type as a `glm::dvec2`. This should be initialized with the target index.
  *
  * There are technically no invalid UV values because of clamp / wrap
  * behavior, so `std::nullopt` is used to denote an erroneous value.
