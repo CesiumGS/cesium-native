@@ -5,10 +5,12 @@
 ##### Breaking Changes :mega:
 
 - Upgraded vcpkg to `2026.04.27`.
+- Renamed `MAXAR_content_geojson` class `ExtensionMaxarContentGeoJson` to `ExtensionTilesetMaxarContentGeoJson`.
 
 ##### Additions :tada:
 
 - Added a constructor overload for `Cesium3DTilesSelection::ITwinRealityDataContentLoaderFactory` to override the iTwin Cesium Reality Data base URL. This makes it possible to connect to alternate servers (e.g., staging, QA, mock servers).
+- Added `ExtensionMetadataEntityMaxarContentGeoJson` class to parse the metadata extension part of `MAXAR_content_geojson`.
 
 ### v0.61.0 - 2026-06-01
 

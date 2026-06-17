@@ -7,7 +7,7 @@
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
-#include <Cesium3DTiles/ExtensionMaxarContentGeoJson.h>
+#include <Cesium3DTiles/ExtensionTilesetMaxarContentGeoJson.h>
 #include <Cesium3DTiles/ExtensionMetadataEntityMaxarContentGeoJson.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
@@ -1091,8 +1091,10 @@ TilesetJsonLoader::createLoader(
         *pExternal);
     if (pExternal->metadata.metadata) {
       auto* pMaxarGeoJsonExtension =
-          pExternal->metadata.metadata->getExtension<ExtensionMetadataEntityMaxarContentGeoJson>();
-      if (pMaxarGeoJsonExtension && pMaxarGeoJsonExtension->propertiesSchemaUri) {
+          pExternal->metadata.metadata
+              ->getExtension<ExtensionMetadataEntityMaxarContentGeoJson>();
+      if (pMaxarGeoJsonExtension &&
+          pMaxarGeoJsonExtension->propertiesSchemaUri) {
         foreignSchemaUrl = CesiumUtility::Uri::resolve(
             tilesetJsonUrl,
             *pMaxarGeoJsonExtension->propertiesSchemaUri);

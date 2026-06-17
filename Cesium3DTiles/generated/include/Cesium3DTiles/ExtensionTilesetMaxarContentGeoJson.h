@@ -11,12 +11,12 @@ namespace Cesium3DTiles {
  * declared at the tileset level to enable the use of GeoJSON content and
  * optional properties metadata schemas in metadata entities.
  */
-struct CESIUM3DTILES_API ExtensionMaxarContentGeoJson final
+struct CESIUM3DTILES_API ExtensionTilesetMaxarContentGeoJson final
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
-  static constexpr const char* TypeName = "ExtensionMaxarContentGeoJson";
+  static constexpr const char* TypeName = "ExtensionTilesetMaxarContentGeoJson";
   /** @brief The official name of the extension. This should be the same as its
    * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "MAXAR_content_geojson";
@@ -29,7 +29,7 @@ struct CESIUM3DTILES_API ExtensionMaxarContentGeoJson final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionMaxarContentGeoJson));
+    accum += int64_t(sizeof(ExtensionTilesetMaxarContentGeoJson));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
 

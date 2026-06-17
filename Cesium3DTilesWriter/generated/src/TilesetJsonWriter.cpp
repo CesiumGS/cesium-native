@@ -22,8 +22,8 @@
 #include <Cesium3DTiles/Extension3dTilesContentConditionalDimensionsValue.h>
 #include <Cesium3DTiles/Extension3dTilesEllipsoid.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
-#include <Cesium3DTiles/ExtensionMaxarContentGeoJson.h>
 #include <Cesium3DTiles/ExtensionMetadataEntityMaxarContentGeoJson.h>
+#include <Cesium3DTiles/ExtensionTilesetMaxarContentGeoJson.h>
 #include <Cesium3DTiles/GroupMetadata.h>
 #include <Cesium3DTiles/ImplicitTiling.h>
 #include <Cesium3DTiles/MetadataEntity.h>
@@ -83,7 +83,7 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const Cesium3DTiles::ExtensionMaxarContentGeoJson& obj,
+    const Cesium3DTiles::ExtensionTilesetMaxarContentGeoJson& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -546,7 +546,7 @@ void writeJson(
 }
 
 void writeJson(
-    const Cesium3DTiles::ExtensionMaxarContentGeoJson& obj,
+    const Cesium3DTiles::ExtensionTilesetMaxarContentGeoJson& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -1442,8 +1442,8 @@ void Extension3dTilesContentConditionalJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void ExtensionMaxarContentGeoJsonJsonWriter::write(
-    const Cesium3DTiles::ExtensionMaxarContentGeoJson& obj,
+void ExtensionTilesetMaxarContentGeoJsonJsonWriter::write(
+    const Cesium3DTiles::ExtensionTilesetMaxarContentGeoJson& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
