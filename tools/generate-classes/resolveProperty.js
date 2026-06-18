@@ -328,6 +328,34 @@ function toPascalCase(name) {
   return name[0].toUpperCase() + name.substr(1);
 }
 
+function createLocalTypeName(propertyName) {
+  return propertyName
+    .split(".")
+    .filter((segment) => segment.length > 0)
+    .map((segment) => toPascalCase(segment))
+    .join("");
+}
+
+function formatCppDefaultValue(value) {
+  if (Array.isArray(value)) {
+    return `{ ${value.map((item) => formatCppDefaultValue(item)).join(", ")} }`;
+  }
+
+  if (typeof value === "string") {
+    return JSON.stringify(value);
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+
+  if (value === null) {
+    return "nullptr";
+  }
+
+  return value.toString();
+}
+
 function propertyDefaults(propertyName, cppSafeName, propertyDetails) {
   let fullDoc =
     propertyDetails.gltf_detailedDescription &&
@@ -410,8 +438,11 @@ function resolveArray(
     schemas: itemProperty.schemas,
     localTypes: itemProperty.localTypes,
     type: `std::vector<${itemProperty.type}>`,
-    defaultValue: propertyDetails.default
-      ? `{ ${propertyDetails.default} }`
+    defaultValue: propertyDetails.default !== undefined
+      ? formatCppDefaultValue(propertyDetails.default)
+      : undefined,
+    defaultValueWriter: propertyDetails.default !== undefined
+      ? formatCppDefaultValue(propertyDetails.default)
       : undefined,
     readerHeaders: [
       `<CesiumJsonReader/ArrayJsonHandler.h>`,
@@ -500,8 +531,12 @@ function resolveDictionary(
  * @return {String} The comment block
  */
 function createEnumPropertyDoc(propertyValues) {
-  let propertyDoc = `/**\n * @brief Known values for ${propertyValues.briefDoc || propertyValues.name
-    }\n`;
+  // Use briefDoc if available, otherwise clean up the name to remove .items/.additionalProperties
+  let displayName = propertyValues.briefDoc;
+  if (!displayName) {
+    displayName = propertyValues.name.replace(".items", "").replace(".additionalProperties", "");
+  }
+  let propertyDoc = `/**\n * @brief Known values for ${displayName}\n`;
   propertyDoc += ` */`;
   return propertyDoc;
 }
@@ -595,7 +630,7 @@ function resolveEnum(
   }
   const enumRuntimeType = enumType === "string" ? "std::string" : "int32_t";
 
-  const enumName = toPascalCase(propertyName);
+  const enumName = createLocalTypeName(propertyName);
   const enumDefaultValue = createEnumDefault(enumName, propertyDetails, enums);
   const enumDefaultValueWriter = `${namespace}::${parentName}::${enumDefaultValue}`;
 
@@ -606,16 +641,18 @@ function resolveEnum(
     enums
   );
 
-  const propertyDefaultValues = propertyDefaults(
-    propertyName,
-    cppSafeName,
-    propertyDetails
-  );
-  const enumBriefDoc =
-    propertyDefaultValues.briefDoc +
-    "\n * \n * Known values are defined in {@link " +
-    enumName +
-    "}.\n *";
+   // Clean up propertyName for display in docs (e.g., "rotationAxis.items" -> "rotationAxis")
+   const displayPropertyName = propertyName.replace(".items", "").replace(".additionalProperties", "");
+   const propertyDefaultValues = propertyDefaults(
+     displayPropertyName,
+     cppSafeName,
+     propertyDetails
+   );
+   const enumBriefDoc =
+     propertyDefaultValues.briefDoc +
+     "\n * \n * Known values are defined in {@link " +
+     enumName +
+     "}.\n *";
   const result = {
     ...propertyDefaultValues,
     localTypes: [
@@ -854,7 +891,9 @@ function makeNameIntoValidEnumIdentifier(name) {
 }
 
 function createAnonymousPropertyTypeTitle(parentName, propertyName) {
-  const propertyWithoutItems = toPascalCase(propertyName.replace(".items", ""));
+  const propertyWithoutItems = createLocalTypeName(
+    propertyName.replace(".items", "")
+  );
   let result = parentName;
   if (!result.endsWith(propertyWithoutItems)) {
     result += " " + propertyWithoutItems;
