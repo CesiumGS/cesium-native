@@ -90,6 +90,7 @@ private:
   int64_t _stride;
   int64_t _offset;
   int64_t _size;
+  bool _normalized;
   AccessorViewStatus _status;
 
 public:
@@ -109,7 +110,12 @@ public:
    */
   AccessorView(
       AccessorViewStatus status = AccessorViewStatus::InvalidAccessorIndex)
-      : _pData(nullptr), _stride(0), _offset(0), _size(0), _status(status) {}
+      : _pData(nullptr),
+        _stride(0),
+        _offset(0),
+        _size(0),
+        _normalized(false),
+        _status(status) {}
 
   /**
    * @brief Creates a new instance from low-level parameters.
@@ -121,16 +127,19 @@ public:
    * @param stride The stride, in bytes, between successive elements.
    * @param offset The offset from the start of the buffer to the first element.
    * @param size The total number of elements.
+   * @param normalized Whether the accessor values are normalized.
    */
   AccessorView(
       const std::byte* pData,
       int64_t stride,
       int64_t offset,
-      int64_t size)
+      int64_t size,
+      bool normalized)
       : _pData(pData),
         _stride(stride),
         _offset(offset),
         _size(size),
+        _normalized(normalized),
         _status(AccessorViewStatus::Valid) {}
 
   /**
@@ -223,6 +232,13 @@ public:
   int64_t offset() const noexcept { return this->_offset; }
 
   /**
+   * @brief Returns whether the accessor values are normalized.
+   *
+   * @returns Whether the accessor values are normalized.
+   */
+  bool normalized() const noexcept { return this->_normalized; }
+
+  /**
    * @brief Returns a pointer to the first byte of this accessor view's data.
    * The elements are stored contiguously, so the next one starts {@link stride} bytes later.
    *
@@ -288,6 +304,7 @@ private:
     this->_stride = accessorByteStride;
     this->_offset = accessor.byteOffset + pBufferView->byteOffset;
     this->_size = accessor.count;
+    this->_normalized = accessor.normalized;
     this->_status = AccessorViewStatus::Valid;
   }
 };
