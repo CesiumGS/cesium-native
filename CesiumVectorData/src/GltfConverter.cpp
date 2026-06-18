@@ -1,3 +1,4 @@
+#include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
@@ -19,7 +20,6 @@
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/ErrorList.h>
-#include <CesiumUtility/JsonHelpers.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
@@ -32,7 +32,6 @@
 #include <glm/matrix.hpp>
 #include <mapbox/earcut.hpp>
 #include <rapidjson/document.h>
-#include <rapidjson/rapidjson.h>
 
 #include <algorithm>
 #include <array>
@@ -516,58 +515,41 @@ ConverterResult GltfConverter::convert(
   return {std::move(converter.model)};
 }
 
-// Should probably be in CesiumUtility
-
-namespace {
-std::optional<std::string>
-getStringProperty(const rapidjson::Value& json, const std::string& key) {
-  const auto it = json.FindMember(key.c_str());
-  if (it == json.MemberEnd() || !it->value.IsString()) {
-    return std::nullopt;
-  }
-  return it->value.GetString();
-}
-} // namespace
-
 ConvertSchemaResult
 GltfConverter::convertSchema(const rapidjson::Document& schemaJson) {
   Schema schema;
-  std::optional<std::string> className = getStringProperty(schemaJson, "name");
-  if (!className) {
+  Cesium3DTilesReader::ExtensionSchemaMaxarContentGeoJsonReader
+      maxarSchemaReader;
+  auto schemaReadResult = maxarSchemaReader.readFromJson(schemaJson);
+  if (!schemaReadResult.value || !schemaReadResult.errors.empty()) {
+    ErrorList errorList = {schemaReadResult.errors, schemaReadResult.warnings};
+    return {errorList};
+  }
+  const auto& maxarSchema = *schemaReadResult.value;
+  if (!maxarSchema.name) {
     return {ErrorList::error("No schema class name")};
   }
-  std::string classKey =
-      JsonHelpers::getStringOrDefault(schemaJson, "semantic", "geoJsonClass");
+  std::string classKey;
+  if (maxarSchema.semantic.empty()) {
+    classKey = "geoJsonClass";
+  } else {
+    classKey = maxarSchema.semantic;
+  }
   Class geoJsonClass;
-  geoJsonClass.name = *className;
-  auto propertiesIt = schemaJson.FindMember("properties");
-  if (propertiesIt == schemaJson.MemberEnd()) {
-    return {ErrorList::error("no properties in schema")};
-  }
-  if (!propertiesIt->value.IsArray()) {
-    return {ErrorList::error("schema properties are not an array")};
-  }
-  const auto& props = propertiesIt->value;
-  for (rapidjson::SizeType i = 0; i < props.Size(); ++i) {
-    const auto& metaProperty = props[i];
-    if (metaProperty.IsObject()) {
-      std::optional<std::string> propName =
-          getStringProperty(metaProperty, "id");
-      std::optional<std::string> propType =
-          getStringProperty(metaProperty, "type");
-      if (propName && propType) {
-        ClassProperty metaClass;
-        metaClass.name = *propName;
-        if (propType == "String") {
-          metaClass.type = ClassProperty::Type::STRING;
-        } else if (propType == "Float") {
-          metaClass.componentType = ClassProperty::ComponentType::FLOAT32;
-        } else if (propType == "Integer") {
-          metaClass.componentType = ClassProperty::ComponentType::INT32;
-        }
-        geoJsonClass.properties[*propName] = std::move(metaClass);
-      }
+  geoJsonClass.name = *maxarSchema.name;
+  for (auto propsIt = maxarSchema.properties.begin();
+       propsIt != maxarSchema.properties.end();
+       ++propsIt) {
+    ClassProperty metaClass;
+    metaClass.name = propsIt->id;
+    if (propsIt->type == "String") {
+      metaClass.type = ClassProperty::Type::STRING;
+    } else if (propsIt->type == "Float") {
+      metaClass.componentType = ClassProperty::ComponentType::FLOAT32;
+    } else if (propsIt->type == "Integer") {
+      metaClass.componentType = ClassProperty::ComponentType::INT32;
     }
+    geoJsonClass.properties[propsIt->id] = std::move(metaClass);
   }
   schema.classes[classKey] = std::move(geoJsonClass);
   return schema;

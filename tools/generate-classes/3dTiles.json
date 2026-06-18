@@ -43,6 +43,9 @@
     "MAXAR_content_geojson extension": {
       "overrideName": "ExtensionMetadataEntityMaxarContentGeoJson"
     },
+    "GeoJSON Properties Schema" : {
+      "overrideName": "ExtensionSchemaMaxarContentGeoJson"
+    },
     "Metadata Entity": {
       "isBaseClass": true
     },
@@ -84,6 +87,10 @@
     {
       "extensionName": "MAXAR_content_geojson",
       "schema": "MAXAR_content_geojson/schema/metadataEntity.MAXAR_content_geojson.schema.json"
+    },
+    {
+      "extensionName": "MAXAR_content_geojson",
+      "schema": "MAXAR_content_geojson/schema/geojsonproperties.schema.json"
     }
   ]
 }
