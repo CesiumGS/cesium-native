@@ -17,6 +17,7 @@
 - Added `QuaternionFromAccessor` visitor for reading quaternions from a `QuaternionAccessorType`.
 - Updated `TexCoordAccessorType` to support additional quantized variants enabled by `KHR_mesh_quantization`.
 - Added `AccessorView::normalized()` and `AccessorWriter::normalized()` getters.
+- Added `getColorAccessorView`, `ColorAccessorType` and `ColorFromAccessor` for reading vertex colors from a glTF model.
 
 ### v0.61.0 - 2026-06-01
 
