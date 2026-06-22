@@ -258,4 +258,70 @@ getQuaternionAccessorView(const Model& model, int32_t accessorIndex) {
   }
   return getQuaternionAccessorView(model, *pAccessor);
 }
+
+ColorAccessorType getColorAccessorView(
+    const Model& model,
+    const MeshPrimitive& primitive,
+    int32_t colorSetIndex) {
+  std::string colorName = "COLOR_" + std::to_string(colorSetIndex);
+  auto colorIt = primitive.attributes.find(colorName);
+  if (colorIt == primitive.attributes.end()) {
+    return ColorAccessorType();
+  }
+
+  const Accessor* pAccessor =
+      model.getSafe<Accessor>(&model.accessors, colorIt->second);
+  if (!pAccessor) {
+    return ColorAccessorType();
+  }
+
+  if (pAccessor->type == Accessor::Type::VEC3) {
+    switch (pAccessor->componentType) {
+    case Accessor::ComponentType::UNSIGNED_BYTE:
+      if (pAccessor->normalized) {
+        return AccessorView<AccessorTypes::VEC3<uint8_t>>(model, *pAccessor);
+      } else {
+        // Invalid accessor, UNSIGNED_BYTE must be normalized
+        return ColorAccessorType();
+      }
+    case Accessor::ComponentType::UNSIGNED_SHORT:
+      if (pAccessor->normalized) {
+        return AccessorView<AccessorTypes::VEC3<uint16_t>>(model, *pAccessor);
+      } else {
+        // Invalid accessor, UNSIGNED_SHORT must be normalized
+        return ColorAccessorType();
+      }
+    case Accessor::ComponentType::FLOAT:
+      return AccessorView<AccessorTypes::VEC3<float>>(model, *pAccessor);
+    default:
+      return ColorAccessorType();
+    }
+  }
+
+  if (pAccessor->type == Accessor::Type::VEC4) {
+    switch (pAccessor->componentType) {
+    case Accessor::ComponentType::UNSIGNED_BYTE:
+      if (pAccessor->normalized) {
+        return AccessorView<AccessorTypes::VEC4<uint8_t>>(model, *pAccessor);
+      } else {
+        // Invalid accessor, UNSIGNED_BYTE must be normalized
+        return ColorAccessorType();
+      }
+    case Accessor::ComponentType::UNSIGNED_SHORT:
+      if (pAccessor->normalized) {
+        return AccessorView<AccessorTypes::VEC4<uint16_t>>(model, *pAccessor);
+      } else {
+        // Invalid accessor, UNSIGNED_SHORT must be normalized
+        return ColorAccessorType();
+      }
+    case Accessor::ComponentType::FLOAT:
+      return AccessorView<AccessorTypes::VEC4<float>>(model, *pAccessor);
+    default:
+      return ColorAccessorType();
+    }
+  }
+
+  return ColorAccessorType();
+}
+
 } // namespace CesiumGltf

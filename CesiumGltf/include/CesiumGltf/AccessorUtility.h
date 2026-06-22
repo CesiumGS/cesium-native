@@ -60,7 +60,7 @@ struct StatusFromAccessor {
 };
 
 /**
- * Type definition for all kinds of position (POSITION) accessors.
+ * @brief Type definition for all kinds of position (`POSITION`) accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC3<int8_t>>,
@@ -71,15 +71,20 @@ typedef std::variant<
     PositionAccessorType;
 
 /**
- * Retrieves an accessor view for the position attribute from the given glTF
- * primitive and model. This verifies that the accessor is of a valid type. If
- * not, the returned accessor view will be invalid.
+ * @brief Retrieves an accessor view for the position attribute from the given
+ * glTF primitive and model. This verifies that the accessor is of a valid type.
+ * If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ *
+ * @returns A position accessor view.
  */
 PositionAccessorType
 getPositionAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
- * Visitor that retrieves the position from the given accessor type
+ * @brief Visitor that retrieves the position from the given accessor type
  * as a `glm::dvec3`.
  *
  * There are technically no invalid position values, so `std::nullopt` is used
@@ -117,7 +122,7 @@ struct PositionFromAccessor {
 };
 
 /**
- * Type definition for all kinds of normal (NORMAL) accessors.
+ * @brief Type definition for all kinds of normal (`NORMAL`) accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC3<int8_t>>,
@@ -126,15 +131,20 @@ typedef std::variant<
     NormalAccessorType;
 
 /**
- * Retrieves an accessor view for the normal attribute from the given glTF
- * primitive and model. This verifies that the accessor is of a valid type. If
- * not, the returned accessor view will be invalid.
+ * @brief Retrieves an accessor view for the normal attribute from the given
+ * glTF primitive and model. This verifies that the accessor is of a valid type.
+ * If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ *
+ * @returns A normal accessor view.
  */
 NormalAccessorType
 getNormalAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
- * Visitor that retrieves the normal from the given accessor type
+ * @brief Visitor that retrieves the normal from the given accessor type
  * as a `glm::dvec3`.
  *
  * There are technically no invalid normal values, so `std::nullopt` is used to
@@ -172,7 +182,8 @@ struct NormalFromAccessor {
 };
 
 /**
- * Type definition for all kinds of feature ID attribute accessors.
+ * @brief Type definition for all kinds of feature ID (`_FEATURE_ID_n`)
+ * attribute accessors.
  */
 typedef std::variant<
     AccessorView<int8_t>,
@@ -184,29 +195,43 @@ typedef std::variant<
     FeatureIdAccessorType;
 
 /**
- * Retrieves an accessor view for the specified feature ID attribute from the
- * given glTF primitive and model. This verifies that the accessor is of a valid
- * type. If not, the returned accessor view will be invalid.
+ * @brief Retrieves an accessor view for the specified feature ID attribute from
+ * the given glTF primitive and model. This verifies that the accessor is of a
+ * valid type. If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ * @param featureIdSetIndex The set index of the attribute, i.e. `n` for
+ * `_FEATURE_ID_n`.
+ *
+ * @returns A feature ID accessor view.
  */
 FeatureIdAccessorType getFeatureIdAccessorView(
     const Model& model,
     const MeshPrimitive& primitive,
-    int32_t featureIdAttributeIndex);
+    int32_t featureIdSetIndex);
 
 /**
- * Retrieves an accessor view for the specified feature ID attribute from the
- * given glTF node and model, if the node contains an EXT_mesh_gpu_instancing
- * property. This verifies that the accessor is of a valid type. If not, the
- * returned accessor view will be invalid.
+ * @brief Retrieves an accessor view for the specified feature ID attribute from
+ * the given glTF node and model, if the node contains an
+ * EXT_mesh_gpu_instancing property. This verifies that the accessor is of a
+ * valid type. If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param node The node.
+ * @param featureIdSetIndex The set index of the attribute, i.e. `n` for
+ * `_FEATURE_ID_n`.
+ *
+ * @returns A feature ID accessor view.
  */
 FeatureIdAccessorType getFeatureIdAccessorView(
     const Model& model,
     const Node& node,
-    int32_t featureIdAttributeIndex);
+    int32_t featureIdSetIndex);
 
 /**
- * Visitor that retrieves the feature ID from the given accessor type as an
- * int64_t. This should be initialized with the index of the vertex whose
+ * @brief Visitor that retrieves the feature ID from the given accessor type as
+ * an int64_t. This should be initialized with the index of the vertex whose
  * feature ID is being queried.
  *
  * -1 is used to indicate errors retrieving the feature ID, e.g., if the given
@@ -236,7 +261,7 @@ struct FeatureIdFromAccessor {
 };
 
 /**
- * Type definition for all kinds of index accessors. std::monostate
+ * @brief Type definition for all kinds of index accessors. std::monostate
  * indicates a nonexistent accessor, which can happen (and is valid) if the
  * primitive vertices are defined without an index buffer.
  */
@@ -248,15 +273,25 @@ typedef std::variant<
     IndexAccessorType;
 
 /**
- * Retrieves an accessor view for the indices of the given glTF primitive from
- * the model. The primitive may not specify any indices; if so, std::monostate
- * is returned.
+ * @brief Retrieves an accessor view for the indices of the given glTF primitive
+ * from the model. The primitive may not specify any indices; if so,
+ * std::monostate is returned.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ *
+ * @returns An index accessor view.
  */
 IndexAccessorType
 getIndexAccessorView(const Model& model, const MeshPrimitive& primitive);
 
 /**
- * Retrieves an indices accessor view of the accessor at the given index.
+ * @brief Retrieves an index accessor view of the accessor at the given index.
+ *
+ * @param model The model.
+ * @param index The accessor index.
+ *
+ * @returns An index accessor view.
  */
 IndexAccessorType getIndexAccessorView(const Model& model, int32_t index);
 
@@ -299,7 +334,7 @@ struct MaxIndexValueFromAccessor {
 };
 
 /**
- * Visitor that retrieves the vertex indices from the given accessor type
+ * @brief Visitor that retrieves the vertex indices from the given accessor type
  * corresponding to a given face index. These indices are returned as an array
  * of int64_ts. This should be initialized with the index of the face, the
  * total number of vertices in the primitive, and the
@@ -412,9 +447,9 @@ struct IndicesForFaceFromAccessor {
 }; // namespace CesiumGltf
 
 /**
- * Visitor that retrieves the vertex index from the given accessor type as an
- * int64_t. This should be initialized with the index (within the
- * accessor itself) of the vertex index.
+ * @brief Visitor that retrieves the vertex index from the given accessor type
+ * as an int64_t. This should be initialized with the index (within the accessor
+ * itself) of the vertex index.
  *
  * -1 is used to indicate errors retrieving the index, e.g., if the given
  * index was out-of-bounds.
@@ -440,7 +475,8 @@ struct IndexFromAccessor {
 };
 
 /**
- * Type definition for all kinds of texture coordinate (TEXCOORD_n) accessors.
+ * @brief Type definition for all kinds of texture coordinate (`TEXCOORD_n`)
+ * accessors.
  */
 typedef std::variant<
     AccessorView<AccessorTypes::VEC2<int8_t>>,
@@ -451,9 +487,16 @@ typedef std::variant<
     TexCoordAccessorType;
 
 /**
- * Retrieves an accessor view for the specified texture coordinate set from
- * the given glTF primitive and model. This verifies that the accessor is of a
- * valid type. If not, the returned accessor view will be invalid.,
+ * @brief Retrieves an accessor view for the specified texture coordinate set
+ * from the given glTF primitive and model. This verifies that the accessor is
+ * of a valid type. If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ * @param textureCoordinateSetIndex The set index of the attribute, i.e. `n` for
+ * `TEXCOORD_n`.
+ *
+ * @returns A texture coordinate accessor view.
  */
 TexCoordAccessorType getTexCoordAccessorView(
     const Model& model,
@@ -461,12 +504,8 @@ TexCoordAccessorType getTexCoordAccessorView(
     int32_t textureCoordinateSetIndex);
 
 /**
- * Visitor that retrieves the texture coordinates from the given accessor type
- * as a glm::dvec2. This should be initialized with the target index.
- *
- * There are technically no invalid UV values because of clamp / wrap
- * Visitor that retrieves the texture coordinates from the given accessor type
- * as a `glm::dvec2`. This should be initialized with the target index.
+ * @brief Visitor that retrieves the texture coordinates from the given accessor
+ * type as a `glm::dvec2`. This should be initialized with the target index.
  *
  * There are technically no invalid UV values because of clamp / wrap
  * behavior, so `std::nullopt` is used to denote an erroneous value.
@@ -538,7 +577,7 @@ QuaternionAccessorType
 getQuaternionAccessorView(const Model& model, int32_t accessorIndex);
 
 /**
- * Visitor that retrieves the quaternion from the given accessor type
+ * @brief Visitor that retrieves the quaternion from the given accessor type
  * as a glm::dquat.
  */
 struct QuaternionFromAccessor {
@@ -575,4 +614,99 @@ struct QuaternionFromAccessor {
   /** @brief The index of the quaternion to obtain. */
   int64_t index;
 };
+
+/**
+ * @brief Type definition for all kinds of color (`COLOR_n`) accessors.
+ */
+typedef std::variant<
+    AccessorView<AccessorTypes::VEC3<uint8_t>>,
+    AccessorView<AccessorTypes::VEC3<uint16_t>>,
+    AccessorView<AccessorTypes::VEC3<float>>,
+    AccessorView<AccessorTypes::VEC4<uint8_t>>,
+    AccessorView<AccessorTypes::VEC4<uint16_t>>,
+    AccessorView<AccessorTypes::VEC4<float>>>
+    ColorAccessorType;
+
+/**
+ * @brief Retrieves an accessor view for the specified color attribute
+ * from the given glTF primitive and model. This verifies that the accessor is
+ * of a valid type. If not, the returned accessor view will be invalid.
+ *
+ * @param model The model.
+ * @param primitive The primitive.
+ * @param colorSetIndex The set index of the attribute, i.e. `n` for `COLOR_n`.
+ *
+ * @returns A color accessor view.
+ */
+ColorAccessorType getColorAccessorView(
+    const Model& model,
+    const MeshPrimitive& primitive,
+    int32_t colorSetIndex);
+
+/**
+ * @brief Visitor that retrieves the color from the given accessor type
+ * as a `glm::dvec4`.
+ */
+struct ColorFromAccessor {
+  /**
+   * @brief Attempts to obtain a `glm::dvec4` at the given index from an
+   * accessor over a vec3. The values will be cast to `double` and, if
+   * applicable, normalized based on `std::numeric_limits<T>::max()`. The fourth
+   * component will be set to 1.0. If the index is invalid, `std::nullopt` is
+   * returned instead.
+   */
+  template <typename T>
+  std::optional<glm::dvec4>
+  operator()(const AccessorView<AccessorTypes::VEC3<T>>& value) {
+    if (index < 0 || index >= value.size()) {
+      return std::nullopt;
+    }
+
+    if (value.normalized()) {
+      return glm::dvec4(
+          CesiumImpl::denormalize(value[index].value[0]),
+          CesiumImpl::denormalize(value[index].value[1]),
+          CesiumImpl::denormalize(value[index].value[2]),
+          1.0);
+    } else {
+      return glm::dvec4(
+          value[index].value[0],
+          value[index].value[1],
+          value[index].value[2],
+          1.0);
+    }
+  }
+
+  /**
+   * @brief Attempts to obtain a `glm::dvec4` at the given index from an
+   * accessor over a vec4. The values will be cast to `double` and, if
+   * applicable, normalized based on `std::numeric_limits<T>::max()`. If the
+   * index is invalid, `std::nullopt` is returned instead.
+   */
+  template <typename T>
+  std::optional<glm::dvec4>
+  operator()(const AccessorView<AccessorTypes::VEC4<T>>& value) {
+    if (index < 0 || index >= value.size()) {
+      return std::nullopt;
+    }
+
+    if (value.normalized()) {
+      return glm::dvec4(
+          CesiumImpl::denormalize(value[index].value[0]),
+          CesiumImpl::denormalize(value[index].value[1]),
+          CesiumImpl::denormalize(value[index].value[2]),
+          CesiumImpl::denormalize(value[index].value[3]));
+    } else {
+      return glm::dvec4(
+          value[index].value[0],
+          value[index].value[1],
+          value[index].value[2],
+          value[index].value[3]);
+    }
+  }
+
+  /** @brief The index of the color to obtain. */
+  int64_t index;
+};
+
 } // namespace CesiumGltf
