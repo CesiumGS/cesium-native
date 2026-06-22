@@ -1,8 +1,10 @@
 #pragma once
 
-#include <CesiumGltf/ImageAsset.h>
-
 #include <filesystem>
+
+namespace CesiumImage {
+struct ImageAsset;
+}
 
 namespace CesiumNativeTests {
 /**
@@ -14,6 +16,6 @@ namespace CesiumNativeTests {
  * compressed pixel formats.
  */
 void writeImageToTgaFile(
-    const CesiumGltf::ImageAsset& image,
+    const CesiumImage::ImageAsset& image,
     const std::filesystem::path& outputPath);
 } // namespace CesiumNativeTests

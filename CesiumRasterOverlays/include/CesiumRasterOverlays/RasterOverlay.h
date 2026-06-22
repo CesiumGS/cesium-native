@@ -3,7 +3,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumImage/Ktx2TranscodeTargets.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -82,7 +82,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
    * @brief For each possible input transmission format, this struct names
    * the ideal target gpu-compressed pixel format to transcode to.
    */
-  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
+  CesiumImage::Ktx2TranscodeTargets ktx2TranscodeTargets;
 
   /**
    * @brief A callback function that is invoked when a raster overlay resource

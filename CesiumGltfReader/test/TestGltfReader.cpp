@@ -6,12 +6,12 @@
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/Image.h>
-#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
@@ -45,6 +45,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGltf;
 using namespace CesiumGltfReader;
+using namespace CesiumImage;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 

@@ -1,11 +1,11 @@
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumImage {
 
 void ImageAsset::changeNumberOfChannels(
     int32_t newChannels,
@@ -49,4 +49,4 @@ void ImageAsset::changeNumberOfChannels(
 
   this->channels = newChannels;
 }
-} // namespace CesiumGltf
+} // namespace CesiumImage

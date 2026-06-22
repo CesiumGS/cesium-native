@@ -49,6 +49,7 @@ target_link_libraries(CesiumVectorOverlays
         CesiumAsync
         CesiumGltf
         CesiumGltfContent
+        CesiumImage
         CesiumVectorData
         Cesium3DTilesSelection
         CesiumRasterOverlays

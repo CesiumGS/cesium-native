@@ -4,12 +4,12 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfSharedAssetSystem.h>
-#include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumGltfReader/Library.h>
+#include <CesiumImage/ImageAsset.h>
+#include <CesiumImage/ImageDecoder.h>
+#include <CesiumImage/Ktx2TranscodeTargets.h>
 #include <CesiumJsonReader/IExtensionJsonHandler.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 
@@ -23,8 +23,7 @@
 namespace CesiumGltfReader {
 
 /**
- * @brief The result of reading a glTF model with
- * {@link GltfReader::readGltf}.
+ * @brief The result of reading a glTF model with @ref GltfReader::readGltf.
  */
 struct CESIUMGLTFREADER_API GltfReaderResult {
   /**
@@ -62,11 +61,11 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
   bool clearDecodedDataUrls = true;
 
   /**
-   * @brief Whether embedded images in {@link CesiumGltf::Model::buffers} should be
+   * @brief Whether embedded images in @ref CesiumGltf::Model::buffers should be
    * automatically decoded as part of the load process.
    *
-   * The {@link CesiumGltf::ImageSpec::mimeType} property is ignored, and instead the
-   * [stb_image](https://github.com/nothings/stb) library is used to decode
+   * The @ref CesiumGltf::ImageSpec::mimeType property is ignored, and instead
+   * the [stb_image](https://github.com/nothings/stb) library is used to decode
    * images in `JPG`, `PNG`, `TGA`, `BMP`, `PSD`, `GIF`, `HDR`, or `PIC` format.
    */
   bool decodeEmbeddedImages = true;
@@ -113,7 +112,7 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * @brief For each possible input transmission format, this struct names
    * the ideal target gpu-compressed pixel format to transcode to.
    */
-  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
+  CesiumImage::Ktx2TranscodeTargets ktx2TranscodeTargets;
 
   /**
    * The shared asset system that will be used to store all of the shared assets
@@ -229,7 +228,7 @@ public:
   postprocessGltf(GltfReaderResult& readGltf, const GltfReaderOptions& options);
 
   /**
-   * @brief Accepts the result of {@link readGltf} and resolves any remaining
+   * @brief Accepts the result of @ref readGltf and resolves any remaining
    * external buffers and images.
    *
    * @param asyncSystem The async system to use for resolving external data.
@@ -250,21 +249,21 @@ public:
 
   /**
    * @brief Reads an Image from a buffer.
-   * @deprecated Use {@link ImageDecoder::readImage} instead.
+   * @deprecated Use @ref CesiumImage::ImageDecoder::readImage instead.
    */
-  [[deprecated(
-      "Use ImageDecoder::readImage instead.")]] static ImageReaderResult
-  readImage(
-      const std::span<const std::byte>& data,
-      const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
+  [[deprecated("Use ImageDecoder::readImage instead.")]] static CesiumImage::
+      ImageReaderResult
+      readImage(
+          const std::span<const std::byte>& data,
+          const CesiumImage::Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
   /**
    * @brief Generate mipmaps for this image.
-   * @deprecated Use {@link ImageDecoder::generateMipMaps} instead.
+   * @deprecated Use @ref CesiumImage::ImageDecoder::generateMipMaps instead.
    */
   [[deprecated("Use ImageDecoder::generateMipMaps instead.")]] static std::
       optional<std::string>
-      generateMipMaps(CesiumGltf::ImageAsset& image);
+      generateMipMaps(CesiumImage::ImageAsset& image);
 
 private:
   CesiumJsonReader::JsonReaderOptions _context;

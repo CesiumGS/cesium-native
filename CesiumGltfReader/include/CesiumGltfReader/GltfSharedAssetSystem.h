@@ -28,11 +28,11 @@ public:
   /**
    * @brief A depot containing images loaded from glTFs.
    *
-   * See \ref CesiumGltf::ImageAsset "ImageAsset" and \ref
+   * See @ref CesiumImage::ImageAsset "ImageAsset" and @ref
    * NetworkImageAssetDescriptor.
    */
   using ImageDepot = CesiumAsync::
-      SharedAssetDepot<CesiumGltf::ImageAsset, NetworkImageAssetDescriptor>;
+      SharedAssetDepot<CesiumImage::ImageAsset, NetworkImageAssetDescriptor>;
 
   /**
    * @brief The asset depot for images.
@@ -43,7 +43,7 @@ public:
    * @brief A depot containing schemas loaded from URIs contained in the glTF
    * EXT_structural_metadata extension.
    *
-   * See \ref CesiumGltf::Schema "Schema" and \ref NetworkSchemaAssetDescriptor.
+   * See @ref CesiumGltf::Schema "Schema" and @ref NetworkSchemaAssetDescriptor.
    */
   using SchemaDepot = CesiumAsync::
       SharedAssetDepot<CesiumGltf::Schema, NetworkSchemaAssetDescriptor>;

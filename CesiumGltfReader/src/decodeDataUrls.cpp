@@ -4,7 +4,7 @@
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
-#include <CesiumGltfReader/ImageDecoder.h>
+#include <CesiumImage/ImageDecoder.h>
 #include <CesiumUtility/Tracing.h>
 
 #include <fmt/format.h>
@@ -18,6 +18,8 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
+using namespace CesiumImage;
 
 namespace CesiumGltfReader {
 

@@ -70,7 +70,7 @@ public:
   }
 
   virtual void* prepareRasterInLoadThread(
-      CesiumGltf::ImageAsset& /*image*/,
+      CesiumImage::ImageAsset& /*image*/,
       const std::any& /*rendererOptions*/) override {
     return new AllocationResult{totalAllocation};
   }

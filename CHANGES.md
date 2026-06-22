@@ -5,6 +5,7 @@
 ##### Breaking Changes :mega:
 
 - Upgraded vcpkg to `2026.04.27`.
+- Moved `CesiumGltf::ImageAsset`, `CesiumGltf::Ktx2TranscodeTargets`, `CesiumGltfReader::ImageDecoder`, and `CesiumGltfContent::ImageManipulation` to a new `CesiumImage` library.
 - `PositionAccessorType` and `NormalAccessorType` are now variant types to support quantized attributes enabled by `KHR_mesh_quantization`.
 - The `AccessorView` and `AccessorWriter` constructor overloads that take raw buffer data now require an additional `normalized` argument.
 - The `getQuaternionAccessorView` overload that took an accessor pointer now takes an accessor reference.
