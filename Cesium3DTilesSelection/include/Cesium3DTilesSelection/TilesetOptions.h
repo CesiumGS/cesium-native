@@ -3,7 +3,7 @@
 #include <Cesium3DTilesSelection/Library.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumImage/Ktx2TranscodeTargets.h>
 
 #include <any>
 #include <functional>
@@ -46,7 +46,7 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
    * @brief For each possible input transmission format, this struct names
    * the ideal target gpu-compressed pixel format to transcode to.
    */
-  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets;
+  CesiumImage::Ktx2TranscodeTargets ktx2TranscodeTargets;
 
   /**
    * @brief Whether or not to transform texture coordinates during load when

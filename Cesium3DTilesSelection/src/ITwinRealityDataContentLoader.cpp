@@ -205,11 +205,11 @@ requestRealityDataContainer(
     const RealityDataDetails& details,
     const std::optional<std::string>& iTwinId,
     const std::string& iTwinAccessToken,
+    const std::string& iTwinRealityDataBaseURL,
     ITwinRealityDataContentLoader::TokenRefreshCallback&& tokenRefreshCallback,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  CesiumUtility::Uri readAccessUri(fmt::format(
-      "https://api.bentley.com/reality-management/reality-data/{}/readaccess",
-      details.id));
+  CesiumUtility::Uri readAccessUri(
+      fmt::format("{}{}/readaccess", iTwinRealityDataBaseURL, details.id));
   if (iTwinId.has_value()) {
     CesiumUtility::UriQuery query("");
     query.setValue("iTwinId", *iTwinId);
@@ -314,11 +314,11 @@ ITwinRealityDataContentLoader::createLoader(
     const std::string& realityDataId,
     const std::optional<std::string>& iTwinId,
     const std::string& iTwinAccessToken,
+    const std::string& iTwinRealityDataBaseURL,
     TokenRefreshCallback&& tokenRefreshCallback,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   CesiumUtility::Uri realityMetadataUri(
-      "https://api.bentley.com/reality-management/reality-data/" +
-      realityDataId);
+      fmt::format("{}{}", iTwinRealityDataBaseURL, realityDataId));
   if (iTwinId.has_value()) {
     CesiumUtility::UriQuery query("");
     query.setValue("iTwinId", *iTwinId);
@@ -338,6 +338,7 @@ ITwinRealityDataContentLoader::createLoader(
                         realityDataId,
                         iTwinId,
                         iTwinAccessToken,
+                        iTwinRealityDataBaseURL,
                         tokenRefreshCallback = std::move(tokenRefreshCallback),
                         ellipsoid](std::shared_ptr<CesiumAsync::IAssetRequest>&&
                                        pRequest) mutable {
@@ -385,6 +386,7 @@ ITwinRealityDataContentLoader::createLoader(
             *details,
             iTwinId,
             iTwinAccessToken,
+            iTwinRealityDataBaseURL,
             std::move(tokenRefreshCallback),
             ellipsoid);
       });
@@ -436,7 +438,8 @@ ITwinRealityDataContentLoader::ITwinRealityDataContentLoader(
       _tokenRefreshCallback(std::move(tokenRefreshCallback)) {}
 
 ITwinRealityDataContentLoader::~ITwinRealityDataContentLoader() {
-  this->_pRealityDataAccessor->notifyLoaderIsBeingDestroyed();
+  if (this->_pRealityDataAccessor)
+    this->_pRealityDataAccessor->notifyLoaderIsBeingDestroyed();
 }
 
 CesiumAsync::Future<std::string>

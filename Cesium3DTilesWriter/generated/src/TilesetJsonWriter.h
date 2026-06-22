@@ -15,6 +15,7 @@ struct Extension3dTilesEllipsoid;
 struct Extension3dTilesBoundingVolumeCylinder;
 struct ExtensionContent3dTilesContentVoxels;
 struct Extension3dTilesContentConditional;
+struct ExtensionMaxarContentGeoJson;
 struct Extension3dTilesContentConditionalDimensionsValue;
 struct Padding;
 struct ConditionalContent;
@@ -109,6 +110,19 @@ struct Extension3dTilesContentConditionalJsonWriter {
 
   static void write(
       const Cesium3DTiles::Extension3dTilesContentConditional& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionMaxarContentGeoJsonJsonWriter {
+  using ValueType = Cesium3DTiles::ExtensionMaxarContentGeoJson;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "MAXAR_content_geojson";
+
+  static void write(
+      const Cesium3DTiles::ExtensionMaxarContentGeoJson& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

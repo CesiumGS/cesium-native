@@ -38,6 +38,7 @@ public:
       const std::string& realityDataId,
       const std::optional<std::string>& iTwinId,
       const std::string& iTwinAccessToken,
+      const std::string& iTwinRealityDataBaseURL,
       TokenRefreshCallback&& tokenRefreshCallback,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 

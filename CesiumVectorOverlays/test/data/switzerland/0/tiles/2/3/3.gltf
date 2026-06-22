@@ -1,0 +1,163 @@
+{
+  "extensionsUsed": ["EXT_mesh_features", "EXT_structural_metadata", "EXT_mesh_polygon"],
+  "accessors": [{
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 9,
+      "type": "SCALAR"
+    }, {
+      "bufferView": 1,
+      "componentType": 5125,
+      "count": 6,
+      "type": "SCALAR"
+    }, {
+      "bufferView": 2,
+      "componentType": 5125,
+      "count": 1,
+      "type": "SCALAR"
+    }, {
+      "bufferView": 3,
+      "componentType": 5125,
+      "count": 1,
+      "type": "SCALAR"
+    }, {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 5,
+      "type": "VEC3",
+      "max": [9794.4306640625, 19707.04296875, -12.741253852844238],
+      "min": [-12522.4755859375, -11530.8798828125, -42.62399673461914]
+    }, {
+      "bufferView": 10,
+      "componentType": 5126,
+      "count": 5,
+      "type": "SCALAR"
+    }],
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [{
+      "uri": "3_0.bin",
+      "byteLength": 244
+    }],
+  "bufferViews": [{
+      "buffer": 0,
+      "byteLength": 36,
+      "target": 34963
+    }, {
+      "buffer": 0,
+      "byteOffset": 40,
+      "byteLength": 24
+    }, {
+      "buffer": 0,
+      "byteOffset": 64,
+      "byteLength": 4
+    }, {
+      "buffer": 0,
+      "byteOffset": 72,
+      "byteLength": 4
+    }, {
+      "buffer": 0,
+      "byteOffset": 80,
+      "byteLength": 60
+    }, {
+      "buffer": 0,
+      "byteOffset": 144,
+      "byteLength": 40
+    }, {
+      "buffer": 0,
+      "byteOffset": 184,
+      "byteLength": 11
+    }, {
+      "buffer": 0,
+      "byteOffset": 200,
+      "byteLength": 8
+    }, {
+      "buffer": 0,
+      "byteOffset": 208,
+      "byteLength": 3
+    }, {
+      "buffer": 0,
+      "byteOffset": 216,
+      "byteLength": 8
+    }, {
+      "buffer": 0,
+      "byteOffset": 224,
+      "byteLength": 20
+    }],
+  "meshes": [{
+      "primitives": [{
+          "attributes": {
+            "_FEATURE_ID_0": 5,
+            "POSITION": 4
+          },
+          "indices": 0,
+          "extensions": {
+            "EXT_mesh_features": {
+              "featureIds": [{
+                  "featureCount": 5,
+                  "attribute": 0,
+                  "propertyTable": 0
+                }]
+            },
+            "EXT_mesh_polygon": {
+              "count": 1,
+              "loopIndices": 1,
+              "loopIndicesOffsets": 2,
+              "indicesOffsets": 3
+            }
+          }
+        }]
+    }],
+  "nodes": [{
+      "matrix": [-0.1651045772413886, 0.0, -0.9862760661062107, 0.0, -0.7262410538601671, 0.676604497445039, 0.12157419843544184, 0.0, 0.6673188220498627, 0.7363466262821785, -0.11171049951028536, 0.0, 4263996.494183882, 4673568.994774677, -713801.5031738383, 1.0],
+      "mesh": 0
+    }],
+  "scene": 0,
+  "scenes": [{
+      "nodes": [0]
+    }],
+  "extensions": {
+    "EXT_structural_metadata": {
+      "schema": {
+        "id": "schema_id",
+        "name": "schema_name",
+        "description": "description_vector",
+        "version": "version",
+        "classes": {
+          "vector_polygon": {
+            "name": "vector_polygon",
+            "description": "description",
+            "properties": {
+              "_id": {
+                "name": "_id",
+                "description": "attribute description",
+                "type": "STRING"
+              },
+              "name": {
+                "name": "name",
+                "description": "attribute description",
+                "type": "STRING"
+              }
+            }
+          }
+        }
+      },
+      "propertyTables": [{
+          "name": "vector_polygon",
+          "class": "vector_polygon",
+          "count": 1,
+          "properties": {
+            "_id": {
+              "values": 8,
+              "stringOffsets": 9
+            },
+            "name": {
+              "values": 6,
+              "stringOffsets": 7
+            }
+          }
+        }]
+    }
+  }
+}

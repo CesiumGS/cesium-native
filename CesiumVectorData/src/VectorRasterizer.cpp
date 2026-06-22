@@ -1,7 +1,8 @@
+#include <CesiumGeospatial/Cartographic.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -29,7 +30,7 @@
 
 using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
-using namespace CesiumGltf;
+using namespace CesiumImage;
 
 namespace CesiumVectorData {
 namespace {
@@ -66,7 +67,7 @@ template <typename T> size_t seedForObject(const T& object, size_t base) {
 
 VectorRasterizer::VectorRasterizer(
     const GlobeRectangle& bounds,
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset,
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset>& imageAsset,
     uint32_t mipLevel,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _bounds(bounds),
@@ -193,6 +194,61 @@ void VectorRasterizer::drawPolygon(
   }
 }
 
+void VectorRasterizer::drawPolygon(
+    const std::vector<std::vector<Cartographic>>& polygon,
+    const PolygonStyle& style) {
+  if (this->_finalized || (!style.fill && !style.outline)) {
+    return;
+  }
+
+  BLPath path;
+
+  for (const std::vector<Cartographic>& ring : polygon) {
+    if (ring.empty())
+      continue;
+
+    auto it = ring.rbegin();
+    auto end = ring.rend();
+
+    Cartographic firstPoint = *it;
+    path.moveTo(radiansToPoint(
+        firstPoint.longitude,
+        firstPoint.latitude,
+        this->_bounds,
+        this->_context));
+    ++it;
+
+    for (; it != end; ++it) {
+      path.lineTo(radiansToPoint(
+          it->longitude,
+          it->latitude,
+          this->_bounds,
+          this->_context));
+    }
+
+    path.close();
+  }
+
+  if (style.fill) {
+    this->_context.fillPath(
+        path,
+        BLRgba32(style.fill->getColor(seedForObject(polygon, 13)).toRgba32()));
+  }
+
+  if (style.outline) {
+    setStrokeWidth(
+        this->_context,
+        *style.outline,
+        this->_ellipsoid,
+        this->_bounds);
+
+    this->_context.strokePath(
+        path,
+        BLRgba32(
+            style.outline->getColor(seedForObject(polygon, 31)).toRgba32()));
+  }
+}
+
 void VectorRasterizer::drawPolyline(
     const std::vector<glm::dvec3>& points,
     const LineStyle& style) {
@@ -220,6 +276,125 @@ void VectorRasterizer::drawPolyline(
       BLRgba32(style.getColor(seedForObject(points, 31)).toRgba32()));
 }
 
+void VectorRasterizer::drawPolyline(
+    const std::vector<CesiumGeospatial::Cartographic>& points,
+    const LineStyle& style) {
+  if (this->_finalized) {
+    return;
+  }
+
+  std::vector<BLPoint> vertices;
+  vertices.reserve(points.size());
+
+  for (const CesiumGeospatial::Cartographic& vertex : points) {
+    BLPoint point = radiansToPoint(
+        vertex.longitude,
+        vertex.latitude,
+        this->_bounds,
+        this->_context);
+    vertices.emplace_back(point);
+  }
+
+  setStrokeWidth(this->_context, style, this->_ellipsoid, this->_bounds);
+
+  this->_context.strokePolyline(
+      vertices.data(),
+      vertices.size(),
+      BLRgba32(style.getColor(seedForObject(points, 31)).toRgba32()));
+}
+
+namespace {
+void drawPointsImpl(
+    BLContext& context,
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    const GlobeRectangle& bounds,
+    const std::vector<BLPoint>& vertices,
+    const std::vector<size_t>& seeds,
+    const PointStyle& style) {
+  if (style.fill) {
+    for (size_t i = 0; i < vertices.size(); i++) {
+      context.fillCircle(
+          BLCircle(vertices[i].x, vertices[i].y, style.radius),
+          BLRgba32(style.fill->getColor(seeds[i]).toRgba32()));
+    }
+  }
+
+  if (style.outline) {
+    setStrokeWidth(context, *style.outline, ellipsoid, bounds);
+
+    for (size_t i = 0; i < vertices.size(); i++) {
+      context.strokeCircle(
+          BLCircle(vertices[i].x, vertices[i].y, style.radius),
+          BLRgba32(style.outline->getColor(seeds[i] ^ 31).toRgba32()));
+    }
+  }
+}
+} // namespace
+
+void VectorRasterizer::drawPoints(
+    const std::vector<glm::dvec3>& points,
+    const PointStyle& style) {
+  if (this->_finalized) {
+    return;
+  }
+
+  std::vector<BLPoint> vertices;
+  vertices.reserve(points.size());
+
+  std::vector<size_t> seeds;
+  seeds.reserve(points.size());
+
+  for (const glm::dvec3& vertex : points) {
+    BLPoint point = radiansToPoint(
+        CesiumUtility::Math::degreesToRadians(vertex.x),
+        CesiumUtility::Math::degreesToRadians(vertex.y),
+        this->_bounds,
+        this->_context);
+    vertices.emplace_back(point);
+    seeds.emplace_back(seedForObject(vertex, 17));
+  }
+
+  drawPointsImpl(
+      this->_context,
+      this->_ellipsoid,
+      this->_bounds,
+      vertices,
+      seeds,
+      style);
+}
+
+void VectorRasterizer::drawPoints(
+    const std::vector<CesiumGeospatial::Cartographic>& points,
+    const PointStyle& style) {
+  if (this->_finalized) {
+    return;
+  }
+
+  std::vector<BLPoint> vertices;
+  vertices.reserve(points.size());
+
+  std::vector<size_t> seeds;
+  seeds.reserve(points.size());
+
+  for (const CesiumGeospatial::Cartographic& vertex : points) {
+    BLPoint point = radiansToPoint(
+        vertex.longitude,
+        vertex.latitude,
+        this->_bounds,
+        this->_context);
+    vertices.emplace_back(point);
+    seeds.emplace_back(seedForObject(vertex, 17));
+  }
+
+  drawPointsImpl(
+      this->_context,
+      this->_ellipsoid,
+      this->_bounds,
+      vertices,
+      seeds,
+      style);
+}
+
 void VectorRasterizer::drawGeoJsonObject(
     const GeoJsonObject& geoJsonObject,
     const VectorStyle& style) {
@@ -243,8 +418,12 @@ void VectorRasterizer::drawGeoJsonObject(
         rasterizer.drawPolygon(polygon, style.polygon);
       }
     }
-    void operator()(const GeoJsonPoint& /*catchAll*/) {}
-    void operator()(const GeoJsonMultiPoint& /*catchAll*/) {}
+    void operator()(const GeoJsonPoint& point) {
+      rasterizer.drawPoints({point.coordinates}, style.point);
+    }
+    void operator()(const GeoJsonMultiPoint& points) {
+      rasterizer.drawPoints(points.coordinates, style.point);
+    }
     void operator()(const GeoJsonFeature& /*catchAll*/) {}
     void operator()(const GeoJsonFeatureCollection& /*catchAll*/) {}
     void operator()(const GeoJsonGeometryCollection& /*catchAll*/) {}
@@ -263,7 +442,7 @@ void VectorRasterizer::clear(const CesiumUtility::Color& clearColor) {
   this->_context.fillAll(BLRgba32(clearColor.toRgba32()));
 }
 
-CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>
+CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset>
 VectorRasterizer::finalize() {
   if (_finalized) {
     return this->_imageAsset;
@@ -275,8 +454,8 @@ VectorRasterizer::finalize() {
   // We need to swap the channels to fix the values.
   // Blend2D provides BLPixelConverter for these sorts of operations, which
   // should be faster because it has SIMD support. But the current
-  // implementation seems to perform well as-is, likely thanks to the compiler's
-  // vectorization.
+  // implementation seems to perform well as-is, likely thanks to the
+  // compiler's vectorization.
   std::byte* pData =
       this->_mipLevel == 0
           ? this->_imageAsset->pixelData.data()

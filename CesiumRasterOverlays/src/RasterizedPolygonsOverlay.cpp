@@ -4,7 +4,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -36,7 +36,7 @@ void rasterizePolygons(
     const std::vector<CartographicPolygon>& cartographicPolygons,
     bool invertSelection) {
 
-  CesiumGltf::ImageAsset& image = loaded.pImage.emplace();
+  CesiumImage::ImageAsset& image = loaded.pImage.emplace();
 
   std::byte insideColor;
   std::byte outsideColor;

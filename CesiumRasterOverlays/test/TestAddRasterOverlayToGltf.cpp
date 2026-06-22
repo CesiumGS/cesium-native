@@ -14,9 +14,9 @@
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumGltfContent/GltfUtilities.h>
-#include <CesiumGltfContent/ImageManipulation.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumGltfWriter/GltfWriter.h>
+#include <CesiumImage/ImageManipulation.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -58,6 +58,7 @@ using namespace CesiumGltf;
 using namespace CesiumGltfContent;
 using namespace CesiumGltfReader;
 using namespace CesiumGltfWriter;
+using namespace CesiumImage;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;

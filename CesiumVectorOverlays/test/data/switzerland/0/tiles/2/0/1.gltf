@@ -1,0 +1,248 @@
+{
+  "extensionsUsed": ["EXT_mesh_features", "EXT_structural_metadata", "EXT_mesh_polygon"],
+  "accessors": [{
+      "bufferView": 0,
+      "componentType": 5125,
+      "count": 18,
+      "type": "SCALAR"
+    }, {
+      "bufferView": 1,
+      "componentType": 5125,
+      "count": 9,
+      "type": "SCALAR"
+    }, {
+      "bufferView": 2,
+      "componentType": 5125,
+      "count": 1,
+      "type": "SCALAR"
+    }, {
+      "bufferView": 3,
+      "componentType": 5125,
+      "count": 1,
+      "type": "SCALAR"
+    }, {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 1,
+      "type": "VEC3",
+      "max": [6867.89111328125, 1602.935791015625, -3.8928141593933105],
+      "min": [6867.89111328125, 1602.935791015625, -3.8928141593933105]
+    }, {
+      "bufferView": 16,
+      "componentType": 5126,
+      "count": 1,
+      "type": "SCALAR"
+    }, {
+      "bufferView": 6,
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "max": [44934.78125, 33390.08203125, -6.413372993469238],
+      "min": [-40169.8359375, -23850.353515625, -242.5794219970703]
+    }, {
+      "bufferView": 17,
+      "componentType": 5126,
+      "count": 8,
+      "type": "SCALAR"
+    }],
+  "asset": {
+    "version": "2.0"
+  },
+  "buffers": [{
+      "uri": "1_0.bin",
+      "byteLength": 424
+    }],
+  "bufferViews": [{
+      "buffer": 0,
+      "byteLength": 72,
+      "target": 34963
+    }, {
+      "buffer": 0,
+      "byteOffset": 72,
+      "byteLength": 36
+    }, {
+      "buffer": 0,
+      "byteOffset": 112,
+      "byteLength": 4
+    }, {
+      "buffer": 0,
+      "byteOffset": 120,
+      "byteLength": 4
+    }, {
+      "buffer": 0,
+      "byteOffset": 128,
+      "byteLength": 12
+    }, {
+      "buffer": 0,
+      "byteOffset": 144,
+      "byteLength": 8
+    }, {
+      "buffer": 0,
+      "byteOffset": 152,
+      "byteLength": 96
+    }, {
+      "buffer": 0,
+      "byteOffset": 248,
+      "byteLength": 64
+    }, {
+      "buffer": 0,
+      "byteOffset": 312,
+      "byteLength": 8
+    }, {
+      "buffer": 0,
+      "byteOffset": 320,
+      "byteLength": 8
+    }, {
+      "buffer": 0,
+      "byteOffset": 328,
+      "byteLength": 4
+    }, {
+      "buffer": 0,
+      "byteOffset": 336,
+      "byteLength": 8
+    }, {
+      "buffer": 0,
+      "byteOffset": 344,
+      "byteLength": 11
+    }, {
+      "buffer": 0,
+      "byteOffset": 360,
+      "byteLength": 8
+    }, {
+      "buffer": 0,
+      "byteOffset": 368,
+      "byteLength": 3
+    }, {
+      "buffer": 0,
+      "byteOffset": 376,
+      "byteLength": 8
+    }, {
+      "buffer": 0,
+      "byteOffset": 384,
+      "byteLength": 4
+    }, {
+      "buffer": 0,
+      "byteOffset": 392,
+      "byteLength": 32
+    }],
+  "meshes": [{
+      "primitives": [{
+          "attributes": {
+            "_FEATURE_ID_0": 5,
+            "POSITION": 4
+          },
+          "mode": 0,
+          "extensions": {
+            "EXT_mesh_features": {
+              "featureIds": [{
+                  "featureCount": 1,
+                  "attribute": 0,
+                  "propertyTable": 0
+                }]
+            }
+          }
+        }, {
+          "attributes": {
+            "_FEATURE_ID_0": 7,
+            "POSITION": 6
+          },
+          "indices": 0,
+          "extensions": {
+            "EXT_mesh_features": {
+              "featureIds": [{
+                  "featureCount": 8,
+                  "attribute": 0,
+                  "propertyTable": 1
+                }]
+            },
+            "EXT_mesh_polygon": {
+              "count": 1,
+              "loopIndices": 1,
+              "loopIndicesOffsets": 2,
+              "indicesOffsets": 3
+            }
+          }
+        }]
+    }],
+  "nodes": [{
+      "matrix": [-0.11397460211319871, 0.0, -0.9934836637172945, 0.0, -0.720707232736441, 0.6882913051365256, 0.08268109792957277, 0.0, 0.6838061675317936, 0.7254344072853576, -0.07844772764090975, 0.0, 4369112.2934561875, 4604062.773495539, -501234.04482698743, 1.0],
+      "mesh": 0
+    }],
+  "scene": 0,
+  "scenes": [{
+      "nodes": [0]
+    }],
+  "extensions": {
+    "EXT_structural_metadata": {
+      "schema": {
+        "id": "schema_id",
+        "name": "schema_name",
+        "description": "description_vector",
+        "version": "version",
+        "classes": {
+          "vector_polygon": {
+            "name": "vector_polygon",
+            "description": "description",
+            "properties": {
+              "_id": {
+                "name": "_id",
+                "description": "attribute description",
+                "type": "STRING"
+              },
+              "name": {
+                "name": "name",
+                "description": "attribute description",
+                "type": "STRING"
+              }
+            }
+          },
+          "vector_point": {
+            "name": "vector_point",
+            "description": "description",
+            "properties": {
+              "_id": {
+                "name": "_id",
+                "description": "attribute description",
+                "type": "STRING"
+              },
+              "name": {
+                "name": "name",
+                "description": "attribute description",
+                "type": "STRING"
+              }
+            }
+          }
+        }
+      },
+      "propertyTables": [{
+          "name": "vector_point",
+          "class": "vector_point",
+          "count": 1,
+          "properties": {
+            "_id": {
+              "values": 10,
+              "stringOffsets": 11
+            },
+            "name": {
+              "values": 8,
+              "stringOffsets": 9
+            }
+          }
+        }, {
+          "name": "vector_polygon",
+          "class": "vector_polygon",
+          "count": 1,
+          "properties": {
+            "_id": {
+              "values": 14,
+              "stringOffsets": 15
+            },
+            "name": {
+              "values": 12,
+              "stringOffsets": 13
+            }
+          }
+        }]
+    }
+  }
+}

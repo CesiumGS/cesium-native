@@ -1,0 +1,38 @@
+{
+  "asset": {
+    "version": "1.1"
+  },
+  "geometricError": 3863.7859884626714,
+  "root": {
+    "boundingVolume": {
+      "region": [0.2847674617338015, 0.8410564758787692, 0.2867604043374349, 0.8416788934512869, 0.0, 0.005]
+    },
+    "geometricError": 1931.8929942313357,
+    "refine": "REPLACE",
+    "children": [{
+        "boundingVolume": {
+          "region": [0.2847674617338015, 0.8410564758787692, 0.2867604043374349, 0.8416788934512869, 0.0, 0.005]
+        },
+        "geometricError": 965.9464971156679,
+        "refine": "REPLACE",
+        "content": {
+          "uri": "0/tiles/{level}/{x}/{y}.glb"
+        },
+        "implicitTiling": {
+          "subdivisionScheme": "QUADTREE",
+          "subtreeLevels": 5,
+          "availableLevels": 1,
+          "subtrees": {
+            "uri": "0/subtrees/{level}/{x}/{y}.subtree"
+          }
+        }
+      }]
+  },
+  "extensionsUsed": ["3DTILES_content_gltf"],
+  "extensions": {
+    "3DTILES_content_gltf": {
+      "extensionsRequired": ["CESIUM_mesh_vector"],
+      "extensionsUsed": ["CESIUM_mesh_vector"]
+    }
+  }
+}

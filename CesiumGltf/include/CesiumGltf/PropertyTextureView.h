@@ -801,8 +801,8 @@ private:
       return PropertyTexturePropertyView<T, Normalized>(status);
     }
 
-    const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
-        _pModel->images[static_cast<size_t>(imageIndex)].pAsset;
+    const CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset>& pImage =
+        this->_pModel->images[static_cast<size_t>(imageIndex)].pAsset;
     const std::vector<int64_t>& channels = propertyTextureProperty.channels;
 
     status = checkChannels(channels, *pImage);
@@ -821,7 +821,7 @@ private:
             propertyTextureProperty,
             classProperty,
             pEnumDefinition,
-            _pModel->samplers[static_cast<size_t>(samplerIndex)],
+            this->_pModel->samplers[static_cast<size_t>(samplerIndex)],
             *pImage,
             propertyOptions);
       }
@@ -830,7 +830,7 @@ private:
     return PropertyTexturePropertyView<T, Normalized>(
         propertyTextureProperty,
         classProperty,
-        _pModel->samplers[static_cast<size_t>(samplerIndex)],
+        this->_pModel->samplers[static_cast<size_t>(samplerIndex)],
         *pImage,
         propertyOptions);
   }
@@ -847,7 +847,7 @@ private:
 
   PropertyViewStatusType checkChannels(
       const std::vector<int64_t>& channels,
-      const ImageAsset& image) const noexcept;
+      const CesiumImage::ImageAsset& image) const noexcept;
 
   const Model* _pModel;
   const PropertyTexture* _pPropertyTexture;

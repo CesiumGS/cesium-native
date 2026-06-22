@@ -8,5 +8,13 @@ graph TD
   classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px
   CesiumVectorData[CesiumVectorData] --> CesiumAsync[CesiumAsync]
   CesiumVectorData[CesiumVectorData] --> CesiumGeometry[CesiumGeometry]
+  CesiumVectorData[CesiumVectorData] --> CesiumGeospatial[CesiumGeospatial]
+  CesiumVectorData[CesiumVectorData] --> CesiumGltf[CesiumGltf]
+  CesiumVectorData[CesiumVectorData] --> CesiumGltfContent[CesiumGltfContent]
+  CesiumVectorData[CesiumVectorData] --> CesiumImage[CesiumImage]
   CesiumVectorData[CesiumVectorData] --> CesiumUtility[CesiumUtility]
-  class CesiumAsync,CesiumGeometry,CesiumUtility,CesiumVectorData libraryNode
+  CesiumVectorData[CesiumVectorData] --> asmjit_asmjit{{asmjit::asmjit}}
+  CesiumVectorData[CesiumVectorData] --> blend2d_blend2d{{blend2d::blend2d}}
+  CesiumVectorData[CesiumVectorData] --> earcut{{earcut}}
+  class asmjit_asmjit,blend2d_blend2d,earcut dependencyNode
+  class CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumImage,CesiumUtility,CesiumVectorData libraryNode
