@@ -10,6 +10,10 @@
 
 - Added a constructor overload for `Cesium3DTilesSelection::ITwinRealityDataContentLoaderFactory` to override the iTwin Cesium Reality Data base URL. This makes it possible to connect to alternate servers (e.g., staging, QA, mock servers).
 
+##### Fixes :wrench:
+
+- `CesiumVectorOverlays::GeoJsonDocumentRasterOverlay` now actually rasterizes `Point` and `MultiPoint` geometry. Previously these were silently dropped before reaching the rasterizer, even though point rendering was already supported.
+
 ### v0.61.0 - 2026-06-01
 
 ##### Breaking Changes :mega:
