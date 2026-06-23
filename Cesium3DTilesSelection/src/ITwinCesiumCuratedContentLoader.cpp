@@ -3,8 +3,8 @@
 #include "CesiumIonTilesetLoader.h"
 
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
+#include <Cesium3DTilesSelection/TilesetContentOptions.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
-#include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 

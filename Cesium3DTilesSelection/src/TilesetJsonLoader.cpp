@@ -21,6 +21,7 @@
 #include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
+#include <Cesium3DTilesSelection/TilesetContentOptions.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -1172,11 +1173,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                   tileTransform,
                   requestHeaders,
                   upAxis};
-              CesiumGltfReader::GltfReaderOptions gltfOptions;
-              gltfOptions.ktx2TranscodeTargets =
-                  contentOptions.ktx2TranscodeTargets;
-              gltfOptions.applyTextureTransform =
-                  contentOptions.applyTextureTransform;
+              CesiumGltfReader::GltfReaderOptions gltfOptions =
+                  contentOptions.toGltfReaderOptions();
               if (pSharedAssetSystem) {
                 gltfOptions.pSharedAssetSystem = pSharedAssetSystem;
               }

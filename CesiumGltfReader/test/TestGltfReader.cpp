@@ -29,6 +29,7 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/geometric.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -272,6 +273,212 @@ TEST_CASE("Read TriangleWithPaddingInGlbBin") {
   GltfReaderResult result = reader.readGltf(data);
   REQUIRE(result.model);
   REQUIRE(result.warnings.size() == 1);
+}
+
+TEST_CASE("Read MeshPrimitiveModes") {
+  std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
+  gltfFile /= "MeshPrimitiveModes/MeshPrimitiveModes.gltf";
+  std::vector<std::byte> data = readFile(gltfFile);
+
+  GltfReader reader;
+  const std::string namePrefix = "mesh with ";
+
+  SUBCASE("as-is") {
+    GltfReaderResult result = reader.readGltf(data);
+    REQUIRE(result.model);
+    const Model& model = result.model.value();
+
+    REQUIRE_EQ(model.meshes.size(), 7);
+    for (const CesiumGltf::Mesh& mesh : model.meshes) {
+      REQUIRE_EQ(mesh.primitives.size(), 1);
+
+      std::string modeName = mesh.name.substr(namePrefix.size());
+
+      if (modeName == "POINTS") {
+        CHECK_EQ(
+            mesh.primitives[0].mode,
+            CesiumGltf::MeshPrimitive::Mode::POINTS);
+      } else if (modeName == "LINES") {
+        CHECK_EQ(
+            mesh.primitives[0].mode,
+            CesiumGltf::MeshPrimitive::Mode::LINES);
+      } else if (modeName == "LINE_LOOP") {
+        CHECK_EQ(
+            mesh.primitives[0].mode,
+            CesiumGltf::MeshPrimitive::Mode::LINE_LOOP);
+      } else if (modeName == "LINE_STRIP") {
+        CHECK_EQ(
+            mesh.primitives[0].mode,
+            CesiumGltf::MeshPrimitive::Mode::LINE_STRIP);
+      } else if (modeName == "TRIANGLES") {
+        CHECK_EQ(
+            mesh.primitives[0].mode,
+            CesiumGltf::MeshPrimitive::Mode::TRIANGLES);
+      } else if (modeName == "GL_TRIANGLE_STRIP") {
+        CHECK_EQ(
+            mesh.primitives[0].mode,
+            CesiumGltf::MeshPrimitive::Mode::TRIANGLE_STRIP);
+      } else if (modeName == "GL_TRIANGLE_FAN") {
+        CHECK_EQ(
+            mesh.primitives[0].mode,
+            CesiumGltf::MeshPrimitive::Mode::TRIANGLE_FAN);
+      }
+    }
+  }
+
+  SUBCASE("converts line loop") {
+    GltfReaderOptions options;
+    options.primitiveModeOptions.convertLineLoop = true;
+
+    GltfReaderResult result = reader.readGltf(data, options);
+    REQUIRE(result.model);
+    const Model& model = result.model.value();
+    REQUIRE_EQ(model.meshes.size(), 7);
+
+    auto lineLoopIt = std::find_if(
+        model.meshes.begin(),
+        model.meshes.end(),
+        [&namePrefix](const CesiumGltf::Mesh& mesh) {
+          std::string modeName = mesh.name.substr(namePrefix.size());
+          return modeName == "LINE_LOOP";
+        });
+
+    REQUIRE_NE(lineLoopIt, model.meshes.end());
+    REQUIRE_EQ(lineLoopIt->primitives.size(), 1);
+
+    const CesiumGltf::MeshPrimitive& primitive = lineLoopIt->primitives[0];
+
+    CHECK_EQ(primitive.mode, CesiumGltf::MeshPrimitive::Mode::LINES);
+    REQUIRE_EQ(primitive.indices, int32_t(model.accessors.size() - 1));
+
+    CesiumGltf::AccessorView<uint16_t> indicesView(model, primitive.indices);
+    REQUIRE_EQ(indicesView.status(), CesiumGltf::AccessorViewStatus::Valid);
+
+    std::vector<uint16_t> expected{0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 0};
+    REQUIRE_EQ(indicesView.size(), int64_t(expected.size()));
+    for (int64_t i = 0; i < indicesView.size(); i++) {
+      REQUIRE_EQ(indicesView[i], expected[size_t(i)]);
+    }
+  }
+
+  SUBCASE("converts line strip") {
+    GltfReaderOptions options;
+    options.primitiveModeOptions.convertLineStrip = true;
+
+    GltfReaderResult result = reader.readGltf(data, options);
+    REQUIRE(result.model);
+    const Model& model = result.model.value();
+    REQUIRE_EQ(model.meshes.size(), 7);
+
+    auto lineLoopIt = std::find_if(
+        model.meshes.begin(),
+        model.meshes.end(),
+        [&namePrefix](const CesiumGltf::Mesh& mesh) {
+          std::string modeName = mesh.name.substr(namePrefix.size());
+          return modeName == "LINE_STRIP";
+        });
+
+    REQUIRE_NE(lineLoopIt, model.meshes.end());
+    REQUIRE_EQ(lineLoopIt->primitives.size(), 1);
+
+    const CesiumGltf::MeshPrimitive& primitive = lineLoopIt->primitives[0];
+
+    CHECK_EQ(primitive.mode, CesiumGltf::MeshPrimitive::Mode::LINES);
+    REQUIRE_EQ(primitive.indices, int32_t(model.accessors.size() - 1));
+
+    CesiumGltf::AccessorView<uint16_t> indicesView(model, primitive.indices);
+    REQUIRE_EQ(indicesView.status(), CesiumGltf::AccessorViewStatus::Valid);
+
+    std::vector<uint16_t> expected{0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6};
+    REQUIRE_EQ(indicesView.size(), int64_t(expected.size()));
+    for (int64_t i = 0; i < indicesView.size(); i++) {
+      REQUIRE_EQ(indicesView[i], expected[size_t(i)]);
+    }
+  }
+
+  SUBCASE("converts triangle strip") {
+    GltfReaderOptions options;
+    options.primitiveModeOptions.convertTriangleStrip = true;
+
+    GltfReaderResult result = reader.readGltf(data, options);
+    REQUIRE(result.model);
+    const Model& model = result.model.value();
+    REQUIRE_EQ(model.meshes.size(), 7);
+
+    auto lineLoopIt = std::find_if(
+        model.meshes.begin(),
+        model.meshes.end(),
+        [&namePrefix](const CesiumGltf::Mesh& mesh) {
+          std::string modeName = mesh.name.substr(namePrefix.size());
+          return modeName == "GL_TRIANGLE_STRIP";
+        });
+
+    REQUIRE_NE(lineLoopIt, model.meshes.end());
+    REQUIRE_EQ(lineLoopIt->primitives.size(), 1);
+
+    const CesiumGltf::MeshPrimitive& primitive = lineLoopIt->primitives[0];
+
+    CHECK_EQ(primitive.mode, CesiumGltf::MeshPrimitive::Mode::TRIANGLES);
+    REQUIRE_EQ(primitive.indices, int32_t(model.accessors.size() - 1));
+
+    CesiumGltf::AccessorView<uint16_t> indicesView(model, primitive.indices);
+    REQUIRE_EQ(indicesView.status(), CesiumGltf::AccessorViewStatus::Valid);
+
+    // clang-format off
+    std::vector<uint16_t> expected{
+      2, 3, 1,
+      4, 1, 3,
+      1, 4, 6,
+      5, 6, 4};
+    // clang-format on
+    REQUIRE_EQ(indicesView.size(), int64_t(expected.size()));
+    for (int64_t i = 0; i < indicesView.size(); i++) {
+      REQUIRE_EQ(indicesView[i], expected[size_t(i)]);
+    }
+  }
+
+  SUBCASE("converts triangle fan") {
+    GltfReaderOptions options;
+    options.primitiveModeOptions.convertTriangleFan = true;
+
+    GltfReaderResult result = reader.readGltf(data, options);
+    REQUIRE(result.model);
+    const Model& model = result.model.value();
+    REQUIRE_EQ(model.meshes.size(), 7);
+
+    auto lineLoopIt = std::find_if(
+        model.meshes.begin(),
+        model.meshes.end(),
+        [&namePrefix](const CesiumGltf::Mesh& mesh) {
+          std::string modeName = mesh.name.substr(namePrefix.size());
+          return modeName == "GL_TRIANGLE_FAN";
+        });
+
+    REQUIRE_NE(lineLoopIt, model.meshes.end());
+    REQUIRE_EQ(lineLoopIt->primitives.size(), 1);
+
+    const CesiumGltf::MeshPrimitive& primitive = lineLoopIt->primitives[0];
+
+    CHECK_EQ(primitive.mode, CesiumGltf::MeshPrimitive::Mode::TRIANGLES);
+    REQUIRE_EQ(primitive.indices, int32_t(model.accessors.size() - 1));
+
+    CesiumGltf::AccessorView<uint16_t> indicesView(model, primitive.indices);
+    REQUIRE_EQ(indicesView.status(), CesiumGltf::AccessorViewStatus::Valid);
+
+    // clang-format off
+    std::vector<uint16_t> expected{
+      0, 1, 2,
+      0, 2, 3,
+      0, 3, 4,
+      0, 4, 5,
+      0, 5, 6,
+      0, 6, 1};
+    // clang-format on
+    REQUIRE_EQ(indicesView.size(), int64_t(expected.size()));
+    for (int64_t i = 0; i < indicesView.size(); i++) {
+      REQUIRE_EQ(indicesView[i], expected[size_t(i)]);
+    }
+  }
 }
 
 TEST_CASE("Nested extras deserializes properly") {
@@ -550,7 +757,7 @@ TEST_CASE("Can parse doubles with no fractions as integers") {
 
 TEST_CASE("Test KTX2") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
-  gltfFile /= "CesiumBalloonKTX2Hacky.glb";
+  gltfFile /= "CesiumBalloon/CesiumBalloonKTX2Hacky.glb";
   std::vector<std::byte> data = readFile(gltfFile.string());
   CesiumGltfReader::GltfReader reader;
   GltfReaderResult result = reader.readGltf(data);
@@ -641,7 +848,8 @@ TEST_CASE("Ignores unknown properties if requested") {
 TEST_CASE("Decodes images with data uris") {
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(readFile(
-      CesiumGltfReader_TEST_DATA_DIR + std::string("/BoxTextured.gltf")));
+      CesiumGltfReader_TEST_DATA_DIR +
+      std::string("/BoxTextured/BoxTextured.gltf")));
 
   REQUIRE(result.warnings.empty());
   REQUIRE(result.errors.empty());
@@ -666,7 +874,8 @@ TEST_CASE("Decodes images with data uris") {
 TEST_CASE("Decode buffer with data URI whose length does match the buffer's "
           "byteLength") {
   std::vector<std::byte> gltfBytes = readFile(
-      CesiumGltfReader_TEST_DATA_DIR + std::string("/BoxTextured.gltf"));
+      CesiumGltfReader_TEST_DATA_DIR +
+      std::string("/BoxTextured/BoxTextured.gltf"));
   std::string gltfString(
       reinterpret_cast<const char*>(gltfBytes.data()),
       gltfBytes.size());
