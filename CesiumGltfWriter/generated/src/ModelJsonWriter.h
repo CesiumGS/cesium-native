@@ -38,6 +38,7 @@ struct ExtensionKhrGaussianSplatting;
 struct ExtensionKhrGaussianSplattingCompressionSpz2;
 struct ExtensionExtMeshPrimitiveEdgeVisibility;
 struct ExtensionExtMeshPolygon;
+struct ExtensionKhrBillboard;
 struct LineString;
 struct Padding;
 struct Shape;
@@ -457,6 +458,19 @@ struct ExtensionExtMeshPolygonJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionExtMeshPolygon& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionKhrBillboardJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrBillboard;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "KHR_billboard";
+
+  static void write(
+      const CesiumGltf::ExtensionKhrBillboard& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
