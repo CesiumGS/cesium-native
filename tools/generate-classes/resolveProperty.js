@@ -641,18 +641,20 @@ function resolveEnum(
     enums
   );
 
-   // Clean up propertyName for display in docs (e.g., "rotationAxis.items" -> "rotationAxis")
-   const displayPropertyName = propertyName.replace(".items", "").replace(".additionalProperties", "");
-   const propertyDefaultValues = propertyDefaults(
-     displayPropertyName,
-     cppSafeName,
-     propertyDetails
-   );
-   const enumBriefDoc =
-     propertyDefaultValues.briefDoc +
-     "\n * \n * Known values are defined in {@link " +
-     enumName +
-     "}.\n *";
+  // Clean up propertyName for display in docs (e.g., "rotationAxis.items" -> "rotationAxis")
+  const displayPropertyName = propertyName
+    .replace(".items", "")
+    .replace(".additionalProperties", "");
+  const propertyDefaultValues = propertyDefaults(
+    displayPropertyName,
+    cppSafeName,
+    propertyDetails
+  );
+  const enumBriefDoc =
+    propertyDefaultValues.briefDoc +
+    "\n * \n * Known values are defined in {@link " +
+    enumName +
+    "}.\n *";
   const result = {
     ...propertyDefaultValues,
     localTypes: [
