@@ -30,3 +30,25 @@ A CI job automatically publishes the documentation to the web site at https://ce
 5. `git checkout main`
 
 The `--ff-only` flags ensure that no new commits are created in the process. We only want to bring over commits from the release tag. If the pull or merge fails, something unusual has probably happened with the git history and it warrants a little investigation before proceeding.
+
+# Release Schedule
+
+## Release Coordinator
+
+| Date      | User             |
+| --------- | ---------------- |
+| 6/1/2026  | `@timoore`       |
+| 7/1/2026  | `@azrogers`      |
+| 8/3/2026  | `@david-lively`  |
+| 9/1/2026  | `@j9liu`         |
+| 10/1/2026 | `@timoore`       |
+| 11/2/2026 | `@azrogers`      |
+| 12/1/2026 | `@david-lively`  |
+
+## Cesium Native Runtimes Release Timeline
+
+| Days Until Release | Release Tasks |
+| --- | ---------------- |
+| T-2 | * All pending PRs merged in all repos <br> * Begin `cesium-native` release <br> * Update `cesium-native` in all runtimes and perform regression testing |
+| T-1 | * Create release commits for `cesium-unity` and `cesium-unreal` <br> * Debug any CI issues * Prepare GitHub release drafts | 
+| T-0 | * Publish releases |

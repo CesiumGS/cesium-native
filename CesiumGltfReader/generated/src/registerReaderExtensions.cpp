@@ -17,6 +17,7 @@
 #include "ExtensionExtMeshPrimitiveEdgeVisibilityJsonHandler.h"
 #include "ExtensionExtPrimitiveVoxelsJsonHandler.h"
 #include "ExtensionExtStructuralMetadataJsonHandler.h"
+#include "ExtensionKhrBillboardJsonHandler.h"
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler.h"
 #include "ExtensionKhrGaussianSplattingJsonHandler.h"
@@ -107,6 +108,8 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeMaxarMeshVariantsJsonHandler>();
+  options
+      .registerExtension<CesiumGltf::Node, ExtensionKhrBillboardJsonHandler>();
   options.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonHandler>();
