@@ -36,6 +36,7 @@
 #include <CesiumGltf/ExtensionExtMeshPrimitiveEdgeVisibility.h>
 #include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionKhrBillboard.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
@@ -112,6 +113,8 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeMaxarMeshVariantsJsonWriter>();
+  context
+      .registerExtension<CesiumGltf::Node, ExtensionKhrBillboardJsonWriter>();
   context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonWriter>();

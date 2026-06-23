@@ -19,6 +19,9 @@
 - Added `QuaternionFromAccessor` visitor for reading quaternions from a `QuaternionAccessorType`.
 - Updated `TexCoordAccessorType` to support additional quantized variants enabled by `KHR_mesh_quantization`.
 - Added `AccessorView::normalized()` and `AccessorWriter::normalized()` getters.
+- Added `getColorAccessorView`, `ColorAccessorType` and `ColorFromAccessor` for reading vertex colors from a glTF model.
+- Added support for `KHR_billboard` glTF extension in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Modified `resolveProperty.js` to correctly generate struct names when the property name would include invalid characters.
 
 ### v0.61.0 - 2026-06-01
 
