@@ -99,21 +99,41 @@ private:
 
 template <typename T>
 std::vector<T> convertLineLoopIndices(const PrimitiveIndicesView& indicesView) {
-  int64_t numIndices = indicesView.numIndices;
+  constexpr T primitiveRestartConstant = std::numeric_limits<T>::max();
 
+  int64_t lineCount = indicesView.numIndices;
   // Example: Given a line loop with three indices A-B-C, its segments are
   // A-B, B-C, C-A, requiring six indices.
   std::vector<T> data;
-  data.reserve(2 * size_t(numIndices));
+  data.reserve(2 * size_t(lineCount));
 
-  for (int64_t i = 0; i < numIndices - 1; ++i) {
-    data.push_back(static_cast<T>(indicesView[i]));
-    data.push_back(static_cast<T>(indicesView[i + 1]));
+  int64_t loopStart = 0;
+  for (int64_t i = 0; i < lineCount; ++i) {
+    // Loop to the starting index once we reach the last line segment.
+    int64_t nextIndex = (i < lineCount - 1) ? i + 1 : loopStart;
+
+    T index0 = static_cast<T>(indicesView[i]);
+    T index1 = static_cast<T>(indicesView[nextIndex]);
+
+    if (index0 == primitiveRestartConstant) {
+      loopStart = i + 1;
+      continue;
+    }
+
+    if (index1 == primitiveRestartConstant) {
+      CESIUM_ASSERT(nextIndex != loopStart);
+
+      // Complete the loop before starting a new one.
+      data.push_back(index0);
+      data.push_back(static_cast<T>(indicesView[loopStart]));
+
+      loopStart = nextIndex + 1;
+      continue;
+    }
+
+    data.push_back(index0);
+    data.push_back(index1);
   }
-
-  // Complete the loop once we reach the last index.
-  data.push_back(static_cast<T>(indicesView[numIndices - 1]));
-  data.push_back(static_cast<T>(indicesView[0]));
 
   return data;
 }
@@ -121,15 +141,25 @@ std::vector<T> convertLineLoopIndices(const PrimitiveIndicesView& indicesView) {
 template <typename T>
 std::vector<T>
 convertLineStripIndices(const PrimitiveIndicesView& indicesView) {
-  int64_t numIndices = indicesView.numIndices;
+  constexpr T primitiveRestartConstant = std::numeric_limits<T>::max();
+
+  int64_t lineCount = indicesView.numIndices - 1;
   // Example: Given a line strip with four indices A-B-C-D, its segments are
   // A-B, B-C, C-D, requiring six indices.
   std::vector<T> data;
-  data.reserve(2 * size_t(numIndices - 1));
+  data.reserve(2 * size_t(lineCount));
 
-  for (int64_t i = 0; i < numIndices - 1; ++i) {
-    data.push_back(static_cast<T>(indicesView[i]));
-    data.push_back(static_cast<T>(indicesView[i + 1]));
+  for (int64_t i = 0; i < lineCount; ++i) {
+    T index0 = static_cast<T>(indicesView[i]);
+    T index1 = static_cast<T>(indicesView[i + 1]);
+
+    if (index0 == primitiveRestartConstant ||
+        index1 == primitiveRestartConstant) {
+      continue;
+    }
+
+    data.push_back(index0);
+    data.push_back(index1);
   }
 
   return data;
@@ -138,20 +168,36 @@ convertLineStripIndices(const PrimitiveIndicesView& indicesView) {
 template <typename T>
 std::vector<T>
 convertTriangleStripIndices(const PrimitiveIndicesView& indicesView) {
+  constexpr T primitiveRestartConstant = std::numeric_limits<T>::max();
+
   int64_t numIndices = indicesView.numIndices;
   // After the first two indices, every index corresponds to a new triangle.
   std::vector<T> data;
   data.reserve(3 * size_t(numIndices - 2));
+
+  int64_t triangleIndexInCurrentStrip = 0;
   for (int64_t i = 0; i < numIndices - 2; ++i) {
-    if (i % 2) {
-      data.push_back(static_cast<T>(indicesView[i + 2]));
-      data.push_back(static_cast<T>(indicesView[i + 1]));
-      data.push_back(static_cast<T>(indicesView[i]));
-    } else {
-      data.push_back(static_cast<T>(indicesView[i]));
-      data.push_back(static_cast<T>(indicesView[i + 1]));
-      data.push_back(static_cast<T>(indicesView[i + 2]));
+    T index0 = static_cast<T>(indicesView[i]);
+    T index1 = static_cast<T>(indicesView[i + 1]);
+    T index2 = static_cast<T>(indicesView[i + 2]);
+    if (index0 == primitiveRestartConstant ||
+        index1 == primitiveRestartConstant ||
+        index2 == primitiveRestartConstant) {
+      triangleIndexInCurrentStrip = 0;
+      continue;
     }
+
+    if (triangleIndexInCurrentStrip % 2) {
+      data.push_back(index2);
+      data.push_back(index1);
+      data.push_back(index0);
+    } else {
+      data.push_back(index0);
+      data.push_back(index1);
+      data.push_back(index2);
+    }
+
+    triangleIndexInCurrentStrip++;
   }
   return data;
 }
@@ -159,14 +205,38 @@ convertTriangleStripIndices(const PrimitiveIndicesView& indicesView) {
 template <typename T>
 std::vector<T>
 convertTriangleFanIndices(const PrimitiveIndicesView& indicesView) {
+  constexpr T primitiveRestartConstant = std::numeric_limits<T>::max();
+
   int64_t numIndices = indicesView.numIndices;
   // After the first two indices, every index corresponds to a new triangle.
   std::vector<T> data;
   data.reserve(3 * size_t(numIndices - 2));
-  for (int64_t i = 2; i < numIndices; ++i) {
-    data.push_back(static_cast<T>(indicesView[0]));
-    data.push_back(static_cast<T>(indicesView[i - 1]));
-    data.push_back(static_cast<T>(indicesView[i]));
+
+  int64_t fanStart = 0;
+  for (int64_t i = 2; i < numIndices; i++) {
+    T fanStartIndex = static_cast<T>(indicesView[fanStart]);
+    T previousIndex = static_cast<T>(indicesView[i - 1]);
+    T currentIndex = static_cast<T>(indicesView[i]);
+
+    if (fanStartIndex == primitiveRestartConstant) {
+      fanStart = i - 1;
+      i = fanStart + 1;
+      continue;
+    }
+    if (previousIndex == primitiveRestartConstant) {
+      fanStart = i;
+      i = fanStart + 1;
+      continue;
+    }
+    if (currentIndex == primitiveRestartConstant) {
+      fanStart = i + 1;
+      i = fanStart + 1;
+      continue;
+    }
+
+    data.push_back(fanStartIndex);
+    data.push_back(previousIndex);
+    data.push_back(currentIndex);
   }
   return data;
 }

@@ -13,7 +13,7 @@
 ##### Additions :tada:
 
 - Added a constructor overload for `Cesium3DTilesSelection::ITwinRealityDataContentLoaderFactory` to override the iTwin Cesium Reality Data base URL. This makes it possible to connect to alternate servers (e.g., staging, QA, mock servers).
-- Added `CesiumGltfReader::MeshPrimitiveModeOptions` to make `CesiumGltfReader::GltfReader` retopologize glTF primitives with unsupported primitive modes.
+- Added `CesiumGltfReader::MeshPrimitiveModeOptions` to make `CesiumGltfReader::GltfReader` retopologize glTF primitives with unsupported primitive modes, accounting for primitive restart.
 - Added `PositionFromAccessor` visitor for reading positions from a `PositionAccessorType`.
 - Added `NormalFromAccessor` visitor for reading normals from a `NormalAccessorType`.
 - Added `QuaternionFromAccessor` visitor for reading quaternions from a `QuaternionAccessorType`.
