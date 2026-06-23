@@ -3,6 +3,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 
@@ -19,7 +20,8 @@ using ConverterResult = CesiumUtility::Result<CesiumGltf::Model>;
  * @brief The result of converting a MAXAR_content_geojson schema to a glTF
  * schema.
  */
-using ConvertSchemaResult = CesiumUtility::Result<CesiumGltf::Schema>;
+using ConvertSchemaResult =
+    CesiumUtility::Result<CesiumUtility::IntrusivePointer<CesiumGltf::Schema>>;
 
 /**
  * @brief Convert GeoJSON documents to glTF.
@@ -32,11 +34,15 @@ public:
    *
    * @param geoJson The GeoJSON document.
    * @param ellipsoid The ellipsoid for GeoJSON coordinates.
+   * @param schema the MAXAR_content_geojson schema for the GeoJSON feature
+   * properties.
    * @returns A result object that includes the glTF Model and any errors.
    */
   static ConverterResult convert(
       const GeoJsonDocument& geoJson,
-      const CesiumGeospatial::Ellipsoid& ellipsoid);
+      const CesiumGeospatial::Ellipsoid& ellipsoid,
+      const CesiumUtility::IntrusivePointer<CesiumGltf::Schema>& pSchema);
+
   /**
    * @brief Convert MAXAR_content_geojson schema into a glTF schema.
    * @param schemaJson The schema supplied with a GeoJson tileset

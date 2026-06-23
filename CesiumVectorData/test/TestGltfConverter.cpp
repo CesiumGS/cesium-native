@@ -7,6 +7,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
@@ -31,8 +32,10 @@ TEST_CASE("Conversion from geoJSON to glTF") {
     Result<GeoJsonDocument> doc =
         GeoJsonDocument::fromGeoJson(readFile(dir / "ship-trajectories.json"));
     REQUIRE(doc.value);
+    IntrusivePointer<Schema> pSchema;
+    pSchema.emplace();
     ConverterResult converterResult =
-        GltfConverter::convert(*doc.value, Ellipsoid::WGS84);
+        GltfConverter::convert(*doc.value, Ellipsoid::WGS84, pSchema);
     REQUIRE(converterResult.value);
     const Model& model = *converterResult.value;
     model.forEachPrimitiveInScene(
