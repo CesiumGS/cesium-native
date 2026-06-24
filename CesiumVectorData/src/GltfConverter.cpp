@@ -1,5 +1,3 @@
-#include "CesiumGltf/PropertyType.h"
-
 #include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
@@ -270,13 +268,14 @@ struct GltfConverterImpl {
     }
   };
 
-  struct FloatPropertyRepresentation {
-    std::vector<float> properties;
+  template <typename Scalar> struct ScalarRepresentation {
+    ScalarRepresentation(size_t numFeatures = 0) : properties(numFeatures) {}
+    std::vector<Scalar> properties;
+    using ScalarType = Scalar;
   };
 
-  struct IntegerPropertyRepresentation {
-    std::vector<int64_t> properties;
-  };
+  using FloatPropertyRepresentation = ScalarRepresentation<double>;
+  using IntegerPropertyRepresentation = ScalarRepresentation<int64_t>;
 
   using PackedProperty = std::variant<
       StringPropertyRepresentation,
@@ -287,7 +286,7 @@ struct GltfConverterImpl {
   void recordStringProperties(
       ExtensionModelExtStructuralMetadata& modelExtension,
       PackedProperties& packedProps) {
-    PropertyTable& propertyTable = modelExtension.propertyTables.emplace_back();
+    PropertyTable& propertyTable = modelExtension.propertyTables.back();
     size_t metadataBufferIndex = this->model.buffers.size();
     Buffer& metadataBuffer = this->model.buffers.emplace_back();
     size_t metadataSize = 0;
@@ -313,7 +312,7 @@ struct GltfConverterImpl {
       }
     }
     metadataBuffer.cesium.data.resize(metadataSize);
-    offsetsBuffer.cesium.data.resize(offsetsSize);
+    offsetsBuffer.cesium.data.resize(offsetsSize * sizeof(size_t));
     size_t buffOffset = 0;
     size_t offsetOffset = 0;
     for (auto& [propName, propRepVariant] : packedProps) {
@@ -339,7 +338,7 @@ struct GltfConverterImpl {
         std::memcpy(
             offsetsBuffer.cesium.data.data() + offsetOffset,
             pPropRep->offsets.data(),
-            pPropRep->offsets.size());
+            pPropRep->offsets.size() * sizeof(size_t));
         buffOffset += pPropRep->buffer.size();
         offsetOffset += pPropRep->offsets.size();
         PropertyTableProperty& propertyTableProperty =
@@ -349,6 +348,45 @@ struct GltfConverterImpl {
         propertyTableProperty.stringOffsets = offsetsIndex;
         propertyTableProperty.stringOffsetType =
             ClassProperty::ComponentType::UINT64;
+      }
+    }
+  }
+
+  template <typename ScalarProperty>
+  void recordScalarProperty(
+      ExtensionModelExtStructuralMetadata& modelExtension,
+      PackedProperties& packedProps) {
+    PropertyTable& propertyTable = modelExtension.propertyTables.back();
+    size_t metadataBufferIndex = this->model.buffers.size();
+    Buffer& metadataBuffer = this->model.buffers.emplace_back();
+    size_t metadataSize = 0;
+
+    for (auto& [_, propRepVariant] : packedProps) {
+      if (auto* pPropRep = std::get_if<ScalarRepresentation<ScalarProperty>>(
+              &propRepVariant)) {
+        metadataSize += pPropRep->properties.size() * sizeof(ScalarProperty);
+      }
+    }
+    metadataBuffer.cesium.data.resize(metadataSize);
+    size_t buffOffset = 0;
+    for (auto& [propName, propRepVariant] : packedProps) {
+      if (auto* pPropRep = std::get_if<ScalarRepresentation<ScalarProperty>>(
+              &propRepVariant)) {
+        size_t byteSize = pPropRep->properties.size() * sizeof(ScalarProperty);
+        int32_t propIndex = makeBufferView(
+            int32_t(metadataBufferIndex),
+            BufferView::Target::ARRAY_BUFFER,
+            int64_t(buffOffset),
+            int64_t(byteSize));
+        std::memcpy(
+            metadataBuffer.cesium.data.data() + buffOffset,
+            pPropRep->properties.data(),
+            byteSize);
+        buffOffset += byteSize;
+        PropertyTableProperty& propertyTableProperty =
+            propertyTable.properties.emplace(propName, PropertyTableProperty())
+                .first->second;
+        propertyTableProperty.values = propIndex;
       }
     }
   }
@@ -367,7 +405,7 @@ struct GltfConverterImpl {
              propIt != feature.properties->end();
              ++propIt) {
           const auto& [name, value] = *propIt;
-          if (std::holds_alternative<JsonValue::String>(value.value)) {
+          if (value.isString()) {
             if (!packedProps.contains(name)) {
               packedProps[name] = StringPropertyRepresentation(numFeatures);
             }
@@ -375,6 +413,20 @@ struct GltfConverterImpl {
                 std::get<StringPropertyRepresentation>(packedProps[name]);
             rep.offsets[featureId] = rep.buffer.size();
             rep.buffer.append(get<JsonValue::String>(value.value));
+          } else if (value.isDouble()) {
+            if (!packedProps.contains(name)) {
+              packedProps[name] = FloatPropertyRepresentation(numFeatures);
+            }
+            auto& rep =
+                std::get<FloatPropertyRepresentation>(packedProps[name]);
+            rep.properties.push_back(value.getDouble());
+          } else if (value.isInt64()) {
+            if (!packedProps.contains(name)) {
+              packedProps[name] = IntegerPropertyRepresentation(numFeatures);
+            }
+            auto& rep =
+                std::get<IntegerPropertyRepresentation>(packedProps[name]);
+            rep.properties.push_back(value.getInt64());
           }
         }
       }
@@ -384,7 +436,10 @@ struct GltfConverterImpl {
     this->model.addExtensionUsed(
         ExtensionModelExtStructuralMetadata::ExtensionName);
     modelExtension.schema = pSchema;
+    modelExtension.propertyTables.emplace_back();
     recordStringProperties(modelExtension, packedProps);
+    recordScalarProperty<double>(modelExtension, packedProps);
+    recordScalarProperty<int64_t>(modelExtension, packedProps);
   }
 };
 
