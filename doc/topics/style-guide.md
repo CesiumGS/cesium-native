@@ -168,8 +168,8 @@ Additionally, make sure to:
 - Use the `/** ... */` comment style (instead of `///`).
 - Use `@ref` when referencing other classes, functions, etc. in the Cesium Native API.
 - Use proper capitalization, grammar, and spelling.
-- Use back apostrophes (`) to encapsulate references to types and variable names.
-- Use triple back apostrophes (```) to encapsulate any snippets of math or code.
+- Use back apostrophes (\`) to encapsulate references to types and variable names.
+- Use triple back apostrophes (\`\`\`) to encapsulate any snippets of math or code.
 
 You can optionally use `@snippet` to include examples of how functions are used in other parts of the code (usually test cases). First, surround the target code with comments containing a descriptive name:
 
