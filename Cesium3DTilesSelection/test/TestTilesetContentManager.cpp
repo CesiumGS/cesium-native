@@ -28,13 +28,13 @@
 #include <CesiumGltf/AccessorWriter.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
-#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -1409,8 +1409,8 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
       CesiumAsync::Future<LoadedRasterOverlayImage>
       loadTileImage(const RasterOverlayTile& overlayTile) override {
-        CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage;
-        CesiumGltf::ImageAsset& image = pImage.emplace();
+        CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> pImage;
+        CesiumImage::ImageAsset& image = pImage.emplace();
         image.width = 1;
         image.height = 1;
         image.channels = 1;

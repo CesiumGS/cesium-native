@@ -7,7 +7,7 @@
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
-#include <CesiumGltfContent/ImageManipulation.h>
+#include <CesiumImage/ImageManipulation.h>
 #include <CesiumRasterOverlays/QuadtreeRasterOverlayTileProvider.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -34,9 +34,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace CesiumGltf;
-using namespace CesiumGltfContent;
-using namespace CesiumGltfReader;
+using namespace CesiumImage;
 using namespace CesiumUtility;
 
 namespace {

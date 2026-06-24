@@ -45,7 +45,7 @@ target_link_libraries(CesiumRasterOverlays
         CesiumGeometry
         CesiumGltf
         CesiumGltfContent
-        CesiumGltfReader
+        CesiumImage
         CesiumJsonReader
         CesiumJsonWriter
         CesiumUtility

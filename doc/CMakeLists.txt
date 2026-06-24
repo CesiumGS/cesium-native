@@ -11,6 +11,7 @@ if(DOXYGEN_FOUND)
         ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
         ../CesiumAsync/include
+        ../CesiumClientCommon/include
         ../CesiumCurl/include
         ../CesiumGeometry/include
         ../CesiumGeospatial/include
@@ -20,17 +21,17 @@ if(DOXYGEN_FOUND)
         ../CesiumGltfReader/include
         ../CesiumGltfReader/generated/include
         ../CesiumGltfWriter/include
-        ../CesiumClientCommon/include
+        ../CesiumImage/include
         ../CesiumIonClient/include
         ../CesiumITwinClient/include
-        ../CesiumVectorOverlays/include
-        ../CesiumVectorData/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
         ../CesiumQuantizedMeshTerrain/include
         ../CesiumQuantizedMeshTerrain/generated/include
         ../CesiumRasterOverlays/include
         ../CesiumUtility/include
+        ../CesiumVectorData/include
+        ../CesiumVectorOverlays/include
     )
 
     set(DOXYGEN_STRIP_FROM_INC_PATH ${LIB_DIRS})
@@ -64,13 +65,16 @@ if(DOXYGEN_FOUND)
         "CESIUMGLTFCONTENT_API"
         "CESIUMGLTFREADER_API"
         "CESIUMGLTFWRITER_API"
-        "CESIUMIWINCLIENT_API"
+        "CESIUMIMAGE_API"
         "CESIUMIONCLIENT_API"
+        "CESIUMITWINCLIENT_API"
         "CESIUMJSONREADER_API"
         "CESIUMJSONWRITER_API"
         "CESIUMQUANTIZEDMESHTERRAIN_API"
         "CESIUMRASTEROVERLAYS_API"
         "CESIUMUTILITY_API"
+        "CESIUMVECTORDATA_API"
+        "CESIUMVECTOROVERLAYS_API"
         "CESIUM_DEFAULT_ELLIPSOID==CesiumGeospatial::Ellipsoid::WGS84")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET "${CMAKE_CURRENT_LIST_DIR}/../node_modules/doxygen-awesome-css/doxygen-awesome.css")
     set(DOXYGEN_HTML_FOOTER "${CMAKE_CURRENT_LIST_DIR}/footer.html")

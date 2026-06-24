@@ -5,20 +5,24 @@
 ##### Breaking Changes :mega:
 
 - Upgraded vcpkg to `2026.04.27`.
-- `forEachTile` and `forEachContent` now take an additional `refine` argument in the callback function.
+- Moved `CesiumGltf::ImageAsset`, `CesiumGltf::Ktx2TranscodeTargets`, `CesiumGltfReader::ImageDecoder`, and `CesiumGltfContent::ImageManipulation` to a new `CesiumImage` library.
 - `PositionAccessorType` and `NormalAccessorType` are now variant types to support quantized attributes enabled by `KHR_mesh_quantization`.
 - The `AccessorView` and `AccessorWriter` constructor overloads that take raw buffer data now require an additional `normalized` argument.
 - The `getQuaternionAccessorView` overload that took an accessor pointer now takes an accessor reference.
+- `forEachTile` and `forEachContent` now take an additional `refine` argument in the callback function.
 
 ##### Additions :tada:
 
 - Added a constructor overload for `Cesium3DTilesSelection::ITwinRealityDataContentLoaderFactory` to override the iTwin Cesium Reality Data base URL. This makes it possible to connect to alternate servers (e.g., staging, QA, mock servers).
+- Added `CesiumGltfReader::MeshPrimitiveModeOptions` to make `CesiumGltfReader::GltfReader` retopologize glTF primitives with unsupported primitive modes, accounting for primitive restart.
 - Added `PositionFromAccessor` visitor for reading positions from a `PositionAccessorType`.
 - Added `NormalFromAccessor` visitor for reading normals from a `NormalAccessorType`.
 - Added `QuaternionFromAccessor` visitor for reading quaternions from a `QuaternionAccessorType`.
 - Updated `TexCoordAccessorType` to support additional quantized variants enabled by `KHR_mesh_quantization`.
 - Added `AccessorView::normalized()` and `AccessorWriter::normalized()` getters.
 - Added `getColorAccessorView`, `ColorAccessorType` and `ColorFromAccessor` for reading vertex colors from a glTF model.
+- Added support for `KHR_billboard` glTF extension in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Modified `resolveProperty.js` to correctly generate struct names when the property name would include invalid characters.
 
 ### v0.61.0 - 2026-06-01
 

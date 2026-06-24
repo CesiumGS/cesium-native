@@ -20,10 +20,10 @@
 #include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionExtMeshPolygon.h>
-#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
@@ -370,7 +370,7 @@ public:
       void* /*pMainThreadRendererResources*/) noexcept override {}
 
   virtual void* prepareRasterInLoadThread(
-      CesiumGltf::ImageAsset& /*image*/,
+      CesiumImage::ImageAsset& /*image*/,
       const std::any& /*rendererOptions*/) override {
     return nullptr;
   }
