@@ -1085,7 +1085,7 @@ TilesetJsonLoader::createLoader(
   TileExternalContent* pExternal =
       result.pRootTile->getContent().getExternalContent();
   CESIUM_ASSERT(pExternal);
-  std::string foreignSchemaUrl;
+  std::string externalSchemaUrl;
   if (pExternal) {
     removeRootPropertyAndParseTilesetMetadata(
         pLogger,
@@ -1098,7 +1098,7 @@ TilesetJsonLoader::createLoader(
               ->getExtension<ExtensionMetadataEntityMaxarContentGeoJson>();
       if (pMaxarGeoJsonExtension &&
           pMaxarGeoJsonExtension->propertiesSchemaUri) {
-        foreignSchemaUrl = CesiumUtility::Uri::resolve(
+        externalSchemaUrl = CesiumUtility::Uri::resolve(
             tilesetJsonUrl,
             *pMaxarGeoJsonExtension->propertiesSchemaUri);
       }
@@ -1135,14 +1135,14 @@ TilesetJsonLoader::createLoader(
       .thenInWorkerThread(
           [asyncSystem,
            pAssetAccessor,
-           foreignSchemaUrl,
+           externalSchemaUrl,
            requestHeaders = std::move(requestHeaderVector)](
               TilesetContentLoaderResult<TilesetJsonLoader>&& result) mutable {
-            if (!foreignSchemaUrl.empty()) {
+            if (!externalSchemaUrl.empty()) {
               return getJson(
                          asyncSystem,
                          pAssetAccessor,
-                         foreignSchemaUrl,
+                         externalSchemaUrl,
                          std::move(requestHeaders))
                   .thenInWorkerThread(
                       [result = std::move(result)](
