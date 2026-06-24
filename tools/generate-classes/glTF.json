@@ -181,6 +181,9 @@
     },
     "EXT_mesh_polygon glTF Mesh Primitive Extension": {
       "overrideName": "ExtensionExtMeshPolygon"
+    },
+    "KHR_billboard glTF Node Extension": {
+      "overrideName": "ExtensionKhrBillboard"
     }
   },
   "extensions": [
@@ -333,6 +336,10 @@
       "attachTo": [
         "mesh.primitive"
       ]
+    },
+    {
+      "extensionName": "KHR_billboard",
+      "schema": "Khronos/KHR_billboard/schema/node.KHR_billboard.schema.json"
     }
   ]
 }

@@ -2,7 +2,7 @@
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayExternals.h>
@@ -25,7 +25,7 @@
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace CesiumGltf;
+using namespace CesiumImage;
 using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
@@ -162,7 +162,7 @@ bool ActivatedRasterOverlay::loadTileThrottled(RasterOverlayTile& tile) {
 namespace {
 struct LoadResult {
   RasterOverlayTile::LoadState state = RasterOverlayTile::LoadState::Unloaded;
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage = nullptr;
+  CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> pImage = nullptr;
   CesiumGeometry::Rectangle rectangle = {};
   std::vector<Credit> credits = {};
   void* pRendererResources = nullptr;
@@ -216,7 +216,7 @@ LoadResult createLoadResultFromLoadedImage(
         "Warnings while loading image for tile");
   }
 
-  CesiumGltf::ImageAsset& image = *loadedImage.pImage;
+  CesiumImage::ImageAsset& image = *loadedImage.pImage;
 
   const int32_t bytesPerPixel = image.channels * image.bytesPerChannel;
   const int64_t requiredBytes =

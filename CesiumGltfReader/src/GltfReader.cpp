@@ -1,5 +1,6 @@
 #include "ModelJsonHandler.h"
 #include "applyKhrTextureTransform.h"
+#include "convertPrimitiveModes.h"
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
@@ -21,14 +22,14 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionTextureWebp.h>
 #include <CesiumGltf/Image.h>
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltfReader/GltfReader.h>
-#include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumGltfReader/NetworkImageAssetDescriptor.h>
 #include <CesiumGltfReader/NetworkSchemaAssetDescriptor.h>
+#include <CesiumImage/ImageAsset.h>
+#include <CesiumImage/ImageDecoder.h>
+#include <CesiumImage/Ktx2TranscodeTargets.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
 #include <CesiumUtility/ErrorList.h>
@@ -55,6 +56,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGltf;
 using namespace CesiumGltfReader;
+using namespace CesiumImage;
 using namespace CesiumJsonReader;
 using namespace CesiumUtility;
 
@@ -379,6 +381,10 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
           model.extensionsUsed.end(),
           "KHR_texture_transform") != model.extensionsUsed.end()) {
     applyKhrTextureTransform(model);
+  }
+
+  if (requiresPrimitiveModeConversion(options.primitiveModeOptions)) {
+    convertPrimitiveModes(model, options.primitiveModeOptions);
   }
 }
 
@@ -765,6 +771,6 @@ void CesiumGltfReader::GltfReader::postprocessGltf(
 }
 
 /*static*/ std::optional<std::string>
-GltfReader::generateMipMaps(CesiumGltf::ImageAsset& image) {
+GltfReader::generateMipMaps(CesiumImage::ImageAsset& image) {
   return ImageDecoder::generateMipMaps(image);
 }

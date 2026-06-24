@@ -1,5 +1,5 @@
 #include <CesiumAsync/AsyncSystem.h>
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-using namespace CesiumGltf;
+using namespace CesiumImage;
 using namespace CesiumNativeTests;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;

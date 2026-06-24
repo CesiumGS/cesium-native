@@ -1,13 +1,13 @@
 #pragma once
 
-#include <CesiumGltf/Library.h>
+#include <CesiumImage/Library.h>
 
-namespace CesiumGltf {
+namespace CesiumImage {
 
 /**
  * @brief Supported GPU compressed pixel formats.
  */
-enum class CESIUMGLTF_API GpuCompressedPixelFormat {
+enum class CESIUMIMAGE_API GpuCompressedPixelFormat {
   /**
    * @brief The data is uncompressed.
    */
@@ -98,15 +98,15 @@ enum class CESIUMGLTF_API GpuCompressedPixelFormat {
 
 /**
  * @brief Represents the status of support for all
- * {@link GpuCompressedPixelFormat}s on a client platform.
+ * @ref GpuCompressedPixelFormat s on a client platform.
  *
- * Clients can use this struct to convey which gpu compressed pixel formats are
- * supported. This can be used to construct a {@link Ktx2TranscodeTargets}.
+ * Clients can use this struct to convey which GPU compressed pixel formats are
+ * supported. This can be used to construct a @ref Ktx2TranscodeTargets.
  *
  * Each entry in the struct is a bool that represents whether the gpu
  * compressed pixel format with the corresponding name is supported.
  */
-struct CESIUMGLTF_API SupportedGpuCompressedPixelFormats {
+struct CESIUMIMAGE_API SupportedGpuCompressedPixelFormats {
   /** @copydoc GpuCompressedPixelFormat::ETC1_RGB */
   bool ETC1_RGB{};
   /** @copydoc GpuCompressedPixelFormat::ETC2_RGBA */
@@ -144,7 +144,7 @@ struct CESIUMGLTF_API SupportedGpuCompressedPixelFormats {
  * When built with the constructor, these targets can take into account
  * platform-specific support for target formats as reported by the client.
  */
-struct CESIUMGLTF_API Ktx2TranscodeTargets {
+struct CESIUMIMAGE_API Ktx2TranscodeTargets {
 
   /**
    * @brief The gpu pixel compression format to transcode Red ETC1S textures
@@ -211,4 +211,4 @@ struct CESIUMGLTF_API Ktx2TranscodeTargets {
       bool preserveHighQuality);
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumImage

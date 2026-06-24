@@ -5,7 +5,7 @@
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Projection.h>
-#include <CesiumGltfReader/ImageDecoder.h>
+#include <CesiumImage/ImageDecoder.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -32,8 +32,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace CesiumGltf;
-using namespace CesiumGltfReader;
+using namespace CesiumImage;
 using namespace CesiumUtility;
 
 namespace CesiumRasterOverlays {
@@ -200,7 +199,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
             if (pResponse->data().empty()) {
               if (options.allowEmptyImages) {
                 return LoadedRasterOverlayImage{
-                    new CesiumGltf::ImageAsset(),
+                    new ImageAsset(),
                     options.rectangle,
                     std::move(options.credits),
                     {},
@@ -221,7 +220,7 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
 
             const std::span<const std::byte> data = pResponse->data();
 
-            CesiumGltfReader::ImageReaderResult loadedImage =
+            ImageReaderResult loadedImage =
                 ImageDecoder::readImage(data, Ktx2TranscodeTargets);
 
             if (!loadedImage.errors.empty()) {

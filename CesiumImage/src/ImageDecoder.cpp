@@ -1,6 +1,6 @@
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
-#include <CesiumGltfReader/ImageDecoder.h>
+#include <CesiumImage/ImageAsset.h>
+#include <CesiumImage/ImageDecoder.h>
+#include <CesiumImage/Ktx2TranscodeTargets.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
 
@@ -31,9 +31,7 @@
 #include <turbojpeg.h>
 #endif
 
-namespace CesiumGltfReader {
-
-using namespace CesiumGltf;
+namespace CesiumImage {
 
 namespace {
 
@@ -71,7 +69,7 @@ ImageReaderResult ImageDecoder::readImage(
 
   ImageReaderResult result;
 
-  CesiumGltf::ImageAsset& image = result.pImage.emplace();
+  ImageAsset& image = result.pImage.emplace();
 
   if (isKtx(data)) {
     ktxTexture2* pTexture = nullptr;
@@ -477,4 +475,4 @@ std::optional<std::string> ImageDecoder::generateMipMaps(ImageAsset& image) {
              static_cast<stbir_pixel_layout>(channels)) != nullptr;
 }
 
-} // namespace CesiumGltfReader
+} // namespace CesiumImage

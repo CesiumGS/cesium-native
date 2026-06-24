@@ -10,7 +10,7 @@
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -780,7 +780,7 @@ public:
                 const int32_t width = std::max(textureSize.x >> i, 1);
                 const int32_t height = std::max(textureSize.y >> i, 1);
                 result.pImage->mipPositions.emplace_back(
-                    CesiumGltf::ImageAssetMipPosition{
+                    CesiumImage::ImageAssetMipPosition{
                         totalSize,
                         (size_t)(width * height * result.pImage->channels *
                                  result.pImage->bytesPerChannel)});

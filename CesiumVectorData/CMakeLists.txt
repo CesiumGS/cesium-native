@@ -57,6 +57,7 @@ target_link_libraries(CesiumVectorData
         CesiumAsync
         CesiumGltf
         CesiumGltfContent
+        CesiumImage
     PRIVATE
         blend2d::blend2d
         $<BUILD_INTERFACE:earcut>
