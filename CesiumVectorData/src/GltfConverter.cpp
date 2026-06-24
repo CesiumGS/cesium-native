@@ -292,11 +292,13 @@ struct GltfConverterImpl {
       PackedProperties& packedProps) {
     PropertyTable& propertyTable = modelExtension.propertyTables.back();
     size_t metadataBufferIndex = this->model.buffers.size();
-    Buffer& metadataBuffer = this->model.buffers.emplace_back();
+    this->model.buffers.emplace_back();
     size_t metadataSize = 0;
     size_t offsetsBufferIndex = this->model.buffers.size();
-    Buffer& offsetsBuffer = this->model.buffers.emplace_back();
+    this->model.buffers.emplace_back();
     size_t offsetsSize = 0;
+    Buffer& metadataBuffer = this->model.buffers[metadataBufferIndex];
+    Buffer& offsetsBuffer = this->model.buffers[offsetsBufferIndex];
 
     for (auto& [_, propRepVariant] : packedProps) {
       if (auto* pPropRep =
