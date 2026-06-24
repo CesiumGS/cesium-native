@@ -17,10 +17,14 @@
 #include <CesiumGltf/MaterialPBRMetallicRoughness.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>

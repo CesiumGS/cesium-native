@@ -37,10 +37,12 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltf/Schema.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>

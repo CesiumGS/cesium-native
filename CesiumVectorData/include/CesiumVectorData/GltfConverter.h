@@ -34,8 +34,8 @@ public:
    *
    * @param geoJson The GeoJSON document.
    * @param ellipsoid The ellipsoid for GeoJSON coordinates.
-   * @param schema the MAXAR_content_geojson schema for the GeoJSON feature
-   * properties.
+   * @param pSchema the converted MAXAR_content_geojson schema for the GeoJSON
+   * feature properties.
    * @returns A result object that includes the glTF Model and any errors.
    */
   static ConverterResult convert(
