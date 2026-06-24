@@ -63,6 +63,4 @@ target_link_libraries(CesiumGltfReader
         meshoptimizer::meshoptimizer
         modp_b64::modp_b64
         spz::spz
-        WebP::webp
-        WebP::webpdecoder
 )
