@@ -54,6 +54,7 @@ cesium_target_include_directories(
 target_link_libraries(CesiumGltfWriter
     PUBLIC
         CesiumGltf
+        CesiumImage
         CesiumJsonWriter
     PRIVATE
         modp_b64::modp_b64

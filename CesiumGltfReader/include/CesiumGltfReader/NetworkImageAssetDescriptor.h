@@ -2,8 +2,8 @@
 
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/NetworkAssetDescriptor.h>
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumImage/ImageAsset.h>
+#include <CesiumImage/Ktx2TranscodeTargets.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>
 
@@ -17,16 +17,16 @@ namespace CesiumGltfReader {
 
 /**
  * @brief A description of an image asset that can be loaded from the network
- * using an {@link CesiumAsync::IAssetAccessor}. This includes a URL, any headers to be
- * included in the request, and the set of supported GPU texture formats for
- * KTX2 decoding.
+ * using an @ref CesiumAsync::IAssetAccessor. This includes a URL, any headers
+ * to be included in the request, and the set of supported GPU texture formats
+ * for KTX2 decoding.
  */
 struct NetworkImageAssetDescriptor
     : public CesiumAsync::NetworkAssetDescriptor {
   /**
    * @brief The supported GPU texture formats used for KTX2 decoding.
    */
-  CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets{};
+  CesiumImage::Ktx2TranscodeTargets ktx2TranscodeTargets{};
 
   /**
    * @brief Determines if this descriptor is identical to another one.
@@ -35,14 +35,14 @@ struct NetworkImageAssetDescriptor
 
   /**
    * @brief Request this asset from the network using the provided asset
-   * accessor and return the loaded {@link CesiumGltf::ImageAsset}.
+   * accessor and return the loaded @ref CesiumImage::ImageAsset.
    *
    * @param asyncSystem The async system.
    * @param pAssetAccessor The asset accessor.
    * @return A future that resolves to the image asset once the request is
    * complete.
    */
-  CesiumAsync::Future<CesiumUtility::ResultPointer<CesiumGltf::ImageAsset>>
+  CesiumAsync::Future<CesiumUtility::ResultPointer<CesiumImage::ImageAsset>>
   load(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor) const;

@@ -1,5 +1,5 @@
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltfContent/ImageManipulation.h>
+#include <CesiumImage/ImageAsset.h>
+#include <CesiumImage/ImageManipulation.h>
 
 #include <doctest/doctest.h>
 
@@ -7,8 +7,7 @@
 #include <cstddef>
 #include <vector>
 
-using namespace CesiumGltf;
-using namespace CesiumGltfContent;
+using namespace CesiumImage;
 
 TEST_CASE("ImageManipulation::unsafeBlitImage entire image") {
   size_t width = 10;

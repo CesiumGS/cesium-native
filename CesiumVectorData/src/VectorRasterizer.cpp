@@ -2,7 +2,7 @@
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -30,7 +30,7 @@
 
 using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
-using namespace CesiumGltf;
+using namespace CesiumImage;
 
 namespace CesiumVectorData {
 namespace {
@@ -67,7 +67,7 @@ template <typename T> size_t seedForObject(const T& object, size_t base) {
 
 VectorRasterizer::VectorRasterizer(
     const GlobeRectangle& bounds,
-    CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset,
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset>& imageAsset,
     uint32_t mipLevel,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _bounds(bounds),
@@ -442,7 +442,7 @@ void VectorRasterizer::clear(const CesiumUtility::Color& clearColor) {
   this->_context.fillAll(BLRgba32(clearColor.toRgba32()));
 }
 
-CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>
+CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset>
 VectorRasterizer::finalize() {
   if (_finalized) {
     return this->_imageAsset;

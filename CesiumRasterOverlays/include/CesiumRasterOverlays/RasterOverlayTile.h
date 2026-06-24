@@ -3,7 +3,6 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Rectangle.h>
-#include <CesiumGltf/Model.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 
@@ -11,6 +10,10 @@
 
 namespace CesiumUtility {
 struct Credit;
+}
+
+namespace CesiumImage {
+struct ImageAsset;
 }
 
 namespace CesiumRasterOverlays {
@@ -192,7 +195,7 @@ public:
    *
    * @return The image data.
    */
-  CesiumUtility::IntrusivePointer<const CesiumGltf::ImageAsset>
+  CesiumUtility::IntrusivePointer<const CesiumImage::ImageAsset>
   getImage() const noexcept {
     return this->_pImage;
   }
@@ -205,7 +208,7 @@ public:
    *
    * @return The image data.
    */
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> getImage() noexcept {
+  CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> getImage() noexcept {
     return this->_pImage;
   }
 
@@ -266,7 +269,7 @@ private:
   CesiumGeometry::Rectangle _rectangle;
   std::vector<CesiumUtility::Credit> _tileCredits;
   LoadState _state;
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> _pImage;
+  CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> _pImage;
   void* _pRendererResources;
   MoreDetailAvailable _moreDetailAvailable;
 };

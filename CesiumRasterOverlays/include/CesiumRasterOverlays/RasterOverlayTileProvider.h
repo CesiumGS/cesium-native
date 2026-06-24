@@ -16,6 +16,10 @@
 
 #include <optional>
 
+namespace CesiumImage {
+struct ImageAsset;
+}
+
 namespace CesiumUtility {
 class CreditReferencer;
 }
@@ -37,7 +41,7 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
    * This will be nullptr if the loading failed. In this case, the `errors`
    * vector will contain the corresponding error messages.
    */
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage{nullptr};
+  CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> pImage{nullptr};
 
   /**
    * @brief The projected rectangle defining the bounds of this image.

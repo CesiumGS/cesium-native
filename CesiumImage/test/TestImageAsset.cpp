@@ -1,10 +1,10 @@
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 
 #include <doctest/doctest.h>
 
 TEST_CASE("ImageAsset::changeNumberOfChannels") {
   SUBCASE("Converts to fewer channels") {
-    CesiumGltf::ImageAsset asset;
+    CesiumImage::ImageAsset asset;
     asset.channels = 4;
     asset.width = 4;
     asset.height = 1;
@@ -41,7 +41,7 @@ TEST_CASE("ImageAsset::changeNumberOfChannels") {
   }
 
   SUBCASE("Converts to more channels") {
-    CesiumGltf::ImageAsset asset;
+    CesiumImage::ImageAsset asset;
     asset.channels = 1;
     asset.width = 4;
     asset.height = 1;

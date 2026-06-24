@@ -2,6 +2,7 @@
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
@@ -32,7 +33,7 @@ using namespace CesiumVectorData;
 const size_t BENCHMARK_ITERATIONS = 100000;
 
 namespace {
-CesiumGltf::ImageAsset rasterizeOverlayTileFromDocument(
+CesiumImage::ImageAsset rasterizeOverlayTileFromDocument(
     const GlobeRectangle& rectangle,
     const glm::dvec2& imageSize,
     GeoJsonDocument&& document,
@@ -77,7 +78,7 @@ CesiumGltf::ImageAsset rasterizeOverlayTileFromDocument(
   return *pTile->getImage();
 }
 
-CesiumGltf::ImageAsset rasterizeOverlayTile(
+CesiumImage::ImageAsset rasterizeOverlayTile(
     const GlobeRectangle& rectangle,
     const glm::dvec2& imageSize,
     const std::filesystem::path& testDataPath,
@@ -96,7 +97,7 @@ CesiumGltf::ImageAsset rasterizeOverlayTile(
 }
 
 bool imageHasPixelWithColor(
-    const CesiumGltf::ImageAsset& image,
+    const CesiumImage::ImageAsset& image,
     uint8_t r,
     uint8_t g,
     uint8_t b,
@@ -257,7 +258,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
       Ellipsoid::WGS84,
       0};
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+  CesiumImage::ImageAsset image = rasterizeOverlayTile(
       GlobeRectangle::fromDegrees(0.0, -5.0, 5.0, 5.0),
       glm::dvec2(256, 256),
       testDataPath,
@@ -300,7 +301,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
       Ellipsoid::WGS84,
       0};
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+  CesiumImage::ImageAsset image = rasterizeOverlayTile(
       GlobeRectangle(-1.0, -1.0, 1.0, 1.0),
       glm::dvec2(256, 256),
       testDataPath,
@@ -343,7 +344,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
       0};
 
   {
-    CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+    CesiumImage::ImageAsset image = rasterizeOverlayTile(
         GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0),
         glm::dvec2(64, 64),
         testDataPath,
@@ -363,7 +364,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
   }
 
   {
-    CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+    CesiumImage::ImageAsset image = rasterizeOverlayTile(
         GlobeRectangle::fromDegrees(-180.0, -5.0, -170.0, 5.0),
         glm::dvec2(64, 64),
         testDataPath,
@@ -383,7 +384,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
   }
 
   {
-    CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+    CesiumImage::ImageAsset image = rasterizeOverlayTile(
         GlobeRectangle::fromDegrees(170.0, -5.0, 180.0, 5.0),
         glm::dvec2(64, 64),
         testDataPath,
@@ -439,7 +440,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection uses geometry style "
       featureStyle,
       collectionStyle);
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
       GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
       glm::dvec2(256, 256),
       std::move(doc),
@@ -481,7 +482,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection falls back to "
       featureStyle,
       collectionStyle);
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
       GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
       glm::dvec2(256, 256),
       std::move(doc),
@@ -516,7 +517,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection falls back to "
       std::nullopt,
       collectionStyle);
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
       GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
       glm::dvec2(256, 256),
       std::move(doc),
@@ -543,7 +544,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection falls back to "
       std::nullopt,
       std::nullopt);
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
       GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
       glm::dvec2(256, 256),
       std::move(doc),

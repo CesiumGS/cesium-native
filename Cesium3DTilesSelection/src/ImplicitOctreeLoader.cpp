@@ -11,6 +11,7 @@
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentOptions.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
@@ -20,7 +21,6 @@
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -146,8 +146,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& tileUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
-    CesiumGltf::Ktx2TranscodeTargets ktx2TranscodeTargets,
-    bool applyTextureTransform,
+    const Cesium3DTilesSelection::TilesetContentOptions& contentOptions,
     const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
         pSharedAssetSystem,
     const glm::dmat4& tileTransform,
@@ -155,8 +154,7 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
       .thenInWorkerThread(
           [pLogger,
-           ktx2TranscodeTargets,
-           applyTextureTransform,
+           contentOptions,
            asyncSystem,
            pAssetAccessor = pAssetAccessor,
            pSharedAssetSystem,
@@ -201,9 +199,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
 
             if (converter) {
               // Convert to gltf
-              CesiumGltfReader::GltfReaderOptions gltfOptions;
-              gltfOptions.ktx2TranscodeTargets = ktx2TranscodeTargets;
-              gltfOptions.applyTextureTransform = applyTextureTransform;
+              CesiumGltfReader::GltfReaderOptions gltfOptions =
+                  contentOptions.toGltfReaderOptions();
               if (pSharedAssetSystem) {
                 gltfOptions.pSharedAssetSystem = pSharedAssetSystem;
               }
@@ -342,8 +339,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       pAssetAccessor,
       tileUrl,
       requestHeaders,
-      contentOptions.ktx2TranscodeTargets,
-      contentOptions.applyTextureTransform,
+      contentOptions,
       loadInput.pSharedAssetSystem,
       tile.getTransform(),
       ellipsoid);

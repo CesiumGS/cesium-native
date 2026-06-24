@@ -19,12 +19,24 @@ getPositionAccessorView(const Model& model, const MeshPrimitive& primitive) {
 
   const Accessor* pAccessor =
       model.getSafe<Accessor>(&model.accessors, positionAttribute->second);
-  if (!pAccessor || pAccessor->type != Accessor::Type::VEC3 ||
-      pAccessor->componentType != Accessor::ComponentType::FLOAT) {
+  if (!pAccessor || pAccessor->type != Accessor::Type::VEC3) {
     return PositionAccessorType();
   }
 
-  return PositionAccessorType(model, *pAccessor);
+  switch (pAccessor->componentType) {
+  case Accessor::ComponentType::BYTE:
+    return AccessorView<AccessorTypes::VEC3<int8_t>>(model, *pAccessor);
+  case Accessor::ComponentType::UNSIGNED_BYTE:
+    return AccessorView<AccessorTypes::VEC3<uint8_t>>(model, *pAccessor);
+  case Accessor::ComponentType::SHORT:
+    return AccessorView<AccessorTypes::VEC3<int16_t>>(model, *pAccessor);
+  case Accessor::ComponentType::UNSIGNED_SHORT:
+    return AccessorView<AccessorTypes::VEC3<uint16_t>>(model, *pAccessor);
+  case Accessor::ComponentType::FLOAT:
+    return AccessorView<AccessorTypes::VEC3<float>>(model, *pAccessor);
+  default:
+    return PositionAccessorType();
+  }
 }
 
 NormalAccessorType
@@ -36,12 +48,30 @@ getNormalAccessorView(const Model& model, const MeshPrimitive& primitive) {
 
   const Accessor* pAccessor =
       model.getSafe<Accessor>(&model.accessors, normalAttribute->second);
-  if (!pAccessor || pAccessor->type != Accessor::Type::VEC3 ||
-      pAccessor->componentType != Accessor::ComponentType::FLOAT) {
+  if (!pAccessor || pAccessor->type != Accessor::Type::VEC3) {
     return NormalAccessorType();
   }
 
-  return NormalAccessorType(model, *pAccessor);
+  switch (pAccessor->componentType) {
+  case Accessor::ComponentType::BYTE:
+    if (pAccessor->normalized) {
+      return AccessorView<AccessorTypes::VEC3<int8_t>>(model, *pAccessor);
+    } else {
+      // Invalid accessor, BYTE must be normalized
+      return NormalAccessorType();
+    }
+  case Accessor::ComponentType::SHORT:
+    if (pAccessor->normalized) {
+      return AccessorView<AccessorTypes::VEC3<int16_t>>(model, *pAccessor);
+    } else {
+      // Invalid accessor, SHORT must be normalized
+      return NormalAccessorType();
+    }
+  case Accessor::ComponentType::FLOAT:
+    return AccessorView<AccessorTypes::VEC3<float>>(model, *pAccessor);
+  default:
+    return NormalAccessorType();
+  }
 }
 
 namespace {
@@ -126,18 +156,23 @@ IndexAccessorType getIndexAccessorView(const Model& model, int32_t index) {
   }
 
   const Accessor* pAccessor = model.getSafe<Accessor>(&model.accessors, index);
-  if (!pAccessor || pAccessor->type != Accessor::Type::SCALAR ||
-      pAccessor->normalized) {
+  return pAccessor ? getIndexAccessorView(model, *pAccessor)
+                   : AccessorView<uint8_t>();
+}
+
+IndexAccessorType
+getIndexAccessorView(const Model& model, const Accessor& accessor) {
+  if (accessor.type != Accessor::Type::SCALAR || accessor.normalized) {
     return AccessorView<uint8_t>();
   }
 
-  switch (pAccessor->componentType) {
+  switch (accessor.componentType) {
   case Accessor::ComponentType::UNSIGNED_BYTE:
-    return AccessorView<uint8_t>(model, *pAccessor);
+    return AccessorView<uint8_t>(model, accessor);
   case Accessor::ComponentType::UNSIGNED_SHORT:
-    return AccessorView<uint16_t>(model, *pAccessor);
+    return AccessorView<uint16_t>(model, accessor);
   case Accessor::ComponentType::UNSIGNED_INT:
-    return AccessorView<uint32_t>(model, *pAccessor);
+    return AccessorView<uint32_t>(model, accessor);
   default:
     return AccessorView<uint8_t>();
   }
@@ -161,18 +196,14 @@ TexCoordAccessorType getTexCoordAccessorView(
   }
 
   switch (pAccessor->componentType) {
+  case Accessor::ComponentType::BYTE:
+    return AccessorView<AccessorTypes::VEC2<int8_t>>(model, *pAccessor);
   case Accessor::ComponentType::UNSIGNED_BYTE:
-    if (pAccessor->normalized) {
-      // Unsigned byte texcoords must be normalized.
-      return AccessorView<AccessorTypes::VEC2<uint8_t>>(model, *pAccessor);
-    }
-    [[fallthrough]];
+    return AccessorView<AccessorTypes::VEC2<uint8_t>>(model, *pAccessor);
+  case Accessor::ComponentType::SHORT:
+    return AccessorView<AccessorTypes::VEC2<int16_t>>(model, *pAccessor);
   case Accessor::ComponentType::UNSIGNED_SHORT:
-    if (pAccessor->normalized) {
-      // Unsigned short texcoords must be normalized.
-      return AccessorView<AccessorTypes::VEC2<uint16_t>>(model, *pAccessor);
-    }
-    [[fallthrough]];
+    return AccessorView<AccessorTypes::VEC2<uint16_t>>(model, *pAccessor);
   case Accessor::ComponentType::FLOAT:
     return AccessorView<AccessorTypes::VEC2<float>>(model, *pAccessor);
   default:
@@ -181,25 +212,43 @@ TexCoordAccessorType getTexCoordAccessorView(
 }
 
 QuaternionAccessorType
-getQuaternionAccessorView(const Model& model, const Accessor* pAccessor) {
-  if (!pAccessor) {
+getQuaternionAccessorView(const Model& model, const Accessor& accessor) {
+  if (accessor.type != Accessor::Type::VEC4) {
     return QuaternionAccessorType();
   }
-  switch (pAccessor->componentType) {
+
+  switch (accessor.componentType) {
   case Accessor::ComponentType::BYTE:
-    return AccessorView<AccessorTypes::VEC4<int8_t>>(model, *pAccessor);
-    [[fallthrough]];
+    if (accessor.normalized) {
+      return AccessorView<AccessorTypes::VEC4<int8_t>>(model, accessor);
+    } else {
+      // Invalid accessor, BYTE must be normalized
+      return QuaternionAccessorType();
+    }
   case Accessor::ComponentType::UNSIGNED_BYTE:
-    return AccessorView<AccessorTypes::VEC4<uint8_t>>(model, *pAccessor);
-    [[fallthrough]];
+    if (accessor.normalized) {
+      return AccessorView<AccessorTypes::VEC4<uint8_t>>(model, accessor);
+    } else {
+      // Invalid accessor, UNSIGNED_BYTE must be normalized
+      return QuaternionAccessorType();
+    }
   case Accessor::ComponentType::SHORT:
-    return AccessorView<AccessorTypes::VEC4<int16_t>>(model, *pAccessor);
-    [[fallthrough]];
+    if (accessor.normalized) {
+      return AccessorView<AccessorTypes::VEC4<int16_t>>(model, accessor);
+    } else {
+      // Invalid accessor, SHORT must be normalized
+      return QuaternionAccessorType();
+    }
   case Accessor::ComponentType::UNSIGNED_SHORT:
-    return AccessorView<AccessorTypes::VEC4<uint16_t>>(model, *pAccessor);
-    [[fallthrough]];
+    if (accessor.normalized) {
+      return AccessorView<AccessorTypes::VEC4<uint16_t>>(model, accessor);
+    } else {
+      // Invalid accessor, UNSIGNED_SHORT must be normalized
+      return QuaternionAccessorType();
+    }
+
   case Accessor::ComponentType::FLOAT:
-    return AccessorView<AccessorTypes::VEC4<float>>(model, *pAccessor);
+    return AccessorView<AccessorTypes::VEC4<float>>(model, accessor);
   default:
     return QuaternionAccessorType();
   }
@@ -209,9 +258,75 @@ QuaternionAccessorType
 getQuaternionAccessorView(const Model& model, int32_t accessorIndex) {
   const Accessor* pAccessor =
       model.getSafe<Accessor>(&model.accessors, accessorIndex);
-  if (!pAccessor || pAccessor->type != Accessor::Type::VEC4) {
+  if (!pAccessor) {
     return QuaternionAccessorType();
   }
-  return getQuaternionAccessorView(model, pAccessor);
+  return getQuaternionAccessorView(model, *pAccessor);
 }
+
+ColorAccessorType getColorAccessorView(
+    const Model& model,
+    const MeshPrimitive& primitive,
+    int32_t colorSetIndex) {
+  std::string colorName = "COLOR_" + std::to_string(colorSetIndex);
+  auto colorIt = primitive.attributes.find(colorName);
+  if (colorIt == primitive.attributes.end()) {
+    return ColorAccessorType();
+  }
+
+  const Accessor* pAccessor =
+      model.getSafe<Accessor>(&model.accessors, colorIt->second);
+  if (!pAccessor) {
+    return ColorAccessorType();
+  }
+
+  if (pAccessor->type == Accessor::Type::VEC3) {
+    switch (pAccessor->componentType) {
+    case Accessor::ComponentType::UNSIGNED_BYTE:
+      if (pAccessor->normalized) {
+        return AccessorView<AccessorTypes::VEC3<uint8_t>>(model, *pAccessor);
+      } else {
+        // Invalid accessor, UNSIGNED_BYTE must be normalized
+        return ColorAccessorType();
+      }
+    case Accessor::ComponentType::UNSIGNED_SHORT:
+      if (pAccessor->normalized) {
+        return AccessorView<AccessorTypes::VEC3<uint16_t>>(model, *pAccessor);
+      } else {
+        // Invalid accessor, UNSIGNED_SHORT must be normalized
+        return ColorAccessorType();
+      }
+    case Accessor::ComponentType::FLOAT:
+      return AccessorView<AccessorTypes::VEC3<float>>(model, *pAccessor);
+    default:
+      return ColorAccessorType();
+    }
+  }
+
+  if (pAccessor->type == Accessor::Type::VEC4) {
+    switch (pAccessor->componentType) {
+    case Accessor::ComponentType::UNSIGNED_BYTE:
+      if (pAccessor->normalized) {
+        return AccessorView<AccessorTypes::VEC4<uint8_t>>(model, *pAccessor);
+      } else {
+        // Invalid accessor, UNSIGNED_BYTE must be normalized
+        return ColorAccessorType();
+      }
+    case Accessor::ComponentType::UNSIGNED_SHORT:
+      if (pAccessor->normalized) {
+        return AccessorView<AccessorTypes::VEC4<uint16_t>>(model, *pAccessor);
+      } else {
+        // Invalid accessor, UNSIGNED_SHORT must be normalized
+        return ColorAccessorType();
+      }
+    case Accessor::ComponentType::FLOAT:
+      return AccessorView<AccessorTypes::VEC4<float>>(model, *pAccessor);
+    default:
+      return ColorAccessorType();
+    }
+  }
+
+  return ColorAccessorType();
+}
+
 } // namespace CesiumGltf

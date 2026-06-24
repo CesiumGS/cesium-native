@@ -1,4 +1,5 @@
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
@@ -14,7 +15,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace CesiumGltf;
+using namespace CesiumImage;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 using namespace CesiumRasterOverlays;

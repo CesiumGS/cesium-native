@@ -2,7 +2,7 @@
 
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
-#include <Cesium3DTilesSelection/TilesetOptions.h>
+#include <Cesium3DTilesSelection/TilesetContentOptions.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/IAssetAccessor.h>

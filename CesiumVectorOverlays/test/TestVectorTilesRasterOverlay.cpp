@@ -7,6 +7,7 @@
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/FileAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/checkFilesEqual.h>

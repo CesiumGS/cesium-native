@@ -6,6 +6,7 @@
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumGltf/TextureView.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumUtility/Assert.h>
 
 #include <glm/common.hpp>
@@ -16,6 +17,8 @@
 #include <cstdint>
 #include <optional>
 #include <vector>
+
+using namespace CesiumImage;
 
 namespace CesiumGltf {
 

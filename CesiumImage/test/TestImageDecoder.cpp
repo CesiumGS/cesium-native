@@ -1,5 +1,5 @@
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltfReader/ImageDecoder.h>
+#include <CesiumImage/ImageAsset.h>
+#include <CesiumImage/ImageDecoder.h>
 #include <CesiumNativeTests/readFile.h>
 
 #include <doctest/doctest.h>
@@ -8,15 +8,14 @@
 #include <filesystem>
 #include <vector>
 
-using namespace CesiumGltf;
-using namespace CesiumGltfReader;
+using namespace CesiumImage;
 
-TEST_CASE("CesiumGltfReader::ImageDecoder") {
+TEST_CASE("CesiumImage::ImageDecoder") {
   SUBCASE("Can correctly interpret mipmaps in KTX2 files") {
     {
       // This KTX2 file has a single mip level and no further mip levels should
       // be generated. `mipPositions` should reflect this single mip level.
-      std::filesystem::path ktx2File = CesiumGltfReader_TEST_DATA_DIR;
+      std::filesystem::path ktx2File = CesiumImage_TEST_DATA_DIR;
       ktx2File /= "ktx2/kota-onelevel.ktx2";
       std::vector<std::byte> data = readFile(ktx2File.string());
       ImageReaderResult imageResult =
@@ -36,7 +35,7 @@ TEST_CASE("CesiumGltfReader::ImageDecoder") {
     {
       // This KTX2 file has only a base image but further mip levels can be
       // generated. This image effectively has no mip levels.
-      std::filesystem::path ktx2File = CesiumGltfReader_TEST_DATA_DIR;
+      std::filesystem::path ktx2File = CesiumImage_TEST_DATA_DIR;
       ktx2File /= "ktx2/kota-automipmap.ktx2";
       std::vector<std::byte> data = readFile(ktx2File.string());
       ImageReaderResult imageResult =
@@ -50,7 +49,7 @@ TEST_CASE("CesiumGltfReader::ImageDecoder") {
 
     {
       // This KTX2 file has a complete mip chain.
-      std::filesystem::path ktx2File = CesiumGltfReader_TEST_DATA_DIR;
+      std::filesystem::path ktx2File = CesiumImage_TEST_DATA_DIR;
       ktx2File /= "ktx2/kota-mipmaps.ktx2";
       std::vector<std::byte> data = readFile(ktx2File.string());
       ImageReaderResult imageResult =
