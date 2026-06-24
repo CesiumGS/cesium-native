@@ -15,6 +15,13 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
 
   /**
    * @brief A callback function for {@link forEachTile}.
+   *
+   * @param tileset The tileset.
+   * @param tile The tile.
+   * @param transform The tile's world transform, computed from the product of
+   * the parent's world transform and the tile's local transform.
+   * @param refine The tile's refine property, potentially inherited from an
+   * ancestor tile if not set.
    */
   typedef void ForEachTileCallback(
       Tileset& tileset,
@@ -32,9 +39,7 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
    */
   void forEachTile(std::function<ForEachTileCallback>&& callback);
 
-  /**
-   * @brief A callback function for {@link forEachTile}.
-   */
+  /** @copydoc Tileset::ForEachTileCallback */
   typedef void ForEachTileConstCallback(
       const Tileset& tileset,
       const Tile& tile,
@@ -46,6 +51,14 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
 
   /**
    * @brief A callback function for {@link forEachContent}.
+   *
+   * @param tileset The tileset.
+   * @param tile The tile.
+   * @param content The content.
+   * @param transform The tile's world transform, computed from the product of
+   * the parent's world transform and the tile's local transform.
+   * @param refine The tile's refine property, potentially inherited from an
+   * ancestor tile if not set.
    */
   typedef void ForEachContentCallback(
       Tileset& tileset,
@@ -64,9 +77,7 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
    */
   void forEachContent(std::function<ForEachContentCallback>&& callback);
 
-  /**
-   * @brief A callback function for {@link forEachContent}.
-   */
+  /** @copydoc Tileset::ForEachContentCallback */
   typedef void ForEachContentConstCallback(
       const Tileset& tileset,
       const Tile& tile,
