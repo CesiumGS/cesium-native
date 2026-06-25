@@ -87,9 +87,9 @@ TEST_CASE("Conversion from geoJSON to glTF") {
     const auto* metadata =
         model.getExtension<ExtensionModelExtStructuralMetadata>();
     REQUIRE(metadata);
-    IntrusivePointer<Schema> pSchema = metadata->schema;
-    REQUIRE(pSchema);
-    const std::unordered_map<std::string, Class>& classes = pSchema->classes;
+    REQUIRE(metadata->schema);
+    const std::unordered_map<std::string, Class>& classes =
+        metadata->schema->classes;
     auto classItr = classes.find("ShipRoute");
     REQUIRE(classItr != classes.end());
     const Class& routeClass = classItr->second;
