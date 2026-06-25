@@ -318,12 +318,14 @@ struct GltfConverterImpl {
       }
     }
     metadataBuffer.cesium.data.resize(metadataSize);
-    offsetsBuffer.cesium.data.resize(offsetsSize * sizeof(size_t));
+    size_t offsetsByteSize = offsetsSize * sizeof(size_t);
+    offsetsBuffer.cesium.data.resize(offsetsByteSize);
     size_t buffOffset = 0;
     size_t offsetOffset = 0;
     for (auto& [propName, propRepVariant] : packedProps) {
       if (auto* pPropRep =
               std::get_if<StringPropertyRepresentation>(&propRepVariant)) {
+        size_t propOffsetsByteSize = pPropRep->offsets.size() * sizeof(size_t);
         int32_t propIndex = makeBufferView(
             int32_t(metadataBufferIndex),
             BufferView::Target::ARRAY_BUFFER,
@@ -333,18 +335,15 @@ struct GltfConverterImpl {
             metadataBuffer.cesium.data.data() + buffOffset,
             pPropRep->buffer.data(),
             pPropRep->buffer.size());
-        for (size_t& offset : pPropRep->offsets) {
-          offset += buffOffset;
-        }
         int32_t offsetsIndex = makeBufferView(
             int32_t(offsetsBufferIndex),
             BufferView::Target::ARRAY_BUFFER,
             int64_t(offsetOffset),
-            int64_t(pPropRep->offsets.size()));
+            int64_t(propOffsetsByteSize));
         std::memcpy(
             offsetsBuffer.cesium.data.data() + offsetOffset,
             pPropRep->offsets.data(),
-            pPropRep->offsets.size() * sizeof(size_t));
+            propOffsetsByteSize);
         buffOffset += pPropRep->buffer.size();
         offsetOffset += pPropRep->offsets.size();
         PropertyTableProperty& propertyTableProperty =
@@ -425,14 +424,14 @@ struct GltfConverterImpl {
             }
             auto& rep =
                 std::get<FloatPropertyRepresentation>(packedProps[name]);
-            rep.properties.push_back(value.getDouble());
+            rep.properties[featureId] = value.getDouble();
           } else if (value.isInt64()) {
             if (!packedProps.contains(name)) {
               packedProps[name] = IntegerPropertyRepresentation(numFeatures);
             }
             auto& rep =
                 std::get<IntegerPropertyRepresentation>(packedProps[name]);
-            rep.properties.push_back(value.getInt64());
+            rep.properties[featureId] = value.getInt64();
           }
         }
       }
@@ -443,6 +442,15 @@ struct GltfConverterImpl {
         ExtensionModelExtStructuralMetadata::ExtensionName);
     modelExtension.schema = pSchema;
     modelExtension.propertyTables.emplace_back();
+    if (pSchema && !pSchema->classes.empty()) {
+      // Only expect one class
+      auto schemaClassItr = pSchema->classes.begin();
+      modelExtension.propertyTables.back().classProperty =
+          schemaClassItr->first;
+    } else {
+      modelExtension.propertyTables.back().classProperty = "default";
+    }
+    modelExtension.propertyTables.back().count = int64_t(numFeatures);
     recordStringProperties(modelExtension, packedProps);
     recordScalarProperty<double>(modelExtension, packedProps);
     recordScalarProperty<int64_t>(modelExtension, packedProps);
