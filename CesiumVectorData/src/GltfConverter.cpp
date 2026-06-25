@@ -321,7 +321,7 @@ struct GltfConverterImpl {
     size_t offsetsByteSize = offsetsSize * sizeof(size_t);
     offsetsBuffer.cesium.data.resize(offsetsByteSize);
     size_t buffOffset = 0;
-    size_t offsetOffset = 0;
+    size_t offsetDataOffset = 0;
     for (auto& [propName, propRepVariant] : packedProps) {
       if (auto* pPropRep =
               std::get_if<StringPropertyRepresentation>(&propRepVariant)) {
@@ -338,14 +338,14 @@ struct GltfConverterImpl {
         int32_t offsetsIndex = makeBufferView(
             int32_t(offsetsBufferIndex),
             BufferView::Target::ARRAY_BUFFER,
-            int64_t(offsetOffset),
+            int64_t(offsetDataOffset),
             int64_t(propOffsetsByteSize));
         std::memcpy(
-            offsetsBuffer.cesium.data.data() + offsetOffset,
+            offsetsBuffer.cesium.data.data() + offsetDataOffset,
             pPropRep->offsets.data(),
             propOffsetsByteSize);
         buffOffset += pPropRep->buffer.size();
-        offsetOffset += pPropRep->offsets.size();
+        offsetDataOffset += pPropRep->offsets.size();
         PropertyTableProperty& propertyTableProperty =
             propertyTable.properties.emplace(propName, PropertyTableProperty())
                 .first->second;
