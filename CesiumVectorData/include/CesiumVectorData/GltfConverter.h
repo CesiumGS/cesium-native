@@ -41,7 +41,8 @@ public:
   static ConverterResult convert(
       const GeoJsonDocument& geoJson,
       const CesiumGeospatial::Ellipsoid& ellipsoid,
-      const CesiumUtility::IntrusivePointer<CesiumGltf::Schema>& pSchema);
+      const CesiumUtility::IntrusivePointer<CesiumGltf::Schema>& pSchema =
+          nullptr);
 
   /**
    * @brief Convert MAXAR_content_geojson schema into a glTF schema.

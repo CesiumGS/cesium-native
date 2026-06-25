@@ -713,7 +713,9 @@ ConverterResult GltfConverter::convert(
   Scene& scene = converter.model.scenes.emplace_back();
   scene.nodes.push_back(int32_t(rootNodeIndex));
   converter.model.scene = int32_t(converter.model.scenes.size() - 1);
-  converter.recordFeatureProperties(pSchema);
+  if (pSchema) {
+    converter.recordFeatureProperties(pSchema);
+  }
   return {std::move(converter.model)};
 }
 

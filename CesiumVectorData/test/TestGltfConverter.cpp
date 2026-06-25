@@ -38,13 +38,13 @@ TEST_CASE("Conversion from geoJSON to glTF") {
   schema.id = "default";
   Class geoJsonClass;
   geoJsonClass.name = "ShipTrajectory";
-  ClassProperty trajId;
-  trajId.type = ClassProperty::Type::SCALAR;
-  trajId.componentType = ClassProperty::ComponentType::INT64;
-  geoJsonClass.properties["traj_id"] = std::move(trajId);
-  ClassProperty shipType;
-  shipType.type = ClassProperty::Type::STRING;
-  geoJsonClass.properties["ShipType"] = std::move(shipType);
+  ClassProperty trajIdClassProperty;
+  trajIdClassProperty.type = ClassProperty::Type::SCALAR;
+  trajIdClassProperty.componentType = ClassProperty::ComponentType::INT64;
+  geoJsonClass.properties["traj_id"] = std::move(trajIdClassProperty);
+  ClassProperty shipTypeClassProperty;
+  shipTypeClassProperty.type = ClassProperty::Type::STRING;
+  geoJsonClass.properties["ShipType"] = std::move(shipTypeClassProperty);
   schema.classes["ShipRoute"] = std::move(geoJsonClass);
   ConverterResult converterResult =
       GltfConverter::convert(*doc.value, Ellipsoid::WGS84, pSchema);
