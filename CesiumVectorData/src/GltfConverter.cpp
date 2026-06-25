@@ -318,14 +318,14 @@ struct GltfConverterImpl {
       }
     }
     metadataBuffer.cesium.data.resize(metadataSize);
-    size_t offsetsByteSize = offsetsSize * sizeof(size_t);
+    size_t offsetsByteSize = offsetsSize * sizeof(uint64_t);
     offsetsBuffer.cesium.data.resize(offsetsByteSize);
     size_t buffOffset = 0;
     size_t offsetDataOffset = 0;
     for (auto& [propName, propRepVariant] : packedProps) {
       if (auto* pPropRep =
               std::get_if<StringPropertyRepresentation>(&propRepVariant)) {
-        size_t propOffsetsByteSize = pPropRep->offsets.size() * sizeof(size_t);
+        size_t propOffsetsByteSize = pPropRep->offsets.size() * sizeof(uint64_t);
         int32_t propIndex = makeBufferView(
             int32_t(metadataBufferIndex),
             BufferView::Target::ARRAY_BUFFER,
