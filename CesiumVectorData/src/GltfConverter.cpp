@@ -306,7 +306,7 @@ struct GltfConverterImpl {
         pPropRep->offsets.back() = pPropRep->buffer.size();
         // Patch up any missing data
         size_t lastValidOffset = 0;
-        for (size_t& offset : pPropRep->offsets) {
+        for (uint64_t& offset : pPropRep->offsets) {
           if (offset == std::numeric_limits<uint64_t>::max()) {
             offset = lastValidOffset;
           } else {
