@@ -10,12 +10,9 @@ graph TD
   CesiumGltfReader[CesiumGltfReader] --> CesiumGltf[CesiumGltf]
   CesiumGltfReader[CesiumGltfReader] --> CesiumImage[CesiumImage]
   CesiumGltfReader[CesiumGltfReader] --> CesiumJsonReader[CesiumJsonReader]
-  CesiumGltfReader[CesiumGltfReader] --> WebP_webp{{WebP::webp}}
-  CesiumGltfReader[CesiumGltfReader] --> WebP_webpdecoder{{WebP::webpdecoder}}
   CesiumGltfReader[CesiumGltfReader] --> draco_draco{{draco::draco}}
-  CesiumGltfReader[CesiumGltfReader] --> libjpeg-turbo_turbojpeg-static{{libjpeg-turbo::turbojpeg-static}}
   CesiumGltfReader[CesiumGltfReader] --> meshoptimizer_meshoptimizer{{meshoptimizer::meshoptimizer}}
   CesiumGltfReader[CesiumGltfReader] --> modp_b64_modp_b64{{modp_b64::modp_b64}}
   CesiumGltfReader[CesiumGltfReader] --> spz_spz{{spz::spz}}
-  class WebP_webp,WebP_webpdecoder,draco_draco,libjpeg-turbo_turbojpeg-static,meshoptimizer_meshoptimizer,modp_b64_modp_b64,spz_spz dependencyNode
+  class draco_draco,meshoptimizer_meshoptimizer,modp_b64_modp_b64,spz_spz dependencyNode
   class CesiumAsync,CesiumGltf,CesiumImage,CesiumJsonReader,CesiumGltfReader libraryNode

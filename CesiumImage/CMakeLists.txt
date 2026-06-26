@@ -51,6 +51,8 @@ target_link_libraries(CesiumImage
         CesiumUtility
     PRIVATE
         KTX::ktx
+        WebP::webp
+        WebP::webpdecoder
 )
 
 if(CESIUM_DISABLE_LIBJPEG_TURBO)

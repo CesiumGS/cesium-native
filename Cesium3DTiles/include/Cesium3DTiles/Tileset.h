@@ -15,11 +15,19 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
 
   /**
    * @brief A callback function for {@link forEachTile}.
+   *
+   * @param tileset The tileset.
+   * @param tile The tile.
+   * @param transform The tile's world transform, computed from the product of
+   * the parent's world transform and the tile's local transform.
+   * @param refine The tile's refine property, potentially inherited from an
+   * ancestor tile if not set.
    */
   typedef void ForEachTileCallback(
       Tileset& tileset,
       Tile& tile,
-      const glm::dmat4& transform);
+      const glm::dmat4& transform,
+      const std::string& refine);
 
   /**
    * @brief Apply the given callback to all tiles.
@@ -31,25 +39,33 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
    */
   void forEachTile(std::function<ForEachTileCallback>&& callback);
 
-  /**
-   * @brief A callback function for {@link forEachTile}.
-   */
+  /** @copydoc Tileset::ForEachTileCallback */
   typedef void ForEachTileConstCallback(
       const Tileset& tileset,
       const Tile& tile,
-      const glm::dmat4& transform);
+      const glm::dmat4& transform,
+      const std::string& refine);
 
   /** @copydoc Tileset::forEachTile */
   void forEachTile(std::function<ForEachTileConstCallback>&& callback) const;
 
   /**
    * @brief A callback function for {@link forEachContent}.
+   *
+   * @param tileset The tileset.
+   * @param tile The tile.
+   * @param content The content.
+   * @param transform The tile's world transform, computed from the product of
+   * the parent's world transform and the tile's local transform.
+   * @param refine The tile's refine property, potentially inherited from an
+   * ancestor tile if not set.
    */
   typedef void ForEachContentCallback(
       Tileset& tileset,
       Tile& tile,
       Content& content,
-      const glm::dmat4& transform);
+      const glm::dmat4& transform,
+      const std::string& refine);
 
   /**
    * @brief Apply the given callback to all contents.
@@ -61,14 +77,13 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
    */
   void forEachContent(std::function<ForEachContentCallback>&& callback);
 
-  /**
-   * @brief A callback function for {@link forEachContent}.
-   */
+  /** @copydoc Tileset::ForEachContentCallback */
   typedef void ForEachContentConstCallback(
       const Tileset& tileset,
       const Tile& tile,
       const Content& content,
-      const glm::dmat4& transform);
+      const glm::dmat4& transform,
+      const std::string& refine);
 
   /** @copydoc Tileset::forEachContent */
   void

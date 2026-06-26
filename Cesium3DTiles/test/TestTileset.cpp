@@ -1,3 +1,5 @@
+#include "Cesium3DTiles/Tile.h"
+
 #include <Cesium3DTiles/Tileset.h>
 
 #include <doctest/doctest.h>
@@ -20,6 +22,11 @@ TEST_CASE("forEachTile") {
 
   Tile& grandchild = child0.children.emplace_back();
 
+  root.refine = Cesium3DTiles::Tile::Refine::ADD;
+  child0.refine = Cesium3DTiles::Tile::Refine::REPLACE;
+  child1.refine = std::nullopt;
+  grandchild.refine = Cesium3DTiles::Tile::Refine::ADD;
+
   glm::dmat4 rootTransform = glm::dmat4(2.0);
   glm::dmat4 child0Transform = glm::dmat4(3.0);
   glm::dmat4 child1Transform = glm::dmat4(4.0);
@@ -40,17 +47,27 @@ TEST_CASE("forEachTile") {
       rootTransform * child0Transform * grandchildTransform;
 
   std::vector<glm::dmat4> transforms;
-  tileset.forEachTile(
-      [&transforms](
-          Tileset& /* tileset */,
-          Tile& /* tile */,
-          const glm::dmat4& transform) { transforms.push_back(transform); });
+  std::vector<std::string> refines;
+  tileset.forEachTile([&transforms, &refines](
+                          Tileset& /* tileset */,
+                          Tile& /* tile */,
+                          const glm::dmat4& transform,
+                          const std::string& refine) {
+    transforms.push_back(transform);
+    refines.push_back(refine);
+  });
 
   REQUIRE(transforms.size() == 4);
   CHECK(transforms[0] == expectedRootTransform);
   CHECK(transforms[1] == expectedChild0Transform);
   CHECK(transforms[2] == expectedGrandchildTransform);
   CHECK(transforms[3] == expectedChild1Transform);
+
+  REQUIRE(refines.size() == 4);
+  CHECK(refines[0] == Cesium3DTiles::Tile::Refine::ADD);
+  CHECK(refines[1] == Cesium3DTiles::Tile::Refine::REPLACE);
+  CHECK(refines[2] == Cesium3DTiles::Tile::Refine::ADD);
+  CHECK(refines[3] == Cesium3DTiles::Tile::Refine::ADD);
 }
 
 TEST_CASE("forEachContent") {
@@ -65,6 +82,11 @@ TEST_CASE("forEachContent") {
   Tile& child1 = root.children[1];
 
   Tile& grandchild = child0.children.emplace_back();
+
+  root.refine = Cesium3DTiles::Tile::Refine::ADD;
+  child0.refine = Cesium3DTiles::Tile::Refine::REPLACE;
+  child1.refine = std::nullopt;
+  grandchild.refine = Cesium3DTiles::Tile::Refine::ADD;
 
   const Content& rootContent = root.content.emplace();
   const Content& child1Content = child1.content.emplace();
@@ -94,13 +116,16 @@ TEST_CASE("forEachContent") {
       rootTransform * child0Transform * grandchildTransform;
 
   std::vector<glm::dmat4> transforms;
+  std::vector<std::string> refines;
   std::vector<Cesium3DTiles::Content*> contents;
-  tileset.forEachContent([&transforms, &contents](
+  tileset.forEachContent([&transforms, &refines, &contents](
                              Tileset& /* tileset */,
                              Tile& /* tile */,
                              Content& content,
-                             const glm::dmat4& transform) {
+                             const glm::dmat4& transform,
+                             const std::string& refine) {
     transforms.push_back(transform);
+    refines.push_back(refine);
     contents.push_back(&content);
   });
 
@@ -109,6 +134,12 @@ TEST_CASE("forEachContent") {
   CHECK(transforms[1] == expectedGrandchildTransform);
   CHECK(transforms[2] == expectedGrandchildTransform);
   CHECK(transforms[3] == expectedChild1Transform);
+
+  REQUIRE(refines.size() == 4);
+  CHECK(refines[0] == Cesium3DTiles::Tile::Refine::ADD);
+  CHECK(refines[1] == Cesium3DTiles::Tile::Refine::ADD);
+  CHECK(refines[2] == Cesium3DTiles::Tile::Refine::ADD);
+  CHECK(refines[3] == Cesium3DTiles::Tile::Refine::ADD);
 
   REQUIRE(contents.size() == 4);
   CHECK(contents[0] == &rootContent);

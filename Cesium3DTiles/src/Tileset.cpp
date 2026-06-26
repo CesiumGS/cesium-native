@@ -35,39 +35,57 @@ std::optional<glm::dmat4> getTileTransform(const Cesium3DTiles::Tile& tile) {
 template <typename TCallback>
 void forEachContentRecursive(
     const glm::dmat4& transform,
+    const std::string& refine,
     const Tileset& tileset,
     const Tile& tile,
     TCallback& callback) {
   glm::dmat4 tileTransform =
       transform * getTileTransform(tile).value_or(glm::dmat4(1.0));
 
+  // Inherit parent's refine if not set
+  const std::string& tileRefine = tile.refine.value_or(refine);
+
   if (tile.content) {
-    callback(tileset, tile, *tile.content, tileTransform);
+    callback(tileset, tile, *tile.content, tileTransform, tileRefine);
   }
 
   // 3D Tiles 1.1 multiple contents
   for (const Cesium3DTiles::Content& content : tile.contents) {
-    callback(tileset, tile, content, tileTransform);
+    callback(tileset, tile, content, tileTransform, tileRefine);
   }
 
   for (const Cesium3DTiles::Tile& childTile : tile.children) {
-    forEachContentRecursive(tileTransform, tileset, childTile, callback);
+    forEachContentRecursive(
+        tileTransform,
+        tileRefine,
+        tileset,
+        childTile,
+        callback);
   }
 }
 
 template <typename TCallback>
 void forEachTileRecursive(
     const glm::dmat4& transform,
+    const std::string& refine,
     const Tileset& tileset,
     const Tile& tile,
     TCallback& callback) {
   glm::dmat4 tileTransform =
       transform * getTileTransform(tile).value_or(glm::dmat4(1.0));
 
-  callback(tileset, tile, tileTransform);
+  // Inherit parent's refine if not set
+  const std::string& tileRefine = tile.refine.value_or(refine);
+
+  callback(tileset, tile, tileTransform, tileRefine);
 
   for (const Cesium3DTiles::Tile& childTile : tile.children) {
-    forEachTileRecursive(tileTransform, tileset, childTile, callback);
+    forEachTileRecursive(
+        tileTransform,
+        tileRefine,
+        tileset,
+        childTile,
+        callback);
   }
 }
 
@@ -78,17 +96,24 @@ void Tileset::forEachTile(std::function<ForEachTileCallback>&& callback) {
       [&callback](
           const Tileset& tileset,
           const Tile& tile,
-          const glm::dmat4& transform) {
+          const glm::dmat4& transform,
+          const std::string& refine) {
         callback(
             const_cast<Tileset&>(tileset),
             const_cast<Tile&>(tile),
-            transform);
+            transform,
+            refine);
       });
 }
 
 void Tileset::forEachTile(
     std::function<ForEachTileConstCallback>&& callback) const {
-  forEachTileRecursive(glm::dmat4(1.0), *this, this->root, callback);
+  forEachTileRecursive(
+      glm::dmat4(1.0),
+      Cesium3DTiles::Tile::Refine::ADD,
+      *this,
+      this->root,
+      callback);
 }
 
 void Tileset::forEachContent(std::function<ForEachContentCallback>&& callback) {
@@ -97,18 +122,25 @@ void Tileset::forEachContent(std::function<ForEachContentCallback>&& callback) {
           const Tileset& tileset,
           const Tile& tile,
           const Content& content,
-          const glm::dmat4& transform) {
+          const glm::dmat4& transform,
+          const std::string& refine) {
         callback(
             const_cast<Tileset&>(tileset),
             const_cast<Tile&>(tile),
             const_cast<Content&>(content),
-            transform);
+            transform,
+            refine);
       });
 }
 
 void Tileset::forEachContent(
     std::function<ForEachContentConstCallback>&& callback) const {
-  forEachContentRecursive(glm::dmat4(1.0), *this, this->root, callback);
+  forEachContentRecursive(
+      glm::dmat4(1.0),
+      Cesium3DTiles::Tile::Refine::ADD,
+      *this,
+      this->root,
+      callback);
 }
 
 void Tileset::addExtensionUsed(const std::string& extensionName) {
