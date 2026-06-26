@@ -305,7 +305,7 @@ struct GltfConverterImpl {
               std::get_if<StringPropertyRepresentation>(&propRepVariant)) {
         pPropRep->offsets.back() = pPropRep->buffer.size();
         // Patch up any missing data
-        size_t lastValidOffset = 0;
+        uint64_t lastValidOffset = 0;
         for (uint64_t& offset : pPropRep->offsets) {
           if (offset == std::numeric_limits<uint64_t>::max()) {
             offset = lastValidOffset;
@@ -320,6 +320,7 @@ struct GltfConverterImpl {
     metadataBuffer.cesium.data.resize(metadataSize);
     size_t offsetsByteSize = offsetsSize * sizeof(uint64_t);
     offsetsBuffer.cesium.data.resize(offsetsByteSize);
+    // These offsets are in bytes.
     size_t buffOffset = 0;
     size_t offsetDataOffset = 0;
     for (auto& [propName, propRepVariant] : packedProps) {
@@ -346,7 +347,7 @@ struct GltfConverterImpl {
             pPropRep->offsets.data(),
             propOffsetsByteSize);
         buffOffset += pPropRep->buffer.size();
-        offsetDataOffset += pPropRep->offsets.size();
+        offsetDataOffset += pPropRep->offsets.size() * sizeof(uint64_t);
         PropertyTableProperty& propertyTableProperty =
             propertyTable.properties.emplace(propName, PropertyTableProperty())
                 .first->second;
