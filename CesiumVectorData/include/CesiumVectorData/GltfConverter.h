@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Schema.h>
@@ -39,10 +40,11 @@ public:
       const CesiumGeospatial::Ellipsoid& ellipsoid);
   /**
    * @brief Convert MAXAR_content_geojson schema into a glTF schema.
-   * @param schemaJson The schema supplied with a GeoJson tileset
+   * @param maxarSchema The schema extension object supplied with a GeoJson
+   * tileset
    * @returns A result object that includes the converted schema and any errors.
    */
-  static ConvertSchemaResult
-  convertSchema(const rapidjson::Document& schemaJson);
+  static ConvertSchemaResult convertSchema(
+      const Cesium3DTiles::ExtensionSchemaMaxarContentGeoJson& maxarSchema);
 };
 } // namespace CesiumVectorData
