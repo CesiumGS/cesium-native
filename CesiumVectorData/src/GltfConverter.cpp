@@ -263,10 +263,10 @@ struct GltfConverterImpl {
 
   struct StringPropertyRepresentation {
     std::string buffer;
-    std::vector<size_t> offsets;
+    std::vector<uint64_t> offsets;
 
     StringPropertyRepresentation(size_t numFeatures = 0)
-        : offsets(numFeatures + 1, std::numeric_limits<size_t>::max()) {
+        : offsets(numFeatures + 1, std::numeric_limits<uint64_t>::max()) {
       // feature ID 0 is reserved for missing data
       offsets[0] = 0;
     }
@@ -307,7 +307,7 @@ struct GltfConverterImpl {
         // Patch up any missing data
         size_t lastValidOffset = 0;
         for (size_t& offset : pPropRep->offsets) {
-          if (offset == std::numeric_limits<size_t>::max()) {
+          if (offset == std::numeric_limits<uint64_t>::max()) {
             offset = lastValidOffset;
           } else {
             lastValidOffset = offset;
@@ -325,7 +325,8 @@ struct GltfConverterImpl {
     for (auto& [propName, propRepVariant] : packedProps) {
       if (auto* pPropRep =
               std::get_if<StringPropertyRepresentation>(&propRepVariant)) {
-        size_t propOffsetsByteSize = pPropRep->offsets.size() * sizeof(uint64_t);
+        size_t propOffsetsByteSize =
+            pPropRep->offsets.size() * sizeof(uint64_t);
         int32_t propIndex = makeBufferView(
             int32_t(metadataBufferIndex),
             BufferView::Target::ARRAY_BUFFER,
