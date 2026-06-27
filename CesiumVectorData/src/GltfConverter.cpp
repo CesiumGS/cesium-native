@@ -535,9 +535,9 @@ ConvertSchemaResult GltfConverter::convertSchema(
     if (propsIt->type == "String") {
       metaClass.type = ClassProperty::Type::STRING;
     } else if (propsIt->type == "Float") {
-      metaClass.componentType = ClassProperty::ComponentType::FLOAT32;
+      metaClass.componentType = ClassProperty::ComponentType::FLOAT64;
     } else if (propsIt->type == "Integer") {
-      metaClass.componentType = ClassProperty::ComponentType::INT32;
+      metaClass.componentType = ClassProperty::ComponentType::INT64;
     }
     geoJsonClass.properties[propsIt->id] = std::move(metaClass);
   }
