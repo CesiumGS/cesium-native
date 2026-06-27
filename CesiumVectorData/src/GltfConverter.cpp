@@ -19,7 +19,7 @@
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
-#include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
@@ -31,7 +31,6 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/matrix.hpp>
 #include <mapbox/earcut.hpp>
-#include <rapidjson/document.h>
 
 #include <algorithm>
 #include <array>
