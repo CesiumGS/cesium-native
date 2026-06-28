@@ -22,6 +22,7 @@
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
@@ -29,6 +30,7 @@
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
 #include <CesiumVectorData/GltfConverter.h>
 
+#include <fmt/format.h>
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_double3.hpp>
@@ -124,6 +126,10 @@ struct GltfConverterImpl {
   int32_t featureIdBufferIndex = -1;
   int32_t featureIdBufferViewIndex = -1;
   int32_t featureIdAccessorIndex = -1;
+
+  // Errors and warnings accumulated during the conversion.
+  ErrorList errorList;
+
   GltfConverterImpl(
       const GeoJsonDocument& inGeoJson,
       const CesiumGeospatial::Ellipsoid& inEllipsoid)
@@ -399,6 +405,12 @@ struct GltfConverterImpl {
   void recordFeatureProperties(const IntrusivePointer<Schema>& pSchema) {
     size_t numFeatures = this->geoJsonFeatures.size();
     PackedProperties packedProps;
+    auto classIt = pSchema->classes.begin();
+    if (classIt == pSchema->classes.end()) {
+      errorList.emplaceWarning("No schema supplied for GeoJSON content.");
+      return;
+    }
+    const Class& metaClass = classIt->second;
     for (size_t featureId = 0; featureId < numFeatures; ++featureId) {
       const GeoJsonObject* pGeoJsonObject = this->geoJsonFeatures[featureId];
       if (!pGeoJsonObject) {
@@ -410,7 +422,21 @@ struct GltfConverterImpl {
              propIt != feature.properties->end();
              ++propIt) {
           const auto& [name, value] = *propIt;
+          auto schemaPropItr = metaClass.properties.find(name);
+          if (schemaPropItr == metaClass.properties.end()) {
+            errorList.warning(
+                fmt::format("Property {} is not in schema.", name));
+            continue;
+          }
+          const ClassProperty& classProp = schemaPropItr->second;
           if (value.isString()) {
+            if (classProp.type != ClassProperty::Type::STRING) {
+              errorList.error(fmt::format(
+                  "String GeoJSON property {} has schema type {}.",
+                  name,
+                  classProp.type));
+              return;
+            }
             if (!packedProps.contains(name)) {
               packedProps[name] = StringPropertyRepresentation(numFeatures);
             }
@@ -419,6 +445,18 @@ struct GltfConverterImpl {
             rep.offsets[featureId] = rep.buffer.size();
             rep.buffer.append(get<JsonValue::String>(value.value));
           } else if (value.isDouble()) {
+            if (!(classProp.type == ClassProperty::Type::SCALAR &&
+                  classProp.componentType &&
+                  *classProp.componentType ==
+                      ClassProperty::ComponentType::FLOAT64)) {
+              errorList.error(fmt::format(
+                  "Double GeoJSON property {} has schema type {}, "
+                  "component type {}.",
+                  name,
+                  classProp.type,
+                  *classProp.componentType));
+              return;
+            }
             if (!packedProps.contains(name)) {
               packedProps[name] = FloatPropertyRepresentation(numFeatures);
             }
@@ -426,6 +464,18 @@ struct GltfConverterImpl {
                 std::get<FloatPropertyRepresentation>(packedProps[name]);
             rep.properties[featureId] = value.getDouble();
           } else if (value.isInt64()) {
+            if (!(classProp.type == ClassProperty::Type::SCALAR &&
+                  classProp.componentType &&
+                  *classProp.componentType ==
+                      ClassProperty::ComponentType::INT64)) {
+              errorList.error(fmt::format(
+                  "Integer GeoJSON property {} has schema type {}, "
+                  "component type {}.",
+                  name,
+                  classProp.type,
+                  *classProp.componentType));
+              return;
+            }
             if (!packedProps.contains(name)) {
               packedProps[name] = IntegerPropertyRepresentation(numFeatures);
             }
@@ -716,7 +766,7 @@ ConverterResult GltfConverter::convert(
   if (pSchema) {
     converter.recordFeatureProperties(pSchema);
   }
-  return {std::move(converter.model)};
+  return {std::move(converter.model), std::move(converter.errorList)};
 }
 
 ConvertSchemaResult GltfConverter::convertSchema(

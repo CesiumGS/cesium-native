@@ -50,6 +50,8 @@ TEST_CASE("Conversion from geoJSON to glTF") {
   ConverterResult converterResult =
       GltfConverter::convert(*doc.value, Ellipsoid::WGS84, pSchema);
   REQUIRE(converterResult.value);
+  REQUIRE(converterResult.errors.errors.empty());
+  REQUIRE(converterResult.errors.warnings.empty());
   const Model& model = *converterResult.value;
   SUBCASE("Feature ids") {
     model.forEachPrimitiveInScene(
