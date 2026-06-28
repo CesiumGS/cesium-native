@@ -13,6 +13,7 @@
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
 #include <Cesium3DTilesReader/ContentReader.h>
 #include <Cesium3DTilesReader/ExtensionContent3dTilesContentVoxelsReader.h>
+#include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <Cesium3DTilesReader/TilesetReader.h>
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -1135,35 +1136,49 @@ TilesetJsonLoader::createLoader(
               return std::move(result);
             });
       })
-      .thenInWorkerThread(
-          [asyncSystem,
-           pAssetAccessor,
-           externalSchemaUrl,
-           requestHeaders = std::move(requestHeaderVector)](
-              TilesetContentLoaderResult<TilesetJsonLoader>&& result) mutable {
-            if (!externalSchemaUrl.empty()) {
-              return getJson(
-                         asyncSystem,
-                         pAssetAccessor,
-                         externalSchemaUrl,
-                         std::move(requestHeaders))
-                  .thenInWorkerThread(
-                      [result = std::move(result)](
-                          JsonFetcherResult&& jsonResult) mutable {
-                        if (jsonResult.value) {
-                          CesiumVectorData::ConvertSchemaResult schemaResult =
-                              CesiumVectorData::GltfConverter::convertSchema(
-                                  *jsonResult.value);
-                          if (schemaResult.pValue) {
-                            result.pLoader->_pExternalSchema =
-                                schemaResult.pValue;
-                          }
-                        }
-                        return std::move(result);
-                      });
-            }
-            return asyncSystem.createResolvedFuture(std::move(result));
-          });
+      .thenInWorkerThread([asyncSystem,
+                           pAssetAccessor,
+                           externalSchemaUrl,
+                           requestHeaders = std::move(requestHeaderVector),
+                           pLogger](
+                              TilesetContentLoaderResult<TilesetJsonLoader>&&
+                                  result) mutable {
+        if (!externalSchemaUrl.empty()) {
+          return getJson(
+                     asyncSystem,
+                     pAssetAccessor,
+                     externalSchemaUrl,
+                     std::move(requestHeaders))
+              .thenInWorkerThread([result = std::move(result), pLogger](
+                                      JsonFetcherResult&& jsonResult) mutable {
+                if (jsonResult.value) {
+                  Cesium3DTilesReader::ExtensionSchemaMaxarContentGeoJsonReader
+                      maxarSchemaReader;
+                  auto schemaReadResult =
+                      maxarSchemaReader.readFromJson(*jsonResult.value);
+                  if (!schemaReadResult.value ||
+                      !schemaReadResult.errors.empty()) {
+                    SPDLOG_LOGGER_ERROR(
+                        pLogger,
+                        "Error reading GeoJSON schema");
+                  } else {
+                    CesiumVectorData::ConvertSchemaResult schemaResult =
+                        CesiumVectorData::GltfConverter::convertSchema(
+                            *schemaReadResult.value);
+                    if (schemaResult.pValue) {
+                      result.pLoader->_pExternalSchema = schemaResult.pValue;
+                    } else {
+                      SPDLOG_LOGGER_ERROR(
+                          pLogger,
+                          "Error converting GeoJSON schema");
+                    }
+                  }
+                }
+                return std::move(result);
+              });
+        }
+        return asyncSystem.createResolvedFuture(std::move(result));
+      });
 }
 
 CesiumAsync::Future<TileLoadResult>

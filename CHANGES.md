@@ -9,8 +9,8 @@
 - `PositionAccessorType` and `NormalAccessorType` are now variant types to support quantized attributes enabled by `KHR_mesh_quantization`.
 - The `AccessorView` and `AccessorWriter` constructor overloads that take raw buffer data now require an additional `normalized` argument.
 - The `getQuaternionAccessorView` overload that took an accessor pointer now takes an accessor reference.
-- `forEachTile` and `forEachContent` now take an additional `refine` argument in the callback function.
 - Renamed `MAXAR_content_geojson` class `ExtensionMaxarContentGeoJson` to `ExtensionTilesetMaxarContentGeoJson`.
+- `forEachTile` and `forEachContent` now take an additional `refine` argument in the callback function.
 
 ##### Additions :tada:
 

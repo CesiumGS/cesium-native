@@ -22,9 +22,7 @@
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
-#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
@@ -36,7 +34,6 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/matrix.hpp>
 #include <mapbox/earcut.hpp>
-#include <rapidjson/document.h>
 
 #include <algorithm>
 #include <array>
@@ -721,22 +718,11 @@ ConverterResult GltfConverter::convert(
   return {std::move(converter.model)};
 }
 
-ConvertSchemaResult
-GltfConverter::convertSchema(const rapidjson::Document& schemaJson) {
+ConvertSchemaResult GltfConverter::convertSchema(
+    const Cesium3DTiles::ExtensionSchemaMaxarContentGeoJson& maxarSchema) {
   IntrusivePointer<Schema> pSchema;
   Schema& schema = pSchema.emplace();
   schema.id = "default";
-  Cesium3DTilesReader::ExtensionSchemaMaxarContentGeoJsonReader
-      maxarSchemaReader;
-  auto schemaReadResult = maxarSchemaReader.readFromJson(schemaJson);
-  if (!schemaReadResult.value || !schemaReadResult.errors.empty()) {
-    ErrorList errorList = {schemaReadResult.errors, schemaReadResult.warnings};
-    return {errorList};
-  }
-  const auto& maxarSchema = *schemaReadResult.value;
-  if (!maxarSchema.name) {
-    return {ErrorList::error("No schema class name")};
-  }
   std::string classKey;
   if (maxarSchema.semantic.empty()) {
     classKey = "geoJsonClass";
@@ -744,7 +730,7 @@ GltfConverter::convertSchema(const rapidjson::Document& schemaJson) {
     classKey = maxarSchema.semantic;
   }
   Class geoJsonClass;
-  geoJsonClass.name = *maxarSchema.name;
+  geoJsonClass.name = classKey;
   for (auto propsIt = maxarSchema.properties.begin();
        propsIt != maxarSchema.properties.end();
        ++propsIt) {

@@ -1,3 +1,4 @@
+#include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
@@ -144,5 +145,40 @@ TEST_CASE("Conversion from geoJSON to glTF") {
     REQUIRE(!missingValue);
     REQUIRE(!invalidValue);
     REQUIRE(*shipTypePropertyView.get(1) == "Cargo");
+  }
+}
+
+TEST_CASE("Convert GeoJSON schema") {
+  SUBCASE("Verify schema") {
+    std::filesystem::path dir(
+        std::filesystem::path(CesiumVectorData_TEST_DATA_DIR));
+    Cesium3DTilesReader::ExtensionSchemaMaxarContentGeoJsonReader
+        maxarSchemaReader;
+    auto schemaReadResult =
+        maxarSchemaReader.readFromJson(readFile(dir / "sample-schema.json"));
+    REQUIRE(schemaReadResult.value);
+    REQUIRE(schemaReadResult.errors.empty());
+    CesiumVectorData::ConvertSchemaResult schemaResult =
+        CesiumVectorData::GltfConverter::convertSchema(*schemaReadResult.value);
+    REQUIRE(schemaResult.pValue);
+    const Schema& schema = *schemaResult.pValue;
+    auto classIt = schema.classes.find("test_point");
+    REQUIRE(classIt != schema.classes.end());
+    const Class& schemaClass = classIt->second;
+    auto propertiesIt = schemaClass.properties.find("FULL_NAME");
+    REQUIRE(propertiesIt != schemaClass.properties.end());
+    REQUIRE(propertiesIt->second.type == ClassProperty::Type::STRING);
+    propertiesIt = schemaClass.properties.find("HGT");
+    REQUIRE(propertiesIt != schemaClass.properties.end());
+    REQUIRE(propertiesIt->second.type == ClassProperty::Type::SCALAR);
+    REQUIRE(
+        propertiesIt->second.componentType ==
+        ClassProperty::ComponentType::FLOAT64);
+    propertiesIt = schemaClass.properties.find("AT005_CAB");
+    REQUIRE(propertiesIt != schemaClass.properties.end());
+    REQUIRE(propertiesIt->second.type == ClassProperty::Type::SCALAR);
+    REQUIRE(
+        propertiesIt->second.componentType ==
+        ClassProperty::ComponentType::INT64);
   }
 }
