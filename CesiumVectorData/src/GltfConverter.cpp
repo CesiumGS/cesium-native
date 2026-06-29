@@ -439,21 +439,33 @@ struct GltfConverterImpl {
           const auto& [name, value] = *propIt;
           if (auto packedPropIt = packedProps.find(name);
               packedPropIt != packedProps.end()) {
-            if (value.isString()) {
-              if (auto* pRep = std::get_if<StringPropertyRepresentation>(
-                      &packedPropIt->second)) {
-                pRep->offsets[featureId] = pRep->buffer.size();
+            if (auto* pRep = std::get_if<StringPropertyRepresentation>(
+                    &packedPropIt->second)) {
+              pRep->offsets[featureId] = pRep->buffer.size();
+              if (value.isString()) {
                 pRep->buffer.append(get<JsonValue::String>(value.value));
+              } else if (value.isDouble()) {
+                pRep->buffer.append(std::to_string(value.getDouble()));
+              } else if (value.isInt64()) {
+                pRep->buffer.append(std::to_string(value.getInt64()));
               }
-            } else if (value.isDouble()) {
-              if (auto* pRep = std::get_if<FloatPropertyRepresentation>(
-                      &packedPropIt->second)) {
+            } else if (
+                auto* pRep = std::get_if<FloatPropertyRepresentation>(
+                    &packedPropIt->second)) {
+              if (value.isDouble()) {
                 pRep->properties[featureId] = value.getDouble();
+              } else if (value.isInt64()) {
+                pRep->properties[featureId] =
+                    static_cast<double>(value.getInt64());
               }
-            } else if (value.isInt64()) {
-              if (auto* pRep = std::get_if<IntegerPropertyRepresentation>(
-                      &packedPropIt->second)) {
+            } else if (
+                auto* pRep = std::get_if<IntegerPropertyRepresentation>(
+                    &packedPropIt->second)) {
+              if (value.isInt64()) {
                 pRep->properties[featureId] = value.getInt64();
+              } else if (value.isDouble()) {
+                pRep->properties[featureId] =
+                    static_cast<int64_t>(value.getDouble());
               }
             }
           }
