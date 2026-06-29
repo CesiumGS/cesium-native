@@ -9,6 +9,7 @@
 - `PositionAccessorType` and `NormalAccessorType` are now variant types to support quantized attributes enabled by `KHR_mesh_quantization`.
 - The `AccessorView` and `AccessorWriter` constructor overloads that take raw buffer data now require an additional `normalized` argument.
 - The `getQuaternionAccessorView` overload that took an accessor pointer now takes an accessor reference.
+- Renamed `MAXAR_content_geojson` class `ExtensionMaxarContentGeoJson` to `ExtensionTilesetMaxarContentGeoJson`.
 - `forEachTile` and `forEachContent` now take an additional `refine` argument in the callback function.
 
 ##### Additions :tada:
@@ -23,6 +24,8 @@
 - Added `getColorAccessorView`, `ColorAccessorType` and `ColorFromAccessor` for reading vertex colors from a glTF model.
 - Added support for `KHR_billboard` glTF extension in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Modified `resolveProperty.js` to correctly generate struct names when the property name would include invalid characters.
+- Added `ExtensionMetadataEntityMaxarContentGeoJson` class to parse the metadata extension part of `MAXAR_content_geojson`.
+- Added `ExtensionSchemaMaxarContentGeoJson` class to parse GeoJson tileset schemas.
 
 ### v0.61.0 - 2026-06-01
 

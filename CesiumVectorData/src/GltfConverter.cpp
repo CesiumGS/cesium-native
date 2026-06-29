@@ -1,3 +1,4 @@
+#include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
@@ -7,6 +8,8 @@
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Class.h>
+#include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/FeatureId.h>
 #include <CesiumGltf/Material.h>
@@ -14,7 +17,9 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Scene.h>
+#include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
@@ -33,6 +38,7 @@
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <optional>
 #include <span>
 #include <string>
 #include <unordered_map>
@@ -42,6 +48,7 @@
 
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumUtility;
 using namespace CesiumVectorData;
 
 namespace CesiumVectorData {
@@ -505,6 +512,37 @@ ConverterResult GltfConverter::convert(
   scene.nodes.push_back(int32_t(rootNodeIndex));
   converter.model.scene = int32_t(converter.model.scenes.size() - 1);
   return {std::move(converter.model)};
+}
+
+ConvertSchemaResult GltfConverter::convertSchema(
+    const Cesium3DTiles::ExtensionSchemaMaxarContentGeoJson& maxarSchema) {
+  IntrusivePointer<Schema> pSchema;
+  Schema& schema = pSchema.emplace();
+  schema.id = "default";
+  std::string classKey;
+  if (maxarSchema.semantic.empty()) {
+    classKey = "geoJsonClass";
+  } else {
+    classKey = maxarSchema.semantic;
+  }
+  Class geoJsonClass;
+  geoJsonClass.name = classKey;
+  for (auto propsIt = maxarSchema.properties.begin();
+       propsIt != maxarSchema.properties.end();
+       ++propsIt) {
+    ClassProperty metaClass;
+    metaClass.name = propsIt->id;
+    if (propsIt->type == "String") {
+      metaClass.type = ClassProperty::Type::STRING;
+    } else if (propsIt->type == "Float") {
+      metaClass.componentType = ClassProperty::ComponentType::FLOAT64;
+    } else if (propsIt->type == "Integer") {
+      metaClass.componentType = ClassProperty::ComponentType::INT64;
+    }
+    geoJsonClass.properties[propsIt->id] = std::move(metaClass);
+  }
+  schema.classes[classKey] = std::move(geoJsonClass);
+  return schema;
 }
 
 } // namespace CesiumVectorData

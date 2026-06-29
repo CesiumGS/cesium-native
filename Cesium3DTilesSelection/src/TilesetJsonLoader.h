@@ -6,6 +6,7 @@
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGltf/Schema.h>
 
 #include <rapidjson/fwd.h>
 
@@ -33,6 +34,8 @@ public:
 
   CesiumGeometry::Axis getUpAxis() const noexcept;
 
+  const CesiumGltf::Schema& getExternalSchema() const noexcept;
+
   void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);
 
   static CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
@@ -59,6 +62,7 @@ private:
   std::string _baseUrl;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
+  CesiumGltf::Schema _externalSchema;
 
   /**
    * @brief The axis that was declared as the "up-axis" for glTF content.

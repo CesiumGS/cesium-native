@@ -7,11 +7,13 @@
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
 #include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
+#include <Cesium3DTiles/ExtensionMetadataEntityMaxarContentGeoJson.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesReader/BoundingVolumeReader.h>
 #include <Cesium3DTilesReader/ContentReader.h>
 #include <Cesium3DTilesReader/ExtensionContent3dTilesContentVoxelsReader.h>
+#include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <Cesium3DTilesReader/TilesetReader.h>
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -41,6 +43,7 @@
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonHelpers.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GltfConverter.h>
@@ -249,6 +252,53 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
   }
 
   return std::nullopt;
+}
+
+using JsonFetcherResult = Result<rapidjson::Document>;
+
+CesiumAsync::Future<JsonFetcherResult> getJson(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::string& jsonUrl,
+    std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders) {
+  return pAssetAccessor->get(asyncSystem, jsonUrl, requestHeaders)
+      .thenInWorkerThread(
+          [](std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest) {
+            auto pResponse = pCompletedRequest->response();
+            const std::string& jsonUrl = pCompletedRequest->url();
+            if (!pResponse) {
+              ErrorList errors;
+              errors.emplaceError(fmt::format(
+                  "Did not receive a valid response for json {}",
+                  jsonUrl));
+              return JsonFetcherResult(errors);
+            }
+            uint16_t statusCode = pResponse->statusCode();
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              ErrorList errors;
+              errors.emplaceError(fmt::format(
+                  "Received status code {} for tile content {}",
+                  statusCode,
+                  jsonUrl));
+              return JsonFetcherResult(errors);
+              ;
+            }
+            rapidjson::Document jsonContent;
+            const auto& responseData = pResponse->data();
+            jsonContent.Parse(
+                reinterpret_cast<const char*>(responseData.data()),
+                responseData.size());
+            if (jsonContent.HasParseError()) {
+              ErrorList errors;
+              errors.emplaceError(fmt::format(
+                  "Error when parsing JSON content, error code {} at byte "
+                  "offset {}",
+                  jsonContent.GetParseError(),
+                  jsonContent.GetErrorOffset()));
+              return JsonFetcherResult(errors);
+            }
+            return JsonFetcherResult(std::move(jsonContent));
+          });
 }
 
 void createImplicitQuadtreeLoader(
@@ -1033,14 +1083,28 @@ TilesetJsonLoader::createLoader(
   TileExternalContent* pExternal =
       result.pRootTile->getContent().getExternalContent();
   CESIUM_ASSERT(pExternal);
+  std::string externalSchemaUrl;
   if (pExternal) {
     removeRootPropertyAndParseTilesetMetadata(
         pLogger,
         tilesetJsonUrl,
         std::move(tilesetJson),
         *pExternal);
+    if (pExternal->metadata.metadata) {
+      auto* pMaxarGeoJsonExtension =
+          pExternal->metadata.metadata
+              ->getExtension<ExtensionMetadataEntityMaxarContentGeoJson>();
+      if (pMaxarGeoJsonExtension &&
+          pMaxarGeoJsonExtension->propertiesSchemaUri) {
+        externalSchemaUrl = CesiumUtility::Uri::resolve(
+            tilesetJsonUrl,
+            *pMaxarGeoJsonExtension->propertiesSchemaUri);
+      }
+    }
   }
-
+  std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaderVector(
+      requestHeaders.begin(),
+      requestHeaders.end());
   return asyncSystem.createResolvedFuture(std::move(result))
       .thenInWorkerThread([asyncSystem, pAssetAccessor](
                               TilesetContentLoaderResult<TilesetJsonLoader>&&
@@ -1065,6 +1129,49 @@ TilesetJsonLoader::createLoader(
             .thenImmediately([result = std::move(result)]() mutable {
               return std::move(result);
             });
+      })
+      .thenInWorkerThread([asyncSystem,
+                           pAssetAccessor,
+                           externalSchemaUrl,
+                           requestHeaders = std::move(requestHeaderVector),
+                           pLogger](
+                              TilesetContentLoaderResult<TilesetJsonLoader>&&
+                                  result) mutable {
+        if (!externalSchemaUrl.empty()) {
+          return getJson(
+                     asyncSystem,
+                     pAssetAccessor,
+                     externalSchemaUrl,
+                     std::move(requestHeaders))
+              .thenInWorkerThread([result = std::move(result), pLogger](
+                                      JsonFetcherResult&& jsonResult) mutable {
+                if (jsonResult.value) {
+                  Cesium3DTilesReader::ExtensionSchemaMaxarContentGeoJsonReader
+                      maxarSchemaReader;
+                  auto schemaReadResult =
+                      maxarSchemaReader.readFromJson(*jsonResult.value);
+                  if (!schemaReadResult.value ||
+                      !schemaReadResult.errors.empty()) {
+                    SPDLOG_LOGGER_ERROR(
+                        pLogger,
+                        "Error reading GeoJSON schema");
+                  } else {
+                    CesiumVectorData::ConvertSchemaResult schemaResult =
+                        CesiumVectorData::GltfConverter::convertSchema(
+                            *schemaReadResult.value);
+                    if (schemaResult.value) {
+                      result.pLoader->_externalSchema = *schemaResult.value;
+                    } else {
+                      SPDLOG_LOGGER_ERROR(
+                          pLogger,
+                          "Error converting GeoJSON schema");
+                    }
+                  }
+                }
+                return std::move(result);
+              });
+        }
+        return asyncSystem.createResolvedFuture(std::move(result));
       });
 }
 
@@ -1239,6 +1346,11 @@ const std::string& TilesetJsonLoader::getBaseUrl() const noexcept {
 
 CesiumGeometry::Axis TilesetJsonLoader::getUpAxis() const noexcept {
   return _upAxis;
+}
+
+const CesiumGltf::Schema&
+TilesetJsonLoader::getExternalSchema() const noexcept {
+  return _externalSchema;
 }
 
 void TilesetJsonLoader::addChildLoader(

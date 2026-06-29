@@ -15,7 +15,11 @@ struct Extension3dTilesEllipsoid;
 struct Extension3dTilesBoundingVolumeCylinder;
 struct ExtensionContent3dTilesContentVoxels;
 struct Extension3dTilesContentConditional;
-struct ExtensionMaxarContentGeoJson;
+struct ExtensionTilesetMaxarContentGeoJson;
+struct ExtensionMetadataEntityMaxarContentGeoJson;
+struct ExtensionSchemaMaxarContentGeoJson;
+struct ExtensionSchemaMaxarContentGeoJsonPropertiesValue;
+struct ExtensionSchemaMaxarContentGeoJsonGeometryValue;
 struct Extension3dTilesContentConditionalDimensionsValue;
 struct Padding;
 struct ConditionalContent;
@@ -114,15 +118,62 @@ struct Extension3dTilesContentConditionalJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ExtensionMaxarContentGeoJsonJsonWriter {
-  using ValueType = Cesium3DTiles::ExtensionMaxarContentGeoJson;
+struct ExtensionTilesetMaxarContentGeoJsonJsonWriter {
+  using ValueType = Cesium3DTiles::ExtensionTilesetMaxarContentGeoJson;
 
   /** @brief The official name of the extension. This should be the same as its
    * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "MAXAR_content_geojson";
 
   static void write(
-      const Cesium3DTiles::ExtensionMaxarContentGeoJson& obj,
+      const Cesium3DTiles::ExtensionTilesetMaxarContentGeoJson& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionMetadataEntityMaxarContentGeoJsonJsonWriter {
+  using ValueType = Cesium3DTiles::ExtensionMetadataEntityMaxarContentGeoJson;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "MAXAR_content_geojson";
+
+  static void write(
+      const Cesium3DTiles::ExtensionMetadataEntityMaxarContentGeoJson& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionSchemaMaxarContentGeoJsonJsonWriter {
+  using ValueType = Cesium3DTiles::ExtensionSchemaMaxarContentGeoJson;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "MAXAR_content_geojson";
+
+  static void write(
+      const Cesium3DTiles::ExtensionSchemaMaxarContentGeoJson& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionSchemaMaxarContentGeoJsonPropertiesValueJsonWriter {
+  using ValueType =
+      Cesium3DTiles::ExtensionSchemaMaxarContentGeoJsonPropertiesValue;
+
+  static void write(
+      const Cesium3DTiles::ExtensionSchemaMaxarContentGeoJsonPropertiesValue&
+          obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionSchemaMaxarContentGeoJsonGeometryValueJsonWriter {
+  using ValueType =
+      Cesium3DTiles::ExtensionSchemaMaxarContentGeoJsonGeometryValue;
+
+  static void write(
+      const Cesium3DTiles::ExtensionSchemaMaxarContentGeoJsonGeometryValue& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

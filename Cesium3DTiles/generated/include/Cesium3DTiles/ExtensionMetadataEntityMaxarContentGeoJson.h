@@ -5,21 +5,28 @@
 #include <Cesium3DTiles/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <optional>
+#include <string>
+
 namespace Cesium3DTiles {
 /**
- * @brief Enables loading GeoJSON content in 3D Tiles. This extension is
- * declared at the tileset level to enable the use of GeoJSON content and
- * optional properties metadata schemas in metadata entities.
+ * @brief Enables loading optional metadata schema for GeoJSON properties.
  */
-struct CESIUM3DTILES_API ExtensionMaxarContentGeoJson final
+struct CESIUM3DTILES_API ExtensionMetadataEntityMaxarContentGeoJson final
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
-  static constexpr const char* TypeName = "ExtensionMaxarContentGeoJson";
+  static constexpr const char* TypeName =
+      "ExtensionMetadataEntityMaxarContentGeoJson";
   /** @brief The official name of the extension. This should be the same as its
    * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "MAXAR_content_geojson";
+
+  /**
+   * @brief The URI (or IRI) of the external schema file for feature metadata.
+   */
+  std::optional<std::string> propertiesSchemaUri;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -29,10 +36,12 @@ struct CESIUM3DTILES_API ExtensionMaxarContentGeoJson final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(ExtensionMaxarContentGeoJson));
+    accum += int64_t(sizeof(ExtensionMetadataEntityMaxarContentGeoJson));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
-
+    if (this->propertiesSchemaUri) {
+      accum += int64_t(this->propertiesSchemaUri->capacity() * sizeof(char));
+    }
     return accum;
   }
 };

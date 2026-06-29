@@ -1,0 +1,34 @@
+{
+  "geometry": {
+    "dimensions": 3,
+    "type": "MultiPoint"
+  },
+  "name": "Pylon (Point)",
+  "properties": [
+    {
+      "description": "Feature Code - The code that defines what the feature is.",
+      "id": "F_CODE",
+      "required": true,
+      "type": "String"
+    },
+    {
+      "description": "Cable Type - a type.",
+      "id": "AT005_CAB",
+      "required": true,
+      "type": "Integer"
+    },
+    {
+      "description": "Height Above Surface Level - The vertical distance measured from the lowest point of the base of the feature at ground or water level (downhill/downstream side) to the tallest point of the feature.",
+      "id": "HGT",
+      "required": true,
+      "type": "Float"
+    },
+    {
+      "description": "Full Name",
+      "id": "FULL_NAME",
+      "required": false,
+      "type": "String"
+    }
+  ],
+  "semantic": "test_point"
+}
