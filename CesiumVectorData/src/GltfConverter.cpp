@@ -30,7 +30,6 @@
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
 #include <CesiumVectorData/GltfConverter.h>
 
-#include <fmt/format.h>
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_double3.hpp>
@@ -439,32 +438,32 @@ struct GltfConverterImpl {
           const auto& [name, value] = *propIt;
           if (auto packedPropIt = packedProps.find(name);
               packedPropIt != packedProps.end()) {
-            if (auto* pRep = std::get_if<StringPropertyRepresentation>(
+            if (auto* pStringRep = std::get_if<StringPropertyRepresentation>(
                     &packedPropIt->second)) {
-              pRep->offsets[featureId] = pRep->buffer.size();
+              pStringRep->offsets[featureId] = pStringRep->buffer.size();
               if (value.isString()) {
-                pRep->buffer.append(get<JsonValue::String>(value.value));
+                pStringRep->buffer.append(get<JsonValue::String>(value.value));
               } else if (value.isDouble()) {
-                pRep->buffer.append(std::to_string(value.getDouble()));
+                pStringRep->buffer.append(std::to_string(value.getDouble()));
               } else if (value.isInt64()) {
-                pRep->buffer.append(std::to_string(value.getInt64()));
+                pStringRep->buffer.append(std::to_string(value.getInt64()));
               }
             } else if (
-                auto* pRep = std::get_if<FloatPropertyRepresentation>(
+                auto* pFloatRep = std::get_if<FloatPropertyRepresentation>(
                     &packedPropIt->second)) {
               if (value.isDouble()) {
-                pRep->properties[featureId] = value.getDouble();
+                pFloatRep->properties[featureId] = value.getDouble();
               } else if (value.isInt64()) {
-                pRep->properties[featureId] =
+                pFloatRep->properties[featureId] =
                     static_cast<double>(value.getInt64());
               }
             } else if (
-                auto* pRep = std::get_if<IntegerPropertyRepresentation>(
+                auto* pIntegerRep = std::get_if<IntegerPropertyRepresentation>(
                     &packedPropIt->second)) {
               if (value.isInt64()) {
-                pRep->properties[featureId] = value.getInt64();
+                pIntegerRep->properties[featureId] = value.getInt64();
               } else if (value.isDouble()) {
-                pRep->properties[featureId] =
+                pIntegerRep->properties[featureId] =
                     static_cast<int64_t>(value.getDouble());
               }
             }
