@@ -444,44 +444,33 @@ struct GltfConverterImpl {
                 std::get<StringPropertyRepresentation>(packedProps[name]);
             rep.offsets[featureId] = rep.buffer.size();
             rep.buffer.append(get<JsonValue::String>(value.value));
-          } else if (value.isDouble()) {
-            if (!(classProp.type == ClassProperty::Type::SCALAR &&
-                  classProp.componentType &&
-                  *classProp.componentType ==
-                      ClassProperty::ComponentType::FLOAT64)) {
-              errorList.error(fmt::format(
-                  "Double GeoJSON property {} has schema type {}, "
-                  "component type {}.",
-                  name,
-                  classProp.type,
-                  *classProp.componentType));
+          } else if (value.isDouble() || value.isInt64()) {
+            if (classProp.type != ClassProperty::Type::SCALAR) {
+              errorList.error(
+                  fmt::format("GeoJSON property {} is not scalar.", name));
               return;
             }
-            if (!packedProps.contains(name)) {
-              packedProps[name] = FloatPropertyRepresentation(numFeatures);
-            }
-            auto& rep =
-                std::get<FloatPropertyRepresentation>(packedProps[name]);
-            rep.properties[featureId] = value.getDouble();
-          } else if (value.isInt64()) {
-            if (!(classProp.type == ClassProperty::Type::SCALAR &&
-                  classProp.componentType &&
-                  *classProp.componentType ==
-                      ClassProperty::ComponentType::INT64)) {
+            if (!classProp.componentType) {
               errorList.error(fmt::format(
-                  "Integer GeoJSON property {} has schema type {}, "
-                  "component type {}.",
-                  name,
-                  classProp.type,
-                  *classProp.componentType));
+                  "GeoJSON property {} does not have a component type.",
+                  name));
               return;
             }
-            if (!packedProps.contains(name)) {
-              packedProps[name] = IntegerPropertyRepresentation(numFeatures);
+            if (value.isDouble()) {
+              if (!packedProps.contains(name)) {
+                packedProps[name] = FloatPropertyRepresentation(numFeatures);
+              }
+              auto& rep =
+                  std::get<FloatPropertyRepresentation>(packedProps[name]);
+              rep.properties[featureId] = value.getDouble();
+            } else {
+              if (!packedProps.contains(name)) {
+                packedProps[name] = IntegerPropertyRepresentation(numFeatures);
+              }
+              auto& rep =
+                  std::get<IntegerPropertyRepresentation>(packedProps[name]);
+              rep.properties[featureId] = value.getInt64();
             }
-            auto& rep =
-                std::get<IntegerPropertyRepresentation>(packedProps[name]);
-            rep.properties[featureId] = value.getInt64();
           }
         }
       }
