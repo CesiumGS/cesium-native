@@ -1209,6 +1209,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& pSharedAssetSystem = loadInput.pSharedAssetSystem;
   const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
+  const auto& pExternalSchema = this->_pExternalSchema;
 
   // If the URL is empty, this tile is empty content and we don't need to make a
   // web request to complete the loading process (in fact, a web request would
@@ -1243,7 +1244,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            asyncSystem,
            pSharedAssetSystem,
            requestHeaders,
-           pExternalSchema = this->_pExternalSchema](
+           pExternalSchema](
               std::shared_ptr<CesiumAsync::IAssetRequest>&&
                   pCompletedRequest) mutable {
             auto pResponse = pCompletedRequest->response();
