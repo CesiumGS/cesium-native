@@ -411,6 +411,21 @@ struct GltfConverterImpl {
       return;
     }
     const Class& metaClass = classIt->second;
+    for (const auto& [propertyName, classProp] : metaClass.properties) {
+      if (classProp.type == ClassProperty::Type::STRING) {
+        packedProps[propertyName] = StringPropertyRepresentation(numFeatures);
+      } else if (
+          classProp.type == ClassProperty::Type::SCALAR &&
+          classProp.componentType) {
+        if (*classProp.componentType == ClassProperty::ComponentType::FLOAT64) {
+          packedProps[propertyName] = FloatPropertyRepresentation(numFeatures);
+        } else if (
+            *classProp.componentType == ClassProperty::ComponentType::INT64) {
+          packedProps[propertyName] =
+              IntegerPropertyRepresentation(numFeatures);
+        }
+      }
+    }
     for (size_t featureId = 0; featureId < numFeatures; ++featureId) {
       const GeoJsonObject* pGeoJsonObject = this->geoJsonFeatures[featureId];
       if (!pGeoJsonObject) {
@@ -422,54 +437,24 @@ struct GltfConverterImpl {
              propIt != feature.properties->end();
              ++propIt) {
           const auto& [name, value] = *propIt;
-          auto schemaPropItr = metaClass.properties.find(name);
-          if (schemaPropItr == metaClass.properties.end()) {
-            errorList.warning(
-                fmt::format("Property {} is not in schema.", name));
-            continue;
-          }
-          const ClassProperty& classProp = schemaPropItr->second;
-          if (value.isString()) {
-            if (classProp.type != ClassProperty::Type::STRING) {
-              errorList.error(fmt::format(
-                  "String GeoJSON property {} has schema type {}.",
-                  name,
-                  classProp.type));
-              return;
-            }
-            if (!packedProps.contains(name)) {
-              packedProps[name] = StringPropertyRepresentation(numFeatures);
-            }
-            StringPropertyRepresentation& rep =
-                std::get<StringPropertyRepresentation>(packedProps[name]);
-            rep.offsets[featureId] = rep.buffer.size();
-            rep.buffer.append(get<JsonValue::String>(value.value));
-          } else if (value.isDouble() || value.isInt64()) {
-            if (classProp.type != ClassProperty::Type::SCALAR) {
-              errorList.error(
-                  fmt::format("GeoJSON property {} is not scalar.", name));
-              return;
-            }
-            if (!classProp.componentType) {
-              errorList.error(fmt::format(
-                  "GeoJSON property {} does not have a component type.",
-                  name));
-              return;
-            }
-            if (value.isDouble()) {
-              if (!packedProps.contains(name)) {
-                packedProps[name] = FloatPropertyRepresentation(numFeatures);
+          if (auto packedPropIt = packedProps.find(name);
+              packedPropIt != packedProps.end()) {
+            if (value.isString()) {
+              if (auto* pRep = std::get_if<StringPropertyRepresentation>(
+                      &packedPropIt->second)) {
+                pRep->offsets[featureId] = pRep->buffer.size();
+                pRep->buffer.append(get<JsonValue::String>(value.value));
               }
-              auto& rep =
-                  std::get<FloatPropertyRepresentation>(packedProps[name]);
-              rep.properties[featureId] = value.getDouble();
-            } else {
-              if (!packedProps.contains(name)) {
-                packedProps[name] = IntegerPropertyRepresentation(numFeatures);
+            } else if (value.isDouble()) {
+              if (auto* pRep = std::get_if<FloatPropertyRepresentation>(
+                      &packedPropIt->second)) {
+                pRep->properties[featureId] = value.getDouble();
               }
-              auto& rep =
-                  std::get<IntegerPropertyRepresentation>(packedProps[name]);
-              rep.properties[featureId] = value.getInt64();
+            } else if (value.isInt64()) {
+              if (auto* pRep = std::get_if<IntegerPropertyRepresentation>(
+                      &packedPropIt->second)) {
+                pRep->properties[featureId] = value.getInt64();
+              }
             }
           }
         }
