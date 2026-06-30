@@ -26,6 +26,7 @@
 - Modified `resolveProperty.js` to correctly generate struct names when the property name would include invalid characters.
 - Added `ExtensionMetadataEntityMaxarContentGeoJson` class to parse the metadata extension part of `MAXAR_content_geojson`.
 - Added `ExtensionSchemaMaxarContentGeoJson` class to parse GeoJson tileset schemas.
+- Added conversion of GeoJSON feature properties to glTF structural metadata.
 
 ### v0.61.0 - 2026-06-01
 

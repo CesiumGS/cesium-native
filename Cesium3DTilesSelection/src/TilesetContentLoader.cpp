@@ -9,6 +9,8 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltf/Schema.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <spdlog/logger.h>
 
@@ -102,4 +104,10 @@ void TilesetContentLoader::setOwner(TilesetContentManager& owner) noexcept {
 void TilesetContentLoader::setOwnerOfNestedLoaders(
     TilesetContentManager& /*owner*/) noexcept {}
 
+void TilesetContentLoader::setExternalSchema(CesiumGltf::Schema*) {}
+
+CesiumUtility::IntrusivePointer<CesiumGltf::Schema>
+TilesetContentLoader::getExternalSchema() {
+  return nullptr;
+}
 } // namespace Cesium3DTilesSelection
