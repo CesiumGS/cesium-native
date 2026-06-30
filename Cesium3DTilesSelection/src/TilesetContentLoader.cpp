@@ -104,8 +104,7 @@ void TilesetContentLoader::setOwner(TilesetContentManager& owner) noexcept {
 void TilesetContentLoader::setOwnerOfNestedLoaders(
     TilesetContentManager& /*owner*/) noexcept {}
 
-void TilesetContentLoader::setExternalSchema(CesiumGltf::Schema*) {
-}
+void TilesetContentLoader::setExternalSchema(CesiumGltf::Schema*) {}
 
 CesiumUtility::IntrusivePointer<CesiumGltf::Schema>
 TilesetContentLoader::getExternalSchema() {
