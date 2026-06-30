@@ -596,6 +596,8 @@ int32_t GltfConverterImpl::finalizePrimitive(
   FeatureId& featureId = extension.featureIds.emplace_back();
   featureId.attribute = 0;
   featureId.featureCount = vectorPrimitive.uniqueFeatures;
+  featureId.propertyTable = 0;
+  featureId.label = "_FEATURE_ID_0";
   featureId.nullFeatureId = 0;
   int32_t nodeIndex = int32_t(this->model.nodes.size());
   this->model.nodes.emplace_back();

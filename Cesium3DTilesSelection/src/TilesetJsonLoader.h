@@ -57,6 +57,10 @@ public:
       rapidjson::Document&& tilesetJson,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
+  void setExternalSchema(CesiumGltf::Schema* schema) override;
+  virtual CesiumUtility::IntrusivePointer<CesiumGltf::Schema>
+  getExternalSchema() override;
+
 protected:
   void setOwnerOfNestedLoaders(TilesetContentManager& owner) noexcept override;
 

@@ -1244,9 +1244,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            asyncSystem,
            pSharedAssetSystem,
            requestHeaders,
-           pExternalSchema](
-              std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                  pCompletedRequest) mutable {
+           pExternalSchema](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                pCompletedRequest) mutable {
             auto pResponse = pCompletedRequest->response();
             const std::string& tileUrl = pCompletedRequest->url();
             if (!pResponse) {
@@ -1368,7 +1367,7 @@ void TilesetJsonLoader::addChildLoader(
   if (this->getOwner() != nullptr) {
     pLoader->setOwner(*this->getOwner());
   }
-
+  pLoader->setExternalSchema(this->_pExternalSchema.get());
   this->_children.emplace_back(std::move(pLoader));
 }
 
@@ -1379,4 +1378,12 @@ void TilesetJsonLoader::setOwnerOfNestedLoaders(
   }
 }
 
+void TilesetJsonLoader::setExternalSchema(CesiumGltf::Schema* schema) {
+  this->_pExternalSchema = schema;
+}
+
+CesiumUtility::IntrusivePointer<CesiumGltf::Schema>
+TilesetJsonLoader::getExternalSchema() {
+  return this->_pExternalSchema;
+}
 } // namespace Cesium3DTilesSelection
