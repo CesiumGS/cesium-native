@@ -194,7 +194,7 @@ endif()
 include("cmake/defaults.cmake")
 
 project(cesium-native
-    VERSION 0.61.0
+    VERSION 0.62.0
     LANGUAGES CXX C
 )
 
