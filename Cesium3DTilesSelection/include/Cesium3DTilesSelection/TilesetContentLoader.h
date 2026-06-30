@@ -210,9 +210,9 @@ public:
    * @brief Store a glTF schema object that will be used to parse metadata in a
    * loader and its children.
    *
-   * @param pointer to Schema.
+   * @param schema pointer to Schema.
    */
-  virtual void setExternalSchema(CesiumGltf::Schema*){};
+  virtual void setExternalSchema(CesiumGltf::Schema* schema);
 
   /**
    * @brief Get the external glTF schema object.
