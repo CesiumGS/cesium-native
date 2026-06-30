@@ -87,12 +87,12 @@ TEST_CASE("Conversion from geoJSON to glTF") {
         });
   }
   SUBCASE("GeoJSON metadata") {
-    const auto* metadata =
+    const auto* pMetadata =
         model.getExtension<ExtensionModelExtStructuralMetadata>();
-    REQUIRE(metadata);
-    REQUIRE(metadata->schema);
+    REQUIRE(pMetadata);
+    REQUIRE(pMetadata->schema);
     const std::unordered_map<std::string, Class>& classes =
-        metadata->schema->classes;
+        pMetadata->schema->classes;
     auto classItr = classes.find("ShipRoute");
     REQUIRE(classItr != classes.end());
     const Class& routeClass = classItr->second;
@@ -104,12 +104,12 @@ TEST_CASE("Conversion from geoJSON to glTF") {
     REQUIRE(trajId.type == ClassProperty::Type::SCALAR);
     REQUIRE(trajId.componentType == ClassProperty::ComponentType::INT64);
     auto propertyTableItr = std::find_if(
-        metadata->propertyTables.begin(),
-        metadata->propertyTables.end(),
+        pMetadata->propertyTables.begin(),
+        pMetadata->propertyTables.end(),
         [](const PropertyTable& propTable) {
           return propTable.classProperty == "ShipRoute";
         });
-    REQUIRE(propertyTableItr != metadata->propertyTables.end());
+    REQUIRE(propertyTableItr != pMetadata->propertyTables.end());
     PropertyTableView view(model, *propertyTableItr);
     REQUIRE(view.status() == PropertyTableViewStatus::Valid);
     auto trajIdPropertyView = view.getPropertyView<int64_t>("traj_id");
