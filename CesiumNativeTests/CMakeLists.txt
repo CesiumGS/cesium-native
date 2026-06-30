@@ -31,6 +31,13 @@ if(NOT CESIUM_DISABLE_CURL)
     list(APPEND cesium_native_targets CesiumCurl)
 endif()
 
+if(CESIUM_ENABLE_I3S)
+    list(APPEND cesium_native_targets CesiumI3S)
+    list(APPEND cesium_native_targets CesiumI3SReader)
+    list(APPEND cesium_native_targets CesiumI3SContent)
+    list(APPEND cesium_native_targets CesiumI3SSelection)
+endif()
+
 cesium_glob_files(test_sources
     ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
 )
