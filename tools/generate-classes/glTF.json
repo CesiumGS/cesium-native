@@ -184,6 +184,9 @@
     },
     "KHR_billboard glTF Node Extension": {
       "overrideName": "ExtensionKhrBillboard"
+    },
+    "BENTLEY_materials_point_style extension": {
+      "overrideName": "ExtensionBentleyMaterialsPointStyle"
     }
   },
   "extensions": [
@@ -340,6 +343,10 @@
     {
       "extensionName": "KHR_billboard",
       "schema": "Khronos/KHR_billboard/schema/node.KHR_billboard.schema.json"
+    },
+    {
+      "extensionName": "BENTLEY_materials_point_style",
+      "schema": "Vendor/BENTLEY_materials_point_style/schema/material.BENTLEY_materials_point_style.schema.json"
     }
   ]
 }
