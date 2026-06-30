@@ -38,10 +38,12 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltf/Schema.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
+#include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
@@ -885,7 +887,8 @@ TileLoadResult parseJsonContentInWorkerThread(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
     ExternalContentInitializer&& externalContentInitializer,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    const IntrusivePointer<CesiumGltf::Schema>& pExternalSchema) {
   const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
   const auto& responseData = pResponse->data();
 
@@ -913,7 +916,10 @@ TileLoadResult parseJsonContentInWorkerThread(
           std::move(pCompletedRequest));
     } else {
       CesiumVectorData::ConverterResult converterResult =
-          CesiumVectorData::GltfConverter::convert(*geoJson.value, ellipsoid);
+          CesiumVectorData::GltfConverter::convert(
+              *geoJson.value,
+              ellipsoid,
+              pExternalSchema);
       if (converterResult.value.has_value() &&
           !converterResult.errors.hasErrors()) {
         return TileLoadResult{
@@ -1159,8 +1165,8 @@ TilesetJsonLoader::createLoader(
                     CesiumVectorData::ConvertSchemaResult schemaResult =
                         CesiumVectorData::GltfConverter::convertSchema(
                             *schemaReadResult.value);
-                    if (schemaResult.value) {
-                      result.pLoader->_externalSchema = *schemaResult.value;
+                    if (schemaResult.pValue) {
+                      result.pLoader->_pExternalSchema = schemaResult.pValue;
                     } else {
                       SPDLOG_LOGGER_ERROR(
                           pLogger,
@@ -1203,6 +1209,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const auto& pSharedAssetSystem = loadInput.pSharedAssetSystem;
   const auto& requestHeaders = loadInput.requestHeaders;
   const auto& contentOptions = loadInput.contentOptions;
+  const auto& pExternalSchema = this->_pExternalSchema;
 
   // If the URL is empty, this tile is empty content and we don't need to make a
   // web request to complete the loading process (in fact, a web request would
@@ -1236,8 +1243,9 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
            pAssetAccessor,
            asyncSystem,
            pSharedAssetSystem,
-           requestHeaders](std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                               pCompletedRequest) mutable {
+           requestHeaders,
+           pExternalSchema](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                pCompletedRequest) mutable {
             auto pResponse = pCompletedRequest->response();
             const std::string& tileUrl = pCompletedRequest->url();
             if (!pResponse) {
@@ -1324,7 +1332,8 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
                       pAssetAccessor,
                       std::move(pCompletedRequest),
                       std::move(externalContentInitializer),
-                      ellipsoid));
+                      ellipsoid,
+                      pExternalSchema));
             }
           });
 }
@@ -1348,9 +1357,9 @@ CesiumGeometry::Axis TilesetJsonLoader::getUpAxis() const noexcept {
   return _upAxis;
 }
 
-const CesiumGltf::Schema&
+const CesiumUtility::IntrusivePointer<CesiumGltf::Schema>&
 TilesetJsonLoader::getExternalSchema() const noexcept {
-  return _externalSchema;
+  return _pExternalSchema;
 }
 
 void TilesetJsonLoader::addChildLoader(
@@ -1358,7 +1367,7 @@ void TilesetJsonLoader::addChildLoader(
   if (this->getOwner() != nullptr) {
     pLoader->setOwner(*this->getOwner());
   }
-
+  pLoader->setExternalSchema(this->_pExternalSchema.get());
   this->_children.emplace_back(std::move(pLoader));
 }
 
@@ -1369,4 +1378,12 @@ void TilesetJsonLoader::setOwnerOfNestedLoaders(
   }
 }
 
+void TilesetJsonLoader::setExternalSchema(CesiumGltf::Schema* schema) {
+  this->_pExternalSchema = schema;
+}
+
+CesiumUtility::IntrusivePointer<CesiumGltf::Schema>
+TilesetJsonLoader::getExternalSchema() {
+  return this->_pExternalSchema;
+}
 } // namespace Cesium3DTilesSelection

@@ -11,15 +11,20 @@
 #include <CesiumGltf/Class.h>
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/FeatureId.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialPBRMetallicRoughness.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
+#include <CesiumGltf/PropertyTable.h>
+#include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/JsonValue.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
 #include <CesiumVectorData/GeoJsonObject.h>
 #include <CesiumVectorData/GeoJsonObjectTypes.h>
@@ -120,6 +125,10 @@ struct GltfConverterImpl {
   int32_t featureIdBufferIndex = -1;
   int32_t featureIdBufferViewIndex = -1;
   int32_t featureIdAccessorIndex = -1;
+
+  // Errors and warnings accumulated during the conversion.
+  ErrorList errorList;
+
   GltfConverterImpl(
       const GeoJsonDocument& inGeoJson,
       const CesiumGeospatial::Ellipsoid& inEllipsoid)
@@ -254,6 +263,233 @@ struct GltfConverterImpl {
     }
     return mapIt->second;
   }
+
+  struct StringPropertyRepresentation {
+    std::string buffer;
+    std::vector<uint64_t> offsets;
+
+    StringPropertyRepresentation(size_t numFeatures = 0)
+        : offsets(numFeatures + 1, std::numeric_limits<uint64_t>::max()) {
+      // feature ID 0 is reserved for missing data
+      offsets[0] = 0;
+    }
+  };
+
+  template <typename Scalar> struct ScalarRepresentation {
+    ScalarRepresentation(size_t numFeatures = 0) : properties(numFeatures) {}
+    std::vector<Scalar> properties;
+    using ScalarType = Scalar;
+  };
+
+  using FloatPropertyRepresentation = ScalarRepresentation<double>;
+  using IntegerPropertyRepresentation = ScalarRepresentation<int64_t>;
+
+  using PackedProperty = std::variant<
+      StringPropertyRepresentation,
+      FloatPropertyRepresentation,
+      IntegerPropertyRepresentation>;
+  using PackedProperties = std::unordered_map<std::string, PackedProperty>;
+
+  void recordStringProperties(
+      ExtensionModelExtStructuralMetadata& modelExtension,
+      PackedProperties& packedProps) {
+    PropertyTable& propertyTable = modelExtension.propertyTables.back();
+    size_t metadataBufferIndex = this->model.buffers.size();
+    this->model.buffers.emplace_back();
+    size_t metadataSize = 0;
+    size_t offsetsBufferIndex = this->model.buffers.size();
+    this->model.buffers.emplace_back();
+    size_t offsetsSize = 0;
+    Buffer& metadataBuffer = this->model.buffers[metadataBufferIndex];
+    Buffer& offsetsBuffer = this->model.buffers[offsetsBufferIndex];
+
+    for (auto& [_, propRepVariant] : packedProps) {
+      if (auto* pPropRep =
+              std::get_if<StringPropertyRepresentation>(&propRepVariant)) {
+        pPropRep->offsets.back() = pPropRep->buffer.size();
+        // Patch up any missing data
+        uint64_t lastValidOffset = 0;
+        for (uint64_t& offset : pPropRep->offsets) {
+          if (offset == std::numeric_limits<uint64_t>::max()) {
+            offset = lastValidOffset;
+          } else {
+            lastValidOffset = offset;
+          }
+        }
+        metadataSize += pPropRep->buffer.size();
+        offsetsSize += pPropRep->offsets.size();
+      }
+    }
+    metadataBuffer.cesium.data.resize(metadataSize);
+    size_t offsetsByteSize = offsetsSize * sizeof(uint64_t);
+    offsetsBuffer.cesium.data.resize(offsetsByteSize);
+    // These offsets are in bytes.
+    size_t buffOffset = 0;
+    size_t offsetDataOffset = 0;
+    for (auto& [propName, propRepVariant] : packedProps) {
+      if (auto* pPropRep =
+              std::get_if<StringPropertyRepresentation>(&propRepVariant)) {
+        size_t propOffsetsByteSize =
+            pPropRep->offsets.size() * sizeof(uint64_t);
+        int32_t propIndex = makeBufferView(
+            int32_t(metadataBufferIndex),
+            BufferView::Target::ARRAY_BUFFER,
+            int64_t(buffOffset),
+            int64_t(pPropRep->buffer.size()));
+        std::memcpy(
+            metadataBuffer.cesium.data.data() + buffOffset,
+            pPropRep->buffer.data(),
+            pPropRep->buffer.size());
+        int32_t offsetsIndex = makeBufferView(
+            int32_t(offsetsBufferIndex),
+            BufferView::Target::ARRAY_BUFFER,
+            int64_t(offsetDataOffset),
+            int64_t(propOffsetsByteSize));
+        std::memcpy(
+            offsetsBuffer.cesium.data.data() + offsetDataOffset,
+            pPropRep->offsets.data(),
+            propOffsetsByteSize);
+        buffOffset += pPropRep->buffer.size();
+        offsetDataOffset += pPropRep->offsets.size() * sizeof(uint64_t);
+        PropertyTableProperty& propertyTableProperty =
+            propertyTable.properties.emplace(propName, PropertyTableProperty())
+                .first->second;
+        propertyTableProperty.values = propIndex;
+        propertyTableProperty.stringOffsets = offsetsIndex;
+        propertyTableProperty.stringOffsetType =
+            ClassProperty::ComponentType::UINT64;
+      }
+    }
+  }
+
+  template <typename ScalarProperty>
+  void recordScalarProperty(
+      ExtensionModelExtStructuralMetadata& modelExtension,
+      PackedProperties& packedProps) {
+    PropertyTable& propertyTable = modelExtension.propertyTables.back();
+    size_t metadataBufferIndex = this->model.buffers.size();
+    Buffer& metadataBuffer = this->model.buffers.emplace_back();
+    size_t metadataSize = 0;
+
+    for (auto& [_, propRepVariant] : packedProps) {
+      if (auto* pPropRep = std::get_if<ScalarRepresentation<ScalarProperty>>(
+              &propRepVariant)) {
+        metadataSize += pPropRep->properties.size() * sizeof(ScalarProperty);
+      }
+    }
+    metadataBuffer.cesium.data.resize(metadataSize);
+    size_t buffOffset = 0;
+    for (auto& [propName, propRepVariant] : packedProps) {
+      if (auto* pPropRep = std::get_if<ScalarRepresentation<ScalarProperty>>(
+              &propRepVariant)) {
+        size_t byteSize = pPropRep->properties.size() * sizeof(ScalarProperty);
+        int32_t propIndex = makeBufferView(
+            int32_t(metadataBufferIndex),
+            BufferView::Target::ARRAY_BUFFER,
+            int64_t(buffOffset),
+            int64_t(byteSize));
+        std::memcpy(
+            metadataBuffer.cesium.data.data() + buffOffset,
+            pPropRep->properties.data(),
+            byteSize);
+        buffOffset += byteSize;
+        PropertyTableProperty& propertyTableProperty =
+            propertyTable.properties.emplace(propName, PropertyTableProperty())
+                .first->second;
+        propertyTableProperty.values = propIndex;
+      }
+    }
+  }
+
+  void recordFeatureProperties(const IntrusivePointer<Schema>& pSchema) {
+    size_t numFeatures = this->geoJsonFeatures.size();
+    PackedProperties packedProps;
+    auto classIt = pSchema->classes.begin();
+    if (classIt == pSchema->classes.end()) {
+      errorList.emplaceWarning("No schema supplied for GeoJSON content.");
+      return;
+    }
+    const Class& metaClass = classIt->second;
+    for (const auto& [propertyName, classProp] : metaClass.properties) {
+      if (classProp.type == ClassProperty::Type::STRING) {
+        packedProps[propertyName] = StringPropertyRepresentation(numFeatures);
+      } else if (
+          classProp.type == ClassProperty::Type::SCALAR &&
+          classProp.componentType) {
+        if (*classProp.componentType == ClassProperty::ComponentType::FLOAT64) {
+          packedProps[propertyName] = FloatPropertyRepresentation(numFeatures);
+        } else if (
+            *classProp.componentType == ClassProperty::ComponentType::INT64) {
+          packedProps[propertyName] =
+              IntegerPropertyRepresentation(numFeatures);
+        }
+      }
+    }
+    for (size_t featureId = 0; featureId < numFeatures; ++featureId) {
+      const GeoJsonObject* pGeoJsonObject = this->geoJsonFeatures[featureId];
+      if (!pGeoJsonObject) {
+        continue;
+      }
+      const GeoJsonFeature& feature = pGeoJsonObject->get<GeoJsonFeature>();
+      if (feature.properties) {
+        for (auto propIt = feature.properties->begin();
+             propIt != feature.properties->end();
+             ++propIt) {
+          const auto& [name, value] = *propIt;
+          if (auto packedPropIt = packedProps.find(name);
+              packedPropIt != packedProps.end()) {
+            if (auto* pStringRep = std::get_if<StringPropertyRepresentation>(
+                    &packedPropIt->second)) {
+              pStringRep->offsets[featureId] = pStringRep->buffer.size();
+              if (value.isString()) {
+                pStringRep->buffer.append(get<JsonValue::String>(value.value));
+              } else if (value.isDouble()) {
+                pStringRep->buffer.append(std::to_string(value.getDouble()));
+              } else if (value.isInt64()) {
+                pStringRep->buffer.append(std::to_string(value.getInt64()));
+              }
+            } else if (
+                auto* pFloatRep = std::get_if<FloatPropertyRepresentation>(
+                    &packedPropIt->second)) {
+              if (value.isDouble()) {
+                pFloatRep->properties[featureId] = value.getDouble();
+              } else if (value.isInt64()) {
+                pFloatRep->properties[featureId] =
+                    static_cast<double>(value.getInt64());
+              }
+            } else if (
+                auto* pIntegerRep = std::get_if<IntegerPropertyRepresentation>(
+                    &packedPropIt->second)) {
+              if (value.isInt64()) {
+                pIntegerRep->properties[featureId] = value.getInt64();
+              } else if (value.isDouble()) {
+                pIntegerRep->properties[featureId] =
+                    static_cast<int64_t>(value.getDouble());
+              }
+            }
+          }
+        }
+      }
+    }
+    ExtensionModelExtStructuralMetadata& modelExtension =
+        this->model.addExtension<ExtensionModelExtStructuralMetadata>();
+    this->model.addExtensionUsed(
+        ExtensionModelExtStructuralMetadata::ExtensionName);
+    modelExtension.schema = pSchema;
+    modelExtension.propertyTables.emplace_back();
+    if (pSchema && !pSchema->classes.empty()) {
+      // Only expect one class
+      auto schemaClassItr = pSchema->classes.begin();
+      modelExtension.propertyTables.back().classProperty =
+          schemaClassItr->first;
+    } else {
+      modelExtension.propertyTables.back().classProperty = "default";
+    }
+    modelExtension.propertyTables.back().count = int64_t(numFeatures);
+    recordStringProperties(modelExtension, packedProps);
+    recordScalarProperty<double>(modelExtension, packedProps);
+    recordScalarProperty<int64_t>(modelExtension, packedProps);
+  }
 };
 
 int32_t GltfConverterImpl::makeBufferView(int32_t buffer, int32_t target) {
@@ -360,6 +596,8 @@ int32_t GltfConverterImpl::finalizePrimitive(
   FeatureId& featureId = extension.featureIds.emplace_back();
   featureId.attribute = 0;
   featureId.featureCount = vectorPrimitive.uniqueFeatures;
+  featureId.propertyTable = 0;
+  featureId.label = "_FEATURE_ID_0";
   featureId.nullFeatureId = 0;
   int32_t nodeIndex = int32_t(this->model.nodes.size());
   this->model.nodes.emplace_back();
@@ -473,7 +711,8 @@ void GltfConverterImpl::createFeatureIdAccessor(size_t numCoords) {
 
 ConverterResult GltfConverter::convert(
     const GeoJsonDocument& geoJson,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    const IntrusivePointer<Schema>& pSchema) {
   GltfConverterImpl converter(geoJson, ellipsoid);
   const GeoJsonObject& root = geoJson.rootObject;
   for (auto geoJsonIt = root.begin(); geoJsonIt != root.end(); ++geoJsonIt) {
@@ -511,7 +750,10 @@ ConverterResult GltfConverter::convert(
   Scene& scene = converter.model.scenes.emplace_back();
   scene.nodes.push_back(int32_t(rootNodeIndex));
   converter.model.scene = int32_t(converter.model.scenes.size() - 1);
-  return {std::move(converter.model)};
+  if (pSchema) {
+    converter.recordFeatureProperties(pSchema);
+  }
+  return {std::move(converter.model), std::move(converter.errorList)};
 }
 
 ConvertSchemaResult GltfConverter::convertSchema(
@@ -542,7 +784,7 @@ ConvertSchemaResult GltfConverter::convertSchema(
     geoJsonClass.properties[propsIt->id] = std::move(metaClass);
   }
   schema.classes[classKey] = std::move(geoJsonClass);
-  return schema;
+  return pSchema;
 }
 
 } // namespace CesiumVectorData
