@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added support for the [`BENTLEY_materials_point_style`](https://github.com/CesiumGS/glTF/pull/91) extension in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+
 ### v0.62.0 - 2026-07-01
 
 ##### Breaking Changes :mega:
