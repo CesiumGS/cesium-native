@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Fixes :wrench:
+
+- `CesiumVectorOverlays::GeoJsonDocumentRasterOverlay` now actually rasterizes `Point` and `MultiPoint` geometry. Previously these were silently dropped before reaching the rasterizer, even though point rendering was already supported.
+
 ### v0.62.0 - 2026-07-01
 
 ##### Breaking Changes :mega:
@@ -27,10 +33,6 @@
 - Added `ExtensionMetadataEntityMaxarContentGeoJson` class to parse the metadata extension part of `MAXAR_content_geojson`.
 - Added `ExtensionSchemaMaxarContentGeoJson` class to parse GeoJson tileset schemas.
 - Added conversion of GeoJSON feature properties to glTF structural metadata.
-
-##### Fixes :wrench:
-
-- `CesiumVectorOverlays::GeoJsonDocumentRasterOverlay` now actually rasterizes `Point` and `MultiPoint` geometry. Previously these were silently dropped before reaching the rasterizer, even though point rendering was already supported.
 
 ### v0.61.0 - 2026-06-01
 
