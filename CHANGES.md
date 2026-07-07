@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.63.0 - 2026-08-03
+
+##### Additions :tada:
+
+- Added support for reading arrays of arbitrary JSON values in `CesiumJsonReader::ArrayJsonHandler`.
+
 ### v0.62.0 - 2026-07-01
 
 ##### Breaking Changes :mega:
