@@ -1,7 +1,7 @@
 
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
+#include <CesiumImage/Ktx2TranscodeTargets.h>
 
-using namespace CesiumGltf;
+using namespace CesiumImage;
 
 Ktx2TranscodeTargets::Ktx2TranscodeTargets(
     const SupportedGpuCompressedPixelFormats& supportedFormats,

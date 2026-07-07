@@ -1,6 +1,5 @@
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
-#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumGltf/PropertyTransformations.h>
@@ -8,6 +7,7 @@
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/Sampler.h>
 #include <CesiumGltf/TextureView.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/ext/vector_double2.hpp>
@@ -42,6 +42,7 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumImage;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 

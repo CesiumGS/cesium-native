@@ -1,12 +1,12 @@
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
-#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTexture.h>
 #include <CesiumGltf/PropertyTexturePropertyView.h>
 #include <CesiumGltf/PropertyTextureView.h>
 #include <CesiumGltf/PropertyView.h>
 #include <CesiumGltf/Texture.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <cstddef>
@@ -96,7 +96,7 @@ PropertyTextureView::checkImage(const int32_t imageIndex) const noexcept {
     return PropertyTexturePropertyViewStatus::ErrorInvalidImage;
   }
 
-  const CesiumUtility::IntrusivePointer<ImageAsset>& pImage =
+  const CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset>& pImage =
       _pModel->images[static_cast<size_t>(imageIndex)].pAsset;
 
   if (!pImage || pImage->width < 1 || pImage->height < 1) {
@@ -112,7 +112,7 @@ PropertyTextureView::checkImage(const int32_t imageIndex) const noexcept {
 
 PropertyViewStatusType PropertyTextureView::checkChannels(
     const std::vector<int64_t>& channels,
-    const ImageAsset& image) const noexcept {
+    const CesiumImage::ImageAsset& image) const noexcept {
   if (channels.size() <= 0 || channels.size() > 4) {
     return PropertyTexturePropertyViewStatus::ErrorInvalidChannels;
   }

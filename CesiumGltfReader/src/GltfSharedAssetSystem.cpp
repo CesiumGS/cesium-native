@@ -1,11 +1,11 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/SharedAssetDepot.h>
-#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfReader/GltfSharedAssetSystem.h>
 #include <CesiumGltfReader/NetworkImageAssetDescriptor.h>
 #include <CesiumGltfReader/NetworkSchemaAssetDescriptor.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>
 
@@ -14,6 +14,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGltf;
 using namespace CesiumGltfReader;
+using namespace CesiumImage;
 using namespace CesiumUtility;
 
 namespace {

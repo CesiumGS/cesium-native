@@ -1,8 +1,8 @@
 #pragma once
 
-#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/ImageSpec.h>
 #include <CesiumGltf/Library.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 namespace CesiumGltf {
@@ -12,8 +12,9 @@ struct CESIUMGLTF_API Image final : public ImageSpec {
 
   /**
    * @brief The loaded image asset. When an image is loaded from a URL, multiple
-   * `Image` instances may all point to the same `ImageAsset` instance.
+   * `Image` instances may all point to the same @ref CesiumImage::ImageAsset
+   * instance.
    */
-  CesiumUtility::IntrusivePointer<ImageAsset> pAsset;
+  CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> pAsset;
 };
 } // namespace CesiumGltf

@@ -39,6 +39,7 @@
 #include <CesiumGltf/ExtensionExtMeshPrimitiveEdgeVisibility.h>
 #include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionKhrBillboard.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
@@ -240,6 +241,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionExtMeshPolygon& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrBillboard& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1298,6 +1304,45 @@ void writeJson(
   if (obj.indicesOffsets > -1) {
     jsonWriter.Key("indicesOffsets");
     writeJson(obj.indicesOffsets, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionKhrBillboard& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.overlay) {
+    jsonWriter.Key("overlay");
+    writeJson(obj.overlay, jsonWriter, context);
+  }
+
+  static const std::vector<std::string> rotationAxisDefault = {"X", "Y", "Z"};
+  if (obj.rotationAxis != rotationAxisDefault) {
+    jsonWriter.Key("rotationAxis");
+    writeJson(obj.rotationAxis, jsonWriter, context);
+  }
+
+  if (obj.scaleWithDistance) {
+    jsonWriter.Key("scaleWithDistance");
+    writeJson(obj.scaleWithDistance, jsonWriter, context);
+  }
+
+  static const std::vector<double> upDefault = {0, 1, 0};
+  if (obj.up != upDefault) {
+    jsonWriter.Key("up");
+    writeJson(obj.up, jsonWriter, context);
+  }
+
+  static const std::vector<double> viewDirectionDefault = {0, 0, 1};
+  if (obj.viewDirection != viewDirectionDefault) {
+    jsonWriter.Key("viewDirection");
+    writeJson(obj.viewDirection, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -3067,6 +3112,13 @@ void ExtensionExtMeshPrimitiveEdgeVisibilityJsonWriter::write(
 
 void ExtensionExtMeshPolygonJsonWriter::write(
     const CesiumGltf::ExtensionExtMeshPolygon& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionKhrBillboardJsonWriter::write(
+    const CesiumGltf::ExtensionKhrBillboard& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

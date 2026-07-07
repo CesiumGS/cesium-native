@@ -1,6 +1,5 @@
 #pragma once
 
-#include <CesiumGltf/ImageAsset.h>
 #include <CesiumGltf/KhrTextureTransform.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
 #include <CesiumGltf/PropertyTransformations.h>
@@ -8,6 +7,7 @@
 #include <CesiumGltf/PropertyView.h>
 #include <CesiumGltf/Sampler.h>
 #include <CesiumGltf/TextureView.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumUtility/Assert.h>
 
 #include <array>
@@ -320,19 +320,20 @@ public:
   }
 
   /**
-   * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
+   * @brief Construct a view of the data specified by a @ref
+   * PropertyTextureProperty.
    *
-   * @param property The {@link PropertyTextureProperty}
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param sampler The {@link Sampler} used by the property.
-   * @param image The {@link ImageAsset} used by the property.
+   * @param property The @ref PropertyTextureProperty
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param sampler The @ref Sampler used by the property.
+   * @param image The @ref CesiumImage::ImageAsset used by the property.
    * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const ImageAsset& image,
+      const CesiumImage::ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
         TextureView(
@@ -394,13 +395,15 @@ public:
   }
 
   /**
-   * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
+   * @brief Construct a view of the data specified by a @ref
+   * PropertyTextureProperty.
    *
-   * @param property The {@link PropertyTextureProperty}
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param pEnumDefinition The {@link CesiumGltf::Enum} definition this property uses.
-   * @param sampler The {@link Sampler} used by the property.
-   * @param image The {@link ImageAsset} used by the property.
+   * @param property The @ref PropertyTextureProperty
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param pEnumDefinition The @ref CesiumGltf::Enum definition this property
+   * uses.
+   * @param sampler The @ref Sampler used by the property.
+   * @param image The @ref CesiumImage::ImageAsset used by the property.
    * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
@@ -408,7 +411,7 @@ public:
       const ClassProperty& classProperty,
       const CesiumGltf::Enum* pEnumDefinition,
       const Sampler& sampler,
-      const ImageAsset& image,
+      const CesiumImage::ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(
             classProperty,
@@ -631,19 +634,20 @@ public:
   }
 
   /**
-   * @brief Construct a view of the data specified by a {@link PropertyTextureProperty}.
+   * @brief Construct a view of the data specified by a @ref
+   * PropertyTextureProperty.
    *
-   * @param property The {@link PropertyTextureProperty}
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param sampler The {@link Sampler} used by the property.
-   * @param image The {@link ImageAsset} used by the property.
+   * @param property The @ref PropertyTextureProperty
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param sampler The @ref Sampler used by the property.
+   * @param image The @ref CesiumImage::ImageAsset used by the property.
    * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
       const PropertyTextureProperty& property,
       const ClassProperty& classProperty,
       const Sampler& sampler,
-      const ImageAsset& image,
+      const CesiumImage::ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         TextureView(

@@ -6,6 +6,8 @@
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGltf/Schema.h>
+#include <CesiumUtility/IntrusivePointer.h>
 
 #include <rapidjson/fwd.h>
 
@@ -33,6 +35,9 @@ public:
 
   CesiumGeometry::Axis getUpAxis() const noexcept;
 
+  const CesiumUtility::IntrusivePointer<CesiumGltf::Schema>&
+  getExternalSchema() const noexcept;
+
   void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);
 
   static CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
@@ -52,6 +57,10 @@ public:
       rapidjson::Document&& tilesetJson,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
+  void setExternalSchema(CesiumGltf::Schema* schema) override;
+  virtual CesiumUtility::IntrusivePointer<CesiumGltf::Schema>
+  getExternalSchema() override;
+
 protected:
   void setOwnerOfNestedLoaders(TilesetContentManager& owner) noexcept override;
 
@@ -59,6 +68,7 @@ private:
   std::string _baseUrl;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
+  CesiumUtility::IntrusivePointer<CesiumGltf::Schema> _pExternalSchema;
 
   /**
    * @brief The axis that was declared as the "up-axis" for glTF content.

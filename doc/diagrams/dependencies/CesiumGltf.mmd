@@ -6,5 +6,6 @@ title: CesiumGltf Dependency Graph
 graph TD
   classDef dependencyNode fill:#fff,stroke:#ccc,color:#666,font-weight:bold,font-size:28px
   classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px
+  CesiumGltf[CesiumGltf] --> CesiumImage[CesiumImage]
   CesiumGltf[CesiumGltf] --> CesiumUtility[CesiumUtility]
-  class CesiumUtility,CesiumGltf libraryNode
+  class CesiumImage,CesiumUtility,CesiumGltf libraryNode
