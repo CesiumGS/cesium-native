@@ -105,14 +105,17 @@ struct QuadtreeGeometryData {
     } else if (
         this->pObject->isType<GeoJsonPoint>() ||
         this->pObject->isType<GeoJsonMultiPoint>()) {
-      // A point's pixel footprint is its radius (plus its outline width) in
-      // every direction. Encode that as an equivalent line width (the full
-      // diameter) so the shared pixel padding math below applies to it too.
+      // A point's fill radius is always in pixels. Encode the full diameter as
+      // an equivalent pixel line width so the shared pixel-padding math below
+      // applies to it too. A pixel-mode outline widens that footprint; a
+      // meters-mode outline was already baked into `rectangle` when it was
+      // built (see visitPoint), so it must not be added here as pixels.
       activeLineStyle.width = 2.0 * this->pStyle->point.radius;
-      if (this->pStyle->point.outline) {
+      activeLineStyle.widthMode = LineWidthMode::Pixels;
+      if (this->pStyle->point.outline &&
+          this->pStyle->point.outline->widthMode == LineWidthMode::Pixels) {
         activeLineStyle.width += this->pStyle->point.outline->width;
       }
-      activeLineStyle.widthMode = LineWidthMode::Pixels;
     } else {
       activeLineStyle = this->pStyle->line;
     }
@@ -344,26 +347,39 @@ struct RectangleAndLineWidthFromObjectVisitor {
   void operator()(const GeoJsonFeatureCollection&) {}
   void operator()(const GeoJsonGeometryCollection&) {}
   void visitPoint(const glm::dvec3& point) {
-    // A point extends `radius` pixels in every direction from its center, plus
-    // its outline width if it is outlined. We track the full diameter as an
-    // equivalent pixel "line width" so the tile bounds get padded the same way
-    // they are for lines and polygon outlines.
-    double pointExtentPixels = 2.0 * style.point.radius;
+    // A point's fill radius is always in pixels, so track its full diameter as
+    // an equivalent pixel "line width" that pads the tile bounds the same way
+    // line and polygon-outline widths do.
+    double pointDiameterPixels = 2.0 * style.point.radius;
+    // The outline is a LineStyle and can be specified in either pixels or
+    // meters. A pixel-mode outline adds to that pixel footprint; a meters-mode
+    // outline is instead folded into the bounding rectangle below, mirroring
+    // how meters line widths are handled in visitWithLineWidth.
+    double outlineMetersHalfWidth = 0.0;
     if (style.point.outline) {
-      pointExtentPixels += style.point.outline->width;
+      if (style.point.outline->widthMode == LineWidthMode::Meters) {
+        outlineMetersHalfWidth =
+            (style.point.outline->width / ellipsoid.getRadii().x) / 2.0;
+      } else {
+        pointDiameterPixels += style.point.outline->width;
+      }
     }
     this->maxLineWidthPixels =
-        std::max(this->maxLineWidthPixels, pointExtentPixels);
+        std::max(this->maxLineWidthPixels, pointDiameterPixels);
 
-    const double longitude = Math::degreesToRadians(point.x);
-    const double latitude = Math::degreesToRadians(point.y);
+    const double west = Math::degreesToRadians(point.x) - outlineMetersHalfWidth;
+    const double south =
+        Math::degreesToRadians(point.y) - outlineMetersHalfWidth;
+    const double east = Math::degreesToRadians(point.x) + outlineMetersHalfWidth;
+    const double north =
+        Math::degreesToRadians(point.y) + outlineMetersHalfWidth;
     if (!rect) {
-      rect = GlobeRectangle(longitude, latitude, longitude, latitude);
+      rect = GlobeRectangle(west, south, east, north);
     } else {
-      rect->setWest(std::min(rect->getWest(), longitude));
-      rect->setSouth(std::min(rect->getSouth(), latitude));
-      rect->setEast(std::max(rect->getEast(), longitude));
-      rect->setNorth(std::max(rect->getNorth(), latitude));
+      rect->setWest(std::min(rect->getWest(), west));
+      rect->setSouth(std::min(rect->getSouth(), south));
+      rect->setEast(std::max(rect->getEast(), east));
+      rect->setNorth(std::max(rect->getNorth(), north));
     }
   }
   void operator()(const GeoJsonPoint& point) { visitPoint(point.coordinates); }
@@ -455,11 +471,8 @@ void addPrimitivesToData(
           ellipsoid},
       geoJsonObject->value);
   // Features, FeatureCollections, and GeometryCollections produce no bounding
-  // box of their own: though they may contain geometry, they have nothing to
-  // render directly, so the visitor leaves `rect` empty and we skip them here
-  // (their children are handled by GeoJsonChildVisitor below). Points and
-  // MultiPoints now DO produce a bounding box and are rasterized as
-  // filled/outlined circles.
+  // box of their own: though they may contain geometry, they themselves have
+  // nothing to render. Their children are handled by GeoJsonChildVisitor below.
   if (rect) {
     documentRegionBuilder.expandToIncludeGlobeRectangle(*rect);
     QuadtreeGeometryData primitive{
