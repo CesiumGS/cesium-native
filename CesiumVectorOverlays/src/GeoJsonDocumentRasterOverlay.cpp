@@ -367,10 +367,12 @@ struct RectangleAndLineWidthFromObjectVisitor {
     this->maxLineWidthPixels =
         std::max(this->maxLineWidthPixels, pointDiameterPixels);
 
-    const double west = Math::degreesToRadians(point.x) - outlineMetersHalfWidth;
+    const double west =
+        Math::degreesToRadians(point.x) - outlineMetersHalfWidth;
     const double south =
         Math::degreesToRadians(point.y) - outlineMetersHalfWidth;
-    const double east = Math::degreesToRadians(point.x) + outlineMetersHalfWidth;
+    const double east =
+        Math::degreesToRadians(point.x) + outlineMetersHalfWidth;
     const double north =
         Math::degreesToRadians(point.y) + outlineMetersHalfWidth;
     if (!rect) {
