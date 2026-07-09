@@ -446,7 +446,7 @@ struct GltfConverterImpl {
             int64_t(propOffsetsByteSize));
         copyOffsets(offsetsBufferIndex, offsetDataOffset, *pPropRep);
         buffOffset += pPropRep->buffer.size();
-        offsetDataOffset += pPropRep->offsets.size() * sizeof(uint64_t);
+        offsetDataOffset += pPropRep->offsets.size() * pPropRep->sizeofOffset;
         PropertyTableProperty& propertyTableProperty =
             propertyTable.properties.emplace(propName, PropertyTableProperty())
                 .first->second;
