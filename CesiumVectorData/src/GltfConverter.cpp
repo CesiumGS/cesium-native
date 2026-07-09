@@ -326,15 +326,15 @@ struct GltfConverterImpl {
     size_t offsetByteSizeRounded = 0;
 
     StringPropertyRepresentation(size_t numFeatures = 0)
-        : offsets(numFeatures + 1, std::numeric_limits<uint64_t>::max()) {
+        : offsets(numFeatures + 1, std::numeric_limits<StringOffset>::max()) {
       // feature ID 0 is reserved for missing data
       offsets[0] = 0;
     }
 
     void finalizeOffsets() {
       this->offsets.back() = this->buffer.size();
-      uint64_t lastValidOffset = 0;
-      for (uint64_t& offset : this->offsets) {
+      StringOffset lastValidOffset = 0;
+      for (StringOffset& offset : this->offsets) {
         if (offset == std::numeric_limits<StringOffset>::max()) {
           offset = lastValidOffset;
         } else {
