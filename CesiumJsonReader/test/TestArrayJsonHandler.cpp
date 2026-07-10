@@ -21,10 +21,9 @@ using namespace CesiumUtility;
 
 namespace {
 
-template <typename THandler>
-auto readArray(std::string_view json) {
+template <typename THandler> auto readArray(std::string_view json) {
   THandler handler;
-  auto bytes = std::span<const std::byte>(
+  std::span<const std::byte> bytes(
       reinterpret_cast<const std::byte*>(json.data()),
       json.size());
   return JsonReader::readJson(bytes, handler);
@@ -45,7 +44,7 @@ public:
 
   void reset(IJsonHandler* pParent, TestObject* pObject) {
     JsonHandler::reset(pParent);
-    _pObject = pObject;
+    this->_pObject = pObject;
   }
 
   IJsonHandler* readObjectKey(const std::string_view& str) override {
@@ -254,8 +253,7 @@ TEST_CASE("ArrayJsonHandler<std::string, StringJsonHandler>") {
   }
 
   SUBCASE("skips unexpected elements and can read later valid elements") {
-    auto result =
-        readArray<Handler>("[\"hello\", 42, true, null, \"world\"]");
+    auto result = readArray<Handler>("[\"hello\", 42, true, null, \"world\"]");
     REQUIRE(result.value.has_value());
     CHECK(result.warnings.size() == 3);
     REQUIRE(result.value->size() == 5);
@@ -283,6 +281,9 @@ TEST_CASE("ArrayJsonHandler<JsonValue, JsonObjectJsonHandler>") {
     CHECK((*result.value)[4].isDouble());
     CHECK((*result.value)[4].getDouble() == 2.5);
     CHECK((*result.value)[5].isObject());
+    const auto* pKey = (*result.value)[5].getValuePtrForKey("key");
+    REQUIRE(pKey != nullptr);
+    CHECK(pKey->getInt64() == 42);
   }
 
   SUBCASE("reads array of booleans") {
@@ -336,8 +337,7 @@ TEST_CASE("ArrayJsonHandler<JsonValue, JsonObjectJsonHandler>") {
     CHECK(pA->getInt64() == 1);
   }
 
-  SUBCASE("mixed types - booleans strings and numbers (original bug case)") {
-    // The original bug: keySet can be an array of strings, numbers, or booleans
+  SUBCASE("mixed types - booleans, strings, and numbers") {
     auto result = readArray<Handler>("[\"value1\", 42, true]");
     REQUIRE(result.value.has_value());
     CHECK(result.warnings.empty());
@@ -352,9 +352,8 @@ TEST_CASE("ArrayJsonHandler<T, THandler> (primary template, objects)") {
   using Handler = ArrayJsonHandler<TestObject, TestObjectJsonHandler>;
 
   SUBCASE("reads array of objects") {
-    auto result = readArray<Handler>(
-        "[{\"name\": \"foo\", \"value\": 1},"
-        " {\"name\": \"bar\", \"value\": 2}]");
+    auto result = readArray<Handler>("[{\"name\": \"foo\", \"value\": 1},"
+                                     " {\"name\": \"bar\", \"value\": 2}]");
     REQUIRE(result.value.has_value());
     CHECK(result.warnings.empty());
     REQUIRE(result.value->size() == 2);
@@ -382,9 +381,9 @@ TEST_CASE("ArrayJsonHandler<T, THandler> (primary template, objects)") {
   }
 
   SUBCASE("warns on string element and inserts default value") {
-    auto result = readArray<Handler>(
-        "[{\"name\": \"foo\", \"value\": 1}, \"bad\","
-        " {\"name\": \"bar\", \"value\": 2}]");
+    auto result =
+        readArray<Handler>("[{\"name\": \"foo\", \"value\": 1}, \"bad\","
+                           " {\"name\": \"bar\", \"value\": 2}]");
     REQUIRE(result.value.has_value());
     REQUIRE(result.warnings.size() == 1);
     CHECK(result.warnings[0].find("string") != std::string::npos);
@@ -398,9 +397,8 @@ TEST_CASE("ArrayJsonHandler<T, THandler> (primary template, objects)") {
   }
 
   SUBCASE("warns on integer element and inserts default value") {
-    auto result = readArray<Handler>(
-        "[{\"name\": \"foo\", \"value\": 1}, 42,"
-        " {\"name\": \"bar\", \"value\": 2}]");
+    auto result = readArray<Handler>("[{\"name\": \"foo\", \"value\": 1}, 42,"
+                                     " {\"name\": \"bar\", \"value\": 2}]");
     REQUIRE(result.value.has_value());
     REQUIRE(result.warnings.size() == 1);
     CHECK(result.warnings[0].find("integer") != std::string::npos);
@@ -411,9 +409,8 @@ TEST_CASE("ArrayJsonHandler<T, THandler> (primary template, objects)") {
   }
 
   SUBCASE("warns on bool element and inserts default value") {
-    auto result = readArray<Handler>(
-        "[{\"name\": \"foo\", \"value\": 1}, true,"
-        " {\"name\": \"bar\", \"value\": 2}]");
+    auto result = readArray<Handler>("[{\"name\": \"foo\", \"value\": 1}, true,"
+                                     " {\"name\": \"bar\", \"value\": 2}]");
     REQUIRE(result.value.has_value());
     REQUIRE(result.warnings.size() == 1);
     CHECK(result.warnings[0].find("boolean") != std::string::npos);
@@ -424,9 +421,8 @@ TEST_CASE("ArrayJsonHandler<T, THandler> (primary template, objects)") {
   }
 
   SUBCASE("warns on null element and inserts default value") {
-    auto result = readArray<Handler>(
-        "[{\"name\": \"foo\", \"value\": 1}, null,"
-        " {\"name\": \"bar\", \"value\": 2}]");
+    auto result = readArray<Handler>("[{\"name\": \"foo\", \"value\": 1}, null,"
+                                     " {\"name\": \"bar\", \"value\": 2}]");
     REQUIRE(result.value.has_value());
     REQUIRE(result.warnings.size() == 1);
     CHECK(result.warnings[0].find("null") != std::string::npos);
@@ -437,10 +433,9 @@ TEST_CASE("ArrayJsonHandler<T, THandler> (primary template, objects)") {
   }
 
   SUBCASE("skips unexpected elements and can read later valid elements") {
-    auto result = readArray<Handler>(
-        "[{\"name\": \"first\", \"value\": 1},"
-        " \"bad\", 42, true, null,"
-        " {\"name\": \"last\", \"value\": 5}]");
+    auto result = readArray<Handler>("[{\"name\": \"first\", \"value\": 1},"
+                                     " \"bad\", 42, true, null,"
+                                     " {\"name\": \"last\", \"value\": 5}]");
     REQUIRE(result.value.has_value());
     CHECK(result.warnings.size() == 4);
     REQUIRE(result.value->size() == 6);
