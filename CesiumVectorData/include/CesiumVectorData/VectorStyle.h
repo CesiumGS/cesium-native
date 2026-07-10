@@ -2,6 +2,7 @@
 
 #include <CesiumUtility/Color.h>
 
+#include <functional>
 #include <optional>
 
 namespace CesiumVectorData {
@@ -46,6 +47,8 @@ struct ColorStyle {
    * a given seed, but nearby seeds will not usually return nearby colors.
    */
   CesiumUtility::Color getColor(size_t randomColorSeed = 0) const;
+
+  bool operator==(const ColorStyle& rhs) const;
 };
 
 /** @brief The mode to use when interpreting a given line width. */
@@ -78,6 +81,8 @@ struct LineStyle : public ColorStyle {
    * @brief The mode to use when interpreting `width`.
    */
   LineWidthMode widthMode = LineWidthMode::Pixels;
+
+  bool operator==(const LineStyle& rhs) const;
 };
 
 /** @brief The style used to draw a Polygon. */
@@ -92,6 +97,8 @@ struct PolygonStyle {
    * polygon will not be outlined.
    */
   std::optional<LineStyle> outline;
+
+  bool operator==(const PolygonStyle& rhs) const;
 };
 
 /** @brief The style used to draw a point. */
@@ -108,6 +115,8 @@ struct PointStyle {
    * point will not be outlined.
    */
   std::optional<LineStyle> outline;
+
+  bool operator==(const PointStyle& rhs) const;
 };
 
 /**
@@ -149,5 +158,32 @@ struct VectorStyle {
    * @brief Initializes all styles to the given color.
    */
   VectorStyle(const CesiumUtility::Color& color);
+
+  bool operator==(const VectorStyle& rhs) const;
 };
 } // namespace CesiumVectorData
+
+template <> struct std::hash<CesiumVectorData::ColorStyle> {
+  std::size_t
+  operator()(const CesiumVectorData::ColorStyle& style) const noexcept;
+};
+
+template <> struct std::hash<CesiumVectorData::LineStyle> {
+  std::size_t
+  operator()(const CesiumVectorData::LineStyle& style) const noexcept;
+};
+
+template <> struct std::hash<CesiumVectorData::PolygonStyle> {
+  std::size_t
+  operator()(const CesiumVectorData::PolygonStyle& style) const noexcept;
+};
+
+template <> struct std::hash<CesiumVectorData::PointStyle> {
+  std::size_t
+  operator()(const CesiumVectorData::PointStyle& style) const noexcept;
+};
+
+template <> struct std::hash<CesiumVectorData::VectorStyle> {
+  std::size_t
+  operator()(const CesiumVectorData::VectorStyle& style) const noexcept;
+};

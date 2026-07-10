@@ -3,8 +3,12 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumVectorData/VectorStyle.h>
+#include <CesiumVectorOverlays/VectorStylingProvider.h>
 
 namespace CesiumVectorOverlays {
+
+using CreateStylingProviderCallback =
+    std::function<std::shared_ptr<VectorStylingProvider>()>;
 
 /**
  * @brief Options for constructing a \ref VectorTilesRasterOverlay.
@@ -19,6 +23,7 @@ struct VectorTilesRasterOverlayOptions {
    * @brief HTTP headers to attach to requests made for this tileset.
    */
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
+  CreateStylingProviderCallback createStylingProviderCallback;
 };
 
 /**

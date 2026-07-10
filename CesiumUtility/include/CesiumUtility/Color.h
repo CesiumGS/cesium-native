@@ -31,5 +31,7 @@ struct Color {
    * 0xAARRGGBB.
    */
   uint32_t toRgba32() const;
+
+  bool operator==(const Color& rhs) const;
 };
 } // namespace CesiumUtility
