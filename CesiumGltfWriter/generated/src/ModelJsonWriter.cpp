@@ -12,6 +12,7 @@
 #include <CesiumGltf/AnimationChannelTarget.h>
 #include <CesiumGltf/AnimationSampler.h>
 #include <CesiumGltf/Asset.h>
+#include <CesiumGltf/BENTLEY_materials_line_styleGlTFMaterialExtension.h>
 #include <CesiumGltf/Box.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -246,6 +247,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionKhrBillboard& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::BENTLEY_materials_line_styleGlTFMaterialExtension& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1343,6 +1349,27 @@ void writeJson(
   if (obj.viewDirection != viewDirectionDefault) {
     jsonWriter.Key("viewDirection");
     writeJson(obj.viewDirection, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::BENTLEY_materials_line_styleGlTFMaterialExtension& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.width != 1) {
+    jsonWriter.Key("width");
+    writeJson(obj.width, jsonWriter, context);
+  }
+
+  if (obj.pattern != 65535) {
+    jsonWriter.Key("pattern");
+    writeJson(obj.pattern, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -3119,6 +3146,13 @@ void ExtensionExtMeshPolygonJsonWriter::write(
 
 void ExtensionKhrBillboardJsonWriter::write(
     const CesiumGltf::ExtensionKhrBillboard& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void BENTLEY_materials_line_styleGlTFMaterialExtensionJsonWriter::write(
+    const CesiumGltf::BENTLEY_materials_line_styleGlTFMaterialExtension& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

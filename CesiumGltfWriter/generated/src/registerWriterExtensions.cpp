@@ -22,6 +22,7 @@
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
 // NOLINTBEGIN(misc-include-cleaner)
+#include <CesiumGltf/BENTLEY_materials_line_styleGlTFMaterialExtension.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
@@ -127,6 +128,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Material,
+      BENTLEY_materials_line_styleGlTFMaterialExtensionJsonWriter>();
   context.registerExtension<
       CesiumGltf::Texture,
       ExtensionKhrTextureBasisuJsonWriter>();

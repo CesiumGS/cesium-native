@@ -39,6 +39,7 @@ struct ExtensionKhrGaussianSplattingCompressionSpz2;
 struct ExtensionExtMeshPrimitiveEdgeVisibility;
 struct ExtensionExtMeshPolygon;
 struct ExtensionKhrBillboard;
+struct BENTLEY_materials_line_styleGlTFMaterialExtension;
 struct LineString;
 struct Padding;
 struct Shape;
@@ -471,6 +472,20 @@ struct ExtensionKhrBillboardJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionKhrBillboard& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct BENTLEY_materials_line_styleGlTFMaterialExtensionJsonWriter {
+  using ValueType =
+      CesiumGltf::BENTLEY_materials_line_styleGlTFMaterialExtension;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "BENTLEY_materials_line_style";
+
+  static void write(
+      const CesiumGltf::BENTLEY_materials_line_styleGlTFMaterialExtension& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
