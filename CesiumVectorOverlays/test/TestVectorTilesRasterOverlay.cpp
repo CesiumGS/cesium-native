@@ -193,7 +193,6 @@ TEST_CASE("Test VectorTilesRasterOverlay polygons") {
   CesiumNativeTests::checkFilesEqual(tempOutPath, referencePath);
 }
 
-
 TEST_CASE(
     "VectorTilesRasterOverlay vienna-streets benchmark" * doctest::skip()) {
   Cesium3DTilesContent::registerAllTileContentTypes();
