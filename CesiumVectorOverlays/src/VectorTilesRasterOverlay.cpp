@@ -732,21 +732,22 @@ private:
                 continue;
               }
 
-              rasterizer.drawPolygon(
-                  pVectorContent->polygons,
-                  pVectorContent->defaultStyle.polygon);
+              for (size_t i = 0; i < pVectorContent->polygons.size(); i++) {
+                rasterizer.drawPolygon(
+                    {pVectorContent->polygons[i]},
+                    pVectorContent->polygonStyles[i]->polygon);
+              }
 
-              for (const std::vector<CesiumGeospatial::Cartographic>& polyline :
-                   pVectorContent->polylines) {
+              for (size_t i = 0; i < pVectorContent->polylines.size(); i++) {
                 rasterizer.drawPolyline(
-                    polyline,
-                    pVectorContent->defaultStyle.line);
+                    pVectorContent->polylines[i],
+                    pVectorContent->polylineStyles[i]->line);
               }
 
               if (!pVectorContent->points.empty()) {
                 rasterizer.drawPoints(
                     pVectorContent->points,
-                    pVectorContent->defaultStyle.point);
+                    pVectorContent->pointStyles);
               }
             }
 

@@ -126,6 +126,16 @@ public:
       const PointStyle& style);
 
   /**
+   * @brief Draws a set of points to the canvas.
+   *
+   * @param points The set of points to draw.
+   * @param style The @ref PointStyle to use when drawing the points.
+   */
+  void drawPoints(
+      const std::vector<CesiumGeospatial::Cartographic>& points,
+      const std::vector<const CesiumVectorData::VectorStyle*>& styles);
+
+  /**
    * @brief Rasterizes a `GeoJsonObject` to the canvas.
    *
    * This will recurse through any children of the `GeoJsonObject` as well. All
