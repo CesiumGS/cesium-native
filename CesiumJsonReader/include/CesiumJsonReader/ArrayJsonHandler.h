@@ -274,12 +274,16 @@ public:
 
   virtual IJsonHandler* readArrayStart() override {
     if (this->_arrayIsOpen) {
-      return this->invalid("An array")->readArrayStart();
+      // An array inside an array
+      CESIUM_ASSERT(this->_pArray);
+      CesiumUtility::JsonValue& o = this->_pArray->emplace_back();
+      this->_objectHandler.reset(this, &o);
+      return this->_objectHandler.readArrayStart();
+    } else {
+      this->_arrayIsOpen = true;
+      this->_pArray->clear();
+      return this;
     }
-
-    this->_arrayIsOpen = true;
-    this->_pArray->clear();
-    return this;
   }
 
   virtual IJsonHandler* readArrayEnd() override { return this->parent(); }

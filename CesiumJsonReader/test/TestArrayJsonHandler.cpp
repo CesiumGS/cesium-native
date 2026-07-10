@@ -346,6 +346,20 @@ TEST_CASE("ArrayJsonHandler<JsonValue, JsonObjectJsonHandler>") {
     CHECK((*result.value)[1].getUint64() == 42);
     CHECK((*result.value)[2].getBool() == true);
   }
+
+  SUBCASE("reads array element that is itself an array") {
+    auto result = readArray<Handler>("[1, [2, 3], \"after\"]");
+    REQUIRE(result.value.has_value());
+    CHECK(result.warnings.empty());
+    REQUIRE(result.value->size() == 3);
+    CHECK((*result.value)[0].getUint64() == 1);
+    REQUIRE((*result.value)[1].isArray());
+    const auto& inner = (*result.value)[1].getArray();
+    REQUIRE(inner.size() == 2);
+    CHECK(inner[0].getUint64() == 2);
+    CHECK(inner[1].getUint64() == 3);
+    CHECK((*result.value)[2].getString() == "after");
+  }
 }
 
 TEST_CASE("ArrayJsonHandler<T, THandler> (primary template, objects)") {
