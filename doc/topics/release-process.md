@@ -39,11 +39,11 @@ The `--ff-only` flags ensure that no new commits are created in the process. We 
 | --------- | ---------------- |
 | 6/1/2026  | `@timoore`       |
 | 7/1/2026  | `@azrogers`      |
-| 8/3/2026  | `@david-lively`  |
-| 9/1/2026  | `@j9liu`         |
-| 10/1/2026 | `@timoore`       |
-| 11/2/2026 | `@azrogers`      |
-| 12/1/2026 | `@david-lively`  |
+| 8/3/2026  | `@j9liu`         |
+| 9/1/2026  | `@timoore`       |
+| 10/1/2026 | `@azrogers`      |
+| 11/2/2026 | `@j9liu`         |
+| 12/1/2026 | `@timoore`       |
 
 ## Cesium Native Runtimes Release Timeline
 
