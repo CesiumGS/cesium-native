@@ -1,7 +1,7 @@
 #pragma once
 
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltfReader/Library.h>
+#include <CesiumImage/ImageAsset.h>
+#include <CesiumImage/Library.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <optional>
@@ -9,19 +9,21 @@
 #include <string>
 #include <vector>
 
-namespace CesiumGltfReader {
+namespace CesiumImage {
+
+struct Ktx2TranscodeTargets;
 
 /**
- * @brief The result of reading an image with {@link ImageDecoder::readImage}.
+ * @brief The result of reading an image with @ref ImageDecoder::readImage.
  */
-struct CESIUMGLTFREADER_API ImageReaderResult {
+struct CESIUMIMAGE_API ImageReaderResult {
 
   /**
-   * @brief The {@link CesiumGltf::ImageAsset} that was read.
+   * @brief The @ref ImageAsset that was read.
    *
    * This will be `std::nullopt` if the image could not be read.
    */
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> pImage;
+  CesiumUtility::IntrusivePointer<ImageAsset> pImage;
 
   /**
    * @brief Error messages that occurred while trying to read the image.
@@ -53,7 +55,7 @@ public:
    */
   static ImageReaderResult readImage(
       const std::span<const std::byte>& data,
-      const CesiumGltf::Ktx2TranscodeTargets& ktx2TranscodeTargets);
+      const Ktx2TranscodeTargets& ktx2TranscodeTargets);
 
   /**
    * @brief Generate mipmaps for this image.
@@ -61,11 +63,10 @@ public:
    * Does nothing if mipmaps already exist or the compressedPixelFormat is not
    * GpuCompressedPixelFormat::NONE.
    *
-   * @param image The image to generate mipmaps for.   *
+   * @param image The image to generate mipmaps for.
    * @return A string describing the error, if unable to generate mipmaps.
    */
-  static std::optional<std::string>
-  generateMipMaps(CesiumGltf::ImageAsset& image);
+  static std::optional<std::string> generateMipMaps(ImageAsset& image);
 
   /**
    * @brief Resize an image, without validating the provided pointers or ranges.
@@ -95,4 +96,4 @@ public:
       int32_t channels);
 };
 
-} // namespace CesiumGltfReader
+} // namespace CesiumImage

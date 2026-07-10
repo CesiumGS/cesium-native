@@ -10,7 +10,7 @@
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
@@ -102,6 +102,17 @@ struct QuadtreeGeometryData {
       }
 
       activeLineStyle = *this->pStyle->polygon.outline;
+    } else if (
+        this->pObject->isType<GeoJsonPoint>() ||
+        this->pObject->isType<GeoJsonMultiPoint>()) {
+      // A point's pixel footprint is its radius (plus its outline width) in
+      // every direction. Encode that as an equivalent line width (the full
+      // diameter) so the shared pixel padding math below applies to it too.
+      activeLineStyle.width = 2.0 * this->pStyle->point.radius;
+      if (this->pStyle->point.outline) {
+        activeLineStyle.width += this->pStyle->point.outline->width;
+      }
+      activeLineStyle.widthMode = LineWidthMode::Pixels;
     } else {
       activeLineStyle = this->pStyle->line;
     }
@@ -332,10 +343,35 @@ struct RectangleAndLineWidthFromObjectVisitor {
   void operator()(const GeoJsonFeature&) {}
   void operator()(const GeoJsonFeatureCollection&) {}
   void operator()(const GeoJsonGeometryCollection&) {}
-  // While we could calculate a bounding box for a point just fine, they are not
-  // rendered by the raster overlay, so there's no need.
-  void operator()(const GeoJsonPoint&) {}
-  void operator()(const GeoJsonMultiPoint&) {}
+  void visitPoint(const glm::dvec3& point) {
+    // A point extends `radius` pixels in every direction from its center, plus
+    // its outline width if it is outlined. We track the full diameter as an
+    // equivalent pixel "line width" so the tile bounds get padded the same way
+    // they are for lines and polygon outlines.
+    double pointExtentPixels = 2.0 * style.point.radius;
+    if (style.point.outline) {
+      pointExtentPixels += style.point.outline->width;
+    }
+    this->maxLineWidthPixels =
+        std::max(this->maxLineWidthPixels, pointExtentPixels);
+
+    const double longitude = Math::degreesToRadians(point.x);
+    const double latitude = Math::degreesToRadians(point.y);
+    if (!rect) {
+      rect = GlobeRectangle(longitude, latitude, longitude, latitude);
+    } else {
+      rect->setWest(std::min(rect->getWest(), longitude));
+      rect->setSouth(std::min(rect->getSouth(), latitude));
+      rect->setEast(std::max(rect->getEast(), longitude));
+      rect->setNorth(std::max(rect->getNorth(), latitude));
+    }
+  }
+  void operator()(const GeoJsonPoint& point) { visitPoint(point.coordinates); }
+  void operator()(const GeoJsonMultiPoint& points) {
+    for (const glm::dvec3& point : points.coordinates) {
+      visitPoint(point);
+    }
+  }
 };
 
 void addPrimitivesToData(
@@ -418,11 +454,9 @@ void addPrimitivesToData(
           style,
           ellipsoid},
       geoJsonObject->value);
-  // Points and MultiPoints, as well as Features, FeatureCollections, and
-  // GeometryCollections have no bounding box. For the first two, this is
-  // because they are not rasterized by this overlay. For the rest, though they
-  // may contain geometry, they do not themselves have anything to render. We
-  // can save some effort by ignoring them all now.
+  // Features, FeatureCollections, and GeometryCollections produce no bounding
+  // box of their own: though they may contain geometry, they themselves have
+  // nothing to render. Their children are handled by GeoJsonChildVisitor below.
   if (rect) {
     documentRegionBuilder.expandToIncludeGlobeRectangle(*rect);
     QuadtreeGeometryData primitive{
@@ -780,7 +814,7 @@ public:
                 const int32_t width = std::max(textureSize.x >> i, 1);
                 const int32_t height = std::max(textureSize.y >> i, 1);
                 result.pImage->mipPositions.emplace_back(
-                    CesiumGltf::ImageAssetMipPosition{
+                    CesiumImage::ImageAssetMipPosition{
                         totalSize,
                         (size_t)(width * height * result.pImage->channels *
                                  result.pImage->bytesPerChannel)});

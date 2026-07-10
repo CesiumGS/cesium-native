@@ -7,8 +7,6 @@
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltf/Model.h>
 #include <CesiumUtility/Color.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
@@ -20,21 +18,25 @@
 
 #include <span>
 
+namespace CesiumImage {
+struct ImageAsset;
+}
+
 namespace CesiumVectorData {
 
 /**
- * @brief Rasterizes vector primitives into a \ref CesiumGltf::ImageAsset.
+ * @brief Rasterizes vector primitives into a @ref CesiumImage::ImageAsset.
  */
 class VectorRasterizer {
 public:
   /**
-   * @brief Creates a new \ref VectorRasterizer representing the given rectangle
+   * @brief Creates a new @ref VectorRasterizer representing the given rectangle
    * on the globe.
    *
    * @param bounds The bounds on the globe that this rasterizer's canvas will
    * cover.
-   * @param imageAsset The destination image asset. This \ref
-   * CesiumGltf::ImageAsset must be four channels, with
+   * @param imageAsset The destination image asset. This @ref
+   * CesiumImage::ImageAsset must be four channels, with
    * only one byte per channel (RGBA32).
    * @param mipLevel The mip level that the rasterizer should rasterize for the
    * image.
@@ -42,16 +44,16 @@ public:
    */
   VectorRasterizer(
       const CesiumGeospatial::GlobeRectangle& bounds,
-      CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset>& imageAsset,
+      CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset>& imageAsset,
       uint32_t mipLevel = 0,
       const CesiumGeospatial::Ellipsoid& ellipsoid =
           CesiumGeospatial::Ellipsoid::WGS84);
 
   /**
-   * @brief Draws a \ref CesiumGeospatial::CartographicPolygon to the canvas.
+   * @brief Draws a @ref CesiumGeospatial::CartographicPolygon to the canvas.
    *
    * @param polygon The polygon to draw.
-   * @param style The \ref PolygonStyle to use when drawing the polygon.
+   * @param style The @ref PolygonStyle to use when drawing the polygon.
    */
   void drawPolygon(
       const CesiumGeospatial::CartographicPolygon& polygon,
@@ -64,7 +66,7 @@ public:
    * @param polygon The polygon to draw. It is assumed to have right-hand
    * winding order (exterior rings are counterclockwise, holes are clockwise) as
    * is the case in GeoJSON. The coordinates should be specified in degrees.
-   * @param style The \ref PolygonStyle to use when drawing the polygon.
+   * @param style The @ref PolygonStyle to use when drawing the polygon.
    */
   void drawPolygon(
       const std::vector<std::vector<glm::dvec3>>& polygon,
@@ -77,7 +79,7 @@ public:
    * @param polygon The polygon to draw. It is assumed to have right-hand
    * winding order (exterior rings are counterclockwise, holes are clockwise) as
    * is the case in GeoJSON. The coordinates should be specified in degrees.
-   * @param style The \ref PolygonStyle to use when drawing the polygon.
+   * @param style The @ref PolygonStyle to use when drawing the polygon.
    */
   void drawPolygon(
       const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygon,
@@ -88,7 +90,7 @@ public:
    *
    * @param points The set of points making up the polyline. The coordinates
    * should be specified in degrees.
-   * @param style The \ref LineStyle to use when drawing the polyline.
+   * @param style The @ref LineStyle to use when drawing the polyline.
    */
   void
   drawPolyline(const std::vector<glm::dvec3>& points, const LineStyle& style);
@@ -97,7 +99,7 @@ public:
    * @brief Draws a polyline (a set of multiple line segments) to the canvas.
    *
    * @param points The set of points making up the polyline.
-   * @param style The \ref LineStyle to use when drawing the polyline.
+   * @param style The @ref LineStyle to use when drawing the polyline.
    */
   void drawPolyline(
       const std::vector<CesiumGeospatial::Cartographic>& points,
@@ -108,7 +110,7 @@ public:
    *
    * @param points The set of points to draw. The coordinates should be
    * specified in degrees.
-   * @param style The \ref PointStyle to use when drawing the points.
+   * @param style The @ref PointStyle to use when drawing the points.
    */
   void
   drawPoints(const std::vector<glm::dvec3>& points, const PointStyle& style);
@@ -117,7 +119,7 @@ public:
    * @brief Draws a set of points to the canvas.
    *
    * @param points The set of points to draw.
-   * @param style The \ref PointStyle to use when drawing the points.
+   * @param style The @ref PointStyle to use when drawing the points.
    */
   void drawPoints(
       const std::vector<CesiumGeospatial::Cartographic>& points,
@@ -138,7 +140,7 @@ public:
    * better results.
    *
    * @param geoJsonObject The GeoJSON object to draw.
-   * @param style The \ref VectorStyle to use when drawing the object.
+   * @param style The @ref VectorStyle to use when drawing the object.
    */
   void drawGeoJsonObject(
       const GeoJsonObject& geoJsonObject,
@@ -155,16 +157,16 @@ public:
    * @brief Finalizes the rasterization operations, flushing all draw calls to
    * the canvas, ensuring proper pixel ordering, and releasing the draw context.
    *
-   * Once a \ref VectorRasterizer is finalized, it can no longer be used for
+   * Once a @ref VectorRasterizer is finalized, it can no longer be used for
    * drawing. Subsequent calls to its methods will do nothing.
    */
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> finalize();
+  CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> finalize();
 
 private:
   CesiumGeospatial::GlobeRectangle _bounds;
   BLImage _image;
   BLContext _context;
-  CesiumUtility::IntrusivePointer<CesiumGltf::ImageAsset> _imageAsset;
+  CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> _imageAsset;
   uint32_t _mipLevel;
   CesiumGeospatial::Ellipsoid _ellipsoid;
   bool _finalized = false;

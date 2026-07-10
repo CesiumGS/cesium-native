@@ -1,4 +1,4 @@
-#include <CesiumGltf/ImageAsset.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/writeTga.h>
 #include <CesiumUtility/Assert.h>
 
@@ -96,7 +96,7 @@ void writeTgaImpl(
 } // namespace
 
 void writeImageToTgaFile(
-    const CesiumGltf::ImageAsset& image,
+    const CesiumImage::ImageAsset& image,
     const std::filesystem::path& outputPath) {
   if (image.mipPositions.size() == 0) {
     writeTgaImpl(

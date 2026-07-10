@@ -53,5 +53,6 @@ cesium_target_include_directories(
 
 target_link_libraries(CesiumGltf
     PUBLIC
+        CesiumImage
         CesiumUtility
 )

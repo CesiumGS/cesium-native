@@ -2,6 +2,7 @@
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
@@ -32,7 +33,7 @@ using namespace CesiumVectorData;
 const size_t BENCHMARK_ITERATIONS = 100000;
 
 namespace {
-CesiumGltf::ImageAsset rasterizeOverlayTileFromDocument(
+CesiumImage::ImageAsset rasterizeOverlayTileFromDocument(
     const GlobeRectangle& rectangle,
     const glm::dvec2& imageSize,
     GeoJsonDocument&& document,
@@ -77,7 +78,7 @@ CesiumGltf::ImageAsset rasterizeOverlayTileFromDocument(
   return *pTile->getImage();
 }
 
-CesiumGltf::ImageAsset rasterizeOverlayTile(
+CesiumImage::ImageAsset rasterizeOverlayTile(
     const GlobeRectangle& rectangle,
     const glm::dvec2& imageSize,
     const std::filesystem::path& testDataPath,
@@ -96,7 +97,7 @@ CesiumGltf::ImageAsset rasterizeOverlayTile(
 }
 
 bool imageHasPixelWithColor(
-    const CesiumGltf::ImageAsset& image,
+    const CesiumImage::ImageAsset& image,
     uint8_t r,
     uint8_t g,
     uint8_t b,
@@ -141,6 +142,19 @@ GeoJsonDocument createFeatureCollectionWithLineString(
   collection.style = collectionStyle;
 
   return GeoJsonDocument(GeoJsonObject{std::move(collection)}, {});
+}
+
+GeoJsonDocument createDocumentWithPoint(const glm::dvec3& coordinates) {
+  GeoJsonPoint point;
+  point.coordinates = coordinates;
+  return GeoJsonDocument(GeoJsonObject{std::move(point)}, {});
+}
+
+GeoJsonDocument
+createDocumentWithMultiPoint(const std::vector<glm::dvec3>& coordinates) {
+  GeoJsonMultiPoint multiPoint;
+  multiPoint.coordinates = coordinates;
+  return GeoJsonDocument(GeoJsonObject{std::move(multiPoint)}, {});
 }
 } // namespace
 
@@ -257,7 +271,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
       Ellipsoid::WGS84,
       0};
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+  CesiumImage::ImageAsset image = rasterizeOverlayTile(
       GlobeRectangle::fromDegrees(0.0, -5.0, 5.0, 5.0),
       glm::dvec2(256, 256),
       testDataPath,
@@ -300,7 +314,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render lines with bounding box "
       Ellipsoid::WGS84,
       0};
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+  CesiumImage::ImageAsset image = rasterizeOverlayTile(
       GlobeRectangle(-1.0, -1.0, 1.0, 1.0),
       glm::dvec2(256, 256),
       testDataPath,
@@ -343,7 +357,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
       0};
 
   {
-    CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+    CesiumImage::ImageAsset image = rasterizeOverlayTile(
         GlobeRectangle::fromDegrees(-175.0, -5.0, 175.0, 5.0),
         glm::dvec2(64, 64),
         testDataPath,
@@ -363,7 +377,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
   }
 
   {
-    CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+    CesiumImage::ImageAsset image = rasterizeOverlayTile(
         GlobeRectangle::fromDegrees(-180.0, -5.0, -170.0, 5.0),
         glm::dvec2(64, 64),
         testDataPath,
@@ -383,7 +397,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can correctly rasterize line strings "
   }
 
   {
-    CesiumGltf::ImageAsset image = rasterizeOverlayTile(
+    CesiumImage::ImageAsset image = rasterizeOverlayTile(
         GlobeRectangle::fromDegrees(170.0, -5.0, 180.0, 5.0),
         glm::dvec2(64, 64),
         testDataPath,
@@ -439,7 +453,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection uses geometry style "
       featureStyle,
       collectionStyle);
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
       GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
       glm::dvec2(256, 256),
       std::move(doc),
@@ -481,7 +495,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection falls back to "
       featureStyle,
       collectionStyle);
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
       GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
       glm::dvec2(256, 256),
       std::move(doc),
@@ -516,7 +530,7 @@ TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection falls back to "
       std::nullopt,
       collectionStyle);
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
       GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
       glm::dvec2(256, 256),
       std::move(doc),
@@ -543,11 +557,132 @@ TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection falls back to "
       std::nullopt,
       std::nullopt);
 
-  CesiumGltf::ImageAsset image = rasterizeOverlayTileFromDocument(
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
       GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
       glm::dvec2(256, 256),
       std::move(doc),
       options);
 
   CHECK(imageHasPixelWithColor(image, 255, 0, 0, 255));
+}
+
+TEST_CASE(
+    "GeoJsonDocumentRasterOverlay can render a Point as a filled circle") {
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt},
+          PointStyle{
+              5.0,
+              ColorStyle{Color{0, 255, 0, 255}, ColorMode::Normal},
+              std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+      glm::dvec2(256, 256),
+      createDocumentWithPoint(glm::dvec3(2.5, 0.0, 0.0)),
+      options);
+
+  // The point's fill color should appear in the rasterized tile.
+  CHECK(imageHasPixelWithColor(image, 0, 255, 0, 255));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay can render a Point with an outline") {
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt},
+          PointStyle{
+              6.0,
+              ColorStyle{Color{0, 255, 0, 255}, ColorMode::Normal},
+              LineStyle{
+                  ColorStyle{Color{0, 0, 255, 255}, ColorMode::Normal},
+                  2.0,
+                  LineWidthMode::Pixels}}},
+      Ellipsoid::WGS84,
+      0};
+
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+      glm::dvec2(256, 256),
+      createDocumentWithPoint(glm::dvec3(2.5, 0.0, 0.0)),
+      options);
+
+  // Both the fill and outline colors should appear in the rasterized tile.
+  CHECK(imageHasPixelWithColor(image, 0, 255, 0, 255));
+  CHECK(imageHasPixelWithColor(image, 0, 0, 255, 255));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay renders a Point whose outline width is "
+          "specified in meters") {
+  // A point's fill radius is always in pixels, but its outline is a LineStyle
+  // and may be specified in meters. Such an outline must be treated as meters
+  // (folded into the geometry's bounding region) rather than being mistaken for
+  // a very large pixel footprint, which previously distorted point rendering.
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt},
+          PointStyle{
+              6.0,
+              ColorStyle{Color{0, 255, 0, 255}, ColorMode::Normal},
+              LineStyle{
+                  ColorStyle{Color{0, 0, 255, 255}, ColorMode::Normal},
+                  50000.0,
+                  LineWidthMode::Meters}}},
+      Ellipsoid::WGS84,
+      0};
+
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+      glm::dvec2(256, 256),
+      createDocumentWithPoint(glm::dvec3(2.5, 0.0, 0.0)),
+      options);
+
+  // The point should still render as a filled, outlined circle rather than a
+  // distorted shape: both the fill and outline colors should be present.
+  CHECK(imageHasPixelWithColor(image, 0, 255, 0, 255));
+  CHECK(imageHasPixelWithColor(image, 0, 0, 255, 255));
+  // A corner far from the point must remain transparent; a meters outline
+  // wrongly treated as a huge pixel footprint would bleed the point across the
+  // tile.
+  const size_t cornerIdx = 0;
+  CHECK(static_cast<uint8_t>(image.pixelData[cornerIdx + 3]) == 0);
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay can render a MultiPoint") {
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt},
+          PointStyle{
+              5.0,
+              ColorStyle{Color{0, 255, 0, 255}, ColorMode::Normal},
+              std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-5.0, -5.0, 5.0, 5.0),
+      glm::dvec2(256, 256),
+      createDocumentWithMultiPoint(
+          {glm::dvec3(-2.5, 0.0, 0.0), glm::dvec3(2.5, 0.0, 0.0)}),
+      options);
+
+  // The MultiPoint's fill color should appear in the rasterized tile.
+  CHECK(imageHasPixelWithColor(image, 0, 255, 0, 255));
 }

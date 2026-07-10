@@ -49,13 +49,15 @@ if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "i
 endif()
 
 target_link_libraries(CesiumVectorData
-    PUBLIC
+  PUBLIC
+        Cesium3DTilesReader
         CesiumUtility
         CesiumGeometry
         CesiumGeospatial
         CesiumAsync
         CesiumGltf
         CesiumGltfContent
+        CesiumImage
     PRIVATE
         blend2d::blend2d
         $<BUILD_INTERFACE:earcut>

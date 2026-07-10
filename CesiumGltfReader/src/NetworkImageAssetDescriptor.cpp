@@ -1,10 +1,10 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/NetworkAssetDescriptor.h>
-#include <CesiumGltf/ImageAsset.h>
-#include <CesiumGltf/Ktx2TranscodeTargets.h>
-#include <CesiumGltfReader/ImageDecoder.h>
 #include <CesiumGltfReader/NetworkImageAssetDescriptor.h>
+#include <CesiumImage/ImageAsset.h>
+#include <CesiumImage/ImageDecoder.h>
+#include <CesiumImage/Ktx2TranscodeTargets.h>
 #include <CesiumUtility/Hash.h>
 #include <CesiumUtility/Result.h>
 
@@ -15,7 +15,7 @@
 #include <vector>
 
 using namespace CesiumAsync;
-using namespace CesiumGltf;
+using namespace CesiumImage;
 using namespace CesiumGltfReader;
 using namespace CesiumUtility;
 

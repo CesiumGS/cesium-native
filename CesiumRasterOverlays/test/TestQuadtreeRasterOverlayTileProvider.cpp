@@ -9,6 +9,7 @@
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGeospatial/WebMercatorProjection.h>
+#include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
@@ -38,7 +39,7 @@
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace CesiumGltf;
+using namespace CesiumImage;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 using namespace CesiumRasterOverlays;

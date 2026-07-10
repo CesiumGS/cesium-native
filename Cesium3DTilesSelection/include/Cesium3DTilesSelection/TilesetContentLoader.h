@@ -21,6 +21,10 @@
 #include <optional>
 #include <vector>
 
+namespace CesiumGltf {
+struct Schema;
+};
+
 namespace Cesium3DTilesSelection {
 class Tile;
 class ITilesetHeightSampler;
@@ -201,6 +205,22 @@ public:
    * @brief Sets the `TilesetContentManager` that owns this loader.
    */
   void setOwner(TilesetContentManager& owner) noexcept;
+
+  /**
+   * @brief Store a glTF schema object that will be used to parse metadata in a
+   * loader and its children.
+   *
+   * @param schema pointer to Schema.
+   */
+  virtual void setExternalSchema(CesiumGltf::Schema* schema);
+
+  /**
+   * @brief Get the external glTF schema object.
+   *
+   * @return A pointer to the Schema.
+   */
+  virtual CesiumUtility::IntrusivePointer<CesiumGltf::Schema>
+  getExternalSchema();
 
 protected:
   /**
