@@ -271,8 +271,8 @@ TEST_CASE("ArrayJsonHandler<JsonValue, JsonObjectJsonHandler>") {
     REQUIRE(result.value.has_value());
     CHECK(result.warnings.empty());
     REQUIRE(result.value->size() == 6);
-    CHECK((*result.value)[0].isInt64());
-    CHECK((*result.value)[0].getInt64() == 1);
+    CHECK((*result.value)[0].isUint64());
+    CHECK((*result.value)[0].getUint64() == 1);
     CHECK((*result.value)[1].isString());
     CHECK((*result.value)[1].getString() == "hello");
     CHECK((*result.value)[2].isBool());
@@ -283,7 +283,7 @@ TEST_CASE("ArrayJsonHandler<JsonValue, JsonObjectJsonHandler>") {
     CHECK((*result.value)[5].isObject());
     const auto* pKey = (*result.value)[5].getValuePtrForKey("key");
     REQUIRE(pKey != nullptr);
-    CHECK(pKey->getInt64() == 42);
+    CHECK(pKey->getUint64() == 42);
   }
 
   SUBCASE("reads array of booleans") {
@@ -311,9 +311,9 @@ TEST_CASE("ArrayJsonHandler<JsonValue, JsonObjectJsonHandler>") {
     REQUIRE(result.value.has_value());
     CHECK(result.warnings.empty());
     REQUIRE(result.value->size() == 3);
-    CHECK((*result.value)[0].getInt64() == 1);
-    CHECK((*result.value)[1].getInt64() == 2);
-    CHECK((*result.value)[2].getInt64() == 3);
+    CHECK((*result.value)[0].getUint64() == 1);
+    CHECK((*result.value)[1].getUint64() == 2);
+    CHECK((*result.value)[2].getUint64() == 3);
   }
 
   SUBCASE("reads array of null values") {
@@ -334,7 +334,7 @@ TEST_CASE("ArrayJsonHandler<JsonValue, JsonObjectJsonHandler>") {
     CHECK((*result.value)[1].isObject());
     const auto* pA = (*result.value)[0].getValuePtrForKey("a");
     REQUIRE(pA != nullptr);
-    CHECK(pA->getInt64() == 1);
+    CHECK(pA->getUint64() == 1);
   }
 
   SUBCASE("mixed types - booleans, strings, and numbers") {
@@ -343,7 +343,7 @@ TEST_CASE("ArrayJsonHandler<JsonValue, JsonObjectJsonHandler>") {
     CHECK(result.warnings.empty());
     REQUIRE(result.value->size() == 3);
     CHECK((*result.value)[0].getString() == "value1");
-    CHECK((*result.value)[1].getInt64() == 42);
+    CHECK((*result.value)[1].getUint64() == 42);
     CHECK((*result.value)[2].getBool() == true);
   }
 }

@@ -160,7 +160,7 @@ public:
 
   ArrayJsonHandler() noexcept
       : JsonHandler(),
-        _objectHandler(std::make_unique<JsonObjectJsonHandler>()) {}
+        _objectHandler() {}
 
   /**
    * @brief Resets the parent and destination array of this \ref
@@ -171,7 +171,6 @@ public:
     JsonHandler::reset(pParent);
     this->_pArray = pArray;
     this->_arrayIsOpen = false;
-    this->_objectHandler = std::make_unique<JsonObjectJsonHandler>();
   }
 
   virtual IJsonHandler* readNull() override {
@@ -261,16 +260,16 @@ public:
 
     CESIUM_ASSERT(this->_pArray);
     CesiumUtility::JsonValue& o = this->_pArray->emplace_back();
-    this->_objectHandler->reset(this, &o);
-    return this->_objectHandler->readObjectStart();
+    this->_objectHandler.reset(this, &o);
+    return this->_objectHandler.readObjectStart();
   }
 
   virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
-    return this->_objectHandler->readObjectKey(str);
+    return this->_objectHandler.readObjectKey(str);
   }
 
   virtual IJsonHandler* readObjectEnd() override {
-    return this->_objectHandler->readObjectEnd();
+    return this->_objectHandler.readObjectEnd();
   }
 
   virtual IJsonHandler* readArrayStart() override {
@@ -310,8 +309,7 @@ private:
 
   std::vector<CesiumUtility::JsonValue>* _pArray = nullptr;
   bool _arrayIsOpen = false;
-
-  std::unique_ptr<CesiumJsonReader::JsonObjectJsonHandler> _objectHandler;
+  CesiumJsonReader::JsonObjectJsonHandler _objectHandler;
 };
 
 /**
