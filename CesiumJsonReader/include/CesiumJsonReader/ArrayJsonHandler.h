@@ -158,7 +158,9 @@ public:
   /** @brief The destination type. */
   using ValueType = std::vector<CesiumUtility::JsonValue>;
 
-  ArrayJsonHandler() noexcept : JsonHandler(), _objectHandler() {}
+  ArrayJsonHandler() noexcept
+      : JsonHandler(),
+        _objectHandler(std::make_unique<JsonObjectJsonHandler>()) {}
 
   /**
    * @brief Resets the parent and destination array of this \ref
@@ -169,7 +171,7 @@ public:
     JsonHandler::reset(pParent);
     this->_pArray = pArray;
     this->_arrayIsOpen = false;
-    this->_objectHandler.reset();
+    this->_objectHandler = std::make_unique<JsonObjectJsonHandler>();
   }
 
   virtual IJsonHandler* readNull() override {
