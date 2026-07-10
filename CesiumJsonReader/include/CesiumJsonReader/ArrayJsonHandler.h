@@ -158,9 +158,7 @@ public:
   /** @brief The destination type. */
   using ValueType = std::vector<CesiumUtility::JsonValue>;
 
-  ArrayJsonHandler() noexcept
-      : JsonHandler(),
-        _objectHandler() {}
+  ArrayJsonHandler() noexcept : JsonHandler(), _objectHandler() {}
 
   /**
    * @brief Resets the parent and destination array of this \ref
