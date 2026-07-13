@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added support for reading arrays of arbitrary JSON values in `CesiumJsonReader::ArrayJsonHandler`.
+
 ##### Fixes :wrench:
 
 - `CesiumVectorOverlays::GeoJsonDocumentRasterOverlay` now actually rasterizes `Point` and `MultiPoint` geometry. Previously these were silently dropped before reaching the rasterizer, even though point rendering was already supported.
