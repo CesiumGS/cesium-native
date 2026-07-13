@@ -277,9 +277,9 @@ TEST_CASE("Read TriangleWithPaddingInGlbBin") {
   REQUIRE(result.warnings.size() == 1);
 }
 
-TEST_CASE("Read PointsWithDiameter") {
+TEST_CASE("Read BENTLEY_materials_point_style") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
-  gltfFile /= "PointsWithDiameter/PointsWithDiameter.gltf";
+  gltfFile /= "StyledPoints/BENTLEY_materials_point_style.gltf";
   std::vector<std::byte> data = readFile(gltfFile);
   GltfReader reader;
   GltfReaderResult result = reader.readGltf(data);
