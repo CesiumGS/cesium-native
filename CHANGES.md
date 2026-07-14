@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Additions :tada:
+
+- Added support for the [`BENTLEY_materials_line_style`](https://github.com/CesiumGS/glTF/pull/89) extension in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+
 ##### Fixes :wrench:
 
 - `CesiumVectorOverlays::GeoJsonDocumentRasterOverlay` now actually rasterizes `Point` and `MultiPoint` geometry. Previously these were silently dropped before reaching the rasterizer, even though point rendering was already supported.
