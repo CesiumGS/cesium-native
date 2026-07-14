@@ -185,9 +185,13 @@
     "KHR_billboard glTF Node Extension": {
       "overrideName": "ExtensionKhrBillboard"
     },
-    "BENTLEY_materials_line_style extension": {
-      "overrideName": "ExtensionBentleyMaterialsLineStyle"
+    "BENTLEY_materials_line_style glTF Material Extension": {
+      "overrideName": "ExtensionMaterialBentleyMaterialsLineStyle"
+    },
+    "BENTLEY_materials_line_style glTF MeshPrimitive Extension": {
+      "overrideName": "ExtensionMeshPrimitiveBentleyMaterialsLineStyle"
     }
+
   },
   "extensions": [
     {
@@ -347,6 +351,10 @@
     {
       "extensionName": "BENTLEY_materials_line_style",
       "schema": "Vendor/BENTLEY_materials_line_style/schema/material.BENTLEY_materials_line_style.schema.json"
+    },
+    {
+      "extensionName": "BENTLEY_materials_line_style",
+      "schema": "Vendor/BENTLEY_materials_line_style/schema/mesh.primitive.BENTLEY_materials_line_style.schema.json"
     }
   ]
 }

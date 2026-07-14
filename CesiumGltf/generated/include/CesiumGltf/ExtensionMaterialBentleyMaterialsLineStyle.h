@@ -12,13 +12,13 @@ namespace CesiumGltf {
  * @brief glTF extension that specifies line width and a GPU-friendly dash
  * pattern for CAD-style visualization.
  */
-struct CESIUMGLTF_API BENTLEY_materials_line_styleGlTFMaterialExtension final
+struct CESIUMGLTF_API ExtensionMaterialBentleyMaterialsLineStyle final
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
   static constexpr const char* TypeName =
-      "BENTLEY_materials_line_styleGlTFMaterialExtension";
+      "ExtensionMaterialBentleyMaterialsLineStyle";
   /** @brief The official name of the extension. This should be the same as its
    * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "BENTLEY_materials_line_style";
@@ -55,7 +55,7 @@ struct CESIUMGLTF_API BENTLEY_materials_line_styleGlTFMaterialExtension final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(BENTLEY_materials_line_styleGlTFMaterialExtension));
+    accum += int64_t(sizeof(ExtensionMaterialBentleyMaterialsLineStyle));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
 

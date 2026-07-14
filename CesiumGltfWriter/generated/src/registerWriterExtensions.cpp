@@ -22,7 +22,6 @@
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
 // NOLINTBEGIN(misc-include-cleaner)
-#include <CesiumGltf/BENTLEY_materials_line_styleGlTFMaterialExtension.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
@@ -45,6 +44,8 @@
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/ExtensionMaterialBentleyMaterialsLineStyle.h>
+#include <CesiumGltf/ExtensionMeshPrimitiveBentleyMaterialsLineStyle.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
@@ -103,6 +104,9 @@ void registerWriterExtensions(
       CesiumGltf::MeshPrimitive,
       ExtensionExtMeshPolygonJsonWriter>();
   context.registerExtension<
+      CesiumGltf::MeshPrimitive,
+      ExtensionMeshPrimitiveBentleyMaterialsLineStyleJsonWriter>();
+  context.registerExtension<
       CesiumGltf::Node,
       ExtensionExtInstanceFeaturesJsonWriter>();
   context.registerExtension<
@@ -130,7 +134,7 @@ void registerWriterExtensions(
       ExtensionKhrMaterialsUnlitJsonWriter>();
   context.registerExtension<
       CesiumGltf::Material,
-      BENTLEY_materials_line_styleGlTFMaterialExtensionJsonWriter>();
+      ExtensionMaterialBentleyMaterialsLineStyleJsonWriter>();
   context.registerExtension<
       CesiumGltf::Texture,
       ExtensionKhrTextureBasisuJsonWriter>();

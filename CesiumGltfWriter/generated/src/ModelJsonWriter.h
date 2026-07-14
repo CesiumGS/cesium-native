@@ -39,7 +39,8 @@ struct ExtensionKhrGaussianSplattingCompressionSpz2;
 struct ExtensionExtMeshPrimitiveEdgeVisibility;
 struct ExtensionExtMeshPolygon;
 struct ExtensionKhrBillboard;
-struct BENTLEY_materials_line_styleGlTFMaterialExtension;
+struct ExtensionMaterialBentleyMaterialsLineStyle;
+struct ExtensionMeshPrimitiveBentleyMaterialsLineStyle;
 struct LineString;
 struct Padding;
 struct Shape;
@@ -476,16 +477,28 @@ struct ExtensionKhrBillboardJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct BENTLEY_materials_line_styleGlTFMaterialExtensionJsonWriter {
-  using ValueType =
-      CesiumGltf::BENTLEY_materials_line_styleGlTFMaterialExtension;
+struct ExtensionMaterialBentleyMaterialsLineStyleJsonWriter {
+  using ValueType = CesiumGltf::ExtensionMaterialBentleyMaterialsLineStyle;
 
   /** @brief The official name of the extension. This should be the same as its
    * key in the `extensions` object. */
   static constexpr const char* ExtensionName = "BENTLEY_materials_line_style";
 
   static void write(
-      const CesiumGltf::BENTLEY_materials_line_styleGlTFMaterialExtension& obj,
+      const CesiumGltf::ExtensionMaterialBentleyMaterialsLineStyle& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionMeshPrimitiveBentleyMaterialsLineStyleJsonWriter {
+  using ValueType = CesiumGltf::ExtensionMeshPrimitiveBentleyMaterialsLineStyle;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "BENTLEY_materials_line_style";
+
+  static void write(
+      const CesiumGltf::ExtensionMeshPrimitiveBentleyMaterialsLineStyle& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
