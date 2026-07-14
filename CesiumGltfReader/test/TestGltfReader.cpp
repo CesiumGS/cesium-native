@@ -2,10 +2,11 @@
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/Buffer.h>
-// #include <CesiumGltf/ExtensionBentleyMaterialsLineStyle.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumGltf/ExtensionExtMeshPrimitiveEdgeVisibility.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionMaterialBentleyMaterialsLineStyle.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
@@ -287,22 +288,20 @@ TEST_CASE("Read BENTLEY_materials_line_style") {
 
   const Model& model = result.model.value();
   REQUIRE_EQ(model.meshes.size(), 1);
-  REQUIRE_EQ(model.meshes[0].primitives.size(), 4);
+  REQUIRE_EQ(model.meshes[0].primitives.size(), 1);
 
-  std::vector<int64_t> expectedDiameters{5, 8, 14, 10};
-  for (size_t i = 0; i < 4; i++) {
-    const CesiumGltf::MeshPrimitive& primitive = model.meshes[0].primitives[i];
-    REQUIRE_EQ(primitive.mode, CesiumGltf::MeshPrimitive::Mode::POINTS);
+  const CesiumGltf::MeshPrimitive& primitive = model.meshes[0].primitives[0];
+  CHECK(primitive.hasExtension<ExtensionExtMeshPrimitiveEdgeVisibility>());
 
-    const CesiumGltf::Material* pMaterial =
-        model.getSafe(&model.materials, primitive.material);
-    REQUIRE(pMaterial);
+  const CesiumGltf::Material* pMaterial =
+      model.getSafe(&model.materials, primitive.material);
+  REQUIRE(pMaterial);
 
-    // const auto* pPointStyleExtension =
-    //     pMaterial->getExtension<ExtensionBentleyMaterialsPointStyle>();
-    // REQUIRE(pPointStyleExtension);
-    // CHECK_EQ(pPointStyleExtension->diameter, expectedDiameters[i]);
-  }
+  const auto* pLineStyleExtension =
+      pMaterial->getExtension<ExtensionMaterialBentleyMaterialsLineStyle>();
+  REQUIRE(pLineStyleExtension);
+  CHECK_EQ(pLineStyleExtension->width, 5);
+  CHECK_EQ(pLineStyleExtension->pattern, 61680);
 }
 
 TEST_CASE("Read MeshPrimitiveModes") {
