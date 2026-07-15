@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added support for the [`BENTLEY_materials_line_style`](https://github.com/CesiumGS/glTF/pull/89) extension in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added support for reading arrays of arbitrary JSON values in `CesiumJsonReader::ArrayJsonHandler`.
 
 ##### Fixes :wrench:
 
