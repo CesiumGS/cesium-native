@@ -712,6 +712,11 @@ function getEnumValue(enumDetails) {
     return enumDetails.const;
   }
 
+  // Enum form seen in KHR_lights_punctual
+  if (enumDetails.enum !== undefined && enumDetails.enum.length > 0) {
+    return enumDetails.enum[0];
+  }
+
   return undefined;
 }
 

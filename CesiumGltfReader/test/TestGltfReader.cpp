@@ -5,6 +5,8 @@
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionModelKhrLightsPunctual.h>
+#include <CesiumGltf/ExtensionNodeKhrLightsPunctual.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
@@ -734,6 +736,62 @@ TEST_CASE("Handles primitive restart during primitive mode conversion") {
       REQUIRE_EQ(indicesView[i], expected[size_t(i)]);
     }
   }
+}
+
+TEST_CASE("Reads KHR_lights_punctual") {
+  std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
+  gltfFile /= "Lights/lights.gltf";
+  std::vector<std::byte> data = readFile(gltfFile);
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(data);
+  REQUIRE(result.model);
+  const Model& model = result.model.value();
+
+  const ExtensionModelKhrLightsPunctual* pModelLights =
+      model.getExtension<ExtensionModelKhrLightsPunctual>();
+  REQUIRE(pModelLights);
+  REQUIRE_EQ(pModelLights->lights.size(), 3);
+
+  const Light& light0 = pModelLights->lights[0];
+  CHECK_EQ(light0.type, Light::Type::directional);
+  CHECK_EQ(light0.color, std::vector<double>{1.0, 0.9, 0.7});
+  CHECK_EQ(light0.intensity, 3.0);
+  CHECK(!light0.spot);
+
+  const Light& light1 = pModelLights->lights[1];
+  CHECK_EQ(light1.type, Light::Type::point);
+  CHECK_EQ(light1.color, std::vector<double>{1.0, 0.0, 0.0});
+  CHECK_EQ(light1.intensity, 20.0);
+  CHECK(!light1.spot);
+
+  const Light& light2 = pModelLights->lights[2];
+  CHECK_EQ(light2.type, Light::Type::spot);
+  CHECK_EQ(light2.color, std::vector<double>{0.3, 0.7, 1.0});
+  CHECK_EQ(light2.intensity, 40.0);
+
+  CHECK(light2.spot);
+  CHECK(CesiumUtility::Math::equalsEpsilon(
+      light2.spot->innerConeAngle,
+      0.785398163397448,
+      CesiumUtility::Math::Epsilon6));
+  CHECK(CesiumUtility::Math::equalsEpsilon(
+      light2.spot->outerConeAngle,
+      1.57079632679,
+      CesiumUtility::Math::Epsilon6));
+
+  REQUIRE_EQ(model.nodes.size(), 4);
+
+  const Node& node0 = model.nodes[0];
+  CHECK(node0.hasExtension<ExtensionNodeKhrLightsPunctual>());
+  CHECK_EQ(node0.getExtension<ExtensionNodeKhrLightsPunctual>()->light, 1);
+
+  const Node& node1 = model.nodes[1];
+  CHECK(node1.hasExtension<ExtensionNodeKhrLightsPunctual>());
+  CHECK_EQ(node1.getExtension<ExtensionNodeKhrLightsPunctual>()->light, 0);
+
+  const Node& node2 = model.nodes[2];
+  CHECK(node2.hasExtension<ExtensionNodeKhrLightsPunctual>());
+  CHECK_EQ(node2.getExtension<ExtensionNodeKhrLightsPunctual>()->light, 2);
 }
 
 TEST_CASE("Nested extras deserializes properly") {

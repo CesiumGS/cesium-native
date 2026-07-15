@@ -21,6 +21,41 @@ struct CESIUMGLTF_API Light final : public CesiumGltf::NamedObject {
   static constexpr const char* TypeName = "Light";
 
   /**
+   * @brief Known values for Specifies the light type.
+   */
+  struct Type {
+    /** @brief Directional lights act as though they are infinitely far away and
+     * emit light in the direction of the local -z axis. This light type
+     * inherits the orientation of the node that it belongs to; position and
+     * scale are ignored except for their effect on the inherited node
+     * orientation. Because it is at an infinite distance, the light is not
+     * attenuated. Its intensity is defined in lumens per metre squared, or lux
+     * (lm/m^2). */
+    inline static const std::string directional = "directional";
+
+    /** @brief Point lights emit light in all directions from their position in
+     * space; rotation and scale are ignored except for their effect on the
+     * inherited node position. The brightness of the light attenuates in a
+     * physically correct manner as distance increases from the light's position
+     * (i.e. brightness goes like the inverse square of the distance). Point
+     * light intensity is defined in candela, which is lumens per square radian
+     * (lm/sr). */
+    inline static const std::string point = "point";
+
+    /** @brief Spot lights emit light in a cone in the direction of the local -z
+     * axis. The angle and falloff of the cone is defined using two numbers, the
+     * innerConeAngle and outerConeAngle. As with point lights, the brightness
+     * also attenuates in a physically correct manner as distance increases from
+     * the light's position (i.e. brightness goes like the inverse square of the
+     * distance). Spot light intensity refers to the brightness inside the
+     * innerConeAngle (and at the location of the light) and is defined in
+     * candela, which is lumens per square radian (lm/sr). Engines that don't
+     * support two angles for spotlights should use outerConeAngle as the
+     * spotlight angle (leaving innerConeAngle to implicitly be 0). */
+    inline static const std::string spot = "spot";
+  };
+
+  /**
    * @brief Color of the light source.
    */
   std::vector<double> color = {1, 1, 1};
@@ -39,8 +74,11 @@ struct CESIUMGLTF_API Light final : public CesiumGltf::NamedObject {
 
   /**
    * @brief Specifies the light type.
+   *
+   * Known values are defined in {@link Type}.
+   *
    */
-  std::string type;
+  std::string type = Type::directional;
 
   /**
    * @brief A distance cutoff at which the light's intensity may be considered
@@ -64,7 +102,6 @@ struct CESIUMGLTF_API Light final : public CesiumGltf::NamedObject {
       accum +=
           this->spot->getSizeBytes() - int64_t(sizeof(CesiumGltf::Spotlight));
     }
-    accum += int64_t(this->type.capacity() * sizeof(char));
     return accum;
   }
 };
