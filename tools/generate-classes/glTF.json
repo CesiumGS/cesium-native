@@ -190,8 +190,10 @@
     },
     "BENTLEY_materials_line_style glTF MeshPrimitive Extension": {
       "overrideName": "ExtensionMeshPrimitiveBentleyMaterialsLineStyle"
+    },
+    "BENTLEY_materials_point_style extension": {
+      "overrideName": "ExtensionBentleyMaterialsPointStyle"
     }
-
   },
   "extensions": [
     {
@@ -355,6 +357,10 @@
     {
       "extensionName": "BENTLEY_materials_line_style",
       "schema": "Vendor/BENTLEY_materials_line_style/schema/mesh.primitive.BENTLEY_materials_line_style.schema.json"
+    },
+    {
+      "extensionName": "BENTLEY_materials_point_style",
+      "schema": "Vendor/BENTLEY_materials_point_style/schema/material.BENTLEY_materials_point_style.schema.json"
     }
   ]
 }

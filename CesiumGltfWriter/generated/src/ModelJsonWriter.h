@@ -41,6 +41,7 @@ struct ExtensionExtMeshPolygon;
 struct ExtensionKhrBillboard;
 struct ExtensionMaterialBentleyMaterialsLineStyle;
 struct ExtensionMeshPrimitiveBentleyMaterialsLineStyle;
+struct ExtensionBentleyMaterialsPointStyle;
 struct LineString;
 struct Padding;
 struct Shape;
@@ -499,6 +500,19 @@ struct ExtensionMeshPrimitiveBentleyMaterialsLineStyleJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionMeshPrimitiveBentleyMaterialsLineStyle& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionBentleyMaterialsPointStyleJsonWriter {
+  using ValueType = CesiumGltf::ExtensionBentleyMaterialsPointStyle;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "BENTLEY_materials_point_style";
+
+  static void write(
+      const CesiumGltf::ExtensionBentleyMaterialsPointStyle& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
