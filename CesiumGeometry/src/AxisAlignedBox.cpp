@@ -1,4 +1,5 @@
 #include <CesiumGeometry/AxisAlignedBox.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/vector_double3.hpp>
@@ -22,5 +23,21 @@ AxisAlignedBox::fromPositions(const std::vector<glm::dvec3>& positions) {
   }
 
   return AxisAlignedBox(min.x, min.y, min.z, max.x, max.y, max.z);
+}
+
+bool intersects(const AxisAlignedBox& b0, const AxisAlignedBox& b1) {
+  // Do all the axes overlap?
+  return b0.minimumX <= b1.maximumX && b0.maximumX >= b1.minimumX &&
+         b0.minimumY <= b1.maximumY && b0.maximumY >= b1.minimumY &&
+         b0.minimumZ <= b1.maximumZ && b0.maximumZ >= b1.minimumZ;
+}
+
+OrientedBoundingBox toOrientedBoundingBox(const AxisAlignedBox& box) {
+  return OrientedBoundingBox(
+      box.center,
+      glm::dmat3(
+          {box.lengthX * .5, 0.0, 0.0},
+          {0.0, box.lengthY * .5, 0.0},
+          {0.0, 0.0, box.lengthZ * .5}));
 }
 } // namespace CesiumGeometry
