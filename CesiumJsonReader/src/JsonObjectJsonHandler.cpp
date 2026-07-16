@@ -103,7 +103,6 @@ JsonObjectJsonHandler::readObjectKey(const std::string_view& str) {
 
   auto it = pObject->emplace(str, CesiumUtility::JsonValue()).first;
   this->_stack.push_back(&it->second);
-  this->_currentKey = str;
   return this;
 }
 

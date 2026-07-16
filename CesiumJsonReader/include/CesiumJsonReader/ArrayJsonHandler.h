@@ -3,9 +3,11 @@
 #include <CesiumJsonReader/DoubleJsonHandler.h>
 #include <CesiumJsonReader/IntegerJsonHandler.h>
 #include <CesiumJsonReader/JsonHandler.h>
+#include <CesiumJsonReader/JsonObjectJsonHandler.h>
 #include <CesiumJsonReader/Library.h>
 #include <CesiumJsonReader/StringJsonHandler.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/JsonValue.h>
 
 #include <functional>
 #include <memory>
@@ -145,6 +147,174 @@ private:
 };
 
 /**
+ * @brief Special case of \ref ArrayJsonHandler for handling arrays of arbitrary
+ * JSON values.
+ */
+template <>
+class CESIUMJSONREADER_API
+    ArrayJsonHandler<CesiumUtility::JsonValue, JsonObjectJsonHandler>
+    : public JsonHandler {
+public:
+  /** @brief The destination type. */
+  using ValueType = std::vector<CesiumUtility::JsonValue>;
+
+  ArrayJsonHandler() noexcept : JsonHandler(), _objectHandler() {}
+
+  /**
+   * @brief Resets the parent and destination array of this \ref
+   * ArrayJsonHandler.
+   */
+  void
+  reset(IJsonHandler* pParent, std::vector<CesiumUtility::JsonValue>* pArray) {
+    JsonHandler::reset(pParent);
+    this->_pArray = pArray;
+    this->_arrayIsOpen = false;
+  }
+
+  virtual IJsonHandler* readNull() override {
+    if (!this->_arrayIsOpen) {
+      return this->invalid("A null")->readNull();
+    }
+
+    CESIUM_ASSERT(this->_pArray);
+    this->_pArray->emplace_back(nullptr);
+    return this;
+  }
+
+  virtual IJsonHandler* readBool(bool b) override {
+    if (!this->_arrayIsOpen) {
+      return this->invalid("A bool")->readBool(b);
+    }
+
+    CESIUM_ASSERT(this->_pArray);
+    this->_pArray->emplace_back(b);
+    return this;
+  }
+
+  virtual IJsonHandler* readInt32(int32_t i) override {
+    if (!this->_arrayIsOpen) {
+      return this->invalid("An integer")->readInt32(i);
+    }
+
+    CESIUM_ASSERT(this->_pArray);
+    this->_pArray->emplace_back(i);
+    return this;
+  }
+
+  virtual IJsonHandler* readUint32(uint32_t i) override {
+    if (!this->_arrayIsOpen) {
+      return this->invalid("An integer")->readUint32(i);
+    }
+
+    CESIUM_ASSERT(this->_pArray);
+    this->_pArray->emplace_back(i);
+    return this;
+  }
+
+  virtual IJsonHandler* readInt64(int64_t i) override {
+    if (!this->_arrayIsOpen) {
+      return this->invalid("An integer")->readInt64(i);
+    }
+
+    CESIUM_ASSERT(this->_pArray);
+    this->_pArray->emplace_back(i);
+    return this;
+  }
+
+  virtual IJsonHandler* readUint64(uint64_t i) override {
+    if (!this->_arrayIsOpen) {
+      return this->invalid("An integer")->readUint64(i);
+    }
+
+    CESIUM_ASSERT(this->_pArray);
+    this->_pArray->emplace_back(i);
+    return this;
+  }
+
+  virtual IJsonHandler* readDouble(double d) override {
+    if (!this->_arrayIsOpen) {
+      return this->invalid("A double (floating-point)")->readDouble(d);
+    }
+
+    CESIUM_ASSERT(this->_pArray);
+    this->_pArray->emplace_back(d);
+    return this;
+  }
+
+  virtual IJsonHandler* readString(const std::string_view& str) override {
+    if (!this->_arrayIsOpen) {
+      return this->invalid("A string")->readString(str);
+    }
+
+    CESIUM_ASSERT(this->_pArray);
+    this->_pArray->emplace_back(std::string(str));
+    return this;
+  }
+
+  virtual IJsonHandler* readObjectStart() override {
+    if (!this->_arrayIsOpen) {
+      return this->invalid("An object")->readObjectStart();
+    }
+
+    CESIUM_ASSERT(this->_pArray);
+    CesiumUtility::JsonValue& o = this->_pArray->emplace_back();
+    this->_objectHandler.reset(this, &o);
+    return this->_objectHandler.readObjectStart();
+  }
+
+  virtual IJsonHandler* readObjectKey(const std::string_view& str) override {
+    return this->_objectHandler.readObjectKey(str);
+  }
+
+  virtual IJsonHandler* readObjectEnd() override {
+    return this->_objectHandler.readObjectEnd();
+  }
+
+  virtual IJsonHandler* readArrayStart() override {
+    if (this->_arrayIsOpen) {
+      // An array inside an array
+      CESIUM_ASSERT(this->_pArray);
+      CesiumUtility::JsonValue& o = this->_pArray->emplace_back();
+      this->_objectHandler.reset(this, &o);
+      return this->_objectHandler.readArrayStart();
+    } else {
+      this->_arrayIsOpen = true;
+      this->_pArray->clear();
+      return this;
+    }
+  }
+
+  virtual IJsonHandler* readArrayEnd() override { return this->parent(); }
+
+  virtual void reportWarning(
+      const std::string& warning,
+      std::vector<std::string>&& context =
+          std::vector<std::string>()) override {
+    context.push_back(
+        std::string("[") + std::to_string(this->_pArray->size()) + "]");
+    this->parent()->reportWarning(warning, std::move(context));
+  }
+
+private:
+  IJsonHandler* invalid(const std::string& type) {
+    if (this->_arrayIsOpen) {
+      this->reportWarning(
+          type + " value is not allowed in the JSON value array "
+                 "and has been replaced with a default value.");
+      this->_pArray->emplace_back();
+      return this->ignoreAndContinue();
+    } else {
+      this->reportWarning(type + " is not allowed and has been ignored.");
+      return this->ignoreAndReturnToParent();
+    }
+  }
+
+  std::vector<CesiumUtility::JsonValue>* _pArray = nullptr;
+  bool _arrayIsOpen = false;
+  CesiumJsonReader::JsonObjectJsonHandler _objectHandler;
+};
+
+/**
  * @brief Special case of \ref ArrayJsonHandler for handling arrays of double
  * values. This will read every scalar value as a double, regardless of whether
  * it's floating point or not. Attempting to read other values will cause a
@@ -219,7 +389,7 @@ public:
 
   virtual IJsonHandler* readDouble(double d) override {
     if (!this->_arrayIsOpen) {
-      return this->invalid("An integer")->readDouble(d);
+      return this->invalid("A double (floating-point)")->readDouble(d);
     }
 
     CESIUM_ASSERT(this->_pArray);

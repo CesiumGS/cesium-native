@@ -56,7 +56,6 @@ private:
   IJsonHandler* doneElement();
 
   std::vector<CesiumUtility::JsonValue*> _stack;
-  std::string_view _currentKey;
 };
 
 } // namespace CesiumJsonReader
