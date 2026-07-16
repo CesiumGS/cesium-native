@@ -22,6 +22,7 @@
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonValue.h>
@@ -134,10 +135,7 @@ const std::string& offsetGltfType(size_t size) {
       [size](const PropertyOffsetParameter& param) {
         return size == param.size;
       });
-  // Shouldn't happen
-  if (parameterIt == &offsetParameters[4]) {
-    return offsetParameters[3].gltfConstant;
-  }
+  CESIUM_ASSERT(parameterIt != &offsetParameters[4]);
   return parameterIt->gltfConstant;
 }
 
@@ -315,8 +313,8 @@ struct GltfConverterImpl {
     return mapIt->second;
   }
 
-  // Offsets refer to arrays, so their maximum possible size is the platform's
-  // size_t.
+  // Since offsets are indices to array elements, their maximum possible size is
+  // the platform's size_t.
   using StringOffset = size_t;
 
   struct StringPropertyRepresentation {
