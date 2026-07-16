@@ -48,6 +48,8 @@
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
+#include <CesiumGltf/ExtensionMaterialBentleyMaterialsLineStyle.h>
+#include <CesiumGltf/ExtensionMeshPrimitiveBentleyMaterialsLineStyle.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue.h>
@@ -247,6 +249,16 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionKhrBillboard& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionMaterialBentleyMaterialsLineStyle& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionMeshPrimitiveBentleyMaterialsLineStyle& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1350,6 +1362,38 @@ void writeJson(
     jsonWriter.Key("viewDirection");
     writeJson(obj.viewDirection, jsonWriter, context);
   }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionMaterialBentleyMaterialsLineStyle& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.width != 1) {
+    jsonWriter.Key("width");
+    writeJson(obj.width, jsonWriter, context);
+  }
+
+  if (obj.pattern != 65535) {
+    jsonWriter.Key("pattern");
+    writeJson(obj.pattern, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionMeshPrimitiveBentleyMaterialsLineStyle& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -3139,6 +3183,20 @@ void ExtensionExtMeshPolygonJsonWriter::write(
 
 void ExtensionKhrBillboardJsonWriter::write(
     const CesiumGltf::ExtensionKhrBillboard& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionMaterialBentleyMaterialsLineStyleJsonWriter::write(
+    const CesiumGltf::ExtensionMaterialBentleyMaterialsLineStyle& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionMeshPrimitiveBentleyMaterialsLineStyleJsonWriter::write(
+    const CesiumGltf::ExtensionMeshPrimitiveBentleyMaterialsLineStyle& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

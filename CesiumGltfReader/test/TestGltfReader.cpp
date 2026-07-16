@@ -5,7 +5,9 @@
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
+#include <CesiumGltf/ExtensionExtMeshPrimitiveEdgeVisibility.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
+#include <CesiumGltf/ExtensionMaterialBentleyMaterialsLineStyle.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
@@ -275,6 +277,34 @@ TEST_CASE("Read TriangleWithPaddingInGlbBin") {
   GltfReaderResult result = reader.readGltf(data);
   REQUIRE(result.model);
   REQUIRE(result.warnings.size() == 1);
+}
+
+TEST_CASE("Read BENTLEY_materials_line_style") {
+  std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
+  gltfFile /= "StyledLines/BENTLEY_materials_line_style.gltf";
+
+  std::vector<std::byte> data = readFile(gltfFile);
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(data);
+  REQUIRE(result.model);
+
+  const Model& model = result.model.value();
+  REQUIRE_EQ(model.meshes.size(), 1);
+
+  REQUIRE_EQ(model.meshes[0].primitives.size(), 1);
+
+  const CesiumGltf::MeshPrimitive& primitive = model.meshes[0].primitives[0];
+  CHECK(primitive.hasExtension<ExtensionExtMeshPrimitiveEdgeVisibility>());
+
+  const CesiumGltf::Material* pMaterial =
+      model.getSafe(&model.materials, primitive.material);
+  REQUIRE(pMaterial);
+
+  const auto* pLineStyleExtension =
+      pMaterial->getExtension<ExtensionMaterialBentleyMaterialsLineStyle>();
+  REQUIRE(pLineStyleExtension);
+  CHECK_EQ(pLineStyleExtension->width, 5);
+  CHECK_EQ(pLineStyleExtension->pattern, 61680);
 }
 
 TEST_CASE("Read BENTLEY_materials_point_style") {
