@@ -208,7 +208,6 @@
       }
     },
     {
-      "name": "spot_light",
       "extensions": {
         "KHR_lights_punctual": {
           "light": 2
@@ -232,6 +231,7 @@
         0,
         1
       ],
+      "name": "spot_light"
     },
     {
       "mesh": 0,
