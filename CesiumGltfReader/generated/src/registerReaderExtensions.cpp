@@ -3,6 +3,7 @@
 
 #include "registerReaderExtensions.h"
 
+#include "ExtensionBentleyMaterialsPointStyleJsonHandler.h"
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionCesiumPrimitiveOutlineJsonHandler.h"
@@ -130,6 +131,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Material,
+      ExtensionBentleyMaterialsPointStyleJsonHandler>();
   options.registerExtension<
       CesiumGltf::Texture,
       ExtensionKhrTextureBasisuJsonHandler>();

@@ -41,6 +41,7 @@ struct ExtensionExtMeshPolygon;
 struct ExtensionKhrBillboard;
 struct ExtensionModelKhrLightsPunctual;
 struct ExtensionNodeKhrLightsPunctual;
+struct ExtensionBentleyMaterialsPointStyle;
 struct Light;
 struct Spotlight;
 struct LineString;
@@ -501,6 +502,19 @@ struct ExtensionNodeKhrLightsPunctualJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionNodeKhrLightsPunctual& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionBentleyMaterialsPointStyleJsonWriter {
+  using ValueType = CesiumGltf::ExtensionBentleyMaterialsPointStyle;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "BENTLEY_materials_point_style";
+
+  static void write(
+      const CesiumGltf::ExtensionBentleyMaterialsPointStyle& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
