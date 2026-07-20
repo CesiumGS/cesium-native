@@ -147,4 +147,10 @@ private:
   glm::dvec3 _lengths;
 };
 
+/**
+ * @brief Test if two oriented bounding boxes intersect.
+ */
+bool CESIUMGEOMETRY_API
+intersects(const OrientedBoundingBox& b1, const OrientedBoundingBox& b2);
+
 } // namespace CesiumGeometry

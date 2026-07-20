@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <type_traits>
 #include <variant>
 
 using namespace CesiumGeometry;
@@ -277,4 +278,118 @@ OrientedBoundingBox getOrientedBoundingBoxFromBoundingVolume(
   return std::visit(Operation{ellipsoid}, boundingVolume);
 }
 
+namespace {
+
+template <typename BV>
+bool intersectsImpl(const BoundingSphere& bs, const BV& bv1) {
+  double d2 = bv1.computeDistanceSquaredToPosition(bs.getCenter());
+  return d2 < bs.getRadius() * bs.getRadius();
+}
+bool intersectsImpl(
+    const BoundingSphere& bs,
+    const BoundingRegionWithLooseFittingHeights& bv1) {
+  double d2 = bv1.computeConservativeDistanceSquaredToPosition(bs.getCenter());
+  return d2 < bs.getRadius() * bs.getRadius();
+}
+
+bool intersectsImpl(
+    const OrientedBoundingBox& obb0,
+    const OrientedBoundingBox& obb1) {
+  return intersects(obb0, obb1);
+}
+
+bool intersectsImpl(const OrientedBoundingBox& obb, const BoundingRegion& br) {
+  return intersects(obb, br.getBoundingBox());
+}
+
+bool intersectsImpl(
+    const OrientedBoundingBox& obb,
+    const BoundingCylinderRegion& bcr) {
+  return intersects(obb, bcr.toOrientedBoundingBox());
+}
+
+template <typename BV>
+bool intersectsImpl(const OrientedBoundingBox& obb, const BV& bv) {
+  return intersectsImpl(obb.toSphere(), bv);
+}
+
+template <typename BV>
+bool intersectsImpl(const BoundingRegion& br, const BV& bv) {
+  return intersectsImpl(br.getBoundingBox(), bv);
+}
+
+} // namespace
+
+// This function produces a lot of "unreachable code" on Windows, but it should
+// be ok.
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4702)
+#endif
+
+bool testIntersection(
+    const BoundingVolume& volume0,
+    const BoundingVolume& volume1) {
+  return visit(
+      [&](auto&& bv0, auto&& bv1) -> bool {
+        // If one of the volumes is a Bounding sphere, then don't bother to
+        // convert; just test against the sphere.
+        if constexpr (std::is_same_v<decltype(bv0), const BoundingSphere&>) {
+          return intersectsImpl(bv0, bv1);
+        } else if constexpr (std::is_same_v<
+                                 decltype(bv1),
+                                 const BoundingSphere&>) {
+          return intersectsImpl(bv1, bv0);
+          ;
+        }
+        if constexpr (std::is_same_v<
+                          decltype(bv0),
+                          const OrientedBoundingBox&>) {
+          return intersectsImpl(bv0, bv1);
+        } else if constexpr (std::is_same_v<
+                                 decltype(bv1),
+                                 const OrientedBoundingBox&>) {
+          return intersectsImpl(bv1, bv0);
+        }
+        if constexpr (std::is_same_v<decltype(bv0), const BoundingRegion&>) {
+          return intersectsImpl(bv0, bv1);
+        } else if constexpr (std::is_same_v<
+                                 decltype(bv1),
+                                 const BoundingRegion&>) {
+          return intersectsImpl(bv1, bv0);
+        }
+        if constexpr (std::is_same_v<
+                          decltype(bv0),
+                          const BoundingRegionWithLooseFittingHeights&>) {
+          return intersectsImpl(bv0.getBoundingRegion(), bv1);
+        } else if constexpr (
+            std::is_same_v<
+                decltype(bv1),
+                const BoundingRegionWithLooseFittingHeights&>) {
+          return intersectsImpl(bv1.getBoundingRegion(), bv0);
+        }
+        if constexpr (
+            std::is_same_v<decltype(bv0), const S2CellBoundingVolume&> ||
+            std::is_same_v<decltype(bv1), const S2CellBoundingVolume&>) {
+          // not dealing yet
+          return false;
+        }
+        if constexpr (std::is_same_v<
+                          decltype(bv0),
+                          const BoundingCylinderRegion&>) {
+          return intersectsImpl(bv0.toOrientedBoundingBox(), bv1);
+        } else if constexpr (std::is_same_v<
+                                 decltype(bv1),
+                                 const BoundingCylinderRegion&>) {
+          return intersectsImpl(bv1.toOrientedBoundingBox(), bv0);
+        }
+        return false;
+      },
+      volume0,
+      volume1);
+}
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 } // namespace Cesium3DTilesSelection
