@@ -402,24 +402,26 @@ void VectorRasterizer::drawPoints(
     return;
   }
 
-  for(size_t i = 0; i < points.size(); i++) {
+  for (size_t i = 0; i < points.size(); i++) {
     BLPoint point = radiansToPoint(
         points[i].longitude,
         points[i].latitude,
         this->_bounds,
         this->_context);
-    if(styles[i]->point.fill) {
+    if (styles[i]->point.fill) {
       this->_context.fillCircle(
-        BLCircle(point.x, point.y, styles[i]->point.radius),
-        BLRgba32(styles[i]->point.fill->getColor(seedForObject(points[i], 17)).toRgba32())
-      );
+          BLCircle(point.x, point.y, styles[i]->point.radius),
+          BLRgba32(styles[i]
+                       ->point.fill->getColor(seedForObject(points[i], 17))
+                       .toRgba32()));
     }
 
-    if(styles[i]->point.outline) {
+    if (styles[i]->point.outline) {
       this->_context.strokeCircle(
-        BLCircle(point.x, point.y, styles[i]->point.radius),
-        BLRgba32(styles[i]->point.outline->getColor(seedForObject(points[i], 31)).toRgba32())
-      );
+          BLCircle(point.x, point.y, styles[i]->point.radius),
+          BLRgba32(styles[i]
+                       ->point.outline->getColor(seedForObject(points[i], 31))
+                       .toRgba32()));
     }
   }
 }

@@ -10,16 +10,21 @@ namespace CesiumVectorOverlays {
 
 class CESIUMVECTOROVERLAYS_API VectorStylingProvider {
 public:
-  virtual void onStylingBegin(const CesiumGltf::Model& model) = 0;
-  virtual std::optional<CesiumVectorData::VectorStyle> onStylePoint(
-      int64_t featureId,
-      const CesiumGeospatial::Cartographic& point) = 0;
-  virtual std::optional<CesiumVectorData::VectorStyle> onStylePolyline(
-      int64_t featureId,
-      const std::vector<CesiumGeospatial::Cartographic>& polyline) = 0;
-  virtual std::optional<CesiumVectorData::VectorStyle> onStylePolygon(
-      int64_t featureId,
-      const std::vector<CesiumGeospatial::Cartographic>& polygon) = 0;
+  virtual bool onStylePoints(
+      const CesiumGltf::Model& model,
+      const std::vector<int64_t>& featureIds,
+      const std::vector<CesiumGeospatial::Cartographic>& points,
+      std::vector<std::optional<CesiumVectorData::VectorStyle>>& outStyles) = 0;
+  virtual bool onStylePolylines(
+      const CesiumGltf::Model& model,
+      const std::vector<int64_t>& featureIds,
+      const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polylines,
+      std::vector<std::optional<CesiumVectorData::VectorStyle>>& outStyles) = 0;
+  virtual bool onStylePolygons(
+      const CesiumGltf::Model& model,
+      const std::vector<int64_t>& featureIds,
+      const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygons,
+      std::vector<std::optional<CesiumVectorData::VectorStyle>>& outStyles) = 0;
 };
 
 } // namespace CesiumVectorOverlays
