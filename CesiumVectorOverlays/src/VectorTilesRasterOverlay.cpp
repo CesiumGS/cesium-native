@@ -121,13 +121,19 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
   VectorRenderContent* pContent = new VectorRenderContent();
   pContent->defaultStyle = defaultStyle;
 
-  if (pStylingProvider != nullptr) {
-    pStylingProvider->onStylingBegin(model);
-  }
+  std::vector<int64_t> pointFeatureIds;
+  std::vector<int64_t> polylineFeatureIds;
+  std::vector<int64_t> polygonFeatureIds;
 
   model.forEachPrimitiveInScene(
       -1,
-      [pContent, rootTransform, &errors, &pStylingProvider, &ellipsoid](
+      [pContent,
+       rootTransform,
+       &errors,
+       &ellipsoid,
+       &pointFeatureIds,
+       &polylineFeatureIds,
+       &polygonFeatureIds](
           const CesiumGltf::Model& model,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
@@ -170,20 +176,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
             const CesiumUtility::Result<int64_t> featureIdResult =
                 getFeatureId(pFeatureIdSet, model, primitive, i);
             errors.merge(featureIdResult.errors);
-            const std::optional<CesiumVectorData::VectorStyle> style =
-                pStylingProvider != nullptr
-                    ? pStylingProvider->onStylePoint(
-                          featureIdResult.value.value_or(-1),
-                          point)
-                    : std::nullopt;
-            if (style) {
-              const auto [it, inserted] =
-                  pContent->uniqueStyles.emplace(*style);
-              const CesiumVectorData::VectorStyle* pStyle = &(*it);
-              pContent->pointStyles.emplace_back(pStyle);
-            } else {
-              pContent->pointStyles.emplace_back(&pContent->defaultStyle);
-            }
+            pointFeatureIds.emplace_back(featureIdResult.value.value_or(-1));
           }
           return;
         } else if (
@@ -194,35 +187,6 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
             return;
           }
 
-          const auto addStyleForFeatureIdFunc =
-              [pFeatureIdSet,
-               model,
-               primitive,
-               &errors,
-               pStylingProvider,
-               pContent](
-                  int64_t i,
-                  const std::vector<CesiumGeospatial::Cartographic>& line) {
-                const CesiumUtility::Result<int64_t> featureIdResult =
-                    getFeatureId(pFeatureIdSet, model, primitive, i);
-                errors.merge(featureIdResult.errors);
-                const std::optional<CesiumVectorData::VectorStyle> style =
-                    pStylingProvider != nullptr
-                        ? pStylingProvider->onStylePolyline(
-                              featureIdResult.value.value_or(-1),
-                              line)
-                        : std::nullopt;
-                if (style) {
-                  const auto [it, inserted] =
-                      pContent->uniqueStyles.emplace(*style);
-                  const CesiumVectorData::VectorStyle* pStyle = &(*it);
-                  pContent->polylineStyles.emplace_back(pStyle);
-                } else {
-                  pContent->polylineStyles.emplace_back(
-                      &pContent->defaultStyle);
-                }
-              };
-
           std::vector<CesiumGeospatial::Cartographic> polyline;
           int64_t startIndex = -1;
           for (int64_t i = 0; i < numIndices; i++) {
@@ -231,7 +195,11 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
             if (idx == maxIndex) {
               // Primitive restart.
               if (polyline.size() >= 2) {
-                addStyleForFeatureIdFunc(startIndex, polyline);
+                const CesiumUtility::Result<int64_t> featureIdResult =
+                    getFeatureId(pFeatureIdSet, model, primitive, startIndex);
+                errors.merge(featureIdResult.errors);
+                polylineFeatureIds.emplace_back(
+                    featureIdResult.value.value_or(-1));
                 pContent->polylines.emplace_back(std::move(polyline));
                 polyline.clear();
                 startIndex = -1;
@@ -265,7 +233,10 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
           }
 
           if (polyline.size() >= 2) {
-            addStyleForFeatureIdFunc(startIndex, polyline);
+            const CesiumUtility::Result<int64_t> featureIdResult =
+                getFeatureId(pFeatureIdSet, model, primitive, startIndex);
+            errors.merge(featureIdResult.errors);
+            polylineFeatureIds.emplace_back(featureIdResult.value.value_or(-1));
             pContent->polylines.emplace_back(std::move(polyline));
           } else if (polyline.size() == 1) {
             errors.emplaceWarning("LINE_STRIP primitive ended with a single "
@@ -338,20 +309,7 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
             const CesiumUtility::Result<int64_t> featureIdResult =
                 getFeatureId(pFeatureIdSet, model, primitive, startIndex);
             errors.merge(featureIdResult.errors);
-            const std::optional<CesiumVectorData::VectorStyle> style =
-                pStylingProvider != nullptr
-                    ? pStylingProvider->onStylePolygon(
-                          featureIdResult.value.value_or(-1),
-                          vertices)
-                    : std::nullopt;
-            if (style) {
-              const auto [it, inserted] =
-                  pContent->uniqueStyles.emplace(*style);
-              const CesiumVectorData::VectorStyle* pStyle = &(*it);
-              pContent->polygonStyles.emplace_back(pStyle);
-            } else {
-              pContent->polygonStyles.emplace_back(&pContent->defaultStyle);
-            }
+            polygonFeatureIds.emplace_back(featureIdResult.value.value_or(-1));
             pContent->polygons.emplace_back(std::move(vertices));
           }
         } else {
@@ -361,6 +319,83 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
               primitive.mode));
         }
       });
+
+  // Apply per-element styling if the user specified a styling provider.
+  if (pStylingProvider != nullptr) {
+    std::vector<std::optional<CesiumVectorData::VectorStyle>> stylesBuffer;
+    stylesBuffer.reserve(pContent->points.size());
+
+    if (pStylingProvider->onStylePoints(
+            model,
+            pointFeatureIds,
+            pContent->points,
+            stylesBuffer)) {
+      for (const auto& style : stylesBuffer) {
+        if (style.has_value()) {
+          pContent->pointStyles.emplace_back(
+              &*pContent->uniqueStyles.insert(*style).first);
+        } else {
+          pContent->pointStyles.emplace_back(&pContent->defaultStyle);
+        }
+      }
+    } else {
+      pContent->pointStyles.resize(
+          pContent->points.size(),
+          &pContent->defaultStyle);
+    }
+
+    stylesBuffer.clear();
+    stylesBuffer.reserve(pContent->polylines.size());
+    if (pStylingProvider->onStylePolylines(
+            model,
+            polylineFeatureIds,
+            pContent->polylines,
+            stylesBuffer)) {
+      for (const auto& style : stylesBuffer) {
+        if (style.has_value()) {
+          pContent->polylineStyles.emplace_back(
+              &*pContent->uniqueStyles.insert(*style).first);
+        } else {
+          pContent->polylineStyles.emplace_back(&pContent->defaultStyle);
+        }
+      }
+    } else {
+      pContent->polylineStyles.resize(
+          pContent->polylines.size(),
+          &pContent->defaultStyle);
+    }
+
+    stylesBuffer.clear();
+    stylesBuffer.reserve(pContent->polygons.size());
+    if (pStylingProvider->onStylePolygons(
+            model,
+            polygonFeatureIds,
+            pContent->polygons,
+            stylesBuffer)) {
+      for (const auto& style : stylesBuffer) {
+        if (style.has_value()) {
+          pContent->polygonStyles.emplace_back(
+              &*pContent->uniqueStyles.insert(*style).first);
+        } else {
+          pContent->polygonStyles.emplace_back(&pContent->defaultStyle);
+        }
+      }
+    } else {
+      pContent->polygonStyles.resize(
+          pContent->polygons.size(),
+          &pContent->defaultStyle);
+    }
+  } else {
+    pContent->pointStyles.resize(
+        pContent->points.size(),
+        &pContent->defaultStyle);
+    pContent->polylineStyles.resize(
+        pContent->polylines.size(),
+        &pContent->defaultStyle);
+    pContent->polygonStyles.resize(
+        pContent->polygons.size(),
+        &pContent->defaultStyle);
+  }
 
   return {pContent, errors};
 }
