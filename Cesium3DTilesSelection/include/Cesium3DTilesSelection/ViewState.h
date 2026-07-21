@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/GeneralCullingVolume.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <CesiumGeometry/CullingVolume.h>
 #include <CesiumGeometry/Plane.h>
@@ -13,7 +14,6 @@
 #include <glm/vec3.hpp>
 
 #include <optional>
-#include <vector>
 
 namespace Cesium3DTilesSelection {
 
@@ -226,7 +226,7 @@ private:
 
   const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
-  const CesiumGeometry::CullingVolume _cullingVolume;
+  const Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
   const glm::dmat4 _viewMatrix;
   const glm::dmat4 _projectionMatrix;
 };

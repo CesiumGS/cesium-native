@@ -120,84 +120,12 @@ ViewState::ViewState(
           ellipsoid) {}
 
 namespace {
-template <class T>
-bool isBoundingVolumeVisible(
-    const T& boundingVolume,
-    const CullingVolume& cullingVolume) noexcept {
-  const CullingResult left =
-      boundingVolume.intersectPlane(cullingVolume.leftPlane);
-  if (left == CullingResult::Outside) {
-    return false;
-  }
 
-  const CullingResult right =
-      boundingVolume.intersectPlane(cullingVolume.rightPlane);
-  if (right == CullingResult::Outside) {
-    return false;
-  }
-
-  const CullingResult top =
-      boundingVolume.intersectPlane(cullingVolume.topPlane);
-  if (top == CullingResult::Outside) {
-    return false;
-  }
-
-  const CullingResult bottom =
-      boundingVolume.intersectPlane(cullingVolume.bottomPlane);
-  if (bottom == CullingResult::Outside) {
-    return false;
-  }
-
-  return true;
-}
 } // namespace
 
 bool ViewState::isBoundingVolumeVisible(
     const BoundingVolume& boundingVolume) const noexcept {
-  // TODO: use plane masks
-  struct Operation {
-    const ViewState& viewState;
-
-    bool operator()(const OrientedBoundingBox& boundingBox) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingBox,
-          viewState._cullingVolume);
-    }
-
-    bool operator()(const BoundingRegion& boundingRegion) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingRegion,
-          viewState._cullingVolume);
-    }
-
-    bool operator()(const BoundingSphere& boundingSphere) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingSphere,
-          viewState._cullingVolume);
-    }
-
-    bool operator()(
-        const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingRegion.getBoundingRegion(),
-          viewState._cullingVolume);
-    }
-
-    bool operator()(const S2CellBoundingVolume& s2Cell) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          s2Cell,
-          viewState._cullingVolume);
-    }
-
-    bool
-    operator()(const BoundingCylinderRegion& boundingCylinderRegion) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingCylinderRegion,
-          viewState._cullingVolume);
-    }
-  };
-
-  return std::visit(Operation{*this}, boundingVolume);
+  return Cesium3DTilesSelection::isBoundingVolumeVisible(_cullingVolume, boundingVolume);
 }
 
 double ViewState::computeDistanceSquaredToBoundingVolume(
