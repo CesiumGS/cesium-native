@@ -23,7 +23,8 @@ struct VectorTilesRasterOverlayOptions {
    * @brief HTTP headers to attach to requests made for this tileset.
    */
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
-  CreateStylingProviderCallback createStylingProviderCallback;
+  
+  std::shared_ptr<VectorStylingProvider> pStylingProvider;
 };
 
 /**

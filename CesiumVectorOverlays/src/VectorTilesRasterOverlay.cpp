@@ -103,7 +103,8 @@ CesiumUtility::Result<int64_t> getFeatureId(
   return {index};
 }
 
-CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
+CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
+    const CesiumAsync::AsyncSystem& asyncSystem,
     CesiumGltf::Model& model,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const glm::dmat4x4& gltfTransform,
@@ -321,71 +322,8 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
       });
 
   // Apply per-element styling if the user specified a styling provider.
-  if (pStylingProvider != nullptr) {
-    std::vector<std::optional<CesiumVectorData::VectorStyle>> stylesBuffer;
-    stylesBuffer.reserve(pContent->points.size());
+  if (pStylingProvider == nullptr) {
 
-    if (pStylingProvider->onStylePoints(
-            model,
-            pointFeatureIds,
-            pContent->points,
-            stylesBuffer)) {
-      for (const auto& style : stylesBuffer) {
-        if (style.has_value()) {
-          pContent->pointStyles.emplace_back(
-              &*pContent->uniqueStyles.insert(*style).first);
-        } else {
-          pContent->pointStyles.emplace_back(&pContent->defaultStyle);
-        }
-      }
-    } else {
-      pContent->pointStyles.resize(
-          pContent->points.size(),
-          &pContent->defaultStyle);
-    }
-
-    stylesBuffer.clear();
-    stylesBuffer.reserve(pContent->polylines.size());
-    if (pStylingProvider->onStylePolylines(
-            model,
-            polylineFeatureIds,
-            pContent->polylines,
-            stylesBuffer)) {
-      for (const auto& style : stylesBuffer) {
-        if (style.has_value()) {
-          pContent->polylineStyles.emplace_back(
-              &*pContent->uniqueStyles.insert(*style).first);
-        } else {
-          pContent->polylineStyles.emplace_back(&pContent->defaultStyle);
-        }
-      }
-    } else {
-      pContent->polylineStyles.resize(
-          pContent->polylines.size(),
-          &pContent->defaultStyle);
-    }
-
-    stylesBuffer.clear();
-    stylesBuffer.reserve(pContent->polygons.size());
-    if (pStylingProvider->onStylePolygons(
-            model,
-            polygonFeatureIds,
-            pContent->polygons,
-            stylesBuffer)) {
-      for (const auto& style : stylesBuffer) {
-        if (style.has_value()) {
-          pContent->polygonStyles.emplace_back(
-              &*pContent->uniqueStyles.insert(*style).first);
-        } else {
-          pContent->polygonStyles.emplace_back(&pContent->defaultStyle);
-        }
-      }
-    } else {
-      pContent->polygonStyles.resize(
-          pContent->polygons.size(),
-          &pContent->defaultStyle);
-    }
-  } else {
     pContent->pointStyles.resize(
         pContent->points.size(),
         &pContent->defaultStyle);
@@ -395,9 +333,97 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
     pContent->polygonStyles.resize(
         pContent->polygons.size(),
         &pContent->defaultStyle);
+    return asyncSystem
+        .createResolvedFuture<CesiumUtility::Result<VectorRenderContent*>>(
+            {pContent, errors});
   }
 
-  return {pContent, errors};
+  return asyncSystem
+      .all(
+          pStylingProvider
+              ->onStylePoints(
+                  asyncSystem,
+                  model,
+                  pointFeatureIds,
+                  pContent->points)
+              .thenInWorkerThread(
+                  [pContent](std::vector<std::optional<
+                                 CesiumVectorData::VectorStyle>>&& result) {
+                    if (result.size() == 0) {
+                      pContent->pointStyles.resize(
+                          pContent->points.size(),
+                          &pContent->defaultStyle);
+                      return false;
+                    }
+
+                    for (const auto& style : result) {
+                      if (style.has_value()) {
+                        pContent->pointStyles.emplace_back(
+                            &*pContent->uniqueStyles.insert(*style).first);
+                      } else {
+                        pContent->pointStyles.emplace_back(
+                            &pContent->defaultStyle);
+                      }
+                    }
+
+                    return true;
+                  }),
+          pStylingProvider
+              ->onStylePolylines(
+                  asyncSystem,
+                  model,
+                  polylineFeatureIds,
+                  pContent->polylines)
+              .thenInWorkerThread(
+                  [pContent](std::vector<std::optional<
+                                 CesiumVectorData::VectorStyle>>&& result) {
+                    if (result.size() == 0) {
+                      pContent->polylineStyles.resize(
+                          pContent->polylines.size(),
+                          &pContent->defaultStyle);
+                      return false;
+                    }
+                    for (const auto& style : result) {
+                      if (style.has_value()) {
+                        pContent->polylineStyles.emplace_back(
+                            &*pContent->uniqueStyles.insert(*style).first);
+                      } else {
+                        pContent->polylineStyles.emplace_back(
+                            &pContent->defaultStyle);
+                      }
+                    }
+                    return true;
+                  }),
+          pStylingProvider
+              ->onStylePolygons(
+                  asyncSystem,
+                  model,
+                  polygonFeatureIds,
+                  pContent->polygons)
+              .thenInWorkerThread(
+                  [pContent](std::vector<std::optional<
+                                 CesiumVectorData::VectorStyle>>&& result) {
+                    if (result.size() == 0) {
+                      pContent->polygonStyles.resize(
+                          pContent->polygons.size(),
+                          &pContent->defaultStyle);
+                      return false;
+                    }
+                    for (const auto& style : result) {
+                      if (style.has_value()) {
+                        pContent->polygonStyles.emplace_back(
+                            &*pContent->uniqueStyles.insert(*style).first);
+                      } else {
+                        pContent->polygonStyles.emplace_back(
+                            &pContent->defaultStyle);
+                      }
+                    }
+                    return true;
+                  }))
+      .thenInWorkerThread([pContent, errors = std::move(errors)](
+                              std::tuple<bool, bool, bool>&& /*results*/) {
+        return Result<VectorRenderContent*>({pContent, errors});
+      });
 }
 
 struct LoadRequest {
@@ -466,35 +492,39 @@ public:
           TileLoadResultAndRenderResources{std::move(tileLoadResult), nullptr});
     }
 
-    Result<VectorRenderContent*> vectorizationResult = vectorizeModel(
-        *pModel,
-        tileLoadResult.ellipsoid,
-        transform,
-        this->defaultStyle,
-        this->_createStylingProviderCallback != nullptr
-            ? this->_createStylingProviderCallback()
-            : nullptr);
-    if (vectorizationResult.errors.hasErrors()) {
-      if (vectorizationResult.value) {
-        delete *vectorizationResult.value;
-      }
+    return vectorizeModel(
+               asyncSystem,
+               *pModel,
+               tileLoadResult.ellipsoid,
+               transform,
+               this->defaultStyle,
+               this->_pStylingProvider)
+        .thenInWorkerThread([tileLoadResult = std::move(tileLoadResult),
+                             this](CesiumUtility::Result<VectorRenderContent*>&&
+                                       vectorizationResult) mutable {
+          if (vectorizationResult.errors.hasErrors()) {
+            if (vectorizationResult.value) {
+              delete *vectorizationResult.value;
+            }
 
-      vectorizationResult.errors.log(
-          this->pLogger,
-          "Errors when vectorizing model:");
-      return asyncSystem.createResolvedFuture(
-          TileLoadResultAndRenderResources{std::move(tileLoadResult), nullptr});
-    }
+            vectorizationResult.errors.log(
+                this->pLogger,
+                "Errors when vectorizing model:");
+            return TileLoadResultAndRenderResources{
+                std::move(tileLoadResult),
+                nullptr};
+          }
 
-    if (!vectorizationResult.errors.warnings.empty()) {
-      vectorizationResult.errors.log(
-          this->pLogger,
-          "Warnings when vectorizing model:");
-    }
+          if (!vectorizationResult.errors.warnings.empty()) {
+            vectorizationResult.errors.log(
+                this->pLogger,
+                "Warnings when vectorizing model:");
+          }
 
-    return asyncSystem.createResolvedFuture(TileLoadResultAndRenderResources{
-        std::move(tileLoadResult),
-        vectorizationResult.value ? *vectorizationResult.value : nullptr});
+          return TileLoadResultAndRenderResources{
+              std::move(tileLoadResult),
+              vectorizationResult.value ? *vectorizationResult.value : nullptr};
+        });
   }
 
   void* prepareInMainThread(Tile& /*tile*/, void* pLoadThreadResult) override {
@@ -553,17 +583,16 @@ public:
   VectorTilesPrepareRendererResources(
       std::shared_ptr<spdlog::logger> pLogger,
       CesiumVectorData::VectorStyle defaultStyle,
-      CreateStylingProviderCallback createStylingProviderCallback)
+      std::shared_ptr<VectorStylingProvider> pStylingProvider)
       : defaultStyle(std::move(defaultStyle)),
         pLogger(std::move(pLogger)),
-        _createStylingProviderCallback(
-            std::move(createStylingProviderCallback)) {}
+        _pStylingProvider(std::move(pStylingProvider)) {}
 
   CesiumVectorData::VectorStyle defaultStyle;
   std::shared_ptr<spdlog::logger> pLogger;
 
 private:
-  CreateStylingProviderCallback _createStylingProviderCallback;
+  std::shared_ptr<VectorStylingProvider> _pStylingProvider;
 };
 
 class VectorTilesRasterOverlayTileProvider final
@@ -812,7 +841,7 @@ public:
             std::make_shared<VectorTilesPrepareRendererResources>(
                 parameters.externals.pLogger,
                 vectorOptions.defaultStyle,
-                vectorOptions.createStylingProviderCallback)) {
+                vectorOptions.pStylingProvider)) {
     const RasterOverlayOptions& overlayOptions =
         (parameters.pOwner ? parameters.pOwner : pCreator)->getOptions();
     this->_options.ellipsoid = overlayOptions.ellipsoid;
