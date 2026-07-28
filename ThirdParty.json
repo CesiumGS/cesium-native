@@ -79,10 +79,9 @@
   },
   {
     "name": "modp_b64",
-    "url": "https://github.com/chromium/chromium/tree/15996b5d2322b634f4197447b10289bddc2b0b32/third_party/modp_b64",
+    "url": "https://github.com/client9/stringencoders",
     "version": "e1448a9415f4ebf6f559c86718193ba067cbb99d",
-    "license": ["BSD-3-Clause"],
-    "notes": "See extern/modp_b64/README.cesium for details."
+    "license": ["BSD-3-Clause"]
   },
   {
     "name": "PicoSHA2",
