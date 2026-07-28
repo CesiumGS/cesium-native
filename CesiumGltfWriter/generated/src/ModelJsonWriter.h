@@ -39,9 +39,13 @@ struct ExtensionKhrGaussianSplattingCompressionSpz2;
 struct ExtensionExtMeshPrimitiveEdgeVisibility;
 struct ExtensionExtMeshPolygon;
 struct ExtensionKhrBillboard;
+struct ExtensionModelKhrLightsPunctual;
+struct ExtensionNodeKhrLightsPunctual;
 struct ExtensionMaterialBentleyMaterialsLineStyle;
 struct ExtensionMeshPrimitiveBentleyMaterialsLineStyle;
 struct ExtensionBentleyMaterialsPointStyle;
+struct Light;
+struct Spotlight;
 struct LineString;
 struct Padding;
 struct Shape;
@@ -478,6 +482,32 @@ struct ExtensionKhrBillboardJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
+struct ExtensionModelKhrLightsPunctualJsonWriter {
+  using ValueType = CesiumGltf::ExtensionModelKhrLightsPunctual;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "KHR_lights_punctual";
+
+  static void write(
+      const CesiumGltf::ExtensionModelKhrLightsPunctual& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionNodeKhrLightsPunctualJsonWriter {
+  using ValueType = CesiumGltf::ExtensionNodeKhrLightsPunctual;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "KHR_lights_punctual";
+
+  static void write(
+      const CesiumGltf::ExtensionNodeKhrLightsPunctual& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct ExtensionMaterialBentleyMaterialsLineStyleJsonWriter {
   using ValueType = CesiumGltf::ExtensionMaterialBentleyMaterialsLineStyle;
 
@@ -513,6 +543,24 @@ struct ExtensionBentleyMaterialsPointStyleJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionBentleyMaterialsPointStyle& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct LightJsonWriter {
+  using ValueType = CesiumGltf::Light;
+
+  static void write(
+      const CesiumGltf::Light& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct SpotlightJsonWriter {
+  using ValueType = CesiumGltf::Spotlight;
+
+  static void write(
+      const CesiumGltf::Spotlight& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

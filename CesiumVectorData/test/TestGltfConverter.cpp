@@ -147,6 +147,9 @@ TEST_CASE("Conversion from geoJSON to glTF") {
     REQUIRE(!missingValue);
     REQUIRE(!invalidValue);
     REQUIRE(*shipTypePropertyView.get(1) == "Cargo");
+    auto propertyItr = propertyTableItr->properties.find("ShipType");
+    const PropertyTableProperty& property = propertyItr->second;
+    REQUIRE(property.stringOffsetType == ClassProperty::ComponentType::UINT16);
   }
 }
 

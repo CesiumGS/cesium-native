@@ -22,6 +22,7 @@
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/JsonValue.h>
@@ -88,6 +89,54 @@ std::vector<uint32_t> triangulatePolygon(const Polygon& polygonIn) {
     }
   }
   return mapbox::earcut<uint32_t>(polygon);
+}
+
+size_t roundToSize(size_t offset, size_t size) {
+  return ((offset + size - 1) / size) * size;
+}
+
+// Helper code for finding the appropriate offset size for string properties
+
+struct PropertyOffsetParameter {
+  uint64_t maxValue;
+  size_t size;
+  std::string gltfConstant;
+};
+
+const PropertyOffsetParameter offsetParameters[] = {
+    {std::numeric_limits<uint8_t>::max(),
+     sizeof(uint8_t),
+     ClassProperty::ComponentType::UINT8},
+    {std::numeric_limits<uint16_t>::max(),
+     sizeof(uint16_t),
+     ClassProperty::ComponentType::UINT16},
+    {std::numeric_limits<uint32_t>::max(),
+     sizeof(uint32_t),
+     ClassProperty::ComponentType::UINT32},
+    {std::numeric_limits<uint64_t>::max(),
+     sizeof(uint64_t),
+     ClassProperty::ComponentType::UINT64}};
+
+size_t offsetSize(uint64_t offset) {
+  auto parameterIt = std::upper_bound(
+      &offsetParameters[0],
+      &offsetParameters[4],
+      offset,
+      [](size_t val, const PropertyOffsetParameter& param) {
+        return val < param.maxValue;
+      });
+  return parameterIt->size;
+}
+
+const std::string& offsetGltfType(size_t size) {
+  auto parameterIt = std::find_if(
+      &offsetParameters[0],
+      &offsetParameters[4],
+      [size](const PropertyOffsetParameter& param) {
+        return size == param.size;
+      });
+  CESIUM_ASSERT(parameterIt != &offsetParameters[4]);
+  return parameterIt->gltfConstant;
 }
 
 struct GltfConverterImpl {
@@ -264,14 +313,34 @@ struct GltfConverterImpl {
     return mapIt->second;
   }
 
+  // Since offsets are indices to array elements, their maximum possible size is
+  // the platform's size_t.
+  using StringOffset = size_t;
+
   struct StringPropertyRepresentation {
     std::string buffer;
-    std::vector<uint64_t> offsets;
+    std::vector<StringOffset> offsets;
+    size_t sizeofOffset = 0;
+    size_t offsetByteSizeRounded = 0;
 
     StringPropertyRepresentation(size_t numFeatures = 0)
-        : offsets(numFeatures + 1, std::numeric_limits<uint64_t>::max()) {
+        : offsets(numFeatures + 1, std::numeric_limits<StringOffset>::max()) {
       // feature ID 0 is reserved for missing data
       offsets[0] = 0;
+    }
+
+    void finalizeOffsets() {
+      this->offsets.back() = this->buffer.size();
+      StringOffset lastValidOffset = 0;
+      for (StringOffset& offset : this->offsets) {
+        if (offset == std::numeric_limits<StringOffset>::max()) {
+          offset = lastValidOffset;
+        } else {
+          lastValidOffset = offset;
+        }
+      }
+      StringOffset maxOffset = offsets.back();
+      this->sizeofOffset = offsetSize(maxOffset);
     }
   };
 
@@ -290,6 +359,41 @@ struct GltfConverterImpl {
       IntegerPropertyRepresentation>;
   using PackedProperties = std::unordered_map<std::string, PackedProperty>;
 
+  template <typename T>
+  void copyOffsets(T* dest, const std::vector<StringOffset>& src) {
+    for (size_t i = 0; i < src.size(); ++i) {
+      dest[i] = static_cast<T>(src[i]);
+    }
+  }
+
+  void copyOffsets(
+      size_t offsetBufferIndex,
+      size_t offsetsStart,
+      const StringPropertyRepresentation& propRep) {
+    std::byte* pOffsetsStart =
+        model.buffers[offsetBufferIndex].cesium.data.data() + offsetsStart;
+    switch (propRep.sizeofOffset) {
+    case 1:
+      return copyOffsets(
+          reinterpret_cast<uint8_t*>(pOffsetsStart),
+          propRep.offsets);
+    case 2:
+      return copyOffsets(
+          reinterpret_cast<uint16_t*>(pOffsetsStart),
+          propRep.offsets);
+    case 4:
+      return copyOffsets(
+          reinterpret_cast<uint32_t*>(pOffsetsStart),
+          propRep.offsets);
+    case 8:
+      return copyOffsets(
+          reinterpret_cast<uint64_t*>(pOffsetsStart),
+          propRep.offsets);
+    default:
+      break;
+    }
+  }
+
   void recordStringProperties(
       ExtensionModelExtStructuralMetadata& modelExtension,
       PackedProperties& packedProps) {
@@ -299,29 +403,20 @@ struct GltfConverterImpl {
     size_t metadataSize = 0;
     size_t offsetsBufferIndex = this->model.buffers.size();
     this->model.buffers.emplace_back();
-    size_t offsetsSize = 0;
+    size_t offsetsByteSize = 0;
     Buffer& metadataBuffer = this->model.buffers[metadataBufferIndex];
     Buffer& offsetsBuffer = this->model.buffers[offsetsBufferIndex];
 
     for (auto& [_, propRepVariant] : packedProps) {
       if (auto* pPropRep =
               std::get_if<StringPropertyRepresentation>(&propRepVariant)) {
-        pPropRep->offsets.back() = pPropRep->buffer.size();
-        // Patch up any missing data
-        uint64_t lastValidOffset = 0;
-        for (uint64_t& offset : pPropRep->offsets) {
-          if (offset == std::numeric_limits<uint64_t>::max()) {
-            offset = lastValidOffset;
-          } else {
-            lastValidOffset = offset;
-          }
-        }
+        pPropRep->finalizeOffsets();
         metadataSize += pPropRep->buffer.size();
-        offsetsSize += pPropRep->offsets.size();
+        offsetsByteSize = roundToSize(offsetsByteSize, pPropRep->sizeofOffset) +
+                          pPropRep->offsets.size() * pPropRep->sizeofOffset;
       }
     }
     metadataBuffer.cesium.data.resize(metadataSize);
-    size_t offsetsByteSize = offsetsSize * sizeof(uint64_t);
     offsetsBuffer.cesium.data.resize(offsetsByteSize);
     // These offsets are in bytes.
     size_t buffOffset = 0;
@@ -330,7 +425,9 @@ struct GltfConverterImpl {
       if (auto* pPropRep =
               std::get_if<StringPropertyRepresentation>(&propRepVariant)) {
         size_t propOffsetsByteSize =
-            pPropRep->offsets.size() * sizeof(uint64_t);
+            pPropRep->offsets.size() * pPropRep->sizeofOffset;
+        offsetDataOffset =
+            roundToSize(offsetDataOffset, pPropRep->sizeofOffset);
         int32_t propIndex = makeBufferView(
             int32_t(metadataBufferIndex),
             BufferView::Target::ARRAY_BUFFER,
@@ -345,19 +442,16 @@ struct GltfConverterImpl {
             BufferView::Target::ARRAY_BUFFER,
             int64_t(offsetDataOffset),
             int64_t(propOffsetsByteSize));
-        std::memcpy(
-            offsetsBuffer.cesium.data.data() + offsetDataOffset,
-            pPropRep->offsets.data(),
-            propOffsetsByteSize);
+        copyOffsets(offsetsBufferIndex, offsetDataOffset, *pPropRep);
         buffOffset += pPropRep->buffer.size();
-        offsetDataOffset += pPropRep->offsets.size() * sizeof(uint64_t);
+        offsetDataOffset += pPropRep->offsets.size() * pPropRep->sizeofOffset;
         PropertyTableProperty& propertyTableProperty =
             propertyTable.properties.emplace(propName, PropertyTableProperty())
                 .first->second;
         propertyTableProperty.values = propIndex;
         propertyTableProperty.stringOffsets = offsetsIndex;
         propertyTableProperty.stringOffsetType =
-            ClassProperty::ComponentType::UINT64;
+            offsetGltfType(pPropRep->sizeofOffset);
       }
     }
   }
