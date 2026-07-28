@@ -62,7 +62,7 @@ struct CESIUMGLTF_API EnumSpec : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The type of the integer enum value.
    *
-   * Known values are defined in {@link ValueType}.
+   * Known values are defined in @ref ValueType.
    *
    */
   std::string valueType = ValueType::UINT16;
@@ -99,7 +99,7 @@ struct CESIUMGLTF_API EnumSpec : public CesiumUtility::ExtensibleObject {
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use {@link Enum} instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref Enum instead.
    */
   EnumSpec() = default;
   friend struct Enum;

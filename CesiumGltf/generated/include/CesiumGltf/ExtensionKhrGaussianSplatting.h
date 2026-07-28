@@ -59,7 +59,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   /**
    * @brief The kernel used to generate the Gaussians.
    *
-   * Known values are defined in {@link Kernel}.
+   * Known values are defined in @ref Kernel.
    *
    */
   std::string kernel = Kernel::ellipse;
@@ -67,7 +67,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   /**
    * @brief The color space of the reconstructed color values.
    *
-   * Known values are defined in {@link ColorSpace}.
+   * Known values are defined in @ref ColorSpace.
    *
    */
   std::string colorSpace = ColorSpace::srgb_rec709_display;
@@ -75,7 +75,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   /**
    * @brief The projection method for rendering the Gaussians.
    *
-   * Known values are defined in {@link Projection}.
+   * Known values are defined in @ref Projection.
    *
    */
   std::string projection = Projection::perspective;
@@ -83,7 +83,7 @@ struct CESIUMGLTF_API ExtensionKhrGaussianSplatting final
   /**
    * @brief The sorting method for rendering the Gaussians.
    *
-   * Known values are defined in {@link SortingMethod}.
+   * Known values are defined in @ref SortingMethod.
    *
    */
   std::string sortingMethod = SortingMethod::cameraDistance;

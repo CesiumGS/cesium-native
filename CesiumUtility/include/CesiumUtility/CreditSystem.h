@@ -54,7 +54,7 @@ enum class CreditFilteringMode : uint8_t {
 /**
  * @brief Represents an HTML string that should be shown on screen to attribute
  * third parties for used data, imagery, etc. Acts as a handle into a
- * {@link CreditSystem} object that actually holds the credit string.
+ * @ref CreditSystem object that actually holds the credit string.
  */
 struct CESIUMUTILITY_API Credit {
 public:
@@ -132,7 +132,7 @@ private:
 };
 
 /**
- * @brief A snapshot of the credits currently active in a {@link CreditSystem}.
+ * @brief A snapshot of the credits currently active in a @ref CreditSystem.
  */
 struct CreditsSnapshot {
   /**
@@ -142,13 +142,13 @@ struct CreditsSnapshot {
 
   /**
    * @brief The credits that were removed since the last call to
-   * {@link CreditSystem::getSnapshot}.
+   * @ref CreditSystem::getSnapshot.
    */
   std::vector<Credit> removedCredits;
 };
 
 /**
- * @brief Creates and manages {@link Credit} objects. Avoids repetitions and
+ * @brief Creates and manages @ref Credit objects. Avoids repetitions and
  * tracks which credits should be shown and which credits should be removed this
  * frame.
  */

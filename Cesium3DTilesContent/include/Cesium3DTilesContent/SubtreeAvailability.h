@@ -34,7 +34,7 @@ enum class ImplicitTileSubdivisionScheme {
 
 /**
  * @brief Supports querying and modifying the various types of availablity
- * information included in a {@link Cesium3DTiles::Subtree}.
+ * information included in a @ref Cesium3DTiles::Subtree.
  */
 class SubtreeAvailability {
 public:
@@ -177,7 +177,7 @@ public:
    * @param relativeTileLevel The level of the tile to query, relative to the
    * root of the subtree.
    * @param relativeTileMortonId The Morton ID of the tile to query. See
-   * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
+   * @ref ImplicitTilingUtilities::computeRelativeMortonIndex.
    * @return True if the tile is available; otherwise, false.
    */
   bool isTileAvailable(
@@ -215,7 +215,7 @@ public:
    * availability, relative to the root of the subtree.
    * @param relativeTileMortonId The Morton ID of the tile for which to set
    * availability. See
-   * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
+   * @ref ImplicitTilingUtilities::computeRelativeMortonIndex.
    * @param isAvailable The new availability state of the tile.
    */
   void setTileAvailable(
@@ -255,7 +255,7 @@ public:
    * @param relativeTileLevel The level of the tile to query, relative to the
    * root of the subtree.
    * @param relativeTileMortonId The Morton ID of the tile to query. See
-   * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
+   * @ref ImplicitTilingUtilities::computeRelativeMortonIndex.
    * @param contentId The ID of the content to query.
    * @return True if the tile's content is available; otherwise, false.
    */
@@ -302,7 +302,7 @@ public:
    * content availability, relative to the root of the subtree.
    * @param relativeTileMortonId The Morton ID of the tile for which to set
    * content availability. See
-   * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
+   * @ref ImplicitTilingUtilities::computeRelativeMortonIndex.
    * @param contentId The ID of the content to query.
    * @param isAvailable The new availability state for the tile's content.
    */
@@ -350,7 +350,7 @@ public:
    *
    * @param relativeSubtreeMortonId The Morton ID of the tile for which to check
    * subtree availability. See
-   * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
+   * @ref ImplicitTilingUtilities::computeRelativeMortonIndex.
    * @return True if the subtree is available; otherwise, false.
    */
   bool isSubtreeAvailable(uint64_t relativeSubtreeMortonId) const noexcept;
@@ -398,7 +398,7 @@ public:
    *
    * @param relativeSubtreeMortonId The Morton ID of the tile for which to set
    * subtree availability. See
-   * {@link ImplicitTilingUtilities::computeRelativeMortonIndex}.
+   * @ref ImplicitTilingUtilities::computeRelativeMortonIndex.
    * @param isAvailable The new availability state.
    */
   void setSubtreeAvailable(

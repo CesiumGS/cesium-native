@@ -19,7 +19,7 @@ namespace CesiumGltf {
 /**
  * @brief Indicates the status of a property texture property view.
  *
- * The {@link PropertyTexturePropertyView} constructor always completes
+ * The @ref PropertyTexturePropertyView constructor always completes
  * successfully. However it may not always reflect the actual content of the
  * corresponding property texture property. This enumeration provides the
  * reason.
@@ -28,12 +28,12 @@ class PropertyTexturePropertyViewStatus : public PropertyViewStatus {
 public:
   /**
    * @brief This property view was initialized from an invalid
-   * {@link PropertyTexture}.
+   * @ref PropertyTexture.
    */
   static const int ErrorInvalidPropertyTexture = 15;
 
   /**
-   * @brief This property view is associated with a {@link ClassProperty} of an
+   * @brief This property view is associated with a @ref ClassProperty of an
    * unsupported type.
    */
   static const int ErrorUnsupportedProperty = 16;
@@ -237,7 +237,7 @@ assembleValueFromChannels(const std::span<uint8_t> bytes) noexcept {
 #pragma region Non - normalized property
 
 /**
- * @brief A view of the data specified by a {@link PropertyTextureProperty}.
+ * @brief A view of the data specified by a @ref PropertyTextureProperty.
  *
  * Provides utilities to sample the property texture property using texture
  * coordinates. Property values are retrieved from the NEAREST texel without
@@ -254,7 +254,7 @@ class PropertyTexturePropertyView;
 
 /**
  * @brief A view of the non-normalized data specified by a
- * {@link PropertyTextureProperty}.
+ * @ref PropertyTextureProperty.
  *
  * Provides utilities to sample the property texture property using texture
  * coordinates.
@@ -277,7 +277,7 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The code from {@link PropertyTexturePropertyViewStatus} indicating the error with the property.
+   * @param status The code from @ref PropertyTexturePropertyViewStatus indicating the error with the property.
    */
   PropertyTexturePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, false>(status),
@@ -294,7 +294,7 @@ public:
    * value. Although this property has no data, it can return the default value
    * when \ref get is called. However, \ref getRaw cannot be used.
    *
-   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param classProperty The @ref ClassProperty this property conforms to.
    */
   PropertyTexturePropertyView(const ClassProperty& classProperty) noexcept
       : PropertyView<ElementType, false>(classProperty),
@@ -565,7 +565,7 @@ private:
 
 /**
  * @brief A view of the normalized data specified by a
- * {@link PropertyTextureProperty}.
+ * @ref PropertyTextureProperty.
  *
  * Provides utilities to sample the property texture property using texture
  * coordinates.
@@ -589,7 +589,7 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The code from {@link PropertyTexturePropertyViewStatus} indicating the error with the property.
+   * @param status The code from @ref PropertyTexturePropertyViewStatus indicating the error with the property.
    */
   PropertyTexturePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, true>(status),
@@ -605,10 +605,10 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a
    * default value. Although this property has no data, it can return the
-   * default value when {@link PropertyTexturePropertyView<ElementType, true>::get} is called.
-   * However, {@link PropertyTexturePropertyView<ElementType, true>::getRaw} cannot be used.
+   * default value when @ref PropertyTexturePropertyView<ElementType, true>::get is called.
+   * However, @ref PropertyTexturePropertyView<ElementType, true>::getRaw cannot be used.
    *
-   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param classProperty The @ref ClassProperty this property conforms to.
    */
   PropertyTexturePropertyView(const ClassProperty& classProperty) noexcept
       : PropertyView<ElementType, true>(classProperty),

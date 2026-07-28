@@ -11,7 +11,7 @@
 namespace CesiumGeospatial {
 
 /**
- * @brief A plane tangent to an {@link Ellipsoid} at a certain origin position.
+ * @brief A plane tangent to an @ref Ellipsoid at a certain origin position.
  *
  * If the origin is not on the surface of the ellipsoid, its surface projection
  * will be used.
@@ -22,7 +22,7 @@ public:
    * @brief Creates a new instance.
    *
    * @param origin The origin, in cartesian coordinates.
-   * @param ellipsoid The ellipsoid. Default value: {@link Ellipsoid::WGS84}.
+   * @param ellipsoid The ellipsoid. Default value: @ref Ellipsoid::WGS84.
    * @throws An `std::invalid_argument` if the given origin is at the
    * center of the ellipsoid.
    */
@@ -34,15 +34,15 @@ public:
    * @brief Creates a new instance.
    *
    * @param eastNorthUpToFixedFrame A transform that was computed with
-   * {@link GlobeTransforms::eastNorthUpToFixedFrame}.
-   * @param ellipsoid The ellipsoid. Default value: {@link Ellipsoid::WGS84}.
+   * @ref GlobeTransforms::eastNorthUpToFixedFrame.
+   * @param ellipsoid The ellipsoid. Default value: @ref Ellipsoid::WGS84.
    */
   EllipsoidTangentPlane(
       const glm::dmat4& eastNorthUpToFixedFrame,
       const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
-   * @brief Returns the {@link Ellipsoid}.
+   * @brief Returns the @ref Ellipsoid.
    */
   const Ellipsoid& getEllipsoid() const noexcept { return this->_ellipsoid; }
 
@@ -69,7 +69,7 @@ public:
   }
 
   /**
-   * @brief Returns a {@link CesiumGeometry::Plane} representation of this
+   * @brief Returns a @ref CesiumGeometry::Plane representation of this
    * plane.
    */
   const CesiumGeometry::Plane& getPlane() const noexcept {

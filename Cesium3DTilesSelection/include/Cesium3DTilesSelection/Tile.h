@@ -74,8 +74,8 @@ enum class TileLoadState {
   /**
    * @brief The tile content is currently being loaded.
    *
-   * Note that while a tile is in this state, its {@link Tile::getContent},
-   * and {@link Tile::getState}, methods may be called from the load thread,
+   * Note that while a tile is in this state, its @ref Tile::getContent,
+   * and @ref Tile::getState, methods may be called from the load thread,
    * and the state may change due to the internal loading process.
    */
   ContentLoading = 1,
@@ -98,26 +98,26 @@ enum class TileLoadState {
 };
 
 /**
- * @brief A tile in a {@link Tileset}.
+ * @brief A tile in a @ref Tileset.
  *
  * The tiles of a tileset form a hierarchy, where each tile may contain
  * renderable content, and each tile has an associated bounding volume.
  *
- * The actual hierarchy is represented with the {@link Tile::getParent}
- * and {@link Tile::getChildren} functions.
+ * The actual hierarchy is represented with the @ref Tile::getParent
+ * and @ref Tile::getChildren functions.
  *
- * The renderable content is provided as a {@link TileContent}
- * from the {@link Tile::getContent} function.
- * The {@link Tile::getGeometricError} function returns the geometric
+ * The renderable content is provided as a @ref TileContent
+ * from the @ref Tile::getContent function.
+ * The @ref Tile::getGeometricError function returns the geometric
  * error of the representation of the renderable content of a tile.
  *
- * The {@link BoundingVolume} is given by the {@link Tile::getBoundingVolume}
+ * The @ref BoundingVolume is given by the @ref Tile::getBoundingVolume
  * function. This bounding volume encloses the renderable content of the
  * tile itself, as well as the renderable content of all children, yielding
  * a spatially coherent hierarchy of bounding volumes.
  *
  * The bounding volume of the content of an individual tile is given
- * by the {@link Tile::getContentBoundingVolume} function.
+ * by the @ref Tile::getContentBoundingVolume function.
  *
  */
 class CESIUM3DTILESSELECTION_API Tile final {
@@ -126,7 +126,7 @@ public:
    * @brief A reference counting pointer to a `Tile`.
    *
    * An instance of this pointer type will keep the `Tile` from being destroyed,
-   * and it may also keep its content from unloading. See {@link addReference}
+   * and it may also keep its content from unloading. See @ref addReference
    * for details.
    */
   using Pointer = CesiumUtility::IntrusivePointer<Tile>;
@@ -135,7 +135,7 @@ public:
    * @brief A reference counting pointer to a const `Tile`.
    *
    * An instance of this pointer type will keep the `Tile` from being destroyed,
-   * and it may also keep its content from unloading. See {@link addReference}
+   * and it may also keep its content from unloading. See @ref addReference
    * for details.
    */
   using ConstPointer = CesiumUtility::IntrusivePointer<const Tile>;
@@ -145,7 +145,7 @@ public:
    * load the content of this tile. Tile has Unloaded status when initializing
    * with this constructor.
    *
-   * @param pLoader The {@link TilesetContentLoader} that is used to load the tile.
+   * @param pLoader The @ref TilesetContentLoader that is used to load the tile.
    * @param tileID The ID of this tile. If not specified, the ID will initially
    * be an empty string.
    */
@@ -165,7 +165,7 @@ public:
    * ID is changed in order to avoid reference count assertion failures at
    * tileset destruction.
    *
-   * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
+   * @param pLoader The @ref TilesetContentLoader that is assiocated with this tile.
    * @param tileID The ID of this tile. If it is an empty string, then the
    * external content will not be unloadable.
    * @param externalContent External content that is associated with this tile.
@@ -187,7 +187,7 @@ public:
    * ID is changed in order to avoid reference count assertion failures at
    * tileset destruction.
    *
-   * @param pLoader The {@link TilesetContentLoader} that is assiocated with this tile.
+   * @param pLoader The @ref TilesetContentLoader that is assiocated with this tile.
    * @param tileID The ID of this tile. If it is an empty string, then the
    * empty content will not be unloadable.
    * @param emptyContent A content tag indicating that the tile has no content.
@@ -277,7 +277,7 @@ public:
   void createChildTiles(std::vector<Tile>&& children);
 
   /**
-   * @brief Returns the {@link BoundingVolume} of this tile.
+   * @brief Returns the @ref BoundingVolume of this tile.
    *
    * This is a bounding volume that encloses the content of this tile,
    * as well as the content of all child tiles.
@@ -291,7 +291,7 @@ public:
   }
 
   /**
-   * @brief Set the {@link BoundingVolume} of this tile.
+   * @brief Set the @ref BoundingVolume of this tile.
    *
    * This function is not supposed to be called by clients.
    *
@@ -304,7 +304,7 @@ public:
   /**
    * @brief Returns the viewer request volume of this tile.
    *
-   * The viewer request volume is an optional {@link BoundingVolume} that
+   * The viewer request volume is an optional @ref BoundingVolume that
    * may be associated with a tile. It allows controlling the rendering
    * process of the tile content: If the viewer request volume is present,
    * then the content of the tile will only be rendered when the viewer
@@ -352,15 +352,15 @@ public:
 
   /**
    * @brief Gets the tile's geometric error as if by calling
-   * {@link getGeometricError}, except that if the error is smaller than
-   * {@link CesiumUtility::Math::Epsilon5} the returned geometric error is instead computed as
+   * @ref getGeometricError, except that if the error is smaller than
+   * @ref CesiumUtility::Math::Epsilon5 the returned geometric error is instead computed as
    * half of the parent tile's (non-zero) geometric error.
    *
    * This is useful for determining when to refine what would ordinarily be a
    * leaf tile, for example to attach more detailed raster overlays to it.
    *
    * If this tile and all of its ancestors have a geometric error less than
-   * {@link CesiumUtility::Math::Epsilon5}, returns {@link CesiumUtility::Math::Epsilon5}.
+   * @ref CesiumUtility::Math::Epsilon5, returns @ref CesiumUtility::Math::Epsilon5.
    *
    * @return The non-zero geometric error.
    */
@@ -392,7 +392,7 @@ public:
   /**
    * @brief The refinement strategy of this tile.
    *
-   * Returns the {@link TileRefine} value that indicates the refinement strategy
+   * Returns the @ref TileRefine value that indicates the refinement strategy
    * for this tile. This is `Add` when the content of the
    * child tiles is *added* to the content of this tile during refinement, and
    * `Replace` when the content of the child tiles *replaces*
@@ -433,7 +433,7 @@ public:
   }
 
   /**
-   * @brief Returns the {@link TileID} of this tile.
+   * @brief Returns the @ref TileID of this tile.
    *
    * This function is not supposed to be called by clients.
    *
@@ -442,7 +442,7 @@ public:
   const TileID& getTileID() const noexcept { return this->_id; }
 
   /**
-   * @brief Set the {@link TileID} of this tile.
+   * @brief Set the @ref TileID of this tile.
    *
    * This function is not supposed to be called by clients.
    *
@@ -451,7 +451,7 @@ public:
   void setTileID(const TileID& id) noexcept { this->_id = id; }
 
   /**
-   * @brief Returns the {@link BoundingVolume} of the renderable content of this
+   * @brief Returns the @ref BoundingVolume of the renderable content of this
    * tile.
    *
    * The content bounding volume is a bounding volume that tightly fits only the
@@ -467,7 +467,7 @@ public:
   }
 
   /**
-   * @brief Set the {@link BoundingVolume} of the renderable content of this
+   * @brief Set the @ref BoundingVolume of the renderable content of this
    * tile.
    *
    * This function is not supposed to be called by clients.
@@ -532,7 +532,7 @@ public:
   TilesetContentLoader* getLoader() const noexcept;
 
   /**
-   * @brief Returns the {@link TileLoadState} of this tile.
+   * @brief Returns the @ref TileLoadState of this tile.
    */
   TileLoadState getState() const noexcept;
 
@@ -541,7 +541,7 @@ public:
    *
    * @param pModifier The optional glTF modifier. If not `nullptr`, this method
    * will return true if the tile needs worker thread glTF modification. See
-   * {@link TilesetExternals::pGltfModifier}.
+   * @ref TilesetExternals::pGltfModifier.
    * @return true if this Tile needs further work done in a worker thread to
    * load it; otherwise, false.
    */
@@ -552,7 +552,7 @@ public:
    *
    * @param pModifier The optional glTF modifier. If not `nullptr`, this method
    * will return true if the tile needs worker thread glTF modification. See
-   * {@link TilesetExternals::pGltfModifier}.
+   * @ref TilesetExternals::pGltfModifier.
    * @return true if this Tile needs further work done in the main thread to
    * load it; otherwise, false.
    */
@@ -563,7 +563,7 @@ public:
    * from being destroyed, and it _may_ also keep the tile's content from
    * unloading.
    *
-   * Use {@link CesiumUtility::IntrusivePointer} to manage references to tiles
+   * Use @ref CesiumUtility::IntrusivePointer to manage references to tiles
    * whenever possible, rather than calling this method directly.
    *
    * When the first reference is added to this tile, this method will
@@ -599,17 +599,17 @@ public:
    * tile from being destroyed, and it _may_ also keep the tile's content from
    * unloading.
    *
-   * Use {@link CesiumUtility::IntrusivePointer} to manage references to tiles
+   * Use @ref CesiumUtility::IntrusivePointer to manage references to tiles
    * whenever possible, rather than calling this method directly.
    *
    * When the last reference is removed from this tile (its count goes from 1 to
    * 0), this method will automatically remove a reference from the tile's
-   * parent tile as well. This is the inverse of the {@link addReference} that
+   * parent tile as well. This is the inverse of the @ref addReference that
    * the child previously invoked on its parent when the child reference count
    * went from 0 to 1. Removing it indicates that it is ok to destroy the child
    * tile, such as by unloading an external tileset.
    *
-   * See {@link addReference} for details of how references affect a tile's
+   * See @ref addReference for details of how references affect a tile's
    * eligibility to have its content unloaded.
    *
    * @param reason An optional explanation for why this reference is being
@@ -621,24 +621,24 @@ public:
   /**
    * @brief Gets the current number of references to this tile.
    *
-   * See {@link addReference} for details of when and why references are added,
+   * See @ref addReference for details of when and why references are added,
    * and how they impact a tile's eligibility to have its content unloaded.
    */
   int32_t getReferenceCount() const noexcept;
 
   /**
-   * @brief Determines if this tile's {@link getContent} counts as a reference
+   * @brief Determines if this tile's @ref getContent counts as a reference
    * to this tile.
    *
    * Content only counts as a reference to the tile when that content may
    * be unloaded. This ensures that the `Tile` will not be destroyed before the
    * content is unloaded.
    *
-   * Content that {@link TileContent::isUnknownContent} cannot be unloaded, so
-   * it is non-referencing. In addition, if the tile's {@link getTileID} is a
+   * Content that @ref TileContent::isUnknownContent cannot be unloaded, so
+   * it is non-referencing. In addition, if the tile's @ref getTileID is a
    * blank string, then content of any type will be non-referencing. This is
    * because the content for a tile without an ID cannot be reloaded, and so it
-   * will never been unloaded except when the entire {@link Tileset} is
+   * will never been unloaded except when the entire @ref Tileset is
    * destroyed.
    *
    * @returns true if this tile's content counts as a reference to this tile;
@@ -667,7 +667,7 @@ private:
   /**
    * @brief Gets a flag indicating whether this tile might have latent children.
    * Latent children don't exist in the `_children` property, but can be created
-   * by the {@link TilesetContentLoader}.
+   * by the @ref TilesetContentLoader.
    *
    * When true, this tile might have children that can be created by the
    * TilesetContentLoader but aren't yet reflected in the `_children` property.
@@ -714,7 +714,7 @@ private:
 
 public:
   /**
-   * @brief A {@link CesiumUtility::DoublyLinkedList} for tile objects.
+   * @brief A @ref CesiumUtility::DoublyLinkedList for tile objects.
    */
   typedef CesiumUtility::DoublyLinkedList<Tile, &Tile::_unusedTilesLinks>
       UnusedLinkedList;

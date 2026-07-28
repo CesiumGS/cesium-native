@@ -82,7 +82,7 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
   /**
    * @brief Magnification filter.
    *
-   * Known values are defined in {@link MagFilter}.
+   * Known values are defined in @ref MagFilter.
    *
    */
   std::optional<int32_t> magFilter;
@@ -90,7 +90,7 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
   /**
    * @brief Minification filter.
    *
-   * Known values are defined in {@link MinFilter}.
+   * Known values are defined in @ref MinFilter.
    *
    */
   std::optional<int32_t> minFilter;
@@ -98,7 +98,7 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
   /**
    * @brief S (U) wrapping mode.
    *
-   * Known values are defined in {@link WrapS}.
+   * Known values are defined in @ref WrapS.
    *
    *
    * All valid values correspond to WebGL enums.
@@ -108,7 +108,7 @@ struct CESIUMGLTF_API Sampler final : public CesiumGltf::NamedObject {
   /**
    * @brief T (V) wrapping mode.
    *
-   * Known values are defined in {@link WrapT}.
+   * Known values are defined in @ref WrapT.
    *
    */
   int32_t wrapT = WrapT::REPEAT;

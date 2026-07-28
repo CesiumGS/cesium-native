@@ -652,9 +652,9 @@ function resolveEnum(
   );
   const enumBriefDoc =
     propertyDefaultValues.briefDoc +
-    "\n * \n * Known values are defined in {@link " +
+    "\n * \n * Known values are defined in @ref " +
     enumName +
-    "}.\n *";
+    ".\n *";
   const result = {
     ...propertyDefaultValues,
     localTypes: [

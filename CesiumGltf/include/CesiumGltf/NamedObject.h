@@ -9,7 +9,7 @@ namespace CesiumGltf {
 /**
  * @brief The base class for objects in a glTF that have a name.
  *
- * A named object is also an {@link CesiumUtility::ExtensibleObject}.
+ * A named object is also an @ref CesiumUtility::ExtensibleObject.
  */
 struct CESIUMGLTF_API NamedObject : public CesiumUtility::ExtensibleObject {
   /**

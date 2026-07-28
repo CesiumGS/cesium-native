@@ -12,7 +12,7 @@ namespace CesiumRasterOverlays {
 /**
  * @brief Styles of Bing Maps overlays.
  *
- * Constants that can be passed to a {@link BingMapsRasterOverlay} to
+ * Constants that can be passed to a @ref BingMapsRasterOverlay to
  * indicate the overlays that should be painted.
  */
 struct BingMapsStyle final {
@@ -74,7 +74,7 @@ struct BingMapsStyle final {
 };
 
 /**
- * @brief A {@link RasterOverlay} that uses Bing Maps as the source for the
+ * @brief A @ref RasterOverlay that uses Bing Maps as the source for the
  * imagery data.
  */
 class CESIUMRASTEROVERLAYS_API BingMapsRasterOverlay final
@@ -88,13 +88,13 @@ public:
    * @param key The Bing Maps key for your application, which can be created at
    * https://www.bingmapsportal.com/.
    * @param mapStyle The type of Bing Maps imagery to load. A value from
-   * {@link BingMapsStyle}, with {@link BingMapsStyle::AERIAL} being the
+   * @ref BingMapsStyle, with @ref BingMapsStyle::AERIAL being the
    * default.
    * @param culture The culture to use when requesting Bing Maps imagery. Not
    * all cultures are supported. See
    * http://msdn.microsoft.com/en-us/library/hh441729.aspx for information on
    * the supported cultures.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   BingMapsRasterOverlay(
       const std::string& name,

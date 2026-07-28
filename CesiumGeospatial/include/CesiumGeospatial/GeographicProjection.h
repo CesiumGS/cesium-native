@@ -14,10 +14,10 @@ class Cartographic;
 
 /**
  * @brief A map projection where longitude and latitude are mapped using an
- * {@link Ellipsoid}.
+ * @ref Ellipsoid.
  *
  * The longitude and latitude are linearly mapped to X and Y by multiplying them
- * (in radians) by the {@link Ellipsoid::getMaximumRadius()}. This projection is
+ * (in radians) by the @ref Ellipsoid::getMaximumRadius(). This projection is
  * commonly known as geographic, equirectangular, equidistant cylindrical, or
  * plate carrée. It is also known as EPSG:4326.
  *
@@ -40,8 +40,8 @@ public:
    * @brief Computes the maximum rectangle that can be covered with this
    * projection
    *
-   * @param ellipsoid The {@link Ellipsoid}. Default value:
-   * {@link Ellipsoid::WGS84}.
+   * @param ellipsoid The @ref Ellipsoid. Default value:
+   * @ref Ellipsoid::WGS84.
    * @return The rectangle
    */
   static constexpr CesiumGeometry::Rectangle computeMaximumProjectedRectangle(
@@ -60,13 +60,13 @@ public:
   /**
    * @brief Constructs a new instance.
    *
-   * @param ellipsoid The {@link Ellipsoid}.
+   * @param ellipsoid The @ref Ellipsoid.
    */
   GeographicProjection(
       const Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
-   * @brief Gets the {@link Ellipsoid}.
+   * @brief Gets the @ref Ellipsoid.
    */
   const Ellipsoid& getEllipsoid() const noexcept { return this->_ellipsoid; }
 
@@ -97,7 +97,7 @@ public:
    * @brief Converts geographic coordinates to geodetic ellipsoid coordinates.
    *
    * Converts geographic X and Y coordinates, expressed in meters, to a
-   * {@link Cartographic} containing geodetic ellipsoid coordinates.
+   * @ref Cartographic containing geodetic ellipsoid coordinates.
    * The height is set to 0.0.
    *
    * @param projectedCoordinates The geographic projected coordinates to
@@ -110,7 +110,7 @@ public:
    * @brief Converts geographic coordinates to geodetic ellipsoid coordinates.
    *
    * Converts geographic X, Y coordinates, expressed in meters, to a
-   * {@link Cartographic} containing geodetic ellipsoid coordinates.
+   * @ref Cartographic containing geodetic ellipsoid coordinates.
    * The Z coordinate is copied unmodified to the height.
    *
    * @param projectedCoordinates The geographic projected coordinates to

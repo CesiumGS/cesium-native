@@ -50,7 +50,7 @@ struct TextureViewOptions {
 /**
  * @brief Indicates the status of a texture view.
  *
- * The {@link TextureView} constructor always completes
+ * The @ref TextureView constructor always completes
  * successfully. However it may not always reflect the actual content of the
  * corresponding texture. This enumeration provides the reason.
  */
@@ -103,7 +103,7 @@ public:
   TextureView() noexcept;
 
   /**
-   * @brief Constructs a view of the texture specified by the given {@link TextureInfo}.
+   * @brief Constructs a view of the texture specified by the given @ref TextureInfo.
    *
    * @param model The glTF model in which to look for the texture's data.
    * @param textureInfo The texture info to create a view for.

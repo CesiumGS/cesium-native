@@ -108,7 +108,7 @@ public:
    * located.
    *
    * @param plane The plane to test against.
-   * @return The {@link CullingResult}:
+   * @return The @ref CullingResult:
    *  * `Inside` if the entire cylinder is on the side of the plane the normal
    * is pointing.
    *  * `Outside` if the entire cylinder is on the opposite side.

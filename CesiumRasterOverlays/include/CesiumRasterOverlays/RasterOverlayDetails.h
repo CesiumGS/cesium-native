@@ -9,7 +9,7 @@
 
 namespace CesiumRasterOverlays {
 /**
- * @brief Holds details of the {@link Cesium3DTilesSelection::TileRenderContent} that are useful
+ * @brief Holds details of the @ref Cesium3DTilesSelection::TileRenderContent that are useful
  * for raster overlays.
  */
 struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
@@ -26,7 +26,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
    * @param rasterOverlayProjections The raster overlay projections for which
    * texture coordinates have been generated.
    * @param rasterOverlayRectangles The rectangle covered by this tile in each
-   * of the {@link rasterOverlayProjections}.
+   * of the @ref rasterOverlayProjections.
    * @param boundingRegion The precise bounding region of this tile.
    */
   RasterOverlayDetails(
@@ -36,11 +36,11 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
 
   /**
    * @brief Finds the rectangle corresponding to a given projection in
-   * {@link rasterOverlayProjections}.
+   * @ref rasterOverlayProjections.
    *
    * @param projection The projection.
    * @return The tile's rectangle in the given projection, or nullptr if the
-   * projection is not in {@link rasterOverlayProjections}.
+   * projection is not in @ref rasterOverlayProjections.
    */
   const CesiumGeometry::Rectangle* findRectangleForOverlayProjection(
       const CesiumGeospatial::Projection& projection) const;
@@ -51,7 +51,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
    *
    * @param other The other instance of RasterOverlayDetails that will be merged
    * with this.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
    */
   void merge(
       const RasterOverlayDetails& other,
@@ -69,7 +69,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
 
   /**
    * @brief The rectangle covered by this tile in each of the
-   * {@link rasterOverlayProjections}.
+   * @ref rasterOverlayProjections.
    */
   std::vector<CesiumGeometry::Rectangle> rasterOverlayRectangles;
 

@@ -14,7 +14,7 @@ class AsyncSystem;
 
 /**
  * @brief A description of an asset that can be loaded from the network using an
- * {@link IAssetAccessor}. This includes a URL and any headers to be included
+ * @ref IAssetAccessor. This includes a URL and any headers to be included
  * in the request.
  */
 struct NetworkAssetDescriptor {

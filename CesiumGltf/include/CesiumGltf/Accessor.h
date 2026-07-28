@@ -17,7 +17,7 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    * `CesiumGltf::Accessor::Type::VEC4` has 4 components.
    *
    * @param type The accessor type.
-   * @return The number of components. Returns 0 if {@link Accessor::type} is
+   * @return The number of components. Returns 0 if @ref Accessor::type is
    * not a valid enumeration value.
    */
   static int8_t computeNumberOfComponents(const std::string& type) noexcept;
@@ -30,7 +30,7 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    *
    * @param componentType The accessor component type.
    * @return The number of bytes for the component type. Returns 0 if
-   * {@link Accessor::componentType} is not a valid enumeration value.
+   * @ref Accessor::componentType is not a valid enumeration value.
    */
   static int8_t computeByteSizeOfComponent(int32_t componentType) noexcept;
 
@@ -39,25 +39,25 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
   /**
    * @brief Computes the number of components for this accessor.
    *
-   * For example if this accessor's {@link Accessor::type} is
+   * For example if this accessor's @ref Accessor::type is
    * `CesiumGltf::Accessor::Type::SCALAR`, then it has 1 component, while if
    * it's `CesiumGltf::Accessor::Type::VEC4` it has 4 components.
    *
    * @return The number of components in this accessor. Returns 0 if this
-   * accessor's {@link Accessor::type} does not have a valid enumeration value.
+   * accessor's @ref Accessor::type does not have a valid enumeration value.
    */
   int8_t computeNumberOfComponents() const noexcept;
 
   /**
    * @brief Computes the number of bytes for this accessor's component type.
    *
-   * For example if this accessor's {@link Accessor::componentType} is
+   * For example if this accessor's @ref Accessor::componentType is
    * `CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT`, then the component
    * type is 2 bytes, while if it's `CesiumGltf::Accessor::ComponentType::FLOAT`
    * then it is 4 bytes.
    *
    * @return The number of bytes for this accessor's component type. Returns 0
-   * if this accessor's {@link Accessor::componentType} does not have a valid
+   * if this accessor's @ref Accessor::componentType does not have a valid
    * enumeration value.
    */
   int8_t computeByteSizeOfComponent() const noexcept;
@@ -66,12 +66,12 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    * @brief Computes the total number of bytes for this accessor in each vertex.
    *
    * This is computed by multiplying
-   * {@link Accessor::computeByteSizeOfComponent} by
-   * {@link Accessor::computeNumberOfComponents}.
+   * @ref Accessor::computeByteSizeOfComponent by
+   * @ref Accessor::computeNumberOfComponents.
    *
    * @return The total number of bytes for this accessor in each vertex. Returns
-   * 0 if this accessor's {@link Accessor::type} or
-   * {@link Accessor::componentType} does not have a valid enumeration
+   * 0 if this accessor's @ref Accessor::type or
+   * @ref Accessor::componentType does not have a valid enumeration
    * value.
    */
   int64_t computeBytesPerVertex() const noexcept;
@@ -81,16 +81,16 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
    *
    * The stride is the number of bytes between the same elements of successive
    * vertices. The returned value will be at least as large as
-   * {@link Accessor::computeBytesPerVertex}, but maybe be larger if this
+   * @ref Accessor::computeBytesPerVertex, but maybe be larger if this
    * accessor's data is interleaved with other accessors.
    *
    * The behavior is undefined if this accessor is not part of the given model.
    *
    * @param model The model that this accessor is a part of.
    * @return The stride in bytes. Returns 0 if this accessor's
-   * {@link Accessor::type} or {@link Accessor::componentType} does not have
-   * a valid enumeration value, or if {@link Accessor::bufferView} does not
-   * refer to a valid {@link BufferView}.
+   * @ref Accessor::type or @ref Accessor::componentType does not have
+   * a valid enumeration value, or if @ref Accessor::bufferView does not
+   * refer to a valid @ref BufferView.
    */
   int64_t computeByteStride(const CesiumGltf::Model& model) const noexcept;
 };

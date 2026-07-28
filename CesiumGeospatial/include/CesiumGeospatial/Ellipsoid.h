@@ -96,7 +96,7 @@ public:
    * @brief Computes the normal of the plane tangent to the surface of the
    * ellipsoid at the provided position.
    *
-   * @param cartographic The {@link Cartographic} position for which to to
+   * @param cartographic The @ref Cartographic position for which to to
    * determine the surface normal.
    * @return The normal.
    */
@@ -104,24 +104,24 @@ public:
   geodeticSurfaceNormal(const Cartographic& cartographic) const noexcept;
 
   /**
-   * @brief Converts the provided {@link Cartographic} to cartesian
+   * @brief Converts the provided @ref Cartographic to cartesian
    * representation.
    *
-   * @param cartographic The {@link Cartographic} position.
+   * @param cartographic The @ref Cartographic position.
    * @return The cartesian representation.
    */
   glm::dvec3
   cartographicToCartesian(const Cartographic& cartographic) const noexcept;
 
   /**
-   * @brief Converts the provided cartesian to a {@link Cartographic}
+   * @brief Converts the provided cartesian to a @ref Cartographic
    * representation.
    *
    * The result will be the empty optional if the given cartesian is at the
    * center of this ellipsoid.
    *
    * @param cartesian The cartesian position.
-   * @return The {@link Cartographic} representation, or the empty optional if
+   * @return The @ref Cartographic representation, or the empty optional if
    * the cartesian is at the center of this ellipsoid.
    */
   std::optional<Cartographic>

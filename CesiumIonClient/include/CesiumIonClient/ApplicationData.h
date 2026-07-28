@@ -17,7 +17,7 @@ enum AuthenticationMode {
    * Authentication using OAuth with Cesium ion Self-Hosted.
    * On the server, this uses the Security Assertion Markup Language (SAML) to
    * communicate with another authentication server.
-   * From our perspective, we can treat this the same as {@link AuthenticationMode::CesiumIon}.
+   * From our perspective, we can treat this the same as @ref AuthenticationMode::CesiumIon.
    */
   Saml,
   /**

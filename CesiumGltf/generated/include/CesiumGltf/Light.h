@@ -75,7 +75,7 @@ struct CESIUMGLTF_API Light final : public CesiumGltf::NamedObject {
   /**
    * @brief Specifies the light type.
    *
-   * Known values are defined in {@link Type}.
+   * Known values are defined in @ref Type.
    *
    */
   std::string type = Type::directional;

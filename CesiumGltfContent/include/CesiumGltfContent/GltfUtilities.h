@@ -102,13 +102,13 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    * value than west.
    *
    * If the glTF contains no geometry, the returned region's rectangle
-   * will be {@link CesiumGeospatial::GlobeRectangle::EMPTY}, its minimum height will be 1.0, and
+   * will be @ref CesiumGeospatial::GlobeRectangle::EMPTY, its minimum height will be 1.0, and
    * its maximum height will be -1.0 (the minimum will be greater than the
    * maximum).
    *
    * @param gltf The model.
    * @param transform The transform from model coordinates to ECEF coordinates.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
    * @return The computed bounding region.
    */
   static CesiumGeospatial::BoundingRegion computeBoundingRegion(
@@ -151,8 +151,8 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   static void collapseToSingleBuffer(CesiumGltf::Model& gltf);
 
   /**
-   * @brief Copies the content of one {@link CesiumGltf::Buffer} to the end of another,
-   * updates all {@link CesiumGltf::BufferView} instances to refer to the destination
+   * @brief Copies the content of one @ref CesiumGltf::Buffer to the end of another,
+   * updates all @ref CesiumGltf::BufferView instances to refer to the destination
    * buffer, and clears the contents of the original buffer.
    *
    * The source buffer is not removed, but it has a `byteLength` of zero after

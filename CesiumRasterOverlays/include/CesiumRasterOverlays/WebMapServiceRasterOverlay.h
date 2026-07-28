@@ -64,7 +64,7 @@ struct WebMapServiceRasterOverlayOptions {
 };
 
 /**
- * @brief A {@link RasterOverlay} accessing images from a Web Map Service (WMS) server.
+ * @brief A @ref RasterOverlay accessing images from a Web Map Service (WMS) server.
  */
 class CESIUMRASTEROVERLAYS_API WebMapServiceRasterOverlay final
     : public RasterOverlay {
@@ -76,8 +76,8 @@ public:
    * @param url The base URL.
    * @param headers The headers. This is a list of pairs of strings of the
    * form (Key,Value) that will be inserted as request headers internally.
-   * @param wmsOptions The {@link WebMapServiceRasterOverlayOptions}.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param wmsOptions The @ref WebMapServiceRasterOverlayOptions.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   WebMapServiceRasterOverlay(
       const std::string& name,

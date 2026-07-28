@@ -14,7 +14,7 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
   Tileset() = default;
 
   /**
-   * @brief A callback function for {@link forEachTile}.
+   * @brief A callback function for @ref forEachTile.
    *
    * @param tileset The tileset.
    * @param tile The tile.
@@ -50,7 +50,7 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
   void forEachTile(std::function<ForEachTileConstCallback>&& callback) const;
 
   /**
-   * @brief A callback function for {@link forEachContent}.
+   * @brief A callback function for @ref forEachContent.
    *
    * @param tileset The tileset.
    * @param tile The tile.
@@ -90,7 +90,7 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
   forEachContent(std::function<ForEachContentConstCallback>&& callback) const;
 
   /**
-   * @brief Adds an extension to the {@link TilesetSpec::extensionsUsed}
+   * @brief Adds an extension to the @ref TilesetSpec::extensionsUsed
    * property, if it is not already present.
    *
    * @param extensionName The name of the used extension.
@@ -98,7 +98,7 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
   void addExtensionUsed(const std::string& extensionName);
 
   /**
-   * @brief Adds an extension to the {@link TilesetSpec::extensionsRequired}
+   * @brief Adds an extension to the @ref TilesetSpec::extensionsRequired
    * property, if it is not already present.
    *
    * Calling this function also adds the extension to `extensionsUsed`, if it's
@@ -109,7 +109,7 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
   void addExtensionRequired(const std::string& extensionName);
 
   /**
-   * @brief Removes an extension from the {@link TilesetSpec::extensionsUsed}
+   * @brief Removes an extension from the @ref TilesetSpec::extensionsUsed
    * property.
    *
    * @param extensionName The name of the used extension.
@@ -117,7 +117,7 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
   void removeExtensionUsed(const std::string& extensionName);
 
   /**
-   * @brief Removes an extension from the {@link TilesetSpec::extensionsRequired}
+   * @brief Removes an extension from the @ref TilesetSpec::extensionsRequired
    * property.
    *
    * Calling this function also removes the extension from `extensionsUsed`.
@@ -128,7 +128,7 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
 
   /**
    * @brief Determines whether a given extension name is listed in the tileset's
-   * {@link TilesetSpec::extensionsUsed} property.
+   * @ref TilesetSpec::extensionsUsed property.
    *
    * @param extensionName The extension name to check.
    * @returns True if the extension is found in `extensionsUsed`; otherwise,
@@ -138,7 +138,7 @@ struct CESIUM3DTILES_API Tileset : public TilesetSpec {
 
   /**
    * @brief Determines whether a given extension name is listed in the tileset's
-   * {@link TilesetSpec::extensionsRequired} property.
+   * @ref TilesetSpec::extensionsRequired property.
    *
    * @param extensionName The extension name to check.
    * @returns True if the extension is found in `extensionsRequired`; otherwise,

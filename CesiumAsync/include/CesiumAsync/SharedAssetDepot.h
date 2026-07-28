@@ -39,10 +39,10 @@ struct SharedAssetContext {
 };
 
 /**
- * @brief A depot for {@link CesiumUtility::SharedAsset} instances, which are potentially shared between multiple objects.
+ * @brief A depot for @ref CesiumUtility::SharedAsset instances, which are potentially shared between multiple objects.
  *
  * @tparam TAssetType The type of asset stored in this depot. This should
- * be derived from {@link CesiumUtility::SharedAsset}.
+ * be derived from @ref CesiumUtility::SharedAsset.
  * @tparam TAssetKey The key type used to uniquely identify assets in this
  * depot.
  * @tparam TContext The type of context passed to the factory function when
@@ -116,7 +116,7 @@ public:
 
   /**
    * @brief Invalidates the previously-cached asset with the given key, so that
-   * the next call to {@link getOrCreate} will create the asset instead of
+   * the next call to @ref getOrCreate will create the asset instead of
    * returning the existing one.
    *
    * Anyone already using the existing asset may continue to do so.
@@ -132,7 +132,7 @@ public:
 
   /**
    * @brief Invalidates the previously-cached asset, so that the next call to
-   * {@link getOrCreate} will create the asset instead of returning the existing
+   * @ref getOrCreate will create the asset instead of returning the existing
    * one.
    *
    * Anyone already using the existing asset may continue to do so.
@@ -187,7 +187,7 @@ private:
 
   /**
    * @brief Marks the given asset as a candidate for deletion.
-   * Should only be called by {@link SharedAsset}. May be called from any thread.
+   * Should only be called by @ref SharedAsset. May be called from any thread.
    *
    * @param asset The asset to mark for deletion.
    * @param threadOwnsDepotLock True if the calling thread already owns the
@@ -200,7 +200,7 @@ private:
 
   /**
    * @brief Unmarks the given asset as a candidate for deletion.
-   * Should only be called by {@link SharedAsset}. May be called from any thread.
+   * Should only be called by @ref SharedAsset. May be called from any thread.
    *
    * @param asset The asset to unmark for deletion.
    * @param threadOwnsDepotLock True if the calling thread already owns the

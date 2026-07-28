@@ -9,10 +9,10 @@ class TilesetContentManager;
 
 /**
  * @brief The base class for something that requests loading of specific tiles
- * from a 3D Tiles {@link Tileset}.
+ * from a 3D Tiles @ref Tileset.
  *
  * When multiple requesters are registered, each is given a fair chance to load
- * tiles in proportion with its {@link TileLoadRequester::getWeight}.
+ * tiles in proportion with its @ref TileLoadRequester::getWeight.
  *
  * Methods of this class may only be called from the main thread.
  *
@@ -40,9 +40,9 @@ public:
 
   /**
    * @brief Determines if this requester has any more tiles that need to be
-   * loaded in a worker thread. To determine if a particular {@link Tile} needs
+   * loaded in a worker thread. To determine if a particular @ref Tile needs
    * to be loaded in a worker thread, call
-   * {@link Tile::needsWorkerThreadLoading}.
+   * @ref Tile::needsWorkerThreadLoading.
    *
    * @return true if this requester has further tiles that need loading by a
    * worker thread; otherwise, false.
@@ -50,10 +50,10 @@ public:
   virtual bool hasMoreTilesToLoadInWorkerThread() const = 0;
 
   /**
-   * @brief Gets the next {@link Tile} that this requester would like loaded in
+   * @brief Gets the next @ref Tile that this requester would like loaded in
    * a worker thread.
    *
-   * When {@link hasMoreTilesToLoadInWorkerThread} returns false, this method
+   * When @ref hasMoreTilesToLoadInWorkerThread returns false, this method
    * can and should return `nullptr`. However, when that method returns true,
    * this method _must_ return a valid `Tile` pointer.
    *
@@ -68,9 +68,9 @@ public:
 
   /**
    * @brief Determines if this requester has any more tiles that need to be
-   * loaded in the main thread. To determine if a particular {@link Tile} needs
+   * loaded in the main thread. To determine if a particular @ref Tile needs
    * to be loaded in the main thread, call
-   * {@link Tile::needsMainThreadLoading}.
+   * @ref Tile::needsMainThreadLoading.
    *
    * @return true if this requester has further tiles that need loading by the
    * main thread; otherwise, false.
@@ -78,10 +78,10 @@ public:
   virtual bool hasMoreTilesToLoadInMainThread() const = 0;
 
   /**
-   * @brief Gets the next {@link Tile} that this requester would like loaded in
+   * @brief Gets the next @ref Tile that this requester would like loaded in
    * the main thread.
    *
-   * When {@link hasMoreTilesToLoadInMainThread} returns false, this method
+   * When @ref hasMoreTilesToLoadInMainThread returns false, this method
    * can and should return `nullptr`. However, when that method returns true,
    * this method _must_ return a valid `Tile` pointer.
    *
@@ -102,13 +102,13 @@ public:
    * If this instance is not currently registered, this method does nothing.
    *
    * To register an instance with a `Tileset`, call
-   * {@link Tileset::registerLoadRequester} on the tileset.
+   * @ref Tileset::registerLoadRequester on the tileset.
    */
   void unregister() noexcept;
 
   /**
    * @brief Determines if this requester is currently registered with a
-   * {@link Tileset}.
+   * @ref Tileset.
    */
   bool isRegistered() const noexcept;
 
@@ -122,7 +122,7 @@ protected:
    * @brief Constructs a new instance as a copy of an existing one.
    *
    * The copy will not be registered with any
-   * {@link Cesium3DTilesSelection::Tileset}, even if the existing instance was.
+   * @ref Cesium3DTilesSelection::Tileset, even if the existing instance was.
    *
    * @param rhs The existing instance to copy.
    */
@@ -132,7 +132,7 @@ protected:
    * @brief Moves an existing instance into a new one.
    *
    * The newly-constructed instance will be registered with the same
-   * {@link Cesium3DTilesSelection::Tileset} as the `rhs`. After the
+   * @ref Cesium3DTilesSelection::Tileset as the `rhs`. After the
    * constructor returns, the `rhs` will no longer be registered.
    *
    * @param rhs The existing instance to move into this one.

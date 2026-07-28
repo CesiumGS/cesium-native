@@ -38,8 +38,8 @@ public:
    * This will become the owner of this instance if another owner is not
    * specified in \ref CreateRasterOverlayTileProviderParameters::pOwner.
    * @param parameters The parameters for creating the tile provider.
-   * @param projection The {@link CesiumGeospatial::Projection}.
-   * @param tilingScheme The tiling scheme to be used by this {@link QuadtreeRasterOverlayTileProvider}.
+   * @param projection The @ref CesiumGeospatial::Projection.
+   * @param tilingScheme The tiling scheme to be used by this @ref QuadtreeRasterOverlayTileProvider.
    * @param coverageRectangle The rectangle that bounds all the area covered by
    * this overlay, expressed in projected coordinates.
    * @param minimumLevel The minimum quadtree tile level.
@@ -79,7 +79,7 @@ public:
   uint32_t getHeight() const noexcept { return this->_imageHeight; }
 
   /**
-   * @brief Returns the {@link CesiumGeometry::QuadtreeTilingScheme} of this
+   * @brief Returns the @ref CesiumGeometry::QuadtreeTilingScheme of this
    * instance.
    */
   const CesiumGeometry::QuadtreeTilingScheme& getTilingScheme() const noexcept {

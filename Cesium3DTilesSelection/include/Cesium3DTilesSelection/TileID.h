@@ -10,9 +10,9 @@
 namespace Cesium3DTilesSelection {
 
 /**
- * @brief An identifier for a {@link Tile} inside the tile hierarchy.
+ * @brief An identifier for a @ref Tile inside the tile hierarchy.
  *
- * This ID is stored in the tile as the {@link Tile::getTileID}.
+ * This ID is stored in the tile as the @ref Tile::getTileID.
  * It is assigned to the tile at construction time, and may be
  * used to identify and access the children of a given tile.
  *
@@ -21,13 +21,13 @@ namespace Cesium3DTilesSelection {
  *
  * * A `std::string`: This is an explicitly-described tile and
  *   the ID is the URL of the tile's content.
- * * A {@link CesiumGeometry::QuadtreeTileID}: This is an implicit
+ * * A @ref CesiumGeometry::QuadtreeTileID: This is an implicit
  *   tile in the quadtree. The URL of the tile's content is formed
  *   by instantiating the context's template URL with this ID.
- * * A {@link CesiumGeometry::OctreeTileID}: This is an implicit
+ * * A @ref CesiumGeometry::OctreeTileID: This is an implicit
  *   tile in the octree. The URL of the tile's content is formed
  *   by instantiating the context's template URL with this ID.
- * * A {@link CesiumGeometry::UpsampledQuadtreeNode}: This tile doesn't
+ * * A @ref CesiumGeometry::UpsampledQuadtreeNode: This tile doesn't
  *   have any content, but content for it can be created by subdividing
  *   the parent tile's content.
  */
@@ -39,12 +39,12 @@ typedef std::variant<
     TileID;
 
 /**
- * @brief Utility functions related to {@link TileID} objects.
+ * @brief Utility functions related to @ref TileID objects.
  */
 struct CESIUM3DTILESSELECTION_API TileIdUtilities {
   /**
-   * @brief Creates an unspecified string representation of the given {@link
-   * TileID}.
+   * @brief Creates an unspecified string representation of the given @ref
+   * TileID.
    *
    * The returned string will contain information about the given tile ID,
    * depending on its type. The exact format and contents of this string

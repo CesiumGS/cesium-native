@@ -23,19 +23,19 @@ class IPrepareRendererResources;
 class GltfModifier;
 
 /**
- * @brief External interfaces used by a {@link Tileset}.
+ * @brief External interfaces used by a @ref Tileset.
  *
  * Not supposed to be used by clients.
  */
 class CESIUM3DTILESSELECTION_API TilesetExternals final {
 public:
   /**
-   * @brief An external {@link CesiumAsync::IAssetAccessor}.
+   * @brief An external @ref CesiumAsync::IAssetAccessor.
    */
   std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor;
 
   /**
-   * @brief An external {@link IPrepareRendererResources}.
+   * @brief An external @ref IPrepareRendererResources.
    */
   std::shared_ptr<IPrepareRendererResources> pPrepareRendererResources;
 
@@ -43,13 +43,13 @@ public:
    * @brief The async system to use to do work in threads.
    *
    * The tileset will automatically call
-   * {@link CesiumAsync::AsyncSystem::dispatchMainThreadTasks} from
-   * {@link Tileset::updateView}.
+   * @ref CesiumAsync::AsyncSystem::dispatchMainThreadTasks from
+   * @ref Tileset::updateView.
    */
   CesiumAsync::AsyncSystem asyncSystem;
 
   /**
-   * @brief An external {@link CesiumUtility::CreditSystem} that can be used to manage credit
+   * @brief An external @ref CesiumUtility::CreditSystem that can be used to manage credit
    * strings and periodically query which credits to show and and which to
    * remove from the screen.
    */

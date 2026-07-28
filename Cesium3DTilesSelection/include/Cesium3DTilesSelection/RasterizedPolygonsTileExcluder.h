@@ -11,8 +11,8 @@ class RasterizedPolygonsOverlay;
 namespace Cesium3DTilesSelection {
 
 /**
- * @brief When provided to {@link TilesetOptions::excluders}, uses the polygons
- * owned by a {@link CesiumRasterOverlays::RasterizedPolygonsOverlay} to exclude tiles that are
+ * @brief When provided to @ref TilesetOptions::excluders, uses the polygons
+ * owned by a @ref CesiumRasterOverlays::RasterizedPolygonsOverlay to exclude tiles that are
  * entirely inside any of the polygon from loading. This is useful when the
  * polygons will be used for clipping.
  */

@@ -46,7 +46,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
    * @brief The maximum number of bytes to use to cache sub-tiles in memory.
    *
    * This is used by provider types, such as
-   * {@link QuadtreeRasterOverlayTileProvider}, that have an underlying tiling
+   * @ref QuadtreeRasterOverlayTileProvider, that have an underlying tiling
    * scheme that may not align with the tiling scheme of the geometry tiles on
    * which the raster overlay tiles are draped. Because a single sub-tile may
    * overlap multiple geometry tiles, it is useful to cache loaded sub-tiles
@@ -61,7 +61,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
    *
    * Images created by this overlay will be no more than this number of pixels
    * in either direction. This may result in reduced raster overlay detail in
-   * some cases. For example, in a {@link QuadtreeRasterOverlayTileProvider},
+   * some cases. For example, in a @ref QuadtreeRasterOverlayTileProvider,
    * this property will limit the number of quadtree tiles that may be mapped to
    * a given geometry tile. The selected quadtree level for a geometry tile is
    * reduced in order to stay under this limit.
@@ -91,7 +91,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
    * Raster overlay resources include a Cesium ion asset endpoint or any
    * resources required for raster overlay metadata.
    *
-   * This callback is invoked by the {@link Cesium3DTilesSelection::RasterOverlayCollection} when an
+   * This callback is invoked by the @ref Cesium3DTilesSelection::RasterOverlayCollection when an
    * error occurs while it is creating a tile provider for this RasterOverlay.
    * It is always invoked in the main thread.
    */
@@ -103,7 +103,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
   bool showCreditsOnScreen = false;
 
   /**
-   * @brief Arbitrary data that will be passed to {@link Cesium3DTilesSelection::IPrepareRendererResources::prepareRasterInLoadThread},
+   * @brief Arbitrary data that will be passed to @ref Cesium3DTilesSelection::IPrepareRendererResources::prepareRasterInLoadThread,
    * for example, data to control the per-raster overlay client-specific texture
    * properties.
    *
@@ -120,14 +120,14 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
 
 /**
  * @brief The base class for a rasterized image that can be draped
- * over a {@link Cesium3DTilesSelection::Tileset}. The image may be very, very high resolution, so only
+ * over a @ref Cesium3DTilesSelection::Tileset. The image may be very, very high resolution, so only
  * small pieces of it are mapped to the Tileset at a time.
  *
- * Instances of this class can be added to the {@link Cesium3DTilesSelection::RasterOverlayCollection}
- * that is returned by {@link Cesium3DTilesSelection::Tileset::getOverlays}.
+ * Instances of this class can be added to the @ref Cesium3DTilesSelection::RasterOverlayCollection
+ * that is returned by @ref Cesium3DTilesSelection::Tileset::getOverlays.
  *
  * Instances of this class must be allocated on the heap, and their lifetimes
- * must be managed with {@link CesiumUtility::IntrusivePointer}.
+ * must be managed with @ref CesiumUtility::IntrusivePointer.
  *
  * @see BingMapsRasterOverlay
  * @see IonRasterOverlay
@@ -141,7 +141,7 @@ public:
    * @brief Creates a new instance.
    *
    * @param name The user-given name of this overlay layer.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   RasterOverlay(
       const std::string& name,
@@ -155,7 +155,7 @@ public:
    *
    * @param asyncSystem The AsyncSystem to use for the returned SharedFuture,
    * if required. If this method is called multiple times, all invocations
-   * must pass {@link CesiumAsync::AsyncSystem} instances that compare equal to each other.
+   * must pass @ref CesiumAsync::AsyncSystem instances that compare equal to each other.
    */
   CesiumAsync::SharedFuture<void>&
   getAsyncDestructionCompleteEvent(const CesiumAsync::AsyncSystem& asyncSystem);
@@ -194,10 +194,10 @@ public:
 
   /**
    * @brief Create a placeholder tile provider can be used in place of the real
-   * one while {@link createTileProvider} completes asynchronously.
+   * one while @ref createTileProvider completes asynchronously.
    *
    * @param externals The external interfaces for use by the raster overlay.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
    * @return The placeholder.
    */
   CesiumUtility::IntrusivePointer<RasterOverlayTileProvider> createPlaceholder(

@@ -10,53 +10,53 @@
 namespace Cesium3DTiles {
 
 /**
- * @brief Holds the details of a found property in a {@link MetadataEntity}.
+ * @brief Holds the details of a found property in a @ref MetadataEntity.
  *
- * Because this structure holds _references_ to the original {@link Schema} and
- * {@link MetadataEntity} instances, it will be invalided if either are
+ * Because this structure holds _references_ to the original @ref Schema and
+ * @ref MetadataEntity instances, it will be invalided if either are
  * destroyed or modified. Continuing to access this result in that scenario will
  * result in undefined behavior.
  */
 struct CESIUM3DTILES_API FoundMetadataProperty {
   /**
    * @brief A reference to the identifier of the class that contains the found
-   * property within the {@link Schema}.
+   * property within the @ref Schema.
    */
   const std::string& classIdentifier;
 
   /**
-   * @brief A reference to the {@link Class} that contains the found property
-   * within the {@link Schema}.
+   * @brief A reference to the @ref Class that contains the found property
+   * within the @ref Schema.
    */
   const Class& classDefinition;
 
   /**
    * @brief A reference to the identifier of the found property within the
-   * {@link Schema}.
+   * @ref Schema.
    */
   const std::string& propertyIdentifier;
 
   /**
-   * @brief A reference to the {@link ClassProperty} describing the found
-   * property within the {@link Schema}.
+   * @brief A reference to the @ref ClassProperty describing the found
+   * property within the @ref Schema.
    */
   const ClassProperty& propertyDefinition;
 
   /**
    * @brief A reference to the value of the found property within the
-   * {@link MetadataEntity}.
+   * @ref MetadataEntity.
    */
   const CesiumUtility::JsonValue& propertyValue;
 };
 
 /**
- * @brief Convenience functions for querying {@link MetadataEntity} instances.
+ * @brief Convenience functions for querying @ref MetadataEntity instances.
  */
 class CESIUM3DTILES_API MetadataQuery {
 public:
   /**
    * @brief Gets the first property with a given
-   * {@link ClassProperty::semantic}.
+   * @ref ClassProperty::semantic.
    *
    * @param schema The schema to use to look up semantics.
    * @param entity The metadata entity to search for a property with the

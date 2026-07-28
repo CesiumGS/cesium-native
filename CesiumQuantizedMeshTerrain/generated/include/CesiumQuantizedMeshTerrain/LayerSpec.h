@@ -148,7 +148,7 @@ struct CESIUMQUANTIZEDMESHTERRAIN_API LayerSpec
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use {@link Layer} instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref Layer instead.
    */
   LayerSpec() = default;
   friend struct Layer;

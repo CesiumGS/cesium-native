@@ -16,13 +16,13 @@ namespace Cesium3DTilesContent {
 
 /**
  * @brief Provides functions for extracting bounding volumes types from the
- * vectors stored in {@link Cesium3DTiles::BoundingVolume}.
+ * vectors stored in @ref Cesium3DTiles::BoundingVolume.
  */
 class TileBoundingVolumes {
 public:
   /**
    * @brief Gets the bounding box defined in a
-   * {@link Cesium3DTiles::BoundingVolume}, if any.
+   * @ref Cesium3DTiles::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the box.
    * @return The box, or `std::nullopt` if the bounding volume does not
@@ -32,8 +32,8 @@ public:
   getOrientedBoundingBox(const Cesium3DTiles::BoundingVolume& boundingVolume);
 
   /**
-   * @brief Sets the `box` property in a {@link Cesium3DTiles::BoundingVolume}
-   * based on an {@link CesiumGeometry::OrientedBoundingBox}.
+   * @brief Sets the `box` property in a @ref Cesium3DTiles::BoundingVolume
+   * based on an @ref CesiumGeometry::OrientedBoundingBox.
    *
    * Other bounding volume types, if any, are not modified.
    *
@@ -46,7 +46,7 @@ public:
 
   /**
    * @brief Gets the bounding region defined in a
-   * {@link Cesium3DTiles::BoundingVolume}, if any.
+   * @ref Cesium3DTiles::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the region.
    * @param ellipsoid The ellipsoid on which the region should be defined.
@@ -58,8 +58,8 @@ public:
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
-   * @brief Sets the `region` property in a {@link Cesium3DTiles::BoundingVolume}
-   * based on a {@link CesiumGeospatial::BoundingRegion}.
+   * @brief Sets the `region` property in a @ref Cesium3DTiles::BoundingVolume
+   * based on a @ref CesiumGeospatial::BoundingRegion.
    *
    * Other bounding volume types, if any, are not modified.
    *
@@ -72,7 +72,7 @@ public:
 
   /**
    * @brief Gets the bounding sphere defined in a
-   * {@link Cesium3DTiles::BoundingVolume}, if any.
+   * @ref Cesium3DTiles::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the sphere.
    * @return The sphere, or `std::nullopt` if the bounding volume does not
@@ -82,8 +82,8 @@ public:
   getBoundingSphere(const Cesium3DTiles::BoundingVolume& boundingVolume);
 
   /**
-   * @brief Sets the `sphere` property in a {@link Cesium3DTiles::BoundingVolume}
-   * based on a {@link CesiumGeometry::BoundingSphere}.
+   * @brief Sets the `sphere` property in a @ref Cesium3DTiles::BoundingVolume
+   * based on a @ref CesiumGeometry::BoundingSphere.
    *
    * Other bounding volume types, if any, are not modified.
    *
@@ -97,7 +97,7 @@ public:
   /**
    * @brief Gets the S2 cell bounding volume defined in the
    * `3DTILES_bounding_volume_S2` extension of a
-   * {@link Cesium3DTiles::BoundingVolume}, if any.
+   * @ref Cesium3DTiles::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the S2 cell
    * bounding volume.
@@ -113,8 +113,8 @@ public:
 
   /**
    * @brief Adds the `3DTILES_bounding_volume_S2` extension to a
-   * {@link Cesium3DTiles::BoundingVolume} based on a
-   * {@link CesiumGeospatial::S2CellBoundingVolume}.
+   * @ref Cesium3DTiles::BoundingVolume based on a
+   * @ref CesiumGeospatial::S2CellBoundingVolume.
    *
    * Other bounding volume types, if any, are not modified.
    *

@@ -29,7 +29,7 @@ namespace CesiumIonClient {
 enum class SortOrder { Ascending, Descending };
 
 /**
- * @brief Options to be passed to {@link Connection::tokens}.
+ * @brief Options to be passed to @ref Connection::tokens.
  */
 struct ListTokensOptions {
   /**
@@ -37,7 +37,7 @@ struct ListTokensOptions {
    *
    * Receiving fewer tokens should not be interpreted as the end of the
    * collection. The end of the collection is reached when the response does not
-   * contain {@link Response::nextPageUrl}.
+   * contain @ref Response::nextPageUrl.
    */
   std::optional<int32_t> limit;
 
@@ -74,7 +74,7 @@ class CESIUMASYNC_API Connection {
 public:
   /**
    * @brief Authorizes access to Cesium ion on behalf of a user, and returns a
-   * {@link Connection} that can be used to interact with ion.
+   * @ref Connection that can be used to interact with ion.
    *
    * Uses the "Authorization Code with PKCE" OAuth2 flow.
    *
@@ -286,7 +286,7 @@ public:
    * tokens.
    *
    * Only a single page is returned. To obtain additional pages, use
-   * {@link Connection::nextPage} and {@link Connection::previousPage}.
+   * @ref Connection::nextPage and @ref Connection::previousPage.
    *
    * @param options Options to include in the "List tokens" request.
    * @return A future that resolves to a page of token information.
@@ -313,11 +313,11 @@ public:
   /**
    * @brief Gets the next page of results from the "List tokens" service.
    *
-   * To get the first page, use {@link Connection::tokens}.
+   * To get the first page, use @ref Connection::tokens.
    *
    * @param currentPage The current page from which to get the next page.
    * @return A future that resolves to the next page of tokens, or to a
-   * response with an {@link Response::errorCode} of "NoMorePages" if the
+   * response with an @ref Response::errorCode of "NoMorePages" if the
    * currentPage is the last one.
    */
   CesiumAsync::Future<Response<TokenList>>
@@ -326,11 +326,11 @@ public:
   /**
    * @brief Gets the previous page of results from the "List tokens" service.
    *
-   * To get the first page (or a particular page), use {@link Connection::tokens}.
+   * To get the first page (or a particular page), use @ref Connection::tokens.
    *
    * @param currentPage The current page from which to get the previous page.
    * @return A future that resolves to the previous page of tokens, or to a
-   * response with an {@link Response::errorCode} of "NoMorePages" if the
+   * response with an @ref Response::errorCode of "NoMorePages" if the
    * currentPage is the first one.
    */
   CesiumAsync::Future<Response<TokenList>>
@@ -381,7 +381,7 @@ public:
    * city name, or landmark) and obtain information about where it's located.
    *
    * @param provider The ion geocoding provider to use.
-   * @param type The type of request to make. See {@link GeocoderRequestType} for more information.
+   * @param type The type of request to make. See @ref GeocoderRequestType for more information.
    * @param query The query to make.
    */
   CesiumAsync::Future<Response<GeocoderResult>> geocode(

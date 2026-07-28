@@ -32,7 +32,7 @@ struct CESIUM3DTILESSELECTION_API FogDensityAtHeight {
 };
 
 /**
- * @brief Additional options for configuring a {@link Tileset}.
+ * @brief Additional options for configuring a @ref Tileset.
  */
 struct CESIUM3DTILESSELECTION_API TilesetOptions {
   /**
@@ -214,14 +214,14 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * @brief Whether to keep tiles loaded during a transition period when
    * switching to a different LOD tile.
    *
-   * For each tile, {@link TileRenderContent::getLodTransitionFadePercentage} will
+   * For each tile, @ref TileRenderContent::getLodTransitionFadePercentage will
    * indicate to the client how faded to render the tile throughout the
    * transition. Tile fades can be used to mask LOD transitions and make them
    * appear less abrupt and jarring.
    *
    * Because each tile currently has only one transition fade percentage, it is
    * recommended that this option be set to `false` when using multiple
-   * {@link TilesetViewGroup} instances.
+   * @ref TilesetViewGroup instances.
    */
   bool enableLodTransitionPeriod = false;
 
@@ -229,7 +229,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
    * @brief How long it should take to transition between tiles of different
    * LODs, in seconds.
    *
-   * This property is ignored if {@link enableLodTransitionPeriod} is false.
+   * This property is ignored if @ref enableLodTransitionPeriod is false.
    *
    * When a tile refines or unrefines to a higher or lower LOD tile, a fade
    * can optionally be applied to smooth the transition. This value determines
@@ -241,7 +241,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   /**
    * @brief Whether to kick descendants while a tile is still fading in.
    *
-   * This property is ignored if {@link enableLodTransitionPeriod} is false.
+   * This property is ignored if @ref enableLodTransitionPeriod is false.
    *
    * This does not delay loading of descendants, but it keeps them off the
    * render list while the tile is fading in. If this is false, the tile
@@ -253,7 +253,7 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   /**
    * @brief A soft limit on how long (in milliseconds) to spend on the
    * main-thread part of tile loading each frame (each call to
-   * {@link Tileset::loadTiles}). A value of 0.0 indicates that all pending
+   * @ref Tileset::loadTiles). A value of 0.0 indicates that all pending
    * main-thread loads should be completed each tick.
    *
    * Setting this to too low of a value will impede overall tile load progress,
@@ -263,19 +263,19 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
 
   /**
    * @brief A soft limit on how long (in milliseconds) to spend unloading
-   * cached tiles each frame (each call to {@link Tileset::loadTiles}). A value
+   * cached tiles each frame (each call to @ref Tileset::loadTiles). A value
    * of 0.0 indicates that the tile cache should not throttle unloading tiles.
    */
   double tileCacheUnloadTimeLimit = 0.0;
 
   /**
-   * @brief Options for configuring the parsing of a {@link Tileset}'s content
+   * @brief Options for configuring the parsing of a @ref Tileset's content
    * and construction of Gltf models.
    */
   TilesetContentOptions contentOptions;
 
   /**
-   * @brief Arbitrary data that will be passed to {@link IPrepareRendererResources::prepareInLoadThread}.
+   * @brief Arbitrary data that will be passed to @ref IPrepareRendererResources::prepareInLoadThread.
    *
    * This object is copied and given to tile preparation threads,
    * so it must be inexpensive to copy.

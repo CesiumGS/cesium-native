@@ -119,8 +119,8 @@ public:
   /**
    * @brief Gets the current node in the traversal.
    *
-   * When {@link beginNode} is called, the node passed to it becomes the
-   * current one. When {@link finishNode} is called, the parent node of the
+   * When @ref beginNode is called, the node passed to it becomes the
+   * current one. When @ref finishNode is called, the parent node of the
    * one passed to it becomes the current one.
    *
    * @return The current node, or nullptr if no traversal is in progress.
@@ -145,7 +145,7 @@ public:
 
   /**
    * @brief Gets the state of the current node on the previous traversal. The
-   * current node is the one for which {@link beginNode} was most recently
+   * current node is the one for which @ref beginNode was most recently
    * called.
    *
    * @return The state on the previous traversal, or `nullptr` if the current
@@ -158,7 +158,7 @@ public:
 
   /**
    * @brief Gets the state of the current node during the current traversal. The
-   * current node is the one for which {@link beginNode} was most recently
+   * current node is the one for which @ref beginNode was most recently
    * called.
    *
    * @return The state object for this node on the current traversal. It may be
@@ -171,7 +171,7 @@ public:
 
   /**
    * @brief Gets the state of the current node during the current traversal. The
-   * current node is the one for which {@link beginNode} was most recently
+   * current node is the one for which @ref beginNode was most recently
    * called.
    *
    * @return The state object for this node on the current traversal.
@@ -185,11 +185,11 @@ public:
    * @brief Ends traversal of the given node.
    *
    * This method must be called in the opposite order of calls to
-   * {@link finishNode}.
+   * @ref finishNode.
    *
    * After `finishNode`, this node's parent node becomes the "current" node.
-   * {@link previousState} and {@link currentState} will return
-   * the states of this node's parent. A call to {@link beginNode} will
+   * @ref previousState and @ref currentState will return
+   * the states of this node's parent. A call to @ref beginNode will
    * delineate a new child of that same parent.
    *
    * @param pNode The node that is done being traversed.

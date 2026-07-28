@@ -23,7 +23,7 @@ class Cartographic;
 class CESIUMGEOSPATIAL_API EarthGravitationalModel1996Grid final {
 public:
   /**
-   * @brief Attempts to create a {@link EarthGravitationalModel1996Grid} from the given buffer.
+   * @brief Attempts to create a @ref EarthGravitationalModel1996Grid from the given buffer.
    *
    * This method expects the buffer to contain the contents of the WW15MGH.DAC
    * 15-arcminute grid. It must be at least 721 * 1440 * 2 = 2,076,480 bytes.

@@ -62,7 +62,7 @@ struct CESIUM3DTILES_API Enum final : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The type of the integer enum value.
    *
-   * Known values are defined in {@link ValueType}.
+   * Known values are defined in @ref ValueType.
    *
    */
   std::string valueType = ValueType::UINT16;

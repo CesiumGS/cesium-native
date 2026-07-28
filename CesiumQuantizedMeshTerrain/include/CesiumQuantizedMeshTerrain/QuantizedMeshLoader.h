@@ -88,7 +88,7 @@ struct QuantizedMeshMetadataResult {
 class CESIUMQUANTIZEDMESHTERRAIN_API QuantizedMeshLoader final {
 public:
   /**
-   * @brief Create a {@link QuantizedMeshLoadResult} from the given data.
+   * @brief Create a @ref QuantizedMeshLoadResult from the given data.
    *
    * @param tileID The tile ID.
    * @param tileBoundingVolume The tile bounding volume.
@@ -97,7 +97,7 @@ public:
    * @param enableWaterMask If true, will attempt to load a water mask from the
    * quantized mesh data.
    * @param ellipsoid The ellipsoid to use for this quantized mesh.
-   * @return The {@link QuantizedMeshLoadResult}
+   * @return The @ref QuantizedMeshLoadResult
    */
   static QuantizedMeshLoadResult load(
       const CesiumGeometry::QuadtreeTileID& tileID,

@@ -41,7 +41,7 @@ public:
    * located.
    *
    * @param plane The plane to test against.
-   * @return The {@link CullingResult}:
+   * @return The @ref CullingResult:
    *  * `Inside` if the entire sphere is on the side of the plane the normal is
    * pointing.
    *  * `Outside` if the entire sphere is on the opposite side.

@@ -12,7 +12,7 @@ namespace CesiumGeometry {
  * other vertices.
  *
  * The vertices to interpolate between are given via their indices. This is
- * used as one representation of a vertex in a {@link TriangleClipVertex}.
+ * used as one representation of a vertex in a @ref TriangleClipVertex.
  */
 struct InterpolatedVertex {
   /**
@@ -26,7 +26,7 @@ struct InterpolatedVertex {
   int second;
 
   /**
-   * @brief The fraction of the distance from {@link first} to {@link second} at
+   * @brief The fraction of the distance from @ref first to @ref second at
    * which to interpolate.
    */
   double t;

@@ -56,14 +56,14 @@ struct TileRasterOverlayStatus {
 };
 
 /**
- * @brief A collection of {@link CesiumRasterOverlays::RasterOverlay} instances that are associated
- * with a {@link Tileset}.
+ * @brief A collection of @ref CesiumRasterOverlays::RasterOverlay instances that are associated
+ * with a @ref Tileset.
  *
  * The raster overlay instances may be added to the raster overlay collection
- * of a tileset that is returned with {@link Tileset::getOverlays}. When the
- * tileset is loaded, one {@link CesiumRasterOverlays::RasterOverlayTileProvider} will be created
+ * of a tileset that is returned with @ref Tileset::getOverlays. When the
+ * tileset is loaded, one @ref CesiumRasterOverlays::RasterOverlayTileProvider will be created
  * for each raster overlay that had been added. The raster overlay tile provider
- * instances will be passed to the {@link CesiumRasterOverlays::RasterOverlayTile} instances that
+ * instances will be passed to the @ref CesiumRasterOverlays::RasterOverlayTile instances that
  * they create when the tiles are updated.
  */
 class CESIUM3DTILESSELECTION_API RasterOverlayCollection final {
@@ -76,7 +76,7 @@ public:
    * the lifetime of the overlay collection or until \ref
    * setLoadedTileEnumerator is called with a new enumerator.
    * @param externals A collection of loading system to load a raster overlay
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
    */
   RasterOverlayCollection(
       const LoadedTileEnumerator& loadedTiles,
@@ -139,7 +139,7 @@ public:
   getActivatedOverlays() const noexcept;
 
   /**
-   * @brief Adds the given {@link CesiumRasterOverlays::RasterOverlay} to this collection.
+   * @brief Adds the given @ref CesiumRasterOverlays::RasterOverlay to this collection.
    *
    * @param pOverlay The pointer to the overlay. This may not be `nullptr`.
    */
@@ -147,21 +147,21 @@ public:
            const CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
 
   /**
-   * @brief Remove the given {@link CesiumRasterOverlays::RasterOverlay} from
+   * @brief Remove the given @ref CesiumRasterOverlays::RasterOverlay from
    * this collection.
    */
   void remove(const CesiumUtility::IntrusivePointer<
               const CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
 
   /**
-   * @brief Remove the given {@link CesiumRasterOverlays::RasterOverlay} from
+   * @brief Remove the given @ref CesiumRasterOverlays::RasterOverlay from
    * this collection.
    */
   void remove(const CesiumUtility::IntrusivePointer<
               CesiumRasterOverlays::RasterOverlay>& pOverlay) noexcept;
 
   /**
-   * @brief Remove the given {@link CesiumRasterOverlays::ActivatedRasterOverlay}
+   * @brief Remove the given @ref CesiumRasterOverlays::ActivatedRasterOverlay
    * from this collection.
    */
   void
@@ -169,15 +169,15 @@ public:
          CesiumRasterOverlays::ActivatedRasterOverlay>& pActivated) noexcept;
 
   /**
-   * @brief Adds raster overlays to a new {@link Tile}.
+   * @brief Adds raster overlays to a new @ref Tile.
    *
-   * The tile should be in the {@link TileLoadState::Unloaded} or
-   * {@link TileLoadState::FailedTemporarily} state.
+   * The tile should be in the @ref TileLoadState::Unloaded or
+   * @ref TileLoadState::FailedTemporarily state.
    *
    * Any existing raster overlays on the tile will be cleared.
    *
    * @param tile The tile for which to add the overlays.
-   * @param tilesetOptions The {@link TilesetOptions} for the tileset to which
+   * @param tilesetOptions The @ref TilesetOptions for the tileset to which
    * the tile belongs.
    * @returns The list of projections required by the overlays that were added
    * to the tile.
@@ -195,7 +195,7 @@ public:
    * detail.
    *
    * @param tile The tile for which to update the overlays.
-   * @param tilesetOptions The {@link TilesetOptions} for the tileset to which
+   * @param tilesetOptions The @ref TilesetOptions for the tileset to which
    * the tile belongs.
    * @returns Details of the raster overlays attached to this tile.
    */
@@ -207,7 +207,7 @@ private:
 
 public:
   /**
-   * @brief A constant iterator for {@link CesiumRasterOverlays::RasterOverlay} instances.
+   * @brief A constant iterator for @ref CesiumRasterOverlays::RasterOverlay instances.
    */
   using const_iterator = CesiumUtility::TransformIterator<
       GetOverlayFunctor,

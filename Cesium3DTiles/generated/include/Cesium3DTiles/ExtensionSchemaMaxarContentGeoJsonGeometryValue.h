@@ -46,7 +46,7 @@ struct CESIUM3DTILES_API ExtensionSchemaMaxarContentGeoJsonGeometryValue final
   /**
    * @brief Type of GeoJSON geometry inside the group
    *
-   * Known values are defined in {@link Type}.
+   * Known values are defined in @ref Type.
    *
    */
   std::string type = Type::Point;

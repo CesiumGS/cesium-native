@@ -31,7 +31,7 @@ class RasterOverlayTileProvider;
  * and the actual tile geometry is established via the
  * @ref Cesium3DTilesSelection::RasterMappedTo3DTile class, which combines a
  * raster overlay tile with texture coordinates, to map the
- * image on the geometry of a {@link Cesium3DTilesSelection::Tile}.
+ * image on the geometry of a @ref Cesium3DTilesSelection::Tile.
  */
 class RasterOverlayTile final
     : public CesiumUtility::ReferenceCountedNonThreadSafe<RasterOverlayTile> {
@@ -75,7 +75,7 @@ public:
    * @brief Tile availability states.
    *
    * Values of this enumeration are returned by
-   * {@link Cesium3DTilesSelection::RasterMappedTo3DTile::update}, which in turn is called by
+   * @ref Cesium3DTilesSelection::RasterMappedTo3DTile::update, which in turn is called by
    * `TilesetContentManager::updateDoneState`. These values are used to
    * determine whether a leaf tile has been reached, but the associated raster
    * tiles are not yet the most detailed ones that are available.
@@ -96,10 +96,10 @@ public:
   /**
    * @brief Constructs a placeholder tile for the tile provider.
    *
-   * The {@link getState} of this instance will always be
-   * {@link LoadState::Placeholder}.
+   * The @ref getState of this instance will always be
+   * @ref LoadState::Placeholder.
    *
-   * @param activatedOverlay The {@link ActivatedRasterOverlay}. This object
+   * @param activatedOverlay The @ref ActivatedRasterOverlay. This object
    * _must_ remain valid for the entire lifetime of the tile. If the activated
    * overlay is destroyed before the tile, undefined behavior will result.
    */
@@ -109,16 +109,16 @@ public:
    * @brief Creates a new instance.
    *
    * The tile will start in the `Unloaded` state, and will not begin loading
-   * until {@link ActivatedRasterOverlay::loadTile} or
-   * {@link ActivatedRasterOverlay::loadTileThrottled} is called.
+   * until @ref ActivatedRasterOverlay::loadTile or
+   * @ref ActivatedRasterOverlay::loadTileThrottled is called.
    *
-   * @param activatedOverlay The {@link ActivatedRasterOverlay}. This object
+   * @param activatedOverlay The @ref ActivatedRasterOverlay. This object
    * _must_ remain valid for the entire lifetime of the tile. If the activated
    * overlay is destroyed before the tile, undefined behavior will result.
    * @param targetScreenPixels The maximum number of pixels on the screen that
    * this tile is meant to cover. The overlay image should be approximately this
    * many pixels divided by the
-   * {@link RasterOverlayOptions::maximumScreenSpaceError} in order to achieve
+   * @ref RasterOverlayOptions::maximumScreenSpaceError in order to achieve
    * the desired level-of-detail, but it does not need to be exactly this size.
    * @param imageryRectangle The rectangle that the returned image must cover.
    * It is allowed to cover a slightly larger rectangle in order to maintain
@@ -142,7 +142,7 @@ public:
   const ActivatedRasterOverlay& getActivatedOverlay() const noexcept;
 
   /**
-   * @brief Returns the {@link RasterOverlayTileProvider} that is responsible
+   * @brief Returns the @ref RasterOverlayTileProvider that is responsible
    * for loading this tile's image.
    */
   RasterOverlayTileProvider& getTileProvider() noexcept;
@@ -151,12 +151,12 @@ public:
   const RasterOverlayTileProvider& getTileProvider() const noexcept;
 
   /**
-   * @brief Gets the {@link RasterOverlay} associated with this instance.
+   * @brief Gets the @ref RasterOverlay associated with this instance.
    */
   const RasterOverlay& getOverlay() const noexcept;
 
   /**
-   * @brief Returns the {@link CesiumGeometry::Rectangle} that defines the bounds
+   * @brief Returns the @ref CesiumGeometry::Rectangle that defines the bounds
    * of this tile in the raster overlay's projected coordinates.
    */
   const CesiumGeometry::Rectangle& getRectangle() const noexcept {
@@ -168,14 +168,14 @@ public:
    * covered by this tile's texture.
    *
    * This is used to control which content (how highly detailed) the
-   * {@link RasterOverlayTileProvider} uses within the bounds of this tile.
+   * @ref RasterOverlayTileProvider uses within the bounds of this tile.
    */
   glm::dvec2 getTargetScreenPixels() const noexcept {
     return this->_targetScreenPixels;
   }
 
   /**
-   * @brief Returns the current {@link LoadState}.
+   * @brief Returns the current @ref LoadState.
    */
   LoadState getState() const noexcept { return this->_state; }
 
@@ -190,8 +190,8 @@ public:
   /**
    * @brief Returns the image data for the tile.
    *
-   * This will only contain valid image data if the {@link getState} of
-   * this tile is {@link LoadState `Loaded`} or {@link LoadState `Done`}.
+   * This will only contain valid image data if the @ref getState of
+   * this tile is @ref LoadState "Loaded" or @ref LoadState "Done".
    *
    * @return The image data.
    */
@@ -203,8 +203,8 @@ public:
   /**
    * @brief Returns the image data for the tile.
    *
-   * This will only contain valid image data if the {@link getState} of
-   * this tile is {@link LoadState `Loaded`} or {@link LoadState `Done`}.
+   * This will only contain valid image data if the @ref getState of
+   * this tile is @ref LoadState "Loaded" or @ref LoadState "Done".
    *
    * @return The image data.
    */
@@ -215,11 +215,11 @@ public:
   /**
    * @brief Create the renderer resources for the loaded image.
    *
-   * If the {@link getState} of this tile is not {@link LoadState `Loaded`},
+   * If the @ref getState of this tile is not @ref LoadState "Loaded",
    * then nothing will be done. Otherwise, the renderer resources will be
    * prepared, so that they may later be obtained with
-   * {@link getRendererResources}, and the {@link getState} of this tile
-   * will change to {@link LoadState `Done`}.
+   * @ref getRendererResources, and the @ref getState of this tile
+   * will change to @ref LoadState "Done".
    */
   void loadInMainThread();
 
