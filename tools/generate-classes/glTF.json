@@ -185,6 +185,18 @@
     "KHR_billboard glTF Node Extension": {
       "overrideName": "ExtensionKhrBillboard"
     },
+    "KHR_lights_punctual glTF Document Extension": {
+      "overrideName": "ExtensionModelKhrLightsPunctual"
+    },
+    "KHR_lights_punctual glTF Node Extension": {
+      "overrideName": "ExtensionNodeKhrLightsPunctual"
+    },
+    "KHR_lights_punctual Light Properties": {
+      "overrideName": "Light"
+    },
+    "KHR_lights_punctual Light Spot Properties": {
+      "overrideName": "Spotlight"
+    },
     "BENTLEY_materials_point_style extension": {
       "overrideName": "ExtensionBentleyMaterialsPointStyle"
     }
@@ -343,6 +355,14 @@
     {
       "extensionName": "KHR_billboard",
       "schema": "Khronos/KHR_billboard/schema/node.KHR_billboard.schema.json"
+    },
+    {
+      "extensionName": "KHR_lights_punctual",
+      "schema": "Khronos/KHR_lights_punctual/schema/glTF.KHR_lights_punctual.schema.json"
+    },
+    {
+      "extensionName": "KHR_lights_punctual",
+      "schema": "Khronos/KHR_lights_punctual/schema/node.KHR_lights_punctual.schema.json"
     },
     {
       "extensionName": "BENTLEY_materials_point_style",

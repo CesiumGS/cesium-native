@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - Added support for the [`BENTLEY_materials_point_style`](https://github.com/CesiumGS/glTF/pull/91) extension in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added support for the [`KHR_lights_punctual`](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_lights_punctual) extension in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added support for reading arrays of arbitrary JSON values in `CesiumJsonReader::ArrayJsonHandler`.
 
 ##### Fixes :wrench:
