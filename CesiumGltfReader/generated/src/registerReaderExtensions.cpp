@@ -26,6 +26,8 @@
 #include "ExtensionKhrMaterialsUnlitJsonHandler.h"
 #include "ExtensionKhrTextureBasisuJsonHandler.h"
 #include "ExtensionKhrTextureTransformJsonHandler.h"
+#include "ExtensionMaterialBentleyMaterialsLineStyleJsonHandler.h"
+#include "ExtensionMeshPrimitiveBentleyMaterialsLineStyleJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionModelExtStructuralMetadataJsonHandler.h"
@@ -103,6 +105,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       CesiumGltf::MeshPrimitive,
       ExtensionExtMeshPolygonJsonHandler>();
   options.registerExtension<
+      CesiumGltf::MeshPrimitive,
+      ExtensionMeshPrimitiveBentleyMaterialsLineStyleJsonHandler>();
+  options.registerExtension<
       CesiumGltf::Node,
       ExtensionExtInstanceFeaturesJsonHandler>();
   options.registerExtension<
@@ -131,6 +136,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Material,
       ExtensionKhrMaterialsUnlitJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Material,
+      ExtensionMaterialBentleyMaterialsLineStyleJsonHandler>();
   options.registerExtension<
       CesiumGltf::Material,
       ExtensionBentleyMaterialsPointStyleJsonHandler>();
