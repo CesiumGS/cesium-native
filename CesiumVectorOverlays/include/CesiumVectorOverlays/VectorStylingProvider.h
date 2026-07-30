@@ -12,21 +12,29 @@ namespace CesiumVectorOverlays {
 
 class CESIUMVECTOROVERLAYS_API VectorStylingProvider {
 public:
-  virtual CesiumAsync::Future<std::vector<std::optional<CesiumVectorData::VectorStyle>>> onStylePoints(
+  virtual CesiumAsync::Future<
+      std::vector<std::optional<CesiumVectorData::VectorStyle>>>
+  onStylePoints(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const CesiumGltf::Model& model,
       const std::vector<int64_t>& featureIds,
       const std::vector<CesiumGeospatial::Cartographic>& points) = 0;
-  virtual CesiumAsync::Future<std::vector<std::optional<CesiumVectorData::VectorStyle>>> onStylePolylines(
+  virtual CesiumAsync::Future<
+      std::vector<std::optional<CesiumVectorData::VectorStyle>>>
+  onStylePolylines(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const CesiumGltf::Model& model,
       const std::vector<int64_t>& featureIds,
-      const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polylines) = 0;
-  virtual CesiumAsync::Future<std::vector<std::optional<CesiumVectorData::VectorStyle>>> onStylePolygons(
+      const std::vector<std::vector<CesiumGeospatial::Cartographic>>&
+          polylines) = 0;
+  virtual CesiumAsync::Future<
+      std::vector<std::optional<CesiumVectorData::VectorStyle>>>
+  onStylePolygons(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const CesiumGltf::Model& model,
       const std::vector<int64_t>& featureIds,
-      const std::vector<std::vector<CesiumGeospatial::Cartographic>>& polygons) = 0;
+      const std::vector<std::vector<CesiumGeospatial::Cartographic>>&
+          polygons) = 0;
 };
 
 } // namespace CesiumVectorOverlays
