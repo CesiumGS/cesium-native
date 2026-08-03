@@ -349,7 +349,8 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
               .thenInWorkerThread(
                   [pContent](std::vector<std::optional<
                                  CesiumVectorData::VectorStyle>>&& result) {
-                    if (result.size() == 0) {
+                    if (result.size() == 0 ||
+                        result.size() != pContent->points.size()) {
                       pContent->pointStyles.resize(
                           pContent->points.size(),
                           &pContent->defaultStyle);
@@ -377,7 +378,8 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
               .thenInWorkerThread(
                   [pContent](std::vector<std::optional<
                                  CesiumVectorData::VectorStyle>>&& result) {
-                    if (result.size() == 0) {
+                    if (result.size() == 0 ||
+                        result.size() != pContent->polylines.size()) {
                       pContent->polylineStyles.resize(
                           pContent->polylines.size(),
                           &pContent->defaultStyle);
@@ -403,7 +405,8 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
               .thenInWorkerThread(
                   [pContent](std::vector<std::optional<
                                  CesiumVectorData::VectorStyle>>&& result) {
-                    if (result.size() == 0) {
+                    if (result.size() == 0 ||
+                        result.size() != pContent->polygons.size()) {
                       pContent->polygonStyles.resize(
                           pContent->polygons.size(),
                           &pContent->defaultStyle);

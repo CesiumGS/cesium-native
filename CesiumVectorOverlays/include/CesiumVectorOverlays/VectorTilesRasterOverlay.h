@@ -7,9 +7,6 @@
 
 namespace CesiumVectorOverlays {
 
-using CreateStylingProviderCallback =
-    std::function<std::shared_ptr<VectorStylingProvider>()>;
-
 /**
  * @brief Options for constructing a \ref VectorTilesRasterOverlay.
  */
@@ -24,6 +21,11 @@ struct VectorTilesRasterOverlayOptions {
    */
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
 
+  /**
+   * @brief An optional provider for styling information for features in the
+   * vector tileset. If not provided, the default style will be used for all
+   * features.
+   */
   std::shared_ptr<VectorStylingProvider> pStylingProvider;
 };
 
