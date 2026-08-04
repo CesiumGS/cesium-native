@@ -21,6 +21,7 @@
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshPolygon.h>
+#include <CesiumGltf/FeatureId.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltfContent/GltfUtilities.h>
@@ -35,6 +36,7 @@
 #include <CesiumUtility/TreeTraversalState.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
+#include <CesiumVectorOverlays/VectorStylingProvider.h>
 #include <CesiumVectorOverlays/VectorTilesRasterOverlay.h>
 
 #include <fmt/format.h>
@@ -54,6 +56,8 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>

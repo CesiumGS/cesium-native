@@ -408,7 +408,7 @@ void VectorRasterizer::drawPoints(
         points[i].latitude,
         this->_bounds,
         this->_context);
-    if (styles[i]->point.fill) {
+    if (styles[i]->point.fill.has_value()) {
       this->_context.fillCircle(
           BLCircle(point.x, point.y, styles[i]->point.radius),
           BLRgba32(styles[i]
@@ -416,7 +416,7 @@ void VectorRasterizer::drawPoints(
                        .toRgba32()));
     }
 
-    if (styles[i]->point.outline) {
+    if (styles[i]->point.outline.has_value()) {
       this->_context.strokeCircle(
           BLCircle(point.x, point.y, styles[i]->point.radius),
           BLRgba32(styles[i]
