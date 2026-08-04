@@ -408,20 +408,26 @@ void VectorRasterizer::drawPoints(
         points[i].latitude,
         this->_bounds,
         this->_context);
-    if (styles[i]->point.fill.has_value()) {
+    // clang-tidy does not understand that we *are* in fact checking these
+    // optionals
+    if (styles[i]->point.fill) {
+      // NOLINTBEGIN(bugprone-unchecked-optional-access)
       this->_context.fillCircle(
           BLCircle(point.x, point.y, styles[i]->point.radius),
           BLRgba32(styles[i]
                        ->point.fill->getColor(seedForObject(points[i], 17))
                        .toRgba32()));
+      // NOLINTEND(bugprone-unchecked-optional-access)
     }
 
-    if (styles[i]->point.outline.has_value()) {
+    if (styles[i]->point.outline) {
+      // NOLINTBEGIN(bugprone-unchecked-optional-access)
       this->_context.strokeCircle(
           BLCircle(point.x, point.y, styles[i]->point.radius),
           BLRgba32(styles[i]
                        ->point.outline->getColor(seedForObject(points[i], 31))
                        .toRgba32()));
+      // NOLINTEND(bugprone-unchecked-optional-access)
     }
   }
 }
