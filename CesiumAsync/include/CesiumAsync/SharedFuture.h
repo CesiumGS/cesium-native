@@ -214,8 +214,8 @@ public:
    * @brief Waits for the future to resolve or reject and returns the result.
    *
    * \attention This method must not be called from the main thread, the one
-   * that calls @ref AsyncSystem::dispatchMainThreadTasks. Doing so can lead to a
-   * deadlock because the main thread tasks will never complete while this
+   * that calls @ref AsyncSystem::dispatchMainThreadTasks. Doing so can lead to
+   * a deadlock because the main thread tasks will never complete while this
    * method is blocking the main thread.
    *
    * To wait in the main thread, use @ref waitInMainThread instead.
@@ -235,8 +235,8 @@ public:
    * @brief Waits for the future to resolve or reject.
    *
    * \attention This method must not be called from the main thread, the one
-   * that calls @ref AsyncSystem::dispatchMainThreadTasks. Doing so can lead to a
-   * deadlock because the main thread tasks will never complete while this
+   * that calls @ref AsyncSystem::dispatchMainThreadTasks. Doing so can lead to
+   * a deadlock because the main thread tasks will never complete while this
    * method is blocking the main thread.
    *
    * To wait in the main thread, use @ref waitInMainThread instead.

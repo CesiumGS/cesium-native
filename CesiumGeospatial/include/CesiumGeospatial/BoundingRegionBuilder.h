@@ -40,9 +40,9 @@ public:
    * @brief Sets the distance from the North or South pole, in radians, that is
    * considered "too close" to rely on the longitude value.
    *
-   * When a position given to @ref expandToIncludePosition has a latitude closer than this value,
-   * the region will be updated to include the position's _latitude_, but the
-   * position's longitude will be ignored.
+   * When a position given to @ref expandToIncludePosition has a latitude closer
+   * than this value, the region will be updated to include the position's
+   * _latitude_, but the position's longitude will be ignored.
    *
    * @param tolerance The new tolerance.
    */
@@ -52,9 +52,9 @@ public:
    * @brief Gets the distance from the North or South pole, in radians, that is
    * considered "too close" to rely on the longitude value.
    *
-   * When a position given to @ref expandToIncludePosition has a latitude closer than this value,
-   * the region will be updated to include the position's _latitude_, but the
-   * position's longitude will be ignored.
+   * When a position given to @ref expandToIncludePosition has a latitude closer
+   * than this value, the region will be updated to include the position's
+   * _latitude_, but the position's longitude will be ignored.
    *
    * @return The tolerance.
    */

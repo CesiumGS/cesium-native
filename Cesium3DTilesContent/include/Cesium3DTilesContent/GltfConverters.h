@@ -165,7 +165,8 @@ public:
    * returned
    *
    * @param filePath The file path that contains the file extension.
-   * @return The @ref ConverterFunction that is registered with the file extension.
+   * @return The @ref ConverterFunction that is registered with the file
+   * extension.
    */
   static ConverterFunction
   getConverterByFileExtension(const std::string& filePath);
@@ -180,7 +181,8 @@ public:
    * @ref GltfConverterResult from the input data.
    *
    * @param content The binary tile content that contains the magic header.
-   * @return The @ref ConverterFunction that is registered with the magic header.
+   * @return The @ref ConverterFunction that is registered with the magic
+   * header.
    */
   static ConverterFunction
   getConverterByMagic(const std::span<const std::byte>& content);
@@ -211,7 +213,8 @@ public:
    * @param options The @ref CesiumGltfReader::GltfReaderOptions for how to
    * read a glTF.
    * @param assetFetcher An object that can perform recursive asset requests.
-   * @return The @ref GltfConverterResult that stores the gltf model converted from the binary data.
+   * @return The @ref GltfConverterResult that stores the gltf model converted
+   * from the binary data.
    */
   static CesiumAsync::Future<GltfConverterResult> convert(
       const std::string& filePath,
@@ -239,7 +242,8 @@ public:
    * @param options The @ref CesiumGltfReader::GltfReaderOptions for how to
    * read a glTF.
    * @param assetFetcher An object that can perform recursive asset requests.
-   * @return The @ref GltfConverterResult that stores the gltf model converted from the binary data.
+   * @return The @ref GltfConverterResult that stores the gltf model converted
+   * from the binary data.
    */
   static CesiumAsync::Future<GltfConverterResult> convert(
       const std::span<const std::byte>& content,

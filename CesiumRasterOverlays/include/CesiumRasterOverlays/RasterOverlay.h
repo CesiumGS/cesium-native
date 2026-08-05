@@ -91,9 +91,10 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
    * Raster overlay resources include a Cesium ion asset endpoint or any
    * resources required for raster overlay metadata.
    *
-   * This callback is invoked by the @ref Cesium3DTilesSelection::RasterOverlayCollection when an
-   * error occurs while it is creating a tile provider for this RasterOverlay.
-   * It is always invoked in the main thread.
+   * This callback is invoked by the @ref
+   * Cesium3DTilesSelection::RasterOverlayCollection when an error occurs while
+   * it is creating a tile provider for this RasterOverlay. It is always invoked
+   * in the main thread.
    */
   std::function<void(const RasterOverlayLoadFailureDetails&)> loadErrorCallback;
 
@@ -103,7 +104,8 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
   bool showCreditsOnScreen = false;
 
   /**
-   * @brief Arbitrary data that will be passed to @ref Cesium3DTilesSelection::IPrepareRendererResources::prepareRasterInLoadThread,
+   * @brief Arbitrary data that will be passed to @ref
+   * Cesium3DTilesSelection::IPrepareRendererResources::prepareRasterInLoadThread,
    * for example, data to control the per-raster overlay client-specific texture
    * properties.
    *
@@ -120,11 +122,12 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayOptions {
 
 /**
  * @brief The base class for a rasterized image that can be draped
- * over a @ref Cesium3DTilesSelection::Tileset. The image may be very, very high resolution, so only
- * small pieces of it are mapped to the Tileset at a time.
+ * over a @ref Cesium3DTilesSelection::Tileset. The image may be very, very high
+ * resolution, so only small pieces of it are mapped to the Tileset at a time.
  *
- * Instances of this class can be added to the @ref Cesium3DTilesSelection::RasterOverlayCollection
- * that is returned by @ref Cesium3DTilesSelection::Tileset::getOverlays.
+ * Instances of this class can be added to the @ref
+ * Cesium3DTilesSelection::RasterOverlayCollection that is returned by @ref
+ * Cesium3DTilesSelection::Tileset::getOverlays.
  *
  * Instances of this class must be allocated on the heap, and their lifetimes
  * must be managed with @ref CesiumUtility::IntrusivePointer.
@@ -155,7 +158,8 @@ public:
    *
    * @param asyncSystem The AsyncSystem to use for the returned SharedFuture,
    * if required. If this method is called multiple times, all invocations
-   * must pass @ref CesiumAsync::AsyncSystem instances that compare equal to each other.
+   * must pass @ref CesiumAsync::AsyncSystem instances that compare equal to
+   * each other.
    */
   CesiumAsync::SharedFuture<void>&
   getAsyncDestructionCompleteEvent(const CesiumAsync::AsyncSystem& asyncSystem);

@@ -13,7 +13,7 @@ namespace Cesium3DTiles {
  * @brief Holds the details of a found property in a @ref MetadataEntity.
  *
  * Because this structure holds _references_ to the original @ref Schema and
- * @ref MetadataEntity instances, it will be invalided if either are
+ * @ref MetadataEntity instances, it will be invalidated if either are
  * destroyed or modified. Continuing to access this result in that scenario will
  * result in undefined behavior.
  */

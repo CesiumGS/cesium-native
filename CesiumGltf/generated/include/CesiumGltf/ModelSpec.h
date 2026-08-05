@@ -212,7 +212,8 @@ struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use @ref Model instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref Model
+   * instead.
    */
   ModelSpec() = default;
   friend struct Model;

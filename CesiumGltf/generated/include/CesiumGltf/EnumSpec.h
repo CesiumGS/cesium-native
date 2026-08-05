@@ -99,7 +99,8 @@ struct CESIUMGLTF_API EnumSpec : public CesiumUtility::ExtensibleObject {
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use @ref Enum instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref Enum
+   * instead.
    */
   EnumSpec() = default;
   friend struct Enum;

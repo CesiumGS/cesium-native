@@ -9,8 +9,8 @@
 
 namespace CesiumRasterOverlays {
 /**
- * @brief Holds details of the @ref Cesium3DTilesSelection::TileRenderContent that are useful
- * for raster overlays.
+ * @brief Holds details of the @ref Cesium3DTilesSelection::TileRenderContent
+ * that are useful for raster overlays.
  */
 struct CESIUMRASTEROVERLAYS_API RasterOverlayDetails {
   /**

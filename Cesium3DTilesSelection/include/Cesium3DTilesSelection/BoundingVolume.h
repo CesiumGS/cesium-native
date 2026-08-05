@@ -75,7 +75,8 @@ estimateGlobeRectangle(
 
 /**
  * @brief Returns the bounding region if the bounding volume is a
- * @ref CesiumGeospatial::BoundingRegion or a @ref CesiumGeospatial::BoundingRegionWithLooseFittingHeights.
+ * @ref CesiumGeospatial::BoundingRegion or a @ref
+ * CesiumGeospatial::BoundingRegionWithLooseFittingHeights.
  *
  * @param boundingVolume The bounding volume.
  * @return A pointer to the bounding region, or nullptr is the bounding volume
@@ -85,7 +86,8 @@ CESIUM3DTILESSELECTION_API const CesiumGeospatial::BoundingRegion*
 getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume);
 
 /**
- * @brief Returns an oriented bounding box that contains the given @ref BoundingVolume.
+ * @brief Returns an oriented bounding box that contains the given @ref
+ * BoundingVolume.
  *
  * @param boundingVolume The bounding volume.
  * @param ellipsoid The ellipsoid used for this @ref BoundingVolume.

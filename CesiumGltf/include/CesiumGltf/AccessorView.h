@@ -240,7 +240,8 @@ public:
 
   /**
    * @brief Returns a pointer to the first byte of this accessor view's data.
-   * The elements are stored contiguously, so the next one starts @ref stride bytes later.
+   * The elements are stored contiguously, so the next one starts @ref stride
+   * bytes later.
    *
    * @returns The start of this view.
    */

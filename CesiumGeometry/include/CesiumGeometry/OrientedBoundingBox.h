@@ -79,8 +79,8 @@ public:
    *
    * @param plane The plane to test against.
    * @return
-   *  * @ref CullingResult::Inside if the entire box is on the side of the plane the normal is
-   * pointing.
+   *  * @ref CullingResult::Inside if the entire box is on the side of the plane
+   * the normal is pointing.
    *  * @ref CullingResult::Outside if the entire box is on the opposite side.
    *  * @ref CullingResult::Intersecting if the box intersects the plane.
    */

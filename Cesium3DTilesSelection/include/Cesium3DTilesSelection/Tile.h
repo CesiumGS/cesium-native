@@ -165,7 +165,8 @@ public:
    * ID is changed in order to avoid reference count assertion failures at
    * tileset destruction.
    *
-   * @param pLoader The @ref TilesetContentLoader that is assiocated with this tile.
+   * @param pLoader The @ref TilesetContentLoader that is assiocated with this
+   * tile.
    * @param tileID The ID of this tile. If it is an empty string, then the
    * external content will not be unloadable.
    * @param externalContent External content that is associated with this tile.
@@ -187,7 +188,8 @@ public:
    * ID is changed in order to avoid reference count assertion failures at
    * tileset destruction.
    *
-   * @param pLoader The @ref TilesetContentLoader that is assiocated with this tile.
+   * @param pLoader The @ref TilesetContentLoader that is assiocated with this
+   * tile.
    * @param tileID The ID of this tile. If it is an empty string, then the
    * empty content will not be unloadable.
    * @param emptyContent A content tag indicating that the tile has no content.
@@ -353,14 +355,15 @@ public:
   /**
    * @brief Gets the tile's geometric error as if by calling
    * @ref getGeometricError, except that if the error is smaller than
-   * @ref CesiumUtility::Math::Epsilon5 the returned geometric error is instead computed as
-   * half of the parent tile's (non-zero) geometric error.
+   * @ref CesiumUtility::Math::Epsilon5 the returned geometric error is instead
+   * computed as half of the parent tile's (non-zero) geometric error.
    *
    * This is useful for determining when to refine what would ordinarily be a
    * leaf tile, for example to attach more detailed raster overlays to it.
    *
    * If this tile and all of its ancestors have a geometric error less than
-   * @ref CesiumUtility::Math::Epsilon5, returns @ref CesiumUtility::Math::Epsilon5.
+   * @ref CesiumUtility::Math::Epsilon5, returns @ref
+   * CesiumUtility::Math::Epsilon5.
    *
    * @return The non-zero geometric error.
    */

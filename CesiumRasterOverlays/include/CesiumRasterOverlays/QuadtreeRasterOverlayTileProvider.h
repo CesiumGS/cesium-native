@@ -39,7 +39,8 @@ public:
    * specified in \ref CreateRasterOverlayTileProviderParameters::pOwner.
    * @param parameters The parameters for creating the tile provider.
    * @param projection The @ref CesiumGeospatial::Projection.
-   * @param tilingScheme The tiling scheme to be used by this @ref QuadtreeRasterOverlayTileProvider.
+   * @param tilingScheme The tiling scheme to be used by this @ref
+   * QuadtreeRasterOverlayTileProvider.
    * @param coverageRectangle The rectangle that bounds all the area covered by
    * this overlay, expressed in projected coordinates.
    * @param minimumLevel The minimum quadtree tile level.

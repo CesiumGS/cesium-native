@@ -134,8 +134,8 @@ struct TilesetHeightRequest : public TileLoadRequester {
   std::set<Tile*> tilesToLoad;
 
   /**
-   * @brief Process a given list of height requests. This is called by the @ref Tileset
-   * in every call to @ref Tileset::updateView.
+   * @brief Process a given list of height requests. This is called by the @ref
+   * Tileset in every call to @ref Tileset::updateView.
    *
    * @param asyncSystem The async system used to do work in threads.
    * @param contentManager The content manager.

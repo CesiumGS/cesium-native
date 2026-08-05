@@ -52,8 +52,8 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
   CesiumGeometry::Rectangle rectangle{};
 
   /**
-   * @brief The @ref CesiumUtility::Credit objects that decribe the attributions that
-   * are required when using the image.
+   * @brief The @ref CesiumUtility::Credit objects that decribe the attributions
+   * that are required when using the image.
    */
   std::vector<CesiumUtility::Credit> credits{};
 

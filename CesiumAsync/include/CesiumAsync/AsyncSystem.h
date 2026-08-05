@@ -184,7 +184,8 @@ public:
   }
 
   /**
-   * @brief The value type of the Future returned by @ref AsyncSystem::all(std::vector<Future<T>>&&) const.
+   * @brief The value type of the Future returned by @ref
+   * AsyncSystem::all(std::vector<Future<T>>&&) const.
    *
    * This will be either `std::vector<T>`, if the input Futures passed to the
    * `all` function return values, or `void` if they do not.

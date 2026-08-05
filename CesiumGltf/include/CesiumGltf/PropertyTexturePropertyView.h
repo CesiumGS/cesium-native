@@ -277,7 +277,8 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The code from @ref PropertyTexturePropertyViewStatus indicating the error with the property.
+   * @param status The code from @ref PropertyTexturePropertyViewStatus
+   * indicating the error with the property.
    */
   PropertyTexturePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, false>(status),
@@ -589,7 +590,8 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The code from @ref PropertyTexturePropertyViewStatus indicating the error with the property.
+   * @param status The code from @ref PropertyTexturePropertyViewStatus
+   * indicating the error with the property.
    */
   PropertyTexturePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, true>(status),
@@ -605,8 +607,9 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a
    * default value. Although this property has no data, it can return the
-   * default value when @ref PropertyTexturePropertyView<ElementType, true>::get is called.
-   * However, @ref PropertyTexturePropertyView<ElementType, true>::getRaw cannot be used.
+   * default value when @ref PropertyTexturePropertyView<ElementType, true>::get
+   * is called. However, @ref PropertyTexturePropertyView<ElementType,
+   * true>::getRaw cannot be used.
    *
    * @param classProperty The @ref ClassProperty this property conforms to.
    */

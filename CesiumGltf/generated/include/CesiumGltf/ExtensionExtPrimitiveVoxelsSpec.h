@@ -80,7 +80,8 @@ struct CESIUMGLTF_API ExtensionExtPrimitiveVoxelsSpec
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use @ref ExtensionExtPrimitiveVoxels instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref
+   * ExtensionExtPrimitiveVoxels instead.
    */
   ExtensionExtPrimitiveVoxelsSpec() = default;
   friend struct ExtensionExtPrimitiveVoxels;

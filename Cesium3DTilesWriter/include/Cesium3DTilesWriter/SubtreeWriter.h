@@ -14,7 +14,8 @@ namespace Cesium3DTilesWriter {
 
 /**
  * @brief The result of writing a subtree with
- * @ref SubtreeWriter::writeSubtreeJson or @ref SubtreeWriter::writeSubtreeBinary.
+ * @ref SubtreeWriter::writeSubtreeJson or @ref
+ * SubtreeWriter::writeSubtreeBinary.
  */
 struct CESIUM3DTILESWRITER_API SubtreeWriterResult {
   /**

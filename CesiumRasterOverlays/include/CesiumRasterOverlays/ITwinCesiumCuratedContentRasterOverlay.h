@@ -11,7 +11,8 @@
 namespace CesiumRasterOverlays {
 
 /**
- * @brief A @ref RasterOverlay that obtains imagery data from the iTwin Cesium Curated Content API.
+ * @brief A @ref RasterOverlay that obtains imagery data from the iTwin Cesium
+ * Curated Content API.
  */
 class CESIUMRASTEROVERLAYS_API ITwinCesiumCuratedContentRasterOverlay final
     : public IonRasterOverlay {

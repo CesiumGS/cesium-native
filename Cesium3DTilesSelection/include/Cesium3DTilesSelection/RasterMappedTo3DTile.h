@@ -17,11 +17,12 @@ namespace Cesium3DTilesSelection {
 class Tile;
 
 /**
- * @brief The result of applying a @ref CesiumRasterOverlays::RasterOverlayTile to geometry.
+ * @brief The result of applying a @ref CesiumRasterOverlays::RasterOverlayTile
+ * to geometry.
  *
  * Instances of this class are used by a @ref Tile in order to map
- * imagery data that is given as @ref CesiumRasterOverlays::RasterOverlayTile instances
- * to the 2D region that is covered by the tile geometry.
+ * imagery data that is given as @ref CesiumRasterOverlays::RasterOverlayTile
+ * instances to the 2D region that is covered by the tile geometry.
  */
 class RasterMappedTo3DTile final {
 public:
@@ -50,8 +51,8 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param pRasterTile The @ref CesiumRasterOverlays::RasterOverlayTile that is mapped to the
-   * geometry.
+   * @param pRasterTile The @ref CesiumRasterOverlays::RasterOverlayTile that is
+   * mapped to the geometry.
    * @param textureCoordinateIndex The index of the texture coordinates to use
    * with this mapped raster overlay.
    */
@@ -61,7 +62,8 @@ public:
       int32_t textureCoordinateIndex);
 
   /**
-   * @brief Returns a @ref CesiumRasterOverlays::RasterOverlayTile that is currently loading.
+   * @brief Returns a @ref CesiumRasterOverlays::RasterOverlayTile that is
+   * currently loading.
    *
    * The caller has to check the exact state of this tile, using
    * @ref Tile::getState.
@@ -79,8 +81,8 @@ public:
   }
 
   /**
-   * @brief Returns the @ref CesiumRasterOverlays::RasterOverlayTile that represents the imagery
-   * data that is ready to render.
+   * @brief Returns the @ref CesiumRasterOverlays::RasterOverlayTile that
+   * represents the imagery data that is ready to render.
    *
    * This will be `nullptr` when the tile data has not yet been loaded.
    *
@@ -163,7 +165,8 @@ public:
    * @param prepareRendererResources The @ref IPrepareRendererResources used to
    * create render resources for raster overlay
    * @param tile The owner tile.
-   * @return The @ref CesiumRasterOverlays::RasterOverlayTile::MoreDetailAvailable state.
+   * @return The @ref
+   * CesiumRasterOverlays::RasterOverlayTile::MoreDetailAvailable state.
    */
   CesiumRasterOverlays::RasterOverlayTile::MoreDetailAvailable
   update(IPrepareRendererResources& prepareRendererResources, Tile& tile);
@@ -184,7 +187,8 @@ public:
       Tile& tile) noexcept;
 
   /**
-   * @brief Does a throttled load of the mapped @ref CesiumRasterOverlays::RasterOverlayTile.
+   * @brief Does a throttled load of the mapped @ref
+   * CesiumRasterOverlays::RasterOverlayTile.
    *
    * @return If the mapped tile is already in the process of loading or it has
    * already finished loading, this method does nothing and returns true. If too
@@ -195,13 +199,14 @@ public:
   bool loadThrottled() noexcept;
 
   /**
-   * @brief Creates a maping between a @ref CesiumRasterOverlays::RasterOverlay and a @ref Tile.
+   * @brief Creates a maping between a @ref CesiumRasterOverlays::RasterOverlay
+   * and a @ref Tile.
    *
-   * The returned mapping will be to a placeholder @ref CesiumRasterOverlays::RasterOverlayTile if
-   * the overlay's tile provider is not yet ready (i.e. it's still a
-   * placeholder) or if the overlap between the tile and the raster overlay
-   * cannot yet be determined because the projected rectangle of the tile is not
-   * yet known.
+   * The returned mapping will be to a placeholder @ref
+   * CesiumRasterOverlays::RasterOverlayTile if the overlay's tile provider is
+   * not yet ready (i.e. it's still a placeholder) or if the overlap between the
+   * tile and the raster overlay cannot yet be determined because the projected
+   * rectangle of the tile is not yet known.
    *
    * Returns a pointer to the created `RasterMappedTo3DTile` in the Tile's
    * @ref Tile::getMappedRasterTiles collection. Note that this pointer may

@@ -75,7 +75,8 @@ struct CESIUMGLTF_API ImageSpec : public CesiumGltf::NamedObject {
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use @ref Image instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref Image
+   * instead.
    */
   ImageSpec() = default;
   friend struct Image;

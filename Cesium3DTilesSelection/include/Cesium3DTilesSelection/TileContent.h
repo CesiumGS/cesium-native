@@ -100,33 +100,43 @@ public:
   void setModel(CesiumGltf::Model&& model);
 
   /**
-   * @brief Get the @ref CesiumRasterOverlays::RasterOverlayDetails which is the result of generating raster overlay UVs for the glTF model
+   * @brief Get the @ref CesiumRasterOverlays::RasterOverlayDetails which is the
+   * result of generating raster overlay UVs for the glTF model
    *
-   * @return The @ref CesiumRasterOverlays::RasterOverlayDetails that is owned by this content
+   * @return The @ref CesiumRasterOverlays::RasterOverlayDetails that is owned
+   * by this content
    */
   const CesiumRasterOverlays::RasterOverlayDetails&
   getRasterOverlayDetails() const noexcept;
 
   /**
-   * @brief Get the @ref CesiumRasterOverlays::RasterOverlayDetails which is the result of generating raster overlay UVs for the glTF model
+   * @brief Get the @ref CesiumRasterOverlays::RasterOverlayDetails which is the
+   * result of generating raster overlay UVs for the glTF model
    *
-   * @return The @ref CesiumRasterOverlays::RasterOverlayDetails that is owned by this content
+   * @return The @ref CesiumRasterOverlays::RasterOverlayDetails that is owned
+   * by this content
    */
   CesiumRasterOverlays::RasterOverlayDetails&
   getRasterOverlayDetails() noexcept;
 
   /**
-   * @brief Set the @ref CesiumRasterOverlays::RasterOverlayDetails which is the result of generating raster overlay UVs for the glTF model
+   * @brief Set the @ref CesiumRasterOverlays::RasterOverlayDetails which is the
+   * result of generating raster overlay UVs for the glTF model
    *
-   * @param rasterOverlayDetails The @ref CesiumRasterOverlays::RasterOverlayDetails that will be owned by this content
+   * @param rasterOverlayDetails The @ref
+   * CesiumRasterOverlays::RasterOverlayDetails that will be owned by this
+   * content
    */
   void setRasterOverlayDetails(
       const CesiumRasterOverlays::RasterOverlayDetails& rasterOverlayDetails);
 
   /**
-   * @brief Set the @ref CesiumRasterOverlays::RasterOverlayDetails which is the result of generating raster overlay UVs for the glTF model
+   * @brief Set the @ref CesiumRasterOverlays::RasterOverlayDetails which is the
+   * result of generating raster overlay UVs for the glTF model
    *
-   * @param rasterOverlayDetails The @ref CesiumRasterOverlays::RasterOverlayDetails that will be owned by this content
+   * @param rasterOverlayDetails The @ref
+   * CesiumRasterOverlays::RasterOverlayDetails that will be owned by this
+   * content
    */
   void setRasterOverlayDetails(
       CesiumRasterOverlays::RasterOverlayDetails&& rasterOverlayDetails);

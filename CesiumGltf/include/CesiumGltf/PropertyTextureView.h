@@ -107,8 +107,8 @@ public:
    *
    * If T does not match the type specified by the class property, this returns
    * an invalid PropertyTexturePropertyView. Likewise, if the value of
-   * Normalized does not match the value of @ref ClassProperty::normalized for that
-   * class property, this returns an invalid property view. Only types with
+   * Normalized does not match the value of @ref ClassProperty::normalized for
+   * that class property, this returns an invalid property view. Only types with
    * integer components may be normalized.
    *
    * @tparam T The C++ type corresponding to the type of the data retrieved.
@@ -141,9 +141,9 @@ public:
   }
 
   /**
-   * @brief Gets a @ref PropertyTexturePropertyView through a callback that accepts a
-   * property id and a @ref PropertyTexturePropertyView that views the data
-   * of the property with the specified id.
+   * @brief Gets a @ref PropertyTexturePropertyView through a callback that
+   * accepts a property id and a @ref PropertyTexturePropertyView that views the
+   * data of the property with the specified id.
    *
    * This method will validate the EXT_structural_metadata format to ensure
    * @ref PropertyTexturePropertyView retrieves the correct data. T must
@@ -151,9 +151,9 @@ public:
    * uint16_t, int32_t, uint32_t, float), a glm vecN composed of one of the
    * scalar types, or a PropertyArrayView containing one of the scalar types.
    *
-   * If the property is somehow invalid, an empty @ref PropertyTexturePropertyView
-   * with an error status will be passed to the callback. Otherwise, a valid
-   * property view will be passed to the callback.
+   * If the property is somehow invalid, an empty @ref
+   * PropertyTexturePropertyView with an error status will be passed to the
+   * callback. Otherwise, a valid property view will be passed to the callback.
    *
    * @param propertyId The id of the property to retrieve data from
    * @param callback A callback function that accepts a property id and a
@@ -269,9 +269,9 @@ public:
   }
 
   /**
-   * @brief Iterates over each property in the @ref PropertyTexture with a callback
-   * that accepts a property id and a @ref PropertyTexturePropertyView to view
-   * the data stored in the @ref PropertyTextureProperty.
+   * @brief Iterates over each property in the @ref PropertyTexture with a
+   * callback that accepts a property id and a @ref PropertyTexturePropertyView
+   * to view the data stored in the @ref PropertyTextureProperty.
    *
    * This method will validate the EXT_structural_metadata format to ensure
    * @ref PropertyTexturePropertyView retrieves the correct data. T must be
@@ -279,8 +279,8 @@ public:
    * uint16_t, int32_t, uint32_t, float), a glm vecN composed of one of the
    * scalar types, or a PropertyArrayView containing one of the scalar types.
    *
-   * If the property is invalid, an empty @ref PropertyTexturePropertyView with an
-   * error status will be passed to the callback. Otherwise, a valid property
+   * If the property is invalid, an empty @ref PropertyTexturePropertyView with
+   * an error status will be passed to the callback. Otherwise, a valid property
    * view will be passed to the callback.
    *
    * @param callback A callback function that accepts property id and

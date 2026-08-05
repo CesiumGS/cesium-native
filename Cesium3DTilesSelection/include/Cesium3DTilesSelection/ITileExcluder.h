@@ -13,7 +13,8 @@ public:
   virtual ~ITileExcluder() = default;
 
   /**
-   * @brief Indicates the start of a new frame, initiated with a call to @ref Tileset::updateView.
+   * @brief Indicates the start of a new frame, initiated with a call to @ref
+   * Tileset::updateView.
    */
   virtual void startNewFrame() noexcept {}
 

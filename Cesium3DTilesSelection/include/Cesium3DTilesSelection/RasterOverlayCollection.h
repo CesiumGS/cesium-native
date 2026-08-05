@@ -56,15 +56,16 @@ struct TileRasterOverlayStatus {
 };
 
 /**
- * @brief A collection of @ref CesiumRasterOverlays::RasterOverlay instances that are associated
- * with a @ref Tileset.
+ * @brief A collection of @ref CesiumRasterOverlays::RasterOverlay instances
+ * that are associated with a @ref Tileset.
  *
  * The raster overlay instances may be added to the raster overlay collection
  * of a tileset that is returned with @ref Tileset::getOverlays. When the
- * tileset is loaded, one @ref CesiumRasterOverlays::RasterOverlayTileProvider will be created
- * for each raster overlay that had been added. The raster overlay tile provider
- * instances will be passed to the @ref CesiumRasterOverlays::RasterOverlayTile instances that
- * they create when the tiles are updated.
+ * tileset is loaded, one @ref CesiumRasterOverlays::RasterOverlayTileProvider
+ * will be created for each raster overlay that had been added. The raster
+ * overlay tile provider instances will be passed to the @ref
+ * CesiumRasterOverlays::RasterOverlayTile instances that they create when the
+ * tiles are updated.
  */
 class CESIUM3DTILESSELECTION_API RasterOverlayCollection final {
 public:
@@ -139,7 +140,8 @@ public:
   getActivatedOverlays() const noexcept;
 
   /**
-   * @brief Adds the given @ref CesiumRasterOverlays::RasterOverlay to this collection.
+   * @brief Adds the given @ref CesiumRasterOverlays::RasterOverlay to this
+   * collection.
    *
    * @param pOverlay The pointer to the overlay. This may not be `nullptr`.
    */
@@ -207,7 +209,8 @@ private:
 
 public:
   /**
-   * @brief A constant iterator for @ref CesiumRasterOverlays::RasterOverlay instances.
+   * @brief A constant iterator for @ref CesiumRasterOverlays::RasterOverlay
+   * instances.
    */
   using const_iterator = CesiumUtility::TransformIterator<
       GetOverlayFunctor,

@@ -64,7 +64,8 @@ struct WebMapServiceRasterOverlayOptions {
 };
 
 /**
- * @brief A @ref RasterOverlay accessing images from a Web Map Service (WMS) server.
+ * @brief A @ref RasterOverlay accessing images from a Web Map Service (WMS)
+ * server.
  */
 class CESIUMRASTEROVERLAYS_API WebMapServiceRasterOverlay final
     : public RasterOverlay {

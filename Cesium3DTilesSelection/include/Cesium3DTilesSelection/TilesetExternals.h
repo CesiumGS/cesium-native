@@ -49,9 +49,9 @@ public:
   CesiumAsync::AsyncSystem asyncSystem;
 
   /**
-   * @brief An external @ref CesiumUtility::CreditSystem that can be used to manage credit
-   * strings and periodically query which credits to show and and which to
-   * remove from the screen.
+   * @brief An external @ref CesiumUtility::CreditSystem that can be used to
+   * manage credit strings and periodically query which credits to show and and
+   * which to remove from the screen.
    */
   std::shared_ptr<CesiumUtility::CreditSystem> pCreditSystem;
 

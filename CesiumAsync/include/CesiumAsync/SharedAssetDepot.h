@@ -39,7 +39,8 @@ struct SharedAssetContext {
 };
 
 /**
- * @brief A depot for @ref CesiumUtility::SharedAsset instances, which are potentially shared between multiple objects.
+ * @brief A depot for @ref CesiumUtility::SharedAsset instances, which are
+ * potentially shared between multiple objects.
  *
  * @tparam TAssetType The type of asset stored in this depot. This should
  * be derived from @ref CesiumUtility::SharedAsset.

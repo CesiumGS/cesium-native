@@ -29,7 +29,8 @@ public:
    * This method is invoked in the load thread and may modify the image.
    *
    * @param image The raster tile image to prepare.
-   * @param rendererOptions Renderer options associated with the raster overlay tile from @ref RasterOverlayOptions::rendererOptions.
+   * @param rendererOptions Renderer options associated with the raster overlay
+   * tile from @ref RasterOverlayOptions::rendererOptions.
    * @returns Arbitrary data representing the result of the load process. This
    * data is passed to @ref prepareRasterInMainThread as the
    * `pLoadThreadResult` parameter.
@@ -63,8 +64,8 @@ public:
    *
    * This method is always called from the thread that destroyed the
    * @ref RasterOverlayTile. When raster overlays are used with tilesets,
-   * this is the thread that called @ref Cesium3DTilesSelection::Tileset::updateView or deleted the
-   * tileset.
+   * this is the thread that called @ref
+   * Cesium3DTilesSelection::Tileset::updateView or deleted the tileset.
    *
    * @param rasterTile The tile for which to free renderer resources.
    * @param pLoadThreadResult The result returned by

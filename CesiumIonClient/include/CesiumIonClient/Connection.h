@@ -381,7 +381,8 @@ public:
    * city name, or landmark) and obtain information about where it's located.
    *
    * @param provider The ion geocoding provider to use.
-   * @param type The type of request to make. See @ref GeocoderRequestType for more information.
+   * @param type The type of request to make. See @ref GeocoderRequestType for
+   * more information.
    * @param query The query to make.
    */
   CesiumAsync::Future<Response<GeocoderResult>> geocode(

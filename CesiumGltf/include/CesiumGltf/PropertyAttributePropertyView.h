@@ -127,7 +127,8 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The code from @ref PropertyAttributePropertyViewStatus indicating the error with the property.
+   * @param status The code from @ref PropertyAttributePropertyViewStatus
+   * indicating the error with the property.
    */
   PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, false>(status), _accessor{}, _size{0} {
@@ -139,8 +140,10 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when @ref PropertyAttributePropertyView<ElementType, false>::get is called. However,
-   * @ref PropertyAttributePropertyView<ElementType, false>::getRaw cannot be used.
+   * when @ref PropertyAttributePropertyView<ElementType, false>::get is called.
+   * However,
+   * @ref PropertyAttributePropertyView<ElementType, false>::getRaw cannot be
+   * used.
    *
    * @param classProperty The @ref ClassProperty this property conforms to.
    * @param size The number of elements in the primitive's POSITION accessor.
@@ -171,12 +174,13 @@ public:
   }
 
   /**
-   * @brief Construct a view of the data specified by a @ref PropertyAttributeProperty.
+   * @brief Construct a view of the data specified by a @ref
+   * PropertyAttributeProperty.
    *
    * @param property The @ref PropertyAttributeProperty
    * @param classProperty The @ref ClassProperty this property conforms to.
-   * @param accessorView The @ref AccessorView for the data that this property is
-   * associated with.
+   * @param accessorView The @ref AccessorView for the data that this property
+   * is associated with.
    */
   PropertyAttributePropertyView(
       const PropertyAttributeProperty& property,
@@ -289,7 +293,8 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The code from @ref PropertyAttributePropertyViewStatus indicating the error with the property.
+   * @param status The code from @ref PropertyAttributePropertyViewStatus
+   * indicating the error with the property.
    */
   PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, true>(status), _accessor{}, _size{0} {
@@ -332,12 +337,13 @@ public:
   }
 
   /**
-   * @brief Construct a view of the data specified by a @ref PropertyAttributeProperty.
+   * @brief Construct a view of the data specified by a @ref
+   * PropertyAttributeProperty.
    *
    * @param property The @ref PropertyAttributeProperty
    * @param classProperty The @ref ClassProperty this property conforms to.
-   * @param accessorView The @ref AccessorView for the data that this property is
-   * associated with.
+   * @param accessorView The @ref AccessorView for the data that this property
+   * is associated with.
    */
   PropertyAttributePropertyView(
       const PropertyAttributeProperty& property,

@@ -39,7 +39,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
    * @brief Creates a new instance
    *
    * @param tile The @ref Tile that the content belongs to.
-   * @param contentOptions The content options the @ref TilesetContentLoader will use to process the content of the tile.
+   * @param contentOptions The content options the @ref TilesetContentLoader
+   * will use to process the content of the tile.
    * @param asyncSystem The async system to use for tile content loading.
    * @param pAssetAccessor The asset accessor to make further requests with.
    * @param pLogger The logger that will be used
@@ -68,12 +69,14 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
   TileLoadInput(TileLoadInput&& rhs) noexcept;
 
   /**
-   * @brief The tile that the @ref TilesetContentLoader will request the server for the content.
+   * @brief The tile that the @ref TilesetContentLoader will request the server
+   * for the content.
    */
   const Tile& tile;
 
   /**
-   * @brief The content options the @ref TilesetContentLoader will use to process the content of the tile.
+   * @brief The content options the @ref TilesetContentLoader will use to
+   * process the content of the tile.
    */
   const TilesetContentOptions& contentOptions;
 
@@ -146,7 +149,8 @@ public:
   /**
    * @brief Load the tile content.
    *
-   * @param input The @ref TileLoadInput that has the tile info and loading systems to load this tile's content
+   * @param input The @ref TileLoadInput that has the tile info and loading
+   * systems to load this tile's content
    * @return The future of @ref TileLoadResult that stores the tile's content
    */
   virtual CesiumAsync::Future<TileLoadResult>

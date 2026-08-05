@@ -24,8 +24,8 @@ namespace CesiumGeospatial {
 class CESIUMGEOSPATIAL_API CartographicPolygon final {
 public:
   /**
-   * @brief Constructs a 2D polygon that can be rasterized onto @ref Cesium3DTilesSelection::Tileset
-   * objects.
+   * @brief Constructs a 2D polygon that can be rasterized onto @ref
+   * Cesium3DTilesSelection::Tileset objects.
    *
    * @param polygon An array of longitude-latitude points in radians defining
    * the perimeter of the 2D polygon.

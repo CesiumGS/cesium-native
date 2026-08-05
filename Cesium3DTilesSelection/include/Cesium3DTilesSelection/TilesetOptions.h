@@ -275,7 +275,8 @@ struct CESIUM3DTILESSELECTION_API TilesetOptions {
   TilesetContentOptions contentOptions;
 
   /**
-   * @brief Arbitrary data that will be passed to @ref IPrepareRendererResources::prepareInLoadThread.
+   * @brief Arbitrary data that will be passed to @ref
+   * IPrepareRendererResources::prepareInLoadThread.
    *
    * This object is copied and given to tile preparation threads,
    * so it must be inexpensive to copy.

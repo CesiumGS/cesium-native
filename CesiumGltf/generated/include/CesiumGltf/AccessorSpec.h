@@ -196,7 +196,8 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use @ref Accessor instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref
+   * Accessor instead.
    */
   AccessorSpec() = default;
   friend struct Accessor;

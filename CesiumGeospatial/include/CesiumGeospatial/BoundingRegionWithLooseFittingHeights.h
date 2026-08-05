@@ -12,7 +12,8 @@ namespace CesiumGeospatial {
  *
  * An instance of this class serves as a marker of the imprecision of the
  * heights in a @ref BoundingRegion, and also has a
- * @ref BoundingRegionWithLooseFittingHeights::computeConservativeDistanceSquaredToPosition
+ * @ref
+ * BoundingRegionWithLooseFittingHeights::computeConservativeDistanceSquaredToPosition
  * method to compute the conservative distance metric.
  */
 class CESIUMGEOSPATIAL_API BoundingRegionWithLooseFittingHeights final {

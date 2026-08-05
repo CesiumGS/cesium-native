@@ -16,9 +16,9 @@ namespace CesiumGltf {
  * @brief Indicates the status of a property table view.
  *
  * The @ref PropertyTableView constructor always completes successfully.
- * However, it may not always reflect the actual content of the @ref PropertyTable,
- * but instead indicate that its @ref PropertyTableView::size is 0.
- * This enumeration provides the reason.
+ * However, it may not always reflect the actual content of the @ref
+ * PropertyTable, but instead indicate that its @ref PropertyTableView::size is
+ * 0. This enumeration provides the reason.
  */
 enum class PropertyTableViewStatus {
   /**
@@ -48,9 +48,9 @@ enum class PropertyTableViewStatus {
 /**
  * @brief Utility to retrieve the data of @ref PropertyTable.
  *
- * This should be used to get a @ref PropertyTablePropertyView of a property in the property table.
- * It will validate the EXT_structural_metadata format and ensure @ref PropertyTablePropertyView
- * does not access out of bounds.
+ * This should be used to get a @ref PropertyTablePropertyView of a property in
+ * the property table. It will validate the EXT_structural_metadata format and
+ * ensure @ref PropertyTablePropertyView does not access out of bounds.
  */
 class PropertyTableView {
 public:
@@ -82,7 +82,8 @@ public:
 
   /**
    * @brief Get the number of elements in this PropertyTableView. If the
-   * view is valid, this returns @ref PropertyTable::count. Otherwise, this returns 0.
+   * view is valid, this returns @ref PropertyTable::count. Otherwise, this
+   * returns 0.
    *
    * @return The number of elements in this PropertyTableView.
    */
@@ -109,23 +110,23 @@ public:
   const ClassProperty* getClassProperty(const std::string& propertyId) const;
 
   /**
-   * @brief Gets a @ref PropertyTablePropertyView that views the data of a property stored
-   * in the @ref PropertyTable.
+   * @brief Gets a @ref PropertyTablePropertyView that views the data of a
+   * property stored in the @ref PropertyTable.
    *
    * This method will validate the EXT_structural_metadata format to ensure
-   * @ref PropertyTablePropertyView retrieves the correct data. T must be one of the
-   * following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t, int32_t,
-   * uint64_t, int64_t, float, double), a glm vecN composed of one of the scalar
-   * types, a glm matN composed of one of the scalar types, bool,
+   * @ref PropertyTablePropertyView retrieves the correct data. T must be one of
+   * the following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
+   * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
+   * the scalar types, a glm matN composed of one of the scalar types, bool,
    * std::string_view, or \ref PropertyArrayView with T as one of the
    * aforementioned types.
    *
    * If T does not match the type specified by the class property, this returns
    * an invalid PropertyTablePropertyView. Likewise, if the value of
    * Normalized
-   * does not match the value of @ref ClassProperty::normalized for that class property,
-   * this returns an invalid property view. Only types with integer components
-   * may be normalized.
+   * does not match the value of @ref ClassProperty::normalized for that class
+   * property, this returns an invalid property view. Only types with integer
+   * components may be normalized.
    *
    * @tparam T The C++ type corresponding to the type of the data retrieved.
    * @tparam Normalized Whether the property is normalized. Only applicable to
