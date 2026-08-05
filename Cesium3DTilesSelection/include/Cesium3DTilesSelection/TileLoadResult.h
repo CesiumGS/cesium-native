@@ -19,7 +19,7 @@ class Tile;
 
 /**
  * @brief Store the content of the tile after finishing
- * loading tile using @ref TilesetContentLoader::loadTileContent:
+ * loading tile using @ref TilesetContentLoader::loadTileContent :
  *
  * 1. Returning @ref TileUnknownContent means that the loader doesn't know
  * the content of the tile. This content type is useful when loader fails to

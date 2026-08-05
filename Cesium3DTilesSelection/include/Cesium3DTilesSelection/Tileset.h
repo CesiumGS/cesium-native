@@ -233,7 +233,7 @@ public:
    * loading and ready to be rendered before returning the function. This method
    * is significantly slower than @ref Tileset::updateView and should only be
    * used for capturing movie or non-realtime situation.
-   * @param frustums The @ref ViewStates that the view should be updated for
+   * @param frustums The @ref ViewState's that the view should be updated for
    * @returns The set of tiles to render in the updated view. This value is only
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
@@ -251,7 +251,7 @@ public:
    * the default view group (@ref getDefaultViewGroup) and then calling
    * @ref loadTiles.
    *
-   * @param frustums The @ref ViewStates that the view should be updated for
+   * @param frustums The @ref ViewState's that the view should be updated for
    * @param deltaTime The amount of time that has passed since the last call to
    * updateView, in seconds.
    * @returns The set of tiles to render in the updated view. This value is only

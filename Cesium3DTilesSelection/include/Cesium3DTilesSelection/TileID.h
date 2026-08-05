@@ -21,13 +21,13 @@ namespace Cesium3DTilesSelection {
  *
  * * A `std::string`: This is an explicitly-described tile and
  *   the ID is the URL of the tile's content.
- * * A @ref CesiumGeometry::QuadtreeTileID: This is an implicit
+ * * A @ref CesiumGeometry::QuadtreeTileID : This is an implicit
  *   tile in the quadtree. The URL of the tile's content is formed
  *   by instantiating the context's template URL with this ID.
- * * A @ref CesiumGeometry::OctreeTileID: This is an implicit
+ * * A @ref CesiumGeometry::OctreeTileID : This is an implicit
  *   tile in the octree. The URL of the tile's content is formed
  *   by instantiating the context's template URL with this ID.
- * * A @ref CesiumGeometry::UpsampledQuadtreeNode: This tile doesn't
+ * * A @ref CesiumGeometry::UpsampledQuadtreeNode : This tile doesn't
  *   have any content, but content for it can be created by subdividing
  *   the parent tile's content.
  */

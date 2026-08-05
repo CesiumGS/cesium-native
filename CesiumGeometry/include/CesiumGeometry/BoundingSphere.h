@@ -41,11 +41,11 @@ public:
    * located.
    *
    * @param plane The plane to test against.
-   * @return The @ref CullingResult:
-   *  * `Inside` if the entire sphere is on the side of the plane the normal is
+   * @return
+   *  * @ref CullingResult::Inside if the entire sphere is on the side of the plane the normal is
    * pointing.
-   *  * `Outside` if the entire sphere is on the opposite side.
-   *  * `Intersecting` if the sphere intersects the plane.
+   *  * @ref CullingResult::Outside if the entire sphere is on the opposite side.
+   *  * @ref CullingResult::Intersecting if the sphere intersects the plane.
    */
   CullingResult intersectPlane(const Plane& plane) const noexcept;
 

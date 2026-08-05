@@ -108,11 +108,11 @@ public:
    * located.
    *
    * @param plane The plane to test against.
-   * @return The @ref CullingResult:
-   *  * `Inside` if the entire cylinder is on the side of the plane the normal
+   * @return
+   *  * @ref CullingResult::Inside if the entire cylinder is on the side of the plane the normal
    * is pointing.
-   *  * `Outside` if the entire cylinder is on the opposite side.
-   *  * `Intersecting` if the cylinder intersects the plane.
+   *  * @ref CullingResult::Outside if the entire cylinder is on the opposite side.
+   *  * @ref CullingResult::Intersecting if the cylinder intersects the plane.
    */
   CullingResult intersectPlane(const Plane& plane) const noexcept;
 
