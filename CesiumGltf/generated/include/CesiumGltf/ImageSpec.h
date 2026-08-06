@@ -45,7 +45,7 @@ struct CESIUMGLTF_API ImageSpec : public CesiumGltf::NamedObject {
    * @brief The image's media type. This field **MUST** be defined when
    * `bufferView` is defined.
    *
-   * Known values are defined in {@link MimeType}.
+   * Known values are defined in @ref MimeType.
    *
    */
   std::optional<std::string> mimeType;
@@ -75,7 +75,8 @@ struct CESIUMGLTF_API ImageSpec : public CesiumGltf::NamedObject {
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use {@link Image} instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref Image
+   * instead.
    */
   ImageSpec() = default;
   friend struct Image;

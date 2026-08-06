@@ -61,7 +61,8 @@ struct CESIUM3DTILES_API BufferSpec : public CesiumUtility::ExtensibleObject {
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref Buffer
+   * instead.
    */
   BufferSpec() = default;
   friend struct Buffer;

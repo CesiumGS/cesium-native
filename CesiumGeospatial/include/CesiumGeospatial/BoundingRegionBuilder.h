@@ -21,7 +21,7 @@ public:
    * @brief Gets the final region from this builder.
    *
    * If no positions are added to this builder, the returned region's rectangle
-   * will be {@link GlobeRectangle::EMPTY}, its minimum height will be 1.0, and
+   * will be @ref GlobeRectangle::EMPTY, its minimum height will be 1.0, and
    * its maximum height will be -1.0 (the minimum will be greater than the
    * maximum).
    */
@@ -32,7 +32,7 @@ public:
    * @brief Gets the final globe rectangle from this builder.
    *
    * If no positions are added to this builder, the returned region's rectangle
-   * will be {@link GlobeRectangle::EMPTY}.
+   * will be @ref GlobeRectangle::EMPTY.
    */
   GlobeRectangle toGlobeRectangle() const;
 
@@ -40,9 +40,9 @@ public:
    * @brief Sets the distance from the North or South pole, in radians, that is
    * considered "too close" to rely on the longitude value.
    *
-   * When a position given to {@link expandToIncludePosition} has a latitude closer than this value,
-   * the region will be updated to include the position's _latitude_, but the
-   * position's longitude will be ignored.
+   * When a position given to @ref expandToIncludePosition has a latitude closer
+   * than this value, the region will be updated to include the position's
+   * _latitude_, but the position's longitude will be ignored.
    *
    * @param tolerance The new tolerance.
    */
@@ -52,9 +52,9 @@ public:
    * @brief Gets the distance from the North or South pole, in radians, that is
    * considered "too close" to rely on the longitude value.
    *
-   * When a position given to {@link expandToIncludePosition} has a latitude closer than this value,
-   * the region will be updated to include the position's _latitude_, but the
-   * position's longitude will be ignored.
+   * When a position given to @ref expandToIncludePosition has a latitude closer
+   * than this value, the region will be updated to include the position's
+   * _latitude_, but the position's longitude will be ignored.
    *
    * @return The tolerance.
    */

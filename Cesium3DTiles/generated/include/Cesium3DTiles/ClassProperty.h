@@ -105,7 +105,7 @@ struct CESIUM3DTILES_API ClassProperty final
   /**
    * @brief The element type.
    *
-   * Known values are defined in {@link Type}.
+   * Known values are defined in @ref Type.
    *
    */
   std::string type = Type::SCALAR;
@@ -114,7 +114,7 @@ struct CESIUM3DTILES_API ClassProperty final
    * @brief The datatype of the element's components. Required for `SCALAR`,
    * `VECN`, and `MATN` types, and disallowed for other types.
    *
-   * Known values are defined in {@link ComponentType}.
+   * Known values are defined in @ref ComponentType.
    *
    */
   std::optional<std::string> componentType;

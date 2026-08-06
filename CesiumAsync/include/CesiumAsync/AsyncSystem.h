@@ -46,12 +46,12 @@ public:
 
   /**
    * @brief Creates a new Future by immediately invoking a function and giving
-   * it the opportunity to resolve or reject a {@link Promise}.
+   * it the opportunity to resolve or reject a @ref Promise.
    *
-   * The {@link Promise} passed to the callback `f` may be resolved or rejected
+   * The @ref Promise passed to the callback `f` may be resolved or rejected
    * asynchronously, even after the function has returned.
    *
-   * This method is very similar to {@link AsyncSystem::createPromise}, except
+   * This method is very similar to @ref AsyncSystem::createPromise, except
    * that that method returns the Promise directly. The advantage of using this
    * method instead is that it is more exception-safe.  If the callback `f`
    * throws an exception, the `Future` will be rejected automatically and the
@@ -82,10 +82,10 @@ public:
    * @brief Create a Promise that can be used at a later time to resolve or
    * reject a Future.
    *
-   * Use {@link Promise<T>::getFuture} to get the Future that is resolved
+   * Use @ref Promise<T>::getFuture to get the Future that is resolved
    * or rejected when this Promise is resolved or rejected.
    *
-   * Consider using {@link AsyncSystem::createFuture} instead of this method.
+   * Consider using @ref AsyncSystem::createFuture instead of this method.
    *
    * @tparam T The type that is provided when resolving the Promise and the type
    * that the associated Future resolves to. Future.
@@ -184,7 +184,8 @@ public:
   }
 
   /**
-   * @brief The value type of the Future returned by {@link AsyncSystem::all(std::vector<Future<T>>&&) const}.
+   * @brief The value type of the Future returned by @ref
+   * AsyncSystem::all(std::vector<Future<T>>&&) const.
    *
    * This will be either `std::vector<T>`, if the input Futures passed to the
    * `all` function return values, or `void` if they do not.
@@ -253,7 +254,7 @@ public:
 
   /**
    * @brief The value type of the Future returned by
-   * {@link AsyncSystem::all(Futures&&... futures) const}.
+   * @ref AsyncSystem::all(Futures&&... futures) const.
    *
    * This will be a `std::tuple` containing the value types from each future.
    *

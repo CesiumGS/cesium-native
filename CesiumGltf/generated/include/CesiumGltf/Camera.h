@@ -51,7 +51,7 @@ struct CESIUMGLTF_API Camera final : public CesiumGltf::NamedObject {
    * @brief Specifies if the camera uses a perspective or orthographic
    * projection.
    *
-   * Known values are defined in {@link Type}.
+   * Known values are defined in @ref Type.
    *
    *
    * Based on this, either the camera's `perspective` or `orthographic` property

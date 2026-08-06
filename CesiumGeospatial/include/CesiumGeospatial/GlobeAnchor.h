@@ -17,7 +17,7 @@ class LocalHorizontalCoordinateSystem;
  * \ref what-are-ecef-coordinates).
  *
  * This class allows the anchored coordinate system to be realized in any
- * {@link LocalHorizontalCoordinateSystem}. When the object is moved, either by
+ * @ref LocalHorizontalCoordinateSystem. When the object is moved, either by
  * specifying a new globe-fixed transform or a new local transform, the
  * orientation may optionally be updated to keep the object upright at its new
  * location on the globe.
@@ -83,7 +83,7 @@ public:
    * the globe changes. This parameter should usually be true, but it may be
    * useful to set it to false it when the caller already accounts for globe
    * curvature itself, because in that case anchor would be over-rotated.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
    */
   void setAnchorToFixedTransform(
       const glm::dmat4& newAnchorToFixed,
@@ -121,7 +121,7 @@ public:
    * the globe changes. This parameter should usually be true, but it may be
    * useful to set it to false it when the caller already accounts for globe
    * curvature itself, because in that case anchor would be over-rotated.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
    */
   void setAnchorToLocalTransform(
       const LocalHorizontalCoordinateSystem& localCoordinateSystem,

@@ -88,7 +88,7 @@ struct CESIUMGEOMETRY_API Rectangle final {
    * @brief Checks whether this rectangle fully contains the given rectangle.
    *
    * This means that this rectangle contains all four corner points
-   * of the given rectangle, as defined in {@link Rectangle::contains}.
+   * of the given rectangle, as defined in @ref Rectangle::contains.
    *
    * @param other The other rectangle.
    * @returns Whether this rectangle fully contains the given rectangle.

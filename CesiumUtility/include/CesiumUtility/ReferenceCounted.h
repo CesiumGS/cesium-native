@@ -29,10 +29,10 @@ template <> class ThreadIdHolder<true> {};
 
 /**
  * @brief A reference-counted base class, meant to be used with
- * {@link IntrusivePointer}.
+ * @ref IntrusivePointer.
  *
- * Consider using {@link ReferenceCountedThreadSafe} or
- * {@link ReferenceCountedNonThreadSafe} instead of using this class directly.
+ * Consider using @ref ReferenceCountedThreadSafe or
+ * @ref ReferenceCountedNonThreadSafe instead of using this class directly.
  *
  * @tparam T The type that is _deriving_ from this class. For example, you
  * should declare your class as
@@ -57,7 +57,7 @@ public:
 
   /**
    * @brief Adds a counted reference to this object. Use
-   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
+   * @ref CesiumUtility::IntrusivePointer instead of calling this method
    * directly.
    */
   void addReference() const /*noexcept*/ {
@@ -73,7 +73,7 @@ public:
   /**
    * @brief Removes a counted reference from this object. When the last
    * reference is removed, this method will delete this instance. Use
-   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
+   * @ref CesiumUtility::IntrusivePointer instead of calling this method
    * directly.
    */
   void releaseReference() const /*noexcept*/ {
@@ -111,7 +111,7 @@ private:
 
 /**
  * @brief A reference-counted base class, meant to be used with
- * {@link IntrusivePointer}. The reference count is thread-safe, so references
+ * @ref IntrusivePointer. The reference count is thread-safe, so references
  * may be added and removed from any thread at any time. The object will be
  * destroyed in the thread that releases the last reference.
  *
@@ -124,7 +124,7 @@ using ReferenceCountedThreadSafe = ReferenceCounted<T, true>;
 
 /**
  * @brief A reference-counted base class, meant to be used with
- * {@link IntrusivePointer}. The reference count is not thread-safe, so
+ * @ref IntrusivePointer. The reference count is not thread-safe, so
  * references must be added and removed (including automatically via
  * `IntrusivePointer`) from only one thread at a time.
  *

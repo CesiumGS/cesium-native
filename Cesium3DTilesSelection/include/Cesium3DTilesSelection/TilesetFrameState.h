@@ -13,7 +13,7 @@ class TilesetViewGroup;
 
 /**
  * @brief Captures information about the current frame during a call to
- * {@link Tileset::updateViewGroup}.
+ * @ref Tileset::updateViewGroup.
  */
 class TilesetFrameState {
 public:

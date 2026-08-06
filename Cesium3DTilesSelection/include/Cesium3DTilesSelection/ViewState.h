@@ -20,7 +20,7 @@ namespace Cesium3DTilesSelection {
 /**
  * @brief The state of the view that is used during the traversal of a tileset.
  *
- * An instance of a view state can be created with the {@link create} function.
+ * An instance of a view state can be created with the @ref create function.
  */
 class CESIUM3DTILESSELECTION_API ViewState final {
 
@@ -28,7 +28,7 @@ public:
   /**
    * @brief Creates a new instance of a view state with a symmetric perspective
    * projection.
-   * @deprecated Use {@link ViewState::ViewState} instead.
+   * @deprecated Use @ref ViewState::ViewState instead.
    */
   [[deprecated("Use ViewState::ViewState instead.")]] static ViewState create(
       const glm::dvec3& position,
@@ -51,9 +51,9 @@ public:
    * @param verticalFieldOfView The vertical field-of-view (opening)
    * angle of the camera, in radians.
    * @param ellipsoid The ellipsoid that will be used to compute the
-   * {@link ViewState#getPositionCartographic cartographic position}
+   * @ref ViewState::getPositionCartographic "cartographic position"
    * from the cartesian position.
-   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   * Default value: @ref CesiumGeospatial::Ellipsoid::WGS84.
    */
   ViewState(
       const glm::dvec3& position,
@@ -70,12 +70,12 @@ public:
    *
    * @param viewMatrix The view's view matrix i.e., the inverse of its pose
    * @param projectionMatrix see e.g.
-   * {@link CesiumGeometry::Transforms::createPerspectiveMatrix}
+   * @ref CesiumGeometry::Transforms::createPerspectiveMatrix
    * @param viewportSize The size of the viewport, in pixels.
    * @param ellipsoid The ellipsoid that will be used to compute the
-   * {@link ViewState#getPositionCartographic cartographic position}
+   * @ref ViewState::getPositionCartographic "cartographic position"
    * from the cartesian position.
-   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   * Default value: @ref CesiumGeospatial::Ellipsoid::WGS84.
    */
   ViewState(
       const glm::dmat4& viewMatrix,
@@ -96,9 +96,9 @@ public:
    * @param bottom bottom distance of near plane edge
    * @param top top distance of near plane edge
    * @param ellipsoid The ellipsoid that will be used to compute the
-   * {@link ViewState#getPositionCartographic cartographic position}
+   * @ref ViewState::getPositionCartographic "cartographic position"
    * from the cartesian position.
-   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   * Default value: @ref CesiumGeospatial::Ellipsoid::WGS84.
    */
   ViewState(
       const glm::dvec3& position,
@@ -177,7 +177,7 @@ public:
   }
 
   /**
-   * @brief Returns whether the given {@link BoundingVolume} is visible for this
+   * @brief Returns whether the given @ref BoundingVolume is visible for this
    * camera
    *
    * Returns whether the given bounding volume is visible for this camera,
@@ -190,7 +190,7 @@ public:
   isBoundingVolumeVisible(const BoundingVolume& boundingVolume) const noexcept;
 
   /**
-   * @brief Computes the squared distance to the given {@link BoundingVolume}.
+   * @brief Computes the squared distance to the given @ref BoundingVolume.
    *
    * Computes the squared euclidean distance from the position of this camera
    * to the closest point of the given bounding volume.

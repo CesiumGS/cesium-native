@@ -16,8 +16,8 @@ namespace CesiumGltfReader {
 
 /**
  * @brief A description of a schema asset that can be loaded from the network
- * using an {@link CesiumAsync::IAssetAccessor}. This includes a URL and any headers to be
- * included in the request.
+ * using an @ref CesiumAsync::IAssetAccessor. This includes a URL and any
+ * headers to be included in the request.
  */
 struct NetworkSchemaAssetDescriptor
     : public CesiumAsync::NetworkAssetDescriptor {
@@ -28,7 +28,7 @@ struct NetworkSchemaAssetDescriptor
 
   /**
    * @brief Request this asset from the network using the provided asset
-   * accessor and return the loaded {@link CesiumGltf::Schema}.
+   * accessor and return the loaded @ref CesiumGltf::Schema.
    *
    * @param asyncSystem The async system.
    * @param pAssetAccessor The asset accessor.

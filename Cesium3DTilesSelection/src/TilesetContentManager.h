@@ -99,14 +99,14 @@ public:
    * it is necessary and possible to do so.
    *
    * Latent children are child tiles that can be created by
-   * {@link TilesetContentLoader::createChildTiles} but that are not yet
-   * reflected in {@link Tile::getChildren}. For example, in implicit tiling,
+   * @ref TilesetContentLoader::createChildTiles but that are not yet
+   * reflected in @ref Tile::getChildren. For example, in implicit tiling,
    * we save memory by only creating explicit Tile instances from implicit
    * availability as those instances are needed. Calling this method will create
    * the explicit tile instances for the given tile's children.
    *
    * This method does nothing if the given tile already has children, or if
-   * {@link Tile::getMightHaveLatentChildren} returns false.
+   * @ref Tile::getMightHaveLatentChildren returns false.
    *
    * @param tile The tile for which to create latent children.
    * @param tilesetOptions The tileset's options.
@@ -123,7 +123,7 @@ public:
    * @brief Unload every tile that is safe to unload.
    *
    * Tiles that are currently loading asynchronously will not be unloaded. If
-   * {@link isIdle} returns true, all tiles will be unloaded.
+   * @ref isIdle returns true, all tiles will be unloaded.
    */
   void unloadAll();
 

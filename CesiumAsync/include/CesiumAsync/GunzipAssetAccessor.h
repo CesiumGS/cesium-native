@@ -7,7 +7,7 @@ namespace CesiumAsync {
 class AsyncSystem;
 
 /**
- * @brief A decorator for an {@link IAssetAccessor} that automatically unzips
+ * @brief A decorator for an @ref IAssetAccessor that automatically unzips
  * gzipped asset responses from the underlying Asset Accessor.
  */
 class GunzipAssetAccessor : public IAssetAccessor {
@@ -15,7 +15,7 @@ public:
   /**
    * @brief Constructs a new instance.
    *
-   * @param pAssetAccessor The underlying {@link IAssetAccessor} used to
+   * @param pAssetAccessor The underlying @ref IAssetAccessor used to
    * retrieve assets that may or may not be zipped.
    */
   GunzipAssetAccessor(const std::shared_ptr<IAssetAccessor>& pAssetAccessor);

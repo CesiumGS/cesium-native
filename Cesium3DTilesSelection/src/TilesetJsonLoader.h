@@ -74,7 +74,7 @@ private:
    * @brief The axis that was declared as the "up-axis" for glTF content.
    *
    * The glTF specification mandates that the Y-axis is the "up"-axis, so the
-   * default value is {@link Axis::Y}. Older tilesets may contain a string
+   * default value is @ref Axis::Y. Older tilesets may contain a string
    * property in the "assets" dictionary, named "gltfUpAxis", indicating a
    * different up-axis. Although the "gltfUpAxis" property is no longer part of
    * the 3D tiles specification, it is still considered for backward

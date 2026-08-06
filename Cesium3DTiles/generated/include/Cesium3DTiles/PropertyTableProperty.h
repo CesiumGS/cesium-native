@@ -103,7 +103,7 @@ struct CESIUM3DTILES_API PropertyTableProperty final
   /**
    * @brief The type of values in `arrayOffsets`.
    *
-   * Known values are defined in {@link ArrayOffsetType}.
+   * Known values are defined in @ref ArrayOffsetType.
    *
    */
   std::string arrayOffsetType = ArrayOffsetType::UINT32;
@@ -111,7 +111,7 @@ struct CESIUM3DTILES_API PropertyTableProperty final
   /**
    * @brief The type of values in `stringOffsets`.
    *
-   * Known values are defined in {@link StringOffsetType}.
+   * Known values are defined in @ref StringOffsetType.
    *
    */
   std::string stringOffsetType = StringOffsetType::UINT32;

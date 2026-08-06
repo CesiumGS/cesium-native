@@ -61,7 +61,7 @@ public:
    * @brief Determines on which side of a plane the bounding region is located.
    *
    * @param plane The plane to test against.
-   * @return The {@link CesiumGeometry::CullingResult}
+   * @return The @ref CesiumGeometry::CullingResult
    *  * `Inside` if the entire region is on the side of the plane the normal is
    * pointing.
    *  * `Outside` if the entire region is on the opposite side.
@@ -122,7 +122,7 @@ public:
    * @brief Computes the union of this bounding region with another.
    *
    * @param other The other bounding region.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
    * @return The union.
    */
   BoundingRegion computeUnion(

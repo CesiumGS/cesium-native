@@ -151,35 +151,35 @@ public:
   void setNorth(double value) noexcept { this->_north = value; }
 
   /**
-   * @brief Returns the {@link Cartographic} position of the south-west corner.
+   * @brief Returns the @ref Cartographic position of the south-west corner.
    */
   constexpr Cartographic getSouthwest() const noexcept {
     return Cartographic(this->_west, this->_south);
   }
 
   /**
-   * @brief Returns the {@link Cartographic} position of the south-east corner.
+   * @brief Returns the @ref Cartographic position of the south-east corner.
    */
   constexpr Cartographic getSoutheast() const noexcept {
     return Cartographic(this->_east, this->_south);
   }
 
   /**
-   * @brief Returns the {@link Cartographic} position of the north-west corner.
+   * @brief Returns the @ref Cartographic position of the north-west corner.
    */
   constexpr Cartographic getNorthwest() const noexcept {
     return Cartographic(this->_west, this->_north);
   }
 
   /**
-   * @brief Returns the {@link Cartographic} position of the north-east corner.
+   * @brief Returns the @ref Cartographic position of the north-east corner.
    */
   constexpr Cartographic getNortheast() const noexcept {
     return Cartographic(this->_east, this->_north);
   }
 
   /**
-   * @brief Returns this rectangle as a {@link CesiumGeometry::Rectangle}.
+   * @brief Returns this rectangle as a @ref CesiumGeometry::Rectangle.
    */
   constexpr CesiumGeometry::Rectangle toSimpleRectangle() const noexcept {
     return CesiumGeometry::Rectangle(
@@ -213,7 +213,7 @@ public:
   }
 
   /**
-   * @brief Computes the {@link Cartographic} center position of this rectangle.
+   * @brief Computes the @ref Cartographic center position of this rectangle.
    */
   Cartographic computeCenter() const noexcept;
 
@@ -244,7 +244,7 @@ public:
    * values as well as the wrapping of longitude at the anti-meridian.  For a
    * simple intersection that ignores these factors and can be used with
    * projected coordinates, see
-   * {@link CesiumGeometry::Rectangle::computeIntersection}.
+   * @ref CesiumGeometry::Rectangle::computeIntersection.
    *
    * @param other The other rectangle to intersect with this one.
    * @returns The intersection rectangle, or `std::nullopt` if there is no
