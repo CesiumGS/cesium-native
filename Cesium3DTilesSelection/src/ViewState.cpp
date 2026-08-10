@@ -9,6 +9,7 @@
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 
 #include <glm/common.hpp>
@@ -119,6 +120,36 @@ ViewState::ViewState(
           viewportSize,
           ellipsoid) {}
 
+ViewState::ViewState(
+    const BoundingVolume& boundingVolume,
+    const CesiumGeospatial::Ellipsoid& ellipsoid)
+    : _position{0.0, 0.0, 1.0},
+      _direction{0.0, 0.0, 1.0},
+      _viewportSize{0, 0},
+      _ellipsoid(ellipsoid),
+      _positionCartographic{},
+      _cullingVolume(boundingVolume),
+      _viewMatrix(1.0),
+      _projectionMatrix(1.0){
+  std::optional<GlobeRectangle> globeRectangle =
+      estimateGlobeRectangle(boundingVolume, ellipsoid);
+  if (!globeRectangle) {
+    return;
+  }
+  // Get approximate center, a "North" view direction,and up at the center.
+  _positionCartographic = globeRectangle->computeCenter();
+  LocalHorizontalCoordinateSystem enu{
+    *_positionCartographic,
+    LocalDirection::East,
+    LocalDirection::North,
+    LocalDirection::Up,
+    1.0,
+    ellipsoid};
+  _viewMatrix = enu.getLocalToEcefTransformation();
+  _position = positionFromView(_viewMatrix);
+  _direction = directionFromView(_viewMatrix);
+}
+
 namespace {
 
 } // namespace
@@ -182,6 +213,9 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
 double ViewState::computeScreenSpaceError(
     double geometricError,
     double distance) const noexcept {
+  if (this->_viewportSize.y == 0.0) {
+    return geometricError / 1024.0;
+  }
   // Avoid divide by zero when viewer is inside the tile
   distance = glm::max(distance, 1e-7);
   // This is a simplified version of the projection transform and homogeneous

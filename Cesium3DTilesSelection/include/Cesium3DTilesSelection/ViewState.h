@@ -112,6 +112,21 @@ public:
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
+   * @brief Creates a new instance of a view state from a bounding volume
+   * associated with a geographic area, as opposed to a viewing projection. This
+   * constructor does not specify a viewport, and so doesn't use Screen Space
+   * Error (SSE) as a selection criteria.
+   *
+   * @param BoundingVolume The geographic viewing volume
+   * @param ellipsoid The ellipsoid that will be used to compute the
+   * {@link ViewState#getPositionCartographic cartographic position} and other
+   * parameters for tile selection.
+   */
+  ViewState(
+      const BoundingVolume& boundingVolume,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+  
+  /**
    * @brief Gets the position of the camera in Earth-centered, Earth-fixed
    * coordinates.
    */
@@ -219,16 +234,16 @@ public:
       const noexcept;
 
 private:
-  const glm::dvec3 _position;
-  const glm::dvec3 _direction;
-  const glm::dvec2 _viewportSize;
-  const CesiumGeospatial::Ellipsoid _ellipsoid;
+  glm::dvec3 _position;
+  glm::dvec3 _direction;
+  glm::dvec2 _viewportSize;
+  CesiumGeospatial::Ellipsoid _ellipsoid;
 
-  const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
+  std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
-  const Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
-  const glm::dmat4 _viewMatrix;
-  const glm::dmat4 _projectionMatrix;
+  Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
+  glm::dmat4 _viewMatrix;
+  glm::dmat4 _projectionMatrix;
 };
 
 } // namespace Cesium3DTilesSelection
