@@ -111,6 +111,19 @@ void parsePntsHeader(
         "size specified in its header.");
     return;
   }
+
+  uint64_t sectionsEnd =
+      static_cast<uint64_t>(headerLength) +
+      static_cast<uint64_t>(pHeader->featureTableJsonByteLength) +
+      static_cast<uint64_t>(pHeader->featureTableBinaryByteLength) +
+      static_cast<uint64_t>(pHeader->batchTableJsonByteLength) +
+      static_cast<uint64_t>(pHeader->batchTableBinaryByteLength);
+  if (sectionsEnd > pHeader->byteLength) {
+    result.errors.emplaceError(
+        "The PNTS is invalid because the sum of the header and section lengths "
+        "exceeds the size specified in its header.");
+    return;
+  }
 }
 
 struct PntsSemantic {

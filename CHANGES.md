@@ -11,6 +11,7 @@
 
 ##### Fixes :wrench:
 
+- Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
 - `CesiumVectorOverlays::GeoJsonDocumentRasterOverlay` now actually rasterizes `Point` and `MultiPoint` geometry. Previously these were silently dropped before reaching the rasterizer, even though point rendering was already supported.
 - The offsets to string feature data in `MAXAR_content_geojson` tiles are now optimized to an appropriate integer type, instead of always using UINT64.
 
