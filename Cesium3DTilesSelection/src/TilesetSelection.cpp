@@ -329,10 +329,17 @@ double computeSse(
 bool meetsSseThreshold(
     const TileSelectionContext& context,
     double sse,
-    bool culled) noexcept {
-  return culled ? !context.options.enforceCulledScreenSpaceError ||
-                      sse < context.options.culledScreenSpaceError
-                : sse < context.options.maximumScreenSpaceError;
+    bool culled,
+    const Tile& tile,
+    double fixedError) noexcept {
+  if (fixedError > 0.0) {
+    return culled ? !context.options.enforceCulledScreenSpaceError
+                  : tile.getGeometricError() < fixedError;
+  } else {
+    return culled ? !context.options.enforceCulledScreenSpaceError ||
+                        sse < context.options.culledScreenSpaceError
+                  : sse < context.options.maximumScreenSpaceError;
+  }
 }
 
 bool isLeaf(const Tile& tile) noexcept { return tile.getChildren().empty(); }
@@ -459,7 +466,8 @@ void fogCull(
   CESIUM_ASSERT(distances.size() == frustums.size());
   bool isFogCulled = true;
   for (size_t i = 0; i < frustums.size(); ++i) {
-    if (isVisibleInFog(distances[i], fogDensities[i])) {
+    if (frustums[i].getViewportSize().y == 0.0 ||
+        isVisibleInFog(distances[i], fogDensities[i])) {
       isFogCulled = false;
       break;
     }
@@ -1125,7 +1133,18 @@ TraversalDetails visitTileIfNeeded(
   }
 
   double tileSse = computeSse(context, frameState, tile);
-  bool meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
+  auto fixedErrorIt = std::min_element(
+      frameState.frustums.begin(),
+      frameState.frustums.end(),
+      [](const ViewState& a, const ViewState& b) {
+        return a.getSelectionMeasure() < b.getSelectionMeasure();
+      });
+  bool meetsSse = meetsSseThreshold(
+      context,
+      tileSse,
+      cullResult.culled,
+      tile,
+      fixedErrorIt->getSelectionMeasure());
 
   TraversalDetails details = visitTile(
       context,

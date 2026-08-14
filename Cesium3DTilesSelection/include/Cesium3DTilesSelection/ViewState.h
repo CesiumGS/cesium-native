@@ -117,15 +117,18 @@ public:
    * constructor does not specify a viewport, and so doesn't use Screen Space
    * Error (SSE) as a selection criteria.
    *
-   * @param BoundingVolume The geographic viewing volume
+   * @param boundingVolume The geographic viewing volume
+   * @param selectionMeasure Value used for selection, typically tile geometric
+   * error
    * @param ellipsoid The ellipsoid that will be used to compute the
    * {@link ViewState#getPositionCartographic cartographic position} and other
    * parameters for tile selection.
    */
   ViewState(
       const BoundingVolume& boundingVolume,
+      double selectionMeasure,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
-  
+
   /**
    * @brief Gets the position of the camera in Earth-centered, Earth-fixed
    * coordinates.
@@ -192,6 +195,11 @@ public:
   }
 
   /**
+   * @brief Gets the selection measure.
+   */
+  double getSelectionMeasure() const { return this->_selectionMeasure; }
+
+  /**
    * @brief Returns whether the given {@link BoundingVolume} is visible for this
    * camera
    *
@@ -244,6 +252,7 @@ private:
   Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
+  double _selectionMeasure = 0.0;
 };
 
 } // namespace Cesium3DTilesSelection

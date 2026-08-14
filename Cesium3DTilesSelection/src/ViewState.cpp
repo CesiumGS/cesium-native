@@ -122,6 +122,7 @@ ViewState::ViewState(
 
 ViewState::ViewState(
     const BoundingVolume& boundingVolume,
+    double selectionMeasure,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _position{0.0, 0.0, 1.0},
       _direction{0.0, 0.0, 1.0},
@@ -130,7 +131,8 @@ ViewState::ViewState(
       _positionCartographic{},
       _cullingVolume(boundingVolume),
       _viewMatrix(1.0),
-      _projectionMatrix(1.0){
+      _projectionMatrix(1.0),
+      _selectionMeasure(selectionMeasure) {
   std::optional<GlobeRectangle> globeRectangle =
       estimateGlobeRectangle(boundingVolume, ellipsoid);
   if (!globeRectangle) {
@@ -139,24 +141,24 @@ ViewState::ViewState(
   // Get approximate center, a "North" view direction,and up at the center.
   _positionCartographic = globeRectangle->computeCenter();
   LocalHorizontalCoordinateSystem enu{
-    *_positionCartographic,
-    LocalDirection::East,
-    LocalDirection::North,
-    LocalDirection::Up,
-    1.0,
-    ellipsoid};
+      *_positionCartographic,
+      LocalDirection::East,
+      LocalDirection::North,
+      LocalDirection::Up,
+      1.0,
+      ellipsoid};
   _viewMatrix = enu.getLocalToEcefTransformation();
   _position = positionFromView(_viewMatrix);
   _direction = directionFromView(_viewMatrix);
 }
 
-namespace {
-
-} // namespace
+namespace {} // namespace
 
 bool ViewState::isBoundingVolumeVisible(
     const BoundingVolume& boundingVolume) const noexcept {
-  return Cesium3DTilesSelection::isBoundingVolumeVisible(_cullingVolume, boundingVolume);
+  return Cesium3DTilesSelection::isBoundingVolumeVisible(
+      _cullingVolume,
+      boundingVolume);
 }
 
 double ViewState::computeDistanceSquaredToBoundingVolume(
@@ -214,7 +216,7 @@ double ViewState::computeScreenSpaceError(
     double geometricError,
     double distance) const noexcept {
   if (this->_viewportSize.y == 0.0) {
-    return geometricError / 1024.0;
+    return geometricError;
   }
   // Avoid divide by zero when viewer is inside the tile
   distance = glm::max(distance, 1e-7);

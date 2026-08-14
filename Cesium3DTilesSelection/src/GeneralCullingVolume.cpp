@@ -57,9 +57,8 @@ bool isBoundingVolumeVisible(
             return isBoundingVolumeVisible(boundingSphere, cullingVolume);
           },
 
-          [cullingVolume](
-              const BoundingRegionWithLooseFittingHeights&
-                  boundingRegion) noexcept {
+          [cullingVolume](const BoundingRegionWithLooseFittingHeights&
+                              boundingRegion) noexcept {
             return isBoundingVolumeVisible(
                 boundingRegion.getBoundingRegion(),
                 cullingVolume);
@@ -71,8 +70,10 @@ bool isBoundingVolumeVisible(
 
           [cullingVolume](
               const BoundingCylinderRegion& boundingCylinderRegion) noexcept {
-            return isBoundingVolumeVisible(boundingCylinderRegion, cullingVolume);
-            }},
+            return isBoundingVolumeVisible(
+                boundingCylinderRegion,
+                cullingVolume);
+          }},
       boundingVolume);
 }
 
@@ -83,15 +84,14 @@ bool isBoundingVolumeVisible(
     const BoundingVolume& boundingVolume) {
   return std::visit(
       overload{
-        [boundingVolume](const CesiumGeometry::CullingVolume& cv) {
-          return isBoundingVolumeVisible(cv, boundingVolume);
-        },
+          [boundingVolume](const CesiumGeometry::CullingVolume& cv) {
+            return isBoundingVolumeVisible(cv, boundingVolume);
+          },
 
-            [boundingVolume](const BoundingVolume& cv) {
-              return testIntersection(cv, boundingVolume);
-            }},
+          [boundingVolume](const BoundingVolume& cv) {
+            return testIntersection(cv, boundingVolume);
+          }},
       cullingVolume);
-  
 }
 
-}
+} // namespace Cesium3DTilesSelection

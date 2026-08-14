@@ -11,6 +11,8 @@ namespace Cesium3DTilesSelection {
 using GeneralCullingVolume =
     std::variant<CesiumGeometry::CullingVolume, BoundingVolume>;
 
-bool CESIUM3DTILESSELECTION_API isBoundingVolumeVisible(const GeneralCullingVolume& cullingVolume, const BoundingVolume& boundingVolume);
+bool CESIUM3DTILESSELECTION_API isBoundingVolumeVisible(
+    const GeneralCullingVolume& cullingVolume,
+    const BoundingVolume& boundingVolume);
 
 } // namespace Cesium3DTilesSelection
