@@ -331,7 +331,7 @@ bool intersectsImpl(const BoundingRegion& br, const BV& bv) {
 bool testIntersection(
     const BoundingVolume& volume0,
     const BoundingVolume& volume1) {
-  return visit(
+  return std::visit(
       [&](auto&& bv0, auto&& bv1) -> bool {
         // If one of the volumes is a Bounding sphere, then don't bother to
         // convert; just test against the sphere.
