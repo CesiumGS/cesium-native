@@ -12,7 +12,7 @@ namespace Cesium3DTilesContent {
 
 /**
  * @brief Convenience functions for getting and setting
- * {@link Cesium3DTiles::Tile::transform} as a `glm::dmat4`.
+ * @ref Cesium3DTiles::Tile::transform as a `glm::dmat4`.
  */
 class TileTransform {
 public:
@@ -24,7 +24,7 @@ public:
    *
    * @param tile The tile from which to get the transform.
    * @return The transform, or `std::nullopt` if the
-   * {@link Cesium3DTiles::Tile::transform} has less than 16 elements.
+   * @ref Cesium3DTiles::Tile::transform has less than 16 elements.
    */
   static std::optional<glm::dmat4>
   getTransform(const Cesium3DTiles::Tile& tile);

@@ -23,13 +23,13 @@ class TilesetFrameState;
 
 /**
  * @brief Represents a group of views that collectively select tiles from a
- * particular {@link Tileset}.
+ * particular @ref Tileset.
  *
  * Create an instance of this class and pass it repeatedly to
- * {@link Tileset::updateViewGroup} to select tiles suitable for rendering the
+ * @ref Tileset::updateViewGroup to select tiles suitable for rendering the
  * tileset from a given view or set of views.
  *
- * This class is intentionally decoupled from {@link ViewState}, such that
+ * This class is intentionally decoupled from @ref ViewState, such that
  * clients are responsible for managing which views are represented by
  * any particular group.
  */
@@ -37,7 +37,7 @@ class CESIUM3DTILESSELECTION_API TilesetViewGroup final
     : public TileLoadRequester {
 public:
   /**
-   * @brief The type of the {@link CesiumUtility::TreeTraversalState}
+   * @brief The type of the @ref CesiumUtility::TreeTraversalState
    * used to track tile selection states for this view group.
    */
   using TraversalState =
@@ -52,7 +52,7 @@ public:
    * @brief Constructs a new instance as a copy of an existing one.
    *
    * The new instance will be equivalent to the existing one, but it will not be
-   * registered with the {@link Cesium3DTilesSelection::Tileset}.
+   * registered with the @ref Cesium3DTilesSelection::Tileset.
    *
    * @param rhs The view group to copy.
    */
@@ -62,7 +62,7 @@ public:
    * @brief Moves an existing view group into a new one.
    *
    * The new instance will be registered with the
-   * {@link Cesium3DTilesSelection::Tileset}, and the old one will be
+   * @ref Cesium3DTilesSelection::Tileset, and the old one will be
    * unregistered.
    *
    * @param rhs The view group to move from.
@@ -72,7 +72,7 @@ public:
 
   /**
    * @brief Gets the result from the last time this view group was updated by
-   * calling {@link Tileset::updateViewGroup}.
+   * calling @ref Tileset::updateViewGroup.
    */
   const ViewUpdateResult& getViewUpdateResult() const;
 
@@ -93,14 +93,14 @@ public:
   /**
    * @brief Adds a tile load task to this view group's load queue.
    *
-   * Each tile may only be added once per call to {@link startNewFrame}. Adding
+   * Each tile may only be added once per call to @ref startNewFrame. Adding
    * a tile multiple times will lead to an assertion in debug builds and
    * undefined behavior in release builds.
    *
    * @param task The tile load task to add to the queue.
    * @param pModifier The optional glTF modifier. If not `nullptr`, this method
    * will also add the tile to load queue if it needs glTF modification. See
-   * {@link TilesetExternals::pGltfModifier}.
+   * @ref TilesetExternals::pGltfModifier.
    */
   void addToLoadQueue(
       const TileLoadTask& task,
@@ -109,8 +109,8 @@ public:
   /**
    * @brief A checkpoint within this view group's load queue.
    *
-   * A checkpoint can be created by calling {@link saveTileLoadQueueCheckpoint}.
-   * Later, calling {@link restoreTileLoadQueueCheckpoint} will remove all
+   * A checkpoint can be created by calling @ref saveTileLoadQueueCheckpoint.
+   * Later, calling @ref restoreTileLoadQueueCheckpoint will remove all
    * tiles from the queue that were added since the checkpoint was saved.
    */
   struct LoadQueueCheckpoint {
@@ -125,10 +125,10 @@ public:
    * group.
    *
    * The saved checkpoint can later be restored by calling
-   * {@link restoreTileLoadQueueCheckpoint}.
+   * @ref restoreTileLoadQueueCheckpoint.
    *
-   * This method should only be called in between calls to {@link startNewFrame}
-   * and {@link finishFrame}.
+   * This method should only be called in between calls to @ref startNewFrame
+   * and @ref finishFrame.
    *
    * @return The checkpoint.
    */
@@ -139,11 +139,11 @@ public:
    * associated with this view group.
    *
    * Restoring a checkpoint discards all tiles from the queue that were
-   * requested, with a call to {@link addToLoadQueue}, since the checkpoint was
+   * requested, with a call to @ref addToLoadQueue, since the checkpoint was
    * created.
    *
-   * This method should only be called in between calls to {@link startNewFrame}
-   * and {@link finishFrame}.
+   * This method should only be called in between calls to @ref startNewFrame
+   * and @ref finishFrame.
    *
    * @param checkpoint The previously-created checkpoint.
    * @return The number of tiles that were discarded from the queue as a result
@@ -180,9 +180,9 @@ public:
    * @brief Finishes the current frame.
    *
    * This method updates the load progress percentage returned by
-   * {@link getPreviousLoadProgressPercentage} and makes sure credits used by
+   * @ref getPreviousLoadProgressPercentage and makes sure credits used by
    * this view group have been referenced on the
-   * {@link CesiumUtility::CreditSystem}.
+   * @ref CesiumUtility::CreditSystem.
    *
    * @param tileset The tileset that is finishing the current frame.
    * @param frameState The state of the frame.
@@ -193,7 +193,7 @@ public:
    * @brief Gets the previous load progress percentage for this view group as
    * of the last time it was updated.
    *
-   * This method reports the progress as of the last call to {@link finishFrame}.
+   * This method reports the progress as of the last call to @ref finishFrame.
    *
    * The reported percentage is computed as:
    *
@@ -210,7 +210,7 @@ public:
    * @brief Sets the weight of this view group relative to other tile
    * requesters.
    *
-   * See {@link getWeight} for an explanation of the meaning of the weight.
+   * See @ref getWeight for an explanation of the meaning of the weight.
    *
    * @param weight The new weight for this view group.
    */

@@ -65,7 +65,7 @@ struct CESIUMGEOMETRY_API Transforms final {
   /**
    * @brief Decomposes a matrix into translation, rotation, and scale
    * components. This is the reverse of
-   * {@link createTranslationRotationScaleMatrix}.
+   * @ref createTranslationRotationScaleMatrix.
    *
    * The scale may be negative (i.e. when switching from a right-handed to a
    * left-handed system), but skew and other funny business will result in

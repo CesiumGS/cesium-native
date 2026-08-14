@@ -82,7 +82,7 @@ struct CESIUMGLTF_API ExtensionBufferViewExtMeshoptCompression final
   /**
    * @brief The compression mode.
    *
-   * Known values are defined in {@link Mode}.
+   * Known values are defined in @ref Mode.
    *
    */
   std::string mode = Mode::ATTRIBUTES;
@@ -90,7 +90,7 @@ struct CESIUMGLTF_API ExtensionBufferViewExtMeshoptCompression final
   /**
    * @brief The compression filter.
    *
-   * Known values are defined in {@link Filter}.
+   * Known values are defined in @ref Filter.
    *
    */
   std::string filter = Filter::NONE;

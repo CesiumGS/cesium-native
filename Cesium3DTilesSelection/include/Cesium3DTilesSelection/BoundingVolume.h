@@ -37,10 +37,10 @@ typedef std::variant<
     BoundingVolume;
 
 /**
- * @brief Transform the given {@link BoundingVolume} with the given matrix.
+ * @brief Transform the given @ref BoundingVolume with the given matrix.
  *
- * If the given bounding volume is a {@link CesiumGeometry::BoundingSphere}
- * or {@link CesiumGeometry::OrientedBoundingBox}, then it will be transformed
+ * If the given bounding volume is a @ref CesiumGeometry::BoundingSphere
+ * or @ref CesiumGeometry::OrientedBoundingBox, then it will be transformed
  * with the given matrix. Bounding regions will not be transformed.
  *
  * @param transform The transform matrix.
@@ -52,7 +52,7 @@ CESIUM3DTILESSELECTION_API BoundingVolume transformBoundingVolume(
     const BoundingVolume& boundingVolume);
 
 /**
- * @brief Returns the center of the given {@link BoundingVolume}.
+ * @brief Returns the center of the given @ref BoundingVolume.
  *
  * @param boundingVolume The bounding volume.
  * @return The center point.
@@ -61,12 +61,12 @@ CESIUM3DTILESSELECTION_API glm::dvec3
 getBoundingVolumeCenter(const BoundingVolume& boundingVolume);
 
 /**
- * @brief Estimates the bounding {@link CesiumGeospatial::GlobeRectangle} of the
- * given {@link BoundingVolume}.
+ * @brief Estimates the bounding @ref CesiumGeospatial::GlobeRectangle of the
+ * given @ref BoundingVolume.
  *
  * @param boundingVolume The bounding volume.
  * @param ellipsoid The ellipsoid to use for globe calculations.
- * @return The bounding {@link CesiumGeospatial::GlobeRectangle}.
+ * @return The bounding @ref CesiumGeospatial::GlobeRectangle.
  */
 CESIUM3DTILESSELECTION_API std::optional<CesiumGeospatial::GlobeRectangle>
 estimateGlobeRectangle(
@@ -75,7 +75,8 @@ estimateGlobeRectangle(
 
 /**
  * @brief Returns the bounding region if the bounding volume is a
- * {@link CesiumGeospatial::BoundingRegion} or a {@link CesiumGeospatial::BoundingRegionWithLooseFittingHeights}.
+ * @ref CesiumGeospatial::BoundingRegion or a @ref
+ * CesiumGeospatial::BoundingRegionWithLooseFittingHeights.
  *
  * @param boundingVolume The bounding volume.
  * @return A pointer to the bounding region, or nullptr is the bounding volume
@@ -85,10 +86,11 @@ CESIUM3DTILESSELECTION_API const CesiumGeospatial::BoundingRegion*
 getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume);
 
 /**
- * @brief Returns an oriented bounding box that contains the given {@link BoundingVolume}.
+ * @brief Returns an oriented bounding box that contains the given @ref
+ * BoundingVolume.
  *
  * @param boundingVolume The bounding volume.
- * @param ellipsoid The ellipsoid used for this {@link BoundingVolume}.
+ * @param ellipsoid The ellipsoid used for this @ref BoundingVolume.
  * @return The oriented bounding box.
  */
 CESIUM3DTILESSELECTION_API CesiumGeometry::OrientedBoundingBox

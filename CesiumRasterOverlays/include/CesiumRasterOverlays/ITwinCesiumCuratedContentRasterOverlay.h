@@ -11,7 +11,8 @@
 namespace CesiumRasterOverlays {
 
 /**
- * @brief A {@link RasterOverlay} that obtains imagery data from the iTwin Cesium Curated Content API.
+ * @brief A @ref RasterOverlay that obtains imagery data from the iTwin Cesium
+ * Curated Content API.
  */
 class CESIUMRASTEROVERLAYS_API ITwinCesiumCuratedContentRasterOverlay final
     : public IonRasterOverlay {
@@ -26,7 +27,7 @@ public:
    * @param name The user-given name of this overlay layer.
    * @param assetID The asset ID.
    * @param iTwinAccessToken The access token.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   ITwinCesiumCuratedContentRasterOverlay(
       const std::string& name,

@@ -7,7 +7,7 @@
 
 namespace CesiumGltf {
 /**
- * @brief Holds {@link Buffer} properties that are specific to the glTF loader
+ * @brief Holds @ref Buffer properties that are specific to the glTF loader
  * rather than part of the glTF spec.
  */
 struct CESIUMGLTF_API BufferCesium final {

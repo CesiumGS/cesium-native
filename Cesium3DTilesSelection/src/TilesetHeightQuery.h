@@ -41,7 +41,7 @@ public:
   CesiumGeospatial::Cartographic inputPosition;
 
   /**
-   * @brief A ray created from the {@link TilesetHeightQuery::inputPosition}.
+   * @brief A ray created from the @ref TilesetHeightQuery::inputPosition.
    *
    */
   CesiumGeometry::Ray ray;
@@ -80,7 +80,7 @@ public:
   /**
    * @brief Find the intersection of the ray with the given tile. If there is
    * one, and if it's closer to the ray's origin than the previous best-known
-   * intersection, then {@link TilesetHeightQuery::intersection} will be
+   * intersection, then @ref TilesetHeightQuery::intersection will be
    * updated.
    *
    * @param pTile The tile to test for intersection with the ray.
@@ -94,9 +94,9 @@ public:
    * tree, starting with the given tile.
    *
    * Any tile whose bounding volume intersects the ray will be added to the
-   * {@link TilesetHeightQuery::candidateTiles} vector. Non-leaf tiles that are
+   * @ref TilesetHeightQuery::candidateTiles vector. Non-leaf tiles that are
    * additively-refined will be added to
-   * {@link TilesetHeightQuery::additiveCandidateTiles}.
+   * @ref TilesetHeightQuery::additiveCandidateTiles.
    *
    * @param pTile The tile at which to start traversal.
    * @param outWarnings On return, reports any warnings that occurred during
@@ -134,8 +134,8 @@ struct TilesetHeightRequest : public TileLoadRequester {
   std::set<Tile*> tilesToLoad;
 
   /**
-   * @brief Process a given list of height requests. This is called by the {@link Tileset}
-   * in every call to {@link Tileset::updateView}.
+   * @brief Process a given list of height requests. This is called by the @ref
+   * Tileset in every call to @ref Tileset::updateView.
    *
    * @param asyncSystem The async system used to do work in threads.
    * @param contentManager The content manager.

@@ -71,14 +71,14 @@ struct LoadLayersResult {
 };
 
 /**
- * @brief Creates a default {@link BoundingRegionWithLooseFittingHeights} for
+ * @brief Creates a default @ref BoundingRegionWithLooseFittingHeights for
  * the given rectangle.
  *
  * The heights of this bounding volume will have unspecified default values
  * that are suitable for the use on earth.
  *
- * @param globeRectangle The {@link CesiumGeospatial::GlobeRectangle}
- * @return The {@link BoundingRegionWithLooseFittingHeights}
+ * @param globeRectangle The @ref CesiumGeospatial::GlobeRectangle
+ * @return The @ref BoundingRegionWithLooseFittingHeights
  */
 BoundingVolume createDefaultLooseEarthBoundingVolume(
     const CesiumGeospatial::GlobeRectangle& globeRectangle,

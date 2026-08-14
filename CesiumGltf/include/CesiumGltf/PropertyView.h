@@ -24,7 +24,7 @@ typedef int32_t PropertyViewStatusType;
 /**
  * @brief Indicates the status of a property view.
  *
- * The {@link PropertyView} constructor always completes successfully.
+ * The @ref PropertyView constructor always completes successfully.
  * However, there may be fundamental errors with the property definition. In
  * such cases, this enumeration provides the reason.
  *
@@ -56,19 +56,19 @@ public:
 
   /**
    * @brief This property view's type does not match what is
-   * specified in {@link ClassProperty::type}.
+   * specified in @ref ClassProperty::type.
    */
   static const PropertyViewStatusType ErrorTypeMismatch = 3;
 
   /**
    * @brief This property view's component type does not match what
-   * is specified in {@link ClassProperty::componentType}.
+   * is specified in @ref ClassProperty::componentType.
    */
   static const PropertyViewStatusType ErrorComponentTypeMismatch = 4;
 
   /**
    * @brief This property view differs from what is specified in
-   * {@link ClassProperty::array}.
+   * @ref ClassProperty::array.
    */
   static const PropertyViewStatusType ErrorArrayTypeMismatch = 5;
 
@@ -80,7 +80,7 @@ public:
 
   /**
    * @brief This property view's normalization differs from what
-   * is specified in {@link ClassProperty::normalized}
+   * is specified in @ref ClassProperty::normalized
    */
   static const PropertyViewStatusType ErrorNormalizationMismatch = 7;
 
@@ -463,7 +463,7 @@ protected:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyViewStatus} indicating the error
+   * @param status The value of @ref PropertyViewStatus indicating the error
    * with the property.
    */
   PropertyView(PropertyViewStatusType status)
@@ -887,7 +887,8 @@ protected:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   * @param status The value of @ref PropertyViewStatus indicating the error
+   * with the property.
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
@@ -1173,7 +1174,8 @@ protected:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   * @param status The value of @ref PropertyViewStatus indicating the error
+   * with the property.
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
@@ -1353,7 +1355,8 @@ protected:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   * @param status The value of @ref PropertyViewStatus indicating the error
+   * with the property.
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
@@ -1608,7 +1611,8 @@ protected:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   * @param status The value of @ref PropertyViewStatus indicating the error
+   * with the property.
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
@@ -2029,7 +2033,8 @@ protected:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   * @param status The value of @ref PropertyViewStatus indicating the error
+   * with the property.
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
@@ -2344,7 +2349,8 @@ protected:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   * @param status The value of @ref PropertyViewStatus indicating the error
+   * with the property.
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),
@@ -2555,7 +2561,8 @@ protected:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyViewStatus} indicating the error with the property.
+   * @param status The value of @ref PropertyViewStatus indicating the error
+   * with the property.
    */
   PropertyView(PropertyViewStatusType status)
       : _status(status),

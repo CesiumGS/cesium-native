@@ -82,7 +82,7 @@ public:
   /**
    * @brief Constructs a new S2 cell ID.
    *
-   * The cell ID value is not validated. Use {@link isValid} to check the
+   * The cell ID value is not validated. Use @ref isValid to check the
    * validity after constructions.
    *
    * @param id The 64-bit cell ID value.

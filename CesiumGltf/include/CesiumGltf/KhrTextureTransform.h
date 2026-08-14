@@ -8,7 +8,7 @@ namespace CesiumGltf {
 /**
  * @brief The status of a parsed KHR_texture_transform.
  *
- * The {@link KhrTextureTransform} constructor always completes successfully,
+ * The @ref KhrTextureTransform constructor always completes successfully,
  * but it may not always reflect the actual transform if errors occur. This
  * enumeration provides the reason.
  */

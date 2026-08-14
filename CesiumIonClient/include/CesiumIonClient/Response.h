@@ -103,7 +103,7 @@ template <typename T> struct Response final {
    * @brief The URL to use to obtain the next page of results, if there is a
    * next page.
    *
-   * Call {@link Connection::nextPage} rather than using this field directly.
+   * Call @ref Connection::nextPage rather than using this field directly.
    */
   std::optional<std::string> nextPageUrl;
 
@@ -111,13 +111,13 @@ template <typename T> struct Response final {
    * @brief The URL to use to obtain the previous page of results, if there is
    * one.
    *
-   * Call {@link Connection::previousPage} rather than using this field directly.
+   * Call @ref Connection::previousPage rather than using this field directly.
    */
   std::optional<std::string> previousPageUrl;
 };
 
 /**
- * @brief A non-value, for use with a valueless {@link Response}.
+ * @brief A non-value, for use with a valueless @ref Response.
  */
 struct NoValue {};
 

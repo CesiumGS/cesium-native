@@ -15,7 +15,7 @@
 
 namespace Cesium3DTilesSelection {
 /**
- * @brief A content tag that indicates the {@link TilesetContentLoader} does not
+ * @brief A content tag that indicates the @ref TilesetContentLoader does not
  * know if a tile's content will point to a mesh content or an external
  * tileset. The content of the tile is only known when the loader loads the tile
  * to inspect the content.
@@ -100,33 +100,43 @@ public:
   void setModel(CesiumGltf::Model&& model);
 
   /**
-   * @brief Get the {@link CesiumRasterOverlays::RasterOverlayDetails} which is the result of generating raster overlay UVs for the glTF model
+   * @brief Get the @ref CesiumRasterOverlays::RasterOverlayDetails which is the
+   * result of generating raster overlay UVs for the glTF model
    *
-   * @return The {@link CesiumRasterOverlays::RasterOverlayDetails} that is owned by this content
+   * @return The @ref CesiumRasterOverlays::RasterOverlayDetails that is owned
+   * by this content
    */
   const CesiumRasterOverlays::RasterOverlayDetails&
   getRasterOverlayDetails() const noexcept;
 
   /**
-   * @brief Get the {@link CesiumRasterOverlays::RasterOverlayDetails} which is the result of generating raster overlay UVs for the glTF model
+   * @brief Get the @ref CesiumRasterOverlays::RasterOverlayDetails which is the
+   * result of generating raster overlay UVs for the glTF model
    *
-   * @return The {@link CesiumRasterOverlays::RasterOverlayDetails} that is owned by this content
+   * @return The @ref CesiumRasterOverlays::RasterOverlayDetails that is owned
+   * by this content
    */
   CesiumRasterOverlays::RasterOverlayDetails&
   getRasterOverlayDetails() noexcept;
 
   /**
-   * @brief Set the {@link CesiumRasterOverlays::RasterOverlayDetails} which is the result of generating raster overlay UVs for the glTF model
+   * @brief Set the @ref CesiumRasterOverlays::RasterOverlayDetails which is the
+   * result of generating raster overlay UVs for the glTF model
    *
-   * @param rasterOverlayDetails The {@link CesiumRasterOverlays::RasterOverlayDetails} that will be owned by this content
+   * @param rasterOverlayDetails The @ref
+   * CesiumRasterOverlays::RasterOverlayDetails that will be owned by this
+   * content
    */
   void setRasterOverlayDetails(
       const CesiumRasterOverlays::RasterOverlayDetails& rasterOverlayDetails);
 
   /**
-   * @brief Set the {@link CesiumRasterOverlays::RasterOverlayDetails} which is the result of generating raster overlay UVs for the glTF model
+   * @brief Set the @ref CesiumRasterOverlays::RasterOverlayDetails which is the
+   * result of generating raster overlay UVs for the glTF model
    *
-   * @param rasterOverlayDetails The {@link CesiumRasterOverlays::RasterOverlayDetails} that will be owned by this content
+   * @param rasterOverlayDetails The @ref
+   * CesiumRasterOverlays::RasterOverlayDetails that will be owned by this
+   * content
    */
   void setRasterOverlayDetails(
       CesiumRasterOverlays::RasterOverlayDetails&& rasterOverlayDetails);
@@ -181,7 +191,7 @@ public:
   /**
    * @brief Get the fade percentage that this tile during an LOD transition.
    *
-   * This will be used when {@link TilesetOptions::enableLodTransitionPeriod}
+   * This will be used when @ref TilesetOptions::enableLodTransitionPeriod
    * is true. Tile fades can be used to make LOD transitions appear less abrupt
    * and jarring. It is up to client implementations how to render the fade
    * percentage, but dithered fading is recommended.
@@ -199,35 +209,35 @@ public:
   void setLodTransitionFadePercentage(float percentage) noexcept;
 
   /**
-   * @brief Gets the state of the {@link GltfModifier} processing of this
+   * @brief Gets the state of the @ref GltfModifier processing of this
    * tile's content.
    * */
   GltfModifierState getGltfModifierState() const noexcept;
 
   /**
-   * @brief Sets the state of the {@link GltfModifier} processing of this
+   * @brief Sets the state of the @ref GltfModifier processing of this
    * tile's content.
    */
   void setGltfModifierState(GltfModifierState modifierState) noexcept;
 
   /**
-   * @brief Gets the modified model produced by the {@link GltfModifier} that is
+   * @brief Gets the modified model produced by the @ref GltfModifier that is
    * not yet available for rendering.
    * */
   const std::optional<CesiumGltf::Model>& getModifiedModel() const noexcept;
 
   /**
    * @brief Gets the renderer resources for the modified model produced by the
-   * {@link GltfModifier} that is not yet available for rendering. These resources
-   * are created by {@link IPrepareRendererResources::prepareInLoadThread}.
+   * @ref GltfModifier that is not yet available for rendering. These resources
+   * are created by @ref IPrepareRendererResources::prepareInLoadThread.
    */
   void* getModifiedRenderResources() const noexcept;
 
   /**
    * @brief Stores the modified model and associated renderer resources produced
-   * by the {@link GltfModifier} that are not yet available for rendering. The
+   * by the @ref GltfModifier that are not yet available for rendering. The
    * renderer resources are created by
-   * {@link IPrepareRendererResources::prepareInLoadThread}.
+   * @ref IPrepareRendererResources::prepareInLoadThread.
    */
   void setModifiedModelAndRenderResources(
       CesiumGltf::Model&& modifiedModel,
@@ -236,17 +246,17 @@ public:
   /**
    * @brief Resets the modified model and renderer resources after they have
    * been determined to be outdated and have been freed with
-   * {@link IPrepareRendererResources::free}.
+   * @ref IPrepareRendererResources::free.
    */
   void resetModifiedModelAndRenderResources() noexcept;
 
   /**
    * @brief Overwrites this instance's model and renderer resources with the
-   * modified ones produced by {@link GltfModifier}. The new model and
+   * modified ones produced by @ref GltfModifier. The new model and
    * resources become eligible for rendering.
    *
-   * After this method returns, {@link getModifiedModel} will return
-   * `std::nullopt` and {@link getModifiedRenderResources} will return
+   * After this method returns, @ref getModifiedModel will return
+   * `std::nullopt` and @ref getModifiedRenderResources will return
    * `nullptr`.
    */
   void replaceWithModifiedModel() noexcept;
@@ -279,7 +289,7 @@ public:
   /**
    * @brief Construct an unknown content for a tile. This constructor
    * is useful when the tile content is known after its content is downloaded by
-   * {@link TilesetContentLoader}
+   * @ref TilesetContentLoader
    */
   TileContent();
 
@@ -297,7 +307,7 @@ public:
   /**
    * @brief Set an unknown content tag for a tile. This constructor
    * is useful when the tile content is known after its content is downloaded by
-   * {@link TilesetContentLoader}
+   * @ref TilesetContentLoader
    */
   void setContentKind(TileUnknownContent content);
 
@@ -339,25 +349,25 @@ public:
   bool isRenderContent() const noexcept;
 
   /**
-   * @brief Get the {@link TileRenderContent} which stores the glTF model
+   * @brief Get the @ref TileRenderContent which stores the glTF model
    * and render resources of the tile
    */
   const TileRenderContent* getRenderContent() const noexcept;
 
   /**
-   * @brief Get the {@link TileRenderContent} which stores the glTF model
+   * @brief Get the @ref TileRenderContent which stores the glTF model
    * and render resources of the tile
    */
   TileRenderContent* getRenderContent() noexcept;
 
   /**
-   * @brief Get the {@link TileExternalContent} which stores the details of
+   * @brief Get the @ref TileExternalContent which stores the details of
    * the external tileset.
    */
   const TileExternalContent* getExternalContent() const noexcept;
 
   /**
-   * @brief Get the {@link TileExternalContent} which stores the details of
+   * @brief Get the @ref TileExternalContent which stores the details of
    * the external tileset.
    */
   TileExternalContent* getExternalContent() noexcept;

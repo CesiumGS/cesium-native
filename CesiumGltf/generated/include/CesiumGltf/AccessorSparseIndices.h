@@ -50,7 +50,7 @@ struct CESIUMGLTF_API AccessorSparseIndices final
   /**
    * @brief The indices data type.
    *
-   * Known values are defined in {@link ComponentType}.
+   * Known values are defined in @ref ComponentType.
    *
    */
   int32_t componentType = ComponentType::UNSIGNED_BYTE;

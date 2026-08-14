@@ -83,7 +83,8 @@ struct CESIUMGLTF_API ExtensionExtMeshPrimitiveEdgeVisibilitySpec
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use {@link ExtensionExtMeshPrimitiveEdgeVisibility} instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref
+   * ExtensionExtMeshPrimitiveEdgeVisibility instead.
    */
   ExtensionExtMeshPrimitiveEdgeVisibilitySpec() = default;
   friend struct ExtensionExtMeshPrimitiveEdgeVisibility;

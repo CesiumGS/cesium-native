@@ -74,7 +74,7 @@ private:
 };
 
 /**
- * @brief A pool of {@link TileOcclusionRendererProxy} objects. Allows quick
+ * @brief A pool of @ref TileOcclusionRendererProxy objects. Allows quick
  * remapping of tiles to occlusion renderer proxies so new proxies do not have
  * to be created for each new tile requesting occlusion results.
  */
@@ -84,7 +84,7 @@ public:
    * @brief Constructs a new instance.
    *
    * @param maximumPoolSize The maximum number of
-   * {@link TileOcclusionRendererProxy} instances that may exist in this pool.
+   * @ref TileOcclusionRendererProxy instances that may exist in this pool.
    */
   TileOcclusionRendererProxyPool(int32_t maximumPoolSize);
 
@@ -99,7 +99,7 @@ public:
   void destroyPool();
 
   /**
-   * @brief Get the {@link TileOcclusionRendererProxy} mapped to the tile.
+   * @brief Get the @ref TileOcclusionRendererProxy mapped to the tile.
    * Attempts to create a new mapping if one does not exist already by
    * assigning a proxy from the free list.
    *
@@ -120,14 +120,14 @@ public:
 
 protected:
   /**
-   * @brief Create a {@link TileOcclusionRendererProxy}.
+   * @brief Create a @ref TileOcclusionRendererProxy.
    *
    * @return A new occlusion proxy.
    */
   virtual TileOcclusionRendererProxy* createProxy() = 0;
 
   /**
-   * @brief Destroy a {@link TileOcclusionRendererProxy} that is done being used.
+   * @brief Destroy a @ref TileOcclusionRendererProxy that is done being used.
    *
    * @param pProxy The proxy to be destroyed.
    */

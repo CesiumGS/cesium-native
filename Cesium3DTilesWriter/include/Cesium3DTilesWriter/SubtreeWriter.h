@@ -14,7 +14,8 @@ namespace Cesium3DTilesWriter {
 
 /**
  * @brief The result of writing a subtree with
- * {@link SubtreeWriter::writeSubtreeJson} or {@link SubtreeWriter::writeSubtreeBinary}.
+ * @ref SubtreeWriter::writeSubtreeJson or @ref
+ * SubtreeWriter::writeSubtreeBinary.
  */
 struct CESIUM3DTILESWRITER_API SubtreeWriterResult {
   /**
@@ -68,7 +69,7 @@ public:
   /**
    * @brief Serializes the provided subtree into a subtree JSON byte vector.
    *
-   * Ignores internal data such as {@link Cesium3DTiles::BufferCesium} when
+   * Ignores internal data such as @ref Cesium3DTiles::BufferCesium when
    * serializing the subtree. Internal data must be saved as external files. The
    * buffer.uri field must be set accordingly prior to calling this function.
    *
@@ -85,7 +86,7 @@ public:
    *
    * The first buffer object implicitly refers to the subtree binary section
    * and should not have a uri. Ignores internal data such as
-   * {@link Cesium3DTiles::BufferCesium}.
+   * @ref Cesium3DTiles::BufferCesium.
    *
    * @param subtree The subtree.
    * @param bufferData The buffer data to store in the subtree binary section.

@@ -12,7 +12,7 @@ namespace CesiumGltfWriter {
 
 /**
  * @brief The result of writing a schema with
- * {@link SchemaWriter::writeSchema}.
+ * @ref SchemaWriter::writeSchema.
  */
 struct CESIUMGLTFWRITER_API SchemaWriterResult {
   /**

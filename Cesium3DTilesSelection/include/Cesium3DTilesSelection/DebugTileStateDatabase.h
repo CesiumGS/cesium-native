@@ -32,8 +32,8 @@ public:
    * given tileset.
    *
    * The state is obtained from the view group's
-   * {@link TilesetViewGroup::getTraversalState} by calling
-   * {@link CesiumUtility::TreeTraversalState::slowlyGetPreviousStates}.
+   * @ref TilesetViewGroup::getTraversalState by calling
+   * @ref CesiumUtility::TreeTraversalState::slowlyGetPreviousStates.
    *
    * @param frameNumber The current frame number.
    * @param tileset The tileset.
@@ -48,8 +48,8 @@ public:
    * @brief Records the state of a given tile.
    *
    * The state is obtained from the view group's
-   * {@link TilesetViewGroup::getTraversalState} by calling
-   * {@link CesiumUtility::TreeTraversalState::slowlyGetPreviousStates}.
+   * @ref TilesetViewGroup::getTraversalState by calling
+   * @ref CesiumUtility::TreeTraversalState::slowlyGetPreviousStates.
    *
    * @param frameNumber The current frame number.
    * @param viewGroup The view group.

@@ -48,7 +48,7 @@ struct CESIUMGLTF_API Shape final : public CesiumGltf::NamedObject {
   /**
    * @brief Specifies the shape type.
    *
-   * Known values are defined in {@link Type}.
+   * Known values are defined in @ref Type.
    *
    */
   std::string type = Type::sphere;

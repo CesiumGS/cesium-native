@@ -25,10 +25,10 @@ namespace CesiumGeospatial {
 typedef std::variant<GeographicProjection, WebMercatorProjection> Projection;
 
 /**
- * @brief Projects a position on the globe using the given {@link Projection}.
+ * @brief Projects a position on the globe using the given @ref Projection.
  *
  * @param projection The projection.
- * @param position The {@link Cartographic} position.
+ * @param position The @ref Cartographic position.
  * @return The coordinates of the projected point, in the coordinate system
  * of the given projection.
  */
@@ -37,11 +37,11 @@ projectPosition(const Projection& projection, const Cartographic& position);
 
 /**
  * @brief Unprojects a position from the globe using the given
- * {@link Projection}.
+ * @ref Projection.
  *
  * @param projection The projection.
  * @param position The coordinates of the point, in meters.
- * @return The {@link Cartographic} position.
+ * @return The @ref Cartographic position.
  */
 Cartographic
 unprojectPosition(const Projection& projection, const glm::dvec3& position);
@@ -51,7 +51,7 @@ unprojectPosition(const Projection& projection, const glm::dvec3& position);
  * corners.
  *
  * This is only accurate when the globe rectangle is still a rectangle after
- * projecting, which is true for {@link WebMercatorProjection} but not
+ * projecting, which is true for @ref WebMercatorProjection but not
  * necessarily true for other projections.
  *
  * @param projection The projection.
@@ -67,7 +67,7 @@ CesiumGeometry::Rectangle projectRectangleSimple(
  * corners.
  *
  * This is only accurate when the rectangle is still a rectangle after
- * unprojecting, which is true for {@link WebMercatorProjection} but not
+ * unprojecting, which is true for @ref WebMercatorProjection but not
  * necessarily true for other projections.
  *
  * @param projection The projection.
@@ -83,7 +83,7 @@ GlobeRectangle unprojectRectangleSimple(
  * eight corners.
  *
  * This is only accurate when the globe box is still a box after
- * projecting, which is true for {@link WebMercatorProjection} but not
+ * projecting, which is true for @ref WebMercatorProjection but not
  * necessarily true for other projections.
  *
  * @param projection The projection.
@@ -98,12 +98,12 @@ projectRegionSimple(const Projection& projection, const BoundingRegion& region);
  * corners.
  *
  * This is only accurate when the box is still a box after
- * unprojecting, which is true for {@link WebMercatorProjection} but not
+ * unprojecting, which is true for @ref WebMercatorProjection but not
  * necessarily true for other projections.
  *
  * @param projection The projection.
  * @param box The box to be unprojected.
- * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+ * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
  * @return The unprojected bounding region.
  */
 BoundingRegion unprojectRegionSimple(

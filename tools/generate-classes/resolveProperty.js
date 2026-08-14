@@ -652,9 +652,9 @@ function resolveEnum(
   );
   const enumBriefDoc =
     propertyDefaultValues.briefDoc +
-    "\n * \n * Known values are defined in {@link " +
+    "\n * \n * Known values are defined in @ref " +
     enumName +
-    "}.\n *";
+    ".\n *";
   const result = {
     ...propertyDefaultValues,
     localTypes: [
@@ -710,6 +710,11 @@ function resolveEnum(
 function getEnumValue(enumDetails) {
   if (enumDetails.const !== undefined) {
     return enumDetails.const;
+  }
+
+  // Enum form seen in KHR_lights_punctual
+  if (enumDetails.enum !== undefined && enumDetails.enum.length > 0) {
+    return enumDetails.enum[0];
   }
 
   return undefined;

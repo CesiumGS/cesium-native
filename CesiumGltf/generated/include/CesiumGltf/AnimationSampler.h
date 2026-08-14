@@ -56,7 +56,7 @@ struct CESIUMGLTF_API AnimationSampler final
   /**
    * @brief Interpolation algorithm.
    *
-   * Known values are defined in {@link Interpolation}.
+   * Known values are defined in @ref Interpolation.
    *
    */
   std::string interpolation = Interpolation::LINEAR;

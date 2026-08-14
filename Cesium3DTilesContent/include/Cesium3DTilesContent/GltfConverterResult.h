@@ -15,7 +15,7 @@ namespace Cesium3DTilesContent {
  * @brief The result of converting a binary content to gltf model.
  *
  * Instances of this structure are created internally, by the
- * {@link GltfConverters}, when the response to a network request for
+ * @ref GltfConverters, when the response to a network request for
  * loading the tile content was received.
  */
 struct CESIUM3DTILESCONTENT_API GltfConverterResult {

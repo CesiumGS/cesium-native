@@ -103,7 +103,7 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
   /**
    * @brief The datatype of the accessor's components.
    *
-   * Known values are defined in {@link ComponentType}.
+   * Known values are defined in @ref ComponentType.
    *
    *
    * UNSIGNED_INT type **MUST NOT** be used for any accessor that is not
@@ -133,7 +133,7 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
    * @brief Specifies if the accessor's elements are scalars, vectors, or
    * matrices.
    *
-   * Known values are defined in {@link Type}.
+   * Known values are defined in @ref Type.
    *
    */
   std::string type = Type::SCALAR;
@@ -196,7 +196,8 @@ struct CESIUMGLTF_API AccessorSpec : public CesiumGltf::NamedObject {
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use {@link Accessor} instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref
+   * Accessor instead.
    */
   AccessorSpec() = default;
   friend struct Accessor;
