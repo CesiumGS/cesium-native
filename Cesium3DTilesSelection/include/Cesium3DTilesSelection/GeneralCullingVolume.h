@@ -22,8 +22,8 @@ using GeneralCullingVolume =
 /**
  * @brief test if a general culling volume intersects a bounding volume.
  *
- * @param CullingVolume the general culling volume.
- * @param BoundingVolume the bounding volume.
+ * @param cullingVolume the general culling volume.
+ * @param boundingVolume the bounding volume.
  * @return true if volumes intersect.
  */
 bool CESIUM3DTILESSELECTION_API isBoundingVolumeVisible(
