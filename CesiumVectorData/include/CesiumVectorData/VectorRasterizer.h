@@ -129,7 +129,12 @@ public:
    * @brief Draws a set of points to the canvas.
    *
    * @param points The set of points to draw.
-   * @param style The @ref PointStyle to use when drawing the points.
+   * @param styles The @ref PointStyle to use when drawing the points.
+   * @note This method is intended for use with per-point styling, where each
+   * point may have a different style. The `styles` vector should be the same
+   * size as the `points` vector, and each point will be drawn using the
+   * corresponding style in the `styles` vector. If a style is `nullptr`, that
+   * point will not be drawn.
    */
   void drawPoints(
       const std::vector<CesiumGeospatial::Cartographic>& points,

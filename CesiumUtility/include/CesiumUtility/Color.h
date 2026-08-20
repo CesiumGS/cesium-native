@@ -32,6 +32,7 @@ struct Color {
    */
   uint32_t toRgba32() const;
 
+  /** @brief Checks if two Color objects are equal. */
   bool operator==(const Color& rhs) const;
 };
 } // namespace CesiumUtility

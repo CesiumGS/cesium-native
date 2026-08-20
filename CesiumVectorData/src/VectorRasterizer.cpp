@@ -402,7 +402,15 @@ void VectorRasterizer::drawPoints(
     return;
   }
 
-  for (size_t i = 0; i < points.size(); i++) {
+  // styles.size() should equal points.size(), but we will only draw as many
+  // points as we have styles for.
+  const size_t numPoints = std::min(points.size(), styles.size());
+
+  for (size_t i = 0; i < numPoints; i++) {
+    if (styles[i] == nullptr) {
+      continue;
+    }
+
     BLPoint point = radiansToPoint(
         points[i].longitude,
         points[i].latitude,

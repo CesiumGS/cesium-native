@@ -168,7 +168,7 @@ struct VectorStyle {
 };
 } // namespace CesiumVectorData
 
-/** @brief Hash implementation for \ref CesiumVectorData::ColorStyle. */
+/** @brief Hash implementation for @ref CesiumVectorData::ColorStyle. */
 template <> struct std::hash<CesiumVectorData::ColorStyle> {
   /** @brief Returns a `size_t` hash of the provided \ref
    * CesiumVectorData::ColorStyle instance. */
@@ -176,7 +176,7 @@ template <> struct std::hash<CesiumVectorData::ColorStyle> {
   operator()(const CesiumVectorData::ColorStyle& style) const noexcept;
 };
 
-/** @brief Hash implementation for \ref CesiumVectorData::LineStyle. */
+/** @brief Hash implementation for @ref CesiumVectorData::LineStyle. */
 template <> struct std::hash<CesiumVectorData::LineStyle> {
   /** @brief Returns a `size_t` hash of the provided \ref
    * CesiumVectorData::LineStyle instance. */
@@ -184,7 +184,7 @@ template <> struct std::hash<CesiumVectorData::LineStyle> {
   operator()(const CesiumVectorData::LineStyle& style) const noexcept;
 };
 
-/** @brief Hash implementation for \ref CesiumVectorData::PolygonStyle. */
+/** @brief Hash implementation for @ref CesiumVectorData::PolygonStyle. */
 template <> struct std::hash<CesiumVectorData::PolygonStyle> {
   /** @brief Returns a `size_t` hash of the provided \ref
    * CesiumVectorData::PolygonStyle instance. */
@@ -192,7 +192,7 @@ template <> struct std::hash<CesiumVectorData::PolygonStyle> {
   operator()(const CesiumVectorData::PolygonStyle& style) const noexcept;
 };
 
-/** @brief Hash implementation for \ref CesiumVectorData::PointStyle. */
+/** @brief Hash implementation for @ref CesiumVectorData::PointStyle. */
 template <> struct std::hash<CesiumVectorData::PointStyle> {
   /** @brief Returns a `size_t` hash of the provided \ref
    * CesiumVectorData::PointStyle instance. */
@@ -200,7 +200,7 @@ template <> struct std::hash<CesiumVectorData::PointStyle> {
   operator()(const CesiumVectorData::PointStyle& style) const noexcept;
 };
 
-/** @brief Hash implementation for \ref CesiumVectorData::VectorStyle. */
+/** @brief Hash implementation for @ref CesiumVectorData::VectorStyle. */
 template <> struct std::hash<CesiumVectorData::VectorStyle> {
   /** @brief Returns a `size_t` hash of the provided \ref
    * CesiumVectorData::VectorStyle instance. */

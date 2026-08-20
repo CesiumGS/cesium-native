@@ -101,7 +101,7 @@ CesiumUtility::Result<int64_t> getFeatureId(
         featureIdAccessor)};
   } else if (pFeatureIdSet->texture) {
     return CesiumUtility::Result<int64_t>(ErrorList::warning(
-        "Feature ID textures for vector primitives is not yet supported."));
+        "Feature ID textures for vector primitives are not yet supported."));
   }
 
   return {index};
@@ -325,9 +325,8 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
         }
       });
 
-  // Apply per-element styling if the user specified a styling provider.
+  // Apply default styling if the user did not specify a styling provider.
   if (pStylingProvider == nullptr) {
-
     pContent->pointStyles.resize(
         pContent->points.size(),
         &pContent->defaultStyle);
@@ -342,6 +341,7 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
             {pContent, errors});
   }
 
+  // Apply per-element styling if the user specified a styling provider.
   return std::
       move(asyncSystem.all(
                pStylingProvider
@@ -364,8 +364,8 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
 
                          for (const auto& style : result) {
                            if (style.has_value()) {
-                             pContent->pointStyles.emplace_back(
-                                 &*pContent->uniqueStyles.insert(*style).first);
+                             pContent->pointStyles.emplace_back(&(
+                                 *pContent->uniqueStyles.insert(*style).first));
                            } else {
                              pContent->pointStyles.emplace_back(
                                  &pContent->defaultStyle);
@@ -393,8 +393,8 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
                          }
                          for (const auto& style : result) {
                            if (style.has_value()) {
-                             pContent->polylineStyles.emplace_back(
-                                 &*pContent->uniqueStyles.insert(*style).first);
+                             pContent->polylineStyles.emplace_back(&(
+                                 *pContent->uniqueStyles.insert(*style).first));
                            } else {
                              pContent->polylineStyles.emplace_back(
                                  &pContent->defaultStyle);
@@ -421,8 +421,8 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
                          }
                          for (const auto& style : result) {
                            if (style.has_value()) {
-                             pContent->polygonStyles.emplace_back(
-                                 &*pContent->uniqueStyles.insert(*style).first);
+                             pContent->polygonStyles.emplace_back(&(
+                                 *pContent->uniqueStyles.insert(*style).first));
                            } else {
                              pContent->polygonStyles.emplace_back(
                                  &pContent->defaultStyle);
