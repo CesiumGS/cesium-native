@@ -43,38 +43,38 @@ bool isBoundingVolumeVisible(
 bool isBoundingVolumeVisible(
     const CullingVolume& cullingVolume,
     const BoundingVolume& boundingVolume) noexcept {
-  return std::visit(
-      overload{
-          [cullingVolume](const OrientedBoundingBox& boundingBox) noexcept {
-            return isBoundingVolumeVisible(boundingBox, cullingVolume);
-          },
+  struct Operation {
+    const CullingVolume& cullingVolume;
 
-          [cullingVolume](const BoundingRegion& boundingRegion) noexcept {
-            return isBoundingVolumeVisible(boundingRegion, cullingVolume);
-          },
+    bool operator()(const OrientedBoundingBox& boundingBox) noexcept {
+      return isBoundingVolumeVisible(boundingBox, cullingVolume);
+    }
 
-          [cullingVolume](const BoundingSphere& boundingSphere) noexcept {
-            return isBoundingVolumeVisible(boundingSphere, cullingVolume);
-          },
+    bool operator()(const BoundingRegion& boundingRegion) noexcept {
+      return isBoundingVolumeVisible(boundingRegion, cullingVolume);
+    }
 
-          [cullingVolume](const BoundingRegionWithLooseFittingHeights&
-                              boundingRegion) noexcept {
-            return isBoundingVolumeVisible(
-                boundingRegion.getBoundingRegion(),
-                cullingVolume);
-          },
+    bool operator()(const BoundingSphere& boundingSphere) noexcept {
+      return isBoundingVolumeVisible(boundingSphere, cullingVolume);
+    }
 
-          [cullingVolume](const S2CellBoundingVolume& s2Cell) noexcept {
-            return isBoundingVolumeVisible(s2Cell, cullingVolume);
-          },
+    bool operator()(
+        const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
+      return isBoundingVolumeVisible(
+          boundingRegion.getBoundingRegion(),
+          cullingVolume);
+    }
 
-          [cullingVolume](
-              const BoundingCylinderRegion& boundingCylinderRegion) noexcept {
-            return isBoundingVolumeVisible(
-                boundingCylinderRegion,
-                cullingVolume);
-          }},
-      boundingVolume);
+    bool operator()(const S2CellBoundingVolume& s2Cell) noexcept {
+      return isBoundingVolumeVisible(s2Cell, cullingVolume);
+    }
+
+    bool
+    operator()(const BoundingCylinderRegion& boundingCylinderRegion) noexcept {
+      return isBoundingVolumeVisible(boundingCylinderRegion, cullingVolume);
+    }
+  };
+  return std::visit(Operation{cullingVolume}, boundingVolume);
 }
 
 } // namespace
