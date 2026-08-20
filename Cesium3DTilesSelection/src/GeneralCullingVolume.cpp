@@ -16,6 +16,7 @@ using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
 
+namespace {
 template <class T>
 bool isBoundingVolumeVisible(
     const T& boundingVolume,
@@ -83,6 +84,7 @@ bool isBoundingVolumeVisible(
   };
   return std::visit(Operation{cullingVolume}, boundingVolume);
 }
+} // namespace
 
 bool isBoundingVolumeVisible(
     const GeneralCullingVolume& cullingVolume,
