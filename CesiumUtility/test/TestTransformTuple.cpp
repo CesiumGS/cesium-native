@@ -3,6 +3,7 @@
 #include <doctest/doctest.h>
 
 #include <string>
+#include <vector>
 
 using namespace CesiumUtility;
 
@@ -27,16 +28,13 @@ TEST_CASE("transformTuple") {
   }
 
   SUBCASE("Transforms a const tuple") {
-    const std::tuple<std::string, std::vector<int>> tuple = std::make_tuple(std::string("test"), std::vector<int>{1, 2, 3});
+    const std::tuple<std::string, std::vector<int>> tuple =
+        std::make_tuple(std::string("test"), std::vector<int>{1, 2, 3});
 
     struct Transformer {
-      size_t operator()(const std::string& str) const {
-        return str.size();
-      }
+      size_t operator()(const std::string& str) const { return str.size(); }
 
-      size_t operator()(const std::vector<int>& v) const {
-        return v.size();
-      }
+      size_t operator()(const std::vector<int>& v) const { return v.size(); }
     };
 
     std::string firstResult;
@@ -47,16 +45,13 @@ TEST_CASE("transformTuple") {
   }
 
   SUBCASE("Transforms a moved tuple") {
-    std::tuple<std::string, std::vector<int>> tuple = std::make_tuple(std::string("test"), std::vector<int>{1, 2, 3});
+    std::tuple<std::string, std::vector<int>> tuple =
+        std::make_tuple(std::string("test"), std::vector<int>{1, 2, 3});
 
     struct Transformer {
-      size_t operator()(std::string&& str) const {
-        return str.size();
-      }
+      size_t operator()(std::string&& str) const { return str.size(); }
 
-      size_t operator()(std::vector<int>&& v) const {
-        return v.size();
-      }
+      size_t operator()(std::vector<int>&& v) const { return v.size(); }
     };
 
     std::string firstResult;
