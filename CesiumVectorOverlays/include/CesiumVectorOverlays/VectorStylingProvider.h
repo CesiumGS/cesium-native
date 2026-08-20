@@ -25,7 +25,7 @@ public:
    * @param points The geometry of the points to style. This will be the same
    * size as `featureIds`, and each point corresponds to the feature ID at the
    * same index.
-   * @returns A future that resolves to a vector of optional VectorStyle
+   * @returns A future that resolves to a vector of optional PointStyle
    * objects, one for each point feature. The vector should be the same size as
    * `featureIds and `points`. If `std::nullopt` is provided for a feature, the
    * feature will use the default style. If the returned vector is empty or does
@@ -33,7 +33,7 @@ public:
    * used for all features.
    */
   virtual CesiumAsync::Future<
-      std::vector<std::optional<CesiumVectorData::VectorStyle>>>
+      std::vector<std::optional<CesiumVectorData::PointStyle>>>
   onStylePoints(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const CesiumGltf::Model& model,
@@ -50,7 +50,7 @@ public:
    * @param polylines The geometry of the polylines to style. This will be the
    * same size as `featureIds`, and each polyline corresponds to the feature ID
    * at the same index.
-   * @returns A future that resolves to a vector of optional VectorStyle
+   * @returns A future that resolves to a vector of optional LineStyle
    * objects, one for each polyline feature. The vector should be the same size
    * as `featureIds` and `polylines`. If `std::nullopt` is provided for a
    * feature, the feature will use the default style. If the returned vector is
@@ -58,7 +58,7 @@ public:
    * default style will be used for all features.
    */
   virtual CesiumAsync::Future<
-      std::vector<std::optional<CesiumVectorData::VectorStyle>>>
+      std::vector<std::optional<CesiumVectorData::LineStyle>>>
   onStylePolylines(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const CesiumGltf::Model& model,
@@ -76,7 +76,7 @@ public:
    * @param polygons The geometry of the polygons to style. This will be the
    * same size as `featureIds`, and each polygon corresponds to the feature ID
    * at the same index.
-   * @returns A future that resolves to a vector of optional VectorStyle
+   * @returns A future that resolves to a vector of optional PolygonStyle
    * objects, one for each polygon feature. The vector should be the same size
    * as `featureIds` and `polygons`. If `std::nullopt` is provided for a
    * feature, the feature will use the default style. If the returned vector is
@@ -84,7 +84,7 @@ public:
    * default style will be used for all features.
    */
   virtual CesiumAsync::Future<
-      std::vector<std::optional<CesiumVectorData::VectorStyle>>>
+      std::vector<std::optional<CesiumVectorData::PolygonStyle>>>
   onStylePolygons(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const CesiumGltf::Model& model,

@@ -397,7 +397,7 @@ void VectorRasterizer::drawPoints(
 
 void VectorRasterizer::drawPoints(
     const std::vector<CesiumGeospatial::Cartographic>& points,
-    const std::vector<const CesiumVectorData::VectorStyle*>& styles) {
+    const std::vector<const CesiumVectorData::PointStyle*>& styles) {
   if (this->_finalized) {
     return;
   }
@@ -418,22 +418,22 @@ void VectorRasterizer::drawPoints(
         this->_context);
     // clang-tidy does not understand that we *are* in fact checking these
     // optionals
-    if (styles[i]->point.fill) {
+    if (styles[i]->fill) {
       // NOLINTBEGIN(bugprone-unchecked-optional-access)
       this->_context.fillCircle(
-          BLCircle(point.x, point.y, styles[i]->point.radius),
+          BLCircle(point.x, point.y, styles[i]->radius),
           BLRgba32(styles[i]
-                       ->point.fill->getColor(seedForObject(points[i], 17))
+                       ->fill->getColor(seedForObject(points[i], 17))
                        .toRgba32()));
       // NOLINTEND(bugprone-unchecked-optional-access)
     }
 
-    if (styles[i]->point.outline) {
+    if (styles[i]->outline) {
       // NOLINTBEGIN(bugprone-unchecked-optional-access)
       this->_context.strokeCircle(
-          BLCircle(point.x, point.y, styles[i]->point.radius),
+          BLCircle(point.x, point.y, styles[i]->radius),
           BLRgba32(styles[i]
-                       ->point.outline->getColor(seedForObject(points[i], 31))
+                       ->outline->getColor(seedForObject(points[i], 31))
                        .toRgba32()));
       // NOLINTEND(bugprone-unchecked-optional-access)
     }

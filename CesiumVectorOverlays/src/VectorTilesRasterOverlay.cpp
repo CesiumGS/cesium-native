@@ -70,14 +70,18 @@ namespace CesiumVectorOverlays {
 namespace {
 struct VectorRenderContent {
   CesiumVectorData::VectorStyle defaultStyle;
-  std::unordered_set<CesiumVectorData::VectorStyle> uniqueStyles;
 
   std::vector<CesiumGeospatial::Cartographic> points;
-  std::vector<const CesiumVectorData::VectorStyle*> pointStyles;
+  std::unordered_set<CesiumVectorData::PointStyle> uniquePointStyles;
+  std::vector<const CesiumVectorData::PointStyle*> pointStyles;
+
   std::vector<std::vector<CesiumGeospatial::Cartographic>> polylines;
-  std::vector<const CesiumVectorData::VectorStyle*> polylineStyles;
+  std::unordered_set<CesiumVectorData::LineStyle> uniquePolylineStyles;
+  std::vector<const CesiumVectorData::LineStyle*> polylineStyles;
+
+  std::unordered_set<CesiumVectorData::PolygonStyle> uniquePolygonStyles;
   std::vector<std::vector<CesiumGeospatial::Cartographic>> polygons;
-  std::vector<const CesiumVectorData::VectorStyle*> polygonStyles;
+  std::vector<const CesiumVectorData::PolygonStyle*> polygonStyles;
 };
 
 CesiumUtility::Result<int64_t> getFeatureId(
@@ -329,111 +333,115 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
   if (pStylingProvider == nullptr) {
     pContent->pointStyles.resize(
         pContent->points.size(),
-        &pContent->defaultStyle);
+        &pContent->defaultStyle.point);
     pContent->polylineStyles.resize(
         pContent->polylines.size(),
-        &pContent->defaultStyle);
+        &pContent->defaultStyle.line);
     pContent->polygonStyles.resize(
         pContent->polygons.size(),
-        &pContent->defaultStyle);
+        &pContent->defaultStyle.polygon);
     return asyncSystem
         .createResolvedFuture<CesiumUtility::Result<VectorRenderContent*>>(
             {pContent, errors});
   }
 
   // Apply per-element styling if the user specified a styling provider.
-  return std::
-      move(asyncSystem.all(
-               pStylingProvider
-                   ->onStylePoints(
-                       asyncSystem,
-                       model,
-                       pointFeatureIds,
-                       pContent->points)
-                   .thenInWorkerThread(
-                       [pContent](
-                           std::vector<std::optional<
-                               CesiumVectorData::VectorStyle>>&& result) {
-                         if (result.size() == 0 ||
-                             result.size() != pContent->points.size()) {
-                           pContent->pointStyles.resize(
-                               pContent->points.size(),
-                               &pContent->defaultStyle);
-                           return false;
-                         }
+  return std::move(
+             asyncSystem.all(
+                 pStylingProvider
+                     ->onStylePoints(
+                         asyncSystem,
+                         model,
+                         pointFeatureIds,
+                         pContent->points)
+                     .thenInWorkerThread(
+                         [pContent](
+                             std::vector<std::optional<
+                                 CesiumVectorData::PointStyle>>&& result) {
+                           if (result.size() == 0 ||
+                               result.size() != pContent->points.size()) {
+                             pContent->pointStyles.resize(
+                                 pContent->points.size(),
+                                 &pContent->defaultStyle.point);
+                             return false;
+                           }
 
-                         for (const auto& style : result) {
-                           if (style.has_value()) {
-                             pContent->pointStyles.emplace_back(&(
-                                 *pContent->uniqueStyles.insert(*style).first));
-                           } else {
-                             pContent->pointStyles.emplace_back(
-                                 &pContent->defaultStyle);
+                           for (const auto& style : result) {
+                             if (style.has_value()) {
+                               pContent->pointStyles.emplace_back(
+                                   &(*pContent->uniquePointStyles.insert(*style)
+                                          .first));
+                             } else {
+                               pContent->pointStyles.emplace_back(
+                                   &pContent->defaultStyle.point);
+                             }
                            }
-                         }
 
-                         return true;
-                       }),
-               pStylingProvider
-                   ->onStylePolylines(
-                       asyncSystem,
-                       model,
-                       polylineFeatureIds,
-                       pContent->polylines)
-                   .thenInWorkerThread(
-                       [pContent](
-                           std::vector<std::optional<
-                               CesiumVectorData::VectorStyle>>&& result) {
-                         if (result.size() == 0 ||
-                             result.size() != pContent->polylines.size()) {
-                           pContent->polylineStyles.resize(
-                               pContent->polylines.size(),
-                               &pContent->defaultStyle);
-                           return false;
-                         }
-                         for (const auto& style : result) {
-                           if (style.has_value()) {
-                             pContent->polylineStyles.emplace_back(&(
-                                 *pContent->uniqueStyles.insert(*style).first));
-                           } else {
-                             pContent->polylineStyles.emplace_back(
-                                 &pContent->defaultStyle);
+                           return true;
+                         }),
+                 pStylingProvider
+                     ->onStylePolylines(
+                         asyncSystem,
+                         model,
+                         polylineFeatureIds,
+                         pContent->polylines)
+                     .thenInWorkerThread(
+                         [pContent](
+                             std::vector<std::optional<
+                                 CesiumVectorData::LineStyle>>&& result) {
+                           if (result.size() == 0 ||
+                               result.size() != pContent->polylines.size()) {
+                             pContent->polylineStyles.resize(
+                                 pContent->polylines.size(),
+                                 &pContent->defaultStyle.line);
+                             return false;
                            }
-                         }
-                         return true;
-                       }),
-               pStylingProvider
-                   ->onStylePolygons(
-                       asyncSystem,
-                       model,
-                       polygonFeatureIds,
-                       pContent->polygons)
-                   .thenInWorkerThread(
-                       [pContent](
-                           std::vector<std::optional<
-                               CesiumVectorData::VectorStyle>>&& result) {
-                         if (result.size() == 0 ||
-                             result.size() != pContent->polygons.size()) {
-                           pContent->polygonStyles.resize(
-                               pContent->polygons.size(),
-                               &pContent->defaultStyle);
-                           return false;
-                         }
-                         for (const auto& style : result) {
-                           if (style.has_value()) {
-                             pContent->polygonStyles.emplace_back(&(
-                                 *pContent->uniqueStyles.insert(*style).first));
-                           } else {
-                             pContent->polygonStyles.emplace_back(
-                                 &pContent->defaultStyle);
+                           for (const auto& style : result) {
+                             if (style.has_value()) {
+                               pContent->polylineStyles.emplace_back(
+                                   &(*pContent->uniquePolylineStyles
+                                          .insert(*style)
+                                          .first));
+                             } else {
+                               pContent->polylineStyles.emplace_back(
+                                   &pContent->defaultStyle.line);
+                             }
                            }
-                         }
-                         return true;
-                       })))
-          .thenInWorkerThread([pContent, errors = std::move(errors)](
-                                  std::tuple<bool, bool, bool>&& /*results*/) {
-            return Result<VectorRenderContent*>({pContent, errors});
-          });
+                           return true;
+                         }),
+                 pStylingProvider
+                     ->onStylePolygons(
+                         asyncSystem,
+                         model,
+                         polygonFeatureIds,
+                         pContent->polygons)
+                     .thenInWorkerThread(
+                         [pContent](
+                             std::vector<std::optional<
+                                 CesiumVectorData::PolygonStyle>>&& result) {
+                           if (result.size() == 0 ||
+                               result.size() != pContent->polygons.size()) {
+                             pContent->polygonStyles.resize(
+                                 pContent->polygons.size(),
+                                 &pContent->defaultStyle.polygon);
+                             return false;
+                           }
+                           for (const auto& style : result) {
+                             if (style.has_value()) {
+                               pContent->polygonStyles.emplace_back(&(
+                                   *pContent->uniquePolygonStyles.insert(*style)
+                                        .first));
+                             } else {
+                               pContent->polygonStyles.emplace_back(
+                                   &pContent->defaultStyle.polygon);
+                             }
+                           }
+                           return true;
+                         })))
+      .thenInWorkerThread([pContent, errors = std::move(errors)](
+                              std::tuple<bool, bool, bool>&& /*results*/) {
+        return Result<VectorRenderContent*>({pContent, errors});
+      });
 }
 
 struct LoadRequest {
@@ -809,13 +817,13 @@ private:
               for (size_t i = 0; i < pVectorContent->polygons.size(); i++) {
                 rasterizer.drawPolygon(
                     {pVectorContent->polygons[i]},
-                    pVectorContent->polygonStyles[i]->polygon);
+                    *pVectorContent->polygonStyles[i]);
               }
 
               for (size_t i = 0; i < pVectorContent->polylines.size(); i++) {
                 rasterizer.drawPolyline(
                     pVectorContent->polylines[i],
-                    pVectorContent->polylineStyles[i]->line);
+                    *pVectorContent->polylineStyles[i]);
               }
 
               if (!pVectorContent->points.empty()) {
