@@ -1,14 +1,21 @@
+#include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/GeneralCullingVolume.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/CullingResult.h>
+#include <CesiumGeometry/CullingVolume.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
+
+#include <variant>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
 
-namespace {
-template <class... Ts> struct overload : Ts... {
-  using Ts::operator()...;
-};
 template <class T>
 bool isBoundingVolumeVisible(
     const T& boundingVolume,
@@ -77,21 +84,21 @@ bool isBoundingVolumeVisible(
   return std::visit(Operation{cullingVolume}, boundingVolume);
 }
 
-} // namespace
-
 bool isBoundingVolumeVisible(
     const GeneralCullingVolume& cullingVolume,
     const BoundingVolume& boundingVolume) {
-  return std::visit(
-      overload{
-          [boundingVolume](const CesiumGeometry::CullingVolume& cv) {
-            return isBoundingVolumeVisible(cv, boundingVolume);
-          },
+  struct Operation {
+    const BoundingVolume& boundingVolume;
 
-          [boundingVolume](const BoundingVolume& cv) {
-            return testIntersection(cv, boundingVolume);
-          }},
-      cullingVolume);
+    bool operator()(const CesiumGeometry::CullingVolume& cv) {
+      return isBoundingVolumeVisible(cv, boundingVolume);
+    }
+
+    bool operator()(const BoundingVolume& cv) {
+      return testIntersection(cv, boundingVolume);
+    }
+  };
+  return std::visit(Operation{boundingVolume}, cullingVolume);
 }
 
 } // namespace Cesium3DTilesSelection

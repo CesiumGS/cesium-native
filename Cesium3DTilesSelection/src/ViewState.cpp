@@ -2,13 +2,13 @@
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
-#include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/CullingVolume.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 
