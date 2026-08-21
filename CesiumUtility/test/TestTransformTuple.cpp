@@ -3,6 +3,7 @@
 #include <doctest/doctest.h>
 
 #include <string>
+#include <vector>
 
 using namespace CesiumUtility;
 
@@ -24,5 +25,39 @@ TEST_CASE("transformTuple") {
     CHECK_EQ(std::get<1>(transformedTuple), "-42");
     CHECK_EQ(std::get<2>(transformedTuple), "97");
     CHECK_EQ(firstResult, std::get<0>(transformedTuple));
+  }
+
+  SUBCASE("Transforms a const tuple") {
+    const std::tuple<std::string, std::vector<int>> tuple =
+        std::make_tuple(std::string("test"), std::vector<int>{1, 2, 3});
+
+    struct Transformer {
+      size_t operator()(const std::string& str) const { return str.size(); }
+
+      size_t operator()(const std::vector<int>& v) const { return v.size(); }
+    };
+
+    std::string firstResult;
+    std::tuple<size_t, size_t> transformedTuple =
+        transformTuple(tuple, Transformer());
+    CHECK_EQ(std::get<0>(transformedTuple), 4);
+    CHECK_EQ(std::get<1>(transformedTuple), 3);
+  }
+
+  SUBCASE("Transforms a moved tuple") {
+    std::tuple<std::string, std::vector<int>> tuple =
+        std::make_tuple(std::string("test"), std::vector<int>{1, 2, 3});
+
+    struct Transformer {
+      size_t operator()(std::string&& str) const { return str.size(); }
+
+      size_t operator()(std::vector<int>&& v) const { return v.size(); }
+    };
+
+    std::string firstResult;
+    std::tuple<size_t, size_t> transformedTuple =
+        transformTuple(std::move(tuple), Transformer());
+    CHECK_EQ(std::get<0>(transformedTuple), 4);
+    CHECK_EQ(std::get<1>(transformedTuple), 3);
   }
 }
