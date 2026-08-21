@@ -1,5 +1,11 @@
 # Change Log
 
+### v0.64.0 - 2026-08-21
+
+##### Additions :tada:
+
+- Added support for the `GS_3DT` reality data type in `ITwinRealityDataContentLoader`.
+
 ### v0.63.0 - 2026-08-03
 
 ##### Additions :tada:
