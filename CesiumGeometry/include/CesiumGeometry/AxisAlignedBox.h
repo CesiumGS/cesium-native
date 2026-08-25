@@ -135,7 +135,11 @@ struct CESIUMGEOMETRY_API AxisAlignedBox final {
 };
 
 /**
- * @brief Test if two axis aligned boxes intersect.
+ * @brief Test if two axis-aligned boxes intersect.
+ *
+ * @param b0 The first axis-aligned box.
+ * @param b1 The second axis-aligned box.
+ * @returns Whether the boxes intersect.
  */
 bool CESIUMGEOMETRY_API
 intersects(const AxisAlignedBox& b0, const AxisAlignedBox& b1);
@@ -144,9 +148,9 @@ intersects(const AxisAlignedBox& b0, const AxisAlignedBox& b1);
  * @brief Return the equivalent OrientedBoundingBox for an AxisAlignedBox. The
  * axes will be the principal axes.
  *
- * @param box the source bounding box
+ * @param box The source axis-aligned bounding box.
  *
- * @returns An oriented bounding box
+ * @returns The equivalent oriented bounding box.
  */
 OrientedBoundingBox toOrientedBoundingBox(const AxisAlignedBox& box);
 

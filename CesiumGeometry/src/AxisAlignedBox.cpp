@@ -26,7 +26,7 @@ AxisAlignedBox::fromPositions(const std::vector<glm::dvec3>& positions) {
 }
 
 bool intersects(const AxisAlignedBox& b0, const AxisAlignedBox& b1) {
-  // Do all the axes overlap?
+  // Check if all axes overlap.
   return b0.minimumX <= b1.maximumX && b0.maximumX >= b1.minimumX &&
          b0.minimumY <= b1.maximumY && b0.maximumY >= b1.minimumY &&
          b0.minimumZ <= b1.maximumZ && b0.maximumZ >= b1.minimumZ;
