@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/GeneralCullingVolume.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <CesiumGeometry/CullingVolume.h>
 #include <CesiumGeometry/Plane.h>
@@ -13,7 +14,6 @@
 #include <glm/vec3.hpp>
 
 #include <optional>
-#include <vector>
 
 namespace Cesium3DTilesSelection {
 
@@ -112,6 +112,24 @@ public:
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
+   * @brief Creates a new instance of a view state from a bounding volume
+   * associated with a geographic area, as opposed to a viewing projection. This
+   * constructor does not specify a viewport, and so doesn't use Screen Space
+   * Error (SSE) as a selection criteria.
+   *
+   * @param boundingVolume The geographic viewing volume
+   * @param geometricErrorThreshold Value used for selection as an alternative
+   * to screen space error.
+   * @param ellipsoid The ellipsoid that will be used to compute the
+   * {@link ViewState#getPositionCartographic cartographic position} and other
+   * parameters for tile selection.
+   */
+  ViewState(
+      const BoundingVolume& boundingVolume,
+      double geometricErrorThreshold,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  /**
    * @brief Gets the position of the camera in Earth-centered, Earth-fixed
    * coordinates.
    */
@@ -177,6 +195,13 @@ public:
   }
 
   /**
+   * @brief Gets the geometric error threshold.
+   */
+  std::optional<double> getGeometricErrorThreshold() const {
+    return this->_geometricErrorThreshold;
+  }
+
+  /**
    * @brief Returns whether the given @ref BoundingVolume is visible for this
    * camera
    *
@@ -219,16 +244,17 @@ public:
       const noexcept;
 
 private:
-  const glm::dvec3 _position;
-  const glm::dvec3 _direction;
-  const glm::dvec2 _viewportSize;
-  const CesiumGeospatial::Ellipsoid _ellipsoid;
+  glm::dvec3 _position;
+  glm::dvec3 _direction;
+  glm::dvec2 _viewportSize;
+  CesiumGeospatial::Ellipsoid _ellipsoid;
 
-  const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
+  std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
-  const CesiumGeometry::CullingVolume _cullingVolume;
-  const glm::dmat4 _viewMatrix;
-  const glm::dmat4 _projectionMatrix;
+  Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
+  glm::dmat4 _viewMatrix;
+  glm::dmat4 _projectionMatrix;
+  std::optional<double> _geometricErrorThreshold;
 };
 
 } // namespace Cesium3DTilesSelection
