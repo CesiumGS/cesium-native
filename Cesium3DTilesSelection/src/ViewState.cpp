@@ -123,7 +123,7 @@ ViewState::ViewState(
 
 ViewState::ViewState(
     const BoundingVolume& boundingVolume,
-    double selectionMeasure,
+    double geometricErrorThreshold,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _position{0.0, 0.0, 1.0},
       _direction{0.0, 0.0, 1.0},
@@ -133,14 +133,14 @@ ViewState::ViewState(
       _cullingVolume(boundingVolume),
       _viewMatrix(1.0),
       _projectionMatrix(1.0),
-      _selectionMeasure(selectionMeasure) {
+      _geometricErrorThreshold(geometricErrorThreshold) {
   std::optional<GlobeRectangle> globeRectangle =
       estimateGlobeRectangle(boundingVolume, ellipsoid);
   if (!globeRectangle) {
     return;
   }
   // Get approximate center, a "North" view direction,and up at the center.
-  _positionCartographic = globeRectangle->computeCenter();
+  this->_positionCartographic = globeRectangle->computeCenter();
   LocalHorizontalCoordinateSystem enu{
       *_positionCartographic,
       LocalDirection::East,
@@ -148,17 +148,15 @@ ViewState::ViewState(
       LocalDirection::Up,
       1.0,
       ellipsoid};
-  _viewMatrix = enu.getLocalToEcefTransformation();
-  _position = positionFromView(_viewMatrix);
-  _direction = directionFromView(_viewMatrix);
+  this->_viewMatrix = enu.getLocalToEcefTransformation();
+  this->_position = positionFromView(_viewMatrix);
+  this->_direction = directionFromView(_viewMatrix);
 }
-
-namespace {} // namespace
 
 bool ViewState::isBoundingVolumeVisible(
     const BoundingVolume& boundingVolume) const noexcept {
   return Cesium3DTilesSelection::isBoundingVolumeVisible(
-      _cullingVolume,
+      this->_cullingVolume,
       boundingVolume);
 }
 
@@ -216,9 +214,14 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
 double ViewState::computeScreenSpaceError(
     double geometricError,
     double distance) const noexcept {
-  if (this->_viewportSize.y == 0.0) {
-    return geometricError;
+  // If the view state is constructed with a geometric error threshold, then
+  // that is used instead as a stand-in for screen space error.
+  if (this->_geometricErrorThreshold) {
+    return *this->_geometricErrorThreshold;
   }
+  // Otherwise, the projection matrix is valid and we can proceed with our
+  // projection-based calculation.
+  //
   // Avoid divide by zero when viewer is inside the tile
   distance = glm::max(distance, 1e-7);
   // This is a simplified version of the projection transform and homogeneous

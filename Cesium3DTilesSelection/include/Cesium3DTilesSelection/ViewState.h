@@ -118,15 +118,15 @@ public:
    * Error (SSE) as a selection criteria.
    *
    * @param boundingVolume The geographic viewing volume
-   * @param selectionMeasure Value used for selection, typically tile geometric
-   * error
+   * @param geometricErrorThreshold Value used for selection as an alternative
+   * to screen space error.
    * @param ellipsoid The ellipsoid that will be used to compute the
    * {@link ViewState#getPositionCartographic cartographic position} and other
    * parameters for tile selection.
    */
   ViewState(
       const BoundingVolume& boundingVolume,
-      double selectionMeasure,
+      double geometricErrorThreshold,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
@@ -195,9 +195,11 @@ public:
   }
 
   /**
-   * @brief Gets the selection measure.
+   * @brief Gets the geometric error threshold.
    */
-  double getSelectionMeasure() const { return this->_selectionMeasure; }
+  std::optional<double> getGeometricErrorThreshold() const {
+    return this->_geometricErrorThreshold;
+  }
 
   /**
    * @brief Returns whether the given @ref BoundingVolume is visible for this
@@ -252,7 +254,7 @@ private:
   Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
-  double _selectionMeasure = 0.0;
+  std::optional<double> _geometricErrorThreshold;
 };
 
 } // namespace Cesium3DTilesSelection

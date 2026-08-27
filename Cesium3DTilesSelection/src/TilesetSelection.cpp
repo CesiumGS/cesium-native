@@ -326,20 +326,22 @@ double computeSse(
   return largestSse;
 }
 
+bool meetsGeometricErrorThreshold(
+    const TileSelectionContext& context,
+    double geometricErrorThreshold,
+    bool culled,
+    const Tile& tile) {
+  return culled ? !context.options.enforceCulledScreenSpaceError
+                : tile.getGeometricError() < geometricErrorThreshold;
+}
+
 bool meetsSseThreshold(
     const TileSelectionContext& context,
     double sse,
-    bool culled,
-    const Tile& tile,
-    double fixedError) noexcept {
-  if (fixedError > 0.0) {
-    return culled ? !context.options.enforceCulledScreenSpaceError
-                  : tile.getGeometricError() < fixedError;
-  } else {
-    return culled ? !context.options.enforceCulledScreenSpaceError ||
-                        sse < context.options.culledScreenSpaceError
-                  : sse < context.options.maximumScreenSpaceError;
-  }
+    bool culled) noexcept {
+  return culled ? !context.options.enforceCulledScreenSpaceError ||
+                      sse < context.options.culledScreenSpaceError
+                : sse < context.options.maximumScreenSpaceError;
 }
 
 bool isLeaf(const Tile& tile) noexcept { return tile.getChildren().empty(); }
@@ -1133,19 +1135,32 @@ TraversalDetails visitTileIfNeeded(
   }
 
   double tileSse = computeSse(context, frameState, tile);
-  auto fixedErrorIt = std::min_element(
+  auto minGeoErrorThresholdIt = std::min_element(
       frameState.frustums.begin(),
       frameState.frustums.end(),
       [](const ViewState& a, const ViewState& b) {
-        return a.getSelectionMeasure() < b.getSelectionMeasure();
+        std::optional<double> aThreshold = a.getGeometricErrorThreshold();
+        std::optional<double> bThreshold = b.getGeometricErrorThreshold();
+        if (!aThreshold) {
+          return true;
+        } else if (!bThreshold) {
+          return false;
+        } else {
+          return *aThreshold < *bThreshold;
+        }
       });
-  bool meetsSse = meetsSseThreshold(
-      context,
-      tileSse,
-      cullResult.culled,
-      tile,
-      fixedErrorIt->getSelectionMeasure());
-
+  bool meetsSse = false;
+  std::optional<double> geometricErrorThreshold =
+      minGeoErrorThresholdIt->getGeometricErrorThreshold();
+  if (geometricErrorThreshold) {
+    meetsSse = meetsGeometricErrorThreshold(
+        context,
+        *geometricErrorThreshold,
+        cullResult.culled,
+        tile);
+  } else {
+    meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
+  }
   TraversalDetails details = visitTile(
       context,
       frameState,

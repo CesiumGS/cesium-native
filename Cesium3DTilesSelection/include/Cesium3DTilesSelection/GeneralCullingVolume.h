@@ -9,21 +9,21 @@
 namespace Cesium3DTilesSelection {
 
 /**
- * @brief A generalization of @ref CesiumGeometry::CullingVolume.
+ * @brief A general culling volume for selecting and filtering tiles.
  *
- * CesiumGeometry::CullingVolume represents orthographic and perspective view
- * frustums; GeneralCullingVolume includes @ref
- * Cesium3DTilesSelection::BoundingVolume too, allowing filtering on
- * e.g. geographic areas.
+ * While CesiumGeometry::CullingVolume represents orthographic and perspective
+ * view frustums, GeneralCullingVolume also includes @ref
+ * Cesium3DTilesSelection::BoundingVolume, which allows more general filtering
+ * (e.g., on geographic areas).
  */
 using GeneralCullingVolume =
     std::variant<CesiumGeometry::CullingVolume, BoundingVolume>;
 
 /**
- * @brief test if a general culling volume intersects a bounding volume.
+ * @brief Test if a general culling volume intersects a bounding volume.
  *
- * @param cullingVolume the general culling volume.
- * @param boundingVolume the bounding volume.
+ * @param cullingVolume The general culling volume.
+ * @param boundingVolume The bounding volume.
  * @return true if volumes intersect.
  */
 bool CESIUM3DTILESSELECTION_API isBoundingVolumeVisible(
