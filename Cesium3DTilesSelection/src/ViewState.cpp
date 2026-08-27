@@ -1,5 +1,6 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/GeneralCullingVolume.h>
+#include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
@@ -209,6 +210,14 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
   };
 
   return std::visit(Operation{*this}, boundingVolume);
+}
+
+double ViewState::computeScreenSpaceError(const Tile& tile, double distance) const noexcept {
+  if (_sseFunctor) {
+    return this->_sseFunctor(tile, distance);
+  } else {
+    return this->computeScreenSpaceError(tile.getGeometricError(), distance);
+  }
 }
 
 double ViewState::computeScreenSpaceError(

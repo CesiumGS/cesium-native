@@ -13,9 +13,12 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+#include <functional>
 #include <optional>
 
 namespace Cesium3DTilesSelection {
+
+class Tile;
 
 /**
  * @brief The state of the view that is used during the traversal of a tileset.
@@ -243,7 +246,15 @@ public:
   double computeScreenSpaceError(double geometricError, double distance)
       const noexcept;
 
-private:
+  double computeScreenSpaceError(const Tile& tile, double distance)
+      const noexcept;
+
+  template<typename T>
+      void setSSEFunctor(T&& fn) {
+    _sseFunctor = std::forward(fn);
+  }
+  
+ private:
   glm::dvec3 _position;
   glm::dvec3 _direction;
   glm::dvec2 _viewportSize;
@@ -255,6 +266,7 @@ private:
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
   std::optional<double> _geometricErrorThreshold;
+  std::function<double (const Tile& tile, double distance)> _sseFunctor;
 };
 
 } // namespace Cesium3DTilesSelection
