@@ -373,3 +373,30 @@ TEST_CASE("Culled tiles keep their ungated screen-space error") {
     CHECK(result.tileScreenSpaceErrorThisFrame[i] == ungated);
   }
 }
+
+TEST_CASE("A view that sees nothing does not change selection") {
+  // Screen-space error depends on a view's projection and its distance to the
+  // tile, not on where the view points, so a view facing away from the globe
+  // reports a large error for tiles it cannot see.
+  TilesetOptions options;
+  options.maximumScreenSpaceError = 16.0;
+  options.renderTilesUnderCamera = false;
+
+  const ViewState wide = makeViewState(40.0);
+  const ViewState blind = makeViewState(1.0, true);
+
+  const ViewUpdateResult alone = selectAfterLoading({wide}, options);
+  const ViewUpdateResult withBlind = selectAfterLoading({wide, blind}, options);
+
+  REQUIRE(alone.tilesVisited > 0);
+  REQUIRE(alone.tilesToRenderThisFrame.size() > 1);
+
+  CHECK(withBlind.tilesVisited == alone.tilesVisited);
+  CHECK(withBlind.tilesCulled == alone.tilesCulled);
+  CHECK(
+      withBlind.tilesToRenderThisFrame.size() ==
+      alone.tilesToRenderThisFrame.size());
+  CHECK(
+      withBlind.tileScreenSpaceErrorThisFrame ==
+      alone.tileScreenSpaceErrorThisFrame);
+}
