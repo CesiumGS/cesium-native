@@ -26,9 +26,12 @@
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
+#include <glm/common.hpp>
+#include <glm/exponential.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/trigonometric.hpp>
 
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <string>
@@ -212,4 +215,115 @@ TEST_CASE("selectTiles result matches updateViewGroup result") {
   // Tile counts must agree between the two paths.
   CHECK(freeResult.tilesToRenderThisFrame.size() == referenceRenderCount);
   CHECK(freeResult.tilesVisited == referenceVisited);
+}
+
+namespace {
+
+const Cartographic DefaultCameraPosition{0.0, 0.0, 100'000.0};
+
+ViewState makeViewState(
+    double horizontalFieldOfViewDegrees,
+    bool lookAwayFromGlobe = false,
+    const Cartographic& cameraPosition = DefaultCameraPosition) {
+  const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
+  const glm::dvec3 position =
+      ellipsoid.cartographicToCartesian(cameraPosition);
+  const glm::dvec3 direction =
+      glm::normalize(lookAwayFromGlobe ? position : -position);
+  const glm::dvec3 up{0.0, 0.0, 1.0};
+  const glm::dvec2 viewport{1920.0, 1080.0};
+
+  const double horizontalFieldOfView =
+      Math::degreesToRadians(horizontalFieldOfViewDegrees);
+  const double verticalFieldOfView =
+      2.0 * std::atan(
+                std::tan(horizontalFieldOfView * 0.5) /
+                (viewport.x / viewport.y));
+
+  return ViewState(
+      position,
+      direction,
+      up,
+      viewport,
+      horizontalFieldOfView,
+      verticalFieldOfView,
+      ellipsoid);
+}
+
+// Reproduces what selectTiles computes for one view, so a recorded error can be
+// attributed to the view it came from.
+double screenSpaceErrorFor(const ViewState& view, const Tile& tile) {
+  const double distance = glm::sqrt(glm::max(
+      view.computeDistanceSquaredToBoundingVolume(tile.getBoundingVolume()),
+      0.0));
+  return view.computeScreenSpaceError(tile.getGeometricError(), distance);
+}
+
+// EllipsoidTilesetLoader creates children on demand, so refinement descends one
+// level per frame. Callers assert the depth reached, so a fixture that stops
+// descending fails loudly instead of silently weakening the test.
+ViewUpdateResult selectAfterLoading(
+    const std::vector<ViewState>& frustums,
+    const TilesetOptions& options) {
+  TilesetExternals externals = makeExternals();
+  auto pTileset = EllipsoidTilesetLoader::createTileset(externals, options);
+  REQUIRE(pTileset != nullptr);
+
+  ViewUpdateResult result;
+  for (int i = 0; i < 16; ++i) {
+    externals.asyncSystem.dispatchMainThreadTasks();
+    result =
+        pTileset->updateViewGroup(pTileset->getDefaultViewGroup(), frustums);
+    externals.asyncSystem.dispatchMainThreadTasks();
+    pTileset->loadTiles();
+  }
+  return result;
+}
+
+// Every recorded error must be one of the two views' own, and each view must
+// drive at least one tile: if one view drives all of them, the other's
+// visibility is being ignored.
+void checkErrorsAreAttributableToBothViews(
+    const ViewUpdateResult& result,
+    const ViewState& first,
+    const ViewState& second) {
+  REQUIRE(
+      result.tileScreenSpaceErrorThisFrame.size() ==
+      result.tilesToRenderThisFrame.size());
+  REQUIRE(result.maxDepthVisited > 4);
+
+  size_t firstDriven = 0;
+  size_t secondDriven = 0;
+  for (size_t i = 0; i < result.tilesToRenderThisFrame.size(); ++i) {
+    const Tile& tile = *result.tilesToRenderThisFrame[i];
+    const double firstSse = screenSpaceErrorFor(first, tile);
+    const double secondSse = screenSpaceErrorFor(second, tile);
+    if (firstSse == secondSse) {
+      continue;
+    }
+
+    const double recorded = result.tileScreenSpaceErrorThisFrame[i];
+    CHECK((recorded == firstSse || recorded == secondSse));
+    firstDriven += recorded == firstSse;
+    secondDriven += recorded == secondSse;
+  }
+
+  REQUIRE(firstDriven > 0);
+  REQUIRE(secondDriven > 0);
+}
+
+} // namespace
+
+TEST_CASE("A view cannot drive refinement of tiles it can't see") {
+  TilesetOptions options;
+  options.maximumScreenSpaceError = 16.0;
+  options.renderTilesUnderCamera = false;
+
+  const ViewState wide = makeViewState(40.0);
+  const ViewState narrow = makeViewState(1.0);
+
+  checkErrorsAreAttributableToBothViews(
+      selectAfterLoading({wide, narrow}, options),
+      wide,
+      narrow);
 }
