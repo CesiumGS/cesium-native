@@ -346,3 +346,30 @@ TEST_CASE("Each view's screen-space error uses that view's own distance") {
       here,
       elsewhere);
 }
+
+TEST_CASE("Culled tiles keep their ungated screen-space error") {
+  TilesetOptions options;
+  options.maximumScreenSpaceError = 16.0;
+  options.renderTilesUnderCamera = false;
+  options.enableFrustumCulling = false;
+  options.enableFogCulling = false;
+
+  const ViewState wide = makeViewState(40.0, true);
+  const ViewState narrow = makeViewState(1.0, true);
+
+  const ViewUpdateResult result = selectAfterLoading({wide, narrow}, options);
+  REQUIRE(
+      result.tileScreenSpaceErrorThisFrame.size() ==
+      result.tilesToRenderThisFrame.size());
+  REQUIRE(result.culledTilesVisited > 0);
+  REQUIRE(result.tilesToRenderThisFrame.size() > 1);
+
+  for (size_t i = 0; i < result.tilesToRenderThisFrame.size(); ++i) {
+    const Tile& tile = *result.tilesToRenderThisFrame[i];
+    const double ungated = glm::max(
+        screenSpaceErrorFor(wide, tile),
+        screenSpaceErrorFor(narrow, tile));
+    CHECK(ungated > 0.0);
+    CHECK(result.tileScreenSpaceErrorThisFrame[i] == ungated);
+  }
+}
