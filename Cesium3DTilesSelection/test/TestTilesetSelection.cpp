@@ -327,3 +327,22 @@ TEST_CASE("A view cannot drive refinement of tiles it can't see") {
       wide,
       narrow);
 }
+
+TEST_CASE("Each view's screen-space error uses that view's own distance") {
+  // Differing position and field of view, so pairing one view with the other's
+  // distance produces a value neither view could have reported.
+  TilesetOptions options;
+  options.maximumScreenSpaceError = 16.0;
+  options.renderTilesUnderCamera = false;
+
+  const ViewState here = makeViewState(40.0);
+  const ViewState elsewhere = makeViewState(
+      6.0,
+      false,
+      Cartographic{Math::degreesToRadians(5.0), 0.0, 2'000'000.0});
+
+  checkErrorsAreAttributableToBothViews(
+      selectAfterLoading({here, elsewhere}, options),
+      here,
+      elsewhere);
+}
