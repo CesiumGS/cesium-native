@@ -7,6 +7,10 @@
 - Added support for "area paging": selection of a region of terrain tiles at a fixed level of detail. The changes to `Cesium3DTilesSelection::ViewState` include support for for general culling volumes in addition to frustums.
 - Added intesection tests for `Cesium3DTilesSelection::BoundingVolume` objects.
 
+##### Fixes :wrench:
+
+- Fixed a bug where a tile's level of detail could be driven by a view that cannot see it. In a view group mixing a wide and a narrow field of view, every tile the wide view saw was refined to the narrow view's screen-space error, visiting far more tiles than either view renders.
+
 ### v0.63.0 - 2026-08-03
 
 ##### Additions :tada:
