@@ -1,5 +1,12 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added support for "area paging": selection of a region of terrain tiles at a fixed level of detail. The changes to `Cesium3DTilesSelection::ViewState` include support for for general culling volumes in addition to frustums.
+- Added intesection tests for `Cesium3DTilesSelection::BoundingVolume` objects.
+
 ### v0.63.0 - 2026-08-03
 
 ##### Additions :tada:
