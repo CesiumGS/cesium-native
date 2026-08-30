@@ -337,7 +337,11 @@ if (CESIUM_COVERAGE_ENABLED AND NOT MSVC)
     setup_target_for_coverage_gcovr_html(
         NAME cesium-native-tests-coverage
         EXECUTABLE ctest -j ${PROCESSOR_COUNT}
-        EXCLUDE "${PROJECT_SOURCE_DIR}/extern/*" "${PROJECT_BINARY_DIR}"
+        EXCLUDE
+            ".*/extern/.*"
+            ".*/generated/.*"
+            ".*/test/.*"
+            "${PROJECT_BINARY_DIR}"
         DEPENDENCIES cesium-native-tests
     )
 endif()
