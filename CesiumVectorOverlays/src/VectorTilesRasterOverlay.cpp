@@ -118,7 +118,6 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
     const glm::dmat4x4& gltfTransform,
     const CesiumVectorData::VectorStyle& defaultStyle,
     const std::shared_ptr<VectorStylingProvider>& pStylingProvider) {
-
   glm::dmat4x4 rootTransform =
       CesiumGltfContent::GltfUtilities::applyRtcCenter(model, gltfTransform);
   rootTransform = CesiumGltfContent::GltfUtilities::applyGltfUpAxisTransform(
@@ -167,8 +166,8 @@ CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
         const CesiumGltf::ExtensionExtMeshFeatures* pMeshFeatures =
             primitive.getExtension<CesiumGltf::ExtensionExtMeshFeatures>();
         const CesiumGltf::FeatureId* pFeatureIdSet =
-            pMeshFeatures != nullptr && !pMeshFeatures->featureIds.empty()
-                ? &pMeshFeatures->featureIds[0]
+            pMeshFeatures != nullptr
+                ? model.getSafe(&pMeshFeatures->featureIds, 0)
                 : nullptr;
 
         if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::POINTS) {
@@ -518,15 +517,16 @@ public:
                this->defaultStyle,
                this->_pStylingProvider)
         .thenInWorkerThread([tileLoadResult = std::move(tileLoadResult),
-                             this](CesiumUtility::Result<VectorRenderContent*>&&
-                                       vectorizationResult) mutable {
+                             pLogger = this->pLogger](
+                                CesiumUtility::Result<VectorRenderContent*>&&
+                                    vectorizationResult) mutable {
           if (vectorizationResult.errors.hasErrors()) {
             if (vectorizationResult.value) {
               delete *vectorizationResult.value;
             }
 
             vectorizationResult.errors.log(
-                this->pLogger,
+                pLogger,
                 "Errors when vectorizing model:");
             return TileLoadResultAndRenderResources{
                 std::move(tileLoadResult),
@@ -535,7 +535,7 @@ public:
 
           if (!vectorizationResult.errors.warnings.empty()) {
             vectorizationResult.errors.log(
-                this->pLogger,
+                pLogger,
                 "Warnings when vectorizing model:");
           }
 
@@ -921,6 +921,11 @@ public:
         this->_options,
         ionAssetEndpointUrl);
     this->_pTileset->registerLoadRequester(this->_loadRequester);
+  }
+
+  virtual ~VectorTilesRasterOverlayTileProvider() {
+    this->_loadRequester.unregister();
+    spdlog::info("VectorTilesRasterOverlayTileProvider destroyed, unregistering load requester.");
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
