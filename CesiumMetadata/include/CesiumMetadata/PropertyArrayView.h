@@ -66,8 +66,7 @@ private:
 
 /**
  * @brief A copy of an array element of a @ref CesiumGltf::PropertyTableProperty
- * or
- * @ref CesiumGltf::PropertyTextureProperty.
+ * or @ref CesiumGltf::PropertyTextureProperty.
  *
  * Whereas @ref PropertyArrayView is a pointer to data stored in a separate
  * place, a PropertyArrayCopy owns the data that it's viewing.

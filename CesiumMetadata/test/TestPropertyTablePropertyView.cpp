@@ -6,6 +6,7 @@
 #include <CesiumMetadata/PropertyTypeTraits.h>
 #include <CesiumUtility/JsonValue.h>
 
+#include <doctest/doctest.h>
 #include <glm/ext/matrix_double2x2.hpp>
 #include <glm/ext/matrix_double3x3.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
@@ -23,24 +24,22 @@
 #include <glm/ext/vector_uint4_sized.hpp>
 #include <glm/fwd.hpp>
 
+#include <bitset>
+#include <climits>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <optional>
+#include <ostream>
+#include <span>
+#include <string>
 #include <string_view>
+#include <vector>
+
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
-
-#include <doctest/doctest.h>
-
-#include <bitset>
-#include <climits>
-#include <cstddef>
-#include <cstring>
-#include <ostream>
-#include <span>
-#include <string>
-#include <vector>
 
 using namespace doctest;
 using namespace CesiumGltf;
@@ -1312,7 +1311,7 @@ TEST_CASE("Check matN PropertyTablePropertyView (normalized)") {
 }
 
 TEST_CASE("Check boolean PropertyTablePropertyView") {
-  std::bitset<sizeof(unsigned long)* CHAR_BIT> bits = 0b11110101;
+  std::bitset<sizeof(unsigned long) * CHAR_BIT> bits = 0b11110101;
   unsigned long val = bits.to_ulong();
   std::vector<std::byte> data(sizeof(val));
   std::memcpy(data.data(), &val, sizeof(val));

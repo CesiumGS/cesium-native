@@ -12,6 +12,7 @@
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonValue.h>
 
+#include <doctest/doctest.h>
 #include <glm/ext/matrix_double2x2.hpp>
 #include <glm/ext/matrix_float2x2.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
@@ -22,18 +23,16 @@
 #include <glm/ext/vector_uint3_sized.hpp>
 #include <glm/fwd.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <optional>
+#include <vector>
+
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
-
-#include <doctest/doctest.h>
-
-#include <cstddef>
-#include <vector>
 
 using namespace CesiumGltf;
 using namespace CesiumMetadata;
