@@ -424,7 +424,7 @@ public:
 
   /**
    * @brief Computes the bounding volume for an implicit quadtree tile with the
-   * given ID as a {@link Cesium3DTiles::BoundingVolume}.
+   * given ID as a @ref Cesium3DTiles::BoundingVolume.
    *
    * @param rootBoundingVolume The bounding volume of the root tile.
    * @param tileID The tile ID for which to compute the bounding volume.
@@ -439,7 +439,7 @@ public:
 
   /**
    * @brief Computes the bounding volume for an implicit octree tile with the
-   * given ID as a {@link Cesium3DTiles::BoundingVolume}.
+   * given ID as a @ref Cesium3DTiles::BoundingVolume.
    *
    * @param rootBoundingVolume The bounding volume of the root tile.
    * @param tileID The tile ID for which to compute the bounding volume.

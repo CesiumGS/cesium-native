@@ -15,7 +15,7 @@
 namespace CesiumRasterOverlays {
 
 /**
- * @brief Options for {@link WebMapTileServiceRasterOverlay}.
+ * @brief Options for @ref WebMapTileServiceRasterOverlay.
  */
 struct WebMapTileServiceRasterOverlayOptions {
 
@@ -78,18 +78,18 @@ struct WebMapTileServiceRasterOverlayOptions {
   std::optional<uint32_t> maximumLevel;
 
   /**
-   * @brief The {@link CesiumGeometry::Rectangle}, in radians, covered by the
+   * @brief The @ref CesiumGeometry::Rectangle, in radians, covered by the
    * image.
    */
   std::optional<CesiumGeometry::Rectangle> coverageRectangle;
 
   /**
-   * @brief The {@link CesiumGeospatial::Projection} that is used.
+   * @brief The @ref CesiumGeospatial::Projection that is used.
    */
   std::optional<CesiumGeospatial::Projection> projection;
 
   /**
-   * @brief The {@link CesiumGeometry::QuadtreeTilingScheme} specifying how
+   * @brief The @ref CesiumGeometry::QuadtreeTilingScheme specifying how
    * the ellipsoidal surface is broken into tiles.
    */
   std::optional<CesiumGeometry::QuadtreeTilingScheme> tilingScheme;
@@ -115,7 +115,7 @@ struct WebMapTileServiceRasterOverlayOptions {
 };
 
 /**
- * @brief A {@link RasterOverlay} accessing images from a Web Map Tile Service
+ * @brief A @ref RasterOverlay accessing images from a Web Map Tile Service
  * (WMTS) server.
  */
 class CESIUMRASTEROVERLAYS_API WebMapTileServiceRasterOverlay final
@@ -128,8 +128,8 @@ public:
    * @param url The base URL.
    * @param headers The headers. This is a list of pairs of strings of the
    * form (Key,Value) that will be inserted as request headers internally.
-   * @param tmsOptions The {@link WebMapTileServiceRasterOverlayOptions}.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param tmsOptions The @ref WebMapTileServiceRasterOverlayOptions.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   WebMapTileServiceRasterOverlay(
       const std::string& name,

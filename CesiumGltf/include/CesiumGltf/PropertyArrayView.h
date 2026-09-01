@@ -12,8 +12,8 @@
 namespace CesiumGltf {
 
 /**
- * @brief A view on an array element of a {@link PropertyTableProperty}
- * or {@link PropertyTextureProperty}.
+ * @brief A view on an array element of a @ref PropertyTableProperty
+ * or @ref PropertyTextureProperty.
  *
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.
@@ -65,10 +65,10 @@ private:
 };
 
 /**
- * @brief A copy of an array element of a {@link PropertyTableProperty} or
- * {@link PropertyTextureProperty}.
+ * @brief A copy of an array element of a @ref PropertyTableProperty or
+ * @ref PropertyTextureProperty.
  *
- * Whereas {@link PropertyArrayView} is a pointer to data stored in a separate
+ * Whereas @ref PropertyArrayView is a pointer to data stored in a separate
  * place, a PropertyArrayCopy owns the data that it's viewing.
  *
  * Provides utility to retrieve the data stored in the array of elements via the
@@ -168,8 +168,8 @@ private:
 };
 
 /**
- * @brief A view on a bool array element of a {@link PropertyTableProperty}
- * or {@link PropertyTextureProperty}.
+ * @brief A view on a bool array element of a @ref PropertyTableProperty
+ * or @ref PropertyTextureProperty.
  *
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.
@@ -220,10 +220,10 @@ private:
 };
 
 /**
- * @brief A copy of a bool array element of a {@link PropertyTableProperty} or
- * {@link PropertyTextureProperty}.
+ * @brief A copy of a bool array element of a @ref PropertyTableProperty or
+ * @ref PropertyTextureProperty.
  *
- * Whereas {@link PropertyArrayView} is a pointer to data stored in a separate
+ * Whereas @ref PropertyArrayView is a pointer to data stored in a separate
  * place, a PropertyArrayCopy owns the data that it's viewing.
  *
  * Provides utility to retrieve the data stored in the array of elements via the
@@ -317,8 +317,8 @@ private:
 };
 
 /**
- * @brief A view on a string array element of a {@link PropertyTableProperty}
- * or {@link PropertyTextureProperty}.
+ * @brief A view on a string array element of a @ref PropertyTableProperty
+ * or @ref PropertyTextureProperty.
  *
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.
@@ -384,9 +384,9 @@ private:
 };
 
 /**
- * @brief A copy of a string array element of a {@link PropertyTableProperty}.
+ * @brief A copy of a string array element of a @ref PropertyTableProperty.
  *
- * Whereas {@link PropertyArrayView} is a pointer to data stored in a separate
+ * Whereas @ref PropertyArrayView is a pointer to data stored in a separate
  * place, a PropertyArrayCopy owns the data that it's viewing.
  *
  * Provides utility to retrieve the data stored in the array of elements via the

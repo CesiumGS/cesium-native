@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/GeneralCullingVolume.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <CesiumGeometry/CullingVolume.h>
 #include <CesiumGeometry/Plane.h>
@@ -13,14 +14,13 @@
 #include <glm/vec3.hpp>
 
 #include <optional>
-#include <vector>
 
 namespace Cesium3DTilesSelection {
 
 /**
  * @brief The state of the view that is used during the traversal of a tileset.
  *
- * An instance of a view state can be created with the {@link create} function.
+ * An instance of a view state can be created with the @ref create function.
  */
 class CESIUM3DTILESSELECTION_API ViewState final {
 
@@ -28,7 +28,7 @@ public:
   /**
    * @brief Creates a new instance of a view state with a symmetric perspective
    * projection.
-   * @deprecated Use {@link ViewState::ViewState} instead.
+   * @deprecated Use @ref ViewState::ViewState instead.
    */
   [[deprecated("Use ViewState::ViewState instead.")]] static ViewState create(
       const glm::dvec3& position,
@@ -51,9 +51,9 @@ public:
    * @param verticalFieldOfView The vertical field-of-view (opening)
    * angle of the camera, in radians.
    * @param ellipsoid The ellipsoid that will be used to compute the
-   * {@link ViewState#getPositionCartographic cartographic position}
+   * @ref ViewState::getPositionCartographic "cartographic position"
    * from the cartesian position.
-   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   * Default value: @ref CesiumGeospatial::Ellipsoid::WGS84.
    */
   ViewState(
       const glm::dvec3& position,
@@ -70,12 +70,12 @@ public:
    *
    * @param viewMatrix The view's view matrix i.e., the inverse of its pose
    * @param projectionMatrix see e.g.
-   * {@link CesiumGeometry::Transforms::createPerspectiveMatrix}
+   * @ref CesiumGeometry::Transforms::createPerspectiveMatrix
    * @param viewportSize The size of the viewport, in pixels.
    * @param ellipsoid The ellipsoid that will be used to compute the
-   * {@link ViewState#getPositionCartographic cartographic position}
+   * @ref ViewState::getPositionCartographic "cartographic position"
    * from the cartesian position.
-   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   * Default value: @ref CesiumGeospatial::Ellipsoid::WGS84.
    */
   ViewState(
       const glm::dmat4& viewMatrix,
@@ -96,9 +96,9 @@ public:
    * @param bottom bottom distance of near plane edge
    * @param top top distance of near plane edge
    * @param ellipsoid The ellipsoid that will be used to compute the
-   * {@link ViewState#getPositionCartographic cartographic position}
+   * @ref ViewState::getPositionCartographic "cartographic position"
    * from the cartesian position.
-   * Default value: {@link CesiumGeospatial::Ellipsoid::WGS84}.
+   * Default value: @ref CesiumGeospatial::Ellipsoid::WGS84.
    */
   ViewState(
       const glm::dvec3& position,
@@ -109,6 +109,24 @@ public:
       double right,
       double bottom,
       double top,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  /**
+   * @brief Creates a new instance of a view state from a bounding volume
+   * associated with a geographic area, as opposed to a viewing projection. This
+   * constructor does not specify a viewport, and so doesn't use Screen Space
+   * Error (SSE) as a selection criteria.
+   *
+   * @param boundingVolume The geographic viewing volume
+   * @param geometricErrorThreshold Value used for selection as an alternative
+   * to screen space error.
+   * @param ellipsoid The ellipsoid that will be used to compute the
+   * {@link ViewState#getPositionCartographic cartographic position} and other
+   * parameters for tile selection.
+   */
+  ViewState(
+      const BoundingVolume& boundingVolume,
+      double geometricErrorThreshold,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
@@ -177,7 +195,14 @@ public:
   }
 
   /**
-   * @brief Returns whether the given {@link BoundingVolume} is visible for this
+   * @brief Gets the geometric error threshold.
+   */
+  std::optional<double> getGeometricErrorThreshold() const {
+    return this->_geometricErrorThreshold;
+  }
+
+  /**
+   * @brief Returns whether the given @ref BoundingVolume is visible for this
    * camera
    *
    * Returns whether the given bounding volume is visible for this camera,
@@ -190,7 +215,7 @@ public:
   isBoundingVolumeVisible(const BoundingVolume& boundingVolume) const noexcept;
 
   /**
-   * @brief Computes the squared distance to the given {@link BoundingVolume}.
+   * @brief Computes the squared distance to the given @ref BoundingVolume.
    *
    * Computes the squared euclidean distance from the position of this camera
    * to the closest point of the given bounding volume.
@@ -219,16 +244,17 @@ public:
       const noexcept;
 
 private:
-  const glm::dvec3 _position;
-  const glm::dvec3 _direction;
-  const glm::dvec2 _viewportSize;
-  const CesiumGeospatial::Ellipsoid _ellipsoid;
+  glm::dvec3 _position;
+  glm::dvec3 _direction;
+  glm::dvec2 _viewportSize;
+  CesiumGeospatial::Ellipsoid _ellipsoid;
 
-  const std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
+  std::optional<CesiumGeospatial::Cartographic> _positionCartographic;
 
-  const CesiumGeometry::CullingVolume _cullingVolume;
-  const glm::dmat4 _viewMatrix;
-  const glm::dmat4 _projectionMatrix;
+  Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
+  glm::dmat4 _viewMatrix;
+  glm::dmat4 _projectionMatrix;
+  std::optional<double> _geometricErrorThreshold;
 };
 
 } // namespace Cesium3DTilesSelection

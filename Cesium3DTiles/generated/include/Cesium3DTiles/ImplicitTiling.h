@@ -37,7 +37,7 @@ struct CESIUM3DTILES_API ImplicitTiling final
   /**
    * @brief A string describing the subdivision scheme used within the tileset.
    *
-   * Known values are defined in {@link SubdivisionScheme}.
+   * Known values are defined in @ref SubdivisionScheme.
    *
    */
   std::string subdivisionScheme = SubdivisionScheme::QUADTREE;

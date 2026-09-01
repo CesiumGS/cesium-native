@@ -67,7 +67,7 @@ public:
    * @brief Determines on which side of a plane the bounding volume is located.
    *
    * @param plane The plane to test against.
-   * @return The {@link CesiumGeometry::CullingResult}
+   * @return The @ref CesiumGeometry::CullingResult
    *  * `Inside` if the entire region is on the side of the plane the normal is
    * pointing.
    *  * `Outside` if the entire region is on the opposite side.

@@ -21,13 +21,13 @@ enum class ExtensionState {
    *
    * If a statically-typed class is available for the extension, it will be
    * used. Otherwise the extension will be represented as a
-   * {@link CesiumUtility::JsonValue}.
+   * @ref CesiumUtility::JsonValue.
    */
   Enabled,
 
   /**
    * @brief The extension is enabled but will always be deserialized as a
-   * {@link CesiumUtility::JsonValue}.
+   * @ref CesiumUtility::JsonValue.
    *
    * Even if a statically-typed class is available for the extension, it will
    * not be used.
@@ -49,7 +49,8 @@ class CESIUMJSONREADER_API JsonReaderOptions {
 public:
   /**
    * @brief Gets a value indicating whether the values of unknown properties are
-   * captured in the {@link CesiumUtility::ExtensibleObject::unknownProperties} field.
+   * captured in the @ref CesiumUtility::ExtensibleObject::unknownProperties
+   * field.
    *
    * If this is false, unknown properties are completely ignored.
    */
@@ -59,7 +60,8 @@ public:
 
   /**
    * @brief Sets a value indicating whether the values of unknown properties are
-   * captured in the {@link CesiumUtility::ExtensibleObject::unknownProperties} field.
+   * captured in the @ref CesiumUtility::ExtensibleObject::unknownProperties
+   * field.
    *
    * If this is false, unknown properties are completely ignored.
    */
@@ -72,7 +74,7 @@ public:
    *
    * @tparam TExtended The object to extend.
    * @tparam TExtensionHandler The extension's
-   * {@link CesiumJsonReader::JsonHandler}.
+   * @ref CesiumJsonReader::JsonHandler.
    * @param extensionName The name of the extension.
    */
   template <typename TExtended, typename TExtensionHandler>
@@ -93,7 +95,7 @@ public:
    *
    * @tparam TExtended The object to extend.
    * @tparam TExtensionHandler The extension's
-   * {@link CesiumJsonReader::JsonHandler}.
+   * @ref CesiumJsonReader::JsonHandler.
    */
   template <typename TExtended, typename TExtensionHandler>
   void registerExtension() {
@@ -123,13 +125,13 @@ public:
    * By default, all extensions are enabled. When an enabled extension is
    * encountered in the source JSON, it is read into a statically-typed
    * extension class, if one is registered, or into a
-   * {@link CesiumUtility::JsonValue} if not.
+   * @ref CesiumUtility::JsonValue if not.
    *
    * When a disabled extension is encountered in the source JSON, it is ignored
    * completely.
    *
    * An extension may also be set to `ExtensionState::JsonOnly`, in which case
-   * it will be read into a {@link CesiumUtility::JsonValue} even if a
+   * it will be read into a @ref CesiumUtility::JsonValue even if a
    * statically-typed extension class is registered.
    *
    * @param extensionName The name of the extension to be enabled or disabled.

@@ -16,8 +16,8 @@ namespace CesiumAsync {
 class AsyncSystem;
 
 /**
- * @brief A decorator for an {@link IAssetAccessor} that caches requests and
- * responses in an {@link ICacheDatabase}.
+ * @brief A decorator for an @ref IAssetAccessor that caches requests and
+ * responses in an @ref ICacheDatabase.
  *
  * This can be used to improve asset loading performance by caching assets
  * across runs.
@@ -29,12 +29,12 @@ public:
    *
    * @param pLogger The logger that receives messages about the status of this
    * instance.
-   * @param pAssetAccessor The underlying {@link IAssetAccessor} used to
+   * @param pAssetAccessor The underlying @ref IAssetAccessor used to
    * retrieve assets that are not in the cache.
    * @param pCacheDatabase The database in which to cache requests and
    * responses.
    * @param requestsPerCachePrune The number of requests to handle before each
-   * {@link ICacheDatabase::prune} of old cached results from the database.
+   * @ref ICacheDatabase::prune of old cached results from the database.
    */
   CachingAssetAccessor(
       const std::shared_ptr<spdlog::logger>& pLogger,

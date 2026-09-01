@@ -693,7 +693,7 @@ function protectedSpecConstructor(name) {
   return `
     protected:
       /**
-       * @brief This class is not meant to be instantiated directly. Use {@link ${name}} instead.
+       * @brief This class is not meant to be instantiated directly. Use @ref ${name} instead.
        */
       ${name}Spec() = default;
       friend struct ${name};

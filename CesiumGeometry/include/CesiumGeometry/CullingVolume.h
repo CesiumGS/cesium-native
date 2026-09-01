@@ -45,14 +45,14 @@ struct CullingVolume final {
 };
 
 /**
- * @brief Creates a {@link CullingVolume} for a perspective frustum.
+ * @brief Creates a @ref CullingVolume for a perspective frustum.
  *
  * @param position The eye position
  * @param direction The viewing direction
  * @param up The up-vector of the frustum
  * @param fovx The horizontal Field-Of-View angle, in radians
  * @param fovy The vertical Field-Of-View angle, in radians
- * @return The {@link CullingVolume}
+ * @return The @ref CullingVolume
  */
 CullingVolume createCullingVolume(
     const glm::dvec3& position,
@@ -62,7 +62,7 @@ CullingVolume createCullingVolume(
     double fovy) noexcept;
 
 /**
- * @brief Create a {@link CullingVolume} from a projection matrix.
+ * @brief Create a @ref CullingVolume from a projection matrix.
  *
  * The matrix can be a composite view - projection matrix; the volume will then
  * cull world coordinates. It can also be a model - view - projection matrix,
@@ -71,7 +71,7 @@ CullingVolume createCullingVolume(
 CullingVolume createCullingVolume(const glm::dmat4& clipMatrix);
 
 /**
- * @brief Creates a {@link CullingVolume} for a perspective frustum.
+ * @brief Creates a @ref CullingVolume for a perspective frustum.
  *
  * @param position The eye position
  * @param direction The viewing direction
@@ -81,7 +81,7 @@ CullingVolume createCullingVolume(const glm::dmat4& clipMatrix);
  * @param t top edge
  * @param b bottom edge
  * @param n near plane distance
- * @return The {@link CullingVolume}
+ * @return The @ref CullingVolume
  */
 CullingVolume createCullingVolume(
     const glm::dvec3& position,
@@ -94,7 +94,7 @@ CullingVolume createCullingVolume(
     double n) noexcept;
 
 /**
- * @brief Creates a {@link CullingVolume} for an orthographic frustum.
+ * @brief Creates a @ref CullingVolume for an orthographic frustum.
  *
  * @param position The eye position
  * @param direction The viewing direction
@@ -104,7 +104,7 @@ CullingVolume createCullingVolume(
  * @param t top edge
  * @param b bottom edge
  * @param n near plane distance
- * @return The {@link CullingVolume}
+ * @return The @ref CullingVolume
  */
 
 CullingVolume createOrthographicCullingVolume(

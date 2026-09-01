@@ -103,12 +103,12 @@ struct CESIUM3DTILESCONTENT_API AssetFetcher {
 };
 
 /**
- * @brief Creates {@link GltfConverterResult} objects from a
+ * @brief Creates @ref GltfConverterResult objects from a
  * a binary content.
  *
  * The class offers a lookup functionality for registering
- * {@link ConverterFunction} instances that can create
- * {@link GltfConverterResult} instances from a binary content.
+ * @ref ConverterFunction instances that can create
+ * @ref GltfConverterResult instances from a binary content.
  *
  * The loaders are registered based on the magic header or the file extension
  * of the input data. The binary data is usually received as a response to a
@@ -119,7 +119,7 @@ struct CESIUM3DTILESCONTENT_API AssetFetcher {
 class CESIUM3DTILESCONTENT_API GltfConverters {
 public:
   /**
-   * @brief A function pointer that can create a {@link GltfConverterResult} from a
+   * @brief A function pointer that can create a @ref GltfConverterResult from a
    * tile binary content.
    */
   using ConverterFunction = CesiumAsync::Future<GltfConverterResult> (*)(
@@ -133,7 +133,7 @@ public:
    * The given magic header is a 4-character string. It will be compared
    * to the first 4 bytes of the raw input data, to decide whether the
    * given factory function should be used to create the
-   * {@link GltfConverterResult} from the input data.
+   * @ref GltfConverterResult from the input data.
    *
    * @param magic The string describing the magic header.
    * @param converter The converter that will be used to create the tile gltf
@@ -148,7 +148,7 @@ public:
    * The given string is a file extension including the "." (e.g. ".ext"). It
    * is used for deciding whether the given factory function should be used to
    * create the
-   * {@link GltfConverterResult} from the input data with the
+   * @ref GltfConverterResult from the input data with the
    * same file extension in its url.
    *
    * @param fileExtension The file extension.
@@ -165,7 +165,8 @@ public:
    * returned
    *
    * @param filePath The file path that contains the file extension.
-   * @return The {@link ConverterFunction} that is registered with the file extension.
+   * @return The @ref ConverterFunction that is registered with the file
+   * extension.
    */
   static ConverterFunction
   getConverterByFileExtension(const std::string& filePath);
@@ -177,22 +178,23 @@ public:
    * The given magic header is a 4-character string. It will be compared
    * to the first 4 bytes of the raw input data, to decide whether the
    * given factory function should be used to create the
-   * {@link GltfConverterResult} from the input data.
+   * @ref GltfConverterResult from the input data.
    *
    * @param content The binary tile content that contains the magic header.
-   * @return The {@link ConverterFunction} that is registered with the magic header.
+   * @return The @ref ConverterFunction that is registered with the magic
+   * header.
    */
   static ConverterFunction
   getConverterByMagic(const std::span<const std::byte>& content);
 
   /**
-   * @brief Creates the {@link GltfConverterResult} from the given
+   * @brief Creates the @ref GltfConverterResult from the given
    * binary content.
    *
-   * This will look up the {@link ConverterFunction} that can be used to
+   * This will look up the @ref ConverterFunction that can be used to
    * process the given input data, based on all loaders that
-   * have been registered with {@link GltfConverters::registerMagic}
-   * or {@link GltfConverters::registerFileExtension}.
+   * have been registered with @ref GltfConverters::registerMagic
+   * or @ref GltfConverters::registerFileExtension.
    *
    * It will first try to find a loader based on the magic header
    * of the `content` in the given input. If no matching loader is found, then
@@ -208,10 +210,11 @@ public:
    * the converter.
    * @param content The tile binary content that may contains the magic header
    * to look up the converter and is used to convert to gltf model.
-   * @param options The {@link CesiumGltfReader::GltfReaderOptions} for how to
+   * @param options The @ref CesiumGltfReader::GltfReaderOptions for how to
    * read a glTF.
    * @param assetFetcher An object that can perform recursive asset requests.
-   * @return The {@link GltfConverterResult} that stores the gltf model converted from the binary data.
+   * @return The @ref GltfConverterResult that stores the gltf model converted
+   * from the binary data.
    */
   static CesiumAsync::Future<GltfConverterResult> convert(
       const std::string& filePath,
@@ -220,12 +223,12 @@ public:
       const AssetFetcher& assetFetcher);
 
   /**
-   * @brief Creates the {@link GltfConverterResult} from the given
+   * @brief Creates the @ref GltfConverterResult from the given
    * binary content.
    *
-   * This will look up the {@link ConverterFunction} that can be used to
+   * This will look up the @ref ConverterFunction that can be used to
    * process the given input data, based on all loaders that
-   * have been registered with {@link GltfConverters::registerMagic}.
+   * have been registered with @ref GltfConverters::registerMagic.
    *
    * It will try to find a loader based on the magic header
    * of the `content` in the given input. If no such loader is found then an
@@ -236,10 +239,11 @@ public:
    *
    * @param content The tile binary content that may contains the magic header
    * to look up the converter and is used to convert to gltf model.
-   * @param options The {@link CesiumGltfReader::GltfReaderOptions} for how to
+   * @param options The @ref CesiumGltfReader::GltfReaderOptions for how to
    * read a glTF.
    * @param assetFetcher An object that can perform recursive asset requests.
-   * @return The {@link GltfConverterResult} that stores the gltf model converted from the binary data.
+   * @return The @ref GltfConverterResult that stores the gltf model converted
+   * from the binary data.
    */
   static CesiumAsync::Future<GltfConverterResult> convert(
       const std::span<const std::byte>& content,

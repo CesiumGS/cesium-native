@@ -27,8 +27,8 @@ public:
    * </ul>
    *
    * @param origin The center point of the local reference frame.
-   * @param ellipsoid The {@link Ellipsoid} whose fixed frame is used in the
-   * transformation. Default value: {@link Ellipsoid::WGS84}.
+   * @param ellipsoid The @ref Ellipsoid whose fixed frame is used in the
+   * transformation. Default value: @ref Ellipsoid::WGS84.
    * @return The transformation matrix
    */
   static glm::dmat4x4 eastNorthUpToFixedFrame(

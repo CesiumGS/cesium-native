@@ -22,7 +22,7 @@ namespace CesiumUtility {
  * class for such assets.
  *
  * The lifetime of instances of this class should be managed by reference
- * counting with {@link IntrusivePointer}.
+ * counting with @ref IntrusivePointer.
  *
  * @tparam T The type that is _deriving_ from this class. For example, you
  * should declare your class as
@@ -35,7 +35,7 @@ namespace CesiumUtility {
  * An independent asset isn't affiliated with an asset depot at all.
  * Its lifetime is controlled exclusively by IntrusivePointer / reference
  * counting. When the asset's reference count goes to zero, it deletes itself.
- * An independent asset's {@link getDepot} returns nullptr.
+ * An independent asset's @ref getDepot returns nullptr.
  *
  * **Active Depot Asset**
  * This is an asset that is owned by an asset depot and that is in use, meaning
@@ -56,7 +56,7 @@ class CESIUMUTILITY_API SharedAsset : public CesiumUtility::ExtensibleObject {
 public:
   /**
    * @brief Adds a counted reference to this object. Use
-   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
+   * @ref CesiumUtility::IntrusivePointer instead of calling this method
    * directly.
    */
   void addReference() const noexcept { this->addReference(false); }
@@ -64,7 +64,7 @@ public:
   /**
    * @brief Removes a counted reference from this object. When the last
    * reference is removed, this method will delete this instance. Use
-   * {@link CesiumUtility::IntrusivePointer} instead of calling this method
+   * @ref CesiumUtility::IntrusivePointer instead of calling this method
    * directly.
    */
   void releaseReference() const noexcept { this->releaseReference(false); }

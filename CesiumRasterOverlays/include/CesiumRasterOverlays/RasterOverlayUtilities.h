@@ -32,7 +32,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
       "_CESIUMOVERLAY_";
 
   /**
-   * @brief Creates texture coordinates for mapping {@link RasterOverlay} tiles
+   * @brief Creates texture coordinates for mapping @ref RasterOverlay tiles
    * to a glTF model.
    *
    * Generates new texture coordinates for the `gltf` using the given
@@ -76,7 +76,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
    * orientation.
    * @param textureCoordinateAttributeBaseName The base name to use for the
    * texture coordinate attributes, without a number on the end. Defaults to
-   * {@link DEFAULT_TEXTURE_COORDINATE_BASE_NAME}.
+   * @ref DEFAULT_TEXTURE_COORDINATE_BASE_NAME.
    * @param firstTextureCoordinateID The texture coordinate ID of the first
    * projection.
    * @return The details of the generated texture coordinates.
@@ -100,7 +100,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
    * texture coordinates must follow a map projection, and the parent tile is
    * divided into quadrants as divided by this map projection. To create the
    * necessary texture coordinates, use
-   * {@link createRasterOverlayTextureCoordinates}.
+   * @ref createRasterOverlayTextureCoordinates.
    *
    * @param parentModel The parent model to upsample.
    * @param childID The quadtree tile ID of the child model. This is used to
@@ -111,12 +111,12 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
    * @param textureCoordinateAttributeBaseName The base name of the attribute
    * that holds the projected texture coordinates. The `textureCoordinateIndex`
    * is appended to this name. Defaults to
-   * {@link DEFAULT_TEXTURE_COORDINATE_BASE_NAME}.
+   * @ref DEFAULT_TEXTURE_COORDINATE_BASE_NAME.
    * @param textureCoordinateIndex The index of the texture coordinate set to
    * use. For example, if `textureCoordinateAttributeBaseName` is
    * `_CESIUMOVERLAY_` and this parameter is 0 (the defaults), then the texture
    * coordinates are read from a vertex attribute named `_CESIUMOVERLAY_0`.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
    * @return The upsampled model.
    */
   static std::optional<CesiumGltf::Model> upsampleGltfForRasterOverlays(
@@ -153,7 +153,7 @@ struct CESIUMRASTEROVERLAYS_API RasterOverlayUtilities {
    * this method.
    *
    * The `target screen pixels` returned here may be further modified by the
-   * raster overlay's {@link ActivatedRasterOverlay::getTile} method. In
+   * raster overlay's @ref ActivatedRasterOverlay::getTile method. In
    * particular, it will usually be divided by the raster overlay's `maximum
    * screen space error` of the raster overlay (not to be confused with the
    * `maximum screen space error` of the tileset, mentioned above).

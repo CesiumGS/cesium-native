@@ -56,7 +56,7 @@
  *
  * The time is measured from the `CESIUM_TRACE` line to the end of the scope.
  * If the current thread is enlisted in an async process
- * ({@link CESIUM_TRACE_ASYNC_ENLIST}), the time is recorded against the async
+ * (@ref CESIUM_TRACE_ASYNC_ENLIST), the time is recorded against the async
  * process. Otherwise, it is recorded against the current thread.
  *
  * @param name The name of the measured operation.
@@ -70,8 +70,8 @@
  * @brief Begins measuring an operation which may span scope but not threads.
  *
  * Begins measuring the time of an operation which completes with a
- * corresponding call to {@link CESIUM_TRACE_END}. If the calling thread is
- * operating in a track ({@link CESIUM_TRACE_USE_TRACK_SET}), the
+ * corresponding call to @ref CESIUM_TRACE_END. If the calling thread is
+ * operating in a track (@ref CESIUM_TRACE_USE_TRACK_SET), the
  * time is recorded in the track. Otherwise, is is recorded against the current
  * thread.
  *
@@ -82,7 +82,7 @@
  *   * If either BEGIN or END is called from a thread operating in a track,
  *     then both must be, and it must be the same track in
  *     both cases. In this case BEGIN and END may be called from different
- *     threads. However, it safer to use {@link CESIUM_TRACE_BEGIN_IN_TRACK}
+ *     threads. However, it safer to use @ref CESIUM_TRACE_BEGIN_IN_TRACK
  *     in this scenario.
  *   * If either BEGIN or END is called from a thread _not_ enlisted into a
  *     track, then both must be called from the same thread and neither
@@ -104,7 +104,7 @@
  * @brief Ends measuring an operation which may span scopes but not threads.
  *
  * Finishes measuring the time of an operation that began with a call to
- * {@link CESIUM_TRACE_BEGIN}. See the documentation for that macro for more
+ * @ref CESIUM_TRACE_BEGIN. See the documentation for that macro for more
  * details and caveats.
  *
  * @param name The name of the measured operation.
@@ -115,10 +115,10 @@
 /**
  * @brief Begins measuring an operation that may span both scopes and threads.
  *
- * This macro is identical to {@link CESIUM_TRACE_BEGIN} except that it does
+ * This macro is identical to @ref CESIUM_TRACE_BEGIN except that it does
  * nothing if the calling thread and scope are not operating as part of a
  * track. This allows it to be safely used to measure operations that span
- * threads. Use {@link CESIUM_TRACE_USE_TRACK_SET} to use a track from a set.
+ * threads. Use @ref CESIUM_TRACE_USE_TRACK_SET to use a track from a set.
  *
  * @param name The name of the measured operation.
  */
@@ -130,10 +130,10 @@
 /**
  * @brief Ends measuring an operation that may span both scopes and threads.
  *
- * This macro is identical to {@link CESIUM_TRACE_END} except that it does
+ * This macro is identical to @ref CESIUM_TRACE_END except that it does
  * nothing if the calling thread and scope are not operating as part of a
  * track. This allows it to be safely used to measure operations that span
- * threads. Use {@link CESIUM_TRACE_USE_TRACK_SET} to use a track from a set.
+ * threads. Use @ref CESIUM_TRACE_USE_TRACK_SET to use a track from a set.
  *
  * @param name The name of the measured operation.
  */
@@ -164,11 +164,11 @@
  *
  * The calling thread will be allocated a track from the track set, and will
  * continue using it for the remainder of the current scope. In addition, if
- * the thread starts an async operation using {@link CesiumAsync::AsyncSystem},
+ * the thread starts an async operation using @ref CesiumAsync::AsyncSystem,
  * all continuations of that async operation will use the same track as well.
  *
  * @param id The ID (field name) of the track set declared with
- *           {@link CESIUM_TRACE_DECLARE_TRACK_SET}.
+ *           @ref CESIUM_TRACE_DECLARE_TRACK_SET.
  */
 #define CESIUM_TRACE_USE_TRACK_SET(id)                                         \
   CesiumUtility::CesiumImpl::TrackReference TRACE_NAME_AUX2(                   \
@@ -182,7 +182,7 @@
  * This macro should be used in a lambda's capture list to capture the track of
  * the current thread so that the lambda (which may execute in a different
  * thread) can use the same track by executing
- * {@link CESIUM_TRACE_USE_CAPTURED_TRACK}.
+ * @ref CESIUM_TRACE_USE_CAPTURED_TRACK.
  */
 #define CESIUM_TRACE_LAMBDA_CAPTURE_TRACK()                                    \
   tracingTrack = CesiumUtility::CesiumImpl::LambdaCaptureTrack()
@@ -192,7 +192,7 @@
  *
  * This macro should be used as the first line in a lambda that should inherit
  * the tracing track of the thread that created it. The lambda's capture list
- * must also contain {@link CESIUM_TRACE_USE_CAPTURED_TRACK}.
+ * must also contain @ref CESIUM_TRACE_USE_CAPTURED_TRACK.
  */
 #define CESIUM_TRACE_USE_CAPTURED_TRACK()                                      \
   CESIUM_TRACE_USE_TRACK_SET(tracingTrack)

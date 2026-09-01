@@ -6,14 +6,15 @@ class Tile;
 
 /**
  * @brief An interface that allows tiles to be excluded from loading and
- * rendering when provided in {@link TilesetOptions::excluders}.
+ * rendering when provided in @ref TilesetOptions::excluders.
  */
 class ITileExcluder {
 public:
   virtual ~ITileExcluder() = default;
 
   /**
-   * @brief Indicates the start of a new frame, initiated with a call to {@link Tileset::updateView}.
+   * @brief Indicates the start of a new frame, initiated with a call to @ref
+   * Tileset::updateView.
    */
   virtual void startNewFrame() noexcept {}
 

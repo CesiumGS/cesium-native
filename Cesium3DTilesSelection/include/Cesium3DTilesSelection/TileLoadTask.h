@@ -6,8 +6,8 @@ class Tile;
 
 /**
  * @brief Enumerates broad categories of priority for loading a
- * {@link Cesium3DTilesSelection::Tile} for a
- * {@link Cesium3DTilesSelection::TilesetViewGroup}.
+ * @ref Cesium3DTilesSelection::Tile for a
+ * @ref Cesium3DTilesSelection::TilesetViewGroup.
  */
 enum class TileLoadPriorityGroup {
   /**
@@ -32,7 +32,7 @@ enum class TileLoadPriorityGroup {
 
 /**
  * @brief Represents the need to load a particular
- * {@link Cesium3DTilesSelection::Tile} with a particular priority.
+ * @ref Cesium3DTilesSelection::Tile with a particular priority.
  */
 struct TileLoadTask {
   /**

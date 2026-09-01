@@ -78,7 +78,7 @@ class CESIUMITWINCLIENT_API Connection {
 public:
   /**
    * @brief Authorizes access to iTwin on behalf of a user, and returns a
-   * {@link Connection} that can be used to interact with the iTwin API.
+   * @ref Connection that can be used to interact with the iTwin API.
    *
    * Uses the "Authorization Code with PKCE" OAuth2 flow.
    *
@@ -105,7 +105,7 @@ public:
    * allow access to.
    * @param openUrlCallback A function that is invoked to launch the user's web
    * browser with a given URL so that they can authorize access.
-   * @return A future that resolves to an iTwin {@link Connection} once the
+   * @return A future that resolves to an iTwin @ref Connection once the
    * user authorizes the application and the token handshake completes.
    */
   static CesiumAsync::Future<CesiumUtility::Result<Connection>> authorize(

@@ -14,7 +14,7 @@ namespace CesiumGltfWriter {
 
 /**
  * @brief The result of writing a glTF with
- * {@link GltfWriter::writeGltf} or {@link GltfWriter::writeGlb}
+ * @ref GltfWriter::writeGltf or @ref GltfWriter::writeGlb
  */
 struct CESIUMGLTFWRITER_API GltfWriterResult {
   /**

@@ -22,7 +22,8 @@ enum GeocoderRequestType {
   /**
    * @brief Perform a quick search based on partial input, such as while a user
    * is typing.
-   * The search results may be less accurate or exhaustive than using {@link GeocoderRequestType::Search}.
+   * The search results may be less accurate or exhaustive than using @ref
+   * GeocoderRequestType::Search.
    */
   Autocomplete
 };
@@ -66,7 +67,8 @@ struct GeocoderFeature {
       destination;
 
   /**
-   * @brief Returns a {@link CesiumGeospatial::GlobeRectangle} representing this feature.
+   * @brief Returns a @ref CesiumGeospatial::GlobeRectangle representing this
+   * feature.
    *
    * If the geocoder service returned a bounding box for this result, this will
    * return the bounding box. If the geocoder service returned a coordinate for
@@ -75,7 +77,8 @@ struct GeocoderFeature {
   CesiumGeospatial::GlobeRectangle getGlobeRectangle() const;
 
   /**
-   * @brief Returns a {@link CesiumGeospatial::Cartographic} representing this feature.
+   * @brief Returns a @ref CesiumGeospatial::Cartographic representing this
+   * feature.
    *
    * If the geocoder service returned a bounding box for this result, this will
    * return the center of the bounding box. If the geocoder service returned a

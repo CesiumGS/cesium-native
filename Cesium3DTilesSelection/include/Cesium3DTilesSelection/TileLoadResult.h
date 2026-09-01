@@ -19,20 +19,21 @@ class Tile;
 
 /**
  * @brief Store the content of the tile after finishing
- * loading tile using {@link TilesetContentLoader::loadTileContent}:
+ * loading tile using @ref TilesetContentLoader::loadTileContent :
  *
- * 1. Returning {@link TileUnknownContent} means that the loader doesn't know
+ * 1. Returning @ref TileUnknownContent means that the loader doesn't know
  * the content of the tile. This content type is useful when loader fails to
  * load the tile content; or a background task is running to determine the tile
  * content and the loader wants the client to retry later at some point in the
  * future
  *
- * 2. Returning {@link TileEmptyContent} means that this tile has no content and mostly used
- * for efficient culling during the traversal process
+ * 2. Returning @ref TileEmptyContent means that this tile has no content and
+ * mostly used for efficient culling during the traversal process
  *
- * 3. Returning {@link TileExternalContent} means that this tile points to an external tileset
+ * 3. Returning @ref TileExternalContent means that this tile points to an
+ * external tileset
  *
- * 4. Returning {@link CesiumGltf::Model} means that this tile has glTF model
+ * 4. Returning @ref CesiumGltf::Model means that this tile has glTF model
  */
 using TileContentKind = std::variant<
     TileUnknownContent,
@@ -41,33 +42,36 @@ using TileContentKind = std::variant<
     CesiumGltf::Model>;
 
 /**
- * @brief Indicate the status of {@link Cesium3DTilesSelection::TilesetContentLoader::loadTileContent} and
- * {@link Cesium3DTilesSelection::TilesetContentLoader::createTileChildren} operations
+ * @brief Indicate the status of @ref
+ * Cesium3DTilesSelection::TilesetContentLoader::loadTileContent and
+ * @ref Cesium3DTilesSelection::TilesetContentLoader::createTileChildren
+ * operations
  */
 enum class TileLoadResultState {
   /**
-   * @brief The operation is successful and all the fields in {@link TileLoadResult}
-   * or {@link TileChildrenResult} are applied to the tile
+   * @brief The operation is successful and all the fields in @ref
+   * TileLoadResult or @ref TileChildrenResult are applied to the tile
    */
   Success,
 
   /**
-   * @brief The operation is failed and __none__ of the fields in {@link TileLoadResult}
-   * or {@link TileChildrenResult} are applied to the tile
+   * @brief The operation is failed and __none__ of the fields in @ref
+   * TileLoadResult or @ref TileChildrenResult are applied to the tile
    */
   Failed,
 
   /**
    * @brief The operation requires the client to retry later due to some
    * background work happenning and
-   * __none__ of the fields in {@link TileLoadResult} or {@link TileChildrenResult} are applied to the tile
+   * __none__ of the fields in @ref TileLoadResult or @ref TileChildrenResult
+   * are applied to the tile
    */
   RetryLater
 };
 
 /**
  * @brief Store the result of loading a tile content after
- * invoking {@link TilesetContentLoader::loadTileContent}
+ * invoking @ref TilesetContentLoader::loadTileContent
  */
 struct CESIUM3DTILESSELECTION_API TileLoadResult {
   /**
@@ -95,7 +99,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
   std::optional<BoundingVolume> updatedContentBoundingVolume;
 
   /**
-   * @brief Holds details of the {@link TileRenderContent} that are useful
+   * @brief Holds details of the @ref TileRenderContent that are useful
    * for raster overlays.
    */
   std::optional<CesiumRasterOverlays::RasterOverlayDetails>
@@ -116,21 +120,24 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * @brief A callback that is invoked in the main thread immediately when the
    * loading is finished. This callback is useful when the content request has
    * other fields like geometric error,
-   * children (in the case of {@link TileExternalContent}), etc, to override the existing fields.
+   * children (in the case of @ref TileExternalContent), etc, to override the
+   * existing fields.
    */
   std::function<void(Tile&)> tileInitializer;
 
   /**
    * @brief The result of loading a tile. Note that if the state is Failed or
-   * RetryLater, __none__ of the fields above (including {@link TileLoadResult::tileInitializer}) will be
-   * applied to a tile when the loading is finished
+   * RetryLater, __none__ of the fields above (including @ref
+   * TileLoadResult::tileInitializer) will be applied to a tile when the loading
+   * is finished
    */
   TileLoadResultState state;
 
   /**
    * @brief The ellipsoid that this tile uses.
    *
-   * This value is only guaranteed to be accurate when {@link TileLoadResult::state} is equal to {@link TileLoadResultState::Success}.
+   * This value is only guaranteed to be accurate when @ref
+   * TileLoadResult::state is equal to @ref TileLoadResultState::Success.
    */
   CesiumGeospatial::Ellipsoid ellipsoid =
       CesiumGeospatial::Ellipsoid::UNIT_SPHERE;

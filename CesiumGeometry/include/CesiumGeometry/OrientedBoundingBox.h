@@ -78,11 +78,11 @@ public:
    * @brief Determines on which side of a plane the bounding box is located.
    *
    * @param plane The plane to test against.
-   * @return The {@link CullingResult}:
-   *  * `Inside` if the entire box is on the side of the plane the normal is
-   * pointing.
-   *  * `Outside` if the entire box is on the opposite side.
-   *  * `Intersecting` if the box intersects the plane.
+   * @return
+   *  * @ref CullingResult::Inside if the entire box is on the side of the plane
+   * the normal is pointing.
+   *  * @ref CullingResult::Outside if the entire box is on the opposite side.
+   *  * @ref CullingResult::Intersecting if the box intersects the plane.
    */
   CullingResult intersectPlane(const Plane& plane) const noexcept;
 
@@ -146,5 +146,15 @@ private:
   glm::dmat3 _inverseHalfAxes;
   glm::dvec3 _lengths;
 };
+
+/**
+ * @brief Test if two oriented bounding boxes intersect.
+ *
+ * @param b1 The first oriented bounding box.
+ * @param b2 The second oriented bounding box.
+ * @return Whether the boxes intersect.
+ */
+bool CESIUMGEOMETRY_API
+intersects(const OrientedBoundingBox& b1, const OrientedBoundingBox& b2);
 
 } // namespace CesiumGeometry

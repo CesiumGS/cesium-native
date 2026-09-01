@@ -15,17 +15,17 @@ class TilesetContentManager;
 
 /**
  * @brief A "virtual collection" that allows enumeration through the loaded
- * tiles in a subtree rooted at a given {@link Tile}.
+ * tiles in a subtree rooted at a given @ref Tile.
  *
  * For the purposes of this enumeration, a loaded tile is one that is in a
- * {@link TileLoadState} other than {@link TileLoadState::Unloaded}, or that
+ * @ref TileLoadState other than @ref TileLoadState::Unloaded, or that
  * has any children (or other descendants) that meet this criteria. We check the
- * latter criteria by looking at {@link Tile::getReferenceCount}.
+ * latter criteria by looking at @ref Tile::getReferenceCount.
  */
 class LoadedConstTileEnumerator {
 public:
   /**
-   * @brief An iterator over constant {@link Tile} instances.
+   * @brief An iterator over constant @ref Tile instances.
    */
   class const_iterator {
   public:
@@ -113,12 +113,12 @@ private:
 class LoadedTileEnumerator {
 public:
   /**
-   * @brief An iterator over constant {@link Tile} instances.
+   * @brief An iterator over constant @ref Tile instances.
    */
   using const_iterator = LoadedConstTileEnumerator::const_iterator;
 
   /**
-   * @brief An iterator over {@link Tile} instances.
+   * @brief An iterator over @ref Tile instances.
    */
   class iterator {
   public:

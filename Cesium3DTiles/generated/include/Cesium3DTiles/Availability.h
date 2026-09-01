@@ -49,7 +49,7 @@ struct CESIUM3DTILES_API Availability final
    * @brief Integer indicating whether all of the elements are available (1) or
    * all are unavailable (0).
    *
-   * Known values are defined in {@link Constant}.
+   * Known values are defined in @ref Constant.
    *
    */
   std::optional<int32_t> constant;

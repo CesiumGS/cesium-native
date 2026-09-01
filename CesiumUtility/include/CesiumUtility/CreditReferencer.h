@@ -11,7 +11,7 @@ struct Credit;
 
 /**
  * @brief Provides a way to reference a set of credits in a
- * {@link CreditSystem} so that the references can easily be released later.
+ * @ref CreditSystem so that the references can easily be released later.
  *
  * Multiple CreditReferencers may be used on the same credit system to track
  * separate sets of references -- e.g., two sets of credits from different
@@ -23,7 +23,7 @@ public:
    * @brief Constructs a new credit referencer without a credit system.
    *
    * The methods on this instance will have no effect before the credit system
-   * is set by calling {@link setCreditSystem}.
+   * is set by calling @ref setCreditSystem.
    */
   CreditReferencer() noexcept;
 
@@ -38,7 +38,7 @@ public:
 
   /**
    * @brief Copies an instance, increasing the credit references on the
-   * {@link CreditSystem} accordingly.
+   * @ref CreditSystem accordingly.
    *
    * @param rhs The instance to copy.
    */
@@ -47,7 +47,7 @@ public:
   /**
    * @brief Moves an instance. After the move, the `rhs` will not own any
    * references, so this operation does not affect the total number of credit
-   * references on the {@link CreditSystem}.
+   * references on the @ref CreditSystem.
    *
    * @param rhs The instance to move.
    */

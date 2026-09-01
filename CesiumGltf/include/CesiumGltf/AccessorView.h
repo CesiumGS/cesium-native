@@ -11,9 +11,9 @@ namespace CesiumGltf {
 /**
  * @brief Indicates the status of an accessor view.
  *
- * The {@link AccessorView} constructor always completes successfully. However,
- * it may not always reflect the actual content of the {@link Accessor}, but
- * instead indicate that its {@link AccessorView::size} is 0. This enumeration
+ * The @ref AccessorView constructor always completes successfully. However,
+ * it may not always reflect the actual content of the @ref Accessor, but
+ * instead indicate that its @ref AccessorView::size is 0. This enumeration
  * provides the reason.
  */
 enum class AccessorViewStatus {
@@ -51,7 +51,7 @@ enum class AccessorViewStatus {
 
   /**
    * @brief The `sizeof(T)` does not match the accessor's
-   * {@link Accessor::computeBytesPerVertex}.
+   * @ref Accessor::computeBytesPerVertex.
    */
   WrongSizeT,
 
@@ -61,12 +61,12 @@ enum class AccessorViewStatus {
   InvalidType,
 
   /**
-   * @brief The {@link AccessorSpec::componentType} is invalid.
+   * @brief The @ref AccessorSpec::componentType is invalid.
    */
   InvalidComponentType,
 
   /**
-   * @brief The {@link BufferView::byteStride} is negative, which is invalid.
+   * @brief The @ref BufferView::byteStride is negative, which is invalid.
    *
    */
   InvalidByteStride,
@@ -77,8 +77,8 @@ enum class AccessorViewStatus {
  *
  * It provides the actual accessor data like an array of elements.
  * The type of the accessor elements is determined by the template
- * parameter. Instances are usually from an {@link Accessor},
- * and the {@link operator[]()} can be used to access the elements:
+ * parameter. Instances are usually from an @ref Accessor,
+ * and the @ref operator[]() can be used to access the elements:
  *
  * @snippet TestAccessorView.cpp createFromAccessorAndRead
  *
@@ -102,11 +102,11 @@ public:
   /**
    * @brief Construct a new instance not pointing to any data.
    *
-   * The new instance will have a {@link size} of 0 and a {@link status} of
+   * The new instance will have a @ref size of 0 and a @ref status of
    * `AccessorViewStatus::InvalidAccessorIndex`.
    *
    * @param status The status of the new accessor. Defaults to
-   * {@link AccessorViewStatus::InvalidAccessorIndex}.
+   * @ref AccessorViewStatus::InvalidAccessorIndex.
    */
   AccessorView(
       AccessorViewStatus status = AccessorViewStatus::InvalidAccessorIndex)
@@ -143,12 +143,12 @@ public:
         _status(AccessorViewStatus::Valid) {}
 
   /**
-   * @brief Creates a new instance from a given model and {@link Accessor}.
+   * @brief Creates a new instance from a given model and @ref Accessor.
    *
    * If the accessor cannot be viewed, the construct will still complete
-   * successfully without throwing an exception. However, {@link size} will
+   * successfully without throwing an exception. However, @ref size will
    * return 0 and
-   * {@link status} will indicate what went wrong.
+   * @ref status will indicate what went wrong.
    *
    * @param model The model to access.
    * @param accessor The accessor to view.
@@ -162,13 +162,13 @@ public:
    * @brief Creates a new instance from a given model and accessor index.
    *
    * If the accessor cannot be viewed, the construct will still complete
-   * successfully without throwing an exception. However, {@link size} will
+   * successfully without throwing an exception. However, @ref size will
    * return 0 and
-   * {@link status} will indicate what went wrong.
+   * @ref status will indicate what went wrong.
    *
    * @param model The model to access.
    * @param accessorIndex The index of the accessor to view in the model's
-   * {@link Model::accessors} list.
+   * @ref Model::accessors list.
    */
   AccessorView(const Model& model, int32_t accessorIndex) noexcept
       : AccessorView() {
@@ -187,7 +187,7 @@ public:
    * @param i The index of the element.
    * @returns The constant reference to the accessor element.
    * @throws A `std::range_error` if the given index is negative
-   * or not smaller than the {@link size} of this accessor.
+   * or not smaller than the @ref size of this accessor.
    */
   const T& operator[](int64_t i) const {
     if (i < 0 || i >= this->_size) {
@@ -240,7 +240,8 @@ public:
 
   /**
    * @brief Returns a pointer to the first byte of this accessor view's data.
-   * The elements are stored contiguously, so the next one starts {@link stride} bytes later.
+   * The elements are stored contiguously, so the next one starts @ref stride
+   * bytes later.
    *
    * @returns The start of this view.
    */
@@ -310,14 +311,14 @@ private:
 };
 
 /**
- * @brief Contains types that may optionally be used with {@link AccessorView}
- * for various {@link Accessor::componentType} values.
+ * @brief Contains types that may optionally be used with @ref AccessorView
+ * for various @ref Accessor::componentType values.
  */
 struct AccessorTypes {
 #pragma pack(push, 1)
 
   /**
-   * @brief A scalar element for an {@link AccessorView}.
+   * @brief A scalar element for an @ref AccessorView.
    *
    * @tparam T The component type.
    */
@@ -329,7 +330,7 @@ struct AccessorTypes {
   };
 
   /**
-   * @brief A 2D vector element for an {@link AccessorView}.
+   * @brief A 2D vector element for an @ref AccessorView.
    *
    * @tparam T The component type.
    */
@@ -341,7 +342,7 @@ struct AccessorTypes {
   };
 
   /**
-   * @brief A 3D vector element for an {@link AccessorView}.
+   * @brief A 3D vector element for an @ref AccessorView.
    *
    * @tparam T The component type.
    */
@@ -353,7 +354,7 @@ struct AccessorTypes {
   };
 
   /**
-   * @brief A 4D vector element for an {@link AccessorView}.
+   * @brief A 4D vector element for an @ref AccessorView.
    *
    * @tparam T The component type.
    */
@@ -365,7 +366,7 @@ struct AccessorTypes {
   };
 
   /**
-   * @brief A 2x2 matrix element for an {@link AccessorView}.
+   * @brief A 2x2 matrix element for an @ref AccessorView.
    *
    * @tparam T The component type.
    */
@@ -377,7 +378,7 @@ struct AccessorTypes {
   };
 
   /**
-   * @brief A 3x3 matrix element for an {@link AccessorView}.
+   * @brief A 3x3 matrix element for an @ref AccessorView.
    *
    * @tparam T The component type.
    */
@@ -389,7 +390,7 @@ struct AccessorTypes {
   };
 
   /**
-   * @brief A 4x4 matrix element for an {@link AccessorView}.
+   * @brief A 4x4 matrix element for an @ref AccessorView.
    *
    * @tparam T The component type.
    */
@@ -445,13 +446,13 @@ createAccessorView(
 } // namespace CesiumImpl
 
 /**
- * @brief Creates an appropriate {@link AccessorView} for a given accessor.
+ * @brief Creates an appropriate @ref AccessorView for a given accessor.
  *
  * The created accessor is provided via a callback, which is a function that can
- * be invoked with all possible {@link AccessorView} types. If an accessor
+ * be invoked with all possible @ref AccessorView types. If an accessor
  * cannot be created, the callback will be invoked with
  * `AccessorView<AccessorTypes::SCALAR<float>>` and the
- * {@link AccessorView::status} will indicate the reason.
+ * @ref AccessorView::status will indicate the reason.
  *
  * @tparam TCallback The callback.
  * @param model The model to access.
@@ -523,18 +524,18 @@ createAccessorView(
 }
 
 /**
- * @brief Creates an appropriate {@link AccessorView} for a given accessor.
+ * @brief Creates an appropriate @ref AccessorView for a given accessor.
  *
  * The created accessor is provided via a callback, which is a function that can
- * be invoked with all possible {@link AccessorView} types. If an accessor
+ * be invoked with all possible @ref AccessorView types. If an accessor
  * cannot be created, the callback will be invoked with
  * `AccessorView<AccessorTypes::SCALAR<float>>` and the
- * {@link AccessorView::status} will indicate the reason.
+ * @ref AccessorView::status will indicate the reason.
  *
  * @tparam TCallback The callback.
  * @param model The model to access.
  * @param accessorIndex The index of the accessor to view in
- * {@link Model::accessors}.
+ * @ref Model::accessors.
  * @param callback The callback that receives the created accessor.
  * @return The value returned by the callback.
  */

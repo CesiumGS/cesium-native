@@ -296,7 +296,7 @@ public:
    * @brief Returns 1.0 if the given value is positive or zero, and -1.0 if it
    * is negative.
    *
-   * This is similar to {@link Math::sign} except that returns 1.0 instead of
+   * This is similar to @ref Math::sign except that returns 1.0 instead of
    * 0.0 when the input value is 0.0.
    *
    * @param value The value to return the sign of.

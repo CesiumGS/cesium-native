@@ -5,7 +5,7 @@
 namespace CesiumGltf {
 
 /**
- * @brief Provides write access to an {@link AccessorView}.
+ * @brief Provides write access to an @ref AccessorView.
  */
 template <class T> class AccessorWriter final {
 private:
@@ -20,7 +20,7 @@ public:
   AccessorWriter() : _accessor() {}
 
   /**
-   * @brief Constructs a new instance from an {@link AccessorView}.
+   * @brief Constructs a new instance from an @ref AccessorView.
    */
   AccessorWriter(const AccessorView<T>& accessorView)
       : _accessor(accessorView) {}

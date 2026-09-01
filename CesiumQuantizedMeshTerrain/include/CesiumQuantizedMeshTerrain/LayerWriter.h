@@ -13,7 +13,7 @@ struct Layer;
 namespace CesiumQuantizedMeshTerrain {
 
 /**
- * @brief The result of writing a layer.json with {@link LayerWriter::write}.
+ * @brief The result of writing a layer.json with @ref LayerWriter::write.
  */
 struct CESIUMQUANTIZEDMESHTERRAIN_API LayerWriterResult {
   /**

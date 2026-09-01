@@ -18,7 +18,7 @@ namespace CesiumGeospatial {
 class CESIUMGEOSPATIAL_API SimplePlanarEllipsoidCurve final {
 public:
   /**
-   * @brief Creates a new instance of {@link SimplePlanarEllipsoidCurve} from a
+   * @brief Creates a new instance of @ref SimplePlanarEllipsoidCurve from a
    * source and destination specified in Earth-Centered, Earth-Fixed
    * coordinates.
    *
@@ -29,7 +29,7 @@ public:
    * @param destinationEcef The position that the path will end at in ECEF
    * coordinates.
    *
-   * @returns An optional type containing a {@link SimplePlanarEllipsoidCurve}
+   * @returns An optional type containing a @ref SimplePlanarEllipsoidCurve
    * object representing the generated path, if possible. If it wasn't possible
    * to scale the input coordinates to geodetic surface coordinates on a WGS84
    * ellipsoid, this will return `std::nullopt` instead.
@@ -41,7 +41,7 @@ public:
       const glm::dvec3& destinationEcef);
 
   /**
-   * @brief Creates a new instance of {@link SimplePlanarEllipsoidCurve} from a
+   * @brief Creates a new instance of @ref SimplePlanarEllipsoidCurve from a
    * source and destination specified in cartographic coordinates (Longitude,
    * Latitude, and Height).
    *
@@ -52,7 +52,7 @@ public:
    * @param destination The position that the path will end at in Longitude,
    * Latitude, and Height.
    *
-   * @returns An optional type containing a {@link SimplePlanarEllipsoidCurve}
+   * @returns An optional type containing a @ref SimplePlanarEllipsoidCurve
    * object representing the generated path, if possible. If it wasn't possible
    * to scale the input coordinates to geodetic surface coordinates on a WGS84
    * ellipsoid, this will return std::nullopt instead.

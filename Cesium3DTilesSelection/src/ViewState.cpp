@@ -1,14 +1,16 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/GeneralCullingVolume.h>
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
-#include <CesiumGeometry/CullingResult.h>
 #include <CesiumGeometry/CullingVolume.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 
 #include <glm/common.hpp>
@@ -119,85 +121,43 @@ ViewState::ViewState(
           viewportSize,
           ellipsoid) {}
 
-namespace {
-template <class T>
-bool isBoundingVolumeVisible(
-    const T& boundingVolume,
-    const CullingVolume& cullingVolume) noexcept {
-  const CullingResult left =
-      boundingVolume.intersectPlane(cullingVolume.leftPlane);
-  if (left == CullingResult::Outside) {
-    return false;
+ViewState::ViewState(
+    const BoundingVolume& boundingVolume,
+    double geometricErrorThreshold,
+    const CesiumGeospatial::Ellipsoid& ellipsoid)
+    : _position{0.0, 0.0, 1.0},
+      _direction{0.0, 0.0, 1.0},
+      _viewportSize{0, 0},
+      _ellipsoid(ellipsoid),
+      _positionCartographic{},
+      _cullingVolume(boundingVolume),
+      _viewMatrix(1.0),
+      _projectionMatrix(1.0),
+      _geometricErrorThreshold(geometricErrorThreshold) {
+  std::optional<GlobeRectangle> globeRectangle =
+      estimateGlobeRectangle(boundingVolume, ellipsoid);
+  if (!globeRectangle) {
+    return;
   }
-
-  const CullingResult right =
-      boundingVolume.intersectPlane(cullingVolume.rightPlane);
-  if (right == CullingResult::Outside) {
-    return false;
-  }
-
-  const CullingResult top =
-      boundingVolume.intersectPlane(cullingVolume.topPlane);
-  if (top == CullingResult::Outside) {
-    return false;
-  }
-
-  const CullingResult bottom =
-      boundingVolume.intersectPlane(cullingVolume.bottomPlane);
-  if (bottom == CullingResult::Outside) {
-    return false;
-  }
-
-  return true;
+  // Get approximate center, a "North" view direction,and up at the center.
+  this->_positionCartographic = globeRectangle->computeCenter();
+  LocalHorizontalCoordinateSystem enu{
+      *_positionCartographic,
+      LocalDirection::East,
+      LocalDirection::North,
+      LocalDirection::Up,
+      1.0,
+      ellipsoid};
+  this->_viewMatrix = enu.getLocalToEcefTransformation();
+  this->_position = positionFromView(_viewMatrix);
+  this->_direction = directionFromView(_viewMatrix);
 }
-} // namespace
 
 bool ViewState::isBoundingVolumeVisible(
     const BoundingVolume& boundingVolume) const noexcept {
-  // TODO: use plane masks
-  struct Operation {
-    const ViewState& viewState;
-
-    bool operator()(const OrientedBoundingBox& boundingBox) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingBox,
-          viewState._cullingVolume);
-    }
-
-    bool operator()(const BoundingRegion& boundingRegion) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingRegion,
-          viewState._cullingVolume);
-    }
-
-    bool operator()(const BoundingSphere& boundingSphere) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingSphere,
-          viewState._cullingVolume);
-    }
-
-    bool operator()(
-        const BoundingRegionWithLooseFittingHeights& boundingRegion) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingRegion.getBoundingRegion(),
-          viewState._cullingVolume);
-    }
-
-    bool operator()(const S2CellBoundingVolume& s2Cell) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          s2Cell,
-          viewState._cullingVolume);
-    }
-
-    bool
-    operator()(const BoundingCylinderRegion& boundingCylinderRegion) noexcept {
-      return Cesium3DTilesSelection::isBoundingVolumeVisible(
-          boundingCylinderRegion,
-          viewState._cullingVolume);
-    }
-  };
-
-  return std::visit(Operation{*this}, boundingVolume);
+  return Cesium3DTilesSelection::isBoundingVolumeVisible(
+      this->_cullingVolume,
+      boundingVolume);
 }
 
 double ViewState::computeDistanceSquaredToBoundingVolume(
@@ -254,6 +214,14 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
 double ViewState::computeScreenSpaceError(
     double geometricError,
     double distance) const noexcept {
+  // If the view state is constructed with a geometric error threshold, then
+  // that is used instead as a stand-in for screen space error.
+  if (this->_geometricErrorThreshold) {
+    return *this->_geometricErrorThreshold;
+  }
+  // Otherwise, the projection matrix is valid and we can proceed with our
+  // projection-based calculation.
+  //
   // Avoid divide by zero when viewer is inside the tile
   distance = glm::max(distance, 1e-7);
   // This is a simplified version of the projection transform and homogeneous

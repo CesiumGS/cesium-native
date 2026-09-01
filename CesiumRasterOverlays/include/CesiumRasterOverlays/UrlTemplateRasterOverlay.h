@@ -32,12 +32,12 @@ struct UrlTemplateRasterOverlayOptions {
   std::optional<std::string> credit;
 
   /**
-   * @brief The {@link CesiumGeospatial::Projection} that is used.
+   * @brief The @ref CesiumGeospatial::Projection that is used.
    */
   std::optional<CesiumGeospatial::Projection> projection;
 
   /**
-   * @brief The {@link CesiumGeometry::QuadtreeTilingScheme} specifying how
+   * @brief The @ref CesiumGeometry::QuadtreeTilingScheme specifying how
    * the ellipsoidal surface is broken into tiles.
    */
   std::optional<CesiumGeometry::QuadtreeTilingScheme> tilingScheme;
@@ -67,14 +67,14 @@ struct UrlTemplateRasterOverlayOptions {
   uint32_t tileHeight = 256;
 
   /**
-   * @brief The {@link CesiumGeometry::Rectangle}, in radians, covered by the
+   * @brief The @ref CesiumGeometry::Rectangle, in radians, covered by the
    * image.
    */
   std::optional<CesiumGeometry::Rectangle> coverageRectangle;
 };
 
 /**
- * @brief A {@link RasterOverlay} accessing images from a templated URL.
+ * @brief A @ref RasterOverlay accessing images from a templated URL.
  */
 class CESIUMRASTEROVERLAYS_API UrlTemplateRasterOverlay final
     : public RasterOverlay {
@@ -104,8 +104,8 @@ public:
    * @param url The URL with template parameters.
    * @param headers The headers. This is a list of pairs of strings of the
    * form (Key,Value) that will be inserted as request headers internally.
-   * @param urlTemplateOptions The {@link UrlTemplateRasterOverlayOptions}.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param urlTemplateOptions The @ref UrlTemplateRasterOverlayOptions.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   UrlTemplateRasterOverlay(
       const std::string& name,

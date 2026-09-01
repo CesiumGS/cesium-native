@@ -58,7 +58,7 @@ struct CESIUMGLTF_API BufferView final : public CesiumGltf::NamedObject {
    * @brief The hint representing the intended GPU buffer type to use with this
    * buffer view.
    *
-   * Known values are defined in {@link Target}.
+   * Known values are defined in @ref Target.
    *
    */
   std::optional<int32_t> target;

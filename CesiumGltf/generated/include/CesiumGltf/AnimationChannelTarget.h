@@ -56,7 +56,7 @@ struct CESIUMGLTF_API AnimationChannelTarget final
    * the order (x, y, z, w), where w is the scalar. For the `"scale"` property,
    * the values are the scaling factors along the X, Y, and Z axes.
    *
-   * Known values are defined in {@link Path}.
+   * Known values are defined in @ref Path.
    *
    */
   std::string path = Path::translation;

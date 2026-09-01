@@ -52,7 +52,7 @@ struct CESIUM3DTILES_API ExtensionSchemaMaxarContentGeoJsonPropertiesValue final
    * @brief Expected datatype of the property value in the GeoJSON Feature's
    * 'properties' object
    *
-   * Known values are defined in {@link Type}.
+   * Known values are defined in @ref Type.
    *
    */
   std::string type = Type::Integer;

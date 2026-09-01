@@ -32,8 +32,8 @@ PointerAlignment: Left
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 
 # Do not break comment lines that contain the given regex. This
-# is here to avoid breaking lines within "{@link SomeClass}"
-# which would cause doxygen to fail.
+# is here to avoid breaking lines within braced expressions in
+# Doxygen comments, which would cause doxygen to fail.
 CommentPragmas: '{.*}'
 
 # Disregard any exising include order, and re-order the headers

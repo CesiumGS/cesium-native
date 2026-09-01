@@ -19,7 +19,7 @@
 namespace CesiumRasterOverlays {
 
 /**
- * @brief A {@link RasterOverlay} that obtains imagery data from Cesium ion.
+ * @brief A @ref RasterOverlay that obtains imagery data from Cesium ion.
  */
 class CESIUMRASTEROVERLAYS_API IonRasterOverlay : public RasterOverlay {
 public:
@@ -33,7 +33,7 @@ public:
    * @param name The user-given name of this overlay layer.
    * @param ionAssetID The asset ID.
    * @param ionAccessToken The access token.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    * @param ionAssetEndpointUrl The URL of the ion endpoint to make our requests
    * to.
    */
@@ -79,7 +79,7 @@ protected:
    * @param needsAuthHeader If true, the access token will be passed through the
    * Authorization header. If false, it will be assumed to be in the provided
    * `overlayUrl`.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   IonRasterOverlay(
       const std::string& name,

@@ -18,7 +18,7 @@ enum class ExtensionState {
   /**
    * @brief The extension is enabled.
    *
-   * If the extension is a {@link CesiumUtility::JsonValue} or a registered
+   * If the extension is a @ref CesiumUtility::JsonValue or a registered
    * statically-typed class it will be written to the serialized model;
    * otherwise it will be ignored and a warning will be reported.
    */

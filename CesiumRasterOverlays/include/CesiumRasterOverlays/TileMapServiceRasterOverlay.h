@@ -45,18 +45,18 @@ struct TileMapServiceRasterOverlayOptions {
   std::optional<uint32_t> maximumLevel;
 
   /**
-   * @brief The {@link CesiumGeometry::Rectangle}, in radians, covered by the
+   * @brief The @ref CesiumGeometry::Rectangle, in radians, covered by the
    * image.
    */
   std::optional<CesiumGeometry::Rectangle> coverageRectangle;
 
   /**
-   * @brief The {@link CesiumGeospatial::Projection} that is used.
+   * @brief The @ref CesiumGeospatial::Projection that is used.
    */
   std::optional<CesiumGeospatial::Projection> projection;
 
   /**
-   * @brief The {@link CesiumGeometry::QuadtreeTilingScheme} specifying how
+   * @brief The @ref CesiumGeometry::QuadtreeTilingScheme specifying how
    * the ellipsoidal surface is broken into tiles.
    */
   std::optional<CesiumGeometry::QuadtreeTilingScheme> tilingScheme;
@@ -82,7 +82,7 @@ struct TileMapServiceRasterOverlayOptions {
 };
 
 /**
- * @brief A {@link RasterOverlay} based on tile map service imagery.
+ * @brief A @ref RasterOverlay based on tile map service imagery.
  */
 class CESIUMRASTEROVERLAYS_API TileMapServiceRasterOverlay final
     : public RasterOverlay {
@@ -94,8 +94,8 @@ public:
    * @param url The base URL.
    * @param headers The headers. This is a list of pairs of strings of the
    * form (Key,Value) that will be inserted as request headers internally.
-   * @param tmsOptions The {@link TileMapServiceRasterOverlayOptions}.
-   * @param overlayOptions The {@link RasterOverlayOptions} for this instance.
+   * @param tmsOptions The @ref TileMapServiceRasterOverlayOptions.
+   * @param overlayOptions The @ref RasterOverlayOptions for this instance.
    */
   TileMapServiceRasterOverlay(
       const std::string& name,

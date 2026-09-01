@@ -11,7 +11,7 @@
 namespace CesiumGeometry {
 
 /**
- * @brief Defines how an {@link AxisAlignedBox} is divided into octree
+ * @brief Defines how an @ref AxisAlignedBox is divided into octree
  * tiles.
  */
 class CESIUMGEOMETRY_API OctreeTilingScheme {
@@ -70,10 +70,10 @@ public:
   uint32_t getNumberOfZTilesAtLevel(uint32_t level) const noexcept;
 
   /**
-   * @brief Computes the {@link CesiumGeometry::OctreeTileID} for a given
+   * @brief Computes the @ref CesiumGeometry::OctreeTileID for a given
    * position and level.
    *
-   * If the projected position is within the {@link getBox} of this tiling
+   * If the projected position is within the @ref getBox of this tiling
    * scheme, then this will compute the octree tile ID for the tile that
    * contains the given position at the given level. Otherwise, `nullopt` is
    * returned.
@@ -86,12 +86,12 @@ public:
   positionToTile(const glm::dvec3& position, uint32_t level) const noexcept;
 
   /**
-   * @brief Returns the {@link AxisAlignedBox} that is
+   * @brief Returns the @ref AxisAlignedBox that is
    * covered by the specified tile.
    *
    * The volume that is covered by the tile that is identified with
-   * the given {@link CesiumGeometry::OctreeTileID} will be computed,
-   * based on the {@link getBox} of this tiling scheme.
+   * the given @ref CesiumGeometry::OctreeTileID will be computed,
+   * based on the @ref getBox of this tiling scheme.
    *
    * @param tileID The tile ID
    * @return The box

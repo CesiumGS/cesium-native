@@ -60,10 +60,10 @@ public:
   uint32_t getNumberOfYTilesAtLevel(uint32_t level) const noexcept;
 
   /**
-   * @brief Computes the {@link CesiumGeometry::QuadtreeTileID} for a given
+   * @brief Computes the @ref CesiumGeometry::QuadtreeTileID for a given
    * position and level.
    *
-   * If the given position is within the {@link getRectangle} of this tiling
+   * If the given position is within the @ref getRectangle of this tiling
    * scheme, then this will compute the quadtree tile ID for the tile that
    * contains the given position at the given level. Otherwise, `nullopt`
    * is returned.
@@ -76,12 +76,12 @@ public:
   positionToTile(const glm::dvec2& position, uint32_t level) const noexcept;
 
   /**
-   * @brief Returns the {@link CesiumGeometry::Rectangle} that is covered by the
+   * @brief Returns the @ref CesiumGeometry::Rectangle that is covered by the
    * specified tile.
    *
    * The rectangle that is covered by the tile that is identified with
-   * the given {@link CesiumGeometry::QuadtreeTileID} will be computed,
-   * based on the {@link getRectangle} of this tiling scheme.
+   * the given @ref CesiumGeometry::QuadtreeTileID will be computed,
+   * based on the @ref getRectangle of this tiling scheme.
    *
    * @param tileID The tile ID
    * @return The rectangle

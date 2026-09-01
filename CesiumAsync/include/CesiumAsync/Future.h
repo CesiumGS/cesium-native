@@ -22,7 +22,7 @@ struct TaskUnwrapper;
 
 /**
  * @brief A value that will be available in the future, as produced by
- * {@link AsyncSystem}.
+ * @ref AsyncSystem.
  *
  * @tparam T The type of the value.
  */
@@ -233,11 +233,11 @@ public:
    * @brief Waits for the future to resolve or reject and returns the result.
    *
    * This method must not be called from the main thread, the one that calls
-   * {@link AsyncSystem::dispatchMainThreadTasks}. Doing so can lead to a
+   * @ref AsyncSystem::dispatchMainThreadTasks. Doing so can lead to a
    * deadlock because the main thread tasks will never complete while this
    * method is blocking the main thread.
    *
-   * To wait in the main thread, use {@link waitInMainThread} instead.
+   * To wait in the main thread, use @ref waitInMainThread instead.
    *
    * @return The value if the future resolves successfully.
    * @throws An exception if the future rejected.
@@ -250,7 +250,7 @@ public:
    *
    * This method must be called from the main thread.
    *
-   * The function does not return until {@link Future::isReady} returns true.
+   * The function does not return until @ref Future::isReady returns true.
    * In the meantime, main-thread tasks are processed as necessary. This method
    * does not spin wait; it suspends the calling thread by waiting on a
    * condition variable when there is no work to do.
@@ -266,11 +266,11 @@ public:
   /**
    * @brief Determines if this future is already resolved or rejected.
    *
-   * If this method returns true, it is guaranteed that {@link wait} will
+   * If this method returns true, it is guaranteed that @ref wait will
    * not block but will instead immediately return a value or throw an
    * exception.
    *
-   * @return True if the future is already resolved or rejected and {@link wait}
+   * @return True if the future is already resolved or rejected and @ref wait
    * will not block; otherwise, false.
    */
   bool isReady() const { return this->_task.ready(); }

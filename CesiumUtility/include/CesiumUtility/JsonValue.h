@@ -48,7 +48,7 @@ constexpr TTo losslessNarrowOrDefault(TFrom from, TTo defaultValue) noexcept {
  * @brief A generic implementation of a value in a JSON structure.
  *
  * Instances of this class are used to represent the common `extras` field
- * of glTF elements that extend the the {@link ExtensibleObject} class.
+ * of glTF elements that extend the the @ref ExtensibleObject class.
  */
 class CESIUMUTILITY_API JsonValue final {
 public:
@@ -90,7 +90,7 @@ public:
   /**
    * @brief Creates a `Number` JSON value.
    *
-   * NaN and ±Infinity are represented as {@link JsonValue::Null}.
+   * NaN and ±Infinity are represented as @ref JsonValue::Null.
    */
   JsonValue(double v) noexcept {
     if (std::isnan(v) || std::isinf(v)) {
@@ -215,7 +215,7 @@ public:
    * @brief Gets a typed value corresponding to the given key in the
    * object represented by this instance.
    *
-   * If this instance is not a {@link JsonValue::Object}, returns
+   * If this instance is not a @ref JsonValue::Object, returns
    * `nullptr`. If the key does not exist in this object, returns
    * `nullptr`. If the named value does not have the type T, returns
    * nullptr.
@@ -239,7 +239,7 @@ public:
    * @brief Gets a typed value corresponding to the given key in the
    * object represented by this instance.
    *
-   * If this instance is not a {@link JsonValue::Object}, returns
+   * If this instance is not a @ref JsonValue::Object, returns
    * `nullptr`. If the key does not exist in this object, returns
    * `nullptr`. If the named value does not have the type T, returns
    * nullptr.
@@ -258,7 +258,7 @@ public:
    * @brief Converts the numerical value corresponding to the given key
    * to the provided numerical template type.
 
-   * If this instance is not a {@link JsonValue::Object}, the key does not exist
+   * If this instance is not a @ref JsonValue::Object, the key does not exist
    * in this object, the named value does not have a numerical type, or if the
    * named value cannot be converted from `double` / `std::uint64_t` /
    * `std::int64_t` without precision loss, returns `std::nullopt`.
@@ -288,7 +288,7 @@ public:
    * @brief Converts the numerical value corresponding to the given key
    * to the provided numerical template type.
    *
-   * If this instance is not a {@link JsonValue::Object}, the key does not exist
+   * If this instance is not a @ref JsonValue::Object, the key does not exist
    * in this object, or the named value does not have a numerical type that can
    * be represented as T without precision loss, then the default value is
    * returned.

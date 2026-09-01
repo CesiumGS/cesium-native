@@ -47,10 +47,10 @@ struct CESIUMUTILITY_API ExtensibleObject {
 
   /**
    * @brief Gets a generic extension with the given name as a
-   * {@link CesiumUtility::JsonValue}.
+   * @ref CesiumUtility::JsonValue.
    *
    * If the extension exists but has a static type, this method will return
-   * nullptr. Use {@link getExtension} to retrieve a statically-typed extension.
+   * nullptr. Use @ref getExtension to retrieve a statically-typed extension.
    *
    * @param extensionName The name of the extension.
    * @return The generic extension, or nullptr if the generic extension doesn't
@@ -94,9 +94,9 @@ struct CESIUMUTILITY_API ExtensibleObject {
   /**
    * @brief The extensions attached to this object.
    *
-   * Use {@link getExtension} to get the extension with a particular static
-   * type. Use {@link getGenericExtension} to get unknown extensions as a
-   * generic {@link CesiumUtility::JsonValue}.
+   * Use @ref getExtension to get the extension with a particular static
+   * type. Use @ref getGenericExtension to get unknown extensions as a
+   * generic @ref CesiumUtility::JsonValue.
    */
   std::unordered_map<std::string, std::any> extensions;
 

@@ -12,7 +12,7 @@ namespace Cesium3DTilesWriter {
 
 /**
  * @brief The result of writing a tileset with
- * {@link TilesetWriter::writeTileset}.
+ * @ref TilesetWriter::writeTileset.
  */
 struct CESIUM3DTILESWRITER_API TilesetWriterResult {
   /**

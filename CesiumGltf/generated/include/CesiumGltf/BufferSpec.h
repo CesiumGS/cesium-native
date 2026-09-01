@@ -51,7 +51,8 @@ struct CESIUMGLTF_API BufferSpec : public CesiumGltf::NamedObject {
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use {@link Buffer} instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref Buffer
+   * instead.
    */
   BufferSpec() = default;
   friend struct Buffer;

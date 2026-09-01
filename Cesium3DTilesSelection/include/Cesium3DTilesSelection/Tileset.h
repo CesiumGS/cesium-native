@@ -107,7 +107,7 @@ public:
    * in the process of being loaded cannot be unloaded immediately. These tiles
    * will be unloaded asynchronously some time after this destructor returns. To
    * be notified of completion of the async portion of the tileset destruction,
-   * subscribe to {@link getAsyncDestructionCompleteEvent}.
+   * subscribe to @ref getAsyncDestructionCompleteEvent.
    */
   ~Tileset() noexcept;
 
@@ -129,8 +129,8 @@ public:
   CesiumAsync::SharedFuture<void>& getRootTileAvailableEvent();
 
   /**
-   * @brief Gets the {@link CesiumUtility::Credit} created from
-   * {@link TilesetOptions::credit}, if any.
+   * @brief Gets the @ref CesiumUtility::Credit created from
+   * @ref TilesetOptions::credit, if any.
    */
   std::optional<CesiumUtility::Credit> getUserCredit() const noexcept;
 
@@ -152,13 +152,13 @@ public:
   const CesiumUtility::CreditSource& getCreditSource() const noexcept;
 
   /**
-   * @brief Gets the {@link TilesetExternals} that summarize the external
+   * @brief Gets the @ref TilesetExternals that summarize the external
    * interfaces used by this tileset.
    */
   TilesetExternals& getExternals() noexcept { return this->_externals; }
 
   /**
-   * @brief Gets the {@link TilesetExternals} that summarize the external
+   * @brief Gets the @ref TilesetExternals that summarize the external
    * interfaces used by this tileset.
    */
   const TilesetExternals& getExternals() const noexcept {
@@ -166,7 +166,7 @@ public:
   }
 
   /**
-   * @brief Returns the {@link CesiumAsync::AsyncSystem} that is used for
+   * @brief Returns the @ref CesiumAsync::AsyncSystem that is used for
    * dispatching asynchronous tasks.
    */
   CesiumAsync::AsyncSystem& getAsyncSystem() noexcept {
@@ -182,12 +182,12 @@ public:
   const TilesetOptions& getOptions() const noexcept { return this->_options; }
 
   /**
-   * @brief Gets the {@link TilesetOptions} of this tileset.
+   * @brief Gets the @ref TilesetOptions of this tileset.
    */
   TilesetOptions& getOptions() noexcept { return this->_options; }
 
   /**
-   * @brief Gets the {@link CesiumGeospatial::Ellipsoid} used by this tileset.
+   * @brief Gets the @ref CesiumGeospatial::Ellipsoid used by this tileset.
    */
   const CesiumGeospatial::Ellipsoid& getEllipsoid() const {
     return this->_options.ellipsoid;
@@ -213,7 +213,7 @@ public:
   Tile* getRootTile() noexcept;
 
   /**
-   * @brief Returns the {@link RasterOverlayCollection} of this tileset.
+   * @brief Returns the @ref RasterOverlayCollection of this tileset.
    */
   RasterOverlayCollection& getOverlays() noexcept;
 
@@ -221,7 +221,7 @@ public:
   const RasterOverlayCollection& getOverlays() const noexcept;
 
   /**
-   * @brief Returns the {@link TilesetSharedAssetSystem} of this tileset.
+   * @brief Returns the @ref TilesetSharedAssetSystem of this tileset.
    */
   TilesetSharedAssetSystem& getSharedAssetSystem() noexcept;
 
@@ -231,9 +231,9 @@ public:
   /**
    * @brief Updates this view but waits for all tiles that meet sse to finish
    * loading and ready to be rendered before returning the function. This method
-   * is significantly slower than {@link Tileset::updateView} and should only be
+   * is significantly slower than @ref Tileset::updateView and should only be
    * used for capturing movie or non-realtime situation.
-   * @param frustums The {@link ViewState}s that the view should be updated for
+   * @param frustums The @ref ViewState's that the view should be updated for
    * @returns The set of tiles to render in the updated view. This value is only
    * valid until the next call to `updateView` or until the tileset is
    * destroyed, whichever comes first.
@@ -247,11 +247,11 @@ public:
    * @brief Updates this view, returning the set of tiles to render in this
    * view.
    *
-   * Calling this method is equivalent to calling {@link updateViewGroup} with
-   * the default view group ({@link getDefaultViewGroup}) and then calling
-   * {@link loadTiles}.
+   * Calling this method is equivalent to calling @ref updateViewGroup with
+   * the default view group (@ref getDefaultViewGroup) and then calling
+   * @ref loadTiles.
    *
-   * @param frustums The {@link ViewState}s that the view should be updated for
+   * @param frustums The @ref ViewState's that the view should be updated for
    * @param deltaTime The amount of time that has passed since the last call to
    * updateView, in seconds.
    * @returns The set of tiles to render in the updated view. This value is only
@@ -273,7 +273,7 @@ public:
    * view group as of the last time it was updated.
    *
    * To get the load progress of a view group other than the default, call
-   * {@link TilesetViewGroup::getPreviousLoadProgressPercentage}.
+   * @ref TilesetViewGroup::getPreviousLoadProgressPercentage.
    */
   float computeLoadProgress() noexcept;
 
@@ -285,13 +285,13 @@ public:
    * that is empty, and that instance will remain empty even after the root tile
    * is available.
 
-   * Once the root tile is available (see {@link getRootTile} and
-   * {@link getRootTileAvailableEvent}), the returned instance will remain
+   * Once the root tile is available (see @ref getRootTile and
+   * @ref getRootTileAvailableEvent), the returned instance will remain
    * valid until the tileset is destroyed.
    *
    * While the returned enumerator itself will remain valid as long as the
    * `Tileset` does, a given iteration may be invalidated by any operation that
-   * modifies the {@link Tile} hierarchy.
+   * modifies the @ref Tile hierarchy.
    */
   LoadedConstTileEnumerator loadedTiles() const;
 
@@ -310,22 +310,22 @@ public:
   int64_t getTotalDataBytes() const noexcept;
 
   /**
-   * @brief Gets the {@link TilesetMetadata} associated with the main or
+   * @brief Gets the @ref TilesetMetadata associated with the main or
    * external tileset.json that contains a given tile. If the metadata is not
    * yet loaded, this method returns nullptr.
    *
    * If this tileset's root tile is not yet available, this method returns
    * nullptr.
    *
-   * If the tileset has a {@link TilesetMetadata::schemaUri}, it will not
+   * If the tileset has a @ref TilesetMetadata::schemaUri, it will not
    * necessarily have been loaded yet.
    *
    * If the provided tile is not the root tile of a tileset.json, this method
-   * walks up the {@link Tile::getParent} chain until it finds the closest
+   * walks up the @ref Tile::getParent chain until it finds the closest
    * root and then returns the metadata associated with the corresponding
    * tileset.json.
    *
-   * Consider calling {@link loadMetadata} instead, which will return a future
+   * Consider calling @ref loadMetadata instead, which will return a future
    * that only resolves after the root tile is loaded and the `schemaUri`, if
    * any, has been resolved.
    *
@@ -340,14 +340,14 @@ public:
    * tileset.json.
    *
    * Before the returned future resolves, the root tile of this tileset will be
-   * loaded and the {@link TilesetMetadata::schemaUri} will be loaded if one
+   * loaded and the @ref TilesetMetadata::schemaUri will be loaded if one
    * has been specified.
    *
    * If the tileset or `schemaUri` fail to load, the returned future will
    * reject.
    *
    * @return A shared future that resolves to the loaded metadata. Once this
-   * future resolves, {@link getMetadata} can be used to synchronously obtain
+   * future resolves, @ref getMetadata can be used to synchronously obtain
    * the same metadata instance.
    */
   CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
@@ -361,7 +361,7 @@ public:
    * expressed in meters above the ellipsoid (usually WGS84), which should not
    * be confused with a height above mean sea level.
    *
-   * Note that {@link Tileset::updateView} must be called periodically, or else
+   * Note that @ref Tileset::updateView must be called periodically, or else
    * the returned `Future` will never resolve. If you are not using this tileset
    * for visualization, you can call `updateView` with an empty list of
    * frustums.
@@ -375,7 +375,7 @@ public:
 
   /**
    * @brief Gets the default view group that is used when calling
-   * {@link updateView}.
+   * @ref updateView.
    *
    * @return The view group.
    */
@@ -391,7 +391,7 @@ public:
    * This method should typically be called once per "render frame", but it may
    * be called at different rates for different view groups.
    *
-   * Users must also periodically call {@link loadTiles}, which will start or
+   * Users must also periodically call @ref loadTiles, which will start or
    * continue the asynchronous process of loading tiles that are needed across
    * all view groups.
    *
@@ -399,7 +399,7 @@ public:
    * is called, simply create a new `TilesetViewGroup` to pass as this
    * parameter. For successive calls to `updateViewGroup`, pass this same
    * instance.
-   * @param frustums The {@link ViewState} instances that are observing the
+   * @param frustums The @ref ViewState instances that are observing the
    * tileset in this view group.
    * @param deltaTime The amount of time that has passed since the last call to
    * updateView, in seconds.
@@ -414,10 +414,10 @@ public:
 
   /**
    * @brief Updates a view group, returning the set of tiles to render in this
-   * view. Unlike {@link updateViewGroup}, this method blocks the calling thread
+   * view. Unlike @ref updateViewGroup, this method blocks the calling thread
    * until all tiles suitable for the views have been loaded.
    *
-   * This method is significantly slower than {@link updateViewGroup} and
+   * This method is significantly slower than @ref updateViewGroup and
    * should only be used for capturing a movie or for other non-realtime
    * situations.
    *
@@ -425,7 +425,7 @@ public:
    * is called, simply create a new `TilesetViewGroup` to pass as this
    * parameter. For successive calls to `updateViewGroup`, pass this same
    * instance.
-   * @param frustums The {@link ViewState} instances that are observing the
+   * @param frustums The @ref ViewState instances that are observing the
    * tileset in this view group.
    * @returns The set of tiles to render in the updated view. This value is only
    * valid until the next call to `updateViewGroup` or until the view group is
@@ -437,7 +437,7 @@ public:
 
   /**
    * @brief Loads the tiles that are currently deemed the most important,
-   * across all height queries and {@link TilesetViewGroup} instances.
+   * across all height queries and @ref TilesetViewGroup instances.
    *
    * In order to minimize tile load latency, this method should be called
    * frequently, such as once per render frame. It will return quickly when
@@ -463,12 +463,12 @@ public:
   /**
    * @brief Registers a tile load requester with this Tileset. Registered tile
    * load requesters get to influence which tiles are loaded when
-   * {@link loadTiles} is called.
+   * @ref loadTiles is called.
    *
    * If the given requester is already registered with this Tileset, this method
    * does nothing.
    *
-   * To unregister a load requester, call {@link TileLoadRequester::unregister}.
+   * To unregister a load requester, call @ref TileLoadRequester::unregister.
    *
    * @param requester The requester to register.
    */

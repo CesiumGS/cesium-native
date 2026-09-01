@@ -20,20 +20,20 @@ struct CESIUMGLTF_API Model : public ModelSpec {
    * After this method returns, this `Model` contains all of the
    * elements that were originally in it _plus_ all of the elements
    * that were in `rhs`. Element indices are updated accordingly.
-   * However, element indices in {@link CesiumUtility::ExtensibleObject::extras}, if any,
-   * are _not_ updated.
+   * However, element indices in @ref CesiumUtility::ExtensibleObject::extras,
+   * if any, are _not_ updated.
    *
    * @param rhs The model to merge into this one.
    */
   CesiumUtility::ErrorList merge(Model&& rhs);
 
   /**
-   * @brief A callback function for {@link forEachRootNodeInScene}.
+   * @brief A callback function for @ref forEachRootNodeInScene.
    */
   typedef void ForEachRootNodeInSceneCallback(Model& gltf, Node& node);
 
   /**
-   * @brief A callback function for {@link forEachRootNodeInScene}.
+   * @brief A callback function for @ref forEachRootNodeInScene.
    */
   typedef void
   ForEachRootNodeInSceneConstCallback(const Model& gltf, const Node& node);
@@ -68,7 +68,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       std::function<ForEachRootNodeInSceneConstCallback>&& callback) const;
 
   /**
-   * @brief A callback function for {@link forEachNodeInScene}.
+   * @brief A callback function for @ref forEachNodeInScene.
    */
   typedef void ForEachNodeInSceneCallback(
       Model& gltf,
@@ -100,7 +100,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       std::function<ForEachNodeInSceneCallback>&& callback);
 
   /**
-   * @brief A callback function for {@link forEachNodeInScene}.
+   * @brief A callback function for @ref forEachNodeInScene.
    */
   typedef void ForEachNodeInSceneConstCallback(
       const Model& gltf,
@@ -113,7 +113,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       std::function<ForEachNodeInSceneConstCallback>&& callback) const;
 
   /**
-   * @brief A callback function for {@link forEachPrimitiveInScene}.
+   * @brief A callback function for @ref forEachPrimitiveInScene.
    */
   typedef void ForEachPrimitiveInSceneCallback(
       Model& gltf,
@@ -148,7 +148,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
       std::function<ForEachPrimitiveInSceneCallback>&& callback);
 
   /**
-   * @brief A callback function for {@link forEachPrimitiveInScene}.
+   * @brief A callback function for @ref forEachPrimitiveInScene.
    */
   typedef void ForEachPrimitiveInSceneConstCallback(
       const Model& gltf,
@@ -227,7 +227,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   }
 
   /**
-   * @brief Adds an extension to the {@link ModelSpec::extensionsUsed}
+   * @brief Adds an extension to the @ref ModelSpec::extensionsUsed
    * property, if it is not already present.
    *
    * @param extensionName The name of the used extension.
@@ -235,7 +235,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   void addExtensionUsed(const std::string& extensionName);
 
   /**
-   * @brief Adds an extension to the {@link ModelSpec::extensionsRequired}
+   * @brief Adds an extension to the @ref ModelSpec::extensionsRequired
    * property, if it is not already present.
    *
    * Calling this function also adds the extension to `extensionsUsed`, if it's
@@ -246,7 +246,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   void addExtensionRequired(const std::string& extensionName);
 
   /**
-   * @brief Removes an extension from the {@link ModelSpec::extensionsUsed}
+   * @brief Removes an extension from the @ref ModelSpec::extensionsUsed
    * property.
    *
    * @param extensionName The name of the used extension.
@@ -254,7 +254,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
   void removeExtensionUsed(const std::string& extensionName);
 
   /**
-   * @brief Removes an extension from the {@link ModelSpec::extensionsRequired}
+   * @brief Removes an extension from the @ref ModelSpec::extensionsRequired
    * property.
    *
    * Calling this function also removes the extension from `extensionsUsed`.
@@ -265,7 +265,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
 
   /**
    * @brief Determines whether a given extension name is listed in the model's
-   * {@link ModelSpec::extensionsUsed} property.
+   * @ref ModelSpec::extensionsUsed property.
    *
    * @param extensionName The extension name to check.
    * @returns True if the extension is found in `extensionsUsed`; otherwise,
@@ -275,7 +275,7 @@ struct CESIUMGLTF_API Model : public ModelSpec {
 
   /**
    * @brief Determines whether a given extension name is listed in the model's
-   * {@link ModelSpec::extensionsRequired} property.
+   * @ref ModelSpec::extensionsRequired property.
    *
    * @param extensionName The extension name to check.
    * @returns True if the extension is found in `extensionsRequired`; otherwise,

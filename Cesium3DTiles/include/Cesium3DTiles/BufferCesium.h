@@ -7,7 +7,7 @@
 
 namespace Cesium3DTiles {
 /**
- * @brief Holds {@link Buffer} properties that are specific to the 3D Tiles loader
+ * @brief Holds @ref Buffer properties that are specific to the 3D Tiles loader
  * rather than part of the 3D Tiles spec.
  */
 struct CESIUM3DTILES_API BufferCesium final {

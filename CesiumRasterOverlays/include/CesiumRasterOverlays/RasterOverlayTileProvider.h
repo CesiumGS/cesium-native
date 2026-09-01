@@ -32,7 +32,7 @@ class IPrepareRasterOverlayRendererResources;
 struct CreateRasterOverlayTileProviderParameters;
 
 /**
- * @brief Summarizes the result of loading an image of a {@link RasterOverlay}.
+ * @brief Summarizes the result of loading an image of a @ref RasterOverlay.
  */
 struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
   /**
@@ -52,8 +52,8 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
   CesiumGeometry::Rectangle rectangle{};
 
   /**
-   * @brief The {@link CesiumUtility::Credit} objects that decribe the attributions that
-   * are required when using the image.
+   * @brief The @ref CesiumUtility::Credit objects that decribe the attributions
+   * that are required when using the image.
    */
   std::vector<CesiumUtility::Credit> credits{};
 
@@ -86,12 +86,12 @@ struct CESIUMRASTEROVERLAYS_API LoadedRasterOverlayImage {
 };
 
 /**
- * @brief Options for {@link RasterOverlayTileProvider::loadTileImageFromUrl}.
+ * @brief Options for @ref RasterOverlayTileProvider::loadTileImageFromUrl.
  */
 struct LoadTileImageFromUrlOptions {
   /**
    * @brief The rectangle definining the bounds of the image being loaded,
-   * expressed in the {@link RasterOverlayTileProvider}'s projection.
+   * expressed in the @ref RasterOverlayTileProvider's projection.
    */
   CesiumGeometry::Rectangle rectangle{};
 
@@ -99,7 +99,7 @@ struct LoadTileImageFromUrlOptions {
    * @brief The credits to display with this tile.
    *
    * This property is copied verbatim to the
-   * {@link LoadedRasterOverlayImage::credits} property.
+   * @ref LoadedRasterOverlayImage::credits property.
    */
   std::vector<CesiumUtility::Credit> credits{};
 
@@ -117,8 +117,8 @@ struct LoadTileImageFromUrlOptions {
    * a valid 0x0 image. If false, such a response will be reported as an
    * error.
    *
-   * {@link ActivatedRasterOverlay::loadTile} and
-   * {@link ActivatedRasterOverlay::loadTileThrottled} will treat such an
+   * @ref ActivatedRasterOverlay::loadTile and
+   * @ref ActivatedRasterOverlay::loadTileThrottled will treat such an
    * image as "failed" and use the quadtree parent (or ancestor) image
    * instead, but will not report any error.
    *
@@ -132,10 +132,10 @@ struct LoadTileImageFromUrlOptions {
 class RasterOverlayTileProvider;
 
 /**
- * @brief Provides individual tiles for a {@link RasterOverlay} on demand.
+ * @brief Provides individual tiles for a @ref RasterOverlay on demand.
  *
  * Instances of this class must be allocated on the heap, and their lifetimes
- * must be managed with {@link CesiumUtility::IntrusivePointer}.
+ * must be managed with @ref CesiumUtility::IntrusivePointer.
  */
 class CESIUMRASTEROVERLAYS_API RasterOverlayTileProvider
     : public CesiumUtility::ReferenceCountedNonThreadSafe<
@@ -148,7 +148,7 @@ public:
    * This will become the owner of this instance if another owner is not
    * specified in \ref CreateRasterOverlayTileProviderParameters::pOwner.
    * @param parameters The parameters for creating the tile provider.
-   * @param projection The {@link CesiumGeospatial::Projection}.
+   * @param projection The @ref CesiumGeospatial::Projection.
    * @param coverageRectangle The rectangle that bounds all the area covered by
    * this overlay, expressed in projected coordinates.
    */
@@ -169,7 +169,7 @@ public:
   CesiumAsync::SharedFuture<void>& getAsyncDestructionCompleteEvent();
 
   /**
-   * @brief Returns the {@link RasterOverlay} that created this instance.
+   * @brief Returns the @ref RasterOverlay that created this instance.
    */
   RasterOverlay& getOwner() noexcept;
 
@@ -212,12 +212,12 @@ public:
   const std::shared_ptr<spdlog::logger>& getLogger() const noexcept;
 
   /**
-   * @brief Returns the {@link CesiumGeospatial::Projection} of this instance.
+   * @brief Returns the @ref CesiumGeospatial::Projection of this instance.
    */
   const CesiumGeospatial::Projection& getProjection() const noexcept;
 
   /**
-   * @brief Returns the coverage {@link CesiumGeometry::Rectangle} of this
+   * @brief Returns the coverage @ref CesiumGeometry::Rectangle of this
    * instance.
    */
   const CesiumGeometry::Rectangle& getCoverageRectangle() const noexcept;
@@ -278,7 +278,7 @@ protected:
   /**
    * @brief Loads an image from a URL and optionally some request headers.
    *
-   * This is a useful helper function for implementing {@link loadTileImage}.
+   * This is a useful helper function for implementing @ref loadTileImage.
    *
    * @param url The URL.
    * @param headers The request headers.

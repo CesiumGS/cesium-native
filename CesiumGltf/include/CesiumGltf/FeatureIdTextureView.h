@@ -12,9 +12,9 @@ struct Model;
 /**
  * @brief The status of a feature ID texture view.
  *
- * The {@link FeatureIdTextureView} constructor always completes successfully,
+ * The @ref FeatureIdTextureView constructor always completes successfully,
  * but it may not always reflect the actual content of the
- * {@link FeatureIdTexture}. This enumeration provides the reason.
+ * @ref FeatureIdTexture. This enumeration provides the reason.
  */
 enum class FeatureIdTextureViewStatus {
   /**
@@ -66,10 +66,10 @@ enum class FeatureIdTextureViewStatus {
 };
 
 /**
- * @brief A view on the image data of {@link FeatureIdTexture}.
+ * @brief A view on the image data of @ref FeatureIdTexture.
  *
  * It provides the ability to sample the feature IDs from the
- * {@link FeatureIdTexture} using texture coordinates.
+ * @ref FeatureIdTexture using texture coordinates.
  */
 class FeatureIdTextureView : public TextureView {
 public:
@@ -79,7 +79,7 @@ public:
   FeatureIdTextureView() noexcept;
 
   /**
-   * @brief Construct a view of the data specified by a {@link FeatureIdTexture}.
+   * @brief Construct a view of the data specified by a @ref FeatureIdTexture.
    *
    * A feature ID texture may contain the `KHR_texture_transform` extension,
    * which transforms the texture coordinates used to sample the texture. The

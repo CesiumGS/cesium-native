@@ -284,8 +284,8 @@ public:
    *
    * If the `_WIN32` preprocessor definition is defined when compiling
    * cesium-native, this is assumed to be a Windows-like system and this
-   * function calls {@link windowsPathToUriPath}. Otherwise, this is assumed to
-   * be a Unix-like system and this function calls {@link unixPathToUriPath}.
+   * function calls @ref windowsPathToUriPath. Otherwise, this is assumed to
+   * be a Unix-like system and this function calls @ref unixPathToUriPath.
    *
    * @param nativePath The file system path.
    * @return The URI path.
@@ -322,8 +322,8 @@ public:
    *
    * If the `_WIN32` preprocessor definition is defined when compiling
    * cesium-native, this is assumed to be a Windows-like system and this
-   * function calls {@link uriPathToWindowsPath}. Otherwise, this is assumed to
-   * be a Unix-like system and this function calls {@link uriPathToUnixPath}.
+   * function calls @ref uriPathToWindowsPath. Otherwise, this is assumed to
+   * be a Unix-like system and this function calls @ref uriPathToUnixPath.
    *
    * @param uriPath The URI path.
    * @return The file system path.

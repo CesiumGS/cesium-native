@@ -62,7 +62,7 @@ struct CESIUM3DTILES_API Tile final : public CesiumUtility::ExtensibleObject {
    * root tile of a tileset; it is optional for all other tiles. The default is
    * to inherit from the parent tile.
    *
-   * Known values are defined in {@link Refine}.
+   * Known values are defined in @ref Refine.
    *
    */
   std::optional<std::string> refine;

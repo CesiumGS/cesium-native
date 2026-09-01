@@ -137,7 +137,8 @@ struct CESIUM3DTILES_API TilesetSpec : public CesiumUtility::ExtensibleObject {
 
 protected:
   /**
-   * @brief This class is not meant to be instantiated directly. Use {@link Tileset} instead.
+   * @brief This class is not meant to be instantiated directly. Use @ref
+   * Tileset instead.
    */
   TilesetSpec() = default;
   friend struct Tileset;

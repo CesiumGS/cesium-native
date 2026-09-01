@@ -14,7 +14,7 @@ namespace CesiumGltf {
 /**
  * @brief Indicates the status of a property attribute property view.
  *
- * The {@link PropertyAttributePropertyView} constructor always completes
+ * The @ref PropertyAttributePropertyView constructor always completes
  * successfully. However it may not always reflect the actual content of the
  * corresponding property attribute property. This enumeration provides the
  * reason.
@@ -23,12 +23,12 @@ class PropertyAttributePropertyViewStatus : public PropertyViewStatus {
 public:
   /**
    * @brief This property view was initialized from an invalid
-   * {@link PropertyAttribute}.
+   * @ref PropertyAttribute.
    */
   static const int ErrorInvalidPropertyAttribute = 15;
 
   /**
-   * @brief This property view is associated with a {@link ClassProperty} of an
+   * @brief This property view is associated with a @ref ClassProperty of an
    * unsupported type.
    */
   static const int ErrorUnsupportedProperty = 16;
@@ -88,7 +88,7 @@ public:
 };
 
 /**
- * @brief A view of the data specified by a {@link PropertyAttributeProperty}.
+ * @brief A view of the data specified by a @ref PropertyAttributeProperty.
  *
  * Ideally, property attribute properties can be initialized as vertex
  * attributes in the target rendering context. However, some runtime engines do
@@ -105,7 +105,7 @@ class PropertyAttributePropertyView;
 
 /**
  * @brief A view of the non-normalized data specified by a
- * {@link PropertyAttributeProperty}.
+ * @ref PropertyAttributeProperty.
  *
  * Ideally, property attribute properties can be initialized as vertex
  * attributes in the target rendering context. However, some runtime engines do
@@ -127,7 +127,8 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The code from {@link PropertyAttributePropertyViewStatus} indicating the error with the property.
+   * @param status The code from @ref PropertyAttributePropertyViewStatus
+   * indicating the error with the property.
    */
   PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, false>(status), _accessor{}, _size{0} {
@@ -139,10 +140,12 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when {@link PropertyAttributePropertyView<ElementType, false>::get} is called. However,
-   * {@link PropertyAttributePropertyView<ElementType, false>::getRaw} cannot be used.
+   * when @ref PropertyAttributePropertyView<ElementType, false>::get is called.
+   * However,
+   * @ref PropertyAttributePropertyView<ElementType, false>::getRaw cannot be
+   * used.
    *
-   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param classProperty The @ref ClassProperty this property conforms to.
    * @param size The number of elements in the primitive's POSITION accessor.
    * Used as a substitute since no actual accessor is defined.
    */
@@ -171,12 +174,13 @@ public:
   }
 
   /**
-   * @brief Construct a view of the data specified by a {@link PropertyAttributeProperty}.
+   * @brief Construct a view of the data specified by a @ref
+   * PropertyAttributeProperty.
    *
-   * @param property The {@link PropertyAttributeProperty}
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param accessorView The {@link AccessorView} for the data that this property is
-   * associated with.
+   * @param property The @ref PropertyAttributeProperty
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param accessorView The @ref AccessorView for the data that this property
+   * is associated with.
    */
   PropertyAttributePropertyView(
       const PropertyAttributeProperty& property,
@@ -264,7 +268,7 @@ private:
 
 /**
  * @brief A view of the normalized data specified by a
- * {@link PropertyAttributeProperty}.
+ * @ref PropertyAttributeProperty.
  *
  * Ideally, property attribute properties can be initialized as vertex
  * attributes in the target rendering context. However, some runtime engines do
@@ -289,7 +293,8 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The code from {@link PropertyAttributePropertyViewStatus} indicating the error with the property.
+   * @param status The code from @ref PropertyAttributePropertyViewStatus
+   * indicating the error with the property.
    */
   PropertyAttributePropertyView(PropertyViewStatusType status) noexcept
       : PropertyView<ElementType, true>(status), _accessor{}, _size{0} {
@@ -303,7 +308,7 @@ public:
    * value. Although this property has no data, it can return the default value
    * when \ref get is called. However, \ref getRaw cannot be used.
    *
-   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param classProperty The @ref ClassProperty this property conforms to.
    * @param size The number of elements in the primitive's POSITION accessor.
    * Used as a substitute since no actual accessor is defined.
    */
@@ -332,12 +337,13 @@ public:
   }
 
   /**
-   * @brief Construct a view of the data specified by a {@link PropertyAttributeProperty}.
+   * @brief Construct a view of the data specified by a @ref
+   * PropertyAttributeProperty.
    *
-   * @param property The {@link PropertyAttributeProperty}
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param accessorView The {@link AccessorView} for the data that this property is
-   * associated with.
+   * @param property The @ref PropertyAttributeProperty
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param accessorView The @ref AccessorView for the data that this property
+   * is associated with.
    */
   PropertyAttributePropertyView(
       const PropertyAttributeProperty& property,

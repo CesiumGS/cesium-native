@@ -38,14 +38,15 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
   /**
    * @brief Creates a new instance
    *
-   * @param tile The {@link Tile} that the content belongs to.
-   * @param contentOptions The content options the {@link TilesetContentLoader} will use to process the content of the tile.
+   * @param tile The @ref Tile that the content belongs to.
+   * @param contentOptions The content options the @ref TilesetContentLoader
+   * will use to process the content of the tile.
    * @param asyncSystem The async system to use for tile content loading.
    * @param pAssetAccessor The asset accessor to make further requests with.
    * @param pLogger The logger that will be used
    * @param requestHeaders The request headers that will be attached to the
    * request.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
    */
   TileLoadInput(
       const Tile& tile,
@@ -68,12 +69,14 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
   TileLoadInput(TileLoadInput&& rhs) noexcept;
 
   /**
-   * @brief The tile that the {@link TilesetContentLoader} will request the server for the content.
+   * @brief The tile that the @ref TilesetContentLoader will request the server
+   * for the content.
    */
   const Tile& tile;
 
   /**
-   * @brief The content options the {@link TilesetContentLoader} will use to process the content of the tile.
+   * @brief The content options the @ref TilesetContentLoader will use to
+   * process the content of the tile.
    */
   const TilesetContentOptions& contentOptions;
 
@@ -112,7 +115,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadInput {
 
 /**
  * @brief Store the result of creating tile's children after
- * invoking {@link TilesetContentLoader::createTileChildren}
+ * invoking @ref TilesetContentLoader::createTileChildren
  */
 struct CESIUM3DTILESSELECTION_API TileChildrenResult {
   /**
@@ -146,8 +149,9 @@ public:
   /**
    * @brief Load the tile content.
    *
-   * @param input The {@link TileLoadInput} that has the tile info and loading systems to load this tile's content
-   * @return The future of {@link TileLoadResult} that stores the tile's content
+   * @param input The @ref TileLoadInput that has the tile info and loading
+   * systems to load this tile's content
+   * @return The future of @ref TileLoadResult that stores the tile's content
    */
   virtual CesiumAsync::Future<TileLoadResult>
   loadTileContent(const TileLoadInput& input) = 0;
@@ -164,8 +168,8 @@ public:
    * children.
    *
    * @param tile The tile to create children for.
-   * @param ellipsoid The {@link CesiumGeospatial::Ellipsoid}.
-   * @return The {@link TileChildrenResult} that stores the tile's children
+   * @param ellipsoid The @ref CesiumGeospatial::Ellipsoid.
+   * @return The @ref TileChildrenResult that stores the tile's children
    */
   virtual TileChildrenResult createTileChildren(
       const Tile& tile,
@@ -224,7 +228,7 @@ public:
 
 protected:
   /**
-   * @brief Called by {@link setOwner} to allow the loader to apply the new
+   * @brief Called by @ref setOwner to allow the loader to apply the new
    * owner to any loaders that are aggregated by this one.
    */
   virtual void setOwnerOfNestedLoaders(TilesetContentManager& owner) noexcept;

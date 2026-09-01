@@ -11,7 +11,7 @@ class QuadtreeTilingScheme;
 /**
  * @brief Uniquely identifies a node in a quadtree.
  *
- * This is one form of a {@link Cesium3DTilesSelection::TileID}.
+ * This is one form of a @ref Cesium3DTilesSelection::TileID.
  *
  * The identifier is composed of the level (with 0 being the level of the root
  * tile), the x- and y-coordinate of the tile, referring to a grid coordinate
@@ -51,7 +51,7 @@ struct CESIUMGEOMETRY_API QuadtreeTileID final {
    * on the given tiling scheme, which provides the number of tiles
    * in x-direction for the level of this tile ID.
    *
-   * @param tilingScheme The {@link QuadtreeTilingScheme}.
+   * @param tilingScheme The @ref QuadtreeTilingScheme.
    * @return The inverted x-coordinate.
    */
   uint32_t
@@ -64,7 +64,7 @@ struct CESIUMGEOMETRY_API QuadtreeTileID final {
    * on the given tiling scheme, which provides the number of tiles
    * in y-direction for the level of this tile ID.
    *
-   * @param tilingScheme The {@link QuadtreeTilingScheme}.
+   * @param tilingScheme The @ref QuadtreeTilingScheme.
    * @return The inverted y-coordinate.
    */
   uint32_t
@@ -107,7 +107,7 @@ struct CESIUMGEOMETRY_API QuadtreeTileID final {
 struct CESIUMGEOMETRY_API UpsampledQuadtreeNode final {
 
   /**
-   * @brief The {@link QuadtreeTileID} for this tree node.
+   * @brief The @ref QuadtreeTileID for this tree node.
    */
   QuadtreeTileID tileID;
 };
@@ -116,13 +116,13 @@ struct CESIUMGEOMETRY_API UpsampledQuadtreeNode final {
 namespace std {
 
 /**
- * @brief A hash function for {@link CesiumGeometry::QuadtreeTileID} objects.
+ * @brief A hash function for @ref CesiumGeometry::QuadtreeTileID objects.
  */
 template <> struct hash<CesiumGeometry::QuadtreeTileID> {
 
   /**
    * @brief A specialization of the `std::hash` template for
-   * {@link CesiumGeometry::QuadtreeTileID} objects.
+   * @ref CesiumGeometry::QuadtreeTileID objects.
    */
   size_t operator()(const CesiumGeometry::QuadtreeTileID& key) const noexcept;
 };

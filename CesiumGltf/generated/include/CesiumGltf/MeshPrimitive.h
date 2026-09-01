@@ -71,7 +71,7 @@ struct CESIUMGLTF_API MeshPrimitive final
   /**
    * @brief The topology type of primitives to render.
    *
-   * Known values are defined in {@link Mode}.
+   * Known values are defined in @ref Mode.
    *
    */
   int32_t mode = Mode::TRIANGLES;

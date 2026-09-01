@@ -22,8 +22,8 @@ class IAssetAccessor;
 namespace Cesium3DTilesSelection {
 
 /**
- * @brief Holds the metadata associated with a {@link Tileset} or an external
- * tileset. This holds all of the fields of {@link Cesium3DTiles::Tileset}
+ * @brief Holds the metadata associated with a @ref Tileset or an external
+ * tileset. This holds all of the fields of @ref Cesium3DTiles::Tileset
  * except for the root tile.
  */
 class CESIUM3DTILESSELECTION_API TilesetMetadata
@@ -89,12 +89,12 @@ public:
   std::vector<std::string> extensionsRequired;
 
   /**
-   * @brief Asynchronously loads the {@link schema} from the {@link schemaUri}.
-   * If the {@link schemaUri} does not contain a value, this method does
+   * @brief Asynchronously loads the @ref schema from the @ref schemaUri.
+   * If the @ref schemaUri does not contain a value, this method does
    * nothing and returns an already-resolved future.
    *
    * Calling this method multiple times will return the same shared future each
-   * time, unless the {@link schemaUri} is changed. In that case, when this
+   * time, unless the @ref schemaUri is changed. In that case, when this
    * method is called, the previous load is canceled and the new one begins.
    *
    * @param asyncSystem The async system used to do work in threads.

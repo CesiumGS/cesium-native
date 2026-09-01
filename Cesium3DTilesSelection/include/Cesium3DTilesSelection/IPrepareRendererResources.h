@@ -55,14 +55,14 @@ struct TileLoadResultAndRenderResources {
 
 /**
  * @brief When implemented for a rendering engine, allows renderer resources to
- * be created and destroyed under the control of a {@link Tileset}.
+ * be created and destroyed under the control of a @ref Tileset.
  *
  * It is not supposed to be used directly by clients. It is implemented
  * for specific rendering engines to provide an infrastructure for preparing the
- * data of a {@link Tile} so that it can be used for rendering.
+ * data of a @ref Tile so that it can be used for rendering.
  *
- * Instances of this class are associated with a {@link Tileset}, in the
- * {@link TilesetExternals} structure that is passed to the constructor.
+ * Instances of this class are associated with a @ref Tileset, in the
+ * @ref TilesetExternals structure that is passed to the constructor.
  */
 class CESIUM3DTILESSELECTION_API IPrepareRendererResources
     : public CesiumRasterOverlays::IPrepareRasterOverlayRendererResources {
@@ -77,12 +77,12 @@ public:
    * @param tileLoadResult The tile data loaded so far.
    * @param transform The tile's transformation.
    * @param rendererOptions Renderer options associated with the tile from
-   * {@link TilesetOptions::rendererOptions}.
+   * @ref TilesetOptions::rendererOptions.
    * @returns A future that resolves to the loaded tile data along with
    * arbitrary "render resources" data representing the result of the load
    * process. The loaded data may be the same as was originally given to this
    * method, or it may be modified. The render resources are passed to
-   * {@link prepareInMainThread} as the `pLoadThreadResult` parameter.
+   * @ref prepareInMainThread as the `pLoadThreadResult` parameter.
    */
   virtual CesiumAsync::Future<TileLoadResultAndRenderResources>
   prepareInLoadThread(
@@ -94,16 +94,16 @@ public:
   /**
    * @brief Further prepares renderer resources.
    *
-   * This is called after {@link prepareInLoadThread}, and unlike that method,
+   * This is called after @ref prepareInLoadThread, and unlike that method,
    * this one is called from the same thread that called
-   * {@link Tileset::updateView}.
+   * @ref Tileset::updateView.
    *
    * @param tile The tile to prepare.
    * @param pLoadThreadResult The value returned from
-   * {@link prepareInLoadThread}.
+   * @ref prepareInLoadThread.
    * @returns Arbitrary data representing the result of the load process.
-   * Note that the value returned by {@link prepareInLoadThread} will _not_ be
-   * automatically preserved and passed to {@link free}. If you need to free
+   * Note that the value returned by @ref prepareInLoadThread will _not_ be
+   * automatically preserved and passed to @ref free. If you need to free
    * that value, do it in this method before returning. If you need that value
    * later, add it to the object returned from this method.
    */
@@ -113,14 +113,14 @@ public:
    * @brief Frees previously-prepared renderer resources.
    *
    * This method is always called from the thread that called
-   * {@link Tileset::updateView} or deleted the tileset.
+   * @ref Tileset::updateView or deleted the tileset.
    *
    * @param tile The tile for which to free renderer resources.
    * @param pLoadThreadResult The result returned by
-   * {@link prepareInLoadThread}. If {@link prepareInMainThread} has
+   * @ref prepareInLoadThread. If @ref prepareInMainThread has
    * already been called, this parameter will be `nullptr`.
    * @param pMainThreadResult The result returned by
-   * {@link prepareInMainThread}. If {@link prepareInMainThread} has
+   * @ref prepareInMainThread. If @ref prepareInMainThread has
    * not yet been called, this parameter will be `nullptr`.
    */
   virtual void free(
@@ -135,10 +135,10 @@ public:
    * @param overlayTextureCoordinateID The ID of the overlay texture coordinate
    * set to use.
    * @param rasterTile The raster overlay tile to add. The raster tile will have
-   * been previously prepared with a call to {@link prepareRasterInLoadThread}
-   * followed by {@link prepareRasterInMainThread}.
+   * been previously prepared with a call to @ref prepareRasterInLoadThread
+   * followed by @ref prepareRasterInMainThread.
    * @param pMainThreadRendererResources The renderer resources for this raster
-   * tile, as created and returned by {@link prepareRasterInMainThread}.
+   * tile, as created and returned by @ref prepareRasterInMainThread.
    * @param translation The translation to apply to the texture coordinates
    * identified by `overlayTextureCoordinateID`. The texture coordinates to use
    * to sample the raster image are computed as `overlayTextureCoordinates *
@@ -164,7 +164,7 @@ public:
    * set to which the raster tile was previously attached.
    * @param rasterTile The raster overlay tile to remove.
    * @param pMainThreadRendererResources The renderer resources for this raster
-   * tile, as created and returned by {@link prepareRasterInMainThread}.
+   * tile, as created and returned by @ref prepareRasterInMainThread.
    */
   virtual void detachRasterInMainThread(
       const Tile& tile,

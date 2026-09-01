@@ -12,7 +12,7 @@ struct Model;
 namespace Cesium3DTilesSelection {
 
 /** @brief An extension holding the "version" of a glTF produced by
- * {@link GltfModifier}.
+ * @ref GltfModifier.
  */
 struct CESIUM3DTILESSELECTION_API GltfModifierVersionExtension
     : public CesiumUtility::ExtensibleObject {
@@ -45,7 +45,7 @@ struct CESIUM3DTILESSELECTION_API GltfModifierVersionExtension
       "CESIUM_INTERNAL_gltf_modifier_version";
 
   /**
-   * @brief The current {@link GltfModifier} version number of the model.
+   * @brief The current @ref GltfModifier version number of the model.
    */
   int64_t version = 0;
 

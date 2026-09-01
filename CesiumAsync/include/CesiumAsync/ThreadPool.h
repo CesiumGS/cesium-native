@@ -10,11 +10,11 @@
 namespace CesiumAsync {
 
 /**
- * @brief A thread pool created by {@link AsyncSystem::createThreadPool}.
+ * @brief A thread pool created by @ref AsyncSystem::createThreadPool.
  *
  * This object has no public methods, but can be used with
- * {@link AsyncSystem::runInThreadPool} and
- * {@link Future::thenInThreadPool}.
+ * @ref AsyncSystem::runInThreadPool and
+ * @ref Future::thenInThreadPool.
  */
 class CESIUMASYNC_API ThreadPool {
 public:

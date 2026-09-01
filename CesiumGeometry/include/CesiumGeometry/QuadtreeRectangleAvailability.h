@@ -20,7 +20,7 @@ public:
   /**
    * @brief Creates a new instance.
    *
-   * @param tilingScheme The {@link QuadtreeTilingScheme}.
+   * @param tilingScheme The @ref QuadtreeTilingScheme.
    * @param maximumLevel The maximum level (height of the tree) for which
    * the availability should be tracked.
    */
@@ -31,7 +31,7 @@ public:
   /**
    * @brief Adds the specified range to the set of available tiles.
    *
-   * @param range The {@link QuadtreeTileRectangularRange} that describes
+   * @param range The @ref QuadtreeTileRectangularRange that describes
    * the range of available tiles.
    */
   void
@@ -55,11 +55,11 @@ public:
    * @brief Returns whether a certain tile is available.
    *
    * This checks the availability of the tile that is described by the
-   * given {@link QuadtreeTileID}, which consists of the level and
+   * given @ref QuadtreeTileID, which consists of the level and
    * the x- and y- coordinates of the queried tile.
    *
    * @param id The quadtree tile ID.
-   * @returns The {@link CesiumGeometry::TileAvailabilityFlags} for this tile,
+   * @returns The @ref CesiumGeometry::TileAvailabilityFlags for this tile,
    * encoded into an uint8_t.
    */
   uint8_t isTileAvailable(const QuadtreeTileID& id) const noexcept;

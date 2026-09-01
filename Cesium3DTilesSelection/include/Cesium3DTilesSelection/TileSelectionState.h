@@ -7,19 +7,19 @@
 namespace Cesium3DTilesSelection {
 
 /**
- * @brief A description of the selection state of a {@link Tile} during the
- * {@link Tileset::updateViewGroup} process.
+ * @brief A description of the selection state of a @ref Tile during the
+ * @ref Tileset::updateViewGroup process.
  *
- * Instances of this class are stored in a {@link TilesetViewGroup} for each
- * visited {@link Tile}, and are used to track the state of the tile during the
- * process of selecting tiles for rendering. The {@link Tileset} updates this
+ * Instances of this class are stored in a @ref TilesetViewGroup for each
+ * visited @ref Tile, and are used to track the state of the tile during the
+ * process of selecting tiles for rendering. The @ref Tileset updates this
  * state while traversing the tile hierarchy, tracking whether a tile was
  * rendered, culled, or refined in the last frame.
  */
 class TileSelectionState final {
 public:
   /**
-   * @brief Enumeration of possible results of a {@link TileSelectionState}
+   * @brief Enumeration of possible results of a @ref TileSelectionState
    */
   enum class CESIUM3DTILESSELECTION_API Result {
     /**
@@ -66,13 +66,13 @@ public:
 
   /**
    * @brief Initializes a new instance with
-   * {@link TileSelectionState::Result::None}
+   * @ref TileSelectionState::Result::None
    */
   constexpr TileSelectionState() noexcept : _result(Result::None) {}
 
   /**
    * @brief Initializes a new instance with a given
-   * {@link TileSelectionState::Result}.
+   * @ref TileSelectionState::Result.
    *
    * @param result The result of the selection.
    */
@@ -81,7 +81,7 @@ public:
   /**
    * @brief Gets the result of selection.
    *
-   * @return The {@link TileSelectionState::Result}
+   * @return The @ref TileSelectionState::Result
    */
   constexpr Result getResult() const noexcept { return this->_result; }
 
@@ -90,8 +90,8 @@ public:
    * render list.
    *
    * In other words, if its last selection result was
-   * {@link TileSelectionState::Result::RenderedAndKicked} or
-   * {@link TileSelectionState::Result::RefinedAndKicked}.
+   * @ref TileSelectionState::Result::RenderedAndKicked or
+   * @ref TileSelectionState::Result::RefinedAndKicked.
    *
    * @return `true` if the tile was kicked, and `false` otherwise
    */
@@ -106,7 +106,7 @@ public:
    *
    * If the tile wasn't kicked, the original value is returned.
    *
-   * @return The {@link TileSelectionState::Result} prior to being kicked.
+   * @return The @ref TileSelectionState::Result prior to being kicked.
    */
   constexpr Result getOriginalResult() const noexcept {
     const Result result = this->getResult();

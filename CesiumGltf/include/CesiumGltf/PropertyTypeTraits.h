@@ -638,7 +638,7 @@ using PropertyValueCopyToView = std::conditional_t<
 /**
  * @brief Creates an optional instance of a type that can be used to own a
  * property value from an optional instance that is only a view on that value.
- * See {@link PropertyValueViewToCopy}.
+ * See @ref PropertyValueViewToCopy.
  *
  * @tparam T The type of the view to copy.
  * @param view An optional instance of a view on the value that will be copied.

@@ -44,14 +44,14 @@ template <typename T> struct Result {
    * provide one.
    *
    * If a value is not provided because the operation failed, then there should
-   * be at least one error in {@link errors} indicating what went wrong.
+   * be at least one error in @ref errors indicating what went wrong.
    */
   std::optional<T> value;
 
   /**
    * @brief The errors and warnings that occurred during the operation.
    *
-   * If a {@link value} is provided, there should not be any errors in this
+   * If a @ref value is provided, there should not be any errors in this
    * list, but there may be warnings. If a value is not provided, there should
    * be at least one error in this list.
    */
@@ -99,14 +99,14 @@ template <typename T> struct Result<CesiumUtility::IntrusivePointer<T>> {
    * provide one.
    *
    * If a value is not provided because the operation failed, then there should
-   * be at least one error in {@link errors} indicating what went wrong.
+   * be at least one error in @ref errors indicating what went wrong.
    */
   CesiumUtility::IntrusivePointer<T> pValue;
 
   /**
    * @brief The errors and warnings that occurred during the operation.
    *
-   * If a {@link pValue} is provided, there should not be any errors in this
+   * If a @ref pValue is provided, there should not be any errors in this
    * list, but there may be warnings. If a pValue is not provided, there should
    * be at least one error in this list.
    */

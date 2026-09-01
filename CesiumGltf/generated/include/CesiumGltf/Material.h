@@ -96,7 +96,7 @@ struct CESIUMGLTF_API Material final : public CesiumGltf::NamedObject {
   /**
    * @brief The alpha rendering mode of the material.
    *
-   * Known values are defined in {@link AlphaMode}.
+   * Known values are defined in @ref AlphaMode.
    *
    *
    * The material's alpha rendering mode enumeration specifying the

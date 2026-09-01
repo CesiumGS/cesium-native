@@ -92,7 +92,7 @@ struct TraversalDetails {
    * the ones that we're not rendering. `notYetRenderableCount` is only reset
    * when a subtree is removed from the render queue because the
    * `notYetRenderableCount` exceeds the
-   * {@link TilesetOptions::loadingDescendantLimit}.
+   * @ref TilesetOptions::loadingDescendantLimit.
    */
   uint32_t notYetRenderableCount = 0;
 };
@@ -198,11 +198,11 @@ void addCurrentTileAndDescendantsToTilesFadingOutIfPreviouslyRendered(
  * @brief Returns whether a tile with the given bounding volume is visible for
  * the camera.
  *
- * @param viewState The {@link ViewState}
+ * @param viewState The @ref ViewState
  * @param boundingVolume The bounding volume of the tile
  * @param forceRenderTilesUnderCamera Whether tiles under the camera should
  * always be considered visible and rendered (see
- * {@link Cesium3DTilesSelection::TilesetOptions}).
+ * @ref Cesium3DTilesSelection::TilesetOptions).
  * @return Whether the tile is visible according to the current camera
  * configuration
  */
@@ -324,6 +324,15 @@ double computeSse(
     }
   }
   return largestSse;
+}
+
+bool meetsGeometricErrorThreshold(
+    const TileSelectionContext& context,
+    double geometricErrorThreshold,
+    bool culled,
+    const Tile& tile) {
+  return culled ? !context.options.enforceCulledScreenSpaceError
+                : tile.getGeometricError() < geometricErrorThreshold;
 }
 
 bool meetsSseThreshold(
@@ -459,7 +468,8 @@ void fogCull(
   CESIUM_ASSERT(distances.size() == frustums.size());
   bool isFogCulled = true;
   for (size_t i = 0; i < frustums.size(); ++i) {
-    if (isVisibleInFog(distances[i], fogDensities[i])) {
+    if (frustums[i].getViewportSize().y == 0.0 ||
+        isVisibleInFog(distances[i], fogDensities[i])) {
       isFogCulled = false;
       break;
     }
@@ -1125,8 +1135,35 @@ TraversalDetails visitTileIfNeeded(
   }
 
   double tileSse = computeSse(context, frameState, tile);
-  bool meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
-
+  auto minGeoErrorThresholdIt = std::min_element(
+      frameState.frustums.begin(),
+      frameState.frustums.end(),
+      [](const ViewState& a, const ViewState& b) {
+        std::optional<double> aThreshold = a.getGeometricErrorThreshold();
+        std::optional<double> bThreshold = b.getGeometricErrorThreshold();
+        if (!aThreshold && !bThreshold) {
+          return false;
+        }
+        if (!aThreshold) {
+          return true;
+        }
+        if (!bThreshold) {
+          return false;
+        }
+        return *aThreshold < *bThreshold;
+      });
+  bool meetsSse = false;
+  std::optional<double> geometricErrorThreshold =
+      minGeoErrorThresholdIt->getGeometricErrorThreshold();
+  if (geometricErrorThreshold) {
+    meetsSse = meetsGeometricErrorThreshold(
+        context,
+        *geometricErrorThreshold,
+        cullResult.culled,
+        tile);
+  } else {
+    meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
+  }
   TraversalDetails details = visitTile(
       context,
       frameState,

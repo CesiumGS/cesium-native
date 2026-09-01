@@ -16,16 +16,16 @@ namespace CesiumGltf {
 /**
  * @brief Indicates the status of a property table property view.
  *
- * The {@link PropertyTablePropertyView} constructor always completes successfully.
+ * The @ref PropertyTablePropertyView constructor always completes successfully.
  * However, it may not always reflect the actual content of the
- * {@link PropertyTableProperty}, but instead indicate that its `size` is 0.
+ * @ref PropertyTableProperty, but instead indicate that its `size` is 0.
  * This enumeration provides the reason.
  */
 class PropertyTablePropertyViewStatus : public PropertyViewStatus {
 public:
   /**
    * @brief This property view was initialized from an invalid
-   * {@link PropertyTable}.
+   * @ref PropertyTable.
    */
   static const PropertyViewStatusType ErrorInvalidPropertyTable = 14;
 
@@ -138,19 +138,20 @@ public:
 int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept;
 
 /**
- * @brief A view on the data of the {@link PropertyTableProperty} that is created
- * by a {@link PropertyTableView}.
+ * @brief A view on the data of the @ref PropertyTableProperty that is created
+ * by a @ref PropertyTableView.
  */
 template <typename ElementType, bool Normalized = false>
 class PropertyTablePropertyView;
 
 /**
- * @brief A view on the data of the {@link PropertyTableProperty} that is created
- * by a {@link PropertyTableView}.
+ * @brief A view on the data of the @ref PropertyTableProperty that is created
+ * by a @ref PropertyTableView.
  *
  * It provides utility to retrieve the actual data stored in the
- * {@link PropertyTableProperty::values} like an array of elements. Data of each
- * instance can be accessed through the {@link PropertyTablePropertyView<ElementType, false>::get} method.
+ * @ref PropertyTableProperty::values like an array of elements. Data of each
+ * instance can be accessed through the @ref
+ * PropertyTablePropertyView<ElementType, false>::get method.
  *
  * @param ElementType must be one of the following: a scalar (uint8_t, int8_t,
  * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double), a
@@ -179,7 +180,8 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The code from {@link PropertyTablePropertyViewStatus} indicating the error with the property.
+   * @param status The code from @ref PropertyTablePropertyViewStatus indicating
+   * the error with the property.
    */
   PropertyTablePropertyView(PropertyViewStatusType status)
       : PropertyView<ElementType, false>(status),
@@ -199,11 +201,13 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when {@link PropertyTablePropertyView<ElementType, false>::get} is called. However,
-   * {@link PropertyTablePropertyView<ElementType, false>::getRaw} cannot be used.
+   * when @ref PropertyTablePropertyView<ElementType, false>::get is called.
+   * However,
+   * @ref PropertyTablePropertyView<ElementType, false>::getRaw cannot be used.
    *
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param size The number of elements in the property table specified by @ref
+   * PropertyTable::count
    */
   PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size)
       : PropertyView<ElementType, false>(classProperty),
@@ -234,13 +238,15 @@ public:
   }
 
   /**
-   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}.
-   * Used for non-array or fixed-length array data.
+   * @brief Construct an instance pointing to data specified by a @ref
+   * PropertyTableProperty. Used for non-array or fixed-length array data.
    *
-   * @param property The {@link PropertyTableProperty}
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param property The @ref PropertyTableProperty
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param size The number of elements in the property table specified by @ref
+   * PropertyTable::count
+   * @param values The raw buffer specified by @ref
+   * PropertyTableProperty::values
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -255,15 +261,18 @@ public:
             values) {}
 
   /**
-   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}, with an enum definition attached.
-   * Used for non-array or fixed-length array data.
+   * @brief Construct an instance pointing to data specified by a @ref
+   * PropertyTableProperty, with an enum definition attached. Used for non-array
+   * or fixed-length array data.
    *
-   * @param property The {@link PropertyTableProperty}.
-   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param property The @ref PropertyTableProperty.
+   * @param classProperty The @ref ClassProperty this property conforms to.
    * @param pEnumDefinition A pointer to the enum definition used for this
    * value.
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}.
-   * @param values The raw buffer specified by {@link PropertyTableProperty::values}.
+   * @param size The number of elements in the property table specified by @ref
+   * PropertyTable::count.
+   * @param values The raw buffer specified by @ref
+   * PropertyTableProperty::values.
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -283,16 +292,23 @@ public:
         _stringOffsetTypeSize{0} {}
 
   /**
-   * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
+   * @brief Construct an instance pointing to the data specified by a @ref
+   * PropertyTableProperty.
    *
-   * @param property The {@link PropertyTableProperty}
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
-   * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
-   * @param stringOffsets The raw buffer specified by {@link PropertyTableProperty::stringOffsets}
-   * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
-   * @param stringOffsetType The offset type of stringOffsets specified by {@link PropertyTableProperty::stringOffsetType}
+   * @param property The @ref PropertyTableProperty
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param size The number of elements in the property table specified by @ref
+   * PropertyTable::count
+   * @param values The raw buffer specified by @ref
+   * PropertyTableProperty::values
+   * @param arrayOffsets The raw buffer specified by @ref
+   * PropertyTableProperty::arrayOffsets
+   * @param stringOffsets The raw buffer specified by @ref
+   * PropertyTableProperty::stringOffsets
+   * @param arrayOffsetType The offset type of arrayOffsets specified by @ref
+   * PropertyTableProperty::arrayOffsetType
+   * @param stringOffsetType The offset type of stringOffsets specified by @ref
+   * PropertyTableProperty::stringOffsetType
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -315,18 +331,25 @@ public:
             stringOffsetType) {}
 
   /**
-   * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}, with an enum definition attached.
+   * @brief Construct an instance pointing to the data specified by a @ref
+   * PropertyTableProperty, with an enum definition attached.
    *
-   * @param property The {@link PropertyTableProperty}.
-   * @param classProperty The {@link ClassProperty} this property conforms to.
+   * @param property The @ref PropertyTableProperty.
+   * @param classProperty The @ref ClassProperty this property conforms to.
    * @param pEnumDefinition A pointer to the enum definition used for this
    * value.
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}.
-   * @param values The raw buffer specified by {@link PropertyTableProperty::values}.
-   * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}.
-   * @param stringOffsets The raw buffer specified by {@link PropertyTableProperty::stringOffsets}.
-   * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}.
-   * @param stringOffsetType The offset type of stringOffsets specified by {@link PropertyTableProperty::stringOffsetType}.
+   * @param size The number of elements in the property table specified by @ref
+   * PropertyTable::count.
+   * @param values The raw buffer specified by @ref
+   * PropertyTableProperty::values.
+   * @param arrayOffsets The raw buffer specified by @ref
+   * PropertyTableProperty::arrayOffsets.
+   * @param stringOffsets The raw buffer specified by @ref
+   * PropertyTableProperty::stringOffsets.
+   * @param arrayOffsetType The offset type of arrayOffsets specified by @ref
+   * PropertyTableProperty::arrayOffsetType.
+   * @param stringOffsetType The offset type of stringOffsets specified by @ref
+   * PropertyTableProperty::stringOffsetType.
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -350,7 +373,7 @@ public:
         _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)} {}
 
   /**
-   * @brief Get the value of an element in the {@link PropertyTable},
+   * @brief Get the value of an element in the @ref PropertyTable,
    * with all value transforms applied. That is, if the property specifies an
    * offset and scale, they will be applied to the value before the value is
    * returned.
@@ -388,7 +411,7 @@ public:
   }
 
   /**
-   * @brief Get the raw value of an element of the {@link PropertyTable},
+   * @brief Get the raw value of an element of the @ref PropertyTable,
    * without offset or scale applied.
    *
    * If this property has a specified "no data" value, the raw value will still
@@ -436,7 +459,7 @@ public:
   /**
    * @brief Get the number of elements in this
    * PropertyTablePropertyView. If the view is valid, this returns
-   * {@link PropertyTable::count}. Otherwise, this returns 0.
+   * @ref PropertyTable::count. Otherwise, this returns 0.
    *
    * @return The number of elements in this PropertyTablePropertyView.
    */
@@ -588,11 +611,11 @@ private:
 };
 
 /**
- * @brief A view on the normalized data of the {@link PropertyTableProperty}
- * that is created by a {@link PropertyTableView}.
+ * @brief A view on the normalized data of the @ref PropertyTableProperty
+ * that is created by a @ref PropertyTableView.
  *
  * It provides utility to retrieve the actual data stored in the
- * {@link PropertyTableProperty::values} like an array of elements. Data of each
+ * @ref PropertyTableProperty::values like an array of elements. Data of each
  * instance can be accessed through the \ref get method.
  *
  * @param ElementType must be one of the following: an integer scalar (uint8_t,
@@ -622,7 +645,8 @@ public:
   /**
    * @brief Constructs an invalid instance for an erroneous property.
    *
-   * @param status The value of {@link PropertyTablePropertyViewStatus} indicating the error with the property.
+   * @param status The value of @ref PropertyTablePropertyViewStatus indicating
+   * the error with the property.
    */
   PropertyTablePropertyView(PropertyViewStatusType status)
       : PropertyView<ElementType, true>(status),
@@ -639,11 +663,13 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when {@link PropertyTablePropertyView<ElementType, true>::get} is called. However,
-   * {@link PropertyTablePropertyView<ElementType, true>::getRaw} cannot be used.
+   * when @ref PropertyTablePropertyView<ElementType, true>::get is called.
+   * However,
+   * @ref PropertyTablePropertyView<ElementType, true>::getRaw cannot be used.
    *
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param size The number of elements in the property table specified by @ref
+   * PropertyTable::count
    */
   PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size)
       : PropertyView<ElementType, true>(classProperty),
@@ -671,13 +697,15 @@ public:
   }
 
   /**
-   * @brief Construct an instance pointing to data specified by a {@link PropertyTableProperty}.
-   * Used for non-array or fixed-length array data.
+   * @brief Construct an instance pointing to data specified by a @ref
+   * PropertyTableProperty. Used for non-array or fixed-length array data.
    *
-   * @param property The {@link PropertyTableProperty}
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
+   * @param property The @ref PropertyTableProperty
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param size The number of elements in the property table specified by @ref
+   * PropertyTable::count
+   * @param values The raw buffer specified by @ref
+   * PropertyTableProperty::values
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -693,15 +721,20 @@ public:
         _arrayOffsetTypeSize{0} {}
 
   /**
-   * @brief Construct an instance pointing to the data specified by a {@link PropertyTableProperty}.
+   * @brief Construct an instance pointing to the data specified by a @ref
+   * PropertyTableProperty.
    *
    *
-   * @param property The {@link PropertyTableProperty}
-   * @param classProperty The {@link ClassProperty} this property conforms to.
-   * @param size The number of elements in the property table specified by {@link PropertyTable::count}
-   * @param values The raw buffer specified by {@link PropertyTableProperty::values}
-   * @param arrayOffsets The raw buffer specified by {@link PropertyTableProperty::arrayOffsets}
-   * @param arrayOffsetType The offset type of arrayOffsets specified by {@link PropertyTableProperty::arrayOffsetType}
+   * @param property The @ref PropertyTableProperty
+   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param size The number of elements in the property table specified by @ref
+   * PropertyTable::count
+   * @param values The raw buffer specified by @ref
+   * PropertyTableProperty::values
+   * @param arrayOffsets The raw buffer specified by @ref
+   * PropertyTableProperty::arrayOffsets
+   * @param arrayOffsetType The offset type of arrayOffsets specified by @ref
+   * PropertyTableProperty::arrayOffsetType
    */
   PropertyTablePropertyView(
       const PropertyTableProperty& property,
@@ -719,7 +752,7 @@ public:
         _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)} {}
 
   /**
-   * @brief Get the value of an element of the {@link PropertyTable},
+   * @brief Get the value of an element of the @ref PropertyTable,
    * with normalization and other value transforms applied. In other words, the
    * value will be normalized, then transformed by the property's offset
    * and scale, if they are defined.
@@ -793,7 +826,7 @@ public:
   }
 
   /**
-   * @brief Get the raw value of an element of the {@link PropertyTable},
+   * @brief Get the raw value of an element of the @ref PropertyTable,
    * without offset, scale, or normalization applied.
    *
    * If this property has a specified "no data" value, the raw value will still
@@ -825,7 +858,7 @@ public:
   /**
    * @brief Get the number of elements in this
    * PropertyTablePropertyView. If the view is valid, this returns
-   * {@link PropertyTable::count}. Otherwise, this returns 0.
+   * @ref PropertyTable::count. Otherwise, this returns 0.
    *
    * @return The number of elements in this PropertyTablePropertyView.
    */

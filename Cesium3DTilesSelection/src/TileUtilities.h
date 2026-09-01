@@ -11,7 +11,8 @@ namespace CesiumImpl {
 /**
  * @brief Returns whether the tile is completely inside a polygon.
  *
- * @param boundingVolume The {@link Cesium3DTilesSelection::BoundingVolume} of the tile.
+ * @param boundingVolume The @ref Cesium3DTilesSelection::BoundingVolume of the
+ * tile.
  * @param cartographicPolygons The list of polygons to check.
  * @return Whether the tile is completely inside a polygon.
  */
@@ -25,7 +26,8 @@ bool withinPolygons(
 /**
  * @brief Returns whether the tile is completely outside all the polygons.
  *
- * @param boundingVolume The {@link Cesium3DTilesSelection::BoundingVolume} of the tile.
+ * @param boundingVolume The @ref Cesium3DTilesSelection::BoundingVolume of the
+ * tile.
  * @param cartographicPolygons The list of polygons to check.
  * @return Whether the tile is completely outside all the polygons.
  */
