@@ -923,11 +923,6 @@ public:
     this->_pTileset->registerLoadRequester(this->_loadRequester);
   }
 
-  virtual ~VectorTilesRasterOverlayTileProvider() {
-    this->_loadRequester.unregister();
-    spdlog::info("VectorTilesRasterOverlayTileProvider destroyed, unregistering load requester.");
-  }
-
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadTileImage(const RasterOverlayTile& overlayTile) override {
     const RasterOverlayOptions& options = this->getOwner().getOptions();
