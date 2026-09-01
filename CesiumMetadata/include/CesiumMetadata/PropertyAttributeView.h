@@ -5,15 +5,15 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyAttribute.h>
-#include <CesiumGltf/PropertyAttributePropertyView.h>
+#include <CesiumMetadata/PropertyAttributePropertyView.h>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 /**
- * @brief Indicates the status of a property attribute view.
+ * @brief Indicates the status of a @ref PropertyAttributeView.
  *
- * The @ref PropertyAttributeView constructor always completes successfully.
+ * ThePropertyAttributeView constructor always completes successfully.
  * However it may not always reflect the actual content of the
- * @ref PropertyAttribute. This enumeration provides the reason.
+ * @ref CesiumGltf::PropertyAttribute. This enumeration provides the reason.
  */
 enum class PropertyAttributeViewStatus {
   /**
@@ -22,52 +22,55 @@ enum class PropertyAttributeViewStatus {
   Valid,
 
   /**
-   * @brief The glTF is missing the EXT_structural_metadata extension.
+   * @brief The glTF is missing the @ref
+   * CesiumGltf::ExtensionModelExtStructuralMetadata extension.
    */
   ErrorMissingMetadataExtension,
 
   /**
-   * @brief The glTF EXT_structural_metadata extension doesn't contain a schema.
+   * @brief The @ref CesiumGltf::ExtensionModelExtStructuralMetadata does not
+   * contain a schema.
    */
   ErrorMissingSchema,
 
   /**
-   * @brief The property attribute's specified class could not be found in the
-   * extension.
+   * @brief The class specified by the @ref CesiumGltf::PropertyAttribute could
+   * not be found in the extension's schema.
    */
   ErrorClassNotFound
 };
 
 /**
- * @brief Attempts to obtain a \ref PropertyType from the \ref Accessor::type
- * "type" field of the accessor.
+ * @brief Attempts to obtain a @ref PropertyType from the @ref
+ * CesiumGltf::AccessorSpec::type "type" field of the accessor.
  *
  * @param accessor The accessor whose type will be obtained.
- * @returns A \ref PropertyType equivalent to the accessor's \ref
- * AccessorSpec::type, or \ref PropertyType::Invalid if no conversion could be
+ * @returns A @ref PropertyType equivalent to the accessor's @ref
+ * AccessorSpec::type, or @ref PropertyType::Invalid if no conversion could be
  * made.
  */
-PropertyType getAccessorTypeAsPropertyType(const Accessor& accessor);
+PropertyType
+getAccessorTypeAsPropertyType(const CesiumGltf::Accessor& accessor);
 
 /**
- * @brief Attempts to obtain a \ref PropertyComponentType from the \ref
- * Accessor::componentType "componentType" field of the accessor.
+ * @brief Attempts to obtain a @ref PropertyComponentType from the @ref
+ * CesiumGltf::AccessorSpec::componentType "componentType" field of the
+ * accessor.
  *
  * @param accessor The accessor whose componentType will be obtained.
- * @returns A \ref PropertyComponentType equivalent to the accessor's \ref
- * AccessorSpec::componentType, or \ref PropertyComponentType::None if no
- * conversion could be made.
+ * @returns A @ref PropertyComponentType equivalent to the accessor's @ref
+ * CesiumGltf::AccessorSpec::componentType, or @ref PropertyComponentType::None
+ * if no conversion could be made.
  */
-PropertyComponentType
-getAccessorComponentTypeAsPropertyComponentType(const Accessor& accessor);
+PropertyComponentType getAccessorComponentTypeAsPropertyComponentType(
+    const CesiumGltf::Accessor& accessor);
 
 /**
- * @brief A view on a @ref PropertyAttribute.
+ * @brief A view on a @ref CesiumGltf::PropertyAttribute.
  *
  * This should be used to get a @ref PropertyAttributePropertyView of a property
- * in the property attribute. It will validate the EXT_structural_metadata
- * format and ensure @ref PropertyAttributePropertyView does not access data out
- *  of bounds.
+ * in the property attribute. It will validate the property's type and ensure
+ * @ref PropertyAttributePropertyView does not access data out of bounds.
  */
 class PropertyAttributeView {
 public:
@@ -75,12 +78,12 @@ public:
    * @brief Construct a PropertyAttributeView.
    *
    * @param model The glTF that contains the property attribute's data.
-   * @param propertyAttribute The @ref PropertyAttribute from which
+   * @param propertyAttribute The @ref CesiumGltf::PropertyAttribute from which
    * the view will retrieve data.
    */
   PropertyAttributeView(
-      const Model& model,
-      const PropertyAttribute& propertyAttribute) noexcept;
+      const CesiumGltf::Model& model,
+      const CesiumGltf::PropertyAttribute& propertyAttribute) noexcept;
 
   /**
    * @brief Gets the status of this property attribute view.
@@ -92,45 +95,48 @@ public:
 
   /**
    * @brief Gets the name of the property attribute being viewed. Returns
-   * std::nullopt if no name was specified.
+   * `std::nullopt` if no name was specified.
    */
   const std::optional<std::string>& name() const noexcept {
-    return _pPropertyAttribute->name;
+    return this->_pPropertyAttribute->name;
   }
 
   /**
-   * @brief Gets the @ref Class that this property attribute conforms to.
+   * @brief Gets the @ref CesiumGltf::Class that this property attribute
+   * conforms to.
    *
-   * @return A pointer to the @ref Class. Returns nullptr if the
-   * PropertyAttribute did not specify a valid class.
+   * @return A pointer to the @ref CesiumGltf::Class. Returns `nullptr` if the
+   * @ref CesiumGltf::PropertyAttribute did not specify a valid class.
    */
-  const Class* getClass() const noexcept { return _pClass; }
+  const CesiumGltf::Class* getClass() const noexcept { return this->_pClass; }
 
   /**
-   * @brief Finds the @ref ClassProperty that
+   * @brief Finds the @ref CesiumGltf::ClassProperty that
    * describes the type information of the property with the specified id.
    * @param propertyId The id of the property to retrieve the class for.
-   * @return A pointer to the @ref ClassProperty.
-   * Return nullptr if the PropertyAttributeView is invalid or if no class
+   * @return A pointer to the @ref CesiumGltf::ClassProperty.
+   * Return `nullptr` if the PropertyAttributeView is invalid or if no class
    * property was found.
    */
-  const ClassProperty* getClassProperty(const std::string& propertyId) const;
+  const CesiumGltf::ClassProperty*
+  getClassProperty(const std::string& propertyId) const;
 
   /**
    * @brief Gets a @ref PropertyAttributePropertyView that views the data of a
-   * property stored in the @ref PropertyAttribute.
+   * property stored in the @ref CesiumGltf::PropertyAttribute.
    *
-   * This method will validate the EXT_structural_metadata format to ensure
-   * @ref PropertyAttributePropertyView retrieves the correct data. T must
-   * be a scalar with a supported component type (int8_t, uint8_t, int16_t,
-   * uint16_t, float), a glm vecN composed of one of the scalar types,
-   * or a glm matN containing one of the scalar types.
+   * This method will validate the property type to ensure @ref
+   * PropertyAttributePropertyView retrieves the correct data. T must be a
+   * scalar with a supported component type (`int8_t`, `uint8_t`, `int16_t`,
+   * `uint16_t`, `float`), a `glm vecN` composed of one of the scalar types, or
+   * a `glm matN` containing one of the scalar types.
    *
    * If T does not match the type specified by the class property, this returns
    * an invalid PropertyAttributePropertyView. Likewise, if the value of
-   * Normalized does not match the value of @ref ClassProperty::normalized for
-   * that class property, this returns an invalid property view. Only types with
-   * integer components may be normalized.
+   * Normalized does not match the value of @ref
+   * CesiumGltf::ClassProperty::normalized for that class property, this returns
+   * an invalid property view. Only types with integer components may be
+   * normalized.
    *
    * @tparam T The C++ type corresponding to the type of the data retrieved.
    * @tparam Normalized Whether the property is normalized. Only applicable to
@@ -142,7 +148,7 @@ public:
    */
   template <typename T, bool Normalized = false>
   PropertyAttributePropertyView<T, Normalized> getPropertyView(
-      const MeshPrimitive& primitive,
+      const CesiumGltf::MeshPrimitive& primitive,
       const std::string& propertyId) const {
     if (this->_status != PropertyAttributeViewStatus::Valid) {
       return PropertyAttributePropertyView<T, Normalized>(
@@ -169,14 +175,14 @@ public:
 
   /**
    * @brief Gets a @ref PropertyAttributePropertyView through a callback that
-   * accepts a property id and a @ref PropertyAttributePropertyView that views
-   * the data of the property with the specified id.
+   * accepts a property ID and a @ref PropertyAttributePropertyView that views
+   * the data of the property with the specified ID.
    *
-   * This method will validate the EXT_structural_metadata format to ensure
-   * @ref PropertyAttributePropertyView retrieves the correct data. T must
-   * be a scalar with a supported component type (int8_t, uint8_t, int16_t,
-   * uint16_t, float), a glm vecN composed of one of the scalar types,
-   * or a glm matN containing one of the scalar types.
+   * This method will validate the property type to ensure @ref
+   * PropertyAttributePropertyView retrieves the correct data. T must be a
+   * scalar with a supported component type (`int8_t`, `uint8_t`, `int16_t`,
+   * `uint16_t`, `float`), a `glm vecN` composed of one of the scalar types,
+   * or a `glm matN` containing one of the scalar types.
    *
    * If the property is somehow invalid, an empty @ref
    * PropertyAttributePropertyView with an error status will be passed to the
@@ -184,13 +190,13 @@ public:
    *
    * @param primitive The target primitive
    * @param propertyId The id of the property to retrieve data from
-   * @param callback A callback function that accepts a property id and a
+   * @param callback A callback function that accepts a property ID and a
    * @ref PropertyAttributePropertyView
    * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
   void getPropertyView(
-      const MeshPrimitive& primitive,
+      const CesiumGltf::MeshPrimitive& primitive,
       const std::string& propertyId,
       Callback&& callback) const {
     if (this->_status != PropertyAttributeViewStatus::Valid) {
@@ -202,7 +208,8 @@ public:
       return;
     }
 
-    const ClassProperty* pClassProperty = getClassProperty(propertyId);
+    const CesiumGltf::ClassProperty* pClassProperty =
+        getClassProperty(propertyId);
     if (!pClassProperty) {
       callback(
           propertyId,
@@ -304,29 +311,30 @@ public:
   }
 
   /**
-   * @brief Iterates over each property in the @ref PropertyAttribute with a
-   * callback that accepts a property id and a @ref
-   * PropertyAttributePropertyView to view the data stored in the @ref
-   * PropertyAttributeProperty.
+   * @brief Iterates over each property in the @ref
+   * CesiumGltf::PropertyAttribute with a callback that accepts a property ID
+   * and a @ref PropertyAttributePropertyView to view the data stored in the
+   * @ref CesiumGltf::PropertyAttributeProperty.
    *
-   * This method will validate the EXT_structural_metadata format to ensure
-   * @ref PropertyAttributePropertyView retrieves the correct data. T must be
-   * a scalar with a supported component type (int8_t, uint8_t, int16_t,
-   * uint16_t, float), a glm vecN composed of one of the scalar types,
-   * or a PropertyArrayView containing one of the scalar types.
+   * This method will validate the property type to ensure @ref
+   * PropertyAttributePropertyView retrieves the correct data. T must be
+   * a scalar with a supported component type (`int8_t`, `uint8_t`, `int16_t`,
+   * `uint16_t`, `float`), a `glm vecN` composed of one of the scalar types,
+   * or a `PropertyArrayView` containing one of the scalar types.
    *
    * If the property is invalid, an empty @ref PropertyAttributePropertyView
    * with an error status will be passed to the callback. Otherwise, a valid
    * property view will be passed to the callback.
    *
    * @param primitive The id of the property to retrieve data from
-   * @param callback A callback function that accepts property id and
+   * @param callback A callback function that accepts a property ID and
    * @ref PropertyAttributePropertyView
    * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
-  void
-  forEachProperty(const MeshPrimitive& primitive, Callback&& callback) const {
+  void forEachProperty(
+      const CesiumGltf::MeshPrimitive& primitive,
+      Callback&& callback) const {
     for (const auto& property : this->_pClass->properties) {
       getPropertyView(
           primitive,
@@ -338,8 +346,8 @@ public:
 private:
   template <typename T, bool Normalized>
   PropertyAttributePropertyView<T, Normalized> getEmptyPropertyViewWithDefault(
-      const MeshPrimitive& primitive,
-      const ClassProperty& classProperty) const {
+      const CesiumGltf::MeshPrimitive& primitive,
+      const CesiumGltf::ClassProperty& classProperty) const {
     // To make the view have a nonzero size, find the POSITION attribute and get
     // its accessor count. If it doesn't exist or is somehow erroneous, just
     // mark the property as nonexistent.
@@ -348,9 +356,10 @@ private:
           PropertyAttributePropertyViewStatus::ErrorNonexistentProperty);
     }
 
-    const Accessor* pAccessor = _pModel->getSafe<Accessor>(
-        &_pModel->accessors,
-        primitive.attributes.at("POSITION"));
+    const CesiumGltf::Accessor* pAccessor =
+        this->_pModel->getSafe<CesiumGltf::Accessor>(
+            &this->_pModel->accessors,
+            primitive.attributes.at("POSITION"));
     if (!pAccessor) {
       return PropertyAttributePropertyView<T, Normalized>(
           PropertyAttributePropertyViewStatus::ErrorNonexistentProperty);
@@ -363,13 +372,13 @@ private:
 
   template <typename T, bool Normalized>
   PropertyAttributePropertyView<T, Normalized> getPropertyViewImpl(
-      const MeshPrimitive& primitive,
+      const CesiumGltf::MeshPrimitive& primitive,
       const std::string& propertyId,
-      const ClassProperty& classProperty) const {
+      const CesiumGltf::ClassProperty& classProperty) const {
     auto propertyAttributePropertyIter =
-        _pPropertyAttribute->properties.find(propertyId);
+        this->_pPropertyAttribute->properties.find(propertyId);
     if (propertyAttributePropertyIter ==
-        _pPropertyAttribute->properties.end()) {
+        this->_pPropertyAttribute->properties.end()) {
       if (!classProperty.required && classProperty.defaultProperty) {
         // If the property was omitted from the property attribute, it is still
         // technically valid if it specifies a default value. Try to create a
@@ -395,9 +404,9 @@ private:
 
   template <typename Callback, bool Normalized>
   void getScalarPropertyViewImpl(
-      const MeshPrimitive& primitive,
+      const CesiumGltf::MeshPrimitive& primitive,
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -452,9 +461,9 @@ private:
 
   template <typename Callback, glm::length_t N, bool Normalized>
   void getVecNPropertyViewImpl(
-      const MeshPrimitive& primitive,
+      const CesiumGltf::MeshPrimitive& primitive,
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -509,9 +518,9 @@ private:
 
   template <typename Callback, bool Normalized>
   void getVecNPropertyViewImpl(
-      const MeshPrimitive& primitive,
+      const CesiumGltf::MeshPrimitive& primitive,
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -552,9 +561,9 @@ private:
 
   template <typename Callback, glm::length_t N, bool Normalized>
   void getMatNPropertyViewImpl(
-      const MeshPrimitive& primitive,
+      const CesiumGltf::MeshPrimitive& primitive,
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -609,9 +618,9 @@ private:
 
   template <typename Callback, bool Normalized>
   void getMatNPropertyViewImpl(
-      const MeshPrimitive& primitive,
+      const CesiumGltf::MeshPrimitive& primitive,
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -652,9 +661,10 @@ private:
 
   template <typename T, bool Normalized>
   PropertyAttributePropertyView<T, Normalized> createPropertyView(
-      const MeshPrimitive& primitive,
-      const ClassProperty& classProperty,
-      const PropertyAttributeProperty& propertyAttributeProperty) const {
+      const CesiumGltf::MeshPrimitive& primitive,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyAttributeProperty& propertyAttributeProperty)
+      const {
     const PropertyType type = convertStringToPropertyType(classProperty.type);
     if (!canRepresentPropertyType<T>(type)) {
       return PropertyAttributePropertyView<T, Normalized>(
@@ -680,8 +690,8 @@ private:
           PropertyAttributePropertyViewStatus::ErrorMissingAttribute);
     }
 
-    const Accessor* pAccessor = _pModel->getSafe<Accessor>(
-        &_pModel->accessors,
+    const CesiumGltf::Accessor* pAccessor = this->_pModel->getSafe(
+        &this->_pModel->accessors,
         primitive.attributes.at(propertyAttributeProperty.attribute));
     if (!pAccessor) {
       return PropertyAttributePropertyView<T, Normalized>(
@@ -706,19 +716,19 @@ private:
               ErrorAccessorNormalizationMismatch);
     }
 
-    AccessorView<T> accessorView = AccessorView<T>(*_pModel, *pAccessor);
-    if (accessorView.status() != AccessorViewStatus::Valid) {
+    CesiumGltf::AccessorView<T> accessorView(*this->_pModel, *pAccessor);
+    if (accessorView.status() != CesiumGltf::AccessorViewStatus::Valid) {
       switch (accessorView.status()) {
-      case AccessorViewStatus::InvalidBufferViewIndex:
+      case CesiumGltf::AccessorViewStatus::InvalidBufferViewIndex:
         return PropertyAttributePropertyView<T, Normalized>(
             PropertyAttributePropertyViewStatus::ErrorInvalidBufferView);
-      case AccessorViewStatus::InvalidBufferIndex:
+      case CesiumGltf::AccessorViewStatus::InvalidBufferIndex:
         return PropertyAttributePropertyView<T, Normalized>(
             PropertyAttributePropertyViewStatus::ErrorInvalidBuffer);
-      case AccessorViewStatus::BufferViewTooSmall:
+      case CesiumGltf::AccessorViewStatus::BufferViewTooSmall:
         return PropertyAttributePropertyView<T, Normalized>(
             PropertyAttributePropertyViewStatus::ErrorAccessorOutOfBounds);
-      case AccessorViewStatus::BufferTooSmall:
+      case CesiumGltf::AccessorViewStatus::BufferTooSmall:
         return PropertyAttributePropertyView<T, Normalized>(
             PropertyAttributePropertyViewStatus::ErrorBufferViewOutOfBounds);
       default:
@@ -733,11 +743,11 @@ private:
         accessorView);
   }
 
-  const Model* _pModel;
-  const PropertyAttribute* _pPropertyAttribute;
-  const Class* _pClass;
+  const CesiumGltf::Model* _pModel;
+  const CesiumGltf::PropertyAttribute* _pPropertyAttribute;
+  const CesiumGltf::Class* _pClass;
 
   PropertyAttributeViewStatus _status;
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/common.hpp>
@@ -12,7 +12,7 @@
 #include <string>
 #include <string_view>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 /**
  * @brief Default conversion between two types. No actual conversion is defined.
  * This returns std::nullopt to indicate the conversion was not successful.
@@ -45,7 +45,7 @@ template <typename TFrom>
 struct MetadataConversions<
     bool,
     TFrom,
-    std::enable_if_t<CesiumGltf::IsMetadataScalar<TFrom>::value>> {
+    std::enable_if_t<CesiumMetadata::IsMetadataScalar<TFrom>::value>> {
   /**
    * @brief Converts a scalar to a boolean. Zero is converted to false, while
    * nonzero values are converted to true.
@@ -134,8 +134,8 @@ struct MetadataConversions<
     TTo,
     TFrom,
     std::enable_if_t<
-        CesiumGltf::IsMetadataInteger<TTo>::value &&
-        CesiumGltf::IsMetadataInteger<TFrom>::value &&
+        CesiumMetadata::IsMetadataInteger<TTo>::value &&
+        CesiumMetadata::IsMetadataInteger<TFrom>::value &&
         !std::is_same_v<TTo, TFrom>>> {
   /**
    * @brief Converts a value of the given integer to another integer type. If
@@ -157,8 +157,8 @@ struct MetadataConversions<
     TTo,
     TFrom,
     std::enable_if_t<
-        CesiumGltf::IsMetadataInteger<TTo>::value &&
-        CesiumGltf::IsMetadataFloating<TFrom>::value>> {
+        CesiumMetadata::IsMetadataInteger<TTo>::value &&
+        CesiumMetadata::IsMetadataFloating<TFrom>::value>> {
   /**
    * @brief Converts a floating-point value to an integer type. This truncates
    * the floating-point value, rounding it towards zero.
@@ -187,7 +187,8 @@ struct MetadataConversions<
     TTo,
     std::string,
     std::enable_if_t<
-        CesiumGltf::IsMetadataInteger<TTo>::value && std::is_signed_v<TTo>>> {
+        CesiumMetadata::IsMetadataInteger<TTo>::value &&
+        std::is_signed_v<TTo>>> {
   /**
    * @brief Converts the contents of a std::string to a signed integer.
    * This assumes that the entire std::string represents the number, not
@@ -232,7 +233,7 @@ struct MetadataConversions<
 
     return std::nullopt;
   }
-}; // namespace CesiumGltf
+}; // namespace CesiumMetadata
 
 /**
  * @brief Converts from std::string to an unsigned integer.
@@ -242,7 +243,8 @@ struct MetadataConversions<
     TTo,
     std::string,
     std::enable_if_t<
-        CesiumGltf::IsMetadataInteger<TTo>::value && !std::is_signed_v<TTo>>> {
+        CesiumMetadata::IsMetadataInteger<TTo>::value &&
+        !std::is_signed_v<TTo>>> {
   /**
    * @brief Converts the contents of a std::string to an unsigned integer.
    * This assumes that the entire std::string represents the number, not
@@ -303,7 +305,7 @@ template <typename TTo>
 struct MetadataConversions<
     TTo,
     std::string_view,
-    std::enable_if_t<CesiumGltf::IsMetadataInteger<TTo>::value>> {
+    std::enable_if_t<CesiumMetadata::IsMetadataInteger<TTo>::value>> {
   /**
    * @brief Converts the contents of a std::string_view to an integer.
    * This assumes that the entire std::string_view represents the number, not
@@ -336,7 +338,7 @@ template <typename TTo>
 struct MetadataConversions<
     TTo,
     bool,
-    std::enable_if_t<CesiumGltf::IsMetadataInteger<TTo>::value>> {
+    std::enable_if_t<CesiumMetadata::IsMetadataInteger<TTo>::value>> {
   /**
    * @brief Converts a boolean to an integer. This returns 1 for true, 0 for
    * false.
@@ -368,7 +370,7 @@ template <typename TFrom>
 struct MetadataConversions<
     float,
     TFrom,
-    std::enable_if_t<CesiumGltf::IsMetadataInteger<TFrom>::value>> {
+    std::enable_if_t<CesiumMetadata::IsMetadataInteger<TFrom>::value>> {
   /**
    * @brief Converts an integer to a float. The value may lose precision during
    * conversion.
@@ -483,7 +485,7 @@ template <typename TFrom>
 struct MetadataConversions<
     double,
     TFrom,
-    std::enable_if_t<CesiumGltf::IsMetadataInteger<TFrom>::value>> {
+    std::enable_if_t<CesiumMetadata::IsMetadataInteger<TFrom>::value>> {
   /**
    * @brief Converts any integer type to a double. The value may lose precision
    * during conversion.
@@ -667,8 +669,8 @@ struct MetadataConversions<
     TTo,
     TFrom,
     std::enable_if_t<
-        CesiumGltf::IsMetadataVecN<TTo>::value &&
-        CesiumGltf::IsMetadataScalar<TFrom>::value>> {
+        CesiumMetadata::IsMetadataVecN<TTo>::value &&
+        CesiumMetadata::IsMetadataScalar<TFrom>::value>> {
   /**
    * @brief Converts a scalar to a vecN. The returned vector is initialized
    * with the value in all of its components. The value may lose precision
@@ -702,8 +704,8 @@ struct MetadataConversions<
     TTo,
     TFrom,
     std::enable_if_t<
-        CesiumGltf::IsMetadataVecN<TTo>::value &&
-        CesiumGltf::IsMetadataVecN<TFrom>::value &&
+        CesiumMetadata::IsMetadataVecN<TTo>::value &&
+        CesiumMetadata::IsMetadataVecN<TFrom>::value &&
         !std::is_same_v<TTo, TFrom>>> {
   /**
    * @brief Converts a value of the given vecN to another vecN type.
@@ -771,8 +773,8 @@ struct MetadataConversions<
     TTo,
     TFrom,
     std::enable_if_t<
-        CesiumGltf::IsMetadataMatN<TTo>::value &&
-        CesiumGltf::IsMetadataScalar<TFrom>::value>> {
+        CesiumMetadata::IsMetadataMatN<TTo>::value &&
+        CesiumMetadata::IsMetadataScalar<TFrom>::value>> {
   /**
    * Converts a scalar to a matN. The returned vector is initialized
    * with the value in all components. The value may lose precision during
@@ -806,8 +808,8 @@ struct MetadataConversions<
     TTo,
     TFrom,
     std::enable_if_t<
-        CesiumGltf::IsMetadataMatN<TTo>::value &&
-        CesiumGltf::IsMetadataMatN<TFrom>::value &&
+        CesiumMetadata::IsMetadataMatN<TTo>::value &&
+        CesiumMetadata::IsMetadataMatN<TFrom>::value &&
         !std::is_same_v<TTo, TFrom>>> {
   /**
    * @brief Converts a value of the given matN to another matN type.
@@ -849,4 +851,4 @@ struct MetadataConversions<
 };
 #pragma endregion
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

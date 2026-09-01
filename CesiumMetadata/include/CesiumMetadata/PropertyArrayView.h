@@ -1,7 +1,7 @@
 #pragma once
 
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/getOffsetFromOffsetsBuffer.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/getOffsetFromOffsetsBuffer.h>
 #include <CesiumUtility/SpanHelper.h>
 
 #include <cstddef>
@@ -9,11 +9,11 @@
 #include <span>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 
 /**
- * @brief A view on an array element of a @ref PropertyTableProperty
- * or @ref PropertyTextureProperty.
+ * @brief A view on an array element of a @ref CesiumGltf::PropertyTableProperty
+ * or @ref CesiumGltf::PropertyTextureProperty.
  *
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.
@@ -65,8 +65,9 @@ private:
 };
 
 /**
- * @brief A copy of an array element of a @ref PropertyTableProperty or
- * @ref PropertyTextureProperty.
+ * @brief A copy of an array element of a @ref CesiumGltf::PropertyTableProperty
+ * or
+ * @ref CesiumGltf::PropertyTextureProperty.
  *
  * Whereas @ref PropertyArrayView is a pointer to data stored in a separate
  * place, a PropertyArrayCopy owns the data that it's viewing.
@@ -104,7 +105,7 @@ public:
   /** @brief Default move assignment operator */
   PropertyArrayCopy& operator=(PropertyArrayCopy&&) = default;
 
-  /** @brief Creates a new \ref PropertyArrayCopy directly from a buffer of
+  /** @brief Creates a new @ref PropertyArrayCopy directly from a buffer of
    * bytes, which will be moved into this copy. */
   PropertyArrayCopy(std::vector<std::byte>&& buffer) noexcept
       : _storage(std::move(buffer)), _view(this->_storage) {}
@@ -143,12 +144,12 @@ public:
   auto end() const { return this->_view.end(); }
 
   /**
-   * @brief Obtains a \ref PropertyArrayView over the contents of this copy.
+   * @brief Obtains a @ref PropertyArrayView over the contents of this copy.
    */
   const PropertyArrayView<ElementType>& view() const { return this->_view; }
 
   /**
-   * @brief Obtains a buffer and view from the copied data, leaving this \ref
+   * @brief Obtains a buffer and view from the copied data, leaving this @ref
    * PropertyArrayCopy empty.
    *
    * @param outBuffer The destination where this copy's internal buffer will be
@@ -168,8 +169,9 @@ private:
 };
 
 /**
- * @brief A view on a bool array element of a @ref PropertyTableProperty
- * or @ref PropertyTextureProperty.
+ * @brief A view on a bool array element of a @ref
+ * CesiumGltf::PropertyTableProperty or @ref
+ * CesiumGltf::PropertyTextureProperty.
  *
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.
@@ -220,8 +222,9 @@ private:
 };
 
 /**
- * @brief A copy of a bool array element of a @ref PropertyTableProperty or
- * @ref PropertyTextureProperty.
+ * @brief A copy of a bool array element of a @ref
+ * CesiumGltf::PropertyTableProperty or
+ * @ref CesiumGltf::PropertyTextureProperty.
  *
  * Whereas @ref PropertyArrayView is a pointer to data stored in a separate
  * place, a PropertyArrayCopy owns the data that it's viewing.
@@ -292,12 +295,12 @@ public:
   int64_t size() const noexcept { return this->_view.size(); }
 
   /**
-   * @brief Obtains a \ref PropertyArrayView over the contents of this copy.
+   * @brief Obtains a @ref PropertyArrayView over the contents of this copy.
    */
   const PropertyArrayView<bool>& view() const { return this->_view; }
 
   /**
-   * @brief Obtains a buffer and view from the copied data, leaving this \ref
+   * @brief Obtains a buffer and view from the copied data, leaving this @ref
    * PropertyArrayCopy empty.
    *
    * @param outBuffer The destination where this copy's internal buffer will be
@@ -317,8 +320,9 @@ private:
 };
 
 /**
- * @brief A view on a string array element of a @ref PropertyTableProperty
- * or @ref PropertyTextureProperty.
+ * @brief A view on a string array element of a @ref
+ * CesiumGltf::PropertyTableProperty or @ref
+ * CesiumGltf::PropertyTextureProperty.
  *
  * Provides utility to retrieve the data stored in the array of
  * elements via the array index operator.
@@ -384,7 +388,8 @@ private:
 };
 
 /**
- * @brief A copy of a string array element of a @ref PropertyTableProperty.
+ * @brief A copy of a string array element of a @ref
+ * CesiumGltf::PropertyTableProperty.
  *
  * Whereas @ref PropertyArrayView is a pointer to data stored in a separate
  * place, a PropertyArrayCopy owns the data that it's viewing.
@@ -516,14 +521,14 @@ public:
   int64_t size() const noexcept { return this->_view.size(); }
 
   /**
-   * @brief Obtains a \ref PropertyArrayView over the contents of this copy.
+   * @brief Obtains a @ref PropertyArrayView over the contents of this copy.
    */
   const PropertyArrayView<std::string_view>& view() const {
     return this->_view;
   }
 
   /**
-   * @brief Obtains a buffer and view from the copied data, leaving this \ref
+   * @brief Obtains a buffer and view from the copied data, leaving this @ref
    * PropertyArrayCopy empty.
    *
    * @param outBuffer The destination where this copy's internal buffer will be
@@ -544,7 +549,7 @@ private:
   PropertyArrayView<std::string_view> _view;
 };
 
-/** @brief Compares two \ref PropertyArrayView instances by comparing their
+/** @brief Compares two @ref PropertyArrayView instances by comparing their
  * values. If the two arrays aren't the same size, this comparison will return
  * false. */
 template <typename T>
@@ -565,8 +570,8 @@ bool operator==(
   return true;
 }
 
-/** @brief Compares a \ref PropertyArrayView with a \ref
- * PropertyArrayCopy by creating a view from the copy and comparing the two. */
+/** @brief Compares a @ref PropertyArrayView with a @ref PropertyArrayCopy by
+ * creating a view from the copy and comparing the two. */
 template <typename T>
 bool operator==(
     const PropertyArrayView<T>& lhs,
@@ -574,8 +579,8 @@ bool operator==(
   return lhs == PropertyArrayView(rhs);
 }
 
-/** @brief Compares a \ref PropertyArrayView with a \ref
- * PropertyArrayCopy by creating a view from the copy and comparing the two. */
+/** @brief Compares a @ref PropertyArrayView with a @ref PropertyArrayCopy by
+ * creating a view from the copy and comparing the two. */
 template <typename T>
 bool operator==(
     const PropertyArrayCopy<T>& lhs,
@@ -583,7 +588,7 @@ bool operator==(
   return lhs.view() == rhs;
 }
 
-/** @brief Compares two \ref PropertyArrayCopy instances by creating
+/** @brief Compares two @ref PropertyArrayCopy instances by creating
  * views from each instance and comparing the two. */
 template <typename T>
 bool operator==(
@@ -593,7 +598,7 @@ bool operator==(
 }
 
 /**
- * @brief Compares two \ref PropertyArrayView instances and returns the inverse.
+ * @brief Compares two @ref PropertyArrayView instances and returns the inverse.
  */
 template <typename T>
 bool operator!=(
@@ -602,9 +607,9 @@ bool operator!=(
   return !(lhs == rhs);
 }
 
-/** @brief Compares a \ref PropertyArrayView with a \ref
- * PropertyArrayCopy by creating a view from the copy and returning the inverse
- * of comparing the two. */
+/** @brief Compares a @ref PropertyArrayView with a @ref PropertyArrayCopy by
+ * creating a view from the copy and returning the inverse of comparing the two.
+ */
 template <typename T>
 bool operator!=(
     const PropertyArrayView<T>& lhs,
@@ -612,9 +617,9 @@ bool operator!=(
   return !(lhs == rhs);
 }
 
-/** @brief Compares a \ref PropertyArrayView with a \ref
- * PropertyArrayCopy by creating a view from the copy and returning the inverse
- * of comparing the two. */
+/** @brief Compares a @ref PropertyArrayView with a @ref PropertyArrayCopy by
+ * creating a view from the copy and returning the inverse of comparing the two.
+ */
 template <typename T>
 bool operator!=(
     const PropertyArrayCopy<T>& lhs,
@@ -622,9 +627,8 @@ bool operator!=(
   return !(lhs == rhs);
 }
 
-/** @brief Compares two \ref
- * PropertyArrayCopy instances by creating views from both instances and
- * returning the inverse of comparing the two. */
+/** @brief Compares two @ref PropertyArrayCopy instances by creating views from
+ * both instances and returning the inverse of comparing the two. */
 template <typename T>
 bool operator!=(
     const PropertyArrayCopy<T>& lhs,
@@ -632,4 +636,4 @@ bool operator!=(
   return !(lhs == rhs);
 }
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

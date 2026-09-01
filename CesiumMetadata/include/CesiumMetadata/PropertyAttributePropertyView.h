@@ -2,77 +2,77 @@
 
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/PropertyAttributeProperty.h>
-#include <CesiumGltf/PropertyTransformations.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
-#include <CesiumGltf/PropertyView.h>
+#include <CesiumMetadata/PropertyTransformations.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
+#include <CesiumMetadata/PropertyView.h>
 #include <CesiumUtility/Assert.h>
 
 #include <cmath>
 #include <cstdint>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 /**
- * @brief Indicates the status of a property attribute property view.
+ * @brief Indicates the status of a @ref PropertyAttributePropertyView.
  *
- * The @ref PropertyAttributePropertyView constructor always completes
- * successfully. However it may not always reflect the actual content of the
- * corresponding property attribute property. This enumeration provides the
+ * The PropertyAttributePropertyView constructor always completes successfully.
+ * However it may not always reflect the actual content of the corresponding
+ * @ref CesiumGltf::PropertyAttributeProperty. This enumeration provides the
  * reason.
  */
 class PropertyAttributePropertyViewStatus : public PropertyViewStatus {
 public:
   /**
    * @brief This property view was initialized from an invalid
-   * @ref PropertyAttribute.
+   * @ref CesiumGltf::PropertyAttribute.
    */
   static const int ErrorInvalidPropertyAttribute = 15;
 
   /**
-   * @brief This property view is associated with a @ref ClassProperty of an
-   * unsupported type.
+   * @brief This property view is associated with a @ref
+   * CesiumGltf::ClassProperty of an unsupported type.
    */
-  static const int ErrorUnsupportedProperty = 16;
+  static const PropertyViewStatusType ErrorUnsupportedProperty = 16;
 
   /**
    * @brief This property view was initialized with a primitive that does not
    * contain the specified attribute.
    */
-  static const int ErrorMissingAttribute = 17;
+  static const PropertyViewStatusType ErrorMissingAttribute = 17;
 
   /**
    * @brief This property view's attribute does not have a valid accessor index.
    */
-  static const int ErrorInvalidAccessor = 18;
+  static const PropertyViewStatusType ErrorInvalidAccessor = 18;
 
   /**
    * @brief This property view's type does not match the type of the accessor it
    * uses.
    */
-  static const int ErrorAccessorTypeMismatch = 19;
+  static const PropertyViewStatusType ErrorAccessorTypeMismatch = 19;
 
   /**
    * @brief This property view's component type does not match the type of the
    * accessor it uses.
    */
-  static const int ErrorAccessorComponentTypeMismatch = 20;
+  static const PropertyViewStatusType ErrorAccessorComponentTypeMismatch = 20;
 
   /**
    * @brief This property view's normalization does not match the normalization
    * of the accessor it uses.
    */
-  static const int ErrorAccessorNormalizationMismatch = 21;
+  static const PropertyViewStatusType ErrorAccessorNormalizationMismatch = 21;
 
   /**
    * @brief This property view uses an accessor that does not have a valid
    * buffer view index.
    */
-  static const int ErrorInvalidBufferView = 22;
+  static const PropertyViewStatusType ErrorInvalidBufferView = 22;
 
   /**
    * @brief This property view uses a buffer view that does not have a valid
    * buffer index.
    */
-  static const int ErrorInvalidBuffer = 23;
+  static const PropertyViewStatusType ErrorInvalidBuffer = 23;
 
   /**
    * @brief This property view uses an accessor that points outside the bounds
@@ -88,7 +88,8 @@ public:
 };
 
 /**
- * @brief A view of the data specified by a @ref PropertyAttributeProperty.
+ * @brief A view of the data specified by a @ref
+ * CesiumGltf::PropertyAttributeProperty.
  *
  * Ideally, property attribute properties can be initialized as vertex
  * attributes in the target rendering context. However, some runtime engines do
@@ -105,7 +106,7 @@ class PropertyAttributePropertyView;
 
 /**
  * @brief A view of the non-normalized data specified by a
- * @ref PropertyAttributeProperty.
+ * @ref CesiumGltf::PropertyAttributeProperty.
  *
  * Ideally, property attribute properties can be initialized as vertex
  * attributes in the target rendering context. However, some runtime engines do
@@ -145,12 +146,13 @@ public:
    * @ref PropertyAttributePropertyView<ElementType, false>::getRaw cannot be
    * used.
    *
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    * @param size The number of elements in the primitive's POSITION accessor.
    * Used as a substitute since no actual accessor is defined.
    */
   PropertyAttributePropertyView(
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       int64_t size) noexcept
       : PropertyView<ElementType, false>(classProperty), _accessor{}, _size{0} {
     if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
@@ -175,17 +177,18 @@ public:
 
   /**
    * @brief Construct a view of the data specified by a @ref
-   * PropertyAttributeProperty.
+   * CesiumGltf::PropertyAttributeProperty.
    *
-   * @param property The @ref PropertyAttributeProperty
-   * @param classProperty The @ref ClassProperty this property conforms to.
-   * @param accessorView The @ref AccessorView for the data that this property
-   * is associated with.
+   * @param property The @ref CesiumGltf::PropertyAttributeProperty
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
+   * @param accessorView The @ref CesiumGltf::AccessorView for the data that
+   * this property is associated with.
    */
   PropertyAttributePropertyView(
-      const PropertyAttributeProperty& property,
-      const ClassProperty& classProperty,
-      const AccessorView<ElementType>& accessorView) noexcept
+      const CesiumGltf::PropertyAttributeProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::AccessorView<ElementType>& accessorView) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
         _accessor{accessorView},
         _size{
@@ -205,8 +208,8 @@ public:
    *
    * @param index The vertex index.
    *
-   * @return The value of the property for the given vertex, or std::nullopt if
-   * it matches the "no data" value
+   * @return The value of the property for the given vertex, or `std::nullopt`
+   * if it matches the "no data" value
    */
   std::optional<ElementType> get(int64_t index) const noexcept {
     if (this->_status ==
@@ -243,7 +246,7 @@ public:
     CESIUM_ASSERT(index >= 0 && "index must be non-negative");
     CESIUM_ASSERT(index < size() && "index must be less than size");
 
-    return _accessor[index];
+    return this->_accessor[index];
   }
 
   /**
@@ -256,19 +259,21 @@ public:
   int64_t size() const noexcept { return _size; }
 
   /**
-   * @brief Gets the underlying \ref AccessorView from the
+   * @brief Gets the underlying @ref CesiumGltf::AccessorView from the
    * PropertyAttributePropertyView.
    */
-  const AccessorView<ElementType>& accessorView() const { return _accessor; }
+  const CesiumGltf::AccessorView<ElementType>& accessorView() const {
+    return this->_accessor;
+  }
 
 private:
-  AccessorView<ElementType> _accessor;
+  CesiumGltf::AccessorView<ElementType> _accessor;
   int64_t _size;
 };
 
 /**
  * @brief A view of the normalized data specified by a
- * @ref PropertyAttributeProperty.
+ * @ref CesiumGltf::PropertyAttributeProperty.
  *
  * Ideally, property attribute properties can be initialized as vertex
  * attributes in the target rendering context. However, some runtime engines do
@@ -306,14 +311,15 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when \ref get is called. However, \ref getRaw cannot be used.
+   * when @ref get is called. However, @ref getRaw cannot be used.
    *
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    * @param size The number of elements in the primitive's POSITION accessor.
    * Used as a substitute since no actual accessor is defined.
    */
   PropertyAttributePropertyView(
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       int64_t size) noexcept
       : PropertyView<ElementType, true>(classProperty), _accessor{}, _size{0} {
     if (this->_status != PropertyAttributePropertyViewStatus::Valid) {
@@ -338,17 +344,18 @@ public:
 
   /**
    * @brief Construct a view of the data specified by a @ref
-   * PropertyAttributeProperty.
+   * CesiumGltf::PropertyAttributeProperty.
    *
-   * @param property The @ref PropertyAttributeProperty
-   * @param classProperty The @ref ClassProperty this property conforms to.
-   * @param accessorView The @ref AccessorView for the data that this property
-   * is associated with.
+   * @param property The @ref CesiumGltf::PropertyAttributeProperty
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
+   * @param accessorView The @ref CesiumGltf::AccessorView for the data that
+   * this property is associated with.
    */
   PropertyAttributePropertyView(
-      const PropertyAttributeProperty& property,
-      const ClassProperty& classProperty,
-      const AccessorView<ElementType>& accessorView) noexcept
+      const CesiumGltf::PropertyAttributeProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::AccessorView<ElementType>& accessorView) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         _accessor{accessorView},
         _size{
@@ -368,8 +375,8 @@ public:
    *
    * @param index The vertex index.
    *
-   * @return The value of the property for the given vertex, or std::nullopt if
-   * it matches the "no data" value
+   * @return The value of the property for the given vertex, or `std::nullopt`
+   * if it matches the "no data" value
    */
   std::optional<NormalizedType> get(int64_t index) const noexcept {
     if (this->_status ==
@@ -431,7 +438,7 @@ public:
     CESIUM_ASSERT(index >= 0 && "index must be non-negative");
     CESIUM_ASSERT(index < size() && "index must be less than size");
 
-    return _accessor[index];
+    return this->_accessor[index];
   }
 
   /**
@@ -444,14 +451,16 @@ public:
   int64_t size() const noexcept { return _size; }
 
   /**
-   * @brief Gets the underlying \ref AccessorView from the
+   * @brief Gets the underlying @ref CesiumGltf::AccessorView from the
    * PropertyAttributePropertyView.
    */
-  const AccessorView<ElementType>& accessorView() const { return _accessor; }
+  const CesiumGltf::AccessorView<ElementType>& accessorView() const {
+    return this->_accessor;
+  }
 
 private:
-  AccessorView<ElementType> _accessor;
+  CesiumGltf::AccessorView<ElementType> _accessor;
   int64_t _size;
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

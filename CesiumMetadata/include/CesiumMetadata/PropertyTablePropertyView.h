@@ -1,10 +1,10 @@
 #pragma once
 
 #include <CesiumGltf/Enum.h>
-#include <CesiumGltf/PropertyArrayView.h>
-#include <CesiumGltf/PropertyTransformations.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
-#include <CesiumGltf/PropertyView.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyTransformations.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
+#include <CesiumMetadata/PropertyView.h>
 #include <CesiumUtility/Assert.h>
 
 #include <cstddef>
@@ -12,20 +12,20 @@
 #include <span>
 #include <string_view>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 /**
- * @brief Indicates the status of a property table property view.
+ * @brief Indicates the status of a @ref PropertyTablePropertyView.
  *
- * The @ref PropertyTablePropertyView constructor always completes successfully.
- * However, it may not always reflect the actual content of the
- * @ref PropertyTableProperty, but instead indicate that its `size` is 0.
+ * The PropertyTablePropertyView constructor always completes successfully.
+ * However, it may not always reflect the actual content of the @ref
+ * CesiumGltf::PropertyTableProperty, but instead indicate that its `size` is 0.
  * This enumeration provides the reason.
  */
 class PropertyTablePropertyViewStatus : public PropertyViewStatus {
 public:
   /**
    * @brief This property view was initialized from an invalid
-   * @ref PropertyTable.
+   * @ref CesiumGltf::PropertyTable.
    */
   static const PropertyViewStatusType ErrorInvalidPropertyTable = 14;
 
@@ -132,32 +132,33 @@ public:
 };
 
 /**
- * @brief Returns the size in bytes of a \ref PropertyComponentType used as the
- * `arrayOffsetType` in the constructor of \ref PropertyTablePropertyView.
+ * @brief Returns the size in bytes of a @ref PropertyComponentType used as the
+ * `arrayOffsetType` in the constructor of @ref PropertyTablePropertyView.
  */
 int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept;
 
 /**
- * @brief A view on the data of the @ref PropertyTableProperty that is created
- * by a @ref PropertyTableView.
+ * @brief A view on the data of the @ref CesiumGltf::PropertyTableProperty that
+ * is created by a @ref PropertyTableView.
  */
 template <typename ElementType, bool Normalized = false>
 class PropertyTablePropertyView;
 
 /**
- * @brief A view on the data of the @ref PropertyTableProperty that is created
- * by a @ref PropertyTableView.
+ * @brief A view on the data of the @ref CesiumGltf::PropertyTableProperty that
+ * is created by a @ref PropertyTableView.
  *
  * It provides utility to retrieve the actual data stored in the
- * @ref PropertyTableProperty::values like an array of elements. Data of each
- * instance can be accessed through the @ref
+ * @ref CesiumGltf::PropertyTableProperty::values like an array of elements.
+ * Data of each instance can be accessed through the @ref
  * PropertyTablePropertyView<ElementType, false>::get method.
  *
- * @param ElementType must be one of the following: a scalar (uint8_t, int8_t,
- * uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t, float, double), a
- * glm vecN composed of one of the scalar types, a glm matN composed of one of
- * the scalar types, bool, std::string_view, or PropertyArrayView<T> with T as
- * one of the aforementioned types.
+ * @param ElementType must be one of the following: a scalar (`uint8_t`,
+ * `int8_t`, `uint16_t`, `int16_t`, `uint32_t`, `int32_t`, `uint64_t`,
+ * `int64_t`, `float`, `double`), a `glm::vecN` composed of one of the scalar
+ * types, a `glm::matN` composed of one of the scalar types, `bool`,
+ * `std::string_view`, or @ref PropertyArrayView with one of the aforementioned
+ * types.
  */
 template <typename ElementType>
 class PropertyTablePropertyView<ElementType, false>
@@ -239,18 +240,20 @@ public:
 
   /**
    * @brief Construct an instance pointing to data specified by a @ref
-   * PropertyTableProperty. Used for non-array or fixed-length array data.
+   * CesiumGltf::PropertyTableProperty. Used for non-array or fixed-length array
+   * data.
    *
-   * @param property The @ref PropertyTableProperty
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param property The @ref CesiumGltf::PropertyTableProperty
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    * @param size The number of elements in the property table specified by @ref
-   * PropertyTable::count
+   * CesiumGltf::PropertyTable::count
    * @param values The raw buffer specified by @ref
-   * PropertyTableProperty::values
+   * CesiumGltf::PropertyTableProperty::values
    */
   PropertyTablePropertyView(
-      const PropertyTableProperty& property,
-      const ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
       int64_t size,
       std::span<const std::byte> values) noexcept
       : PropertyTablePropertyView(
@@ -262,21 +265,22 @@ public:
 
   /**
    * @brief Construct an instance pointing to data specified by a @ref
-   * PropertyTableProperty, with an enum definition attached. Used for non-array
-   * or fixed-length array data.
+   * CesiumGltf::PropertyTableProperty, with an enum definition attached. Used
+   * for non-array or fixed-length array data.
    *
-   * @param property The @ref PropertyTableProperty.
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param property The @ref CesiumGltf::PropertyTableProperty.
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    * @param pEnumDefinition A pointer to the enum definition used for this
    * value.
    * @param size The number of elements in the property table specified by @ref
-   * PropertyTable::count.
+   * CesiumGltf::PropertyTable::count.
    * @param values The raw buffer specified by @ref
-   * PropertyTableProperty::values.
+   * CesiumGltf::PropertyTableProperty::values.
    */
   PropertyTablePropertyView(
-      const PropertyTableProperty& property,
-      const ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::Enum* pEnumDefinition,
       int64_t size,
       std::span<const std::byte> values) noexcept
@@ -293,26 +297,27 @@ public:
 
   /**
    * @brief Construct an instance pointing to the data specified by a @ref
-   * PropertyTableProperty.
+   * CesiumGltf::PropertyTableProperty.
    *
-   * @param property The @ref PropertyTableProperty
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param property The @ref CesiumGltf::PropertyTableProperty
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    * @param size The number of elements in the property table specified by @ref
-   * PropertyTable::count
+   * CesiumGltf::PropertyTable::count
    * @param values The raw buffer specified by @ref
-   * PropertyTableProperty::values
+   * CesiumGltf::PropertyTableProperty::values
    * @param arrayOffsets The raw buffer specified by @ref
-   * PropertyTableProperty::arrayOffsets
+   * CesiumGltf::PropertyTableProperty::arrayOffsets
    * @param stringOffsets The raw buffer specified by @ref
-   * PropertyTableProperty::stringOffsets
+   * CesiumGltf::PropertyTableProperty::stringOffsets
    * @param arrayOffsetType The offset type of arrayOffsets specified by @ref
-   * PropertyTableProperty::arrayOffsetType
+   * CesiumGltf::PropertyTableProperty::arrayOffsetType
    * @param stringOffsetType The offset type of stringOffsets specified by @ref
-   * PropertyTableProperty::stringOffsetType
+   * CesiumGltf::PropertyTableProperty::stringOffsetType
    */
   PropertyTablePropertyView(
-      const PropertyTableProperty& property,
-      const ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
       int64_t size,
       std::span<const std::byte> values,
       std::span<const std::byte> arrayOffsets,
@@ -332,28 +337,29 @@ public:
 
   /**
    * @brief Construct an instance pointing to the data specified by a @ref
-   * PropertyTableProperty, with an enum definition attached.
+   * CesiumGltf::PropertyTableProperty, with an enum definition attached.
    *
-   * @param property The @ref PropertyTableProperty.
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param property The @ref CesiumGltf::PropertyTableProperty.
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    * @param pEnumDefinition A pointer to the enum definition used for this
    * value.
    * @param size The number of elements in the property table specified by @ref
-   * PropertyTable::count.
+   * CesiumGltf::PropertyTable::count.
    * @param values The raw buffer specified by @ref
-   * PropertyTableProperty::values.
+   * CesiumGltf::PropertyTableProperty::values.
    * @param arrayOffsets The raw buffer specified by @ref
-   * PropertyTableProperty::arrayOffsets.
+   * CesiumGltf::PropertyTableProperty::arrayOffsets.
    * @param stringOffsets The raw buffer specified by @ref
-   * PropertyTableProperty::stringOffsets.
+   * CesiumGltf::PropertyTableProperty::stringOffsets.
    * @param arrayOffsetType The offset type of arrayOffsets specified by @ref
-   * PropertyTableProperty::arrayOffsetType.
+   * CesiumGltf::PropertyTableProperty::arrayOffsetType.
    * @param stringOffsetType The offset type of stringOffsets specified by @ref
-   * PropertyTableProperty::stringOffsetType.
+   * CesiumGltf::PropertyTableProperty::stringOffsetType.
    */
   PropertyTablePropertyView(
-      const PropertyTableProperty& property,
-      const ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::Enum* pEnumDefinition,
       int64_t size,
       std::span<const std::byte> values,
@@ -373,7 +379,7 @@ public:
         _stringOffsetTypeSize{getOffsetTypeSize(stringOffsetType)} {}
 
   /**
-   * @brief Get the value of an element in the @ref PropertyTable,
+   * @brief Get the value of an element in the @ref CesiumGltf::PropertyTable,
    * with all value transforms applied. That is, if the property specifies an
    * offset and scale, they will be applied to the value before the value is
    * returned.
@@ -381,10 +387,10 @@ public:
    * If this property has a specified "no data" value, and the retrieved element
    * is equal to that value, then this will return the property's specified
    * default value. If the property did not provide a default value, this
-   * returns std::nullopt.
+   * returns `std::nullopt`.
    *
    * @param index The element index
-   * @return The value of the element, or std::nullopt if it matches the "no
+   * @return The value of the element, or `std::nullopt` if it matches the "no
    * data" value
    */
   std::optional<PropertyValueViewToCopy<ElementType>>
@@ -392,7 +398,7 @@ public:
     if (this->_status ==
         PropertyTablePropertyViewStatus::EmptyPropertyWithDefault) {
       CESIUM_ASSERT(index >= 0 && "index must be non-negative");
-      CESIUM_ASSERT(index < size() && "index must be less than size");
+      CESIUM_ASSERT(index < this->size() && "index must be less than size");
 
       return propertyValueViewToCopy(this->defaultValue());
     }
@@ -411,8 +417,8 @@ public:
   }
 
   /**
-   * @brief Get the raw value of an element of the @ref PropertyTable,
-   * without offset or scale applied.
+   * @brief Get the raw value of an element of the @ref
+   * CesiumGltf::PropertyTable, without offset or scale applied.
    *
    * If this property has a specified "no data" value, the raw value will still
    * be returned, even if it equals the "no data" value.
@@ -425,10 +431,10 @@ public:
         this->_status == PropertyTablePropertyViewStatus::Valid &&
         "Check the status() first to make sure view is valid");
     CESIUM_ASSERT(
-        size() > 0 &&
+        this->size() > 0 &&
         "Check the size() of the view to make sure it's not empty");
     CESIUM_ASSERT(index >= 0 && "index must be non-negative");
-    CESIUM_ASSERT(index < size() && "index must be less than size");
+    CESIUM_ASSERT(index < this->size() && "index must be less than size");
 
     if constexpr (IsMetadataNumeric<ElementType>::value) {
       return getNumericValue(index);
@@ -459,37 +465,36 @@ public:
   /**
    * @brief Get the number of elements in this
    * PropertyTablePropertyView. If the view is valid, this returns
-   * @ref PropertyTable::count. Otherwise, this returns 0.
+   * @ref CesiumGltf::PropertyTable::count. Otherwise, this returns 0.
    *
    * @return The number of elements in this PropertyTablePropertyView.
    */
-  int64_t size() const noexcept { return _size; }
+  int64_t size() const noexcept { return this->_size; }
 
 private:
   ElementType getNumericValue(int64_t index) const noexcept {
-    return reinterpret_cast<const ElementType*>(_values.data())[index];
+    return reinterpret_cast<const ElementType*>(this->_values.data())[index];
   }
 
   bool getBooleanValue(int64_t index) const noexcept {
-    const int64_t byteIndex = index / 8;
-    const int64_t bitIndex = index % 8;
+    const size_t byteIndex = static_cast<size_t>(index / 8);
+    const size_t bitIndex = static_cast<size_t>(index % 8);
     const int bitValue =
-        static_cast<int>(_values[static_cast<size_t>(byteIndex)] >> bitIndex) &
-        1;
+        static_cast<int>(this->_values[byteIndex] >> bitIndex) & 1;
     return bitValue == 1;
   }
 
   std::string_view getStringValue(int64_t index) const noexcept {
     const size_t currentOffset = getOffsetFromOffsetsBuffer(
         static_cast<size_t>(index),
-        _stringOffsets,
-        _stringOffsetType);
+        this->_stringOffsets,
+        this->_stringOffsetType);
     const size_t nextOffset = getOffsetFromOffsetsBuffer(
         static_cast<size_t>(index + 1),
-        _stringOffsets,
-        _stringOffsetType);
+        this->_stringOffsets,
+        this->_stringOffsetType);
     return std::string_view(
-        reinterpret_cast<const char*>(_values.data() + currentOffset),
+        reinterpret_cast<const char*>(this->_values.data() + currentOffset),
         nextOffset - currentOffset);
   }
 
@@ -500,7 +505,7 @@ private:
     if (count > 0) {
       size_t arraySize = count * sizeof(T);
       const std::span<const std::byte> values(
-          _values.data() + static_cast<size_t>(index) * arraySize,
+          this->_values.data() + static_cast<size_t>(index) * arraySize,
           arraySize);
       return PropertyArrayView<T>{values};
     }
@@ -509,69 +514,70 @@ private:
     // indices, not byte offsets, so they must be multiplied by sizeof(T)
     const size_t currentOffset = getOffsetFromOffsetsBuffer(
                                      static_cast<size_t>(index),
-                                     _arrayOffsets,
-                                     _arrayOffsetType) *
+                                     this->_arrayOffsets,
+                                     this->_arrayOffsetType) *
                                  sizeof(T);
     const size_t nextOffset = getOffsetFromOffsetsBuffer(
                                   static_cast<size_t>(index + 1),
-                                  _arrayOffsets,
-                                  _arrayOffsetType) *
+                                  this->_arrayOffsets,
+                                  this->_arrayOffsetType) *
                               sizeof(T);
     const std::span<const std::byte> values(
-        _values.data() + currentOffset,
+        this->_values.data() + currentOffset,
         nextOffset - currentOffset);
     return PropertyArrayView<T>{values};
   }
 
   PropertyArrayView<std::string_view>
   getStringArrayValues(int64_t index) const noexcept {
-    size_t count = static_cast<size_t>(this->arrayCount());
+    int64_t count = this->arrayCount();
     // Handle fixed-length arrays
     if (count > 0) {
       // Copy the corresponding string offsets to pass to the PropertyArrayView.
       const size_t arraySize =
-          count * static_cast<size_t>(_stringOffsetTypeSize);
+          static_cast<size_t>(count * this->_stringOffsetTypeSize);
       const std::span<const std::byte> stringOffsetValues(
-          _stringOffsets.data() + static_cast<size_t>(index) * arraySize,
-          arraySize + static_cast<size_t>(_stringOffsetTypeSize));
+          this->_stringOffsets.data() + static_cast<size_t>(index) * arraySize,
+          arraySize + static_cast<size_t>(this->_stringOffsetTypeSize));
       return PropertyArrayView<std::string_view>(
-          _values,
+          this->_values,
           stringOffsetValues,
-          _stringOffsetType,
-          static_cast<int64_t>(count));
+          this->_stringOffsetType,
+          count);
     }
 
     // Handle variable-length arrays
     const size_t currentArrayOffset =
         getOffsetFromOffsetsBuffer(
             static_cast<size_t>(index),
-            _arrayOffsets,
-            _arrayOffsetType) *
-        static_cast<size_t>(_stringOffsetTypeSize);
-    const size_t nextArrayOffset = getOffsetFromOffsetsBuffer(
-                                       static_cast<size_t>(index + 1),
-                                       _arrayOffsets,
-                                       _arrayOffsetType) *
-                                   static_cast<size_t>(_stringOffsetTypeSize);
+            this->_arrayOffsets,
+            this->_arrayOffsetType) *
+        static_cast<size_t>(this->_stringOffsetTypeSize);
+    const size_t nextArrayOffset =
+        getOffsetFromOffsetsBuffer(
+            static_cast<size_t>(index + 1),
+            this->_arrayOffsets,
+            this->_arrayOffsetType) *
+        static_cast<size_t>(this->_stringOffsetTypeSize);
     const size_t arraySize = nextArrayOffset - currentArrayOffset;
     const std::span<const std::byte> stringOffsetValues(
-        _stringOffsets.data() + currentArrayOffset,
-        arraySize + static_cast<size_t>(_stringOffsetTypeSize));
+        this->_stringOffsets.data() + currentArrayOffset,
+        arraySize + static_cast<size_t>(this->_stringOffsetTypeSize));
     return PropertyArrayView<std::string_view>(
         _values,
         stringOffsetValues,
-        _stringOffsetType,
-        static_cast<int64_t>(arraySize) / _stringOffsetTypeSize);
+        this->_stringOffsetType,
+        static_cast<int64_t>(arraySize) / this->_stringOffsetTypeSize);
   }
 
   PropertyArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {
-    size_t count = static_cast<size_t>(this->arrayCount());
+    int64_t count = this->arrayCount());
     // Handle fixed-length arrays
     if (count > 0) {
-      const size_t offsetBits = count * static_cast<size_t>(index);
-      const size_t nextOffsetBits = count * static_cast<size_t>(index + 1);
+      const size_t offsetBits = static_cast<size_t>(count * index);
+      const size_t nextOffsetBits = static_cast<size_t>(count * (index + 1));
       const std::span<const std::byte> buffer(
-          _values.data() + offsetBits / 8,
+          this->_values.data() + offsetBits / 8,
           (nextOffsetBits / 8 - offsetBits / 8 + 1));
       return PropertyArrayView<bool>(
           buffer,
@@ -582,15 +588,15 @@ private:
     // Handle variable-length arrays
     const size_t currentOffset = getOffsetFromOffsetsBuffer(
         static_cast<size_t>(index),
-        _arrayOffsets,
-        _arrayOffsetType);
+        this->_arrayOffsets,
+        this->_arrayOffsetType);
     const size_t nextOffset = getOffsetFromOffsetsBuffer(
         static_cast<size_t>(index + 1),
-        _arrayOffsets,
-        _arrayOffsetType);
+        this->_arrayOffsets,
+        this->_arrayOffsetType);
     const size_t totalBits = nextOffset - currentOffset;
     const std::span<const std::byte> buffer(
-        _values.data() + currentOffset / 8,
+        this->_values.data() + currentOffset / 8,
         (nextOffset / 8 - currentOffset / 8 + 1));
     return PropertyArrayView<bool>(
         buffer,
@@ -611,18 +617,19 @@ private:
 };
 
 /**
- * @brief A view on the normalized data of the @ref PropertyTableProperty
- * that is created by a @ref PropertyTableView.
+ * @brief A view on the normalized data of the @ref
+ * CesiumGltf::PropertyTableProperty that is created by a @ref
+ * PropertyTableView.
  *
  * It provides utility to retrieve the actual data stored in the
- * @ref PropertyTableProperty::values like an array of elements. Data of each
- * instance can be accessed through the \ref get method.
+ * @ref  CesiumGltf::PropertyTableProperty::values like an array of elements.
+ * Data of each instance can be accessed through the @ref get method.
  *
- * @param ElementType must be one of the following: an integer scalar (uint8_t,
- * int8_t, uint16_t, int16_t, uint32_t, int32_t, uint64_t, int64_t), a glm vecN
- * composed of one of the integer scalar types, a glm matN composed of one of
- * the integer scalar types, or PropertyArrayView<T> with T as one of the
- * aforementioned types.
+ * @param ElementType must be one of the following: an integer scalar
+ * (`uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `uint32_t`, `int32_t`,
+ * `uint64_t`, `int64_t`), a `glm::vecN` composed of one of the integer scalar
+ * types, a `glm::matN` composed of one of the integer scalar types, or @ref
+ * PropertyArrayView with one of the aforementioned types.
  */
 template <typename ElementType>
 class PropertyTablePropertyView<ElementType, true>
@@ -667,11 +674,14 @@ public:
    * However,
    * @ref PropertyTablePropertyView<ElementType, true>::getRaw cannot be used.
    *
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param classProperty The @ref CesiumGltf:: ClassProperty this property
+   * conforms to.
    * @param size The number of elements in the property table specified by @ref
    * PropertyTable::count
    */
-  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size)
+  PropertyTablePropertyView(
+      const CesiumGltf::ClassProperty& classProperty,
+      int64_t size)
       : PropertyView<ElementType, true>(classProperty),
         _values{},
         _size{0},
@@ -698,18 +708,20 @@ public:
 
   /**
    * @brief Construct an instance pointing to data specified by a @ref
-   * PropertyTableProperty. Used for non-array or fixed-length array data.
+   *  CesiumGltf::PropertyTableProperty. Used for non-array or fixed-length
+   * array data.
    *
-   * @param property The @ref PropertyTableProperty
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param property The @ref CesiumGltf::PropertyTableProperty
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    * @param size The number of elements in the property table specified by @ref
-   * PropertyTable::count
+   * CesiumGltf::PropertyTable::count
    * @param values The raw buffer specified by @ref
-   * PropertyTableProperty::values
+   * CesiumGltf::PropertyTableProperty::values
    */
   PropertyTablePropertyView(
-      const PropertyTableProperty& property,
-      const ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
       int64_t size,
       std::span<const std::byte> values) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
@@ -722,23 +734,24 @@ public:
 
   /**
    * @brief Construct an instance pointing to the data specified by a @ref
-   * PropertyTableProperty.
+   * CesiumGltf::PropertyTableProperty.
    *
    *
-   * @param property The @ref PropertyTableProperty
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param property The @ref CesiumGltf::PropertyTableProperty
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    * @param size The number of elements in the property table specified by @ref
-   * PropertyTable::count
+   * CesiumGltf::PropertyTable::count
    * @param values The raw buffer specified by @ref
-   * PropertyTableProperty::values
+   * CesiumGltf::PropertyTableProperty::values
    * @param arrayOffsets The raw buffer specified by @ref
-   * PropertyTableProperty::arrayOffsets
+   * CesiumGltf::PropertyTableProperty::arrayOffsets
    * @param arrayOffsetType The offset type of arrayOffsets specified by @ref
-   * PropertyTableProperty::arrayOffsetType
+   * CesiumGltf::PropertyTableProperty::arrayOffsetType
    */
   PropertyTablePropertyView(
-      const PropertyTableProperty& property,
-      const ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
       int64_t size,
       std::span<const std::byte> values,
       std::span<const std::byte> arrayOffsets,
@@ -752,7 +765,7 @@ public:
         _arrayOffsetTypeSize{getOffsetTypeSize(arrayOffsetType)} {}
 
   /**
-   * @brief Get the value of an element of the @ref PropertyTable,
+   * @brief Get the value of an element of the @ref CesiumGltf::PropertyTable,
    * with normalization and other value transforms applied. In other words, the
    * value will be normalized, then transformed by the property's offset
    * and scale, if they are defined.
@@ -760,10 +773,10 @@ public:
    * If this property has a specified "no data" value, and the retrieved element
    * is equal to that value, then this will return the property's specified
    * default value. If the property did not provide a default value, this
-   * returns std::nullopt.
+   * returns `std::nullopt`.
    *
    * @param index The element index
-   * @return The value of the element, or std::nullopt if it matches the "no
+   * @return The value of the element, or `std::nullopt` if it matches the "no
    * data" value
    */
   std::optional<PropertyValueViewToCopy<NormalizedType>>
@@ -826,8 +839,8 @@ public:
   }
 
   /**
-   * @brief Get the raw value of an element of the @ref PropertyTable,
-   * without offset, scale, or normalization applied.
+   * @brief Get the raw value of an element of the @ref
+   * CesiumGltf::PropertyTable, without offset, scale, or normalization applied.
    *
    * If this property has a specified "no data" value, the raw value will still
    * be returned, even if it equals the "no data" value.
@@ -858,7 +871,7 @@ public:
   /**
    * @brief Get the number of elements in this
    * PropertyTablePropertyView. If the view is valid, this returns
-   * @ref PropertyTable::count. Otherwise, this returns 0.
+   * @ref CesiumGltf::PropertyTable::count. Otherwise, this returns 0.
    *
    * @return The number of elements in this PropertyTablePropertyView.
    */
@@ -878,7 +891,7 @@ private:
     if (count > 0) {
       size_t arraySize = count * sizeof(T);
       const std::span<const std::byte> values(
-          _values.data() + static_cast<size_t>(index) * arraySize,
+          this->_values.data() + static_cast<size_t>(index) * arraySize,
           arraySize);
       return PropertyArrayView<T>{values};
     }
@@ -887,16 +900,16 @@ private:
     // indices, not byte offsets, so they must be multiplied by sizeof(T)
     const size_t currentOffset = getOffsetFromOffsetsBuffer(
                                      static_cast<size_t>(index),
-                                     _arrayOffsets,
-                                     _arrayOffsetType) *
+                                     this->_arrayOffsets,
+                                     this->_arrayOffsetType) *
                                  sizeof(T);
     const size_t nextOffset = getOffsetFromOffsetsBuffer(
                                   static_cast<size_t>(index + 1),
-                                  _arrayOffsets,
-                                  _arrayOffsetType) *
+                                  this->_arrayOffsets,
+                                  this->_arrayOffsetType) *
                               sizeof(T);
     const std::span<const std::byte> values(
-        _values.data() + currentOffset,
+        this->_values.data() + currentOffset,
         nextOffset - currentOffset);
     return PropertyArrayView<T>{values};
   }
@@ -909,4 +922,4 @@ private:
   int64_t _arrayOffsetTypeSize;
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

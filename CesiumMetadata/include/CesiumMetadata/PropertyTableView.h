@@ -2,23 +2,23 @@
 
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyTablePropertyView.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumMetadata/PropertyTablePropertyView.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 
 #include <glm/common.hpp>
 
 #include <optional>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 
 /**
- * @brief Indicates the status of a property table view.
+ * @brief Indicates the status of a @ref PropertyTableView.
  *
- * The @ref PropertyTableView constructor always completes successfully.
+ * The PropertyTableView constructor always completes successfully.
  * However, it may not always reflect the actual content of the @ref
- * PropertyTable, but instead indicate that its @ref PropertyTableView::size is
- * 0. This enumeration provides the reason.
+ * CesiumGltf::PropertyTable, but instead indicate that its @ref
+ * PropertyTableView::size is 0. This enumeration provides the reason.
  */
 enum class PropertyTableViewStatus {
   /**
@@ -27,40 +27,42 @@ enum class PropertyTableViewStatus {
   Valid,
 
   /**
-   * @brief The property table view's model does not contain an
-   * EXT_structural_metadata extension.
+   * @brief The glTF is missing the @ref
+   * CesiumGltf::ExtensionModelExtStructuralMetadata extension.
    */
   ErrorMissingMetadataExtension,
 
   /**
-   * @brief The property table view's model does not have a schema in its
-   * EXT_structural_metadata extension.
+   * @brief The @ref CesiumGltf::ExtensionModelExtStructuralMetadata does not
+   * contain a schema.
    */
   ErrorMissingSchema,
 
   /**
-   * @brief The property table's specified class could not be found in the
-   * extension.
+   * @brief The class specified by the @ref CesiumGltf::PropertyTable could
+   * not be found in the extension's schema.
    */
   ErrorClassNotFound
 };
 
 /**
- * @brief Utility to retrieve the data of @ref PropertyTable.
+ * @brief Utility to retrieve the data of @ref CesiumGltf::PropertyTable.
  *
  * This should be used to get a @ref PropertyTablePropertyView of a property in
- * the property table. It will validate the EXT_structural_metadata format and
- * ensure @ref PropertyTablePropertyView does not access out of bounds.
+ * the property table. It will validate the property's type and ensure @ref
+ * PropertyTablePropertyView does not access out of bounds.
  */
 class PropertyTableView {
 public:
   /**
    * @brief Creates an instance of PropertyTableView.
    * @param model The glTF Model that contains the property table data.
-   * @param propertyTable The @ref PropertyTable
-   * from which the view will retrieve data.
+   * @param propertyTable The @ref CesiumGltf::PropertyTable from which the view
+   * will retrieve data.
    */
-  PropertyTableView(const Model& model, const PropertyTable& propertyTable);
+  PropertyTableView(
+      const CesiumGltf::Model& model,
+      const CesiumGltf::PropertyTable& propertyTable);
 
   /**
    * @brief Gets the status of this property table view.
@@ -70,69 +72,72 @@ public:
    *
    * @return The status of this property table view.
    */
-  PropertyTableViewStatus status() const noexcept { return _status; }
+  PropertyTableViewStatus status() const noexcept { return this->_status; }
 
   /**
    * @brief Gets the name of the property table being viewed. Returns
-   * std::nullopt if no name was specified.
+   * `std::nullopt` if no name was specified.
    */
   const std::optional<std::string>& name() const noexcept {
-    return _pPropertyTable->name;
+    return this->_pPropertyTable->name;
   }
 
   /**
    * @brief Get the number of elements in this PropertyTableView. If the
-   * view is valid, this returns @ref PropertyTable::count. Otherwise, this
-   * returns 0.
+   * view is valid, this returns @ref CesiumGltf::PropertyTable::count.
+   * Otherwise, this returns 0.
    *
    * @return The number of elements in this PropertyTableView.
    */
   int64_t size() const noexcept {
-    return _status == PropertyTableViewStatus::Valid ? _pPropertyTable->count
-                                                     : 0;
+    return this->_status == PropertyTableViewStatus::Valid
+               ? this->_pPropertyTable->count
+               : 0;
   }
 
   /**
-   * @brief Gets the @ref Class that this property table conforms to.
+   * @brief Gets the @ref CesiumGltf::Class that this property table conforms
+   * to.
    *
-   * @return A pointer to the @ref Class. Returns nullptr if the PropertyTable
-   * did not specify a valid class.
+   * @return A pointer to the @ref CesiumGltf::Class. Returns `nullptr` if the
+   * CesiumGltf::PropertyTable did not specify a valid class.
    */
-  const Class* getClass() const noexcept { return _pClass; }
+  const CesiumGltf::Class* getClass() const noexcept { return this->_pClass; }
 
   /**
-   * @brief Finds the @ref ClassProperty that
-   * describes the type information of the property with the specified id.
-   * @param propertyId The id of the property to retrieve the class for.
-   * @return A pointer to the @ref ClassProperty. Returns nullptr if the
-   * PropertyTableView is invalid or if no class property was found.
+   * @brief Finds the @ref CesiumGltf::ClassProperty that
+   * describes the type information of the property with the specified ID.
+   * @param propertyId The ID of the property to retrieve the class for.
+   * @return A pointer to the @ref CesiumGltf::ClassProperty. Returns `nullptr`
+   * if the PropertyTableView is invalid or if no class property was found.
    */
-  const ClassProperty* getClassProperty(const std::string& propertyId) const;
+  const CesiumGltf::ClassProperty*
+  getClassProperty(const std::string& propertyId) const;
 
   /**
    * @brief Gets a @ref PropertyTablePropertyView that views the data of a
-   * property stored in the @ref PropertyTable.
+   * property stored in the @ref CesiumGltf::PropertyTable.
    *
-   * This method will validate the EXT_structural_metadata format to ensure
-   * @ref PropertyTablePropertyView retrieves the correct data. T must be one of
-   * the following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
-   * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
-   * the scalar types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or \ref PropertyArrayView with T as one of the
-   * aforementioned types.
+   * This method will validate the property's type to ensure @ref
+   * PropertyTablePropertyView retrieves the correct data. `T` must be one of
+   * the following: a scalar (`uint8_t`, `int8_t`, `uint16_t`, `int16_t`,
+   * `uint32_t`, `int32_t`, `uint64_t`, `int64_t`, `float`, `double`), a
+   * `glm::vecN` composed of one of the scalar types, a `glm::matN` composed of
+   * one of the scalar types, `bool`, `std::string_view`, or @ref
+   * PropertyArrayView with one of the aforementioned types.
    *
-   * If T does not match the type specified by the class property, this returns
-   * an invalid PropertyTablePropertyView. Likewise, if the value of
-   * Normalized
-   * does not match the value of @ref ClassProperty::normalized for that class
-   * property, this returns an invalid property view. Only types with integer
-   * components may be normalized.
+   * If `T` does not match the type specified by the class property, this
+   * returns an invalid @ref PropertyTablePropertyView. Likewise, if the value
+   * of Normalized does not match the value of @ref
+   * CesiumGltf::ClassProperty::normalized for that class property, this returns
+   * an invalid property view. Only types with integer components may be
+   * normalized.
    *
    * @tparam T The C++ type corresponding to the type of the data retrieved.
    * @tparam Normalized Whether the property is normalized. Only applicable to
    * types with integer components.
-   * @param propertyId The id of the property to retrieve data from
-   * @return A \ref PropertyTablePropertyView of the property. If no valid
+   * @param propertyId The ID of the property to retrieve data from
+   * @return A @ref PropertyTablePropertyView of the property. If no valid
    * property is found, the property view will be invalid.
    */
   template <typename T, bool Normalized = false>
@@ -153,25 +158,25 @@ public:
   }
 
   /**
-   * @brief Gets a \ref PropertyTablePropertyView through a callback that
-   * accepts a property id and a \ref PropertyTablePropertyView that views the
-   * data of the property with the specified id.
+   * @brief Gets a @ref PropertyTablePropertyView through a callback that
+   * accepts a property ID and a @ref PropertyTablePropertyView that views the
+   * data of the property with the specified ID.
    *
-   * This method will validate the EXT_structural_metadata format to ensure
-   * \ref PropertyTablePropertyView retrieves the correct data. T must be one of
-   * the following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
-   * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
-   * the scalar types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or \ref PropertyArrayView with T as one of the
-   * aforementioned types.
+   * This method will validate the property's type to ensure @ref
+   * PropertyTablePropertyView retrieves the correct data. `T` must be one of
+   * the following: a scalar (`uint8_t`, `int8_t`, `uint16_t`, `int16_t`,
+   * `uint32_t`, `int32_t`, `uint64_t`, `int64_t`, `float`, `double`), a
+   * `glm::vecN` composed of one of the scalar types, a `glm::matN` composed of
+   * one of the scalar types, `bool`, `std::string_view`, or @ref
+   * PropertyArrayView with one of the aforementioned types.
    *
-   * If the property is invalid, an empty \ref PropertyTablePropertyView with an
+   * If the property is invalid, an empty @ref PropertyTablePropertyView with an
    * error status will be passed to the callback. Otherwise, a valid property
    * view will be passed to the callback.
    *
-   * @param propertyId The id of the property to retrieve data from
-   * @param callback A callback function that accepts a property id and a
-   * \ref PropertyTablePropertyView
+   * @param propertyId The ID of the property to retrieve data from
+   * @param callback A callback function that accepts a property ID and a
+   * @ref PropertyTablePropertyView
    * @tparam Callback The type of the callback function.
    */
   template <typename Callback>
@@ -185,7 +190,8 @@ public:
       return;
     }
 
-    const ClassProperty* pClassProperty = getClassProperty(propertyId);
+    const CesiumGltf::ClassProperty* pClassProperty =
+        getClassProperty(propertyId);
     if (!pClassProperty) {
       callback(
           propertyId,
@@ -340,24 +346,25 @@ public:
   }
 
   /**
-   * @brief Iterates over each property in the \ref PropertyTable with a
-   * callback that accepts a property id and a \ref PropertyTablePropertyView to
-   * view the data stored in the \ref PropertyTableProperty.
+   * @brief Iterates over each property in the @ref CesiumGltf::PropertyTable
+   * with a callback that accepts a property ID and a @ref
+   * PropertyTablePropertyView to view the data stored in the @ref
+   * CesiumGltf::PropertyTableProperty.
    *
-   * This method will validate the EXT_structural_metadata format to ensure
-   * \ref PropertyTablePropertyView retrieves the correct data. T must be one of
-   * the following: a scalar (uint8_t, int8_t, uint16_t, int16_t, uint32_t,
-   * int32_t, uint64_t, int64_t, float, double), a glm vecN composed of one of
-   * the scalar types, a glm matN composed of one of the scalar types, bool,
-   * std::string_view, or \ref PropertyArrayView with T as one of the
-   * aforementioned types.
+   * This method will validate the property's type to ensure @ref
+   * PropertyTablePropertyView retrieves the correct data. `T` must be one of
+   * the following: a scalar (`uint8_t`, `int8_t`, `uint16_t`, `int16_t`,
+   * `uint32_t`, `int32_t`, `uint64_t`, `int64_t`, `float`, `double`), a
+   * `glm::vecN` composed of one of the scalar types, a `glm::matN` composed of
+   * one of the scalar types, `bool`, `std::string_view`, or @ref
+   * PropertyArrayView with one of the aforementioned types.
    *
-   * If the property is invalid, an empty \ref PropertyTablePropertyView with
+   * If the property is invalid, an empty @ref PropertyTablePropertyView with
    * an error status code will be passed to the callback. Otherwise, a valid
    * property view will be passed to the callback.
    *
-   * @param callback A callback function that accepts property id and
-   * \ref PropertyTablePropertyView
+   * @param callback A callback function that accepts property ID and
+   * @ref PropertyTablePropertyView
    * @tparam Callback The type of the callback function.
    */
   template <typename Callback> void forEachProperty(Callback&& callback) const {
@@ -370,7 +377,7 @@ private:
   template <typename Callback, bool Normalized>
   void getScalarArrayPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -456,7 +463,7 @@ private:
   template <typename Callback, glm::length_t N, bool Normalized>
   void getVecNArrayPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -542,7 +549,7 @@ private:
   template <typename Callback, bool Normalized>
   void getVecNArrayPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -581,7 +588,7 @@ private:
   template <typename Callback, glm::length_t N, bool Normalized>
   void getMatNArrayPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -667,7 +674,7 @@ private:
   template <typename Callback, bool Normalized>
   void getMatNArrayPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -706,7 +713,7 @@ private:
   template <typename Callback, bool Normalized>
   void getArrayPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -754,7 +761,7 @@ private:
   template <typename Callback, glm::length_t N, bool Normalized>
   void getVecNPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
 
@@ -841,7 +848,7 @@ private:
   template <typename Callback, bool Normalized>
   void getVecNPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -880,7 +887,7 @@ private:
   template <typename Callback, glm::length_t N, bool Normalized>
   void getMatNPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -966,7 +973,7 @@ private:
   template <typename Callback, bool Normalized>
   void getMatNPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback) const {
@@ -1005,7 +1012,7 @@ private:
   template <typename Callback, bool Normalized>
   void getScalarPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback) const {
     switch (componentType) {
@@ -1071,17 +1078,17 @@ private:
   template <typename T, bool Normalized>
   PropertyTablePropertyView<T, Normalized> getPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty) const {
+      const CesiumGltf::ClassProperty& classProperty) const {
     auto propertyTablePropertyIter =
-        _pPropertyTable->properties.find(propertyId);
-    if (propertyTablePropertyIter == _pPropertyTable->properties.end()) {
+        this->_pPropertyTable->properties.find(propertyId);
+    if (propertyTablePropertyIter == this->_pPropertyTable->properties.end()) {
       if (!classProperty.required && classProperty.defaultProperty) {
         // If the property was omitted from the property table, it is still
         // technically valid if it specifies a default value. Create a view that
         // just returns the default value.
         return PropertyTablePropertyView<T, Normalized>(
             classProperty,
-            _pPropertyTable->count);
+            this->_pPropertyTable->count);
       }
 
       // Otherwise, the property is erroneously nonexistent.
@@ -1121,8 +1128,8 @@ private:
 
   template <typename T, bool Normalized>
   PropertyTablePropertyView<T, Normalized> getNumericOrBooleanPropertyValues(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& propertyTableProperty) const {
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& propertyTableProperty) const {
     if (classProperty.array) {
       return PropertyTablePropertyView<T, Normalized>(
           PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -1213,19 +1220,19 @@ private:
   }
 
   PropertyTablePropertyView<std::string_view> getStringPropertyValues(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& propertyTableProperty) const;
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& propertyTableProperty) const;
 
   PropertyTablePropertyView<PropertyArrayView<bool>>
   getBooleanArrayPropertyValues(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& propertyTableProperty) const;
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& propertyTableProperty) const;
 
   template <typename T, bool Normalized>
   PropertyTablePropertyView<PropertyArrayView<T>, Normalized>
   getNumericArrayPropertyValues(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& propertyTableProperty) const {
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& propertyTableProperty) const {
     if (!classProperty.array) {
       return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTablePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -1301,7 +1308,8 @@ private:
     // Handle fixed-length arrays
     if (fixedLengthArrayCount > 0) {
       size_t maxRequiredBytes =
-          static_cast<size_t>(_pPropertyTable->count * fixedLengthArrayCount) *
+          static_cast<size_t>(
+              this->_pPropertyTable->count * fixedLengthArrayCount) *
           sizeof(T);
 
       if (values.size() < maxRequiredBytes) {
@@ -1315,13 +1323,13 @@ private:
             propertyTableProperty,
             classProperty,
             pEnumDefinition,
-            _pPropertyTable->count,
+            this->_pPropertyTable->count,
             values);
       } else {
         return PropertyTablePropertyView<PropertyArrayView<T>, Normalized>(
             propertyTableProperty,
             classProperty,
-            _pPropertyTable->count,
+            this->_pPropertyTable->count,
             values);
       }
     }
@@ -1341,7 +1349,7 @@ private:
         propertyTableProperty.arrayOffsets,
         arrayOffsetType,
         values.size(),
-        static_cast<size_t>(_pPropertyTable->count),
+        static_cast<size_t>(this->_pPropertyTable->count),
         checkBitsSize,
         arrayOffsets);
     if (status != PropertyTablePropertyViewStatus::Valid) {
@@ -1353,7 +1361,7 @@ private:
       return PropertyTablePropertyView<PropertyArrayView<T>, true>(
           propertyTableProperty,
           classProperty,
-          _pPropertyTable->count,
+          this->_pPropertyTable->count,
           values,
           arrayOffsets,
           arrayOffsetType);
@@ -1362,7 +1370,7 @@ private:
           propertyTableProperty,
           classProperty,
           pEnumDefinition,
-          _pPropertyTable->count,
+          this->_pPropertyTable->count,
           values,
           arrayOffsets,
           std::span<const std::byte>(),
@@ -1373,8 +1381,8 @@ private:
 
   PropertyTablePropertyView<PropertyArrayView<std::string_view>>
   getStringArrayPropertyValues(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& propertyTableProperty) const;
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& propertyTableProperty) const;
 
   PropertyViewStatusType getBufferSafe(
       int32_t bufferView,
@@ -1395,10 +1403,10 @@ private:
       size_t propertyTableCount,
       std::span<const std::byte>& stringOffsetsBuffer) const noexcept;
 
-  const Model* _pModel;
-  const PropertyTable* _pPropertyTable;
-  const Class* _pClass;
+  const CesiumGltf::Model* _pModel;
+  const CesiumGltf::PropertyTable* _pPropertyTable;
+  const CesiumGltf::Class* _pClass;
   const std::unordered_map<std::string, CesiumGltf::Enum>* _pEnumDefinitions;
   PropertyTableViewStatus _status;
 };
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

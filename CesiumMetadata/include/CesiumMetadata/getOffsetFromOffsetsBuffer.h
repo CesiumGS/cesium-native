@@ -1,13 +1,14 @@
 #pragma once
 
-#include <CesiumGltf/PropertyType.h>
+#include <CesiumMetadata/PropertyType.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/SpanHelper.h>
 
 #include <cstddef>
 #include <span>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
+
 static size_t getOffsetFromOffsetsBuffer(
     size_t index,
     const std::span<const std::byte>& offsetBuffer,
@@ -42,4 +43,5 @@ static size_t getOffsetFromOffsetsBuffer(
     return 0;
   }
 }
-} // namespace CesiumGltf
+
+} // namespace CesiumMetadata
