@@ -1,5 +1,6 @@
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
+#include <CesiumGltf/Image.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTexture.h>
 #include <CesiumGltf/Texture.h>
@@ -9,7 +10,6 @@
 #include <CesiumMetadata/PropertyView.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
-#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
