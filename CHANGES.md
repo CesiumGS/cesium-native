@@ -1,5 +1,11 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- The `CesiumVectorOverlays::VectorTilesRasterOverlay` now supports styling via specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
+
 ### v0.64.0 - 2026-09-01
 
 ##### Additions :tada:
