@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <Cesium3DTilesContent/GltfConverters.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -18,6 +18,9 @@ public:
       const std::filesystem::path& filePath,
       const CesiumGltfReader::GltfReaderOptions& options = {});
   static GltfConverterResult fromI3dm(
+      const std::filesystem::path& filePath,
+      const CesiumGltfReader::GltfReaderOptions& options = {});
+  static GltfConverterResult fromVctr(
       const std::filesystem::path& filePath,
       const CesiumGltfReader::GltfReaderOptions& options = {});
 
