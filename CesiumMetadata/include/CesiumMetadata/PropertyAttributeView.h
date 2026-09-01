@@ -9,9 +9,9 @@
 
 namespace CesiumMetadata {
 /**
- * @brief Indicates the status of a @ref PropertyAttributeView.
+ * @brief Indicates the status of a PropertyAttributeView.
  *
- * ThePropertyAttributeView constructor always completes successfully.
+ * The @ref PropertyAttributeView constructor always completes successfully.
  * However it may not always reflect the actual content of the
  * @ref CesiumGltf::PropertyAttribute. This enumeration provides the reason.
  */
@@ -46,8 +46,8 @@ enum class PropertyAttributeViewStatus {
  *
  * @param accessor The accessor whose type will be obtained.
  * @returns A @ref PropertyType equivalent to the accessor's @ref
- * AccessorSpec::type, or @ref PropertyType::Invalid if no conversion could be
- * made.
+ * CesiumGltf::AccessorSpec::type, or @ref PropertyType::Invalid if no
+ * conversion could be made.
  */
 PropertyType
 getAccessorTypeAsPropertyType(const CesiumGltf::Accessor& accessor);

@@ -13,9 +13,9 @@
 namespace CesiumMetadata {
 
 /**
- * @brief Indicates the status of a @ref PropertyTableView.
+ * @brief Indicates the status of a PropertyTableView.
  *
- * The PropertyTableView constructor always completes successfully.
+ * The @ref PropertyTableView constructor always completes successfully.
  * However, it may not always reflect the actual content of the @ref
  * CesiumGltf::PropertyTable, but instead indicate that its @ref
  * PropertyTableView::size is 0. This enumeration provides the reason.

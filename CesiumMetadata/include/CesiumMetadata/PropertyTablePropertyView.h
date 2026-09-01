@@ -206,9 +206,10 @@ public:
    * However,
    * @ref PropertyTablePropertyView<ElementType, false>::getRaw cannot be used.
    *
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    * @param size The number of elements in the property table specified by @ref
-   * PropertyTable::count
+   * CesiumGltf::PropertyTable::count
    */
   PropertyTablePropertyView(
       const CesiumGltf::ClassProperty& classProperty,
@@ -676,10 +677,10 @@ public:
    * However,
    * @ref PropertyTablePropertyView<ElementType, true>::getRaw cannot be used.
    *
-   * @param classProperty The @ref CesiumGltf:: ClassProperty this property
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
    * conforms to.
    * @param size The number of elements in the property table specified by @ref
-   * PropertyTable::count
+   * CesiumGltf::PropertyTable::count
    */
   PropertyTablePropertyView(
       const CesiumGltf::ClassProperty& classProperty,

@@ -11,9 +11,9 @@
 
 namespace CesiumMetadata {
 /**
- * @brief Indicates the status of @ref PropertyTextureView.
+ * @brief Indicates the status of PropertyTextureView.
  *
- * The PropertyTextureView constructor always completes successfully.
+ * The @ref PropertyTextureView constructor always completes successfully.
  * However it may not always reflect the actual content of the
  * @ref CesiumGltf::PropertyTexture. This enumeration provides the reason.
  */
@@ -36,8 +36,8 @@ enum class PropertyTextureViewStatus {
   ErrorMissingSchema,
 
   /**
-   * @brief The class specified by the @CesiumGltf::PropertyTexture could not be
-   * found in the extension's schema.
+   * @brief The class specified by the @ref CesiumGltf::PropertyTexture could
+   * not be found in the extension's schema.
    */
   ErrorClassNotFound
 };

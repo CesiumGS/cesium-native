@@ -62,7 +62,7 @@ public:
 
   /**
    * @brief This property view's component type does not match what
-   * is specified in @refCesiumGltf:: ClassProperty::componentType.
+   * is specified in @ref CesiumGltf::ClassProperty::componentType.
    */
   static const PropertyViewStatusType ErrorComponentTypeMismatch = 4;
 
