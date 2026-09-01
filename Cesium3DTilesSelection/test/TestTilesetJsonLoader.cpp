@@ -22,8 +22,8 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyTablePropertyView.h>
-#include <CesiumGltf/PropertyTableView.h>
+#include <CesiumMetadata/PropertyTablePropertyView.h>
+#include <CesiumMetadata/PropertyTableView.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -53,6 +53,7 @@ using namespace doctest;
 using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 using namespace CesiumNativeTests;
 using namespace CesiumUtility;
 

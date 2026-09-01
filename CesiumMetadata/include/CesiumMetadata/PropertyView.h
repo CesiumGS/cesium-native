@@ -143,7 +143,8 @@ PropertyViewStatusType validatePropertyType(
     return PropertyViewStatus::ErrorTypeMismatch;
   }
 
-  const bool isEnum = classProperty.type == ClassProperty::Type::ENUM;
+  const bool isEnum =
+      classProperty.type == CesiumGltf::ClassProperty::Type::ENUM;
   const bool hasEnumDefinition = pEnumDefinition != nullptr;
   if (isEnum != hasEnumDefinition) {
     return PropertyViewStatus::ErrorInvalidEnum;
@@ -200,7 +201,8 @@ PropertyViewStatusType validateArrayPropertyType(
     return PropertyViewStatus::ErrorTypeMismatch;
   }
 
-  const bool isEnum = classProperty.type == ClassProperty::Type::ENUM;
+  const bool isEnum =
+      classProperty.type == CesiumGltf::ClassProperty::Type::ENUM;
   const bool hasEnumDefinition = pEnumDefinition != nullptr;
   if (isEnum != hasEnumDefinition) {
     return PropertyViewStatus::ErrorInvalidEnum;
@@ -381,7 +383,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const CesiumGltf::ClassProperty& classProperty)
       : PropertyView(classProperty, nullptr) {}
 
   /**
@@ -389,7 +391,7 @@ public:
    * definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::Enum* pEnumDefinition)
       : _status(
             validatePropertyType<ElementType>(classProperty, pEnumDefinition)),
@@ -413,7 +415,7 @@ public:
       return;
     }
 
-    if (classProperty.type != ClassProperty::Type::ENUM) {
+    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
       getNumericPropertyValues(classProperty);
     }
 
@@ -512,7 +514,7 @@ protected:
       return;
     }
 
-    if (classProperty.type != ClassProperty::Type::ENUM) {
+    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
       getNumericPropertyValues(property);
     }
   }
@@ -531,7 +533,7 @@ protected:
     }
 
     // If the property has its own values, override the class-provided values.
-    if (classProperty.type != ClassProperty::Type::ENUM) {
+    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
       getNumericPropertyValues(property);
     }
   }
@@ -725,10 +727,10 @@ private:
   }
 
   using PropertyDefinitionType = std::variant<
-      ClassProperty,
-      PropertyTableProperty,
-      PropertyTextureProperty,
-      PropertyAttributeProperty>;
+      CesiumGltf::ClassProperty,
+      CesiumGltf::PropertyTableProperty,
+      CesiumGltf::PropertyTextureProperty,
+      CesiumGltf::PropertyAttributeProperty>;
 
   /**
    * @brief Attempts to parse offset, scale, min, and max properties from the
@@ -831,7 +833,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const CesiumGltf::ClassProperty& classProperty)
       : _status(validatePropertyType<ElementType>(classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
@@ -1561,7 +1563,7 @@ public:
       return;
     }
 
-    if (classProperty.type != ClassProperty::Type::ENUM) {
+    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
       getNumericPropertyValues(classProperty);
     }
 
@@ -1643,7 +1645,7 @@ protected:
     }
 
     // If the property has its own values, override the class-provided values.
-    if (classProperty.type != ClassProperty::Type::ENUM) {
+    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
       getNumericPropertyValues(property);
     }
   }
@@ -1662,7 +1664,7 @@ protected:
     }
 
     // If the property has its own values, override the class-provided values.
-    if (classProperty.type != ClassProperty::Type::ENUM) {
+    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
       getNumericPropertyValues(property);
     }
   }
@@ -1783,8 +1785,10 @@ private:
   PropertyArrayCopy<ElementType> _defaultValue;
   PropertyType _propertyType;
 
-  using PropertyDefinitionType = std::
-      variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
+  using PropertyDefinitionType = std::variant<
+      CesiumGltf::ClassProperty,
+      CesiumGltf::PropertyTableProperty,
+      CesiumGltf::PropertyTextureProperty>;
   void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
     std::visit(
         [this](auto property) {
@@ -1974,7 +1978,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const CesiumGltf::ClassProperty& classProperty)
       : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
             classProperty)),
         _name(classProperty.name),
@@ -2056,8 +2060,8 @@ protected:
    * its class definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& property)
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& property)
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -2072,8 +2076,8 @@ protected:
    * and its class definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTextureProperty& property)
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTextureProperty& property)
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -2200,8 +2204,10 @@ private:
   PropertyArrayCopy<NormalizedType> _defaultValue;
   PropertyType _propertyType;
 
-  using PropertyDefinitionType = std::
-      variant<ClassProperty, PropertyTableProperty, PropertyTextureProperty>;
+  using PropertyDefinitionType = std::variant<
+      CesiumGltf::ClassProperty,
+      CesiumGltf::PropertyTableProperty,
+      CesiumGltf::PropertyTextureProperty>;
   void getNumericPropertyValues(const PropertyDefinitionType& inProperty) {
     std::visit(
         [this](auto property) {

@@ -264,7 +264,7 @@ class PropertyTexturePropertyView;
  */
 template <typename ElementType>
 class PropertyTexturePropertyView<ElementType, false>
-    : public PropertyView<ElementType, false>, public TextureView {
+    : public PropertyView<ElementType, false>, public CesiumGltf::TextureView {
 public:
   /**
    * @brief Constructs an invalid instance for a non-existent property.
@@ -339,13 +339,13 @@ public:
       const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::Sampler& sampler,
       const CesiumImage::ImageAsset& image,
-      const TextureViewOptions& options = TextureViewOptions()) noexcept
+      const CesiumGltf::TextureViewOptions& options = {}) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
         TextureView(
             sampler,
             image,
             property.texCoord,
-            property.getExtension<ExtensionKhrTextureTransform>(),
+            property.getExtension<CesiumGltf::ExtensionKhrTextureTransform>(),
             options),
         _channels(property.channels),
         _swizzle() {
@@ -354,23 +354,23 @@ public:
     }
 
     switch (this->getTextureViewStatus()) {
-    case TextureViewStatus::Valid:
+    case CesiumGltf::TextureViewStatus::Valid:
       break;
-    case TextureViewStatus::ErrorInvalidSampler:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidSampler:
       this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
       return;
-    case TextureViewStatus::ErrorInvalidImage:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidImage:
       this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidImage;
       return;
-    case TextureViewStatus::ErrorEmptyImage:
+    case CesiumGltf::TextureViewStatus::ErrorEmptyImage:
       this->_status = PropertyTexturePropertyViewStatus::ErrorEmptyImage;
       return;
-    case TextureViewStatus::ErrorInvalidBytesPerChannel:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidBytesPerChannel:
       this->_status =
           PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
       return;
-    case TextureViewStatus::ErrorUninitialized:
-    case TextureViewStatus::ErrorInvalidTexture:
+    case CesiumGltf::TextureViewStatus::ErrorUninitialized:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidTexture:
     default:
       this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
       return;
@@ -418,7 +418,7 @@ public:
       const CesiumGltf::Enum* pEnumDefinition,
       const CesiumGltf::Sampler& sampler,
       const CesiumImage::ImageAsset& image,
-      const TextureViewOptions& options = TextureViewOptions()) noexcept
+      const CesiumGltf::TextureViewOptions& options = {}) noexcept
       : PropertyView<ElementType, false>(
             classProperty,
             property,
@@ -427,7 +427,7 @@ public:
             sampler,
             image,
             property.texCoord,
-            property.getExtension<ExtensionKhrTextureTransform>(),
+            property.getExtension<CesiumGltf::ExtensionKhrTextureTransform>(),
             options),
         _channels(property.channels),
         _swizzle() {
@@ -436,43 +436,43 @@ public:
     }
 
     switch (this->getTextureViewStatus()) {
-    case TextureViewStatus::Valid:
+    case CesiumGltf::TextureViewStatus::Valid:
       break;
-    case TextureViewStatus::ErrorInvalidSampler:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidSampler:
       this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
       return;
-    case TextureViewStatus::ErrorInvalidImage:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidImage:
       this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidImage;
       return;
-    case TextureViewStatus::ErrorEmptyImage:
+    case CesiumGltf::TextureViewStatus::ErrorEmptyImage:
       this->_status = PropertyTexturePropertyViewStatus::ErrorEmptyImage;
       return;
-    case TextureViewStatus::ErrorInvalidBytesPerChannel:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidBytesPerChannel:
       this->_status =
           PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
       return;
-    case TextureViewStatus::ErrorUninitialized:
-    case TextureViewStatus::ErrorInvalidTexture:
+    case CesiumGltf::TextureViewStatus::ErrorUninitialized:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidTexture:
     default:
       this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
       return;
     }
 
-    _swizzle.reserve(_channels.size());
+    this->_swizzle.reserve(_channels.size());
 
-    for (size_t i = 0; i < _channels.size(); ++i) {
-      switch (_channels[i]) {
+    for (size_t i = 0; i < this->_channels.size(); ++i) {
+      switch (this->_channels[i]) {
       case 0:
-        _swizzle += "r";
+        this->_swizzle += "r";
         break;
       case 1:
-        _swizzle += "g";
+        this->_swizzle += "g";
         break;
       case 2:
-        _swizzle += "b";
+        this->_swizzle += "b";
         break;
       case 3:
-        _swizzle += "a";
+        this->_swizzle += "a";
         break;
       default:
         CESIUM_ASSERT(
@@ -579,7 +579,7 @@ private:
  */
 template <typename ElementType>
 class PropertyTexturePropertyView<ElementType, true>
-    : public PropertyView<ElementType, true>, public TextureView {
+    : public PropertyView<ElementType, true>, public CesiumGltf::TextureView {
 private:
   using NormalizedType = typename TypeToNormalizedType<ElementType>::type;
 
@@ -620,7 +620,8 @@ public:
    * @param classProperty The @ref CesiumGltf::ClassProperty this property
    * conforms to.
    */
-  PropertyTexturePropertyView(const ClassProperty& classProperty) noexcept
+  PropertyTexturePropertyView(
+      const CesiumGltf::ClassProperty& classProperty) noexcept
       : PropertyView<ElementType, true>(classProperty),
         TextureView(),
         _channels(),
@@ -659,13 +660,13 @@ public:
       const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::Sampler& sampler,
       const CesiumImage::ImageAsset& image,
-      const TextureViewOptions& options = TextureViewOptions()) noexcept
+      const CesiumGltf::TextureViewOptions& options = {}) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
         TextureView(
             sampler,
             image,
             property.texCoord,
-            property.getExtension<ExtensionKhrTextureTransform>(),
+            property.getExtension<CesiumGltf::ExtensionKhrTextureTransform>(),
             options),
         _channels(property.channels),
         _swizzle() {
@@ -674,42 +675,42 @@ public:
     }
 
     switch (this->getTextureViewStatus()) {
-    case TextureViewStatus::Valid:
+    case CesiumGltf::TextureViewStatus::Valid:
       break;
-    case TextureViewStatus::ErrorInvalidSampler:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidSampler:
       this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
       return;
-    case TextureViewStatus::ErrorInvalidImage:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidImage:
       this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidImage;
       return;
-    case TextureViewStatus::ErrorEmptyImage:
+    case CesiumGltf::TextureViewStatus::ErrorEmptyImage:
       this->_status = PropertyTexturePropertyViewStatus::ErrorEmptyImage;
       return;
-    case TextureViewStatus::ErrorInvalidBytesPerChannel:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidBytesPerChannel:
       this->_status =
           PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
       return;
-    case TextureViewStatus::ErrorUninitialized:
-    case TextureViewStatus::ErrorInvalidTexture:
+    case CesiumGltf::TextureViewStatus::ErrorUninitialized:
+    case CesiumGltf::TextureViewStatus::ErrorInvalidTexture:
     default:
       this->_status = PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
       return;
     }
 
-    this->_swizzle.reserve(_channels.size());
-    for (size_t i = 0; i < _channels.size(); ++i) {
-      switch (_channels[i]) {
+    this->_swizzle.reserve(this->_channels.size());
+    for (size_t i = 0; i < this->_channels.size(); ++i) {
+      switch (this->_channels[i]) {
       case 0:
-        _swizzle += "r";
+        this->_swizzle += "r";
         break;
       case 1:
-        _swizzle += "g";
+        this->_swizzle += "g";
         break;
       case 2:
-        _swizzle += "b";
+        this->_swizzle += "b";
         break;
       case 3:
-        _swizzle += "a";
+        this->_swizzle += "a";
         break;
       default:
         CESIUM_ASSERT(

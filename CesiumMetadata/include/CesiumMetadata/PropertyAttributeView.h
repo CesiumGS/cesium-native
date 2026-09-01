@@ -154,7 +154,8 @@ public:
       return PropertyAttributePropertyView<T, Normalized>(
           PropertyAttributePropertyViewStatus::ErrorInvalidPropertyAttribute);
     }
-    const ClassProperty* pClassProperty = getClassProperty(propertyId);
+    const CesiumGltf::ClassProperty* pClassProperty =
+        getClassProperty(propertyId);
     if (!pClassProperty) {
       return PropertyAttributePropertyView<T, Normalized>(
           PropertyAttributePropertyViewStatus::ErrorNonexistentProperty);
@@ -393,7 +394,7 @@ private:
           PropertyAttributePropertyViewStatus::ErrorNonexistentProperty);
     }
 
-    const PropertyAttributeProperty& propertyAttributeProperty =
+    const CesiumGltf::PropertyAttributeProperty& propertyAttributeProperty =
         propertyAttributePropertyIter->second;
 
     return createPropertyView<T, Normalized>(

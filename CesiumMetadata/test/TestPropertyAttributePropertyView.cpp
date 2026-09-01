@@ -5,9 +5,11 @@
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyAttributeProperty.h>
-#include <CesiumGltf/PropertyTransformations.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumMetadata/PropertyAttributePropertyView.h>
+#include <CesiumMetadata/PropertyTransformations.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
+#include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/ext/matrix_double2x2.hpp>
@@ -28,15 +30,13 @@
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
-#include <CesiumGltf/PropertyAttributePropertyView.h>
-#include <CesiumUtility/Assert.h>
-
 #include <doctest/doctest.h>
 
 #include <cstddef>
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 using namespace CesiumUtility;
 
 namespace {

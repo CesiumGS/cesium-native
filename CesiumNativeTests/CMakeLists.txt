@@ -21,6 +21,7 @@ set(cesium_native_targets
     CesiumImage
     CesiumITwinClient
     CesiumJsonReader
+    CesiumMetadata
     CesiumVectorData
     CesiumVectorOverlays
     CesiumQuantizedMeshTerrain

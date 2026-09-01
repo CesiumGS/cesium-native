@@ -1,6 +1,6 @@
-#include <CesiumGltf/PropertyArrayView.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 
 #include <doctest/doctest.h>
 #include <glm/ext/matrix_double2x2.hpp>
@@ -34,7 +34,7 @@
 #include <string_view>
 #include <type_traits>
 
-using namespace CesiumGltf;
+using namespace CesiumMetadata;
 
 TEST_CASE("Test IsMetadataScalar") {
   REQUIRE(IsMetadataScalar<uint8_t>::value);

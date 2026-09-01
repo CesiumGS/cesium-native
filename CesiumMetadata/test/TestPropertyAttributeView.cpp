@@ -9,12 +9,12 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyAttribute.h>
 #include <CesiumGltf/PropertyAttributeProperty.h>
-#include <CesiumGltf/PropertyAttributePropertyView.h>
-#include <CesiumGltf/PropertyAttributeView.h>
-#include <CesiumGltf/PropertyTransformations.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumMetadata/PropertyAttributePropertyView.h>
+#include <CesiumMetadata/PropertyAttributeView.h>
+#include <CesiumMetadata/PropertyTransformations.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 #include <CesiumUtility/Assert.h>
 
 #include <doctest/doctest.h>
@@ -36,6 +36,7 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 
 namespace {
 template <typename T, bool Normalized = false>

@@ -12,12 +12,12 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTable.h>
-#include <CesiumGltf/PropertyTablePropertyView.h>
-#include <CesiumGltf/PropertyTableView.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfReader/GltfReader.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyTablePropertyView.h>
+#include <CesiumMetadata/PropertyTableView.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Math.h>
 
@@ -45,6 +45,7 @@
 
 using namespace doctest;
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 using namespace Cesium3DTilesContent;
 using namespace CesiumUtility;
 

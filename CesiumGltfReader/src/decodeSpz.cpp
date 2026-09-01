@@ -8,7 +8,6 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonValue.h>
@@ -246,9 +245,8 @@ void decodePrimitive(
       // Since the data returned from spz is float, it makes more sense to
       // return the exact values instead of converting it to a byte or short.
       const std::string prevComponentTypeName =
-          CesiumGltf::convertPropertyComponentTypeToString(
-              CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
-                  pColorAccessor->componentType));
+          CesiumGltf::Accessor::getComponentTypeAsString(
+              pColorAccessor->componentType);
       readGltf.warnings.push_back(fmt::format(
           "SPZ glTF COLOR_0 accessor is type {} - changing type to FLOAT",
           prevComponentTypeName));

@@ -148,7 +148,8 @@ public:
           PropertyTablePropertyViewStatus::ErrorInvalidPropertyTable);
     }
 
-    const ClassProperty* pClassProperty = getClassProperty(propertyId);
+    const CesiumGltf::ClassProperty* pClassProperty =
+        getClassProperty(propertyId);
     if (!pClassProperty) {
       return PropertyTablePropertyView<T, Normalized>(
           PropertyTablePropertyViewStatus::ErrorNonexistentProperty);
@@ -1096,7 +1097,7 @@ private:
           PropertyTablePropertyViewStatus::ErrorNonexistentProperty);
     }
 
-    const PropertyTableProperty& propertyTableProperty =
+    const CesiumGltf::PropertyTableProperty& propertyTableProperty =
         propertyTablePropertyIter->second;
 
     if constexpr (IsMetadataNumeric<T>::value || IsMetadataBoolean<T>::value) {

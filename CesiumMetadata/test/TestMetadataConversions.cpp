@@ -1,5 +1,5 @@
-#include <CesiumGltf/MetadataConversions.h>
-#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumMetadata/MetadataConversions.h>
+#include <CesiumMetadata/PropertyArrayView.h>
 
 #include <doctest/doctest.h>
 #include <glm/ext/matrix_double2x2.hpp>
@@ -41,7 +41,7 @@
 #pragma warning(disable : 4756)
 #endif
 
-using namespace CesiumGltf;
+using namespace CesiumMetadata;
 
 void testStringToBooleanConversion(
     const std::string& input,

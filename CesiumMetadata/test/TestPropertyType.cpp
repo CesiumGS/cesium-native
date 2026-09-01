@@ -1,13 +1,14 @@
 #include <CesiumGltf/AccessorSpec.h>
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/PropertyTableProperty.h>
-#include <CesiumGltf/PropertyType.h>
+#include <CesiumMetadata/PropertyType.h>
 
 #include <doctest/doctest.h>
 
 #include <cstdint>
 
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 
 TEST_CASE("Test convertStringToPropertyType") {
   REQUIRE(

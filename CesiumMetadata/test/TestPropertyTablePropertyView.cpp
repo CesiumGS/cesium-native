@@ -1,8 +1,9 @@
 #include <CesiumGltf/ClassProperty.h>
-#include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTableProperty.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyTablePropertyView.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <glm/ext/matrix_double2x2.hpp>
@@ -30,8 +31,6 @@
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
-#include <CesiumGltf/PropertyTablePropertyView.h>
-
 #include <doctest/doctest.h>
 
 #include <bitset>
@@ -45,6 +44,7 @@
 
 using namespace doctest;
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 using namespace CesiumUtility;
 
 namespace {
@@ -1312,7 +1312,7 @@ TEST_CASE("Check matN PropertyTablePropertyView (normalized)") {
 }
 
 TEST_CASE("Check boolean PropertyTablePropertyView") {
-  std::bitset<sizeof(unsigned long)* CHAR_BIT> bits = 0b11110101;
+  std::bitset<sizeof(unsigned long) * CHAR_BIT> bits = 0b11110101;
   unsigned long val = bits.to_ulong();
   std::vector<std::byte> data(sizeof(val));
   std::memcpy(data.data(), &val, sizeof(val));

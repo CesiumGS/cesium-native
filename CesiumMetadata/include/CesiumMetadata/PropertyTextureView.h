@@ -126,14 +126,14 @@ public:
   template <typename T, bool Normalized = false>
   PropertyTexturePropertyView<T, Normalized> getPropertyView(
       const std::string& propertyId,
-      const CesiumGltf::TextureViewOptions& propertyOptions =
-          TextureViewOptions()) const {
+      const CesiumGltf::TextureViewOptions& propertyOptions = {}) const {
     if (this->_status != PropertyTextureViewStatus::Valid) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorInvalidPropertyTexture);
     }
 
-    const ClassProperty* pClassProperty = getClassProperty(propertyId);
+    const CesiumGltf::ClassProperty* pClassProperty =
+        getClassProperty(propertyId);
     if (!pClassProperty) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorNonexistentProperty);
@@ -334,7 +334,7 @@ private:
           PropertyTexturePropertyViewStatus::ErrorNonexistentProperty);
     }
 
-    const PropertyTextureProperty& propertyTextureProperty =
+    const CesiumGltf::PropertyTextureProperty& propertyTextureProperty =
         propertyTexturePropertyIter->second;
 
     if constexpr (IsMetadataScalar<T>::value) {
@@ -713,8 +713,10 @@ private:
   PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>
   createArrayPropertyView(
       const CesiumGltf::ClassProperty& classProperty,
-      [[maybe_unused]] const CesiumGltf::PropertyTextureProperty& propertyTextureProperty,
-      [[maybe_unused]] const CesiumGltf::TextureViewOptions& propertyOptions) const {
+      [[maybe_unused]] const CesiumGltf::PropertyTextureProperty&
+          propertyTextureProperty,
+      [[maybe_unused]] const CesiumGltf::TextureViewOptions& propertyOptions)
+      const {
     if (!classProperty.array) {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);

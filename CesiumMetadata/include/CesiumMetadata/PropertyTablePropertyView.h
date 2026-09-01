@@ -210,7 +210,9 @@ public:
    * @param size The number of elements in the property table specified by @ref
    * PropertyTable::count
    */
-  PropertyTablePropertyView(const ClassProperty& classProperty, int64_t size)
+  PropertyTablePropertyView(
+      const CesiumGltf::ClassProperty& classProperty,
+      int64_t size)
       : PropertyView<ElementType, false>(classProperty),
         _values{},
         _size{0},
@@ -571,7 +573,7 @@ private:
   }
 
   PropertyArrayView<bool> getBooleanArrayValues(int64_t index) const noexcept {
-    int64_t count = this->arrayCount());
+    int64_t count = this->arrayCount();
     // Handle fixed-length arrays
     if (count > 0) {
       const size_t offsetBits = static_cast<size_t>(count * index);

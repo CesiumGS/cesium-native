@@ -7,16 +7,16 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTexture.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
-#include <CesiumGltf/PropertyTexturePropertyView.h>
-#include <CesiumGltf/PropertyTextureView.h>
-#include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltf/Sampler.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureView.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyTexturePropertyView.h>
+#include <CesiumMetadata/PropertyTextureView.h>
+#include <CesiumMetadata/PropertyTransformations.h>
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
@@ -32,6 +32,7 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 using namespace CesiumNativeTests;
 
 namespace {

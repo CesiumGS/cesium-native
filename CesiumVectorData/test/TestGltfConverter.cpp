@@ -8,7 +8,7 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
-#include <CesiumGltf/PropertyTableView.h>
+#include <CesiumMetadata/PropertyTableView.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>
@@ -25,6 +25,7 @@
 
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 using namespace CesiumUtility;
 using namespace CesiumVectorData;
 

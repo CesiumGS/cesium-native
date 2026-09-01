@@ -1,8 +1,8 @@
 #include "makeEnumValue.h"
 
 #include <CesiumGltf/ClassProperty.h>
-#include <CesiumGltf/PropertyArrayView.h>
-#include <CesiumGltf/PropertyView.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyView.h>
 #include <CesiumUtility/JsonValue.h>
 
 #include <doctest/doctest.h>
@@ -32,6 +32,7 @@
 #include <string_view>
 
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 

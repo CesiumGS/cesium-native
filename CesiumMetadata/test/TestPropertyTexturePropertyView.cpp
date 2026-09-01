@@ -1,15 +1,21 @@
+#include "makeEnumValue.h"
+
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
-#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumGltf/KhrTextureTransform.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
-#include <CesiumGltf/PropertyTransformations.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/Sampler.h>
 #include <CesiumGltf/TextureView.h>
 #include <CesiumImage/ImageAsset.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyTexturePropertyView.h>
+#include <CesiumMetadata/PropertyTransformations.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 #include <CesiumUtility/JsonValue.h>
+#include <CesiumUtility/Math.h>
 
+#include <doctest/doctest.h>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_double4.hpp>
@@ -20,29 +26,22 @@
 #include <glm/ext/vector_uint3_sized.hpp>
 #include <glm/ext/vector_uint4_sized.hpp>
 
+#include <climits>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
 #include <optional>
+#include <vector>
+
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
-#include "makeEnumValue.h"
-
-#include <CesiumGltf/KhrTextureTransform.h>
-#include <CesiumGltf/PropertyTexturePropertyView.h>
-#include <CesiumUtility/Math.h>
-
-#include <doctest/doctest.h>
-
-#include <climits>
-#include <cstddef>
-#include <vector>
-
 using namespace CesiumGltf;
 using namespace CesiumImage;
+using namespace CesiumMetadata;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 

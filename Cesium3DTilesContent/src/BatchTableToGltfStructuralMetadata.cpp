@@ -21,9 +21,9 @@
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/PropertyTable.h>
 #include <CesiumGltf/PropertyTableProperty.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonValue.h>
@@ -52,6 +52,7 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 using namespace Cesium3DTilesContent::CesiumImpl;
 using namespace CesiumUtility;
 

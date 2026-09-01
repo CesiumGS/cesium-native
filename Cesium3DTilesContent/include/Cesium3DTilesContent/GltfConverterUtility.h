@@ -4,7 +4,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGltf/AccessorView.h>
-#include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumMetadata/PropertyTransformations.h>
 #include <CesiumUtility/ErrorList.h>
 
 #include <glm/fwd.hpp>
@@ -121,10 +121,10 @@ toGlmQuat(const CesiumGltf::AccessorTypes::VEC4<ComponentType>& gltfVal) {
         gltfVal.value[2]);
   } else {
     return GlmType(
-        CesiumGltf::normalize(gltfVal.value[3]),
-        CesiumGltf::normalize(gltfVal.value[0]),
-        CesiumGltf::normalize(gltfVal.value[1]),
-        CesiumGltf::normalize(gltfVal.value[2]));
+        CesiumMetadata::normalize(gltfVal.value[3]),
+        CesiumMetadata::normalize(gltfVal.value[0]),
+        CesiumMetadata::normalize(gltfVal.value[1]),
+        CesiumMetadata::normalize(gltfVal.value[2]));
   }
 }
 

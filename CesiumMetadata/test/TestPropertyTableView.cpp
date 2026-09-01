@@ -7,13 +7,13 @@
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTable.h>
 #include <CesiumGltf/PropertyTableProperty.h>
-#include <CesiumGltf/PropertyTablePropertyView.h>
-#include <CesiumGltf/PropertyTableView.h>
-#include <CesiumGltf/PropertyTransformations.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyTablePropertyView.h>
+#include <CesiumMetadata/PropertyTableView.h>
+#include <CesiumMetadata/PropertyTransformations.h>
 
 #include <doctest/doctest.h>
 #include <glm/common.hpp>
@@ -37,6 +37,7 @@
 #include <vector>
 
 using namespace CesiumGltf;
+using namespace CesiumMetadata;
 using namespace CesiumNativeTests;
 
 namespace {
@@ -5600,7 +5601,8 @@ TEST_CASE("Test callback for string array PropertyTableProperty") {
           PropertyArrayView<std::string_view> v1 = propertyValue.getRaw(1);
           REQUIRE(v1.size() == 2);
           REQUIRE(
-              v1[0] == "But they still abduct my cows! Those milk thiefs! 👽 🐮");
+              v1[0] ==
+              "But they still abduct my cows! Those milk thiefs! 👽 🐮");
           REQUIRE(v1[1] == "I'm not crazy. My mother had me tested 🤪");
 
           PropertyArrayView<std::string_view> v2 = propertyValue.getRaw(2);

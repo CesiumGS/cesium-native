@@ -1,4 +1,4 @@
-#include <CesiumGltf/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyArrayView.h>
 
 #include <doctest/doctest.h>
 
@@ -10,7 +10,7 @@
 #include <vector>
 
 using namespace doctest;
-using namespace CesiumGltf;
+using namespace CesiumMetadata;
 
 TEST_CASE("PropertyArrayCopy") {
   SUBCASE("bool") {
