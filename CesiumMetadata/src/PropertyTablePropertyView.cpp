@@ -1,10 +1,10 @@
-#include <CesiumGltf/PropertyTablePropertyView.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyView.h>
+#include <CesiumMetadata/PropertyTablePropertyView.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyView.h>
 
 #include <cstdint>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 // Re-initialize consts here to avoid "undefined reference" errors with GCC /
 // Clang.
 const PropertyViewStatusType
@@ -58,4 +58,4 @@ int64_t getOffsetTypeSize(PropertyComponentType offsetType) noexcept {
     return 0;
   }
 }
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

@@ -3,13 +3,16 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyAttribute.h>
-#include <CesiumGltf/PropertyAttributeView.h>
-#include <CesiumGltf/PropertyType.h>
+#include <CesiumMetadata/PropertyAttributeView.h>
+#include <CesiumMetadata/PropertyType.h>
 
 #include <string>
 
-namespace CesiumGltf {
-PropertyType getAccessorTypeAsPropertyType(const Accessor& accessor) {
+using namespace CesiumGltf;
+
+namespace CesiumMetadata {
+PropertyType
+getAccessorTypeAsPropertyType(const CesiumGltf::Accessor& accessor) {
   if (accessor.type == Accessor::Type::SCALAR) {
     return PropertyType::Scalar;
   }
@@ -35,8 +38,8 @@ PropertyType getAccessorTypeAsPropertyType(const Accessor& accessor) {
   return PropertyType::Invalid;
 }
 
-PropertyComponentType
-getAccessorComponentTypeAsPropertyComponentType(const Accessor& accessor) {
+PropertyComponentType getAccessorComponentTypeAsPropertyComponentType(
+    const CesiumGltf::Accessor& accessor) {
   switch (accessor.componentType) {
   case Accessor::ComponentType::BYTE:
     return PropertyComponentType::Int8;
@@ -54,13 +57,13 @@ getAccessorComponentTypeAsPropertyComponentType(const Accessor& accessor) {
 }
 
 PropertyAttributeView::PropertyAttributeView(
-    const Model& model,
-    const PropertyAttribute& propertyAttribute) noexcept
+    const CesiumGltf::Model& model,
+    const CesiumGltf::PropertyAttribute& propertyAttribute) noexcept
     : _pModel(&model),
       _pPropertyAttribute(&propertyAttribute),
       _pClass(nullptr),
       _status() {
-  const ExtensionModelExtStructuralMetadata* pMetadata =
+  const auto* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
 
   if (!pMetadata) {
@@ -83,18 +86,18 @@ PropertyAttributeView::PropertyAttributeView(
   this->_pClass = &classIt->second;
 }
 
-const ClassProperty*
+const CesiumGltf::ClassProperty*
 PropertyAttributeView::getClassProperty(const std::string& propertyId) const {
-  if (_status != PropertyAttributeViewStatus::Valid) {
+  if (this->_status != PropertyAttributeViewStatus::Valid) {
     return nullptr;
   }
 
-  auto propertyIter = _pClass->properties.find(propertyId);
-  if (propertyIter == _pClass->properties.end()) {
+  auto propertyIter = this->_pClass->properties.find(propertyId);
+  if (propertyIter == this->_pClass->properties.end()) {
     return nullptr;
   }
 
   return &propertyIter->second;
 }
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

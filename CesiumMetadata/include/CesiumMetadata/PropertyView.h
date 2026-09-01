@@ -2,31 +2,31 @@
 
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/Enum.h>
-#include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyAttributeProperty.h>
 #include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
 #include <optional>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 
 /**
- * @brief The type used for fields of \ref PropertyViewStatus.
+ * @brief The type used for fields of @ref PropertyViewStatus.
  */
 typedef int32_t PropertyViewStatusType;
 
 /**
- * @brief Indicates the status of a property view.
+ * @brief Indicates the status of a @ref PropertyView.
  *
- * The @ref PropertyView constructor always completes successfully.
- * However, there may be fundamental errors with the property definition. In
- * such cases, this enumeration provides the reason.
+ * The PropertyView constructor always completes successfully. However, there
+ * may be fundamental errors with the property definition. In such cases, this
+ * enumeration provides the reason.
  *
  * This is defined with a class of static consts as opposed to an enum, so that
  * derived property view classes can extend the statuses with their own specific
@@ -56,19 +56,19 @@ public:
 
   /**
    * @brief This property view's type does not match what is
-   * specified in @ref ClassProperty::type.
+   * specified in @ref CesiumGltf::ClassProperty::type.
    */
   static const PropertyViewStatusType ErrorTypeMismatch = 3;
 
   /**
    * @brief This property view's component type does not match what
-   * is specified in @ref ClassProperty::componentType.
+   * is specified in @refCesiumGltf:: ClassProperty::componentType.
    */
   static const PropertyViewStatusType ErrorComponentTypeMismatch = 4;
 
   /**
    * @brief This property view differs from what is specified in
-   * @ref ClassProperty::array.
+   * @ref CesiumGltf::ClassProperty::array.
    */
   static const PropertyViewStatusType ErrorArrayTypeMismatch = 5;
 
@@ -80,7 +80,7 @@ public:
 
   /**
    * @brief This property view's normalization differs from what
-   * is specified in @ref ClassProperty::normalized
+   * is specified in @ref CesiumGltf::ClassProperty::normalized
    */
   static const PropertyViewStatusType ErrorNormalizationMismatch = 7;
 
@@ -121,21 +121,21 @@ public:
 };
 
 /**
- * @brief Validates a \ref ClassProperty representing a property, checking for
- * any type mismatches.
+ * @brief Validates a @ref CesiumGltf::ClassProperty representing a property,
+ * checking for any type mismatches.
  *
  * @tparam T The value type of the PropertyView that was constructed for this
- * ClassProperty.
+ * CesiumGltf::ClassProperty.
  * @param classProperty The class property to validate.
  * @param pEnumDefinition If the class property is an enum, this should be the
  * enum definition. If not, this should be nullptr.
  *
- * @returns A \ref PropertyViewStatus value representing the error found while
- * validating, or \ref PropertyViewStatus::Valid if no errors were found.
+ * @returns A @ref PropertyViewStatus value representing the error found while
+ * validating, or @ref PropertyViewStatus::Valid if no errors were found.
  */
 template <typename T>
 PropertyViewStatusType validatePropertyType(
-    const ClassProperty& classProperty,
+    const CesiumGltf::ClassProperty& classProperty,
     const CesiumGltf::Enum* pEnumDefinition = nullptr) {
 
   if (!canRepresentPropertyType<T>(
@@ -177,21 +177,21 @@ PropertyViewStatusType validatePropertyType(
 }
 
 /**
- * @brief Validates a \ref ClassProperty representing an array of values,
- * checking for any type mismatches.
+ * @brief Validates a @ref CesiumGltf::ClassProperty representing an array of
+ * values, checking for any type mismatches.
  *
  * @tparam T The array type of the PropertyView that was constructed for this
- * ClassProperty.
+ * CesiumGltf::ClassProperty.
  * @param classProperty The class property to validate.
  * @param pEnumDefinition If the class property is an enum array, this should be
  * the enum definition. If not, this should be nullptr.
  *
- * @returns A \ref PropertyViewStatus value representing the error found while
- * validating, or \ref PropertyViewStatus::Valid if no errors were found.
+ * @returns A @ref PropertyViewStatus value representing the error found while
+ * validating, or @ref PropertyViewStatus::Valid if no errors were found.
  */
 template <typename T>
 PropertyViewStatusType validateArrayPropertyType(
-    const ClassProperty& classProperty,
+    const CesiumGltf::ClassProperty& classProperty,
     const CesiumGltf::Enum* pEnumDefinition = nullptr) {
   using ElementType = typename MetadataArrayType<T>::type;
 
@@ -234,7 +234,7 @@ PropertyViewStatusType validateArrayPropertyType(
 }
 
 /**
- * @brief Attempts to get a scalar value from the provided \ref
+ * @brief Attempts to get a scalar value from the provided @ref
  * CesiumUtility::JsonValue "JsonValue".
  *
  * @param jsonValue The value to attempt to get as a scalar.
@@ -246,11 +246,11 @@ static std::optional<T> getScalar(const CesiumUtility::JsonValue& jsonValue) {
 }
 
 /**
- * @brief Attempts to obtain a vector of type `VecType` from the provided \ref
+ * @brief Attempts to obtain a vector of type `VecType` from the provided @ref
  * CesiumUtility::JsonValue "JsonValue".
  *
  * @param jsonValue The value to attempt to get as a vector. To be successful,
- * this \ref CesiumUtility::JsonValue "JsonValue" must be an array with the same
+ * this @ref CesiumUtility::JsonValue "JsonValue" must be an array with the same
  * number of elements as `VecType`.
  * @returns A vector of type `VecType` if successful, or `std::nullopt` if not.
  */
@@ -283,12 +283,12 @@ getVecN(const CesiumUtility::JsonValue& jsonValue) {
 }
 
 /**
- * @brief Attempts to obtain a matrix of type `MatType` from the provided \ref
+ * @brief Attempts to obtain a matrix of type `MatType` from the provided @ref
  * CesiumUtility::JsonValue "JsonValue".
  *
  * @param jsonValue The value to attempt to get as a matrix. To be successful,
- * this \ref CesiumUtility::JsonValue "JsonValue" must be an array with the same
- * number of elements as `MatType`. For example, to read a 4x4 matrix, the \ref
+ * this @ref CesiumUtility::JsonValue "JsonValue" must be an array with the same
+ * number of elements as `MatType`. For example, to read a 4x4 matrix, the @ref
  * CesiumUtility::JsonValue "JsonValue" must be an array with 16 elements.
  * @returns A matrix of type `MatType` if successful, or `std::nullopt` if not.
  */
@@ -481,12 +481,12 @@ protected:
         _propertyType(PropertyType::Invalid) {}
 
   /**
-   * @brief Constructs a property instance from a property table property and
-   * its class definition, with an optional associated enum definition.
+   * @brief Constructs a property instance from a property table property,
+   * class definition, and optional associated enum definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& property,
       const CesiumGltf::Enum* pEnumDefinition = nullptr)
       : PropertyView(classProperty, pEnumDefinition) {
     if (_status != PropertyViewStatus::Valid) {
@@ -494,18 +494,18 @@ protected:
     }
 
     // If the property has its own values, override the class-provided values.
-    if (classProperty.type != ClassProperty::Type::ENUM) {
+    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
       getNumericPropertyValues(property);
     }
   }
 
   /**
    * @brief Constructs a property instance from a property texture property,
-   * class definition, and an optional associated enum definition.
+   * class definition, and optional associated enum definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTextureProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTextureProperty& property,
       const CesiumGltf::Enum* pEnumDefinition = nullptr)
       : PropertyView(classProperty, pEnumDefinition) {
     if (_status != PropertyViewStatus::Valid) {
@@ -518,12 +518,12 @@ protected:
   }
 
   /**
-   * @brief Constructs a property instance from a property attribute property
-   * and its class definition, along with an optional enum definition.
+   * @brief Constructs a property instance from a property attribute property,
+   * class definition, and optional associated enum definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyAttributeProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyAttributeProperty& property,
       const CesiumGltf::Enum* pEnumDefinition = nullptr)
       : PropertyView(classProperty, pEnumDefinition) {
     if (_status != PropertyViewStatus::Valid) {
@@ -653,7 +653,7 @@ public:
   }
 
   /**
-   * @brief Returns the \ref PropertyType of the property this view is
+   * @brief Returns the @ref PropertyType of the property this view is
    * accessing.
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
@@ -909,8 +909,8 @@ protected:
    * its class definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& property)
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& property)
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -925,8 +925,8 @@ protected:
    * its class definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTextureProperty& property)
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTextureProperty& property)
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -941,8 +941,8 @@ protected:
    * and its class definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyAttributeProperty& property)
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyAttributeProperty& property)
       : PropertyView(classProperty) {
     if (_status != PropertyViewStatus::Valid) {
       return;
@@ -1025,7 +1025,7 @@ public:
   }
 
   /**
-   * @brief Returns the \ref PropertyType of the property this view is
+   * @brief Returns the @ref PropertyType of the property this view is
    * accessing.
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
@@ -1074,10 +1074,10 @@ private:
   }
 
   using PropertyDefinitionType = std::variant<
-      ClassProperty,
-      PropertyTableProperty,
-      PropertyTextureProperty,
-      PropertyAttributeProperty>;
+      CesiumGltf::ClassProperty,
+      CesiumGltf::PropertyTableProperty,
+      CesiumGltf::PropertyTextureProperty,
+      CesiumGltf::PropertyAttributeProperty>;
 
   /**
    * @brief Attempts to parse offset, scale, min, and max properties from the
@@ -1146,7 +1146,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const CesiumGltf::ClassProperty& classProperty)
       : _status(validatePropertyType<bool>(classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
@@ -1190,8 +1190,8 @@ protected:
    * its class definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& /*property*/,
       const CesiumGltf::Enum* /*pEnumDefinition*/)
       : PropertyView(classProperty) {}
 
@@ -1266,7 +1266,7 @@ public:
   std::optional<bool> defaultValue() const noexcept { return _defaultValue; }
 
   /**
-   * @brief Returns the \ref PropertyType of the property this view is
+   * @brief Returns the @ref PropertyType of the property this view is
    * accessing.
    */
   PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
@@ -1314,7 +1314,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const CesiumGltf::ClassProperty& classProperty)
       : _status(validatePropertyType<std::string_view>(classProperty)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
@@ -1372,8 +1372,8 @@ protected:
    * its class definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& /*property*/,
       const CesiumGltf::Enum* /*pEnumDefinition*/)
       : PropertyView(classProperty) {}
 
@@ -1462,7 +1462,7 @@ public:
   }
 
   /**
-   * @brief Returns the \ref PropertyType of the property this view is
+   * @brief Returns the @ref PropertyType of the property this view is
    * accessing.
    */
   PropertyType propertyType() const noexcept { return PropertyType::String; }
@@ -1527,7 +1527,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const CesiumGltf::ClassProperty& classProperty)
       : PropertyView(classProperty, nullptr) {}
 
   /**
@@ -1535,7 +1535,7 @@ public:
    * definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::Enum* pEnumDefinition)
       : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
             classProperty,
@@ -1634,8 +1634,8 @@ protected:
    * its class definition, and an optional enum definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& property,
       const CesiumGltf::Enum* pEnumDefinition = nullptr)
       : PropertyView(classProperty, pEnumDefinition) {
     if (_status != PropertyViewStatus::Valid) {
@@ -1653,8 +1653,8 @@ protected:
    * its class definition, and an optional enum definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTextureProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTextureProperty& property,
       const CesiumGltf::Enum* pEnumDefinition = nullptr)
       : PropertyView(classProperty, pEnumDefinition) {
     if (_status != PropertyViewStatus::Valid) {
@@ -1757,7 +1757,7 @@ public:
   }
 
   /**
-   * @brief Returns the \ref PropertyType of the property that this view is
+   * @brief Returns the @ref PropertyType of the property that this view is
    * accessing.
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
@@ -2174,7 +2174,7 @@ public:
   }
 
   /**
-   * @brief Returns the \ref PropertyType of the property this view is
+   * @brief Returns the @ref PropertyType of the property this view is
    * accessing.
    */
   PropertyType propertyType() const noexcept { return _propertyType; }
@@ -2318,7 +2318,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const CesiumGltf::ClassProperty& classProperty)
       : _status(
             validateArrayPropertyType<PropertyArrayView<bool>>(classProperty)),
         _name(classProperty.name),
@@ -2366,8 +2366,8 @@ protected:
    * its class definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& /*property*/,
       const CesiumGltf::Enum* /*pEnumDefinition*/)
       : PropertyView(classProperty) {}
 
@@ -2456,7 +2456,7 @@ public:
   }
 
   /**
-   * @brief Returns the \ref PropertyType of the property this view is
+   * @brief Returns the @ref PropertyType of the property this view is
    * accessing.
    */
   PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
@@ -2516,7 +2516,7 @@ public:
   /**
    * @brief Constructs a property instance from a class definition only.
    */
-  PropertyView(const ClassProperty& classProperty)
+  PropertyView(const CesiumGltf::ClassProperty& classProperty)
       : _status(validateArrayPropertyType<PropertyArrayView<std::string_view>>(
             classProperty)),
         _name(classProperty.name),
@@ -2579,8 +2579,8 @@ protected:
    * and its class definition.
    */
   PropertyView(
-      const ClassProperty& classProperty,
-      const PropertyTableProperty& /*property*/,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTableProperty& /*property*/,
       const CesiumGltf::Enum* /*pEnumDefinition*/)
       : PropertyView(classProperty) {}
 
@@ -2671,7 +2671,7 @@ public:
   }
 
   /**
-   * @brief Returns the \ref PropertyType of the property this view is
+   * @brief Returns the @ref PropertyType of the property this view is
    * accessing.
    */
   PropertyType propertyType() const noexcept { return PropertyType::String; }
@@ -2712,4 +2712,4 @@ private:
   }
 };
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

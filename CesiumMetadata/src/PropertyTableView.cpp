@@ -3,14 +3,14 @@
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyArrayView.h>
 #include <CesiumGltf/PropertyTable.h>
 #include <CesiumGltf/PropertyTableProperty.h>
-#include <CesiumGltf/PropertyTablePropertyView.h>
-#include <CesiumGltf/PropertyTableView.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyView.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyTablePropertyView.h>
+#include <CesiumMetadata/PropertyTableView.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyView.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <glm/common.hpp>
@@ -21,7 +21,9 @@
 #include <string>
 #include <string_view>
 
-namespace CesiumGltf {
+using namespace CesiumGltf;
+
+namespace CesiumMetadata {
 
 namespace {
 template <typename T>
@@ -129,44 +131,44 @@ PropertyViewStatusType checkStringAndArrayOffsetsBuffers(
 } // namespace
 
 PropertyTableView::PropertyTableView(
-    const Model& model,
-    const PropertyTable& propertyTable)
+    const CesiumGltf::Model& model,
+    const CesiumGltf::PropertyTable& propertyTable)
     : _pModel{&model},
       _pPropertyTable{&propertyTable},
       _pClass{nullptr},
       _pEnumDefinitions{},
       _status() {
-  const ExtensionModelExtStructuralMetadata* pMetadata =
+  const auto* pMetadata =
       model.getExtension<ExtensionModelExtStructuralMetadata>();
   if (!pMetadata) {
-    _status = PropertyTableViewStatus::ErrorMissingMetadataExtension;
+    this->_status = PropertyTableViewStatus::ErrorMissingMetadataExtension;
     return;
   }
 
   const CesiumUtility::IntrusivePointer<Schema>& schema = pMetadata->schema;
   if (!schema) {
-    _status = PropertyTableViewStatus::ErrorMissingSchema;
+    this->_status = PropertyTableViewStatus::ErrorMissingSchema;
     return;
   }
 
   auto classIter = schema->classes.find(_pPropertyTable->classProperty);
   if (classIter == schema->classes.end()) {
-    _status = PropertyTableViewStatus::ErrorClassNotFound;
+    this->_status = PropertyTableViewStatus::ErrorClassNotFound;
     return;
   }
 
-  _pClass = &classIter->second;
-  _pEnumDefinitions = &schema->enums;
+  this->_pClass = &classIter->second;
+  this->_pEnumDefinitions = &schema->enums;
 }
 
 const ClassProperty*
 PropertyTableView::getClassProperty(const std::string& propertyId) const {
-  if (_status != PropertyTableViewStatus::Valid) {
+  if (this->_status != PropertyTableViewStatus::Valid) {
     return nullptr;
   }
 
-  auto propertyIter = _pClass->properties.find(propertyId);
-  if (propertyIter == _pClass->properties.end()) {
+  auto propertyIter = this->_pClass->properties.find(propertyId);
+  if (propertyIter == this->_pClass->properties.end()) {
     return nullptr;
   }
 
@@ -179,13 +181,13 @@ PropertyViewStatusType PropertyTableView::getBufferSafe(
   buffer = {};
 
   const BufferView* pBufferView =
-      _pModel->getSafe(&_pModel->bufferViews, bufferViewIdx);
+      this->_pModel->getSafe(&_pModel->bufferViews, bufferViewIdx);
   if (!pBufferView) {
     return PropertyTablePropertyViewStatus::ErrorInvalidValueBufferView;
   }
 
   const Buffer* pBuffer =
-      _pModel->getSafe(&_pModel->buffers, pBufferView->buffer);
+      this->_pModel->getSafe(&_pModel->buffers, pBufferView->buffer);
   if (!pBuffer) {
     return PropertyTablePropertyViewStatus::ErrorInvalidValueBuffer;
   }
@@ -387,8 +389,7 @@ PropertyTableView::getBooleanArrayPropertyValues(
   // Handle fixed-length arrays
   if (fixedLengthArrayCount > 0) {
     size_t maxRequiredBytes = static_cast<size_t>(glm::ceil(
-        static_cast<double>(_pPropertyTable->count * fixedLengthArrayCount) /
-        8.0));
+        double(this->_pPropertyTable->count * fixedLengthArrayCount) / 8.0));
 
     if (values.size() < maxRequiredBytes) {
       return PropertyTablePropertyView<PropertyArrayView<bool>>(
@@ -399,7 +400,7 @@ PropertyTableView::getBooleanArrayPropertyValues(
     return PropertyTablePropertyView<PropertyArrayView<bool>>(
         propertyTableProperty,
         classProperty,
-        _pPropertyTable->count,
+        this->_pPropertyTable->count,
         values);
   }
 
@@ -418,7 +419,7 @@ PropertyTableView::getBooleanArrayPropertyValues(
       propertyTableProperty.arrayOffsets,
       arrayOffsetType,
       values.size(),
-      static_cast<size_t>(_pPropertyTable->count),
+      static_cast<size_t>(this->_pPropertyTable->count),
       checkBitsSize,
       arrayOffsets);
   if (status != PropertyTablePropertyViewStatus::Valid) {
@@ -428,7 +429,7 @@ PropertyTableView::getBooleanArrayPropertyValues(
   return PropertyTablePropertyView<PropertyArrayView<bool>>(
       propertyTableProperty,
       classProperty,
-      _pPropertyTable->count,
+      this->_pPropertyTable->count,
       values,
       arrayOffsets,
       std::span<const std::byte>(),
@@ -491,7 +492,8 @@ PropertyTableView::getStringArrayPropertyValues(
         propertyTableProperty.stringOffsets,
         stringOffsetType,
         values.size(),
-        static_cast<size_t>(_pPropertyTable->count * fixedLengthArrayCount),
+        static_cast<size_t>(
+            this->_pPropertyTable->count * fixedLengthArrayCount),
         stringOffsets);
     if (status != PropertyTablePropertyViewStatus::Valid) {
       return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
@@ -501,7 +503,7 @@ PropertyTableView::getStringArrayPropertyValues(
     return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
         propertyTableProperty,
         classProperty,
-        _pPropertyTable->count,
+        this->_pPropertyTable->count,
         values,
         std::span<const std::byte>(),
         stringOffsets,
@@ -538,6 +540,7 @@ PropertyTableView::getStringArrayPropertyValues(
         status);
   }
 
+  size_t count = static_cast<size_t>(this->_pPropertyTable->count);
   switch (arrayOffsetType) {
   case PropertyComponentType::Uint8:
     status = checkStringAndArrayOffsetsBuffers<uint8_t>(
@@ -545,7 +548,7 @@ PropertyTableView::getStringArrayPropertyValues(
         stringOffsets,
         values.size(),
         stringOffsetType,
-        static_cast<size_t>(_pPropertyTable->count));
+        count);
     break;
   case PropertyComponentType::Uint16:
     status = checkStringAndArrayOffsetsBuffers<uint16_t>(
@@ -553,7 +556,7 @@ PropertyTableView::getStringArrayPropertyValues(
         stringOffsets,
         values.size(),
         stringOffsetType,
-        static_cast<size_t>(_pPropertyTable->count));
+        count);
     break;
   case PropertyComponentType::Uint32:
     status = checkStringAndArrayOffsetsBuffers<uint32_t>(
@@ -561,7 +564,7 @@ PropertyTableView::getStringArrayPropertyValues(
         stringOffsets,
         values.size(),
         stringOffsetType,
-        static_cast<size_t>(_pPropertyTable->count));
+        count);
     break;
   case PropertyComponentType::Uint64:
     status = checkStringAndArrayOffsetsBuffers<uint64_t>(
@@ -569,7 +572,7 @@ PropertyTableView::getStringArrayPropertyValues(
         stringOffsets,
         values.size(),
         stringOffsetType,
-        static_cast<size_t>(_pPropertyTable->count));
+        count);
     break;
   default:
     status = PropertyTablePropertyViewStatus::ErrorInvalidArrayOffsetType;
@@ -584,11 +587,11 @@ PropertyTableView::getStringArrayPropertyValues(
   return PropertyTablePropertyView<PropertyArrayView<std::string_view>>(
       propertyTableProperty,
       classProperty,
-      _pPropertyTable->count,
+      this->_pPropertyTable->count,
       values,
       arrayOffsets,
       stringOffsets,
       arrayOffsetType,
       stringOffsetType);
 }
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

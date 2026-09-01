@@ -1,7 +1,7 @@
-#include <CesiumGltf/PropertyAttributePropertyView.h>
-#include <CesiumGltf/PropertyView.h>
+#include <CesiumMetadata/PropertyAttributePropertyView.h>
+#include <CesiumMetadata/PropertyView.h>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 // Re-initialize consts here to avoid "undefined reference" errors with GCC /
 // Clang.
 const PropertyViewStatusType
@@ -26,4 +26,4 @@ const PropertyViewStatusType
     PropertyAttributePropertyViewStatus::ErrorAccessorOutOfBounds;
 const PropertyViewStatusType
     PropertyAttributePropertyViewStatus::ErrorBufferViewOutOfBounds;
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

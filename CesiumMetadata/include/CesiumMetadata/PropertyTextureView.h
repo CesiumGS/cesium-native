@@ -5,17 +5,17 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTexture.h>
-#include <CesiumGltf/PropertyTexturePropertyView.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/TextureView.h>
+#include <CesiumMetadata/PropertyTexturePropertyView.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 /**
- * @brief Indicates the status of a property texture view.
+ * @brief Indicates the status of @ref PropertyTextureView.
  *
- * The @ref PropertyTextureView constructor always completes successfully.
+ * The PropertyTextureView constructor always completes successfully.
  * However it may not always reflect the actual content of the
- * @ref PropertyTexture. This enumeration provides the reason.
+ * @ref CesiumGltf::PropertyTexture. This enumeration provides the reason.
  */
 enum class PropertyTextureViewStatus {
   /**
@@ -24,42 +24,43 @@ enum class PropertyTextureViewStatus {
   Valid,
 
   /**
-   * @brief The glTF is missing the EXT_structural_metadata extension.
+   * @brief The glTF is missing the @ref
+   * CesiumGltf::ExtensionModelExtStructuralMetadata extension.
    */
   ErrorMissingMetadataExtension,
 
   /**
-   * @brief The glTF EXT_structural_metadata extension doesn't contain a schema.
+   * @brief The @ref CesiumGltf::ExtensionModelExtStructuralMetadata does not
+   * contain a schema.
    */
   ErrorMissingSchema,
 
   /**
-   * @brief The property texture's specified class could not be found in the
-   * extension.
+   * @brief The class specified by the @CesiumGltf::PropertyTexture could not be
+   * found in the extension's schema.
    */
   ErrorClassNotFound
 };
 
 /**
- * @brief A view on a @ref PropertyTexture.
+ * @brief A view on a @ref CesiumGltf::PropertyTexture.
  *
  * This should be used to get a @ref PropertyTexturePropertyView of a property
- * in the property texture. It will validate the EXT_structural_metadata format
- * and
- * ensure @ref PropertyTexturePropertyView does not access data out of bounds.
+ * in the property texture. It will validate the property type and ensure @ref
+ * PropertyTexturePropertyView does not access data out of bounds.
  */
 class PropertyTextureView {
 public:
   /**
    * @brief Construct a PropertyTextureView.
    *
-   * @param model The glTF that contains the property texture's data.
-   * @param propertyTexture The @ref PropertyTexture
+   * @param model The @ref CesiumGltf::Model that contains the property texture.
+   * @param propertyTexture The @ref CesiumGltf::PropertyTexture
    * from which the view will retrieve data.
    */
   PropertyTextureView(
-      const Model& model,
-      const PropertyTexture& propertyTexture) noexcept;
+      const CesiumGltf::Model& model,
+      const CesiumGltf::PropertyTexture& propertyTexture) noexcept;
 
   /**
    * @brief Gets the status of this property texture view.
@@ -71,45 +72,48 @@ public:
 
   /**
    * @brief Gets the name of the property texture being viewed. Returns
-   * std::nullopt if no name was specified.
+   * `std::nullopt` if no name was specified.
    */
   const std::optional<std::string>& name() const noexcept {
-    return _pPropertyTexture->name;
+    return this->_pPropertyTexture->name;
   }
 
   /**
-   * @brief Gets the @ref Class that this property texture conforms to.
+   * @brief Gets the @ref CesiumGltf::Class that this property texture conforms
+   * to.
    *
-   * @return A pointer to the @ref Class. Returns nullptr if the PropertyTexture
-   * did not specify a valid class.
+   * @return A pointer to the @ref CesiumGltf::Class. Returns `nullptr` if the
+   * @ref CesiumGltf::PropertyTexture did not specify a valid class.
    */
-  const Class* getClass() const noexcept { return _pClass; }
+  const CesiumGltf::Class* getClass() const noexcept { return this->_pClass; }
 
   /**
-   * @brief Finds the @ref ClassProperty that
-   * describes the type information of the property with the specified id.
-   * @param propertyId The id of the property to retrieve the class for.
-   * @return A pointer to the @ref ClassProperty.
-   * Return nullptr if the PropertyTextureView is invalid or if no class
-   * property was found.
+   * @brief Finds the @ref CesiumGltf::ClassProperty that
+   * describes the type information of the property with the specified ID.
+   * @param propertyId The ID of the property to retrieve the class for.
+   * @return A pointer to the @ref CesiumGltf::ClassProperty. Returns `nullptr`
+   * if the PropertyTextureView is invalid or if no class property was found.
    */
-  const ClassProperty* getClassProperty(const std::string& propertyId) const;
+  const CesiumGltf::ClassProperty*
+  getClassProperty(const std::string& propertyId) const;
 
   /**
    * @brief Gets a @ref PropertyTexturePropertyView that views the data of a
-   * property stored in the @ref PropertyTexture.
+   * property stored in the @ref CesiumGltf::PropertyTexture.
    *
-   * This method will validate the EXT_structural_metadata format to ensure
-   * @ref PropertyTexturePropertyView retrieves the correct data. T must
-   * be a scalar with a supported component type (int8_t, uint8_t, int16_t,
-   * uint16_t, int32_t, uint32_t, float), a glm vecN composed of one of the
-   * scalar types, or a PropertyArrayView containing one of the scalar types.
+   * This method will validate the property type to ensure @ref
+   * PropertyTexturePropertyView retrieves the correct data. `T` must be a
+   * scalar with a supported component type (`int8_t`, `uint8_t`, `int16_t`,
+   * `uint16_t`, `int32_t`, `uint32_t`, `float`), a `glm::vecN` composed of one
+   * of the scalar types, or a @ref PropertyArrayView containing one of the
+   * scalar types.
    *
-   * If T does not match the type specified by the class property, this returns
-   * an invalid PropertyTexturePropertyView. Likewise, if the value of
-   * Normalized does not match the value of @ref ClassProperty::normalized for
-   * that class property, this returns an invalid property view. Only types with
-   * integer components may be normalized.
+   * If `T` does not match the type specified by the class property, this
+   * returns an invalid PropertyTexturePropertyView. Likewise, if the value of
+   * `Normalized` does not match the value of @ref
+   * CesiumGltf::ClassProperty::normalized for that class property, this returns
+   * an invalid property view. Only types with integer components may be
+   * normalized.
    *
    * @tparam T The C++ type corresponding to the type of the data retrieved.
    * @tparam Normalized Whether the property is normalized. Only applicable to
@@ -122,7 +126,8 @@ public:
   template <typename T, bool Normalized = false>
   PropertyTexturePropertyView<T, Normalized> getPropertyView(
       const std::string& propertyId,
-      const TextureViewOptions& propertyOptions = TextureViewOptions()) const {
+      const CesiumGltf::TextureViewOptions& propertyOptions =
+          TextureViewOptions()) const {
     if (this->_status != PropertyTextureViewStatus::Valid) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorInvalidPropertyTexture);
@@ -142,21 +147,22 @@ public:
 
   /**
    * @brief Gets a @ref PropertyTexturePropertyView through a callback that
-   * accepts a property id and a @ref PropertyTexturePropertyView that views the
-   * data of the property with the specified id.
+   * accepts a property ID and a @ref PropertyTexturePropertyView that views the
+   * data of the property with the specified ID.
    *
-   * This method will validate the EXT_structural_metadata format to ensure
-   * @ref PropertyTexturePropertyView retrieves the correct data. T must
-   * be a scalar with a supported component type (int8_t, uint8_t, int16_t,
-   * uint16_t, int32_t, uint32_t, float), a glm vecN composed of one of the
-   * scalar types, or a PropertyArrayView containing one of the scalar types.
+   * This method will validate the property type to ensure @ref
+   * PropertyTexturePropertyView retrieves the correct data. `T` must be a
+   * scalar with a supported component type (`int8_t`, `uint8_t`, `int16_t`,
+   * `uint16_t`, `int32_t`, `uint32_t`, `float`), a `glm::vecN` composed of one
+   * of the scalar types, or a @ref PropertyArrayView containing one of the
+   * scalar types.
    *
    * If the property is somehow invalid, an empty @ref
    * PropertyTexturePropertyView with an error status will be passed to the
    * callback. Otherwise, a valid property view will be passed to the callback.
    *
-   * @param propertyId The id of the property to retrieve data from
-   * @param callback A callback function that accepts a property id and a
+   * @param propertyId The ID of the property to retrieve data from
+   * @param callback A callback function that accepts a property ID and a
    * @ref PropertyTexturePropertyView
    * @param propertyOptions The options to apply to the property.
    * @tparam Callback The type of the callback function.
@@ -165,7 +171,8 @@ public:
   void getPropertyView(
       const std::string& propertyId,
       Callback&& callback,
-      const TextureViewOptions& propertyOptions = TextureViewOptions()) const {
+      const CesiumGltf::TextureViewOptions& propertyOptions =
+          CesiumGltf::TextureViewOptions()) const {
     if (this->_status != PropertyTextureViewStatus::Valid) {
       callback(
           propertyId,
@@ -174,7 +181,8 @@ public:
       return;
     }
 
-    const ClassProperty* pClassProperty = getClassProperty(propertyId);
+    const CesiumGltf::ClassProperty* pClassProperty =
+        getClassProperty(propertyId);
     if (!pClassProperty) {
       callback(
           propertyId,
@@ -269,21 +277,23 @@ public:
   }
 
   /**
-   * @brief Iterates over each property in the @ref PropertyTexture with a
-   * callback that accepts a property id and a @ref PropertyTexturePropertyView
-   * to view the data stored in the @ref PropertyTextureProperty.
+   * @brief Iterates over each property in the @ref CesiumGltf::PropertyTexture
+   * with a callback that accepts a property id and a @ref
+   * PropertyTexturePropertyView to view the data stored in the @ref
+   * CesiumGltf::PropertyTextureProperty.
    *
-   * This method will validate the EXT_structural_metadata format to ensure
-   * @ref PropertyTexturePropertyView retrieves the correct data. T must be
-   * a scalar with a supported component type (int8_t, uint8_t, int16_t,
-   * uint16_t, int32_t, uint32_t, float), a glm vecN composed of one of the
-   * scalar types, or a PropertyArrayView containing one of the scalar types.
+   * This method will validate the property type to ensure @ref
+   * PropertyTexturePropertyView retrieves the correct data. `T` must be a
+   * scalar with a supported component type (`int8_t`, `uint8_t`, `int16_t`,
+   * `uint16_t`, `int32_t`, `uint32_t`, `float`), a `glm::vecN` composed of one
+   * of the scalar types, or a @ref PropertyArrayView containing one of the
+   * scalar types.
    *
    * If the property is invalid, an empty @ref PropertyTexturePropertyView with
    * an error status will be passed to the callback. Otherwise, a valid property
    * view will be passed to the callback.
    *
-   * @param callback A callback function that accepts property id and
+   * @param callback A callback function that accepts a property ID and
    * @ref PropertyTexturePropertyView
    * @param propertyOptions The options to apply to each property in the
    * property texture.
@@ -293,7 +303,8 @@ public:
   template <typename Callback>
   void forEachProperty(
       Callback&& callback,
-      const TextureViewOptions& propertyOptions = TextureViewOptions()) const {
+      const CesiumGltf::TextureViewOptions& propertyOptions =
+          CesiumGltf::TextureViewOptions()) const {
     for (const auto& property : this->_pClass->properties) {
       getPropertyView(
           property.first,
@@ -306,11 +317,12 @@ private:
   template <typename T, bool Normalized>
   PropertyTexturePropertyView<T, Normalized> getPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
-      const TextureViewOptions& propertyOptions) const {
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::TextureViewOptions& propertyOptions) const {
     auto propertyTexturePropertyIter =
-        _pPropertyTexture->properties.find(propertyId);
-    if (propertyTexturePropertyIter == _pPropertyTexture->properties.end()) {
+        this->_pPropertyTexture->properties.find(propertyId);
+    if (propertyTexturePropertyIter ==
+        this->_pPropertyTexture->properties.end()) {
       if (!classProperty.required && classProperty.defaultProperty) {
         // If the property was omitted from the property texture, it is still
         // technically valid if it specifies a default value. Create a view that
@@ -349,11 +361,11 @@ private:
   template <typename Callback, bool Normalized>
   void getArrayPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback,
-      const TextureViewOptions& propertyOptions) const {
+      const CesiumGltf::TextureViewOptions& propertyOptions) const {
     // Only scalar arrays are supported.
     if (type != PropertyType::Scalar) {
       callback(
@@ -417,10 +429,10 @@ private:
   template <typename Callback, bool Normalized>
   void getScalarPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback,
-      const TextureViewOptions& propertyOptions) const {
+      const CesiumGltf::TextureViewOptions& propertyOptions) const {
     switch (componentType) {
     case PropertyComponentType::Int8:
       callback(
@@ -490,10 +502,10 @@ private:
   template <typename Callback, glm::length_t N, bool Normalized>
   void getVecNPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyComponentType componentType,
       Callback&& callback,
-      const TextureViewOptions& propertyOptions) const {
+      const CesiumGltf::TextureViewOptions& propertyOptions) const {
     switch (componentType) {
     case PropertyComponentType::Int8:
       callback(
@@ -545,11 +557,11 @@ private:
   template <typename Callback, bool Normalized>
   void getVecNPropertyViewImpl(
       const std::string& propertyId,
-      const ClassProperty& classProperty,
+      const CesiumGltf::ClassProperty& classProperty,
       PropertyType type,
       PropertyComponentType componentType,
       Callback&& callback,
-      const TextureViewOptions& propertyOptions) const {
+      const CesiumGltf::TextureViewOptions& propertyOptions) const {
     const glm::length_t N = getDimensionsFromPropertyType(type);
     switch (N) {
     case 2:
@@ -587,9 +599,10 @@ private:
 
   template <typename T, bool Normalized>
   PropertyTexturePropertyView<T, Normalized> createScalarPropertyView(
-      const ClassProperty& classProperty,
-      [[maybe_unused]] const PropertyTextureProperty& propertyTextureProperty,
-      const TextureViewOptions& propertyOptions) const {
+      const CesiumGltf::ClassProperty& classProperty,
+      [[maybe_unused]] const CesiumGltf::PropertyTextureProperty&
+          propertyTextureProperty,
+      const CesiumGltf::TextureViewOptions& propertyOptions) const {
     if (classProperty.array) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -653,9 +666,11 @@ private:
 
   template <typename T, bool Normalized>
   PropertyTexturePropertyView<T, Normalized> createVecNPropertyView(
-      const ClassProperty& classProperty,
-      [[maybe_unused]] const PropertyTextureProperty& propertyTextureProperty,
-      [[maybe_unused]] const TextureViewOptions& propertyOptions) const {
+      const CesiumGltf::ClassProperty& classProperty,
+      [[maybe_unused]] const CesiumGltf::PropertyTextureProperty&
+          propertyTextureProperty,
+      [[maybe_unused]] const CesiumGltf::TextureViewOptions& propertyOptions)
+      const {
     if (classProperty.array) {
       return PropertyTexturePropertyView<T, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -697,9 +712,9 @@ private:
   template <typename T, bool Normalized>
   PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>
   createArrayPropertyView(
-      const ClassProperty& classProperty,
-      [[maybe_unused]] const PropertyTextureProperty& propertyTextureProperty,
-      [[maybe_unused]] const TextureViewOptions& propertyOptions) const {
+      const CesiumGltf::ClassProperty& classProperty,
+      [[maybe_unused]] const CesiumGltf::PropertyTextureProperty& propertyTextureProperty,
+      [[maybe_unused]] const CesiumGltf::TextureViewOptions& propertyOptions) const {
     if (!classProperty.array) {
       return PropertyTexturePropertyView<PropertyArrayView<T>, Normalized>(
           PropertyTexturePropertyViewStatus::ErrorArrayTypeMismatch);
@@ -776,10 +791,10 @@ private:
 
   template <typename T, bool Normalized>
   PropertyTexturePropertyView<T, Normalized> createPropertyViewImpl(
-      const ClassProperty& classProperty,
-      const PropertyTextureProperty& propertyTextureProperty,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::PropertyTextureProperty& propertyTextureProperty,
       size_t elementSize,
-      const TextureViewOptions& propertyOptions,
+      const CesiumGltf::TextureViewOptions& propertyOptions,
       const CesiumGltf::Enum* pEnumDefinition) const {
     int32_t samplerIndex;
     int32_t imageIndex;
@@ -849,11 +864,11 @@ private:
       const std::vector<int64_t>& channels,
       const CesiumImage::ImageAsset& image) const noexcept;
 
-  const Model* _pModel;
-  const PropertyTexture* _pPropertyTexture;
-  const Class* _pClass;
+  const CesiumGltf::Model* _pModel;
+  const CesiumGltf::PropertyTexture* _pPropertyTexture;
+  const CesiumGltf::Class* _pClass;
   const std::unordered_map<std::string, CesiumGltf::Enum>* _pEnumDefinitions;
 
   PropertyTextureViewStatus _status;
 };
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

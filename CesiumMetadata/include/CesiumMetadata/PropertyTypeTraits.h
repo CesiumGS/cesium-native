@@ -1,7 +1,7 @@
 #pragma once
 
-#include <CesiumGltf/PropertyArrayView.h>
-#include <CesiumGltf/PropertyType.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyType.h>
 
 #include <glm/glm.hpp>
 
@@ -9,7 +9,7 @@
 #include <optional>
 #include <type_traits>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 /**
  * @brief Check if a C++ type can be represented as a scalar property type
  */
@@ -190,13 +190,13 @@ template <typename T> struct MetadataArrayType {
 };
 /** @copydoc MetadataArrayType */
 template <typename T>
-struct MetadataArrayType<CesiumGltf::PropertyArrayView<T>> {
+struct MetadataArrayType<CesiumMetadata::PropertyArrayView<T>> {
   /** @brief The component type of this metadata array. */
   using type = T;
 };
 /** @copydoc MetadataArrayType */
 template <typename T>
-struct MetadataArrayType<CesiumGltf::PropertyArrayCopy<T>> {
+struct MetadataArrayType<CesiumMetadata::PropertyArrayCopy<T>> {
   /** @brief The component type of this metadata array. */
   using type = T;
 };
@@ -208,7 +208,7 @@ struct MetadataArrayType<CesiumGltf::PropertyArrayCopy<T>> {
  * \ref PropertyType::Enum, since the enum definition is separate from the
  * PropertyType. It is on the runtime to refer to the original class property
  * definition, and check whether there is an associated \ref
- * CesiumGltf::ClassProperty::enumType.
+ * CesiumMetadata::ClassProperty::enumType.
  */
 template <typename T> struct TypeToPropertyType;
 
@@ -693,4 +693,4 @@ static PropertyValueCopyToView<T> propertyValueCopyToView(const T& copy) {
   }
 }
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

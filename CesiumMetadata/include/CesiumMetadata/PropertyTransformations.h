@@ -1,7 +1,7 @@
 #pragma once
 
-#include <CesiumGltf/PropertyArrayView.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
+#include <CesiumMetadata/PropertyArrayView.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 
 #include <glm/common.hpp>
 
@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <optional>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 /**
  * @brief Normalizes the given value between [0, 1] if unsigned or [-1, 1] if
  * signed, based on the type's maximum value.
@@ -245,4 +245,4 @@ PropertyArrayCopy<glm::mat<N, N, double>> transformNormalizedMatNArray(
 
   return PropertyArrayCopy(std::move(result));
 }
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

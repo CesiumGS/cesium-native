@@ -1,7 +1,7 @@
 #include <CesiumGltf/AccessorSpec.h>
 #include <CesiumGltf/ClassProperty.h>
 #include <CesiumGltf/PropertyTableProperty.h>
-#include <CesiumGltf/PropertyType.h>
+#include <CesiumMetadata/PropertyType.h>
 
 #include <glm/detail/qualifier.hpp>
 
@@ -9,7 +9,9 @@
 #include <cstdint>
 #include <string>
 
-namespace CesiumGltf {
+using namespace CesiumGltf;
+
+namespace CesiumMetadata {
 std::string convertPropertyTypeToString(PropertyType type) {
   switch (type) {
   case PropertyType::Scalar:
@@ -385,4 +387,4 @@ size_t getSizeOfComponentType(PropertyComponentType componentType) {
     return 0;
   }
 }
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

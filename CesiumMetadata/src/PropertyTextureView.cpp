@@ -2,11 +2,11 @@
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTexture.h>
-#include <CesiumGltf/PropertyTexturePropertyView.h>
-#include <CesiumGltf/PropertyTextureView.h>
-#include <CesiumGltf/PropertyView.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumImage/ImageAsset.h>
+#include <CesiumMetadata/PropertyTexturePropertyView.h>
+#include <CesiumMetadata/PropertyTextureView.h>
+#include <CesiumMetadata/PropertyView.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <cstddef>
@@ -14,17 +14,17 @@
 #include <string>
 #include <vector>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 PropertyTextureView::PropertyTextureView(
-    const Model& model,
-    const PropertyTexture& propertyTexture) noexcept
+    const CesiumGltf::Model& model,
+    const CesiumGltf::PropertyTexture& propertyTexture) noexcept
     : _pModel(&model),
       _pPropertyTexture(&propertyTexture),
       _pClass(nullptr),
       _pEnumDefinitions{},
       _status() {
-  const ExtensionModelExtStructuralMetadata* pMetadata =
-      model.getExtension<ExtensionModelExtStructuralMetadata>();
+  const auto* pMetadata =
+      model.getExtension<CesiumGltf::ExtensionModelExtStructuralMetadata>();
 
   if (!pMetadata) {
     this->_status = PropertyTextureViewStatus::ErrorMissingMetadataExtension;
@@ -47,7 +47,7 @@ PropertyTextureView::PropertyTextureView(
   this->_pEnumDefinitions = &pMetadata->schema->enums;
 }
 
-const ClassProperty*
+const CesiumGltf::ClassProperty*
 PropertyTextureView::getClassProperty(const std::string& propertyId) const {
   if (_status != PropertyTextureViewStatus::Valid) {
     return nullptr;
@@ -65,45 +65,43 @@ PropertyViewStatusType PropertyTextureView::getTextureSafe(
     const int32_t textureIndex,
     int32_t& samplerIndex,
     int32_t& imageIndex) const noexcept {
-  if (textureIndex < 0 ||
-      static_cast<size_t>(textureIndex) >= _pModel->textures.size()) {
+  const CesiumGltf::Texture* pTexture =
+      this->_pModel->getSafe(&this->_pModel->textures, textureIndex);
+  if (!pTexture) {
     return PropertyTexturePropertyViewStatus::ErrorInvalidTexture;
   }
 
-  const Texture& texture = _pModel->textures[static_cast<size_t>(textureIndex)];
-  samplerIndex = texture.sampler;
-  imageIndex = texture.source;
+  samplerIndex = pTexture->sampler;
+  imageIndex = pTexture->source;
 
   return PropertyTexturePropertyViewStatus::Valid;
 }
 
 PropertyViewStatusType
 PropertyTextureView::checkSampler(const int32_t samplerIndex) const noexcept {
-  if (samplerIndex < 0 ||
-      static_cast<size_t>(samplerIndex) >= _pModel->samplers.size()) {
-    return PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
-  }
-
   // TODO: check if sampler filter values are supported
-
-  return PropertyTexturePropertyViewStatus::Valid;
+  return this->_pModel->getSafe(&this->_pModel->samplers, samplerIndex)
+             ? PropertyTexturePropertyViewStatus::Valid
+             : PropertyTexturePropertyViewStatus::ErrorInvalidSampler;
 }
 
 PropertyViewStatusType
 PropertyTextureView::checkImage(const int32_t imageIndex) const noexcept {
-  if (imageIndex < 0 ||
-      static_cast<size_t>(imageIndex) >= _pModel->images.size()) {
+  const CesiumGltf::Image* pImage =
+      this->_pModel->getSafe(&this->_pModel->images, imageIndex);
+
+  if (!pImage) {
     return PropertyTexturePropertyViewStatus::ErrorInvalidImage;
   }
 
-  const CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset>& pImage =
-      _pModel->images[static_cast<size_t>(imageIndex)].pAsset;
+  const CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset>& pImageAsset =
+      pImage->pAsset;
 
-  if (!pImage || pImage->width < 1 || pImage->height < 1) {
+  if (!pImageAsset || pImageAsset->width < 1 || pImageAsset->height < 1) {
     return PropertyTexturePropertyViewStatus::ErrorEmptyImage;
   }
 
-  if (pImage->bytesPerChannel > 1) {
+  if (pImageAsset->bytesPerChannel > 1) {
     return PropertyTexturePropertyViewStatus::ErrorInvalidBytesPerChannel;
   }
 
@@ -117,7 +115,7 @@ PropertyViewStatusType PropertyTextureView::checkChannels(
     return PropertyTexturePropertyViewStatus::ErrorInvalidChannels;
   }
 
-  int64_t imageChannelCount = static_cast<int64_t>(image.channels);
+  int64_t imageChannelCount = int64_t(image.channels);
   for (int64_t channel : channels) {
     if (channel < 0 || channel >= imageChannelCount) {
       return PropertyTexturePropertyViewStatus::ErrorInvalidChannels;
@@ -127,4 +125,4 @@ PropertyViewStatusType PropertyTextureView::checkChannels(
   return PropertyTexturePropertyViewStatus::Valid;
 }
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

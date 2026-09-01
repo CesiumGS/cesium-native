@@ -1,6 +1,6 @@
-#include <CesiumGltf/PropertyView.h>
+#include <CesiumMetadata/PropertyView.h>
 
-using namespace CesiumGltf;
+namespace CesiumMetadata {
 
 // Re-initialize consts here to avoid "undefined reference" errors with GCC /
 // Clang.
@@ -19,3 +19,5 @@ const PropertyViewStatusType PropertyViewStatus::ErrorInvalidMin;
 const PropertyViewStatusType PropertyViewStatus::ErrorInvalidNoDataValue;
 const PropertyViewStatusType PropertyViewStatus::ErrorInvalidDefaultValue;
 const PropertyViewStatusType PropertyViewStatus::ErrorInvalidEnum;
+
+} // namespace CesiumMetadata

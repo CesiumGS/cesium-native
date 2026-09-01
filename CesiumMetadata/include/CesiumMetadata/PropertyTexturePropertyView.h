@@ -2,12 +2,12 @@
 
 #include <CesiumGltf/KhrTextureTransform.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
-#include <CesiumGltf/PropertyTransformations.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
-#include <CesiumGltf/PropertyView.h>
 #include <CesiumGltf/Sampler.h>
 #include <CesiumGltf/TextureView.h>
 #include <CesiumImage/ImageAsset.h>
+#include <CesiumMetadata/PropertyTransformations.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
+#include <CesiumMetadata/PropertyView.h>
 #include <CesiumUtility/Assert.h>
 
 #include <array>
@@ -15,26 +15,26 @@
 #include <cstdint>
 #include <optional>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 /**
- * @brief Indicates the status of a property texture property view.
+ * @brief Indicates the status of a @ref PropertyTexturePropertyView.
  *
- * The @ref PropertyTexturePropertyView constructor always completes
+ * The PropertyTexturePropertyView constructor always completes
  * successfully. However it may not always reflect the actual content of the
- * corresponding property texture property. This enumeration provides the
- * reason.
+ * corresponding @ref CesiumGltf::PropertyTextureProperty. This enumeration
+ * provides the reason.
  */
 class PropertyTexturePropertyViewStatus : public PropertyViewStatus {
 public:
   /**
    * @brief This property view was initialized from an invalid
-   * @ref PropertyTexture.
+   * @ref CesiumGltf::PropertyTexture.
    */
   static const int ErrorInvalidPropertyTexture = 15;
 
   /**
-   * @brief This property view is associated with a @ref ClassProperty of an
-   * unsupported type.
+   * @brief This property view is associated with a @ref
+   * CesiumGltf::ClassProperty of an unsupported type.
    */
   static const int ErrorUnsupportedProperty = 16;
 
@@ -77,7 +77,7 @@ public:
    * @brief The channels of this property texture property do not provide
    * the exact number of bytes required by the property type. This may be
    * because an incorrect number of channels was provided, or because the
-   * image itself has a different channel count / byte size than expected.
+   * image itself has a different channel count or byte size than expected.
    */
   static const int ErrorChannelsAndTypeMismatch = 23;
 };
@@ -181,7 +181,7 @@ ElementType assembleVecNValue(const std::span<uint8_t> bytes) noexcept {
  *
  * @tparam T The element type to read from `bytes`.
  * @param bytes A span of bytes to convert into an array value.
- * @returns A \ref PropertyArrayCopy containing the elements read.
+ * @returns A @ref PropertyArrayCopy containing the elements read.
  */
 template <typename T>
 PropertyArrayCopy<T>
@@ -211,8 +211,8 @@ assembleArrayValue(const std::span<uint8_t> bytes) noexcept {
  *
  * @tparam ElementType The type of element to assemble.
  * @param bytes The byte values of the sampled channels of the texture.
- * @returns The result of \ref assembleScalarValue, \ref assembleVecNValue, or
- * \ref assembleArrayValue depending on `ElementType`.
+ * @returns The result of @ref assembleScalarValue, @ref assembleVecNValue, or
+ * @ref assembleArrayValue depending on `ElementType`.
  */
 template <typename ElementType>
 PropertyValueViewToCopy<ElementType>
@@ -237,7 +237,8 @@ assembleValueFromChannels(const std::span<uint8_t> bytes) noexcept {
 #pragma region Non - normalized property
 
 /**
- * @brief A view of the data specified by a @ref PropertyTextureProperty.
+ * @brief A view of the data specified by a @ref
+ * CesiumGltf::PropertyTextureProperty.
  *
  * Provides utilities to sample the property texture property using texture
  * coordinates. Property values are retrieved from the NEAREST texel without
@@ -254,7 +255,7 @@ class PropertyTexturePropertyView;
 
 /**
  * @brief A view of the non-normalized data specified by a
- * @ref PropertyTextureProperty.
+ * @ref CesiumGltf::PropertyTextureProperty.
  *
  * Provides utilities to sample the property texture property using texture
  * coordinates.
@@ -293,11 +294,13 @@ public:
   /**
    * @brief Constructs an instance of an empty property that specifies a default
    * value. Although this property has no data, it can return the default value
-   * when \ref get is called. However, \ref getRaw cannot be used.
+   * when @ref get is called. However, @ref getRaw cannot be used.
    *
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    */
-  PropertyTexturePropertyView(const ClassProperty& classProperty) noexcept
+  PropertyTexturePropertyView(
+      const CesiumGltf::ClassProperty& classProperty) noexcept
       : PropertyView<ElementType, false>(classProperty),
         TextureView(),
         _channels(),
@@ -322,18 +325,19 @@ public:
 
   /**
    * @brief Construct a view of the data specified by a @ref
-   * PropertyTextureProperty.
+   * CesiumGltf::PropertyTextureProperty.
    *
-   * @param property The @ref PropertyTextureProperty
-   * @param classProperty The @ref ClassProperty this property conforms to.
-   * @param sampler The @ref Sampler used by the property.
+   * @param property The @ref CesiumGltf::PropertyTextureProperty
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
+   * @param sampler The @ref CesiumGltf::Sampler used by the property.
    * @param image The @ref CesiumImage::ImageAsset used by the property.
    * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
-      const PropertyTextureProperty& property,
-      const ClassProperty& classProperty,
-      const Sampler& sampler,
+      const CesiumGltf::PropertyTextureProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::Sampler& sampler,
       const CesiumImage::ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(classProperty, property),
@@ -397,21 +401,22 @@ public:
 
   /**
    * @brief Construct a view of the data specified by a @ref
-   * PropertyTextureProperty.
+   * CesiumGltf::PropertyTextureProperty.
    *
-   * @param property The @ref PropertyTextureProperty
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param property The @ref CesiumGltf::PropertyTextureProperty
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    * @param pEnumDefinition The @ref CesiumGltf::Enum definition this property
    * uses.
-   * @param sampler The @ref Sampler used by the property.
+   * @param sampler The @ref CesiumGltf::Sampler used by the property.
    * @param image The @ref CesiumImage::ImageAsset used by the property.
    * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
-      const PropertyTextureProperty& property,
-      const ClassProperty& classProperty,
+      const CesiumGltf::PropertyTextureProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::Enum* pEnumDefinition,
-      const Sampler& sampler,
+      const CesiumGltf::Sampler& sampler,
       const CesiumImage::ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, false>(
@@ -485,12 +490,13 @@ public:
    *
    * If this property has a specified "no data" value, this will return the
    * property's default value for any elements that equal this "no data" value.
-   * If the property did not specify a default value, this returns std::nullopt.
+   * If the property did not specify a default value, this returns
+   * `std::nullopt`.
    *
    * @param u The u-component of the texture coordinates.
    * @param v The v-component of the texture coordinates.
    *
-   * @return The value of the element, or std::nullopt if it matches the "no
+   * @return The value of the element, or `std::nullopt` if it matches the "no
    * data" value
    */
   std::optional<PropertyValueViewToCopy<ElementType>>
@@ -566,7 +572,7 @@ private:
 
 /**
  * @brief A view of the normalized data specified by a
- * @ref PropertyTextureProperty.
+ * @ref CesiumGltf::PropertyTextureProperty.
  *
  * Provides utilities to sample the property texture property using texture
  * coordinates.
@@ -611,7 +617,8 @@ public:
    * is called. However, @ref PropertyTexturePropertyView<ElementType,
    * true>::getRaw cannot be used.
    *
-   * @param classProperty The @ref ClassProperty this property conforms to.
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
    */
   PropertyTexturePropertyView(const ClassProperty& classProperty) noexcept
       : PropertyView<ElementType, true>(classProperty),
@@ -638,18 +645,19 @@ public:
 
   /**
    * @brief Construct a view of the data specified by a @ref
-   * PropertyTextureProperty.
+   * CesiumGltf::PropertyTextureProperty.
    *
-   * @param property The @ref PropertyTextureProperty
-   * @param classProperty The @ref ClassProperty this property conforms to.
-   * @param sampler The @ref Sampler used by the property.
+   * @param property The @ref CesiumGltf::PropertyTextureProperty
+   * @param classProperty The @ref CesiumGltf::ClassProperty this property
+   * conforms to.
+   * @param sampler The @ref CesiumGltf::Sampler used by the property.
    * @param image The @ref CesiumImage::ImageAsset used by the property.
    * @param options The options for constructing the view.
    */
   PropertyTexturePropertyView(
-      const PropertyTextureProperty& property,
-      const ClassProperty& classProperty,
-      const Sampler& sampler,
+      const CesiumGltf::PropertyTextureProperty& property,
+      const CesiumGltf::ClassProperty& classProperty,
+      const CesiumGltf::Sampler& sampler,
       const CesiumImage::ImageAsset& image,
       const TextureViewOptions& options = TextureViewOptions()) noexcept
       : PropertyView<ElementType, true>(classProperty, property),
@@ -688,7 +696,7 @@ public:
       return;
     }
 
-    _swizzle.reserve(_channels.size());
+    this->_swizzle.reserve(_channels.size());
     for (size_t i = 0; i < _channels.size(); ++i) {
       switch (_channels[i]) {
       case 0:
@@ -720,12 +728,12 @@ public:
    * If this property has a specified "no data" value, and the retrieved
    * element is equal to that value, then this will return the property's
    * specified default value. If the property did not provide a default value,
-   * this returns std::nullopt.
+   * this returns `std::nullopt`.
    *
    * @param u The u-component of the texture coordinates.
    * @param v The v-component of the texture coordinates.
    *
-   * @return The value of the element, or std::nullopt if it matches the "no
+   * @return The value of the element, or `std::nullopt` if it matches the "no
    * data" value
    */
   std::optional<PropertyValueViewToCopy<NormalizedType>>
@@ -815,4 +823,4 @@ private:
 };
 #pragma endregion
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata

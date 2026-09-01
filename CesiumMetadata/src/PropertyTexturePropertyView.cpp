@@ -1,7 +1,7 @@
-#include <CesiumGltf/PropertyTexturePropertyView.h>
-#include <CesiumGltf/PropertyView.h>
+#include <CesiumMetadata/PropertyTexturePropertyView.h>
+#include <CesiumMetadata/PropertyView.h>
 
-namespace CesiumGltf {
+namespace CesiumMetadata {
 
 // Re-initialize consts here to avoid "undefined reference" errors with GCC /
 // Clang.
@@ -23,4 +23,4 @@ const PropertyViewStatusType
 const PropertyViewStatusType
     PropertyTexturePropertyViewStatus::ErrorChannelsAndTypeMismatch;
 
-} // namespace CesiumGltf
+} // namespace CesiumMetadata
