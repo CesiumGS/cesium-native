@@ -1312,3 +1312,25 @@ TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
     checkBufferContents<uint8_t>(buffer.cesium.data, expected);
   }
 }
+
+TEST_CASE("Rejects PNTS sections that extend past the declared byte length") {
+  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testFilePath = testFilePath / "PointCloud";
+
+  SUBCASE("feature table") {
+    testFilePath = testFilePath / "invalidFeatureTableSectionLength.pnts";
+  }
+
+  SUBCASE("batch table") {
+    testFilePath = testFilePath / "invalidBatchTableSectionLength.pnts";
+  }
+
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+
+  CHECK_FALSE(result.model);
+  REQUIRE(result.errors.hasErrors());
+  CHECK(
+      result.errors.errors[0] ==
+      "The PNTS is invalid because the sum of the header and section lengths "
+      "exceeds the size specified in its header.");
+}
