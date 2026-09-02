@@ -5,8 +5,8 @@
 #include <CesiumGltf/PropertyAttributeProperty.h>
 #include <CesiumGltf/PropertyTableProperty.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumMetadata/MetadataValueType.h>
 #include <CesiumMetadata/PropertyArrayView.h>
-#include <CesiumMetadata/PropertyType.h>
 #include <CesiumMetadata/PropertyTypeTraits.h>
 
 #include <algorithm>
@@ -15,7 +15,6 @@
 #include <optional>
 
 namespace CesiumMetadata {
-
 /**
  * @brief The type used for fields of @ref PropertyViewStatus.
  */
@@ -121,30 +120,27 @@ public:
 };
 
 /**
- * @brief Validates a @ref CesiumGltf::ClassProperty representing a property,
- * checking for any type mismatches.
+ * @brief Validates a @ref MetadataValueType against the C++ type used for the
+ * PropertyView.
  *
- * @tparam T The value type of the PropertyView that was constructed for this
- * CesiumGltf::ClassProperty.
- * @param classProperty The class property to validate.
- * @param pEnumDefinition If the class property is an enum, this should be the
- * enum definition. If not, this should be nullptr.
+ * @tparam T The C++ type.
+ * @param valueType The value type to validate.
+ * @param pEnumDefinition The enum definition associated with the property, if
+ * any. Must be nullptr if the property is not an enum.
  *
  * @returns A @ref PropertyViewStatus value representing the error found while
  * validating, or @ref PropertyViewStatus::Valid if no errors were found.
  */
 template <typename T>
-PropertyViewStatusType validatePropertyType(
-    const CesiumGltf::ClassProperty& classProperty,
+PropertyViewStatusType validateValueType(
+    const MetadataValueType& valueType,
     const CesiumGltf::Enum* pEnumDefinition = nullptr) {
 
-  if (!canRepresentPropertyType<T>(
-          convertStringToPropertyType(classProperty.type))) {
+  if (!canRepresentPropertyType<T>(valueType.type)) {
     return PropertyViewStatus::ErrorTypeMismatch;
   }
 
-  const bool isEnum =
-      classProperty.type == CesiumGltf::ClassProperty::Type::ENUM;
+  const bool isEnum = valueType.type == PropertyType::Enum;
   const bool hasEnumDefinition = pEnumDefinition != nullptr;
   if (isEnum != hasEnumDefinition) {
     return PropertyViewStatus::ErrorInvalidEnum;
@@ -157,20 +153,11 @@ PropertyViewStatusType validatePropertyType(
         convertStringToPropertyComponentType(pEnumDefinition->valueType)) {
       return PropertyViewStatus::ErrorComponentTypeMismatch;
     }
-  } else {
-    if (!classProperty.componentType &&
-        expectedComponentType != PropertyComponentType::None) {
-      return PropertyViewStatus::ErrorComponentTypeMismatch;
-    }
-
-    if (classProperty.componentType &&
-        expectedComponentType != convertStringToPropertyComponentType(
-                                     *classProperty.componentType)) {
-      return PropertyViewStatus::ErrorComponentTypeMismatch;
-    }
+  } else if (valueType.componentType != expectedComponentType) {
+    return PropertyViewStatus::ErrorComponentTypeMismatch;
   }
 
-  if (classProperty.array) {
+  if (valueType.array) {
     return PropertyViewStatus::ErrorArrayTypeMismatch;
   }
 
@@ -178,31 +165,29 @@ PropertyViewStatusType validatePropertyType(
 }
 
 /**
- * @brief Validates a @ref CesiumGltf::ClassProperty representing an array of
- * values, checking for any type mismatches.
+ * @brief Validates a @ref MetadataValueType against the C++ array type used for
+ * the PropertyView.
  *
- * @tparam T The array type of the PropertyView that was constructed for this
- * CesiumGltf::ClassProperty.
- * @param classProperty The class property to validate.
- * @param pEnumDefinition If the class property is an enum array, this should be
+ * @tparam T The C++ value type. Must be a subtype of @ref PropertyArrayView
+ * or @ref PropertyArrayCopy.
+ * @param valueType The value type to validate.
+ * @param pEnumDefinition If the property is an enum array, this should be
  * the enum definition. If not, this should be nullptr.
  *
  * @returns A @ref PropertyViewStatus value representing the error found while
  * validating, or @ref PropertyViewStatus::Valid if no errors were found.
  */
 template <typename T>
-PropertyViewStatusType validateArrayPropertyType(
-    const CesiumGltf::ClassProperty& classProperty,
+PropertyViewStatusType validateArrayValueType(
+    const MetadataValueType& valueType,
     const CesiumGltf::Enum* pEnumDefinition = nullptr) {
   using ElementType = typename MetadataArrayType<T>::type;
 
-  if (!canRepresentPropertyType<ElementType>(
-          convertStringToPropertyType(classProperty.type))) {
+  if (!canRepresentPropertyType<ElementType>(valueType.type)) {
     return PropertyViewStatus::ErrorTypeMismatch;
   }
 
-  const bool isEnum =
-      classProperty.type == CesiumGltf::ClassProperty::Type::ENUM;
+  const bool isEnum = valueType.type == PropertyType::Enum;
   const bool hasEnumDefinition = pEnumDefinition != nullptr;
   if (isEnum != hasEnumDefinition) {
     return PropertyViewStatus::ErrorInvalidEnum;
@@ -215,20 +200,11 @@ PropertyViewStatusType validateArrayPropertyType(
         convertStringToPropertyComponentType(pEnumDefinition->valueType)) {
       return PropertyViewStatus::ErrorComponentTypeMismatch;
     }
-  } else {
-    if (!classProperty.componentType &&
-        expectedComponentType != PropertyComponentType::None) {
-      return PropertyViewStatus::ErrorComponentTypeMismatch;
-    }
-
-    if (classProperty.componentType &&
-        expectedComponentType != convertStringToPropertyComponentType(
-                                     *classProperty.componentType)) {
-      return PropertyViewStatus::ErrorComponentTypeMismatch;
-    }
+  } else if (valueType.componentType != expectedComponentType) {
+    return PropertyViewStatus::ErrorComponentTypeMismatch;
   }
 
-  if (!classProperty.array) {
+  if (!valueType.array) {
     return PropertyViewStatus::ErrorArrayTypeMismatch;
   }
 
@@ -367,7 +343,8 @@ public:
    * @brief Constructs an empty property instance.
    */
   PropertyView()
-      : _status(PropertyViewStatus::ErrorNonexistentProperty),
+      : _valueType(),
+        _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
         _description(std::nullopt),
@@ -377,8 +354,7 @@ public:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt),
-        _propertyType(PropertyType::Invalid) {}
+        _defaultValue(std::nullopt) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
@@ -393,8 +369,9 @@ public:
   PropertyView(
       const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::Enum* pEnumDefinition)
-      : _status(
-            validatePropertyType<ElementType>(classProperty, pEnumDefinition)),
+      : _valueType(classProperty),
+        _status(
+            validateValueType<ElementType>(this->_valueType, pEnumDefinition)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
@@ -404,58 +381,58 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt),
-        _propertyType(convertStringToPropertyType(classProperty.type)) {
-    if (_status != PropertyViewStatus::Valid) {
+        _defaultValue(std::nullopt) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.normalized) {
-      _status = PropertyViewStatus::ErrorNormalizationMismatch;
+      this->_status = PropertyViewStatus::ErrorNormalizationMismatch;
       return;
     }
 
-    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
+    bool isEnum = this->_valueType.type == PropertyType::Enum;
+    if (!isEnum) {
       getNumericPropertyValues(classProperty);
     }
 
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.noData) {
-      if (!_required && _propertyType == PropertyType::Enum) {
+      if (!this->_required && isEnum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
         if constexpr (IsMetadataInteger<ElementType>::value) {
           // "noData" can only be defined if the property is not required.
-          _noData = getEnumValue(*classProperty.noData, *pEnumDefinition);
+          this->_noData = getEnumValue(*classProperty.noData, *pEnumDefinition);
         }
-      } else if (!_required && _propertyType != PropertyType::Enum) {
-        _noData = getValue(*classProperty.noData);
+      } else if (!this->_required) {
+        this->_noData = getValue(*classProperty.noData);
       }
 
-      if (!_noData) {
+      if (!this->_noData) {
         // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidNoDataValue;
+        this->_status = PropertyViewStatus::ErrorInvalidNoDataValue;
         return;
       }
     }
 
     if (classProperty.defaultProperty) {
-      if (!_required && _propertyType == PropertyType::Enum) {
+      if (!this->_required && isEnum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
         if constexpr (IsMetadataInteger<ElementType>::value) {
           // "default" can only be defined if the property is not required.
           _defaultValue =
               getEnumValue(*classProperty.defaultProperty, *pEnumDefinition);
         }
-      } else if (!_required && _propertyType != PropertyType::Enum) {
-        _defaultValue = getValue(*classProperty.defaultProperty);
+      } else if (!this->_required) {
+        this->_defaultValue = getValue(*classProperty.defaultProperty);
       }
 
-      if (!_defaultValue) {
+      if (!this->_defaultValue) {
         // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidDefaultValue;
+        this->_status = PropertyViewStatus::ErrorInvalidDefaultValue;
         return;
       }
     }
@@ -469,7 +446,8 @@ protected:
    * with the property.
    */
   PropertyView(PropertyViewStatusType status)
-      : _status(status),
+      : _valueType(),
+        _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
         _description(std::nullopt),
@@ -479,8 +457,7 @@ protected:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt),
-        _propertyType(PropertyType::Invalid) {}
+        _defaultValue(std::nullopt) {}
 
   /**
    * @brief Constructs a property instance from a property table property,
@@ -491,12 +468,12 @@ protected:
       const CesiumGltf::PropertyTableProperty& property,
       const CesiumGltf::Enum* pEnumDefinition = nullptr)
       : PropertyView(classProperty, pEnumDefinition) {
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     // If the property has its own values, override the class-provided values.
-    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
+    if (this->_valueType.type != PropertyType::Enum) {
       getNumericPropertyValues(property);
     }
   }
@@ -514,7 +491,7 @@ protected:
       return;
     }
 
-    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
+    if (this->_valueType.type != PropertyType::Enum) {
       getNumericPropertyValues(property);
     }
   }
@@ -533,7 +510,7 @@ protected:
     }
 
     // If the property has its own values, override the class-provided values.
-    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
+    if (this->_valueType.type != PropertyType::Enum) {
       getNumericPropertyValues(property);
     }
   }
@@ -545,13 +522,15 @@ public:
    *
    * @return The status of this property view.
    */
-  PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return this->_status; }
 
   /**
    * @brief Gets the name of the property being viewed. Returns std::nullopt if
    * no name was specified.
    */
-  const std::optional<std::string>& name() const noexcept { return _name; }
+  const std::optional<std::string>& name() const noexcept {
+    return this->_name;
+  }
 
   /**
    * @brief Gets the semantic of the property being viewed. The semantic is an
@@ -560,7 +539,7 @@ public:
    * semantic was specified.
    */
   const std::optional<std::string>& semantic() const noexcept {
-    return _semantic;
+    return this->_semantic;
   }
 
   /**
@@ -568,7 +547,7 @@ public:
    * std::nullopt if no description was specified.
    */
   const std::optional<std::string>& description() const noexcept {
-    return _description;
+    return this->_description;
   }
 
   /**
@@ -591,7 +570,7 @@ public:
    *
    * @returns The property's offset, or std::nullopt if it was not specified.
    */
-  std::optional<ElementType> offset() const noexcept { return _offset; }
+  std::optional<ElementType> offset() const noexcept { return this->_offset; }
 
   /**
    * @brief Gets the scale to apply to property values. Only applicable to
@@ -600,7 +579,7 @@ public:
    *
    * @returns The property's scale, or std::nullopt if it was not specified.
    */
-  std::optional<ElementType> scale() const noexcept { return _scale; }
+  std::optional<ElementType> scale() const noexcept { return this->_scale; }
 
   /**
    * @brief Gets the maximum allowed value for the property. Only applicable to
@@ -611,7 +590,7 @@ public:
    * @returns The property's maximum value, or std::nullopt if it was not
    * specified.
    */
-  std::optional<ElementType> max() const noexcept { return _max; }
+  std::optional<ElementType> max() const noexcept { return this->_max; }
 
   /**
    * @brief Gets the minimum allowed value for the property. Only applicable to
@@ -622,14 +601,14 @@ public:
    * @returns The property's minimum value, or std::nullopt if it was not
    * specified.
    */
-  std::optional<ElementType> min() const noexcept { return _min; }
+  std::optional<ElementType> min() const noexcept { return this->_min; }
 
   /**
    * @brief Whether the property must be present in every entity conforming to
    * the class. If not required, instances of the property may include "no data"
    * values, or the entire property may be omitted.
    */
-  bool required() const noexcept { return _required; }
+  bool required() const noexcept { return this->_required; }
 
   /**
    * @brief Gets the "no data" value, i.e., the value representing missing data
@@ -640,7 +619,7 @@ public:
    * @returns The property's "no data" value, or std::nullopt if it was not
    * specified.
    */
-  std::optional<ElementType> noData() const noexcept { return _noData; }
+  std::optional<ElementType> noData() const noexcept { return this->_noData; }
 
   /**
    * @brief Gets the default value to use when encountering a "no data" value or
@@ -651,16 +630,17 @@ public:
    * specified.
    */
   std::optional<ElementType> defaultValue() const noexcept {
-    return _defaultValue;
+    return this->_defaultValue;
   }
 
   /**
-   * @brief Returns the @ref PropertyType of the property this view is
-   * accessing.
+   * @brief Returns the @ref MetadataValueType for the values that this property
+   * view accesses.
    */
-  PropertyType propertyType() const noexcept { return _propertyType; }
+  MetadataValueType valueType() const noexcept { return this->_valueType; }
 
 protected:
+  MetadataValueType _valueType;
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
@@ -677,7 +657,6 @@ private:
   bool _required;
   std::optional<ElementType> _noData;
   std::optional<ElementType> _defaultValue;
-  PropertyType _propertyType;
 
   /**
    * @brief Attempts to parse an ElementType from the given json value.
@@ -817,7 +796,8 @@ public:
    * @brief Constructs an empty property instance.
    */
   PropertyView()
-      : _status(PropertyViewStatus::ErrorNonexistentProperty),
+      : _valueType(),
+        _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
         _description(std::nullopt),
@@ -827,14 +807,14 @@ public:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt),
-        _propertyType(PropertyType::Invalid) {}
+        _defaultValue(std::nullopt) {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const CesiumGltf::ClassProperty& classProperty)
-      : _status(validatePropertyType<ElementType>(classProperty)),
+      : _valueType(classProperty),
+        _status(validateValueType<ElementType>(this->_valueType)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
@@ -844,42 +824,41 @@ public:
         _min(std::nullopt),
         _required(classProperty.required),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt),
-        _propertyType(convertStringToPropertyType(classProperty.type)) {
-    if (_status != PropertyViewStatus::Valid) {
+        _defaultValue(std::nullopt) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (!classProperty.normalized) {
-      _status = PropertyViewStatus::ErrorNormalizationMismatch;
+      this->_status = PropertyViewStatus::ErrorNormalizationMismatch;
     }
 
     getNumericPropertyValues(classProperty);
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.noData) {
-      if (!_required) {
+      if (!this->_required) {
         // "noData" should not be defined if the property is required.
-        _noData = getValue<ElementType>(*classProperty.noData);
+        this->_noData = getValue<ElementType>(*classProperty.noData);
       }
-      if (!_noData) {
+      if (!this->_noData) {
         // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidNoDataValue;
+        this->_status = PropertyViewStatus::ErrorInvalidNoDataValue;
         return;
       }
     }
 
     if (classProperty.defaultProperty) {
       // default value should not be defined if the property is required.
-      if (!_required) {
-        _defaultValue =
+      if (!this->_required) {
+        this->_defaultValue =
             getValue<NormalizedType>(*classProperty.defaultProperty);
       }
-      if (!_defaultValue) {
+      if (!this->_defaultValue) {
         // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidDefaultValue;
+        this->_status = PropertyViewStatus::ErrorInvalidDefaultValue;
         return;
       }
     }
@@ -893,7 +872,8 @@ protected:
    * with the property.
    */
   PropertyView(PropertyViewStatusType status)
-      : _status(status),
+      : _valueType(),
+        _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
         _description(std::nullopt),
@@ -903,8 +883,7 @@ protected:
         _min(std::nullopt),
         _required(false),
         _noData(std::nullopt),
-        _defaultValue(std::nullopt),
-        _propertyType(PropertyType::Invalid) {}
+        _defaultValue(std::nullopt) {}
 
   /**
    * @brief Constructs a property instance from a property table property and
@@ -914,7 +893,7 @@ protected:
       const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::PropertyTableProperty& property)
       : PropertyView(classProperty) {
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
@@ -923,6 +902,7 @@ protected:
   }
 
   /**
+template <typename T>
    * @brief Constructs a property instance from a property texture property and
    * its class definition.
    */
@@ -930,7 +910,7 @@ protected:
       const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::PropertyTextureProperty& property)
       : PropertyView(classProperty) {
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
@@ -946,7 +926,7 @@ protected:
       const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::PropertyAttributeProperty& property)
       : PropertyView(classProperty) {
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
@@ -958,25 +938,27 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::status
    */
-  PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return this->_status; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::name
    */
-  const std::optional<std::string>& name() const noexcept { return _name; }
+  const std::optional<std::string>& name() const noexcept {
+    return this->_name;
+  }
 
   /**
    * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
-    return _semantic;
+    return this->_semantic;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
-    return _description;
+    return this->_description;
   }
 
   /**
@@ -992,47 +974,51 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::offset
    */
-  std::optional<NormalizedType> offset() const noexcept { return _offset; }
+  std::optional<NormalizedType> offset() const noexcept {
+    return this->_offset;
+  }
 
   /**
    * @copydoc PropertyView<ElementType, false>::scale
    */
-  std::optional<NormalizedType> scale() const noexcept { return _scale; }
+  std::optional<NormalizedType> scale() const noexcept { return this->_scale; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::max
    */
-  std::optional<NormalizedType> max() const noexcept { return _max; }
+  std::optional<NormalizedType> max() const noexcept { return this->_max; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::min
    */
-  std::optional<NormalizedType> min() const noexcept { return _min; }
+  std::optional<NormalizedType> min() const noexcept { return this->_min; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::required
    */
-  bool required() const noexcept { return _required; }
+  bool required() const noexcept { return this->_required; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::noData
    */
-  std::optional<ElementType> noData() const noexcept { return _noData; }
+  std::optional<ElementType> noData() const noexcept { return this->_noData; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<NormalizedType> defaultValue() const noexcept {
-    return _defaultValue;
+    return this->_defaultValue;
   }
 
   /**
-   * @brief Returns the @ref PropertyType of the property this view is
-   * accessing.
+   * @brief Returns the @ref MetadataValueType for the values that this property
+   * view accesses.
    */
-  PropertyType propertyType() const noexcept { return _propertyType; }
+  MetadataValueType valueType() const noexcept { return this->_valueType; }
 
 protected:
+  /** @copydoc MetadataValueType */
+  MetadataValueType _valueType;
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
@@ -1049,7 +1035,6 @@ private:
   bool _required;
   std::optional<ElementType> _noData;
   std::optional<NormalizedType> _defaultValue;
-  PropertyType _propertyType;
 
   /**
    * @brief Attempts to parse from the given json value.
@@ -1057,8 +1042,8 @@ private:
    * If T is a type with multiple components, e.g. a VECN or MATN type, this
    * will return std::nullopt if one or more components could not be parsed.
    *
-   * @return The value as an instance of T, or std::nullopt if it could not be
-   * parsed.
+   * @return The value as an instance of T, or std::nullopt if it could not
+   * be parsed.
    */
   template <typename T>
   static std::optional<T> getValue(const CesiumUtility::JsonValue& jsonValue) {
@@ -1149,24 +1134,24 @@ public:
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const CesiumGltf::ClassProperty& classProperty)
-      : _status(validatePropertyType<bool>(classProperty)),
+      : _status(validateValueType<bool>(MetadataValueType(classProperty))),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
         _required(classProperty.required),
         _defaultValue(std::nullopt) {
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.defaultProperty) {
-      if (!_required) {
-        _defaultValue = getBooleanValue(*classProperty.defaultProperty);
+      if (!this->_required) {
+        this->_defaultValue = getBooleanValue(*classProperty.defaultProperty);
       }
 
-      if (!_defaultValue) {
+      if (!this->_defaultValue) {
         // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidDefaultValue;
+        this->_status = PropertyViewStatus::ErrorInvalidDefaultValue;
         return;
       }
     }
@@ -1201,25 +1186,27 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::status
    */
-  PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return this->_status; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::name
    */
-  const std::optional<std::string>& name() const noexcept { return _name; }
+  const std::optional<std::string>& name() const noexcept {
+    return this->_name;
+  }
 
   /**
    * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
-    return _semantic;
+    return this->_semantic;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
-    return _description;
+    return this->_description;
   }
 
   /**
@@ -1255,7 +1242,7 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::required
    */
-  bool required() const noexcept { return _required; }
+  bool required() const noexcept { return this->_required; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::noData
@@ -1265,13 +1252,17 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::defaultValue
    */
-  std::optional<bool> defaultValue() const noexcept { return _defaultValue; }
+  std::optional<bool> defaultValue() const noexcept {
+    return this->_defaultValue;
+  }
 
   /**
-   * @brief Returns the @ref PropertyType of the property this view is
-   * accessing.
+   * @brief Returns the @ref MetadataValueType for the values that this property
+   * view accesses.
    */
-  PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
+  MetadataValueType valueType() const noexcept {
+    return {PropertyType::Boolean, PropertyComponentType::None, false};
+  }
 
 protected:
   /** @copydoc PropertyViewStatus */
@@ -1317,37 +1308,38 @@ public:
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const CesiumGltf::ClassProperty& classProperty)
-      : _status(validatePropertyType<std::string_view>(classProperty)),
+      : _status(validateValueType<std::string_view>(
+            MetadataValueType(classProperty))),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
         _required(classProperty.required),
         _noData(std::nullopt),
         _defaultValue(std::nullopt) {
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.noData) {
-      if (!_required) {
-        _noData = getStringValue(*classProperty.noData);
+      if (!this->_required) {
+        this->_noData = getStringValue(*classProperty.noData);
       }
 
-      if (!_noData) {
+      if (!this->_noData) {
         // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidNoDataValue;
+        this->_status = PropertyViewStatus::ErrorInvalidNoDataValue;
         return;
       }
     }
 
     if (classProperty.defaultProperty) {
-      if (!_required) {
-        _defaultValue = getStringValue(*classProperty.defaultProperty);
+      if (!this->_required) {
+        this->_defaultValue = getStringValue(*classProperty.defaultProperty);
       }
 
-      if (!_defaultValue) {
+      if (!this->_defaultValue) {
         // The value was specified but something went wrong.
-        _status = PropertyViewStatus::ErrorInvalidDefaultValue;
+        this->_status = PropertyViewStatus::ErrorInvalidDefaultValue;
         return;
       }
     }
@@ -1383,25 +1375,27 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::status
    */
-  PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return this->_status; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::name
    */
-  const std::optional<std::string>& name() const noexcept { return _name; }
+  const std::optional<std::string>& name() const noexcept {
+    return this->_name;
+  }
 
   /**
    * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
-    return _semantic;
+    return this->_semantic;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
-    return _description;
+    return this->_description;
   }
 
   /**
@@ -1441,33 +1435,32 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::required
    */
-  bool required() const noexcept { return _required; }
+  bool required() const noexcept { return this->_required; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::noData
    */
   std::optional<std::string_view> noData() const noexcept {
-    if (_noData)
-      return std::string_view(*_noData);
-
-    return std::nullopt;
+    return this->_noData ? std::make_optional(std::string_view(*this->_noData))
+                         : std::nullopt;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::defaultValue
    */
   std::optional<std::string_view> defaultValue() const noexcept {
-    if (_defaultValue)
-      return std::string_view(*_defaultValue);
-
-    return std::nullopt;
+    return this->_defaultValue
+               ? std::make_optional(std::string_view(*this->_defaultValue))
+               : std::nullopt;
   }
 
   /**
-   * @brief Returns the @ref PropertyType of the property this view is
-   * accessing.
+   * @brief Returns the @ref MetadataValueType for the values that this property
+   * view accesses.
    */
-  PropertyType propertyType() const noexcept { return PropertyType::String; }
+  MetadataValueType valueType() const noexcept {
+    return {PropertyType::String, PropertyComponentType::None, false};
+  }
 
 protected:
   /** @copydoc PropertyViewStatus */
@@ -1512,7 +1505,8 @@ public:
    * @brief Constructs an empty property instance.
    */
   PropertyView()
-      : _status(PropertyViewStatus::ErrorNonexistentProperty),
+      : _valueType(),
+        _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
         _description(std::nullopt),
@@ -1523,8 +1517,7 @@ public:
         _min(),
         _required(false),
         _noData(),
-        _defaultValue(),
-        _propertyType(PropertyType::Invalid) {}
+        _defaultValue() {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
@@ -1539,8 +1532,9 @@ public:
   PropertyView(
       const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::Enum* pEnumDefinition)
-      : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
-            classProperty,
+      : _valueType(classProperty),
+        _status(validateArrayValueType<PropertyArrayView<ElementType>>(
+            _valueType,
             pEnumDefinition)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
@@ -1552,27 +1546,27 @@ public:
         _min(),
         _required(classProperty.required),
         _noData(),
-        _defaultValue(),
-        _propertyType(convertStringToPropertyType(classProperty.type)) {
-    if (_status != PropertyViewStatus::Valid) {
+        _defaultValue() {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.normalized) {
-      _status = PropertyViewStatus::ErrorNormalizationMismatch;
+      this->_status = PropertyViewStatus::ErrorNormalizationMismatch;
       return;
     }
 
-    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
+    bool isEnum = this->_valueType.type == PropertyType::Enum;
+    if (!isEnum) {
       getNumericPropertyValues(classProperty);
     }
 
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (classProperty.noData) {
-      if (!this->_required && this->_propertyType == PropertyType::Enum) {
+      if (!this->_required && isEnum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
         if constexpr (IsMetadataInteger<ElementType>::value) {
           this->_noData =
@@ -1590,7 +1584,7 @@ public:
     }
 
     if (classProperty.defaultProperty) {
-      if (!this->_required && this->_propertyType == PropertyType::Enum) {
+      if (!this->_required && isEnum) {
         CESIUM_ASSERT(pEnumDefinition != nullptr);
         if constexpr (IsMetadataInteger<ElementType>::value) {
           this->_defaultValue = getEnumArrayValue(
@@ -1617,7 +1611,8 @@ protected:
    * with the property.
    */
   PropertyView(PropertyViewStatusType status)
-      : _status(status),
+      : _valueType(),
+        _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
         _description(std::nullopt),
@@ -1628,8 +1623,7 @@ protected:
         _min(),
         _required(false),
         _noData(),
-        _defaultValue(),
-        _propertyType(PropertyType::Invalid) {}
+        _defaultValue() {}
 
   /**
    * @brief Constructs a property instance from a property table property,
@@ -1640,12 +1634,12 @@ protected:
       const CesiumGltf::PropertyTableProperty& property,
       const CesiumGltf::Enum* pEnumDefinition = nullptr)
       : PropertyView(classProperty, pEnumDefinition) {
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     // If the property has its own values, override the class-provided values.
-    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
+    if (this->_valueType.type != PropertyType::Enum) {
       getNumericPropertyValues(property);
     }
   }
@@ -1659,12 +1653,12 @@ protected:
       const CesiumGltf::PropertyTextureProperty& property,
       const CesiumGltf::Enum* pEnumDefinition = nullptr)
       : PropertyView(classProperty, pEnumDefinition) {
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     // If the property has its own values, override the class-provided values.
-    if (classProperty.type != CesiumGltf::ClassProperty::Type::ENUM) {
+    if (this->_valueType.type != PropertyType::Enum) {
       getNumericPropertyValues(property);
     }
   }
@@ -1673,31 +1667,33 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::status
    */
-  PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return this->_status; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::name
    */
-  const std::optional<std::string>& name() const noexcept { return _name; }
+  const std::optional<std::string>& name() const noexcept {
+    return this->_name;
+  }
 
   /**
    * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
-    return _semantic;
+    return this->_semantic;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
-    return _description;
+    return this->_description;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::arrayCount
    */
-  int64_t arrayCount() const noexcept { return _count; }
+  int64_t arrayCount() const noexcept { return this->_count; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::normalized
@@ -1739,7 +1735,7 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::required
    */
-  bool required() const noexcept { return _required; }
+  bool required() const noexcept { return this->_required; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::noData
@@ -1759,12 +1755,14 @@ public:
   }
 
   /**
-   * @brief Returns the @ref PropertyType of the property that this view is
-   * accessing.
+   * @brief Returns the @ref MetadataValueType for the values that this property
+   * view accesses.
    */
-  PropertyType propertyType() const noexcept { return _propertyType; }
+  MetadataValueType valueType() const noexcept { return this->_valueType; }
 
 protected:
+  /** @copydoc MetadataValueType */
+  MetadataValueType _valueType;
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
@@ -1783,7 +1781,6 @@ private:
   bool _required;
   PropertyArrayCopy<ElementType> _noData;
   PropertyArrayCopy<ElementType> _defaultValue;
-  PropertyType _propertyType;
 
   using PropertyDefinitionType = std::variant<
       CesiumGltf::ClassProperty,
@@ -1961,7 +1958,8 @@ public:
    * @brief Constructs an empty property instance.
    */
   PropertyView()
-      : _status(PropertyViewStatus::ErrorNonexistentProperty),
+      : _valueType(),
+        _status(PropertyViewStatus::ErrorNonexistentProperty),
         _name(std::nullopt),
         _semantic(std::nullopt),
         _description(std::nullopt),
@@ -1972,15 +1970,15 @@ public:
         _min(),
         _required(false),
         _noData(),
-        _defaultValue(),
-        _propertyType(PropertyType::Invalid) {}
+        _defaultValue() {}
 
   /**
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const CesiumGltf::ClassProperty& classProperty)
-      : _status(validateArrayPropertyType<PropertyArrayView<ElementType>>(
-            classProperty)),
+      : _valueType(classProperty),
+        _status(validateArrayValueType<PropertyArrayView<ElementType>>(
+            this->_valueType)),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
@@ -1991,19 +1989,18 @@ public:
         _min(),
         _required(classProperty.required),
         _noData(),
-        _defaultValue(),
-        _propertyType(convertStringToPropertyType(classProperty.type)) {
-    if (_status != PropertyViewStatus::Valid) {
+        _defaultValue() {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
     if (!classProperty.normalized) {
-      _status = PropertyViewStatus::ErrorNormalizationMismatch;
+      this->_status = PropertyViewStatus::ErrorNormalizationMismatch;
       return;
     }
 
     getNumericPropertyValues(classProperty);
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
@@ -2041,7 +2038,8 @@ protected:
    * with the property.
    */
   PropertyView(PropertyViewStatusType status)
-      : _status(status),
+      : _valueType(),
+        _status(status),
         _name(std::nullopt),
         _semantic(std::nullopt),
         _description(std::nullopt),
@@ -2052,8 +2050,7 @@ protected:
         _min(),
         _required(false),
         _noData(),
-        _defaultValue(),
-        _propertyType(PropertyType::Invalid) {}
+        _defaultValue() {}
 
   /**
    * @brief Constructs a property instance from a property table property and
@@ -2063,7 +2060,7 @@ protected:
       const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::PropertyTableProperty& property)
       : PropertyView(classProperty) {
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
@@ -2079,7 +2076,7 @@ protected:
       const CesiumGltf::ClassProperty& classProperty,
       const CesiumGltf::PropertyTextureProperty& property)
       : PropertyView(classProperty) {
-    if (_status != PropertyViewStatus::Valid) {
+    if (this->_status != PropertyViewStatus::Valid) {
       return;
     }
 
@@ -2091,25 +2088,27 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::status
    */
-  PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return this->_status; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::name
    */
-  const std::optional<std::string>& name() const noexcept { return _name; }
+  const std::optional<std::string>& name() const noexcept {
+    return this->_name;
+  }
 
   /**
    * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
-    return _semantic;
+    return this->_semantic;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
-    return _description;
+    return this->_description;
   }
 
   /**
@@ -2157,7 +2156,7 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::required
    */
-  bool required() const noexcept { return _required; }
+  bool required() const noexcept { return this->_required; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::noData
@@ -2178,12 +2177,14 @@ public:
   }
 
   /**
-   * @brief Returns the @ref PropertyType of the property this view is
-   * accessing.
+   * @brief Returns the @ref MetadataValueType for the values that this property
+   * view accesses.
    */
-  PropertyType propertyType() const noexcept { return _propertyType; }
+  MetadataValueType valueType() const noexcept { return this->_valueType; }
 
 protected:
+  /** @copydoc MetadataValueType */
+  MetadataValueType _valueType;
   /** @copydoc PropertyViewStatus */
   PropertyViewStatusType _status;
 
@@ -2202,7 +2203,6 @@ private:
   bool _required;
   PropertyArrayCopy<ElementType> _noData;
   PropertyArrayCopy<NormalizedType> _defaultValue;
-  PropertyType _propertyType;
 
   using PropertyDefinitionType = std::variant<
       CesiumGltf::ClassProperty,
@@ -2325,8 +2325,8 @@ public:
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const CesiumGltf::ClassProperty& classProperty)
-      : _status(
-            validateArrayPropertyType<PropertyArrayView<bool>>(classProperty)),
+      : _status(validateArrayValueType<PropertyArrayView<bool>>(
+            MetadataValueType(classProperty))),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
@@ -2381,25 +2381,27 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::status
    */
-  PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return this->_status; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::name
    */
-  const std::optional<std::string>& name() const noexcept { return _name; }
+  const std::optional<std::string>& name() const noexcept {
+    return this->_name;
+  }
 
   /**
    * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
-    return _semantic;
+    return this->_semantic;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
-    return _description;
+    return this->_description;
   }
 
   /**
@@ -2462,10 +2464,12 @@ public:
   }
 
   /**
-   * @brief Returns the @ref PropertyType of the property this view is
-   * accessing.
+   * @brief Returns the @ref MetadataValueType for the values that this property
+   * view accesses.
    */
-  PropertyType propertyType() const noexcept { return PropertyType::Boolean; }
+  MetadataValueType valueType() const noexcept {
+    return {PropertyType::Boolean, PropertyComponentType::None, true};
+  }
 
 protected:
   /** @copydoc PropertyViewStatus */
@@ -2523,8 +2527,8 @@ public:
    * @brief Constructs a property instance from a class definition only.
    */
   PropertyView(const CesiumGltf::ClassProperty& classProperty)
-      : _status(validateArrayPropertyType<PropertyArrayView<std::string_view>>(
-            classProperty)),
+      : _status(validateArrayValueType<PropertyArrayView<std::string_view>>(
+            MetadataValueType(classProperty))),
         _name(classProperty.name),
         _semantic(classProperty.semantic),
         _description(classProperty.description),
@@ -2594,31 +2598,33 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::status
    */
-  PropertyViewStatusType status() const noexcept { return _status; }
+  PropertyViewStatusType status() const noexcept { return this->_status; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::name
    */
-  const std::optional<std::string>& name() const noexcept { return _name; }
+  const std::optional<std::string>& name() const noexcept {
+    return this->_name;
+  }
 
   /**
    * @copydoc PropertyView<ElementType, false>::semantic
    */
   const std::optional<std::string>& semantic() const noexcept {
-    return _semantic;
+    return this->_semantic;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::description
    */
   const std::optional<std::string>& description() const noexcept {
-    return _description;
+    return this->_description;
   }
 
   /**
    * @copydoc PropertyView<ElementType, false>::arrayCount
    */
-  int64_t arrayCount() const noexcept { return _count; }
+  int64_t arrayCount() const noexcept { return this->_count; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::normalized
@@ -2656,7 +2662,7 @@ public:
   /**
    * @copydoc PropertyView<ElementType, false>::required
    */
-  bool required() const noexcept { return _required; }
+  bool required() const noexcept { return this->_required; }
 
   /**
    * @copydoc PropertyView<ElementType, false>::noData
@@ -2677,10 +2683,12 @@ public:
   }
 
   /**
-   * @brief Returns the @ref PropertyType of the property this view is
-   * accessing.
+   * @brief Returns the @ref MetadataValueType for the values that this property
+   * view accesses.
    */
-  PropertyType propertyType() const noexcept { return PropertyType::String; }
+  MetadataValueType valueType() const noexcept {
+    return {PropertyType::String, PropertyComponentType::None, true};
+  }
 
 protected:
   /** @copydoc PropertyViewStatus */
