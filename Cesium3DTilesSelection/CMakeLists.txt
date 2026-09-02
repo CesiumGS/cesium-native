@@ -50,6 +50,7 @@ target_link_libraries(Cesium3DTilesSelection
         CesiumGltf
         CesiumGltfReader
         CesiumImage
+        CesiumMetadata
         CesiumQuantizedMeshTerrain
         CesiumRasterOverlays
         CesiumUtility

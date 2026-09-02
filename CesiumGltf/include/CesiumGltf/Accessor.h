@@ -13,11 +13,11 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
   /**
    * @brief Computes the number of components for a given accessor type.
    *
-   * For example `CesiumGltf::Accessor::Type::SCALAR` has 1 component while
-   * `CesiumGltf::Accessor::Type::VEC4` has 4 components.
+   * For example @ref AccessorSpec::Type::SCALAR has 1 component while @ref
+   * AccessorSpec::Type::VEC4 has 4 components.
    *
    * @param type The accessor type.
-   * @return The number of components. Returns 0 if @ref Accessor::type is
+   * @return The number of components. Returns 0 if @ref AccessorSpec::type is
    * not a valid enumeration value.
    */
   static int8_t computeNumberOfComponents(const std::string& type) noexcept;
@@ -25,14 +25,25 @@ struct CESIUMGLTF_API Accessor final : public AccessorSpec {
   /**
    * @brief Computes the number of bytes for a given accessor component type.
    *
-   * For example `CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT` is 2
-   * bytes while `CesiumGltf::Accessor::ComponentType::FLOAT` is 4 bytes.
+   * For example @ref AccessorSpec::ComponentType::UNSIGNED_SHORT is 2
+   * bytes while @ref AccessorSpec::ComponentType::FLOAT is 4 bytes.
    *
    * @param componentType The accessor component type.
    * @return The number of bytes for the component type. Returns 0 if
    * @ref Accessor::componentType is not a valid enumeration value.
    */
   static int8_t computeByteSizeOfComponent(int32_t componentType) noexcept;
+
+  /**
+   * @brief Converts the value of a given accessor component type to a string.
+   *
+   * For example, @ref AccessorSpec::ComponentType::FLOAT will become `"FLOAT"`.
+   *
+   * @param componentType The accessor component type to convert to a string.
+   * @returns The type as a string, or `"INVALID"` if the input is an unknown
+   * value.
+   */
+  static std::string getComponentTypeAsString(int32_t componentType) noexcept;
 
   Accessor() = default;
 

@@ -61,6 +61,7 @@ target_link_libraries(Cesium3DTilesContent
         CesiumGltf
         CesiumGltfContent
         CesiumGltfReader
+        CesiumMetadata
         CesiumUtility
     PRIVATE
         libmorton::libmorton

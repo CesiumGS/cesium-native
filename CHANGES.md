@@ -2,9 +2,19 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- Moved metadata-related structs, classes, and functions from `CesiumGltf` to a new `CesiumMetadata` library:
+  - `PropertyType`, `PropertyTypeTraits`, `MetadataConversions`
+  - `PropertyView`, `PropertyArrayView`,  `PropertyTransformations`
+  - `PropertyTablePropertyView`, `PropertyTexturePropertyView`, `PropertyAttributePropertyView`
+  - `PropertyTableView`, `PropertyTextureView`, `PropertyAttributeView`
+  - `getOffsetFromOffsetsBuffer`
+
 ##### Additions :tada:
 
 - The `CesiumVectorOverlays::VectorTilesRasterOverlay` now supports styling via specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
+- Added `CesiumGltf::Accessor::getComponentTypeAsString` to get the corresponding semantic string for an integer component type.
 
 ### v0.64.0 - 2026-09-01
 
