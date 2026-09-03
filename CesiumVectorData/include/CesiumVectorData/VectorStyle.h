@@ -2,6 +2,7 @@
 
 #include <CesiumUtility/Color.h>
 
+#include <functional>
 #include <optional>
 
 namespace CesiumVectorData {
@@ -46,6 +47,9 @@ struct ColorStyle {
    * a given seed, but nearby seeds will not usually return nearby colors.
    */
   CesiumUtility::Color getColor(size_t randomColorSeed = 0) const;
+
+  /** @brief Checks if two ColorStyle instances are equal. */
+  bool operator==(const ColorStyle& rhs) const;
 };
 
 /** @brief The mode to use when interpreting a given line width. */
@@ -78,6 +82,9 @@ struct LineStyle : public ColorStyle {
    * @brief The mode to use when interpreting `width`.
    */
   LineWidthMode widthMode = LineWidthMode::Pixels;
+
+  /** @brief Checks if two LineStyle instances are equal. */
+  bool operator==(const LineStyle& rhs) const;
 };
 
 /** @brief The style used to draw a Polygon. */
@@ -92,6 +99,9 @@ struct PolygonStyle {
    * polygon will not be outlined.
    */
   std::optional<LineStyle> outline;
+
+  /** @brief Checks if two PolygonStyle instances are equal. */
+  bool operator==(const PolygonStyle& rhs) const;
 };
 
 /** @brief The style used to draw a point. */
@@ -108,6 +118,9 @@ struct PointStyle {
    * point will not be outlined.
    */
   std::optional<LineStyle> outline;
+
+  /** @brief Checks if two PointStyle instances are equal. */
+  bool operator==(const PointStyle& rhs) const;
 };
 
 /**
@@ -149,5 +162,48 @@ struct VectorStyle {
    * @brief Initializes all styles to the given color.
    */
   VectorStyle(const CesiumUtility::Color& color);
+
+  /** @brief Checks if two VectorStyle instances are equal. */
+  bool operator==(const VectorStyle& rhs) const;
 };
 } // namespace CesiumVectorData
+
+/** @brief Hash implementation for @ref CesiumVectorData::ColorStyle. */
+template <> struct std::hash<CesiumVectorData::ColorStyle> {
+  /** @brief Returns a `size_t` hash of the provided \ref
+   * CesiumVectorData::ColorStyle instance. */
+  std::size_t
+  operator()(const CesiumVectorData::ColorStyle& style) const noexcept;
+};
+
+/** @brief Hash implementation for @ref CesiumVectorData::LineStyle. */
+template <> struct std::hash<CesiumVectorData::LineStyle> {
+  /** @brief Returns a `size_t` hash of the provided \ref
+   * CesiumVectorData::LineStyle instance. */
+  std::size_t
+  operator()(const CesiumVectorData::LineStyle& style) const noexcept;
+};
+
+/** @brief Hash implementation for @ref CesiumVectorData::PolygonStyle. */
+template <> struct std::hash<CesiumVectorData::PolygonStyle> {
+  /** @brief Returns a `size_t` hash of the provided \ref
+   * CesiumVectorData::PolygonStyle instance. */
+  std::size_t
+  operator()(const CesiumVectorData::PolygonStyle& style) const noexcept;
+};
+
+/** @brief Hash implementation for @ref CesiumVectorData::PointStyle. */
+template <> struct std::hash<CesiumVectorData::PointStyle> {
+  /** @brief Returns a `size_t` hash of the provided \ref
+   * CesiumVectorData::PointStyle instance. */
+  std::size_t
+  operator()(const CesiumVectorData::PointStyle& style) const noexcept;
+};
+
+/** @brief Hash implementation for @ref CesiumVectorData::VectorStyle. */
+template <> struct std::hash<CesiumVectorData::VectorStyle> {
+  /** @brief Returns a `size_t` hash of the provided \ref
+   * CesiumVectorData::VectorStyle instance. */
+  std::size_t
+  operator()(const CesiumVectorData::VectorStyle& style) const noexcept;
+};

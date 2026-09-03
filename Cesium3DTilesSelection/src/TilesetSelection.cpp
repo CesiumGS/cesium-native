@@ -1141,13 +1141,16 @@ TraversalDetails visitTileIfNeeded(
       [](const ViewState& a, const ViewState& b) {
         std::optional<double> aThreshold = a.getGeometricErrorThreshold();
         std::optional<double> bThreshold = b.getGeometricErrorThreshold();
+        if (!aThreshold && !bThreshold) {
+          return false;
+        }
         if (!aThreshold) {
           return true;
-        } else if (!bThreshold) {
-          return false;
-        } else {
-          return *aThreshold < *bThreshold;
         }
+        if (!bThreshold) {
+          return false;
+        }
+        return *aThreshold < *bThreshold;
       });
   bool meetsSse = false;
   std::optional<double> geometricErrorThreshold =

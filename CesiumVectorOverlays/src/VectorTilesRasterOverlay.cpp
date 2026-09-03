@@ -19,7 +19,9 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
+#include <CesiumGltf/ExtensionExtMeshFeatures.h>
 #include <CesiumGltf/ExtensionExtMeshPolygon.h>
+#include <CesiumGltf/FeatureId.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltfContent/GltfUtilities.h>
@@ -34,6 +36,7 @@
 #include <CesiumUtility/TreeTraversalState.h>
 #include <CesiumVectorData/VectorRasterizer.h>
 #include <CesiumVectorData/VectorStyle.h>
+#include <CesiumVectorOverlays/VectorStylingProvider.h>
 #include <CesiumVectorOverlays/VectorTilesRasterOverlay.h>
 
 #include <fmt/format.h>
@@ -53,6 +56,8 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -64,19 +69,55 @@ using namespace CesiumUtility;
 namespace CesiumVectorOverlays {
 namespace {
 struct VectorRenderContent {
-  CesiumVectorData::VectorStyle style;
+  CesiumVectorData::VectorStyle defaultStyle;
 
   std::vector<CesiumGeospatial::Cartographic> points;
+  std::unordered_set<CesiumVectorData::PointStyle> uniquePointStyles;
+  std::vector<const CesiumVectorData::PointStyle*> pointStyles;
+
   std::vector<std::vector<CesiumGeospatial::Cartographic>> polylines;
+  std::unordered_set<CesiumVectorData::LineStyle> uniquePolylineStyles;
+  std::vector<const CesiumVectorData::LineStyle*> polylineStyles;
+
+  std::unordered_set<CesiumVectorData::PolygonStyle> uniquePolygonStyles;
   std::vector<std::vector<CesiumGeospatial::Cartographic>> polygons;
+  std::vector<const CesiumVectorData::PolygonStyle*> polygonStyles;
 };
 
-CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
+CesiumUtility::Result<int64_t> getFeatureId(
+    const CesiumGltf::FeatureId* pFeatureIdSet,
+    const CesiumGltf::Model& model,
+    const CesiumGltf::MeshPrimitive& primitive,
+    int64_t index) {
+  if (!pFeatureIdSet) {
+    return {-1};
+  }
+
+  if (pFeatureIdSet->attribute) {
+    // Lookup based on attribute.
+    const CesiumGltf::FeatureIdAccessorType& featureIdAccessor =
+        CesiumGltf::getFeatureIdAccessorView(
+            model,
+            primitive,
+            static_cast<int32_t>(*pFeatureIdSet->attribute));
+    return {std::visit(
+        CesiumGltf::FeatureIdFromAccessor{index},
+        featureIdAccessor)};
+  } else if (pFeatureIdSet->texture) {
+    return CesiumUtility::Result<int64_t>(ErrorList::warning(
+        "Feature ID textures for vector primitives are not yet supported."));
+  }
+
+  return {index};
+}
+
+CesiumAsync::Future<CesiumUtility::Result<VectorRenderContent*>> vectorizeModel(
+    const CesiumAsync::AsyncSystem& asyncSystem,
     CesiumGltf::Model& model,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const glm::dmat4x4& gltfTransform,
-    const CesiumVectorData::VectorStyle& defaultStyle) {
-
+    const CesiumVectorData::VectorStyle& defaultStyle,
+    const std::shared_ptr<VectorStylingProvider>& pStylingProvider) {
   glm::dmat4x4 rootTransform =
       CesiumGltfContent::GltfUtilities::applyRtcCenter(model, gltfTransform);
   rootTransform = CesiumGltfContent::GltfUtilities::applyGltfUpAxisTransform(
@@ -86,11 +127,21 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
   CesiumUtility::ErrorList errors;
 
   VectorRenderContent* pContent = new VectorRenderContent();
-  pContent->style = defaultStyle;
+  pContent->defaultStyle = defaultStyle;
+
+  std::vector<int64_t> pointFeatureIds;
+  std::vector<int64_t> polylineFeatureIds;
+  std::vector<int64_t> polygonFeatureIds;
 
   model.forEachPrimitiveInScene(
       -1,
-      [pContent, rootTransform, &errors, &ellipsoid](
+      [pContent,
+       rootTransform,
+       &errors,
+       &ellipsoid,
+       &pointFeatureIds,
+       &polylineFeatureIds,
+       &polygonFeatureIds](
           const CesiumGltf::Model& model,
           const CesiumGltf::Node& /*node*/,
           const CesiumGltf::Mesh& /*mesh*/,
@@ -112,15 +163,28 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
           return;
         }
 
+        const CesiumGltf::ExtensionExtMeshFeatures* pMeshFeatures =
+            primitive.getExtension<CesiumGltf::ExtensionExtMeshFeatures>();
+        const CesiumGltf::FeatureId* pFeatureIdSet =
+            pMeshFeatures != nullptr
+                ? model.getSafe(&pMeshFeatures->featureIds, 0)
+                : nullptr;
+
         if (primitive.mode == CesiumGltf::MeshPrimitive::Mode::POINTS) {
           for (int64_t i = 0; i < positionView.size(); i++) {
             const glm::vec3 position = positionView[i];
             const glm::dvec4 transformedPosition =
                 rootTransform * nodeTransform * glm::dvec4(position, 1.0);
-            pContent->points.emplace_back(
+            const CesiumGeospatial::Cartographic point =
                 ellipsoid
                     .cartesianToCartographic(glm::dvec3(transformedPosition))
-                    .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0}));
+                    .value_or(CesiumGeospatial::Cartographic{0.0, 0.0, 0.0});
+            pContent->points.emplace_back(point);
+
+            const CesiumUtility::Result<int64_t> featureIdResult =
+                getFeatureId(pFeatureIdSet, model, primitive, i);
+            errors.merge(featureIdResult.errors);
+            pointFeatureIds.emplace_back(featureIdResult.value.value_or(-1));
           }
           return;
         } else if (
@@ -132,14 +196,21 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
           }
 
           std::vector<CesiumGeospatial::Cartographic> polyline;
+          int64_t startIndex = -1;
           for (int64_t i = 0; i < numIndices; i++) {
             const int64_t idx =
                 std::visit(CesiumGltf::IndexFromAccessor{i}, indicesView);
             if (idx == maxIndex) {
               // Primitive restart.
               if (polyline.size() >= 2) {
+                const CesiumUtility::Result<int64_t> featureIdResult =
+                    getFeatureId(pFeatureIdSet, model, primitive, startIndex);
+                errors.merge(featureIdResult.errors);
+                polylineFeatureIds.emplace_back(
+                    featureIdResult.value.value_or(-1));
                 pContent->polylines.emplace_back(std::move(polyline));
                 polyline.clear();
+                startIndex = -1;
               } else {
                 errors.emplaceError("Primitive restart index encountered but "
                                     "current polyline has less than 2 points.");
@@ -156,6 +227,10 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
               return;
             }
 
+            if (startIndex == -1) {
+              startIndex = idx;
+            }
+
             const glm::vec3 position = positionView[idx];
             const glm::dvec4 transformedPosition =
                 rootTransform * nodeTransform * glm::dvec4(position, 1.0);
@@ -166,6 +241,10 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
           }
 
           if (polyline.size() >= 2) {
+            const CesiumUtility::Result<int64_t> featureIdResult =
+                getFeatureId(pFeatureIdSet, model, primitive, startIndex);
+            errors.merge(featureIdResult.errors);
+            polylineFeatureIds.emplace_back(featureIdResult.value.value_or(-1));
             pContent->polylines.emplace_back(std::move(polyline));
           } else if (polyline.size() == 1) {
             errors.emplaceWarning("LINE_STRIP primitive ended with a single "
@@ -212,8 +291,11 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
                                     : std::visit(
                                           CesiumGltf::NumIndicesFromAccessor{},
                                           loopIndicesView);
-            std::vector<CesiumGeospatial::Cartographic> vertices;
 
+            std::vector<CesiumGeospatial::Cartographic> vertices;
+            int64_t startIndex = std::visit(
+                CesiumGltf::IndexFromAccessor{loopIndicesOffset},
+                loopIndicesView);
             for (int64_t j = loopIndicesOffset; j < nextLoopIndicesOffset;
                  j++) {
               int64_t loopIndex =
@@ -232,6 +314,10 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
               vertices.emplace_back(cartographic);
             }
 
+            const CesiumUtility::Result<int64_t> featureIdResult =
+                getFeatureId(pFeatureIdSet, model, primitive, startIndex);
+            errors.merge(featureIdResult.errors);
+            polygonFeatureIds.emplace_back(featureIdResult.value.value_or(-1));
             pContent->polygons.emplace_back(std::move(vertices));
           }
         } else {
@@ -242,7 +328,119 @@ CesiumUtility::Result<VectorRenderContent*> vectorizeModel(
         }
       });
 
-  return {pContent, errors};
+  // Apply default styling if the user did not specify a styling provider.
+  if (pStylingProvider == nullptr) {
+    pContent->pointStyles.resize(
+        pContent->points.size(),
+        &pContent->defaultStyle.point);
+    pContent->polylineStyles.resize(
+        pContent->polylines.size(),
+        &pContent->defaultStyle.line);
+    pContent->polygonStyles.resize(
+        pContent->polygons.size(),
+        &pContent->defaultStyle.polygon);
+    return asyncSystem
+        .createResolvedFuture<CesiumUtility::Result<VectorRenderContent*>>(
+            {pContent, errors});
+  }
+
+  // Apply per-element styling if the user specified a styling provider.
+  return std::move(
+             asyncSystem.all(
+                 pStylingProvider
+                     ->onStylePoints(
+                         asyncSystem,
+                         model,
+                         pointFeatureIds,
+                         pContent->points)
+                     .thenInWorkerThread(
+                         [pContent](
+                             std::vector<std::optional<
+                                 CesiumVectorData::PointStyle>>&& result) {
+                           if (result.size() == 0 ||
+                               result.size() != pContent->points.size()) {
+                             pContent->pointStyles.resize(
+                                 pContent->points.size(),
+                                 &pContent->defaultStyle.point);
+                             return false;
+                           }
+
+                           for (const auto& style : result) {
+                             if (style.has_value()) {
+                               pContent->pointStyles.emplace_back(
+                                   &(*pContent->uniquePointStyles.insert(*style)
+                                          .first));
+                             } else {
+                               pContent->pointStyles.emplace_back(
+                                   &pContent->defaultStyle.point);
+                             }
+                           }
+
+                           return true;
+                         }),
+                 pStylingProvider
+                     ->onStylePolylines(
+                         asyncSystem,
+                         model,
+                         polylineFeatureIds,
+                         pContent->polylines)
+                     .thenInWorkerThread(
+                         [pContent](
+                             std::vector<std::optional<
+                                 CesiumVectorData::LineStyle>>&& result) {
+                           if (result.size() == 0 ||
+                               result.size() != pContent->polylines.size()) {
+                             pContent->polylineStyles.resize(
+                                 pContent->polylines.size(),
+                                 &pContent->defaultStyle.line);
+                             return false;
+                           }
+                           for (const auto& style : result) {
+                             if (style.has_value()) {
+                               pContent->polylineStyles.emplace_back(
+                                   &(*pContent->uniquePolylineStyles
+                                          .insert(*style)
+                                          .first));
+                             } else {
+                               pContent->polylineStyles.emplace_back(
+                                   &pContent->defaultStyle.line);
+                             }
+                           }
+                           return true;
+                         }),
+                 pStylingProvider
+                     ->onStylePolygons(
+                         asyncSystem,
+                         model,
+                         polygonFeatureIds,
+                         pContent->polygons)
+                     .thenInWorkerThread(
+                         [pContent](
+                             std::vector<std::optional<
+                                 CesiumVectorData::PolygonStyle>>&& result) {
+                           if (result.size() == 0 ||
+                               result.size() != pContent->polygons.size()) {
+                             pContent->polygonStyles.resize(
+                                 pContent->polygons.size(),
+                                 &pContent->defaultStyle.polygon);
+                             return false;
+                           }
+                           for (const auto& style : result) {
+                             if (style.has_value()) {
+                               pContent->polygonStyles.emplace_back(&(
+                                   *pContent->uniquePolygonStyles.insert(*style)
+                                        .first));
+                             } else {
+                               pContent->polygonStyles.emplace_back(
+                                   &pContent->defaultStyle.polygon);
+                             }
+                           }
+                           return true;
+                         })))
+      .thenInWorkerThread([pContent, errors = std::move(errors)](
+                              std::tuple<bool, bool, bool>&& /*results*/) {
+        return Result<VectorRenderContent*>({pContent, errors});
+      });
 }
 
 struct LoadRequest {
@@ -311,26 +509,40 @@ public:
           TileLoadResultAndRenderResources{std::move(tileLoadResult), nullptr});
     }
 
-    Result<VectorRenderContent*> vectorizationResult = vectorizeModel(
-        *pModel,
-        tileLoadResult.ellipsoid,
-        transform,
-        this->defaultStyle);
-    if (vectorizationResult.errors.hasErrors()) {
-      if (vectorizationResult.value) {
-        delete *vectorizationResult.value;
-      }
+    return vectorizeModel(
+               asyncSystem,
+               *pModel,
+               tileLoadResult.ellipsoid,
+               transform,
+               this->defaultStyle,
+               this->_pStylingProvider)
+        .thenInWorkerThread([tileLoadResult = std::move(tileLoadResult),
+                             pLogger = this->pLogger](
+                                CesiumUtility::Result<VectorRenderContent*>&&
+                                    vectorizationResult) mutable {
+          if (vectorizationResult.errors.hasErrors()) {
+            if (vectorizationResult.value) {
+              delete *vectorizationResult.value;
+            }
 
-      vectorizationResult.errors.log(
-          this->pLogger,
-          "Errors when vectorizing model:");
-      return asyncSystem.createResolvedFuture(
-          TileLoadResultAndRenderResources{std::move(tileLoadResult), nullptr});
-    }
+            vectorizationResult.errors.log(
+                pLogger,
+                "Errors when vectorizing model:");
+            return TileLoadResultAndRenderResources{
+                std::move(tileLoadResult),
+                nullptr};
+          }
 
-    return asyncSystem.createResolvedFuture(TileLoadResultAndRenderResources{
-        std::move(tileLoadResult),
-        vectorizationResult.value ? *vectorizationResult.value : nullptr});
+          if (!vectorizationResult.errors.warnings.empty()) {
+            vectorizationResult.errors.log(
+                pLogger,
+                "Warnings when vectorizing model:");
+          }
+
+          return TileLoadResultAndRenderResources{
+              std::move(tileLoadResult),
+              vectorizationResult.value ? *vectorizationResult.value : nullptr};
+        });
   }
 
   void* prepareInMainThread(Tile& /*tile*/, void* pLoadThreadResult) override {
@@ -388,11 +600,17 @@ public:
 
   VectorTilesPrepareRendererResources(
       std::shared_ptr<spdlog::logger> pLogger,
-      CesiumVectorData::VectorStyle defaultStyle)
-      : defaultStyle(std::move(defaultStyle)), pLogger(std::move(pLogger)) {}
+      CesiumVectorData::VectorStyle defaultStyle,
+      std::shared_ptr<VectorStylingProvider> pStylingProvider)
+      : defaultStyle(std::move(defaultStyle)),
+        pLogger(std::move(pLogger)),
+        _pStylingProvider(std::move(pStylingProvider)) {}
 
   CesiumVectorData::VectorStyle defaultStyle;
   std::shared_ptr<spdlog::logger> pLogger;
+
+private:
+  std::shared_ptr<VectorStylingProvider> _pStylingProvider;
 };
 
 class VectorTilesRasterOverlayTileProvider final
@@ -596,19 +814,22 @@ private:
                 continue;
               }
 
-              rasterizer.drawPolygon(
-                  pVectorContent->polygons,
-                  pVectorContent->style.polygon);
+              for (size_t i = 0; i < pVectorContent->polygons.size(); i++) {
+                rasterizer.drawPolygon(
+                    {pVectorContent->polygons[i]},
+                    *pVectorContent->polygonStyles[i]);
+              }
 
-              for (const std::vector<CesiumGeospatial::Cartographic>& polyline :
-                   pVectorContent->polylines) {
-                rasterizer.drawPolyline(polyline, pVectorContent->style.line);
+              for (size_t i = 0; i < pVectorContent->polylines.size(); i++) {
+                rasterizer.drawPolyline(
+                    pVectorContent->polylines[i],
+                    *pVectorContent->polylineStyles[i]);
               }
 
               if (!pVectorContent->points.empty()) {
                 rasterizer.drawPoints(
                     pVectorContent->points,
-                    pVectorContent->style.point);
+                    pVectorContent->pointStyles);
               }
             }
 
@@ -637,7 +858,8 @@ public:
         _pPrepareRendererResources(
             std::make_shared<VectorTilesPrepareRendererResources>(
                 parameters.externals.pLogger,
-                vectorOptions.defaultStyle)) {
+                vectorOptions.defaultStyle,
+                vectorOptions.pStylingProvider)) {
     const RasterOverlayOptions& overlayOptions =
         (parameters.pOwner ? parameters.pOwner : pCreator)->getOptions();
     this->_options.ellipsoid = overlayOptions.ellipsoid;

@@ -10,4 +10,8 @@ uint32_t Color::toRgba32() const {
 
 Color::Color(uint8_t r_, uint8_t g_, uint8_t b_, uint8_t a_)
     : r(r_), g(g_), b(b_), a(a_) {}
+bool Color::operator==(const Color& rhs) const {
+  return this->r == rhs.r && this->g == rhs.g && this->b == rhs.b &&
+         this->a == rhs.a;
+}
 } // namespace CesiumUtility
