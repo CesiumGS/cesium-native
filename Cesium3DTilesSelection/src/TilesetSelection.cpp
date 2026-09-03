@@ -102,6 +102,10 @@ struct CullResult {
   bool shouldVisit = true;
   // whether this tile was culled (Note: we might still want to visit it)
   bool culled = false;
+  // largest screen-space error among the frustums that can see this tile, or
+  // nullopt if none of them can. A frustum that can't see the tile has no
+  // opinion on how finely it needs to be refined.
+  std::optional<double> visibleScreenSpaceError;
 };
 
 enum class VisitTileAction { Render, Refine };
@@ -392,47 +396,43 @@ void frustumCull(
   }
 
   const Ellipsoid& ellipsoid = context.options.ellipsoid;
+  const bool renderTilesUnderCamera = context.options.renderTilesUnderCamera;
   const std::vector<ViewState>& frustums = frameState.frustums;
+  const auto& distances = context.scratchDistances;
+  CESIUM_ASSERT(frustums.size() == distances.size());
 
-  if (cullWithChildrenBounds) {
-    // Frustum cull using the children's bounds.
-    if (std::any_of(
-            frustums.begin(),
-            frustums.end(),
-            [&ellipsoid,
-             children = tile.getChildren(),
-             renderTilesUnderCamera = context.options.renderTilesUnderCamera](
-                const ViewState& frustum) {
-              for (const Tile& child : children) {
-                if (isVisibleFromCamera(
-                        frustum,
-                        child.getBoundingVolume(),
-                        ellipsoid,
-                        renderTilesUnderCamera)) {
-                  return true;
-                }
-              }
-              return false;
-            })) {
-      // At least one child is visible in at least one frustum, so don't cull.
-      return;
+  for (size_t i = 0; i < frustums.size(); ++i) {
+    bool visible = false;
+    if (cullWithChildrenBounds) {
+      for (const Tile& child : tile.getChildren()) {
+        if (isVisibleFromCamera(
+                frustums[i],
+                child.getBoundingVolume(),
+                ellipsoid,
+                renderTilesUnderCamera)) {
+          visible = true;
+          break;
+        }
+      }
+    } else {
+      visible = isVisibleFromCamera(
+          frustums[i],
+          tile.getBoundingVolume(),
+          ellipsoid,
+          renderTilesUnderCamera);
     }
-    // Frustum cull based on the actual tile's bounds.
-  } else if (std::any_of(
-                 frustums.begin(),
-                 frustums.end(),
-                 [&ellipsoid,
-                  &boundingVolume = tile.getBoundingVolume(),
-                  renderTilesUnderCamera =
-                      context.options.renderTilesUnderCamera](
-                     const ViewState& frustum) {
-                   return isVisibleFromCamera(
-                       frustum,
-                       boundingVolume,
-                       ellipsoid,
-                       renderTilesUnderCamera);
-                 })) {
-    // The tile is visible in at least one frustum, so don't cull.
+
+    if (visible) {
+      const double sse = frustums[i].computeScreenSpaceError(
+          tile.getGeometricError(),
+          distances[i]);
+      cullResult.visibleScreenSpaceError = glm::max(
+          cullResult.visibleScreenSpaceError.value_or(0.0),
+          sse);
+    }
+  }
+
+  if (cullResult.visibleScreenSpaceError) {
     return;
   }
 
@@ -1134,7 +1134,13 @@ TraversalDetails visitTileIfNeeded(
     ++result.culledTilesVisited;
   }
 
-  double tileSse = computeSse(context, frameState, tile);
+  // Nothing saw this tile, yet we're visiting it (culling disabled,
+  // forbidHoles, an unconditionally refined root). Reporting 0.0 would meet
+  // every threshold and bypass culledScreenSpaceError, so fall back to the
+  // error over every frustum.
+  double tileSse = cullResult.visibleScreenSpaceError
+                       ? *cullResult.visibleScreenSpaceError
+                       : computeSse(context, frameState, tile);
   auto minGeoErrorThresholdIt = std::min_element(
       frameState.frustums.begin(),
       frameState.frustums.end(),
