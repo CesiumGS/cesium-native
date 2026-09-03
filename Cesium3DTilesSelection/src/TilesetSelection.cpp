@@ -102,15 +102,11 @@ struct CullResult {
   bool shouldVisit = true;
   // whether this tile was culled (Note: we might still want to visit it)
   bool culled = false;
-  // bit i is set if frustum i can see this tile, or one of its children when
-  // culling with children bounds. Frustums past bit 63 are treated as seeing
-  // every tile.
-  uint64_t visibleFrustums = 0;
+  // largest screen-space error among the frustums that can see this tile, or
+  // nullopt if none of them can. A frustum that can't see the tile has no
+  // opinion on how finely it needs to be refined.
+  std::optional<double> visibleScreenSpaceError;
 };
-
-bool isFrustumVisible(uint64_t visibleFrustums, size_t i) noexcept {
-  return i >= 64 || (visibleFrustums & (uint64_t(1) << i)) != 0;
-}
 
 enum class VisitTileAction { Render, Refine };
 
@@ -318,23 +314,12 @@ void addTileToRender(ViewUpdateResult& result, Tile& tile, double sse) {
 double computeSse(
     const TileSelectionContext& context,
     const TilesetFrameState& frameState,
-    const Tile& tile,
-    uint64_t visibleFrustums) noexcept {
+    const Tile& tile) noexcept {
+  double largestSse = 0.0;
   const auto& frustums = frameState.frustums;
   const auto& distances = context.scratchDistances;
   CESIUM_ASSERT(frustums.size() == distances.size());
-
-  // Nothing saw this tile, yet we're visiting it (culling disabled,
-  // forbidHoles, an unconditionally refined root). Gating to 0.0 would meet
-  // every threshold and bypass culledScreenSpaceError, so fold over them all.
-  const bool gated = visibleFrustums != 0;
-
-  double largestSse = 0.0;
   for (size_t i = 0; i < frustums.size(); ++i) {
-    // A frustum that can't see this tile has no opinion on its refinement.
-    if (gated && !isFrustumVisible(visibleFrustums, i)) {
-      continue;
-    }
     const double sse = frustums[i].computeScreenSpaceError(
         tile.getGeometricError(),
         distances[i]);
@@ -413,8 +398,9 @@ void frustumCull(
   const Ellipsoid& ellipsoid = context.options.ellipsoid;
   const bool renderTilesUnderCamera = context.options.renderTilesUnderCamera;
   const std::vector<ViewState>& frustums = frameState.frustums;
+  const auto& distances = context.scratchDistances;
+  CESIUM_ASSERT(frustums.size() == distances.size());
 
-  bool anyVisible = false;
   for (size_t i = 0; i < frustums.size(); ++i) {
     bool visible = false;
     if (cullWithChildrenBounds) {
@@ -437,14 +423,16 @@ void frustumCull(
     }
 
     if (visible) {
-      anyVisible = true;
-      if (i < 64) {
-        cullResult.visibleFrustums |= uint64_t(1) << i;
-      }
+      const double sse = frustums[i].computeScreenSpaceError(
+          tile.getGeometricError(),
+          distances[i]);
+      cullResult.visibleScreenSpaceError = glm::max(
+          cullResult.visibleScreenSpaceError.value_or(0.0),
+          sse);
     }
   }
 
-  if (anyVisible) {
+  if (cullResult.visibleScreenSpaceError) {
     return;
   }
 
@@ -1146,8 +1134,13 @@ TraversalDetails visitTileIfNeeded(
     ++result.culledTilesVisited;
   }
 
-  double tileSse =
-      computeSse(context, frameState, tile, cullResult.visibleFrustums);
+  // Nothing saw this tile, yet we're visiting it (culling disabled,
+  // forbidHoles, an unconditionally refined root). Reporting 0.0 would meet
+  // every threshold and bypass culledScreenSpaceError, so fall back to the
+  // error over every frustum.
+  double tileSse = cullResult.visibleScreenSpaceError
+                       ? *cullResult.visibleScreenSpaceError
+                       : computeSse(context, frameState, tile);
   auto minGeoErrorThresholdIt = std::min_element(
       frameState.frustums.begin(),
       frameState.frustums.end(),

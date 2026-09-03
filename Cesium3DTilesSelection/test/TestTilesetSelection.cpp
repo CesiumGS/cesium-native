@@ -280,38 +280,6 @@ ViewUpdateResult selectAfterLoading(
   return result;
 }
 
-// Every recorded error must be one of the two views' own, and each view must
-// drive at least one tile: if one view drives all of them, the other's
-// visibility is being ignored.
-void checkErrorsAreAttributableToBothViews(
-    const ViewUpdateResult& result,
-    const ViewState& first,
-    const ViewState& second) {
-  REQUIRE(
-      result.tileScreenSpaceErrorThisFrame.size() ==
-      result.tilesToRenderThisFrame.size());
-  REQUIRE(result.maxDepthVisited > 4);
-
-  size_t firstDriven = 0;
-  size_t secondDriven = 0;
-  for (size_t i = 0; i < result.tilesToRenderThisFrame.size(); ++i) {
-    const Tile& tile = *result.tilesToRenderThisFrame[i];
-    const double firstSse = screenSpaceErrorFor(first, tile);
-    const double secondSse = screenSpaceErrorFor(second, tile);
-    if (firstSse == secondSse) {
-      continue;
-    }
-
-    const double recorded = result.tileScreenSpaceErrorThisFrame[i];
-    CHECK((recorded == firstSse || recorded == secondSse));
-    firstDriven += recorded == firstSse;
-    secondDriven += recorded == secondSse;
-  }
-
-  REQUIRE(firstDriven > 0);
-  REQUIRE(secondDriven > 0);
-}
-
 } // namespace
 
 TEST_CASE("A view cannot drive refinement of tiles it can't see") {
@@ -322,32 +290,79 @@ TEST_CASE("A view cannot drive refinement of tiles it can't see") {
   const ViewState wide = makeViewState(40.0);
   const ViewState narrow = makeViewState(1.0);
 
-  checkErrorsAreAttributableToBothViews(
-      selectAfterLoading({wide, narrow}, options),
-      wide,
-      narrow);
+  const ViewUpdateResult result = selectAfterLoading({wide, narrow}, options);
+  REQUIRE(
+      result.tileScreenSpaceErrorThisFrame.size() ==
+      result.tilesToRenderThisFrame.size());
+  REQUIRE(result.maxDepthVisited > 4);
+
+  size_t drivenByWide = 0;
+  size_t drivenByNarrow = 0;
+  for (size_t i = 0; i < result.tilesToRenderThisFrame.size(); ++i) {
+    const Tile& tile = *result.tilesToRenderThisFrame[i];
+
+    // Both views sit at the same position, so the narrow one always computes
+    // the larger error. A tile it cannot see must still report the wide view's
+    // smaller error.
+    const double wideSse = screenSpaceErrorFor(wide, tile);
+    const double narrowSse = screenSpaceErrorFor(narrow, tile);
+    if (wideSse == narrowSse) {
+      continue;
+    }
+    REQUIRE(narrowSse > wideSse);
+
+    const double actualSse = result.tileScreenSpaceErrorThisFrame[i];
+    CHECK((actualSse == wideSse || actualSse == narrowSse));
+    drivenByWide += actualSse == wideSse;
+    drivenByNarrow += actualSse == narrowSse;
+  }
+
+  REQUIRE(drivenByWide > 0);
+  REQUIRE(drivenByNarrow > 0);
 }
 
 TEST_CASE("Each view's screen-space error uses that view's own distance") {
-  // Differing position and field of view, so pairing one view with the other's
-  // distance produces a value neither view could have reported.
   TilesetOptions options;
   options.maximumScreenSpaceError = 16.0;
   options.renderTilesUnderCamera = false;
 
+  // Differing position and field of view, so pairing one view with the other's
+  // distance produces a value neither view could have reported.
   const ViewState here = makeViewState(40.0);
   const ViewState elsewhere = makeViewState(
       6.0,
       false,
       Cartographic{Math::degreesToRadians(5.0), 0.0, 2'000'000.0});
 
-  checkErrorsAreAttributableToBothViews(
-      selectAfterLoading({here, elsewhere}, options),
-      here,
-      elsewhere);
+  const ViewUpdateResult result =
+      selectAfterLoading({here, elsewhere}, options);
+  REQUIRE(
+      result.tileScreenSpaceErrorThisFrame.size() ==
+      result.tilesToRenderThisFrame.size());
+  REQUIRE(result.maxDepthVisited > 4);
+
+  size_t drivenByHere = 0;
+  size_t drivenByElsewhere = 0;
+  for (size_t i = 0; i < result.tilesToRenderThisFrame.size(); ++i) {
+    const Tile& tile = *result.tilesToRenderThisFrame[i];
+    const double hereSse = screenSpaceErrorFor(here, tile);
+    const double elsewhereSse = screenSpaceErrorFor(elsewhere, tile);
+    if (hereSse == elsewhereSse) {
+      continue;
+    }
+
+    const double actualSse = result.tileScreenSpaceErrorThisFrame[i];
+    CHECK((actualSse == hereSse || actualSse == elsewhereSse));
+    drivenByHere += actualSse == hereSse;
+    drivenByElsewhere += actualSse == elsewhereSse;
+  }
+
+  REQUIRE(drivenByHere > 0);
+  REQUIRE(drivenByElsewhere > 0);
 }
 
-TEST_CASE("Culled tiles keep their ungated screen-space error") {
+TEST_CASE("Culled tiles keep their maximum screen-space error across multiple "
+          "frustums") {
   TilesetOptions options;
   options.maximumScreenSpaceError = 16.0;
   options.renderTilesUnderCamera = false;
@@ -366,11 +381,11 @@ TEST_CASE("Culled tiles keep their ungated screen-space error") {
 
   for (size_t i = 0; i < result.tilesToRenderThisFrame.size(); ++i) {
     const Tile& tile = *result.tilesToRenderThisFrame[i];
-    const double ungated = glm::max(
+    const double maximumSse = glm::max(
         screenSpaceErrorFor(wide, tile),
         screenSpaceErrorFor(narrow, tile));
-    CHECK(ungated > 0.0);
-    CHECK(result.tileScreenSpaceErrorThisFrame[i] == ungated);
+    CHECK(maximumSse > 0.0);
+    CHECK(result.tileScreenSpaceErrorThisFrame[i] == maximumSse);
   }
 }
 
