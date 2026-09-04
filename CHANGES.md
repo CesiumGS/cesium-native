@@ -9,6 +9,7 @@
 ##### Additions :tada:
 
 - Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added a `CESIUM_DISABLE_SPZ` CMake option to build Cesium Native without Niantic SPZ support.
 
 ### v0.65.0 - 2026-10-01
 

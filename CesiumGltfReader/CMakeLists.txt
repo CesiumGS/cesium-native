@@ -5,6 +5,9 @@ cesium_glob_files(CESIUM_GLTF_READER_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
     ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.cpp
 )
+if(CESIUM_DISABLE_SPZ)
+    list(REMOVE_ITEM CESIUM_GLTF_READER_SOURCES ${CMAKE_CURRENT_LIST_DIR}/src/decodeSpz.cpp)
+endif()
 cesium_glob_files(CESIUM_GLTF_READER_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/*.h
     ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.h
@@ -62,5 +65,13 @@ target_link_libraries(CesiumGltfReader
     PRIVATE
         meshoptimizer::meshoptimizer
         modp_b64::modp_b64
-        spz::spz
+)
+
+if(NOT CESIUM_DISABLE_SPZ)
+    target_link_libraries(CesiumGltfReader PRIVATE spz::spz)
+endif()
+
+target_compile_definitions(
+    CesiumGltfReader
+    PRIVATE $<$<BOOL:${CESIUM_DISABLE_SPZ}>:CESIUM_DISABLE_SPZ>
 )
