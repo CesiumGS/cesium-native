@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - The `CesiumVectorOverlays::VectorTilesRasterOverlay` now supports styling via specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
+- Added a `CESIUM_DISABLE_SPZ` CMake option to build Cesium Native without Niantic SPZ support.
 
 ### v0.64.0 - 2026-09-01
 
