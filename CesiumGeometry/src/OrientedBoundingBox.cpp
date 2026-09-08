@@ -11,6 +11,8 @@
 #include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
 
+#include <cmath>
+
 namespace CesiumGeometry {
 CullingResult
 OrientedBoundingBox::intersectPlane(const Plane& plane) const noexcept {
@@ -225,4 +227,53 @@ OrientedBoundingBox::fromSphere(const BoundingSphere& sphere) noexcept {
   return OrientedBoundingBox(center, halfAxes);
 }
 
+bool intersects(const OrientedBoundingBox& b0, const OrientedBoundingBox& b1) {
+  const OrientedBoundingBox* boxes[2] = {&b0, &b1};
+  const glm::dvec3 T = b1.getCenter() - b0.getCenter();
+  const glm::dvec3 lengths[2] = {b0.getLengths() / 2.0, b1.getLengths() / 2.0};
+  // Normalized axes
+  glm::dmat3 axes[2] = {b0.getHalfAxes(), b1.getHalfAxes()};
+  for (int j = 0; j < 2; ++j) {
+    for (int i = 0; i < 3; ++i) {
+      axes[j][i] = axes[j][i] / lengths[j][i];
+    }
+  }
+  auto faceTest = [&](int box, int face, int other) {
+    const auto& otherHalfAxes = boxes[other]->getHalfAxes();
+    double projectedBoxLengths = lengths[box][face];
+    for (int i = 0; i < 3; ++i) {
+      projectedBoxLengths +=
+          std::abs(glm::dot(otherHalfAxes[i], axes[box][face]));
+    }
+    return std::abs(glm::dot(T, axes[box][face])) > projectedBoxLengths;
+  };
+  // Test the three face planes of the boxes against each box
+  for (int box = 0; box < 2; ++box) {
+    for (int face = 0; face < 3; ++face) {
+      if (faceTest(box, face, (box + 1) % 2)) {
+        return false;
+      }
+    }
+  }
+  // Test planes made by edges of box 0 and box 1
+  auto edgeTest = [&](int edge0, int edge1) {
+    glm::dvec3 planeNormal = glm::cross(axes[0][edge0], axes[1][edge1]);
+    double projectedBoxLengths = 0.0;
+    for (int box = 0; box < 2; ++box) {
+      for (int i = 0; i < 3; ++i) {
+        projectedBoxLengths +=
+            std::abs(glm::dot(boxes[box]->getHalfAxes()[i], planeNormal));
+      }
+    }
+    return std::abs(glm::dot(T, planeNormal)) > projectedBoxLengths;
+  };
+  for (int a = 0; a < 3; ++a) {
+    for (int b = a; b < 3; ++b) {
+      if (edgeTest(a, b)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
 } // namespace CesiumGeometry

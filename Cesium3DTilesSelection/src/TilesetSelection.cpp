@@ -326,6 +326,15 @@ double computeSse(
   return largestSse;
 }
 
+bool meetsGeometricErrorThreshold(
+    const TileSelectionContext& context,
+    double geometricErrorThreshold,
+    bool culled,
+    const Tile& tile) {
+  return culled ? !context.options.enforceCulledScreenSpaceError
+                : tile.getGeometricError() < geometricErrorThreshold;
+}
+
 bool meetsSseThreshold(
     const TileSelectionContext& context,
     double sse,
@@ -459,7 +468,8 @@ void fogCull(
   CESIUM_ASSERT(distances.size() == frustums.size());
   bool isFogCulled = true;
   for (size_t i = 0; i < frustums.size(); ++i) {
-    if (isVisibleInFog(distances[i], fogDensities[i])) {
+    if (frustums[i].getViewportSize().y == 0.0 ||
+        isVisibleInFog(distances[i], fogDensities[i])) {
       isFogCulled = false;
       break;
     }
@@ -1125,8 +1135,35 @@ TraversalDetails visitTileIfNeeded(
   }
 
   double tileSse = computeSse(context, frameState, tile);
-  bool meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
-
+  auto minGeoErrorThresholdIt = std::min_element(
+      frameState.frustums.begin(),
+      frameState.frustums.end(),
+      [](const ViewState& a, const ViewState& b) {
+        std::optional<double> aThreshold = a.getGeometricErrorThreshold();
+        std::optional<double> bThreshold = b.getGeometricErrorThreshold();
+        if (!aThreshold && !bThreshold) {
+          return false;
+        }
+        if (!aThreshold) {
+          return true;
+        }
+        if (!bThreshold) {
+          return false;
+        }
+        return *aThreshold < *bThreshold;
+      });
+  bool meetsSse = false;
+  std::optional<double> geometricErrorThreshold =
+      minGeoErrorThresholdIt->getGeometricErrorThreshold();
+  if (geometricErrorThreshold) {
+    meetsSse = meetsGeometricErrorThreshold(
+        context,
+        *geometricErrorThreshold,
+        cullResult.culled,
+        tile);
+  } else {
+    meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
+  }
   TraversalDetails details = visitTile(
       context,
       frameState,

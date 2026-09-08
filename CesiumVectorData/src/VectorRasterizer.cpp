@@ -395,6 +395,51 @@ void VectorRasterizer::drawPoints(
       style);
 }
 
+void VectorRasterizer::drawPoints(
+    const std::vector<CesiumGeospatial::Cartographic>& points,
+    const std::vector<const CesiumVectorData::PointStyle*>& styles) {
+  if (this->_finalized) {
+    return;
+  }
+
+  // styles.size() should equal points.size(), but we will only draw as many
+  // points as we have styles for.
+  const size_t numPoints = std::min(points.size(), styles.size());
+
+  for (size_t i = 0; i < numPoints; i++) {
+    if (styles[i] == nullptr) {
+      continue;
+    }
+
+    BLPoint point = radiansToPoint(
+        points[i].longitude,
+        points[i].latitude,
+        this->_bounds,
+        this->_context);
+    // clang-tidy does not understand that we *are* in fact checking these
+    // optionals
+    if (styles[i]->fill) {
+      // NOLINTBEGIN(bugprone-unchecked-optional-access)
+      this->_context.fillCircle(
+          BLCircle(point.x, point.y, styles[i]->radius),
+          BLRgba32(styles[i]
+                       ->fill->getColor(seedForObject(points[i], 17))
+                       .toRgba32()));
+      // NOLINTEND(bugprone-unchecked-optional-access)
+    }
+
+    if (styles[i]->outline) {
+      // NOLINTBEGIN(bugprone-unchecked-optional-access)
+      this->_context.strokeCircle(
+          BLCircle(point.x, point.y, styles[i]->radius),
+          BLRgba32(styles[i]
+                       ->outline->getColor(seedForObject(points[i], 31))
+                       .toRgba32()));
+      // NOLINTEND(bugprone-unchecked-optional-access)
+    }
+  }
+}
+
 void VectorRasterizer::drawGeoJsonObject(
     const GeoJsonObject& geoJsonObject,
     const VectorStyle& style) {
