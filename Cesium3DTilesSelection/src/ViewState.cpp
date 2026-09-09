@@ -212,9 +212,12 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
   return std::visit(Operation{*this}, boundingVolume);
 }
 
-double ViewState::computeScreenSpaceError(const Tile& tile, double distance) const noexcept {
+double ViewState::computeScreenSpaceError(
+    const Tile& tile,
+    double distance,
+    uint32_t depth) const noexcept {
   if (_sseFunctor) {
-    return this->_sseFunctor(tile, distance);
+    return this->_sseFunctor(tile, distance, depth);
   } else {
     return this->computeScreenSpaceError(tile.getGeometricError(), distance);
   }

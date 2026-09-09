@@ -133,6 +133,32 @@ public:
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
+   * @brief Creates a new instance of a view state from a bounding volume
+   * associated with a geographic area, as opposed to a viewing projection. This
+   * constructor does not specify a viewport, and so doesn't use Screen Space
+   * Error (SSE) as a selection criteria. Instead, a user-supplied functor
+   * calculates a measure used as a standin for SSE.
+   *
+   * @param boundingVolume The geographic viewing volume
+   * @param geometricErrorThreshold Value used for selection as an alternative
+   * to screen space error.
+   * @param functor measure function with signature (double)(const Tile&, double
+   * distance, uint32_t depth)
+   * @param ellipsoid The ellipsoid that will be used to compute the
+   * {@link ViewState#getPositionCartographic cartographic position} and other
+   * parameters for tile selection.
+   */
+  template <typename F>
+  ViewState(
+      const BoundingVolume& boundingVolume,
+      double geometricErrorThreshold,
+      F&& functor,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID)
+      : ViewState(boundingVolume, geometricErrorThreshold, ellipsoid) {
+    this->setSSEFunctor(functor);
+  }
+
+  /**
    * @brief Gets the position of the camera in Earth-centered, Earth-fixed
    * coordinates.
    */
@@ -246,15 +272,31 @@ public:
   double computeScreenSpaceError(double geometricError, double distance)
       const noexcept;
 
-  double computeScreenSpaceError(const Tile& tile, double distance)
-      const noexcept;
+  /**
+   * @brief Computes the screen space error from a given geometric error
+   *
+   * Computes the screen space error (SSE) that results from the given
+   * geometric error, when it is viewed with this camera from the given
+   * distance.
+   *
+   * The given distance will be clamped to a small positive value if
+   * it is negative or too close to zero.
+   *
+   * @param tile the tile
+   * @param distance The viewing distance
+   * @param depth level in the tileset traversal
+   * @return The screen space error
+   */
+  double computeScreenSpaceError(
+      const Tile& tile,
+      double distance,
+      uint32_t depth) const noexcept;
 
-  template<typename T>
-      void setSSEFunctor(T&& fn) {
+  template <typename T> void setSSEFunctor(T&& fn) {
     _sseFunctor = std::forward(fn);
   }
-  
- private:
+
+private:
   glm::dvec3 _position;
   glm::dvec3 _direction;
   glm::dvec2 _viewportSize;
@@ -266,7 +308,8 @@ public:
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
   std::optional<double> _geometricErrorThreshold;
-  std::function<double (const Tile& tile, double distance)> _sseFunctor;
+  std::function<double(const Tile& tile, double distance, uint32_t depth)>
+      _sseFunctor;
 };
 
 } // namespace Cesium3DTilesSelection
