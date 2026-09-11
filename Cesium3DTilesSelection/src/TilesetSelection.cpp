@@ -328,11 +328,19 @@ double computeSse(
 
 bool meetsGeometricErrorThreshold(
     const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     double geometricErrorThreshold,
     bool culled,
     const Tile& tile) {
-  return culled ? !context.options.enforceCulledScreenSpaceError
-                : tile.getGeometricError() < geometricErrorThreshold;
+  if (culled) {
+    return !context.options.enforceCulledScreenSpaceError;
+  }
+  return std::any_of(
+      frameState.frustums.begin(),
+      frameState.frustums.end(),
+      [&](const ViewState& viewState) {
+        return viewState.meetsErrorThreshold(geometricErrorThreshold, tile);
+      });
 }
 
 bool meetsSseThreshold(
@@ -1158,7 +1166,8 @@ TraversalDetails visitTileIfNeeded(
   if (geometricErrorThreshold) {
     meetsSse = meetsGeometricErrorThreshold(
         context,
-        *geometricErrorThreshold,
+        frameState,
+        *geometricErrorThreshold != 0.0 ? *geometricErrorThreshold : tileSse,
         cullResult.culled,
         tile);
   } else {

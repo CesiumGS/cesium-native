@@ -216,8 +216,11 @@ double ViewState::computeScreenSpaceError(
     const Tile& tile,
     double distance,
     uint32_t depth) const noexcept {
-  if (_sseFunctor) {
-    return this->_sseFunctor(tile, distance, depth);
+  if (this->_errorMeasureHandler) {
+    return this->_errorMeasureHandler->computeErrorMeasure(
+        tile,
+        distance,
+        depth);
   } else {
     return this->computeScreenSpaceError(tile.getGeometricError(), distance);
   }
@@ -260,5 +263,13 @@ double ViewState::getHorizontalFieldOfView() const noexcept {
 
 double ViewState::getVerticalFieldOfView() const noexcept {
   return std::atan(-1.0 / this->_projectionMatrix[1][1]) * 2.0;
+}
+
+bool ViewState::meetsErrorThreshold(double errorMeasure, const Tile& tile)
+    const {
+  if (this->_errorMeasureHandler) {
+    return this->_errorMeasureHandler->meetsErrorThreshold(errorMeasure, tile);
+  }
+  return tile.getGeometricError() < errorMeasure;
 }
 } // namespace Cesium3DTilesSelection
