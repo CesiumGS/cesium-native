@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - The `CesiumVectorOverlays::VectorTilesRasterOverlay` now supports styling via specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
+- `Cesium3DTilesSelection::ViewState` can be supplied an object that computes tile error measure.
 
 ### v0.64.0 - 2026-09-01
 
