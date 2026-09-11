@@ -5,6 +5,7 @@
 ##### Additions :tada:
 
 - The `CesiumVectorOverlays::VectorTilesRasterOverlay` now supports styling via specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
+- Fixed potential crashes when using the glTF modifier on a tileset also using raster overlays (such as cartographic polygons).
 
 ### v0.64.0 - 2026-09-01
 

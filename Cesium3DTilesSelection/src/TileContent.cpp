@@ -20,6 +20,7 @@ TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
       _modifierState{GltfModifierState::Idle},
       _modifiedModel{},
       _pModifiedRenderResources(nullptr),
+      _activeUpSamplingTaskCount(0),
       _rasterOverlayDetails{},
       _credits{},
       _lodTransitionFadePercentage{0.0f} {}
@@ -72,6 +73,7 @@ void TileRenderContent::resetModifiedModelAndRenderResources() noexcept {
 
 void TileRenderContent::replaceWithModifiedModel() noexcept {
   CESIUM_ASSERT(this->_modifiedModel);
+  CESIUM_ASSERT(!this->isBeingUpSampled());
   if (this->_modifiedModel) {
     this->_model = std::move(*this->_modifiedModel);
     // reset after move because this is tested for nullopt in
@@ -80,6 +82,19 @@ void TileRenderContent::replaceWithModifiedModel() noexcept {
     this->_pRenderResources = this->_pModifiedRenderResources;
     this->_pModifiedRenderResources = nullptr;
   }
+}
+
+bool TileRenderContent::isBeingUpSampled() const noexcept {
+  return this->_activeUpSamplingTaskCount > 0;
+}
+
+void TileRenderContent::incrementUpSamplingTaskCount() const noexcept {
+  this->_activeUpSamplingTaskCount++;
+}
+
+void TileRenderContent::decrementUpSamplingTaskCount() const noexcept {
+  CESIUM_ASSERT(this->_activeUpSamplingTaskCount > 0);
+  this->_activeUpSamplingTaskCount--;
 }
 
 const RasterOverlayDetails&
