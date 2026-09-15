@@ -1,5 +1,6 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/GeneralCullingVolume.h>
+#include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
@@ -212,6 +213,20 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
 }
 
 double ViewState::computeScreenSpaceError(
+    const Tile& tile,
+    double distance,
+    uint32_t depth) const noexcept {
+  if (this->_errorMeasureHandler) {
+    return this->_errorMeasureHandler->computeErrorMeasure(
+        tile,
+        distance,
+        depth);
+  } else {
+    return this->computeScreenSpaceError(tile.getGeometricError(), distance);
+  }
+}
+
+double ViewState::computeScreenSpaceError(
     double geometricError,
     double distance) const noexcept {
   // If the view state is constructed with a geometric error threshold, then
@@ -248,5 +263,13 @@ double ViewState::getHorizontalFieldOfView() const noexcept {
 
 double ViewState::getVerticalFieldOfView() const noexcept {
   return std::atan(-1.0 / this->_projectionMatrix[1][1]) * 2.0;
+}
+
+bool ViewState::meetsErrorThreshold(double errorMeasure, const Tile& tile)
+    const {
+  if (this->_errorMeasureHandler) {
+    return this->_errorMeasureHandler->meetsErrorThreshold(errorMeasure, tile);
+  }
+  return tile.getGeometricError() < errorMeasure;
 }
 } // namespace Cesium3DTilesSelection

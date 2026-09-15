@@ -13,9 +13,44 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+#include <functional>
+#include <memory>
 #include <optional>
+#include <utility>
 
 namespace Cesium3DTilesSelection {
+
+class Tile;
+
+/**
+ * @brief class for customizing calculation and comparison of the selection
+ * measure for tiles. Usually this value is the screen space error, but it be
+ * another criteria such as a fixed geometric error or the depth of a tile in
+ * the tileset.
+ */
+class CESIUM3DTILESSELECTION_API ErrorMeasureHandler {
+public:
+  /**
+   * @brief compute the error measure, a generalization of screen space error.
+   * @param tile the tile being tested
+   * @param distance distance from the ViewState's position to the tile
+   * @param depth the depth (level) of the tile in the tileset.
+   * @return the error measure
+   */
+  virtual double computeErrorMeasure(
+      const Tile& tile,
+      double distance,
+      uint32_t depth) const = 0;
+  /**
+   * @brief Test if a computed error measure for a tile meets a minimum
+   * criteria.
+   * @param errorMeasure the previously computed error measure for a tile
+   * @param tile the tile
+   * @return true if the error measure meets the threshold.
+   */
+  virtual bool
+  meetsErrorThreshold(double errorMeasure, const Tile& tile) const = 0;
+};
 
 /**
  * @brief The state of the view that is used during the traversal of a tileset.
@@ -128,6 +163,31 @@ public:
       const BoundingVolume& boundingVolume,
       double geometricErrorThreshold,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  /**
+   * @brief Creates a new instance of a view state from a bounding volume
+   * associated with a geographic area, as opposed to a viewing projection. This
+   * constructor does not specify a viewport, and so doesn't use Screen Space
+   * Error (SSE) as a selection criteria. Instead, a user-supplied functor
+   * object calculates a measure used as a standin for SSE.
+   *
+   * @param boundingVolume The geographic viewing volume
+   * @param geometricErrorThreshold Value used for selection as an alternative
+   * to screen space error.
+   * @param functor `std::shared_ptr` to object that implements measure
+   * calculation and comparison.
+   * @param ellipsoid The ellipsoid that will be used to compute the
+   * {@link ViewState#getPositionCartographic cartographic position} and other
+   * parameters for tile selection.
+   */
+  ViewState(
+      const BoundingVolume& boundingVolume,
+      double geometricErrorThreshold,
+      std::shared_ptr<ErrorMeasureHandler> errorMeasureHandler,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID)
+      : ViewState(boundingVolume, geometricErrorThreshold, ellipsoid) {
+    this->_errorMeasureHandler = std::move(errorMeasureHandler);
+  }
 
   /**
    * @brief Gets the position of the camera in Earth-centered, Earth-fixed
@@ -243,6 +303,36 @@ public:
   double computeScreenSpaceError(double geometricError, double distance)
       const noexcept;
 
+  /**
+   * @brief Computes the screen space error from a given geometric error
+   *
+   * Computes the screen space error (SSE) that results from the given
+   * geometric error, when it is viewed with this camera from the given
+   * distance.
+   *
+   * The given distance will be clamped to a small positive value if
+   * it is negative or too close to zero.
+   *
+   * @param tile the tile
+   * @param distance The viewing distance
+   * @param depth level in the tileset traversal
+   * @return The screen space error
+   */
+  double computeScreenSpaceError(
+      const Tile& tile,
+      double distance,
+      uint32_t depth) const noexcept;
+
+  /**
+   * @brief Tests whether an fixed error measure meets the threshold test. This
+   * calles the error measure functor if there is one; otherwise, it uses the
+   * fixed geometric error assigned to this ViewState.
+   * @param errorMeasure the computed error measure
+   * @param tile the tile
+   * @return true if the error measure is satisfied for this tile.
+   */
+  bool meetsErrorThreshold(double errorMeasure, const Tile& tile) const;
+
 private:
   glm::dvec3 _position;
   glm::dvec3 _direction;
@@ -255,6 +345,7 @@ private:
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
   std::optional<double> _geometricErrorThreshold;
+  std::shared_ptr<ErrorMeasureHandler> _errorMeasureHandler;
 };
 
 } // namespace Cesium3DTilesSelection

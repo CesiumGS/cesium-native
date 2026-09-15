@@ -310,15 +310,15 @@ void addTileToRender(ViewUpdateResult& result, Tile& tile, double sse) {
 double computeSse(
     const TileSelectionContext& context,
     const TilesetFrameState& frameState,
-    const Tile& tile) noexcept {
+    const Tile& tile,
+    uint32_t depth) noexcept {
   double largestSse = 0.0;
   const auto& frustums = frameState.frustums;
   const auto& distances = context.scratchDistances;
   CESIUM_ASSERT(frustums.size() == distances.size());
   for (size_t i = 0; i < frustums.size(); ++i) {
-    const double sse = frustums[i].computeScreenSpaceError(
-        tile.getGeometricError(),
-        distances[i]);
+    const double sse =
+        frustums[i].computeScreenSpaceError(tile, distances[i], depth);
     if (sse > largestSse) {
       largestSse = sse;
     }
@@ -328,11 +328,19 @@ double computeSse(
 
 bool meetsGeometricErrorThreshold(
     const TileSelectionContext& context,
+    const TilesetFrameState& frameState,
     double geometricErrorThreshold,
     bool culled,
     const Tile& tile) {
-  return culled ? !context.options.enforceCulledScreenSpaceError
-                : tile.getGeometricError() < geometricErrorThreshold;
+  if (culled) {
+    return !context.options.enforceCulledScreenSpaceError;
+  }
+  return std::any_of(
+      frameState.frustums.begin(),
+      frameState.frustums.end(),
+      [&](const ViewState& viewState) {
+        return viewState.meetsErrorThreshold(geometricErrorThreshold, tile);
+      });
 }
 
 bool meetsSseThreshold(
@@ -1134,7 +1142,7 @@ TraversalDetails visitTileIfNeeded(
     ++result.culledTilesVisited;
   }
 
-  double tileSse = computeSse(context, frameState, tile);
+  double tileSse = computeSse(context, frameState, tile, depth);
   auto minGeoErrorThresholdIt = std::min_element(
       frameState.frustums.begin(),
       frameState.frustums.end(),
@@ -1158,7 +1166,8 @@ TraversalDetails visitTileIfNeeded(
   if (geometricErrorThreshold) {
     meetsSse = meetsGeometricErrorThreshold(
         context,
-        *geometricErrorThreshold,
+        frameState,
+        *geometricErrorThreshold != 0.0 ? *geometricErrorThreshold : tileSse,
         cullResult.culled,
         tile);
   } else {
