@@ -26,9 +26,12 @@
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
+#include <glm/common.hpp>
+#include <glm/exponential.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/trigonometric.hpp>
 
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <string>
@@ -212,4 +215,203 @@ TEST_CASE("selectTiles result matches updateViewGroup result") {
   // Tile counts must agree between the two paths.
   CHECK(freeResult.tilesToRenderThisFrame.size() == referenceRenderCount);
   CHECK(freeResult.tilesVisited == referenceVisited);
+}
+
+namespace {
+
+const Cartographic DefaultCameraPosition{0.0, 0.0, 100'000.0};
+
+ViewState makeViewState(
+    double horizontalFieldOfViewDegrees,
+    bool lookAwayFromGlobe = false,
+    const Cartographic& cameraPosition = DefaultCameraPosition) {
+  const Ellipsoid& ellipsoid = Ellipsoid::WGS84;
+  const glm::dvec3 position =
+      ellipsoid.cartographicToCartesian(cameraPosition);
+  const glm::dvec3 direction =
+      glm::normalize(lookAwayFromGlobe ? position : -position);
+  const glm::dvec3 up{0.0, 0.0, 1.0};
+  const glm::dvec2 viewport{1920.0, 1080.0};
+
+  const double horizontalFieldOfView =
+      Math::degreesToRadians(horizontalFieldOfViewDegrees);
+  const double verticalFieldOfView =
+      2.0 * std::atan(
+                std::tan(horizontalFieldOfView * 0.5) /
+                (viewport.x / viewport.y));
+
+  return ViewState(
+      position,
+      direction,
+      up,
+      viewport,
+      horizontalFieldOfView,
+      verticalFieldOfView,
+      ellipsoid);
+}
+
+// Reproduces what selectTiles computes for one view, so a recorded error can be
+// attributed to the view it came from.
+double screenSpaceErrorFor(const ViewState& view, const Tile& tile) {
+  const double distance = glm::sqrt(glm::max(
+      view.computeDistanceSquaredToBoundingVolume(tile.getBoundingVolume()),
+      0.0));
+  return view.computeScreenSpaceError(tile.getGeometricError(), distance);
+}
+
+// EllipsoidTilesetLoader creates children on demand, so refinement descends one
+// level per frame. Callers assert the depth reached, so a fixture that stops
+// descending fails loudly instead of silently weakening the test.
+ViewUpdateResult selectAfterLoading(
+    const std::vector<ViewState>& frustums,
+    const TilesetOptions& options) {
+  TilesetExternals externals = makeExternals();
+  auto pTileset = EllipsoidTilesetLoader::createTileset(externals, options);
+  REQUIRE(pTileset != nullptr);
+
+  ViewUpdateResult result;
+  for (int i = 0; i < 16; ++i) {
+    externals.asyncSystem.dispatchMainThreadTasks();
+    result =
+        pTileset->updateViewGroup(pTileset->getDefaultViewGroup(), frustums);
+    externals.asyncSystem.dispatchMainThreadTasks();
+    pTileset->loadTiles();
+  }
+  return result;
+}
+
+} // namespace
+
+TEST_CASE("A view cannot drive refinement of tiles it can't see") {
+  TilesetOptions options;
+  options.maximumScreenSpaceError = 16.0;
+  options.renderTilesUnderCamera = false;
+
+  const ViewState wide = makeViewState(40.0);
+  const ViewState narrow = makeViewState(1.0);
+
+  const ViewUpdateResult result = selectAfterLoading({wide, narrow}, options);
+  REQUIRE(
+      result.tileScreenSpaceErrorThisFrame.size() ==
+      result.tilesToRenderThisFrame.size());
+  REQUIRE(result.maxDepthVisited > 4);
+
+  size_t drivenByWide = 0;
+  size_t drivenByNarrow = 0;
+  for (size_t i = 0; i < result.tilesToRenderThisFrame.size(); ++i) {
+    const Tile& tile = *result.tilesToRenderThisFrame[i];
+
+    // Both views sit at the same position, so the narrow one always computes
+    // the larger error. A tile it cannot see must still report the wide view's
+    // smaller error.
+    const double wideSse = screenSpaceErrorFor(wide, tile);
+    const double narrowSse = screenSpaceErrorFor(narrow, tile);
+    if (wideSse == narrowSse) {
+      continue;
+    }
+    REQUIRE(narrowSse > wideSse);
+
+    const double actualSse = result.tileScreenSpaceErrorThisFrame[i];
+    CHECK((actualSse == wideSse || actualSse == narrowSse));
+    drivenByWide += actualSse == wideSse;
+    drivenByNarrow += actualSse == narrowSse;
+  }
+
+  REQUIRE(drivenByWide > 0);
+  REQUIRE(drivenByNarrow > 0);
+}
+
+TEST_CASE("Each view's screen-space error uses that view's own distance") {
+  TilesetOptions options;
+  options.maximumScreenSpaceError = 16.0;
+  options.renderTilesUnderCamera = false;
+
+  // Differing position and field of view, so pairing one view with the other's
+  // distance produces a value neither view could have reported.
+  const ViewState here = makeViewState(40.0);
+  const ViewState elsewhere = makeViewState(
+      6.0,
+      false,
+      Cartographic{Math::degreesToRadians(5.0), 0.0, 2'000'000.0});
+
+  const ViewUpdateResult result =
+      selectAfterLoading({here, elsewhere}, options);
+  REQUIRE(
+      result.tileScreenSpaceErrorThisFrame.size() ==
+      result.tilesToRenderThisFrame.size());
+  REQUIRE(result.maxDepthVisited > 4);
+
+  size_t drivenByHere = 0;
+  size_t drivenByElsewhere = 0;
+  for (size_t i = 0; i < result.tilesToRenderThisFrame.size(); ++i) {
+    const Tile& tile = *result.tilesToRenderThisFrame[i];
+    const double hereSse = screenSpaceErrorFor(here, tile);
+    const double elsewhereSse = screenSpaceErrorFor(elsewhere, tile);
+    if (hereSse == elsewhereSse) {
+      continue;
+    }
+
+    const double actualSse = result.tileScreenSpaceErrorThisFrame[i];
+    CHECK((actualSse == hereSse || actualSse == elsewhereSse));
+    drivenByHere += actualSse == hereSse;
+    drivenByElsewhere += actualSse == elsewhereSse;
+  }
+
+  REQUIRE(drivenByHere > 0);
+  REQUIRE(drivenByElsewhere > 0);
+}
+
+TEST_CASE("Culled tiles keep their maximum screen-space error across multiple "
+          "frustums") {
+  TilesetOptions options;
+  options.maximumScreenSpaceError = 16.0;
+  options.renderTilesUnderCamera = false;
+  options.enableFrustumCulling = false;
+  options.enableFogCulling = false;
+
+  const ViewState wide = makeViewState(40.0, true);
+  const ViewState narrow = makeViewState(1.0, true);
+
+  const ViewUpdateResult result = selectAfterLoading({wide, narrow}, options);
+  REQUIRE(
+      result.tileScreenSpaceErrorThisFrame.size() ==
+      result.tilesToRenderThisFrame.size());
+  REQUIRE(result.culledTilesVisited > 0);
+  REQUIRE(result.tilesToRenderThisFrame.size() > 1);
+
+  for (size_t i = 0; i < result.tilesToRenderThisFrame.size(); ++i) {
+    const Tile& tile = *result.tilesToRenderThisFrame[i];
+    const double maximumSse = glm::max(
+        screenSpaceErrorFor(wide, tile),
+        screenSpaceErrorFor(narrow, tile));
+    CHECK(maximumSse > 0.0);
+    CHECK(result.tileScreenSpaceErrorThisFrame[i] == maximumSse);
+  }
+}
+
+TEST_CASE("A view that sees nothing does not change selection") {
+  // Screen-space error depends on a view's projection and its distance to the
+  // tile, not on where the view points, so a view facing away from the globe
+  // reports a large error for tiles it cannot see.
+  TilesetOptions options;
+  options.maximumScreenSpaceError = 16.0;
+  options.renderTilesUnderCamera = false;
+
+  const ViewState wide = makeViewState(40.0);
+  const ViewState blind = makeViewState(1.0, true);
+
+  const ViewUpdateResult alone = selectAfterLoading({wide}, options);
+  const ViewUpdateResult withBlind = selectAfterLoading({wide, blind}, options);
+
+  REQUIRE(alone.tilesVisited > 0);
+  REQUIRE(alone.tilesToRenderThisFrame.size() > 1);
+
+  CHECK(withBlind.tilesVisited == alone.tilesVisited);
+  CHECK(withBlind.tilesCulled == alone.tilesCulled);
+  CHECK(
+      withBlind.tilesToRenderThisFrame.size() ==
+      alone.tilesToRenderThisFrame.size());
+  CHECK(
+      withBlind.tileScreenSpaceErrorThisFrame ==
+      alone.tileScreenSpaceErrorThisFrame);
 }
