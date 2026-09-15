@@ -50,6 +50,11 @@ public:
    */
   virtual bool
   meetsErrorThreshold(double errorMeasure, const Tile& tile) const = 0;
+
+  /**
+   * @brief destructor
+   */
+  virtual ~ErrorMeasureHandler() = default;
 };
 
 /**
