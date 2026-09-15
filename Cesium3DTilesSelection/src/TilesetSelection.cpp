@@ -1134,10 +1134,9 @@ TraversalDetails visitTileIfNeeded(
     ++result.culledTilesVisited;
   }
 
-  // Nothing saw this tile, yet we're visiting it (culling disabled,
-  // forbidHoles, an unconditionally refined root). Reporting 0.0 would meet
-  // every threshold and bypass culledScreenSpaceError, so fall back to the
-  // error over every frustum.
+  // The fallback covers tiles visited while no frustum can see them (culling
+  // disabled, forbidHoles, an unconditionally refined root), where reporting
+  // 0.0 would meet every threshold and bypass culledScreenSpaceError.
   double tileSse = cullResult.visibleScreenSpaceError
                        ? *cullResult.visibleScreenSpaceError
                        : computeSse(context, frameState, tile);
