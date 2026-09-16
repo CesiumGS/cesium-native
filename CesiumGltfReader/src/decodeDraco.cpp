@@ -66,9 +66,10 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
 
   CesiumGltf::Buffer& buffer = *pBuffer;
 
+  const int64_t bufferSize = static_cast<int64_t>(buffer.cesium.data.size());
   if (bufferView.byteOffset < 0 || bufferView.byteLength < 0 ||
-      bufferView.byteOffset + bufferView.byteLength >
-          static_cast<int64_t>(buffer.cesium.data.size())) {
+      bufferView.byteOffset > bufferSize ||
+      bufferView.byteLength > bufferSize - bufferView.byteOffset) {
     readGltf.warnings.emplace_back(
         "Draco bufferView extends beyond its buffer.");
     return nullptr;
