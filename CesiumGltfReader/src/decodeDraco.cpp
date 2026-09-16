@@ -240,6 +240,15 @@ void copyDecodedAttribute(
   CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
 
   const int8_t numberOfComponents = pAccessor->computeNumberOfComponents();
+  if (pAttribute->num_components() != numberOfComponents) {
+    readGltf.warnings.emplace_back(
+        "Draco attribute has " +
+        std::to_string(int32_t(pAttribute->num_components())) +
+        " components, but its accessor has " +
+        std::to_string(int32_t(numberOfComponents)) +
+        ". Extra components are ignored and missing ones are zero-filled.");
+  }
+
   const int64_t stride = static_cast<int64_t>(
       numberOfComponents * pAccessor->computeByteSizeOfComponent());
   const int64_t sizeBytes = pAccessor->count * stride;
