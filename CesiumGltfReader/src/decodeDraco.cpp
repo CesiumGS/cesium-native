@@ -256,7 +256,7 @@ void copyDecodedAttribute(
     for (draco::PointIndex i(0); i < pMesh->num_points(); ++i) {
       const draco::AttributeValueIndex valueIndex = pAttribute->mapped_index(i);
       pAttribute->ConvertValue(valueIndex, numberOfComponents, pOut);
-      pOut += pAttribute->num_components();
+      pOut += numberOfComponents;
     }
   };
 
