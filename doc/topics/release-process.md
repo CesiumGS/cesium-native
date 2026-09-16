@@ -4,7 +4,7 @@ This is the process we follow when releasing a new version of Cesium Native.
 
 ## Prepare for Release
 
-Use the reusable Copilot prompt in [.github/prompts/prepare-release.prompt.md](../../.github/prompts/prepare-release.prompt.md) and provide the release version number. It performs the first four steps for you:
+Run the `/prepare-release` skill in [.github/skills/prepare-release/SKILL.md](../../.github/skills/prepare-release/SKILL.md) and provide the release version number. It performs the first four steps for you:
 
 1. Verify that CI is passing on all platforms. Fix it if not.
 2. Verify that `CHANGES.md` is complete and accurate.
