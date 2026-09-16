@@ -5,6 +5,7 @@
 #include <CesiumUtility/Assert.h>
 
 #include <cmath>
+#include <limits>
 
 namespace CesiumJsonReader {
 /**
@@ -59,6 +60,19 @@ public:
     double intPart;
     double fractPart = std::modf(d, &intPart);
     if (fractPart != 0) {
+      return JsonHandler::readDouble(d);
+    }
+    // Reject values that are not representable in T before casting, since
+    // that cast would be undefined behavior. The comparison must not use
+    // static_cast<double>(max()): for 64-bit types that rounds up to 2^63
+    // (or 2^64), which would incorrectly admit the first out-of-range
+    // value. Instead compare against the exclusive upper bound 2^digits,
+    // which is always exactly representable as a double. The lower bound
+    // is zero or a negated power of two and is likewise exact.
+    constexpr double upperBound =
+        2.0 * static_cast<double>(std::numeric_limits<T>::max() / 2 + 1);
+    if (intPart < static_cast<double>(std::numeric_limits<T>::lowest()) ||
+        intPart >= upperBound) {
       return JsonHandler::readDouble(d);
     }
     *this->_pInteger = static_cast<T>(intPart);
