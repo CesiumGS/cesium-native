@@ -12,6 +12,10 @@
 
 - The `CesiumVectorOverlays::VectorTilesRasterOverlay` now supports styling via specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
 
+##### Fixes :wrench:
+
+- Fixed potential out-of-bounds access while decoding Draco-compressed glTFs.
+
 ### v0.64.0 - 2026-09-01
 
 ##### Additions :tada:
