@@ -1125,6 +1125,61 @@ TEST_CASE("Can parse doubles with no fractions as integers") {
       std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
   CHECK(!result.warnings.empty());
+
+  // A double literal with no fractional part but a magnitude outside the
+  // range of the target integer type must also be rejected, rather than
+  // being cast to a garbage value.
+  s = R"(
+    {
+      "accessors": [
+        {
+          "count": 1e20,
+          "componentType": 5121
+        }
+      ]
+    }
+  )";
+  result = reader.readGltf(
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  CHECK(!result.warnings.empty());
+  CHECK(result.model.value().accessors[0].count == 0);
+
+  // 2^63 is the first invalid value for a 64-bit signed count, and it is
+  // exactly what static_cast<double>(int64 max) rounds up to, so it must be
+  // rejected rather than slipping past a rounded bound.
+  s = R"(
+    {
+      "accessors": [
+        {
+          "count": 9223372036854775808.0,
+          "componentType": 5121
+        }
+      ]
+    }
+  )";
+  result = reader.readGltf(
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  CHECK(!result.warnings.empty());
+  CHECK(result.model.value().accessors[0].count == 0);
+
+  // The largest double below 2^63 is representable as int64 and must parse.
+  s = R"(
+    {
+      "accessors": [
+        {
+          "count": 9223372036854774784.0,
+          "componentType": 5121
+        }
+      ]
+    }
+  )";
+  result = reader.readGltf(
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  CHECK(result.warnings.empty());
+  CHECK(result.model.value().accessors[0].count == 9223372036854774784LL);
 }
 
 TEST_CASE("Test KTX2") {
