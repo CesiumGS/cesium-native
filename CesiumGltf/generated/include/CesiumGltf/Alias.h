@@ -5,23 +5,29 @@
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <vector>
+#include <cstdint>
+#include <string>
 
 namespace CesiumGltf {
 /**
- * @brief An axis-aligned box with a size per-axis, centered at the origin in
- * local space, with normals facing outwards along each axis.
+ * @brief Used to alias files referenced within an external file to other paths
+ * by the parent.
  */
-struct CESIUMGLTF_API Box final : public CesiumUtility::ExtensibleObject {
+struct CESIUMGLTF_API Alias final : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
-  static constexpr const char* TypeName = "Box";
+  static constexpr const char* TypeName = "Alias";
 
   /**
-   * @brief The size of the box in each axis in local space.
+   * @brief String alias matched against an inner path.
    */
-  std::vector<double> size = {1, 1, 1};
+  std::string alias;
+
+  /**
+   * @brief The index of the file in the files array.
+   */
+  int32_t file = -1;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -31,10 +37,10 @@ struct CESIUMGLTF_API Box final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(Box));
+    accum += int64_t(sizeof(Alias));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(sizeof(double) * this->size.capacity());
+    accum += int64_t(this->alias.capacity() * sizeof(char));
     return accum;
   }
 };

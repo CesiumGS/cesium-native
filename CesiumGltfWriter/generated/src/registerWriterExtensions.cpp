@@ -9,6 +9,7 @@
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/FeatureIdTexture.h>
+#include <CesiumGltf/LegacyShape.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
@@ -16,7 +17,6 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
-#include <CesiumGltf/Shape.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
@@ -168,10 +168,10 @@ void registerWriterExtensions(
       CesiumGltf::FeatureIdTexture,
       ExtensionKhrTextureTransformJsonWriter>();
   context.registerExtension<
-      CesiumGltf::Shape,
+      CesiumGltf::LegacyShape,
       ExtensionExtImplicitEllipsoidRegionJsonWriter>();
   context.registerExtension<
-      CesiumGltf::Shape,
+      CesiumGltf::LegacyShape,
       ExtensionExtImplicitCylinderRegionJsonWriter>();
   context.registerExtension<
       CesiumGltf::ExtensionKhrGaussianSplatting,

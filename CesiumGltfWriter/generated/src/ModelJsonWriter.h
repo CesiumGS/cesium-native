@@ -48,11 +48,11 @@ struct Light;
 struct Spotlight;
 struct LineString;
 struct Padding;
-struct Shape;
-struct Cylinder;
-struct Capsule;
-struct Box;
-struct Sphere;
+struct LegacyShape;
+struct LegacyCylinder;
+struct LegacyCapsule;
+struct LegacyBox;
+struct LegacySphere;
 struct ExtensionNodeMaxarMeshVariantsMappingsValue;
 struct ExtensionModelMaxarMeshVariantsValue;
 struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
@@ -75,9 +75,16 @@ struct ExtensionExtInstanceFeaturesFeatureId;
 struct Model;
 struct Texture;
 struct Skin;
+struct Shape;
+struct Sphere;
+struct Plane;
+struct Cylinder;
+struct Capsule;
+struct Box;
 struct Scene;
 struct Sampler;
 struct Node;
+struct BoundingVolume;
 struct Mesh;
 struct MeshPrimitive;
 struct Material;
@@ -85,6 +92,9 @@ struct MaterialOcclusionTextureInfo;
 struct MaterialNormalTextureInfo;
 struct MaterialPBRMetallicRoughness;
 struct Image;
+struct File;
+struct Alias;
+struct ExternalAsset;
 struct Camera;
 struct CameraPerspective;
 struct CameraOrthographic;
@@ -583,47 +593,47 @@ struct PaddingJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct ShapeJsonWriter {
-  using ValueType = CesiumGltf::Shape;
+struct LegacyShapeJsonWriter {
+  using ValueType = CesiumGltf::LegacyShape;
 
   static void write(
-      const CesiumGltf::Shape& obj,
+      const CesiumGltf::LegacyShape& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct CylinderJsonWriter {
-  using ValueType = CesiumGltf::Cylinder;
+struct LegacyCylinderJsonWriter {
+  using ValueType = CesiumGltf::LegacyCylinder;
 
   static void write(
-      const CesiumGltf::Cylinder& obj,
+      const CesiumGltf::LegacyCylinder& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct CapsuleJsonWriter {
-  using ValueType = CesiumGltf::Capsule;
+struct LegacyCapsuleJsonWriter {
+  using ValueType = CesiumGltf::LegacyCapsule;
 
   static void write(
-      const CesiumGltf::Capsule& obj,
+      const CesiumGltf::LegacyCapsule& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct BoxJsonWriter {
-  using ValueType = CesiumGltf::Box;
+struct LegacyBoxJsonWriter {
+  using ValueType = CesiumGltf::LegacyBox;
 
   static void write(
-      const CesiumGltf::Box& obj,
+      const CesiumGltf::LegacyBox& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct SphereJsonWriter {
-  using ValueType = CesiumGltf::Sphere;
+struct LegacySphereJsonWriter {
+  using ValueType = CesiumGltf::LegacySphere;
 
   static void write(
-      const CesiumGltf::Sphere& obj,
+      const CesiumGltf::LegacySphere& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
@@ -828,6 +838,60 @@ struct SkinJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
+struct ShapeJsonWriter {
+  using ValueType = CesiumGltf::Shape;
+
+  static void write(
+      const CesiumGltf::Shape& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct SphereJsonWriter {
+  using ValueType = CesiumGltf::Sphere;
+
+  static void write(
+      const CesiumGltf::Sphere& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct PlaneJsonWriter {
+  using ValueType = CesiumGltf::Plane;
+
+  static void write(
+      const CesiumGltf::Plane& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct CylinderJsonWriter {
+  using ValueType = CesiumGltf::Cylinder;
+
+  static void write(
+      const CesiumGltf::Cylinder& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct CapsuleJsonWriter {
+  using ValueType = CesiumGltf::Capsule;
+
+  static void write(
+      const CesiumGltf::Capsule& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct BoxJsonWriter {
+  using ValueType = CesiumGltf::Box;
+
+  static void write(
+      const CesiumGltf::Box& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct SceneJsonWriter {
   using ValueType = CesiumGltf::Scene;
 
@@ -851,6 +915,15 @@ struct NodeJsonWriter {
 
   static void write(
       const CesiumGltf::Node& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct BoundingVolumeJsonWriter {
+  using ValueType = CesiumGltf::BoundingVolume;
+
+  static void write(
+      const CesiumGltf::BoundingVolume& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
@@ -914,6 +987,33 @@ struct ImageJsonWriter {
 
   static void write(
       const CesiumGltf::Image& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct FileJsonWriter {
+  using ValueType = CesiumGltf::File;
+
+  static void write(
+      const CesiumGltf::File& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct AliasJsonWriter {
+  using ValueType = CesiumGltf::Alias;
+
+  static void write(
+      const CesiumGltf::Alias& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExternalAssetJsonWriter {
+  using ValueType = CesiumGltf::ExternalAsset;
+
+  static void write(
+      const CesiumGltf::ExternalAsset& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

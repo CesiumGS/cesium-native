@@ -24,6 +24,30 @@
     "Texture Info": {
       "isBaseClass": true
     },
+    "File Reference": {
+      "overrideName": "File"
+    },
+    "File Reference to External File Remap Alias": {
+      "overrideName": "Alias"
+    },
+    "Shape Resource": {
+      "overrideName": "Shape"
+    },
+    "Box Shape": {
+      "overrideName": "Box"
+    },
+    "Capsule Shape": {
+      "overrideName": "Capsule"
+    },
+    "Cylinder Shape": {
+      "overrideName": "Cylinder"
+    },
+    "Plane Shape": {
+      "overrideName": "Plane"
+    },
+    "Sphere Shape": {
+      "overrideName": "Sphere"
+    },
     "CESIUM_RTC": {
       "overrideName": "ExtensionCesiumRTC"
     },
@@ -141,19 +165,19 @@
       "overrideName": "ExtensionKhrImplicitShapes"
     },
     "KHR_implicit_shapes Shape Resource": {
-      "overrideName": "Shape"
+      "overrideName": "LegacyShape"
     },
     "KHR_implicit_shapes Box Shape": {
-      "overrideName": "Box"
+      "overrideName": "LegacyBox"
     },
     "KHR_implicit_shapes Capsule Shape": {
-      "overrideName": "Capsule"
+      "overrideName": "LegacyCapsule"
     },
     "KHR_implicit_shapes Cylinder Shape": {
-      "overrideName": "Cylinder"
+      "overrideName": "LegacyCylinder"
     },
     "KHR_implicit_shapes Sphere Shape": {
-      "overrideName": "Sphere"
+      "overrideName": "LegacySphere"
     },
     "EXT_implicit_ellipsoid_region extension on KHR_implicit_shapes.shape": {
       "overrideName": "ExtensionExtImplicitEllipsoidRegion"

@@ -5,23 +5,31 @@
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <vector>
+#include <optional>
 
 namespace CesiumGltf {
 /**
- * @brief An axis-aligned box with a size per-axis, centered at the origin in
- * local space, with normals facing outwards along each axis.
+ * @brief A plane centered at the origin in local space, optionally with finite
+ * extents, with normal along the +Y axis in local space. The plane is
+ * one-sided.
  */
-struct CESIUMGLTF_API Box final : public CesiumUtility::ExtensibleObject {
+struct CESIUMGLTF_API Plane final : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
-  static constexpr const char* TypeName = "Box";
+  static constexpr const char* TypeName = "Plane";
 
   /**
-   * @brief The size of the box in each axis in local space.
+   * @brief The extents along the X axis in local space. If not provided, this
+   * dimension should be considered infinite.
    */
-  std::vector<double> size = {1, 1, 1};
+  std::optional<double> sizeX;
+
+  /**
+   * @brief The extents along the Z axis in local space. If not provided, this
+   * dimension should be considered infinite.
+   */
+  std::optional<double> sizeZ;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -31,10 +39,10 @@ struct CESIUMGLTF_API Box final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(Box));
+    accum += int64_t(sizeof(Plane));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(sizeof(double) * this->size.capacity());
+
     return accum;
   }
 };
