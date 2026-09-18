@@ -8,6 +8,7 @@
 #include "Extension3dTilesShapeCylinderRegionJsonHandler.h"
 #include "Extension3dTilesShapeEllipsoidRegionJsonHandler.h"
 #include "Extension3dTilesShapeS2JsonHandler.h"
+#include "Extension3dTilesSubtreeJsonHandler.h"
 #include "ExtensionBentleyMaterialsPointStyleJsonHandler.h"
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
@@ -91,6 +92,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Model,
       ExtensionModel3dTilesLayersJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Model,
+      Extension3dTilesSubtreeJsonHandler>();
   options.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonHandler>();

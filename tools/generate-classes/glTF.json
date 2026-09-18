@@ -259,6 +259,9 @@
     },
     "3DTILES_shape_s2": {
       "overrideName": "Extension3dTilesShapeS2"
+    },
+    "Subtree": {
+      "overrideName": "Extension3dTilesSubtree"
     }
   },
   "extensions": [
@@ -475,6 +478,10 @@
     {
       "extensionName": "3DTILES_shape_s2",
       "schema": "Vendor/3DTILES_shape_s2/schema/shape.3DTILES_shape_s2.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_subtree",
+      "schema": "Vendor/3DTILES_subtree/schema/glTF.3DTILES_subtree.schema.json"
     }
   ]
 }

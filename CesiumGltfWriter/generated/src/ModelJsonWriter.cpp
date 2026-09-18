@@ -13,6 +13,7 @@
 #include <CesiumGltf/AnimationChannelTarget.h>
 #include <CesiumGltf/AnimationSampler.h>
 #include <CesiumGltf/Asset.h>
+#include <CesiumGltf/Availability.h>
 #include <CesiumGltf/BoundingVolume.h>
 #include <CesiumGltf/Box.h>
 #include <CesiumGltf/Buffer.h>
@@ -32,6 +33,7 @@
 #include <CesiumGltf/Extension3dTilesShapeCylinderRegion.h>
 #include <CesiumGltf/Extension3dTilesShapeEllipsoidRegion.h>
 #include <CesiumGltf/Extension3dTilesShapeS2.h>
+#include <CesiumGltf/Extension3dTilesSubtree.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -344,6 +346,16 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::Extension3dTilesShapeS2& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Extension3dTilesSubtree& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Availability& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1789,6 +1801,74 @@ void writeJson(
 
   jsonWriter.Key("maximumHeight");
   writeJson(obj.maximumHeight, jsonWriter, context);
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Extension3dTilesSubtree& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("tileAvailability");
+  writeJson(obj.tileAvailability, jsonWriter, context);
+
+  if (obj.contentAvailability) {
+    jsonWriter.Key("contentAvailability");
+    writeJson(obj.contentAvailability, jsonWriter, context);
+  }
+
+  jsonWriter.Key("childSubtreeAvailability");
+  writeJson(obj.childSubtreeAvailability, jsonWriter, context);
+
+  if (!obj.tileAttributes.empty()) {
+    jsonWriter.Key("tileAttributes");
+    writeJson(obj.tileAttributes, jsonWriter, context);
+  }
+
+  if (!obj.contentAttributes.empty()) {
+    jsonWriter.Key("contentAttributes");
+    writeJson(obj.contentAttributes, jsonWriter, context);
+  }
+
+  if (obj.tileProperties > -1) {
+    jsonWriter.Key("tileProperties");
+    writeJson(obj.tileProperties, jsonWriter, context);
+  }
+
+  if (obj.contentProperties > -1) {
+    jsonWriter.Key("contentProperties");
+    writeJson(obj.contentProperties, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Availability& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.bitstream > -1) {
+    jsonWriter.Key("bitstream");
+    writeJson(obj.bitstream, jsonWriter, context);
+  }
+
+  if (obj.availableCount) {
+    jsonWriter.Key("availableCount");
+    writeJson(obj.availableCount, jsonWriter, context);
+  }
+
+  if (obj.constant) {
+    jsonWriter.Key("constant");
+    writeJson(obj.constant, jsonWriter, context);
+  }
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -4023,6 +4103,20 @@ void Extension3dTilesShapeEllipsoidRegionJsonWriter::write(
 
 void Extension3dTilesShapeS2JsonWriter::write(
     const CesiumGltf::Extension3dTilesShapeS2& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesSubtreeJsonWriter::write(
+    const CesiumGltf::Extension3dTilesSubtree& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void AvailabilityJsonWriter::write(
+    const CesiumGltf::Availability& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
