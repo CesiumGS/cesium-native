@@ -20,6 +20,7 @@
 #include "ExtensionExtGeoreferenceJsonHandler.h"
 #include "ExtensionExtGeospatialCrsJsonHandler.h"
 #include "ExtensionExtGeospatialCrsWkidJsonHandler.h"
+#include "ExtensionExtGeospatialCrsWkt2JsonHandler.h"
 #include "ExtensionExtImplicitCylinderRegionJsonHandler.h"
 #include "ExtensionExtImplicitEllipsoidRegionJsonHandler.h"
 #include "ExtensionExtInstanceFeaturesJsonHandler.h"
@@ -238,5 +239,8 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::ExtensionExtGeospatialCrs,
       ExtensionExtGeospatialCrsWkidJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::ExtensionExtGeospatialCrs,
+      ExtensionExtGeospatialCrsWkt2JsonHandler>();
 }
 } // namespace CesiumGltfReader

@@ -45,6 +45,7 @@
 #include <CesiumGltf/ExtensionExtGeoreference.h>
 #include <CesiumGltf/ExtensionExtGeospatialCrs.h>
 #include <CesiumGltf/ExtensionExtGeospatialCrsWkid.h>
+#include <CesiumGltf/ExtensionExtGeospatialCrsWkt2.h>
 #include <CesiumGltf/ExtensionExtImplicitCylinderRegion.h>
 #include <CesiumGltf/ExtensionExtImplicitEllipsoidRegion.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
@@ -381,6 +382,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionExtGeospatialCrsWkid& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionExtGeospatialCrsWkt2& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1976,6 +1982,20 @@ void writeJson(
     jsonWriter.Key("epoch");
     writeJson(obj.epoch, jsonWriter, context);
   }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionExtGeospatialCrsWkt2& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("wkt2");
+  writeJson(obj.wkt2, jsonWriter, context);
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -4278,6 +4298,13 @@ void ExtensionExtGeospatialCrsJsonWriter::write(
 
 void ExtensionExtGeospatialCrsWkidJsonWriter::write(
     const CesiumGltf::ExtensionExtGeospatialCrsWkid& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionExtGeospatialCrsWkt2JsonWriter::write(
+    const CesiumGltf::ExtensionExtGeospatialCrsWkt2& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

@@ -42,6 +42,7 @@
 #include <CesiumGltf/ExtensionExtGeoreference.h>
 #include <CesiumGltf/ExtensionExtGeospatialCrs.h>
 #include <CesiumGltf/ExtensionExtGeospatialCrsWkid.h>
+#include <CesiumGltf/ExtensionExtGeospatialCrsWkt2.h>
 #include <CesiumGltf/ExtensionExtImplicitCylinderRegion.h>
 #include <CesiumGltf/ExtensionExtImplicitEllipsoidRegion.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
@@ -242,5 +243,8 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::ExtensionExtGeospatialCrs,
       ExtensionExtGeospatialCrsWkidJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::ExtensionExtGeospatialCrs,
+      ExtensionExtGeospatialCrsWkt2JsonWriter>();
 }
 } // namespace CesiumGltfWriter
