@@ -2,6 +2,7 @@
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
@@ -33,6 +34,7 @@
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_float4.hpp>
 #include <glm/geometric.hpp>
 
 #include <algorithm>
@@ -1001,6 +1003,121 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
 
   REQUIRE(!primitive3.getGenericExtension("KHR_draco_mesh_compression"));
   REQUIRE(!primitive3.getExtension<ExtensionKhrDracoMeshCompression>());
+}
+
+namespace {
+// Builds a model with a single primitive whose POSITION attribute is
+// Draco-compressed, reusing the compressed bitstream from the CesiumMilkTruck
+// test data. In that bitstream, POSITION has unique ID 1 and three components.
+GltfReaderResult createDracoModel(const std::string& positionType) {
+  GltfReaderResult result;
+  Model& model = result.model.emplace();
+
+  Buffer& buffer = model.buffers.emplace_back();
+  buffer.cesium.data = readFile(
+      std::filesystem::path(CesiumGltfReader_TEST_DATA_DIR) /
+      "DracoCompressed" / "0.bin");
+  buffer.byteLength = int64_t(buffer.cesium.data.size());
+
+  BufferView& bufferView = model.bufferViews.emplace_back();
+  bufferView.buffer = 0;
+  bufferView.byteOffset = 1240;
+  bufferView.byteLength = 7871;
+
+  Accessor& accessor = model.accessors.emplace_back();
+  accessor.componentType = Accessor::ComponentType::FLOAT;
+  accessor.type = positionType;
+  accessor.count = 1856;
+
+  MeshPrimitive& primitive =
+      model.meshes.emplace_back().primitives.emplace_back();
+  primitive.attributes["POSITION"] = 0;
+
+  ExtensionKhrDracoMeshCompression& draco =
+      primitive.addExtension<ExtensionKhrDracoMeshCompression>();
+  draco.bufferView = 0;
+  draco.attributes["POSITION"] = 1;
+
+  model.addExtensionRequired(ExtensionKhrDracoMeshCompression::ExtensionName);
+
+  return result;
+}
+
+bool hasWarningContaining(
+    const GltfReaderResult& result,
+    const std::string& text) {
+  for (const std::string& warning : result.warnings) {
+    if (warning.find(text) != std::string::npos) {
+      return true;
+    }
+  }
+  return false;
+}
+} // namespace
+
+TEST_CASE("Decodes a Draco attribute with more components than its accessor") {
+  GltfReader reader;
+  GltfReaderOptions options;
+
+  GltfReaderResult expected = createDracoModel(Accessor::Type::VEC3);
+  reader.postprocessGltf(expected, options);
+  REQUIRE(expected.model);
+
+  AccessorView<glm::vec3> expectedView(*expected.model, 0);
+  REQUIRE(expectedView.status() == AccessorViewStatus::Valid);
+
+  GltfReaderResult result = createDracoModel(Accessor::Type::VEC2);
+  reader.postprocessGltf(result, options);
+  REQUIRE(result.model);
+  CHECK(hasWarningContaining(result, "components, but its accessor has"));
+
+  // The extra component must be dropped rather than written past the end of
+  // the buffer that was sized for the accessor.
+  const Buffer& decoded = result.model->buffers.back();
+  CHECK(size_t(decoded.byteLength) == decoded.cesium.data.size());
+  CHECK(decoded.byteLength == expectedView.size() * 2 * 4);
+
+  AccessorView<glm::vec2> view(*result.model, 0);
+  REQUIRE(view.status() == AccessorViewStatus::Valid);
+  REQUIRE(view.size() == expectedView.size());
+  for (int64_t i = 0; i < view.size(); ++i) {
+    CHECK(view[i].x == expectedView[i].x);
+    CHECK(view[i].y == expectedView[i].y);
+  }
+}
+
+TEST_CASE("Decodes a Draco attribute with fewer components than its accessor") {
+  GltfReader reader;
+  GltfReaderOptions options;
+
+  GltfReaderResult expected = createDracoModel(Accessor::Type::VEC3);
+  reader.postprocessGltf(expected, options);
+  REQUIRE(expected.model);
+
+  AccessorView<glm::vec3> expectedView(*expected.model, 0);
+  REQUIRE(expectedView.status() == AccessorViewStatus::Valid);
+
+  GltfReaderResult result = createDracoModel(Accessor::Type::VEC4);
+  reader.postprocessGltf(result, options);
+  REQUIRE(result.model);
+  CHECK(hasWarningContaining(result, "components, but its accessor has"));
+
+  // The buffer must be sized for the accessor's four components, and the
+  // component Draco does not store must be zero-filled rather than left as
+  // overlapping or uninitialized data.
+  const Buffer& decoded = result.model->buffers.back();
+  CHECK(size_t(decoded.byteLength) == decoded.cesium.data.size());
+  CHECK(decoded.byteLength == expectedView.size() * 4 * 4);
+
+  AccessorView<glm::vec4> view(*result.model, 0);
+  REQUIRE(view.status() == AccessorViewStatus::Valid);
+  REQUIRE(view.size() == expectedView.size());
+  for (int64_t i = 0; i < view.size(); ++i) {
+    CHECK(view[i].x == expectedView[i].x);
+    CHECK(view[i].y == expectedView[i].y);
+    CHECK(view[i].z == expectedView[i].z);
+    CHECK(view[i].w == 0.0f);
+  }
 }
 
 TEST_CASE("Extensions deserialize to JsonVaue iff "
