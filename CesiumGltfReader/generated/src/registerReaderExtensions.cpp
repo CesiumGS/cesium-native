@@ -3,6 +3,7 @@
 
 #include "registerReaderExtensions.h"
 
+#include "Extension3dTilesHorizonOcclusionPointJsonHandler.h"
 #include "ExtensionBentleyMaterialsPointStyleJsonHandler.h"
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
@@ -42,6 +43,7 @@
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Content.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/LegacyShape.h>
@@ -133,6 +135,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       CesiumGltf::Node,
       ExtensionNode3dTilesTilesetJsonHandler>();
   options.registerExtension<
+      CesiumGltf::Node,
+      Extension3dTilesHorizonOcclusionPointJsonHandler>();
+  options.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonHandler>();
   options.registerExtension<
@@ -180,5 +185,8 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::ExtensionKhrGaussianSplatting,
       ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Content,
+      Extension3dTilesHorizonOcclusionPointJsonHandler>();
 }
 } // namespace CesiumGltfReader

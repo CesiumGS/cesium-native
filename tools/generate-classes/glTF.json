@@ -235,6 +235,9 @@
     },
     "node.3DTILES_tileset": {
       "overrideName": "ExtensionNode3dTilesTileset"
+    },
+    "3DTILES_horizon_occlusion_point": {
+      "overrideName": "Extension3dTilesHorizonOcclusionPoint"
     }
   },
   "extensions": [
@@ -419,6 +422,14 @@
     {
       "extensionName": "3DTILES_tileset",
       "schema": "Vendor/3DTILES_tileset/schema/node.3DTILES_tileset.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_horizon_occlusion_point",
+      "schema": "Vendor/3DTILES_horizon_occlusion_point/schema/3DTILES_horizon_occlusion_point.schema.json",
+      "attachTo": [
+        "content",
+        "node"
+      ]
     }
   ]
 }

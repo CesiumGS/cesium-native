@@ -7,6 +7,7 @@
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Content.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/LegacyShape.h>
@@ -22,6 +23,7 @@
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 
 // NOLINTBEGIN(misc-include-cleaner)
+#include <CesiumGltf/Extension3dTilesHorizonOcclusionPoint.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -138,6 +140,9 @@ void registerWriterExtensions(
       CesiumGltf::Node,
       ExtensionNode3dTilesTilesetJsonWriter>();
   context.registerExtension<
+      CesiumGltf::Node,
+      Extension3dTilesHorizonOcclusionPointJsonWriter>();
+  context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonWriter>();
   context.registerExtension<
@@ -184,5 +189,8 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::ExtensionKhrGaussianSplatting,
       ExtensionKhrGaussianSplattingCompressionSpz2JsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Content,
+      Extension3dTilesHorizonOcclusionPointJsonWriter>();
 }
 } // namespace CesiumGltfWriter
