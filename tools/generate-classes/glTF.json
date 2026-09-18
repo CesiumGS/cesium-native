@@ -271,6 +271,9 @@
     },
     "node.EXT_georeference": {
       "overrideName": "ExtensionExtGeoreference"
+    },
+    "EXT_geospatial_crs": {
+      "overrideName": "ExtensionExtGeospatialCrs"
     }
   },
   "extensions": [
@@ -503,6 +506,13 @@
     {
       "extensionName": "EXT_georeference",
       "schema": "Vendor/EXT_georeference/schema/node.EXT_georeference.schema.json"
+    },
+    {
+      "extensionName": "EXT_geospatial_crs",
+      "schema": "Vendor/EXT_geospatial_crs/schema/EXT_geospatial_crs.schema.json",
+      "attachTo": [
+        "glTF"
+      ]
     }
   ]
 }

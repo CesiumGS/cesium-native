@@ -57,6 +57,7 @@ struct Extension3dTilesSubtree;
 struct Extension3dTilesTilesetVectors;
 struct Extension3dTilesTilesetVoxels;
 struct ExtensionExtGeoreference;
+struct ExtensionExtGeospatialCrs;
 struct Padding;
 struct Availability;
 struct Layer;
@@ -739,6 +740,19 @@ struct ExtensionExtGeoreferenceJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionExtGeoreference& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionExtGeospatialCrsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtGeospatialCrs;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "EXT_geospatial_crs";
+
+  static void write(
+      const CesiumGltf::ExtensionExtGeospatialCrs& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

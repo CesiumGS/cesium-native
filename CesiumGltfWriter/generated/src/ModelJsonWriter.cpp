@@ -43,6 +43,7 @@
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtGeoreference.h>
+#include <CesiumGltf/ExtensionExtGeospatialCrs.h>
 #include <CesiumGltf/ExtensionExtImplicitCylinderRegion.h>
 #include <CesiumGltf/ExtensionExtImplicitEllipsoidRegion.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
@@ -369,6 +370,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionExtGeoreference& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionExtGeospatialCrs& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1923,6 +1929,20 @@ void writeJson(
     jsonWriter.Key("height");
     writeJson(obj.height, jsonWriter, context);
   }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionExtGeospatialCrs& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("format");
+  writeJson(obj.format, jsonWriter, context);
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -4211,6 +4231,13 @@ void Extension3dTilesTilesetVoxelsJsonWriter::write(
 
 void ExtensionExtGeoreferenceJsonWriter::write(
     const CesiumGltf::ExtensionExtGeoreference& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionExtGeospatialCrsJsonWriter::write(
+    const CesiumGltf::ExtensionExtGeospatialCrs& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

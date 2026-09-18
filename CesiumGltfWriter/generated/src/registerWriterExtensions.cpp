@@ -39,6 +39,7 @@
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtGeoreference.h>
+#include <CesiumGltf/ExtensionExtGeospatialCrs.h>
 #include <CesiumGltf/ExtensionExtImplicitCylinderRegion.h>
 #include <CesiumGltf/ExtensionExtImplicitEllipsoidRegion.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
@@ -109,6 +110,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Model,
       Extension3dTilesTilesetVoxelsJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Model,
+      ExtensionExtGeospatialCrsJsonWriter>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonWriter>();
