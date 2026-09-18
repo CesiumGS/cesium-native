@@ -30,6 +30,7 @@
 #include <CesiumGltf/Extension3dTilesHorizonOcclusionPoint.h>
 #include <CesiumGltf/Extension3dTilesImplicitTiling.h>
 #include <CesiumGltf/Extension3dTilesShapeCylinderRegion.h>
+#include <CesiumGltf/Extension3dTilesShapeEllipsoidRegion.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -332,6 +333,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::Extension3dTilesShapeCylinderRegion& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Extension3dTilesShapeEllipsoidRegion& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1719,6 +1725,43 @@ void writeJson(
   if (obj.maximumAngle != 3.14159265359) {
     jsonWriter.Key("maximumAngle");
     writeJson(obj.maximumAngle, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Extension3dTilesShapeEllipsoidRegion& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("minimumHeight");
+  writeJson(obj.minimumHeight, jsonWriter, context);
+
+  jsonWriter.Key("maximumHeight");
+  writeJson(obj.maximumHeight, jsonWriter, context);
+
+  if (obj.minimumLatitude != -1.57079632679) {
+    jsonWriter.Key("minimumLatitude");
+    writeJson(obj.minimumLatitude, jsonWriter, context);
+  }
+
+  if (obj.maximumLatitude != 1.57079632679) {
+    jsonWriter.Key("maximumLatitude");
+    writeJson(obj.maximumLatitude, jsonWriter, context);
+  }
+
+  if (obj.minimumLongitude != -3.14159265359) {
+    jsonWriter.Key("minimumLongitude");
+    writeJson(obj.minimumLongitude, jsonWriter, context);
+  }
+
+  if (obj.maximumLongitude != 3.14159265359) {
+    jsonWriter.Key("maximumLongitude");
+    writeJson(obj.maximumLongitude, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -3940,6 +3983,13 @@ void ExtensionNode3dTilesLayersJsonWriter::write(
 
 void Extension3dTilesShapeCylinderRegionJsonWriter::write(
     const CesiumGltf::Extension3dTilesShapeCylinderRegion& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesShapeEllipsoidRegionJsonWriter::write(
+    const CesiumGltf::Extension3dTilesShapeEllipsoidRegion& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

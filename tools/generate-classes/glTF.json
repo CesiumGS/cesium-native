@@ -253,6 +253,9 @@
     },
     "3DTILES_shape_cylinder_region": {
       "overrideName": "Extension3dTilesShapeCylinderRegion"
+    },
+    "3DTILES_shape_ellipsoid_region": {
+      "overrideName": "Extension3dTilesShapeEllipsoidRegion"
     }
   },
   "extensions": [
@@ -461,6 +464,10 @@
     {
       "extensionName": "3DTILES_shape_cylinder_region",
       "schema": "Vendor/3DTILES_shape_cylinder_region/schema/shape.3DTILES_shape_cylinder_region.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_shape_ellipsoid_region",
+      "schema": "Vendor/3DTILES_shape_ellipsoid_region/schema/shape.3DTILES_shape_ellipsoid_region.schema.json"
     }
   ]
 }
