@@ -52,11 +52,13 @@
 #include <CesiumGltf/ExtensionMeshPrimitiveBentleyMaterialsLineStyle.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariants.h>
+#include <CesiumGltf/ExtensionModel3dTilesLayers.h>
 #include <CesiumGltf/ExtensionModel3dTilesTileset.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelKhrLightsPunctual.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
 #include <CesiumGltf/ExtensionModelMaxarMeshVariants.h>
+#include <CesiumGltf/ExtensionNode3dTilesLayers.h>
 #include <CesiumGltf/ExtensionNode3dTilesTileset.h>
 #include <CesiumGltf/ExtensionNodeKhrLightsPunctual.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
@@ -87,6 +89,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Model,
       ExtensionModel3dTilesTilesetJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModel3dTilesLayersJsonWriter>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonWriter>();
@@ -146,6 +151,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Node,
       Extension3dTilesImplicitTilingJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Node,
+      ExtensionNode3dTilesLayersJsonWriter>();
   context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonWriter>();

@@ -48,6 +48,9 @@ struct ExtensionModel3dTilesTileset;
 struct ExtensionNode3dTilesTileset;
 struct Extension3dTilesHorizonOcclusionPoint;
 struct Extension3dTilesImplicitTiling;
+struct ExtensionModel3dTilesLayers;
+struct ExtensionNode3dTilesLayers;
+struct Layer;
 struct Content;
 struct BoundingVolume;
 struct Light;
@@ -611,6 +614,41 @@ struct Extension3dTilesImplicitTilingJsonWriter {
 
   static void write(
       const CesiumGltf::Extension3dTilesImplicitTiling& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionModel3dTilesLayersJsonWriter {
+  using ValueType = CesiumGltf::ExtensionModel3dTilesLayers;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "3DTILES_layers";
+
+  static void write(
+      const CesiumGltf::ExtensionModel3dTilesLayers& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionNode3dTilesLayersJsonWriter {
+  using ValueType = CesiumGltf::ExtensionNode3dTilesLayers;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "3DTILES_layers";
+
+  static void write(
+      const CesiumGltf::ExtensionNode3dTilesLayers& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct LayerJsonWriter {
+  using ValueType = CesiumGltf::Layer;
+
+  static void write(
+      const CesiumGltf::Layer& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

@@ -241,6 +241,15 @@
     },
     "3DTILES_implicit_tiling": {
       "overrideName": "Extension3dTilesImplicitTiling"
+    },
+    "3DTILES_layers glTF Document extension": {
+      "overrideName": "ExtensionModel3dTilesLayers"
+    },
+    "3DTILES_layers node extension": {
+      "overrideName": "ExtensionNode3dTilesLayers"
+    },
+    "Layer in 3DTILES_layers": {
+      "overrideName": "Layer"
     }
   },
   "extensions": [
@@ -437,6 +446,14 @@
     {
       "extensionName": "3DTILES_implicit_tiling",
       "schema": "Vendor/3DTILES_implicit_tiling/schema/node.3DTILES_implicit_tiling.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_layers",
+      "schema": "Vendor/3DTILES_layers/schema/glTF.3DTILES_layers.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_layers",
+      "schema": "Vendor/3DTILES_layers/schema/node.3DTILES_layers.schema.json"
     }
   ]
 }
