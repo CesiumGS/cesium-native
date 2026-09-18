@@ -28,6 +28,7 @@
 #include <CesiumGltf/Extension3dTilesImplicitTiling.h>
 #include <CesiumGltf/Extension3dTilesShapeCylinderRegion.h>
 #include <CesiumGltf/Extension3dTilesShapeEllipsoidRegion.h>
+#include <CesiumGltf/Extension3dTilesShapeS2.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -213,5 +214,8 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Shape,
       Extension3dTilesShapeEllipsoidRegionJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Shape,
+      Extension3dTilesShapeS2JsonWriter>();
 }
 } // namespace CesiumGltfWriter

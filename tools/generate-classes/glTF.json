@@ -256,6 +256,9 @@
     },
     "3DTILES_shape_ellipsoid_region": {
       "overrideName": "Extension3dTilesShapeEllipsoidRegion"
+    },
+    "3DTILES_shape_s2": {
+      "overrideName": "Extension3dTilesShapeS2"
     }
   },
   "extensions": [
@@ -468,6 +471,10 @@
     {
       "extensionName": "3DTILES_shape_ellipsoid_region",
       "schema": "Vendor/3DTILES_shape_ellipsoid_region/schema/shape.3DTILES_shape_ellipsoid_region.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_shape_s2",
+      "schema": "Vendor/3DTILES_shape_s2/schema/shape.3DTILES_shape_s2.schema.json"
     }
   ]
 }
