@@ -63,9 +63,10 @@ struct ExtensionExtGeospatialCrsWkt2;
 struct ExtensionNodeExtNodeVisibilityConditions;
 struct ExtensionModelExtNodeVisibilityConditions;
 struct ExtensionExtNodeVisibilityVolume;
+struct ExtensionExtVoxels;
+struct Padding;
 struct BoundingVolume;
 struct ExtensionModelExtNodeVisibilityConditionsDimensionsValue;
-struct Padding;
 struct Availability;
 struct Layer;
 struct Content;
@@ -828,6 +829,28 @@ struct ExtensionExtNodeVisibilityVolumeJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
+struct ExtensionExtVoxelsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtVoxels;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "EXT_voxels";
+
+  static void write(
+      const CesiumGltf::ExtensionExtVoxels& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct PaddingJsonWriter {
+  using ValueType = CesiumGltf::Padding;
+
+  static void write(
+      const CesiumGltf::Padding& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct BoundingVolumeJsonWriter {
   using ValueType = CesiumGltf::BoundingVolume;
 
@@ -844,15 +867,6 @@ struct ExtensionModelExtNodeVisibilityConditionsDimensionsValueJsonWriter {
   static void write(
       const CesiumGltf::
           ExtensionModelExtNodeVisibilityConditionsDimensionsValue& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
-struct PaddingJsonWriter {
-  using ValueType = CesiumGltf::Padding;
-
-  static void write(
-      const CesiumGltf::Padding& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

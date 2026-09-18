@@ -289,6 +289,9 @@
     },
     "EXT_node_visibility_volume": {
       "overrideName": "ExtensionExtNodeVisibilityVolume"
+    },
+    "EXT_voxels glTF Node extension": {
+      "overrideName": "ExtensionExtVoxels"
     }
   },
   "extensions": [
@@ -560,6 +563,10 @@
       "attachTo": [
         "node"
       ]
+    },
+    {
+      "extensionName": "EXT_voxels",
+      "schema": "Vendor/EXT_voxels/schema/node.EXT_voxels.schema.json"
     }
   ]
 }

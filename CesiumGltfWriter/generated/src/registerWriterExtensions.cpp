@@ -53,6 +53,7 @@
 #include <CesiumGltf/ExtensionExtNodeVisibilityVolume.h>
 #include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
+#include <CesiumGltf/ExtensionExtVoxels.h>
 #include <CesiumGltf/ExtensionKhrBillboard.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
@@ -193,6 +194,7 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionExtNodeVisibilityVolumeJsonWriter>();
+  context.registerExtension<CesiumGltf::Node, ExtensionExtVoxelsJsonWriter>();
   context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonWriter>();
