@@ -210,7 +210,7 @@
   "extensions": [
     {
       "extensionName": "CESIUM_RTC",
-      "schema": "../1.0/Vendor/CESIUM_RTC/CESIUM_RTC.schema.json",
+      "schema": "Vendor/CESIUM_RTC/CESIUM_RTC.schema.json",
       "attachTo": [
         "glTF"
       ]
