@@ -29,6 +29,7 @@
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/Extension3dTilesHorizonOcclusionPoint.h>
 #include <CesiumGltf/Extension3dTilesImplicitTiling.h>
+#include <CesiumGltf/Extension3dTilesShapeCylinderRegion.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -326,6 +327,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionNode3dTilesLayers& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Extension3dTilesShapeCylinderRegion& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1683,6 +1689,36 @@ void writeJson(
   if (obj.layer > -1) {
     jsonWriter.Key("layer");
     writeJson(obj.layer, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Extension3dTilesShapeCylinderRegion& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("minimumRadius");
+  writeJson(obj.minimumRadius, jsonWriter, context);
+
+  jsonWriter.Key("maximumRadius");
+  writeJson(obj.maximumRadius, jsonWriter, context);
+
+  jsonWriter.Key("height");
+  writeJson(obj.height, jsonWriter, context);
+
+  if (obj.minimumAngle != -3.14159265359) {
+    jsonWriter.Key("minimumAngle");
+    writeJson(obj.minimumAngle, jsonWriter, context);
+  }
+
+  if (obj.maximumAngle != 3.14159265359) {
+    jsonWriter.Key("maximumAngle");
+    writeJson(obj.maximumAngle, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -3897,6 +3933,13 @@ void ExtensionModel3dTilesLayersJsonWriter::write(
 
 void ExtensionNode3dTilesLayersJsonWriter::write(
     const CesiumGltf::ExtensionNode3dTilesLayers& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesShapeCylinderRegionJsonWriter::write(
+    const CesiumGltf::Extension3dTilesShapeCylinderRegion& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

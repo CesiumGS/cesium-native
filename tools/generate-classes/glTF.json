@@ -250,6 +250,9 @@
     },
     "Layer in 3DTILES_layers": {
       "overrideName": "Layer"
+    },
+    "3DTILES_shape_cylinder_region": {
+      "overrideName": "Extension3dTilesShapeCylinderRegion"
     }
   },
   "extensions": [
@@ -454,6 +457,10 @@
     {
       "extensionName": "3DTILES_layers",
       "schema": "Vendor/3DTILES_layers/schema/node.3DTILES_layers.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_shape_cylinder_region",
+      "schema": "Vendor/3DTILES_shape_cylinder_region/schema/shape.3DTILES_shape_cylinder_region.schema.json"
     }
   ]
 }

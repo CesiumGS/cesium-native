@@ -5,6 +5,7 @@
 
 #include "Extension3dTilesHorizonOcclusionPointJsonHandler.h"
 #include "Extension3dTilesImplicitTilingJsonHandler.h"
+#include "Extension3dTilesShapeCylinderRegionJsonHandler.h"
 #include "ExtensionBentleyMaterialsPointStyleJsonHandler.h"
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
@@ -57,6 +58,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/PropertyTextureProperty.h>
+#include <CesiumGltf/Shape.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumGltf/TextureInfo.h>
 #include <CesiumJsonReader/JsonReaderOptions.h>
@@ -200,5 +202,8 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Content,
       Extension3dTilesHorizonOcclusionPointJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Shape,
+      Extension3dTilesShapeCylinderRegionJsonHandler>();
 }
 } // namespace CesiumGltfReader
