@@ -274,6 +274,9 @@
     },
     "EXT_geospatial_crs": {
       "overrideName": "ExtensionExtGeospatialCrs"
+    },
+    "EXT_geospatial_crs_wkid": {
+      "overrideName": "ExtensionExtGeospatialCrsWkid"
     }
   },
   "extensions": [
@@ -512,6 +515,13 @@
       "schema": "Vendor/EXT_geospatial_crs/schema/EXT_geospatial_crs.schema.json",
       "attachTo": [
         "glTF"
+      ]
+    },
+    {
+      "extensionName": "EXT_geospatial_crs_wkid",
+      "schema": "Vendor/EXT_geospatial_crs_wkid/schema/EXT_geospatial_crs_wkid.schema.json",
+      "attachTo": [
+        "EXT_geospatial_crs"
       ]
     }
   ]

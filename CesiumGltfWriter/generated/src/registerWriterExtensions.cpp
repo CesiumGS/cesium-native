@@ -8,6 +8,7 @@
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Content.h>
+#include <CesiumGltf/ExtensionExtGeospatialCrs.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/LegacyShape.h>
@@ -40,6 +41,7 @@
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtGeoreference.h>
 #include <CesiumGltf/ExtensionExtGeospatialCrs.h>
+#include <CesiumGltf/ExtensionExtGeospatialCrsWkid.h>
 #include <CesiumGltf/ExtensionExtImplicitCylinderRegion.h>
 #include <CesiumGltf/ExtensionExtImplicitEllipsoidRegion.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
@@ -237,5 +239,8 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Shape,
       Extension3dTilesShapeS2JsonWriter>();
+  context.registerExtension<
+      CesiumGltf::ExtensionExtGeospatialCrs,
+      ExtensionExtGeospatialCrsWkidJsonWriter>();
 }
 } // namespace CesiumGltfWriter

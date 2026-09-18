@@ -44,6 +44,7 @@
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
 #include <CesiumGltf/ExtensionExtGeoreference.h>
 #include <CesiumGltf/ExtensionExtGeospatialCrs.h>
+#include <CesiumGltf/ExtensionExtGeospatialCrsWkid.h>
 #include <CesiumGltf/ExtensionExtImplicitCylinderRegion.h>
 #include <CesiumGltf/ExtensionExtImplicitEllipsoidRegion.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
@@ -375,6 +376,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionExtGeospatialCrs& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionExtGeospatialCrsWkid& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1943,6 +1949,33 @@ void writeJson(
 
   jsonWriter.Key("format");
   writeJson(obj.format, jsonWriter, context);
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionExtGeospatialCrsWkid& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("authority");
+  writeJson(obj.authority, jsonWriter, context);
+
+  jsonWriter.Key("wkid");
+  writeJson(obj.wkid, jsonWriter, context);
+
+  if (obj.vcsWkid) {
+    jsonWriter.Key("vcsWkid");
+    writeJson(obj.vcsWkid, jsonWriter, context);
+  }
+
+  if (obj.epoch) {
+    jsonWriter.Key("epoch");
+    writeJson(obj.epoch, jsonWriter, context);
+  }
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -4238,6 +4271,13 @@ void ExtensionExtGeoreferenceJsonWriter::write(
 
 void ExtensionExtGeospatialCrsJsonWriter::write(
     const CesiumGltf::ExtensionExtGeospatialCrs& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionExtGeospatialCrsWkidJsonWriter::write(
+    const CesiumGltf::ExtensionExtGeospatialCrsWkid& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

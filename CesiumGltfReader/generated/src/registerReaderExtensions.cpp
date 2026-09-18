@@ -19,6 +19,7 @@
 #include "ExtensionCesiumTileEdgesJsonHandler.h"
 #include "ExtensionExtGeoreferenceJsonHandler.h"
 #include "ExtensionExtGeospatialCrsJsonHandler.h"
+#include "ExtensionExtGeospatialCrsWkidJsonHandler.h"
 #include "ExtensionExtImplicitCylinderRegionJsonHandler.h"
 #include "ExtensionExtImplicitEllipsoidRegionJsonHandler.h"
 #include "ExtensionExtInstanceFeaturesJsonHandler.h"
@@ -55,6 +56,7 @@
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Content.h>
+#include <CesiumGltf/ExtensionExtGeospatialCrs.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/LegacyShape.h>
@@ -233,5 +235,8 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Shape,
       Extension3dTilesShapeS2JsonHandler>();
+  options.registerExtension<
+      CesiumGltf::ExtensionExtGeospatialCrs,
+      ExtensionExtGeospatialCrsWkidJsonHandler>();
 }
 } // namespace CesiumGltfReader
