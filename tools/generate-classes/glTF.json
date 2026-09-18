@@ -265,6 +265,9 @@
     },
     "3DTILES_tileset_vectors": {
       "overrideName": "Extension3dTilesTilesetVectors"
+    },
+    "3DTILES_tileset_voxels": {
+      "overrideName": "Extension3dTilesTilesetVoxels"
     }
   },
   "extensions": [
@@ -489,6 +492,10 @@
     {
       "extensionName": "3DTILES_tileset_vectors",
       "schema": "Vendor/3DTILES_tileset_vectors/schema/glTF.3DTILES_tileset_vectors.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_tileset_voxels",
+      "schema": "Vendor/3DTILES_tileset_voxels/schema/glTF.3DTILES_tileset_voxels.schema.json"
     }
   ]
 }

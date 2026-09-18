@@ -31,6 +31,7 @@
 #include <CesiumGltf/Extension3dTilesShapeS2.h>
 #include <CesiumGltf/Extension3dTilesSubtree.h>
 #include <CesiumGltf/Extension3dTilesTilesetVectors.h>
+#include <CesiumGltf/Extension3dTilesTilesetVoxels.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -104,6 +105,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Model,
       Extension3dTilesTilesetVectorsJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Model,
+      Extension3dTilesTilesetVoxelsJsonWriter>();
   context.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonWriter>();

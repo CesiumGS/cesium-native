@@ -55,6 +55,8 @@ struct Extension3dTilesShapeEllipsoidRegion;
 struct Extension3dTilesShapeS2;
 struct Extension3dTilesSubtree;
 struct Extension3dTilesTilesetVectors;
+struct Extension3dTilesTilesetVoxels;
+struct Padding;
 struct Availability;
 struct Layer;
 struct Content;
@@ -62,7 +64,6 @@ struct BoundingVolume;
 struct Light;
 struct Spotlight;
 struct LineString;
-struct Padding;
 struct LegacyShape;
 struct LegacyCylinder;
 struct LegacyCapsule;
@@ -715,6 +716,28 @@ struct Extension3dTilesTilesetVectorsJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
+struct Extension3dTilesTilesetVoxelsJsonWriter {
+  using ValueType = CesiumGltf::Extension3dTilesTilesetVoxels;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "3DTILES_tileset_voxels";
+
+  static void write(
+      const CesiumGltf::Extension3dTilesTilesetVoxels& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct PaddingJsonWriter {
+  using ValueType = CesiumGltf::Padding;
+
+  static void write(
+      const CesiumGltf::Padding& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct AvailabilityJsonWriter {
   using ValueType = CesiumGltf::Availability;
 
@@ -774,15 +797,6 @@ struct LineStringJsonWriter {
 
   static void write(
       const CesiumGltf::LineString& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
-struct PaddingJsonWriter {
-  using ValueType = CesiumGltf::Padding;
-
-  static void write(
-      const CesiumGltf::Padding& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
