@@ -1,7 +1,9 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/Buffer.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
@@ -47,6 +49,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 using namespace CesiumAsync;
@@ -1445,4 +1448,111 @@ TEST_CASE("SPZ decoding works properly") {
     REQUIRE(scaleView.size() == 1);
     CHECK(scaleView[0] == glm::vec3(20.085537, 7.38905621, 2.71828175));
   }
+}
+
+namespace {
+// Builds a model with a single primitive whose POSITION attribute is
+// Draco-compressed, reusing the compressed bitstream from the CesiumMilkTruck
+// test data. In that bitstream, POSITION has unique ID 1 and three components.
+GltfReaderResult createDracoModel(const std::string& positionType) {
+  GltfReaderResult result;
+  Model& model = result.model.emplace();
+
+  Buffer& buffer = model.buffers.emplace_back();
+  buffer.cesium.data = readFile(
+      std::filesystem::path(CesiumGltfReader_TEST_DATA_DIR) /
+      "DracoCompressed" / "0.bin");
+  buffer.byteLength = int64_t(buffer.cesium.data.size());
+
+  BufferView& bufferView = model.bufferViews.emplace_back();
+  bufferView.buffer = 0;
+  bufferView.byteOffset = 1240;
+  bufferView.byteLength = 7871;
+
+  Accessor& accessor = model.accessors.emplace_back();
+  accessor.componentType = Accessor::ComponentType::FLOAT;
+  accessor.type = positionType;
+  accessor.count = 1856;
+
+  MeshPrimitive& primitive =
+      model.meshes.emplace_back().primitives.emplace_back();
+  primitive.attributes["POSITION"] = 0;
+
+  ExtensionKhrDracoMeshCompression& draco =
+      primitive.addExtension<ExtensionKhrDracoMeshCompression>();
+  draco.bufferView = 0;
+  draco.attributes["POSITION"] = 1;
+
+  model.addExtensionRequired(ExtensionKhrDracoMeshCompression::ExtensionName);
+
+  return result;
+}
+
+bool hasWarningContaining(
+    const GltfReaderResult& result,
+    const std::string& text) {
+  for (const std::string& warning : result.warnings) {
+    if (warning.find(text) != std::string::npos) {
+      return true;
+    }
+  }
+  return false;
+}
+} // namespace
+
+TEST_CASE("Replaces an illegal Draco indices accessor componentType") {
+  GltfReader reader;
+  GltfReaderOptions options;
+
+  GltfReaderResult result = createDracoModel(Accessor::Type::VEC3);
+
+  Accessor& indicesAccessor = result.model->accessors.emplace_back();
+  indicesAccessor.type = Accessor::Type::SCALAR;
+
+  bool expectWarning = true;
+  SUBCASE("unknown componentType") { indicesAccessor.componentType = 9999; }
+  SUBCASE("FLOAT componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::FLOAT;
+  }
+  SUBCASE("signed componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::SHORT;
+  }
+  SUBCASE("normalized componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::UNSIGNED_SHORT;
+    indicesAccessor.normalized = true;
+    expectWarning = false;
+  }
+  SUBCASE("too narrow componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    expectWarning = false;
+  }
+
+  const int32_t indicesAccessorIndex =
+      static_cast<int32_t>(result.model->accessors.size() - 1);
+  result.model->meshes[0].primitives[0].indices = indicesAccessorIndex;
+
+  reader.postprocessGltf(result, options);
+
+  REQUIRE(result.model);
+  if (expectWarning) {
+    CHECK(hasWarningContaining(result, "not a valid glTF index componentType"));
+  }
+
+  // The componentType must end up as a legal glTF index type wide enough for
+  // the decoded Draco point count, so the indices buffer is sized and
+  // interpreted consistently and the canonical index accessor reader accepts
+  // the result.
+  const Accessor& fixedAccessor =
+      result.model->accessors[static_cast<size_t>(indicesAccessorIndex)];
+  CHECK(fixedAccessor.componentType == Accessor::ComponentType::UNSIGNED_SHORT);
+  CHECK(fixedAccessor.type == Accessor::Type::SCALAR);
+  CHECK(!fixedAccessor.normalized);
+
+  IndexAccessorType indexView = getIndexAccessorView(
+      *result.model,
+      result.model->meshes[0].primitives[0]);
+  const auto* pView = std::get_if<AccessorView<uint16_t>>(&indexView);
+  REQUIRE(pView);
+  REQUIRE(pView->status() == AccessorViewStatus::Valid);
+  CHECK(pView->size() == fixedAccessor.count);
 }
