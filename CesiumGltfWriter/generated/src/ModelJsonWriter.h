@@ -60,6 +60,9 @@ struct ExtensionExtGeoreference;
 struct ExtensionExtGeospatialCrs;
 struct ExtensionExtGeospatialCrsWkid;
 struct ExtensionExtGeospatialCrsWkt2;
+struct ExtensionNodeExtNodeVisibilityConditions;
+struct ExtensionModelExtNodeVisibilityConditions;
+struct ExtensionModelExtNodeVisibilityConditionsDimensionsValue;
 struct Padding;
 struct Availability;
 struct Layer;
@@ -781,6 +784,43 @@ struct ExtensionExtGeospatialCrsWkt2JsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionExtGeospatialCrsWkt2& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionNodeExtNodeVisibilityConditionsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionNodeExtNodeVisibilityConditions;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "EXT_node_visibility_conditions";
+
+  static void write(
+      const CesiumGltf::ExtensionNodeExtNodeVisibilityConditions& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionModelExtNodeVisibilityConditionsJsonWriter {
+  using ValueType = CesiumGltf::ExtensionModelExtNodeVisibilityConditions;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "EXT_node_visibility_conditions";
+
+  static void write(
+      const CesiumGltf::ExtensionModelExtNodeVisibilityConditions& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionModelExtNodeVisibilityConditionsDimensionsValueJsonWriter {
+  using ValueType =
+      CesiumGltf::ExtensionModelExtNodeVisibilityConditionsDimensionsValue;
+
+  static void write(
+      const CesiumGltf::
+          ExtensionModelExtNodeVisibilityConditionsDimensionsValue& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

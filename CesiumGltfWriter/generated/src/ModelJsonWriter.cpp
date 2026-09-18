@@ -71,6 +71,8 @@
 #include <CesiumGltf/ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue.h>
 #include <CesiumGltf/ExtensionModel3dTilesLayers.h>
 #include <CesiumGltf/ExtensionModel3dTilesTileset.h>
+#include <CesiumGltf/ExtensionModelExtNodeVisibilityConditions.h>
+#include <CesiumGltf/ExtensionModelExtNodeVisibilityConditionsDimensionsValue.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModelKhrLightsPunctual.h>
 #include <CesiumGltf/ExtensionModelKhrMaterialsVariants.h>
@@ -79,6 +81,7 @@
 #include <CesiumGltf/ExtensionModelMaxarMeshVariantsValue.h>
 #include <CesiumGltf/ExtensionNode3dTilesLayers.h>
 #include <CesiumGltf/ExtensionNode3dTilesTileset.h>
+#include <CesiumGltf/ExtensionNodeExtNodeVisibilityConditions.h>
 #include <CesiumGltf/ExtensionNodeKhrLightsPunctual.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariants.h>
 #include <CesiumGltf/ExtensionNodeMaxarMeshVariantsMappingsValue.h>
@@ -387,6 +390,22 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::ExtensionExtGeospatialCrsWkt2& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionNodeExtNodeVisibilityConditions& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionModelExtNodeVisibilityConditions& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::ExtensionModelExtNodeVisibilityConditionsDimensionsValue&
+        obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1996,6 +2015,58 @@ void writeJson(
 
   jsonWriter.Key("wkt2");
   writeJson(obj.wkt2, jsonWriter, context);
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionNodeExtNodeVisibilityConditions& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.conditions.empty()) {
+    jsonWriter.Key("conditions");
+    writeJson(obj.conditions, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionModelExtNodeVisibilityConditions& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (!obj.dimensions.empty()) {
+    jsonWriter.Key("dimensions");
+    writeJson(obj.dimensions, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::ExtensionModelExtNodeVisibilityConditionsDimensionsValue&
+        obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("name");
+  writeJson(obj.name, jsonWriter, context);
+
+  if (!obj.domain.empty()) {
+    jsonWriter.Key("domain");
+    writeJson(obj.domain, jsonWriter, context);
+  }
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -4305,6 +4376,28 @@ void ExtensionExtGeospatialCrsWkidJsonWriter::write(
 
 void ExtensionExtGeospatialCrsWkt2JsonWriter::write(
     const CesiumGltf::ExtensionExtGeospatialCrsWkt2& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionNodeExtNodeVisibilityConditionsJsonWriter::write(
+    const CesiumGltf::ExtensionNodeExtNodeVisibilityConditions& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionModelExtNodeVisibilityConditionsJsonWriter::write(
+    const CesiumGltf::ExtensionModelExtNodeVisibilityConditions& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void ExtensionModelExtNodeVisibilityConditionsDimensionsValueJsonWriter::write(
+    const CesiumGltf::ExtensionModelExtNodeVisibilityConditionsDimensionsValue&
+        obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

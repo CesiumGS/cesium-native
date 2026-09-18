@@ -280,6 +280,12 @@
     },
     "EXT_geospatial_crs_wkt2": {
       "overrideName": "ExtensionExtGeospatialCrsWkt2"
+    },
+    "EXT_node_visibility_conditions": {
+      "overrideName": "ExtensionNodeExtNodeVisibilityConditions"
+    },
+    "EXT_node_visibility_conditions extension": {
+      "overrideName": "ExtensionModelExtNodeVisibilityConditions"
     }
   },
   "extensions": [
@@ -533,6 +539,17 @@
       "attachTo": [
         "EXT_geospatial_crs"
       ]
+    },
+    {
+      "extensionName": "EXT_node_visibility_conditions",
+      "schema": "Vendor/EXT_node_visibility_conditions/schema/EXT_node_visibility_conditions.schema.json",
+      "attachTo": [
+        "node"
+      ]
+    },
+    {
+      "extensionName": "EXT_node_visibility_conditions",
+      "schema": "Vendor/EXT_node_visibility_conditions/schema/glTF.EXT_node_visibility_conditions.schema.json"
     }
   ]
 }
