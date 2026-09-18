@@ -286,6 +286,9 @@
     },
     "EXT_node_visibility_conditions extension": {
       "overrideName": "ExtensionModelExtNodeVisibilityConditions"
+    },
+    "EXT_node_visibility_volume": {
+      "overrideName": "ExtensionExtNodeVisibilityVolume"
     }
   },
   "extensions": [
@@ -550,6 +553,13 @@
     {
       "extensionName": "EXT_node_visibility_conditions",
       "schema": "Vendor/EXT_node_visibility_conditions/schema/glTF.EXT_node_visibility_conditions.schema.json"
+    },
+    {
+      "extensionName": "EXT_node_visibility_volume",
+      "schema": "Vendor/EXT_node_visibility_volume/schema/EXT_node_visibility_volume.schema.json",
+      "attachTo": [
+        "node"
+      ]
     }
   ]
 }

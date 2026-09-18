@@ -50,6 +50,7 @@
 #include <CesiumGltf/ExtensionExtMeshGpuInstancing.h>
 #include <CesiumGltf/ExtensionExtMeshPolygon.h>
 #include <CesiumGltf/ExtensionExtMeshPrimitiveEdgeVisibility.h>
+#include <CesiumGltf/ExtensionExtNodeVisibilityVolume.h>
 #include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrBillboard.h>
@@ -189,6 +190,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionNodeExtNodeVisibilityConditionsJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Node,
+      ExtensionExtNodeVisibilityVolumeJsonWriter>();
   context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonWriter>();

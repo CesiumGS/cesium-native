@@ -62,12 +62,13 @@ struct ExtensionExtGeospatialCrsWkid;
 struct ExtensionExtGeospatialCrsWkt2;
 struct ExtensionNodeExtNodeVisibilityConditions;
 struct ExtensionModelExtNodeVisibilityConditions;
+struct ExtensionExtNodeVisibilityVolume;
+struct BoundingVolume;
 struct ExtensionModelExtNodeVisibilityConditionsDimensionsValue;
 struct Padding;
 struct Availability;
 struct Layer;
 struct Content;
-struct BoundingVolume;
 struct Light;
 struct Spotlight;
 struct LineString;
@@ -814,6 +815,28 @@ struct ExtensionModelExtNodeVisibilityConditionsJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
+struct ExtensionExtNodeVisibilityVolumeJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtNodeVisibilityVolume;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "EXT_node_visibility_volume";
+
+  static void write(
+      const CesiumGltf::ExtensionExtNodeVisibilityVolume& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct BoundingVolumeJsonWriter {
+  using ValueType = CesiumGltf::BoundingVolume;
+
+  static void write(
+      const CesiumGltf::BoundingVolume& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
 struct ExtensionModelExtNodeVisibilityConditionsDimensionsValueJsonWriter {
   using ValueType =
       CesiumGltf::ExtensionModelExtNodeVisibilityConditionsDimensionsValue;
@@ -857,15 +880,6 @@ struct ContentJsonWriter {
 
   static void write(
       const CesiumGltf::Content& obj,
-      CesiumJsonWriter::JsonWriter& jsonWriter,
-      const CesiumJsonWriter::ExtensionWriterContext& context);
-};
-
-struct BoundingVolumeJsonWriter {
-  using ValueType = CesiumGltf::BoundingVolume;
-
-  static void write(
-      const CesiumGltf::BoundingVolume& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
