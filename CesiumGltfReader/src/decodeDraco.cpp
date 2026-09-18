@@ -149,9 +149,29 @@ void copyDecodedIndices(
     supposedComponentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_INT;
   }
 
-  if (supposedComponentType > pIndicesAccessor->componentType) {
+  // mesh.primitive.indices requires the accessor to have SCALAR type and an
+  // unsigned integer componentType; getIndexAccessorView additionally
+  // rejects normalized accessors. Replace an illegal componentType, and
+  // widen a legal one that is too narrow for the decoded point count.
+  switch (pIndicesAccessor->componentType) {
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT:
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_INT:
+    if (supposedComponentType > pIndicesAccessor->componentType) {
+      pIndicesAccessor->componentType = supposedComponentType;
+    }
+    break;
+  default:
+    readGltf.warnings.emplace_back(
+        "indices accessor has a componentType (" +
+        std::to_string(pIndicesAccessor->componentType) +
+        ") that is not a valid glTF index componentType; using a "
+        "componentType derived from the decoded Draco point count instead.");
     pIndicesAccessor->componentType = supposedComponentType;
+    break;
   }
+  pIndicesAccessor->type = CesiumGltf::Accessor::Type::SCALAR;
+  pIndicesAccessor->normalized = false;
 
   pIndicesAccessor->bufferView = static_cast<int32_t>(model.bufferViews.size());
   CesiumGltf::BufferView& indicesBufferView = model.bufferViews.emplace_back();
@@ -168,7 +188,6 @@ void copyDecodedIndices(
   indicesBufferView.byteOffset = 0;
   indicesBufferView.target =
       CesiumGltf::BufferView::Target::ELEMENT_ARRAY_BUFFER;
-  pIndicesAccessor->type = CesiumGltf::Accessor::Type::SCALAR;
   pIndicesAccessor->byteOffset = 0;
 
   static_assert(sizeof(draco::PointIndex) == sizeof(uint32_t));
@@ -177,22 +196,10 @@ void copyDecodedIndices(
       reinterpret_cast<const uint32_t*>(&pMesh->face(draco::FaceIndex(0))[0]);
 
   switch (pIndicesAccessor->componentType) {
-  case CesiumGltf::Accessor::ComponentType::BYTE:
-    copyData(
-        pSourceIndices,
-        reinterpret_cast<int8_t*>(indicesBuffer.cesium.data.data()),
-        pIndicesAccessor->count);
-    break;
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
     copyData(
         pSourceIndices,
         reinterpret_cast<uint8_t*>(indicesBuffer.cesium.data.data()),
-        pIndicesAccessor->count);
-    break;
-  case CesiumGltf::Accessor::ComponentType::SHORT:
-    copyData(
-        pSourceIndices,
-        reinterpret_cast<int16_t*>(indicesBuffer.cesium.data.data()),
         pIndicesAccessor->count);
     break;
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT:
@@ -207,11 +214,10 @@ void copyDecodedIndices(
         reinterpret_cast<uint32_t*>(indicesBuffer.cesium.data.data()),
         pIndicesAccessor->count);
     break;
-  case CesiumGltf::Accessor::ComponentType::FLOAT:
-    copyData(
-        pSourceIndices,
-        reinterpret_cast<float*>(indicesBuffer.cesium.data.data()),
-        pIndicesAccessor->count);
+  default:
+    // Unreachable: componentType is validated to be one of the above values
+    // before this point.
+    CESIUM_ASSERT(false);
     break;
   }
 }
