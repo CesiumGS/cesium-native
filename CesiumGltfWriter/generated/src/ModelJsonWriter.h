@@ -54,6 +54,7 @@ struct Extension3dTilesShapeCylinderRegion;
 struct Extension3dTilesShapeEllipsoidRegion;
 struct Extension3dTilesShapeS2;
 struct Extension3dTilesSubtree;
+struct Extension3dTilesTilesetVectors;
 struct Availability;
 struct Layer;
 struct Content;
@@ -697,6 +698,19 @@ struct Extension3dTilesSubtreeJsonWriter {
 
   static void write(
       const CesiumGltf::Extension3dTilesSubtree& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct Extension3dTilesTilesetVectorsJsonWriter {
+  using ValueType = CesiumGltf::Extension3dTilesTilesetVectors;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "3DTILES_tileset_vectors";
+
+  static void write(
+      const CesiumGltf::Extension3dTilesTilesetVectors& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

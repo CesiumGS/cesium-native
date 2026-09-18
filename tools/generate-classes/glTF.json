@@ -262,6 +262,9 @@
     },
     "Subtree": {
       "overrideName": "Extension3dTilesSubtree"
+    },
+    "3DTILES_tileset_vectors": {
+      "overrideName": "Extension3dTilesTilesetVectors"
     }
   },
   "extensions": [
@@ -482,6 +485,10 @@
     {
       "extensionName": "3DTILES_subtree",
       "schema": "Vendor/3DTILES_subtree/schema/glTF.3DTILES_subtree.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_tileset_vectors",
+      "schema": "Vendor/3DTILES_tileset_vectors/schema/glTF.3DTILES_tileset_vectors.schema.json"
     }
   ]
 }

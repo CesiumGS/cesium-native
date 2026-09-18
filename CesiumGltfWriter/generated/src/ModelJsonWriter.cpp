@@ -34,6 +34,7 @@
 #include <CesiumGltf/Extension3dTilesShapeEllipsoidRegion.h>
 #include <CesiumGltf/Extension3dTilesShapeS2.h>
 #include <CesiumGltf/Extension3dTilesSubtree.h>
+#include <CesiumGltf/Extension3dTilesTilesetVectors.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -351,6 +352,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::Extension3dTilesSubtree& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Extension3dTilesTilesetVectors& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1842,6 +1848,22 @@ void writeJson(
   if (obj.contentProperties > -1) {
     jsonWriter.Key("contentProperties");
     writeJson(obj.contentProperties, jsonWriter, context);
+  }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Extension3dTilesTilesetVectors& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  if (obj.clip) {
+    jsonWriter.Key("clip");
+    writeJson(obj.clip, jsonWriter, context);
   }
 
   writeExtensibleObject(obj, jsonWriter, context);
@@ -4110,6 +4132,13 @@ void Extension3dTilesShapeS2JsonWriter::write(
 
 void Extension3dTilesSubtreeJsonWriter::write(
     const CesiumGltf::Extension3dTilesSubtree& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesTilesetVectorsJsonWriter::write(
+    const CesiumGltf::Extension3dTilesTilesetVectors& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
