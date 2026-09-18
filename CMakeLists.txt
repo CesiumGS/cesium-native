@@ -33,7 +33,10 @@ endif()
 option(CESIUM_USE_EZVCPKG "use ezvcpkg helper" ${CESIUM_USE_EZVCPKG_DEFAULT})
 option(CESIUM_DISABLE_CURL "Disable cesium-native's use of libcurl" OFF)
 option(CESIUM_DISABLE_LIBJPEG_TURBO "Disable cesium-native's use of libjpeg-turbo. JPEG images will be decoded with STB instead." OFF)
+option(CESIUM_DISABLE_SPZ "Disable decoding Gaussian splats compressed with Niantic SPZ" OFF)
 option(CESIUM_WASM64 "Enable 64-bit WebAssembly target" OFF)
+
+set(VCPKG_MANIFEST_NO_DEFAULT_FEATURES ${CESIUM_DISABLE_SPZ})
 
 if (CESIUM_TARGET_WASM)
     # Make sure curl is disabled on wasm builds, as it is not supported.
@@ -128,8 +131,12 @@ set(PACKAGES_PUBLIC asyncplusplus expected-lite fmt glm rapidjson spdlog stb ada
 set(PACKAGES_PRIVATE
     abseil draco ktx[core] modp-base64 meshoptimizer openssl s2geometry
     sqlite3 tinyxml2 libwebp zlib-ng picosha2
-    earcut-hpp libmorton zstd spz zlib
+    earcut-hpp libmorton zstd
 )
+
+if(NOT CESIUM_DISABLE_SPZ)
+    list(APPEND PACKAGES_PRIVATE spz zlib)
+endif()
 
 # asmjit needed by blend2d on non-iOS platforms (iOS and Wasm don't support JIT)
 if(NOT CESIUM_TARGET_WASM AND NOT IOS AND NOT VCPKG_CMAKE_SYSTEM_NAME MATCHES "iOS")
@@ -389,17 +396,19 @@ find_package(meshoptimizer CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(s2 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
-# spz's installed spzConfig.cmake calls find_dependency(ZLIB), which uses CMake's
-# FindZLIB module. The vcpkg zlib 1.3.2 port builds the static library with a
-# Windows-specific "s" suffix (zs.lib), which FindZLIB doesn't search for by
-# default. The vcpkg cmake wrapper that handles this is only active when the vcpkg
-# toolchain is loaded, but in the cesium-unreal context this CMakeLists.txt is
-# included via add_subdirectory after the parent toolchain is already set, so the
-# wrapper never runs. Pre-populating these cache variables replicates what the
-# wrapper would have done, allowing FindZLIB to succeed.
-find_library(ZLIB_LIBRARY_RELEASE NAMES z zs PATHS "${PACKAGE_BUILD_DIR}/lib" NO_DEFAULT_PATH)
-find_library(ZLIB_LIBRARY_DEBUG NAMES z zd zsd PATHS "${PACKAGE_BUILD_DIR}/debug/lib" NO_DEFAULT_PATH)
-find_package(spz CONFIG REQUIRED)
+if(NOT CESIUM_DISABLE_SPZ)
+    # spz's installed spzConfig.cmake calls find_dependency(ZLIB), which uses CMake's
+    # FindZLIB module. The vcpkg zlib 1.3.2 port builds the static library with a
+    # Windows-specific "s" suffix (zs.lib), which FindZLIB doesn't search for by
+    # default. The vcpkg cmake wrapper that handles this is only active when the vcpkg
+    # toolchain is loaded, but in the cesium-unreal context this CMakeLists.txt is
+    # included via add_subdirectory after the parent toolchain is already set, so the
+    # wrapper never runs. Pre-populating these cache variables replicates what the
+    # wrapper would have done, allowing FindZLIB to succeed.
+    find_library(ZLIB_LIBRARY_RELEASE NAMES z zs PATHS "${PACKAGE_BUILD_DIR}/lib" NO_DEFAULT_PATH)
+    find_library(ZLIB_LIBRARY_DEBUG NAMES z zd zsd PATHS "${PACKAGE_BUILD_DIR}/debug/lib" NO_DEFAULT_PATH)
+    find_package(spz CONFIG REQUIRED)
+endif()
 find_package(tinyxml2 CONFIG REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(WebP CONFIG REQUIRED)
