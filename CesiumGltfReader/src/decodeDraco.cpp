@@ -171,6 +171,13 @@ void copyDecodedIndices(
   pIndicesAccessor->type = CesiumGltf::Accessor::Type::SCALAR;
   pIndicesAccessor->byteOffset = 0;
 
+  if (pMesh->num_faces() == 0) {
+    // The zero-length buffer created above is already correct; there is
+    // nothing to copy, and draco::Mesh::face cannot be called on an empty
+    // mesh.
+    return;
+  }
+
   static_assert(sizeof(draco::PointIndex) == sizeof(uint32_t));
 
   const uint32_t* pSourceIndices =
@@ -216,7 +223,9 @@ void copyDecodedIndices(
   }
 }
 
-void copyDecodedAttribute(
+// Returns false if the attribute cannot be decoded and must be removed from
+// the primitive.
+bool copyDecodedAttribute(
     GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& /* primitive */,
     CesiumGltf::Accessor* pAccessor,
@@ -225,6 +234,14 @@ void copyDecodedAttribute(
   CESIUM_TRACE("CesiumGltfReader::copyDecodedAttribute");
   CESIUM_ASSERT(readGltf.model.has_value());
   CesiumGltf::Model& model = readGltf.model.value();
+
+  if (!pAttribute->is_mapping_identity() &&
+      pAttribute->indices_map_size() < pMesh->num_points()) {
+    readGltf.warnings.emplace_back(
+        "Draco attribute maps fewer points than the mesh contains, so the "
+        "attribute is removed from the primitive.");
+    return false;
+  }
 
   if (pAccessor->count != pMesh->num_points()) {
     readGltf.warnings.emplace_back("Attribute accessor.count doesn't match "
@@ -285,6 +302,8 @@ void copyDecodedAttribute(
         std::to_string(int32_t(pAccessor->componentType)));
     break;
   }
+
+  return true;
 }
 
 void decodePrimitive(
@@ -334,12 +353,17 @@ void decodePrimitive(
       continue;
     }
 
-    copyDecodedAttribute(
-        readGltf,
-        primitive,
-        pAccessor,
-        pMesh.get(),
-        pAttribute);
+    if (!copyDecodedAttribute(
+            readGltf,
+            primitive,
+            pAccessor,
+            pMesh.get(),
+            pAttribute)) {
+      // The accessor was not rewritten with decoded data; leaving it in the
+      // primitive would advertise the still-compressed accessor after the
+      // Draco extension is stripped below.
+      primitive.attributes.erase(primitiveAttrIt);
+    }
   }
 }
 } // namespace
