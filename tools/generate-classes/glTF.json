@@ -229,6 +229,12 @@
     },
     "BENTLEY_materials_point_style extension": {
       "overrideName": "ExtensionBentleyMaterialsPointStyle"
+    },
+    "glTF.3DTILES_tileset": {
+      "overrideName": "ExtensionModel3dTilesTileset"
+    },
+    "node.3DTILES_tileset": {
+      "overrideName": "ExtensionNode3dTilesTileset"
     }
   },
   "extensions": [
@@ -405,6 +411,14 @@
     {
       "extensionName": "BENTLEY_materials_point_style",
       "schema": "Vendor/BENTLEY_materials_point_style/schema/material.BENTLEY_materials_point_style.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_tileset",
+      "schema": "Vendor/3DTILES_tileset/schema/glTF.3DTILES_tileset.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_tileset",
+      "schema": "Vendor/3DTILES_tileset/schema/node.3DTILES_tileset.schema.json"
     }
   ]
 }
