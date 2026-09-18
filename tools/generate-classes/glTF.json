@@ -93,6 +93,9 @@
     "EXT_structural_metadata glTF Mesh Primitive extension": {
       "overrideName": "ExtensionMeshPrimitiveExtStructuralMetadata"
     },
+    "EXT_structural_metadata EXT_voxels extension": {
+      "overrideName": "ExtensionExtVoxelsExtStructuralMetadata"
+    },
     "Class Property in EXT_structural_metadata": {
       "overrideName": "ClassProperty"
     },
@@ -334,7 +337,9 @@
       "schema": "Vendor/EXT_structural_metadata/schema/EXT_structural_metadata.schema.json",
       "attachTo": [
         "node",
-        "material"
+        "material",
+        "glTF.3DTILES_tileset",
+        "content"
       ]
     },
     {
@@ -344,6 +349,10 @@
     {
       "extensionName": "EXT_structural_metadata",
       "schema": "Vendor/EXT_structural_metadata/schema/mesh.primitive.EXT_structural_metadata.schema.json"
+    },
+    {
+      "extensionName": "EXT_structural_metadata",
+      "schema": "Vendor/EXT_structural_metadata/schema/node.EXT_voxels.EXT_structural_metadata.schema.json"
     },
     {
       "extensionName": "KHR_draco_mesh_compression",

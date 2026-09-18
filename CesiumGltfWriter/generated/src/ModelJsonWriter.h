@@ -20,6 +20,7 @@ struct ExtensionBufferViewExtMeshoptCompression;
 struct ExtensionExtStructuralMetadata;
 struct ExtensionModelExtStructuralMetadata;
 struct ExtensionMeshPrimitiveExtStructuralMetadata;
+struct ExtensionExtVoxelsExtStructuralMetadata;
 struct ExtensionKhrDracoMeshCompression;
 struct ExtensionKhrMaterialsUnlit;
 struct ExtensionModelKhrMaterialsVariants;
@@ -263,6 +264,19 @@ struct ExtensionMeshPrimitiveExtStructuralMetadataJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionMeshPrimitiveExtStructuralMetadata& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ExtensionExtVoxelsExtStructuralMetadataJsonWriter {
+  using ValueType = CesiumGltf::ExtensionExtVoxelsExtStructuralMetadata;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "EXT_structural_metadata";
+
+  static void write(
+      const CesiumGltf::ExtensionExtVoxelsExtStructuralMetadata& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

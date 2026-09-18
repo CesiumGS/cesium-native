@@ -31,6 +31,7 @@
 #include "ExtensionExtNodeVisibilityVolumeJsonHandler.h"
 #include "ExtensionExtPrimitiveVoxelsJsonHandler.h"
 #include "ExtensionExtStructuralMetadataJsonHandler.h"
+#include "ExtensionExtVoxelsExtStructuralMetadataJsonHandler.h"
 #include "ExtensionExtVoxelsJsonHandler.h"
 #include "ExtensionKhrBillboardJsonHandler.h"
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
@@ -62,7 +63,9 @@
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Content.h>
 #include <CesiumGltf/ExtensionExtGeospatialCrs.h>
+#include <CesiumGltf/ExtensionExtVoxels.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
+#include <CesiumGltf/ExtensionModel3dTilesTileset.h>
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/LegacyShape.h>
 #include <CesiumGltf/Material.h>
@@ -209,6 +212,18 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       CesiumGltf::Material,
       ExtensionBentleyMaterialsPointStyleJsonHandler>();
   options.registerExtension<
+      CesiumGltf::ExtensionModel3dTilesTileset,
+      ExtensionExtStructuralMetadataJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Content,
+      ExtensionExtStructuralMetadataJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Content,
+      Extension3dTilesHorizonOcclusionPointJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::ExtensionExtVoxels,
+      ExtensionExtVoxelsExtStructuralMetadataJsonHandler>();
+  options.registerExtension<
       CesiumGltf::Texture,
       ExtensionKhrTextureBasisuJsonHandler>();
   options.registerExtension<
@@ -238,9 +253,6 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::ExtensionKhrGaussianSplatting,
       ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler>();
-  options.registerExtension<
-      CesiumGltf::Content,
-      Extension3dTilesHorizonOcclusionPointJsonHandler>();
   options.registerExtension<
       CesiumGltf::Shape,
       Extension3dTilesShapeCylinderRegionJsonHandler>();

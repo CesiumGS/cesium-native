@@ -9,7 +9,9 @@
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Content.h>
 #include <CesiumGltf/ExtensionExtGeospatialCrs.h>
+#include <CesiumGltf/ExtensionExtVoxels.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
+#include <CesiumGltf/ExtensionModel3dTilesTileset.h>
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/LegacyShape.h>
 #include <CesiumGltf/Material.h>
@@ -54,6 +56,7 @@
 #include <CesiumGltf/ExtensionExtPrimitiveVoxels.h>
 #include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionExtVoxels.h>
+#include <CesiumGltf/ExtensionExtVoxelsExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionKhrBillboard.h>
 #include <CesiumGltf/ExtensionKhrDracoMeshCompression.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
@@ -214,6 +217,18 @@ void registerWriterExtensions(
       CesiumGltf::Material,
       ExtensionBentleyMaterialsPointStyleJsonWriter>();
   context.registerExtension<
+      CesiumGltf::ExtensionModel3dTilesTileset,
+      ExtensionExtStructuralMetadataJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Content,
+      ExtensionExtStructuralMetadataJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Content,
+      Extension3dTilesHorizonOcclusionPointJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::ExtensionExtVoxels,
+      ExtensionExtVoxelsExtStructuralMetadataJsonWriter>();
+  context.registerExtension<
       CesiumGltf::Texture,
       ExtensionKhrTextureBasisuJsonWriter>();
   context
@@ -242,9 +257,6 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::ExtensionKhrGaussianSplatting,
       ExtensionKhrGaussianSplattingCompressionSpz2JsonWriter>();
-  context.registerExtension<
-      CesiumGltf::Content,
-      Extension3dTilesHorizonOcclusionPointJsonWriter>();
   context.registerExtension<
       CesiumGltf::Shape,
       Extension3dTilesShapeCylinderRegionJsonWriter>();
