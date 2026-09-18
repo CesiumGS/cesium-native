@@ -17,6 +17,7 @@
 #include "ExtensionCesiumPrimitiveOutlineJsonHandler.h"
 #include "ExtensionCesiumRTCJsonHandler.h"
 #include "ExtensionCesiumTileEdgesJsonHandler.h"
+#include "ExtensionExtGeoreferenceJsonHandler.h"
 #include "ExtensionExtImplicitCylinderRegionJsonHandler.h"
 #include "ExtensionExtImplicitEllipsoidRegionJsonHandler.h"
 #include "ExtensionExtInstanceFeaturesJsonHandler.h"
@@ -165,6 +166,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Node,
       ExtensionNode3dTilesLayersJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Node,
+      ExtensionExtGeoreferenceJsonHandler>();
   options.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonHandler>();

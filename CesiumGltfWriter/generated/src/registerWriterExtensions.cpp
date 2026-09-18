@@ -38,6 +38,7 @@
 #include <CesiumGltf/ExtensionCesiumPrimitiveOutline.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/ExtensionCesiumTileEdges.h>
+#include <CesiumGltf/ExtensionExtGeoreference.h>
 #include <CesiumGltf/ExtensionExtImplicitCylinderRegion.h>
 #include <CesiumGltf/ExtensionExtImplicitEllipsoidRegion.h>
 #include <CesiumGltf/ExtensionExtInstanceFeatures.h>
@@ -170,6 +171,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Node,
       ExtensionNode3dTilesLayersJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Node,
+      ExtensionExtGeoreferenceJsonWriter>();
   context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonWriter>();
