@@ -28,6 +28,7 @@
 #include <CesiumGltf/Enum.h>
 #include <CesiumGltf/EnumValue.h>
 #include <CesiumGltf/Extension3dTilesHorizonOcclusionPoint.h>
+#include <CesiumGltf/Extension3dTilesImplicitTiling.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -307,6 +308,11 @@ void writeJson(
 
 void writeJson(
     const CesiumGltf::Extension3dTilesHorizonOcclusionPoint& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context);
+
+void writeJson(
+    const CesiumGltf::Extension3dTilesImplicitTiling& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -1602,6 +1608,32 @@ void writeJson(
     jsonWriter.Key("horizonOcclusionPoint");
     writeJson(obj.horizonOcclusionPoint, jsonWriter, context);
   }
+
+  writeExtensibleObject(obj, jsonWriter, context);
+
+  jsonWriter.EndObject();
+}
+
+void writeJson(
+    const CesiumGltf::Extension3dTilesImplicitTiling& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  jsonWriter.StartObject();
+
+  jsonWriter.Key("contentUri");
+  writeJson(obj.contentUri, jsonWriter, context);
+
+  jsonWriter.Key("subtreeUri");
+  writeJson(obj.subtreeUri, jsonWriter, context);
+
+  jsonWriter.Key("subdivisionScheme");
+  writeJson(obj.subdivisionScheme, jsonWriter, context);
+
+  jsonWriter.Key("availableLevels");
+  writeJson(obj.availableLevels, jsonWriter, context);
+
+  jsonWriter.Key("subtreeLevels");
+  writeJson(obj.subtreeLevels, jsonWriter, context);
 
   writeExtensibleObject(obj, jsonWriter, context);
 
@@ -3783,6 +3815,13 @@ void ExtensionNode3dTilesTilesetJsonWriter::write(
 
 void Extension3dTilesHorizonOcclusionPointJsonWriter::write(
     const CesiumGltf::Extension3dTilesHorizonOcclusionPoint& obj,
+    CesiumJsonWriter::JsonWriter& jsonWriter,
+    const CesiumJsonWriter::ExtensionWriterContext& context) {
+  writeJson(obj, jsonWriter, context);
+}
+
+void Extension3dTilesImplicitTilingJsonWriter::write(
+    const CesiumGltf::Extension3dTilesImplicitTiling& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

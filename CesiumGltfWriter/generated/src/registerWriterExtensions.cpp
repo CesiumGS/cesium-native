@@ -24,6 +24,7 @@
 
 // NOLINTBEGIN(misc-include-cleaner)
 #include <CesiumGltf/Extension3dTilesHorizonOcclusionPoint.h>
+#include <CesiumGltf/Extension3dTilesImplicitTiling.h>
 #include <CesiumGltf/ExtensionBentleyMaterialsPointStyle.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -142,6 +143,9 @@ void registerWriterExtensions(
   context.registerExtension<
       CesiumGltf::Node,
       Extension3dTilesHorizonOcclusionPointJsonWriter>();
+  context.registerExtension<
+      CesiumGltf::Node,
+      Extension3dTilesImplicitTilingJsonWriter>();
   context.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonWriter>();

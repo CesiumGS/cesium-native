@@ -238,6 +238,9 @@
     },
     "3DTILES_horizon_occlusion_point": {
       "overrideName": "Extension3dTilesHorizonOcclusionPoint"
+    },
+    "3DTILES_implicit_tiling": {
+      "overrideName": "Extension3dTilesImplicitTiling"
     }
   },
   "extensions": [
@@ -430,6 +433,10 @@
         "content",
         "node"
       ]
+    },
+    {
+      "extensionName": "3DTILES_implicit_tiling",
+      "schema": "Vendor/3DTILES_implicit_tiling/schema/node.3DTILES_implicit_tiling.schema.json"
     }
   ]
 }

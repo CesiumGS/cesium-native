@@ -4,6 +4,7 @@
 #include "registerReaderExtensions.h"
 
 #include "Extension3dTilesHorizonOcclusionPointJsonHandler.h"
+#include "Extension3dTilesImplicitTilingJsonHandler.h"
 #include "ExtensionBentleyMaterialsPointStyleJsonHandler.h"
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
@@ -137,6 +138,9 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Node,
       Extension3dTilesHorizonOcclusionPointJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Node,
+      Extension3dTilesImplicitTilingJsonHandler>();
   options.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonHandler>();

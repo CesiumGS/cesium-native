@@ -47,6 +47,7 @@ struct ExtensionBentleyMaterialsPointStyle;
 struct ExtensionModel3dTilesTileset;
 struct ExtensionNode3dTilesTileset;
 struct Extension3dTilesHorizonOcclusionPoint;
+struct Extension3dTilesImplicitTiling;
 struct Content;
 struct BoundingVolume;
 struct Light;
@@ -597,6 +598,19 @@ struct Extension3dTilesHorizonOcclusionPointJsonWriter {
 
   static void write(
       const CesiumGltf::Extension3dTilesHorizonOcclusionPoint& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct Extension3dTilesImplicitTilingJsonWriter {
+  using ValueType = CesiumGltf::Extension3dTilesImplicitTiling;
+
+  /** @brief The official name of the extension. This should be the same as its
+   * key in the `extensions` object. */
+  static constexpr const char* ExtensionName = "3DTILES_implicit_tiling";
+
+  static void write(
+      const CesiumGltf::Extension3dTilesImplicitTiling& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
