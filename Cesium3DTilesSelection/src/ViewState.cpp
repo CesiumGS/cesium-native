@@ -22,7 +22,9 @@
 #include <glm/geometric.hpp>
 
 #include <cmath>
+#include <cstdint>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <variant>
 
@@ -134,7 +136,7 @@ ViewState::ViewState(
       _cullingVolume(boundingVolume),
       _viewMatrix(1.0),
       _projectionMatrix(1.0),
-      _errorMeasureHandler(errorMeasureHandler) {
+      _errorMeasureHandler(std::move(errorMeasureHandler)) {
   std::optional<GlobeRectangle> globeRectangle =
       estimateGlobeRectangle(boundingVolume, ellipsoid);
   if (!globeRectangle) {
