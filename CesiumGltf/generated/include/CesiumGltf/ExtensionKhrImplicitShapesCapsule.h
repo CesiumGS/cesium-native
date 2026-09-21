@@ -5,22 +5,34 @@
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
-#include <vector>
-
 namespace CesiumGltf {
 /**
- * @brief Parameters describing a box shape.
+ * @brief Parameters describing a capsule shape.
  */
-struct CESIUMGLTF_API LegacyBox final : public CesiumUtility::ExtensibleObject {
+struct CESIUMGLTF_API ExtensionKhrImplicitShapesCapsule final
+    : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
-  static constexpr const char* TypeName = "LegacyBox";
+  static constexpr const char* TypeName = "ExtensionKhrImplicitShapesCapsule";
 
   /**
-   * @brief The extents of the box in each axis in local space.
+   * @brief The distance between the centers of the two capping spheres of
+   * capsule.
    */
-  std::vector<double> size = {1, 1, 1};
+  double height = 0.5;
+
+  /**
+   * @brief The radius of the sphere located at the bottom of the capsule (i.e.
+   * the sphere at the half-height along -Y)
+   */
+  double radiusBottom = 0.25;
+
+  /**
+   * @brief The radius of the sphere located at the top of the capsule (i.e. the
+   * sphere at the half-height along +Y)
+   */
+  double radiusTop = 0.25;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -30,10 +42,10 @@ struct CESIUMGLTF_API LegacyBox final : public CesiumUtility::ExtensibleObject {
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(LegacyBox));
+    accum += int64_t(sizeof(ExtensionKhrImplicitShapesCapsule));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
-    accum += int64_t(sizeof(double) * this->size.capacity());
+
     return accum;
   }
 };

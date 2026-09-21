@@ -64,6 +64,11 @@
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplattingCompressionSpz2.h>
 #include <CesiumGltf/ExtensionKhrImplicitShapes.h>
+#include <CesiumGltf/ExtensionKhrImplicitShapesBox.h>
+#include <CesiumGltf/ExtensionKhrImplicitShapesCapsule.h>
+#include <CesiumGltf/ExtensionKhrImplicitShapesCylinder.h>
+#include <CesiumGltf/ExtensionKhrImplicitShapesShape.h>
+#include <CesiumGltf/ExtensionKhrImplicitShapesSphere.h>
 #include <CesiumGltf/ExtensionKhrMaterialsUnlit.h>
 #include <CesiumGltf/ExtensionKhrTextureBasisu.h>
 #include <CesiumGltf/ExtensionKhrTextureTransform.h>
@@ -95,11 +100,6 @@
 #include <CesiumGltf/File.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Layer.h>
-#include <CesiumGltf/LegacyBox.h>
-#include <CesiumGltf/LegacyCapsule.h>
-#include <CesiumGltf/LegacyCylinder.h>
-#include <CesiumGltf/LegacyShape.h>
-#include <CesiumGltf/LegacySphere.h>
 #include <CesiumGltf/Light.h>
 #include <CesiumGltf/LineString.h>
 #include <CesiumGltf/Material.h>
@@ -468,27 +468,27 @@ void writeJson(
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::LegacyShape& obj,
+    const CesiumGltf::ExtensionKhrImplicitShapesShape& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::LegacyCylinder& obj,
+    const CesiumGltf::ExtensionKhrImplicitShapesCylinder& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::LegacyCapsule& obj,
+    const CesiumGltf::ExtensionKhrImplicitShapesCapsule& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::LegacyBox& obj,
+    const CesiumGltf::ExtensionKhrImplicitShapesBox& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
 void writeJson(
-    const CesiumGltf::LegacySphere& obj,
+    const CesiumGltf::ExtensionKhrImplicitShapesSphere& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context);
 
@@ -2338,7 +2338,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::LegacyShape& obj,
+    const CesiumGltf::ExtensionKhrImplicitShapesShape& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -2372,7 +2372,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::LegacyCylinder& obj,
+    const CesiumGltf::ExtensionKhrImplicitShapesCylinder& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -2398,7 +2398,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::LegacyCapsule& obj,
+    const CesiumGltf::ExtensionKhrImplicitShapesCapsule& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -2424,7 +2424,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::LegacyBox& obj,
+    const CesiumGltf::ExtensionKhrImplicitShapesBox& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -2441,7 +2441,7 @@ void writeJson(
 }
 
 void writeJson(
-    const CesiumGltf::LegacySphere& obj,
+    const CesiumGltf::ExtensionKhrImplicitShapesSphere& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   jsonWriter.StartObject();
@@ -4559,36 +4559,36 @@ void LineStringJsonWriter::write(
   writeJson(obj, jsonWriter, context);
 }
 
-void LegacyShapeJsonWriter::write(
-    const CesiumGltf::LegacyShape& obj,
+void ExtensionKhrImplicitShapesShapeJsonWriter::write(
+    const CesiumGltf::ExtensionKhrImplicitShapesShape& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void LegacyCylinderJsonWriter::write(
-    const CesiumGltf::LegacyCylinder& obj,
+void ExtensionKhrImplicitShapesCylinderJsonWriter::write(
+    const CesiumGltf::ExtensionKhrImplicitShapesCylinder& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void LegacyCapsuleJsonWriter::write(
-    const CesiumGltf::LegacyCapsule& obj,
+void ExtensionKhrImplicitShapesCapsuleJsonWriter::write(
+    const CesiumGltf::ExtensionKhrImplicitShapesCapsule& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void LegacyBoxJsonWriter::write(
-    const CesiumGltf::LegacyBox& obj,
+void ExtensionKhrImplicitShapesBoxJsonWriter::write(
+    const CesiumGltf::ExtensionKhrImplicitShapesBox& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);
 }
 
-void LegacySphereJsonWriter::write(
-    const CesiumGltf::LegacySphere& obj,
+void ExtensionKhrImplicitShapesSphereJsonWriter::write(
+    const CesiumGltf::ExtensionKhrImplicitShapesSphere& obj,
     CesiumJsonWriter::JsonWriter& jsonWriter,
     const CesiumJsonWriter::ExtensionWriterContext& context) {
   writeJson(obj, jsonWriter, context);

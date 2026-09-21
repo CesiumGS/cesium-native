@@ -7,19 +7,30 @@
 
 namespace CesiumGltf {
 /**
- * @brief Parameters describing a sphere shape.
+ * @brief Parameters describing a cylinder shape.
  */
-struct CESIUMGLTF_API LegacySphere final
+struct CESIUMGLTF_API ExtensionKhrImplicitShapesCylinder final
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
-  static constexpr const char* TypeName = "LegacySphere";
+  static constexpr const char* TypeName = "ExtensionKhrImplicitShapesCylinder";
 
   /**
-   * @brief The radius of the sphere.
+   * @brief The height of the cylinder, centered along the Y axis.
    */
-  double radius = 0.5;
+  double height = 0.5;
+
+  /**
+   * @brief The radius of the bottom of the cylinder (the disk located along
+   * -Y.)
+   */
+  double radiusBottom = 0.25;
+
+  /**
+   * @brief The radius of the top of the cylinder (the disk located along +Y.)
+   */
+  double radiusTop = 0.25;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -29,7 +40,7 @@ struct CESIUMGLTF_API LegacySphere final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(LegacySphere));
+    accum += int64_t(sizeof(ExtensionKhrImplicitShapesCylinder));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
 

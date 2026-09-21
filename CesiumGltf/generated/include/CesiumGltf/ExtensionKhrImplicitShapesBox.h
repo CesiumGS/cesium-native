@@ -5,32 +5,23 @@
 #include <CesiumGltf/Library.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
+#include <vector>
+
 namespace CesiumGltf {
 /**
- * @brief Parameters describing a cylinder shape.
+ * @brief Parameters describing a box shape.
  */
-struct CESIUMGLTF_API LegacyCylinder final
+struct CESIUMGLTF_API ExtensionKhrImplicitShapesBox final
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
-  static constexpr const char* TypeName = "LegacyCylinder";
+  static constexpr const char* TypeName = "ExtensionKhrImplicitShapesBox";
 
   /**
-   * @brief The height of the cylinder, centered along the Y axis.
+   * @brief The extents of the box in each axis in local space.
    */
-  double height = 0.5;
-
-  /**
-   * @brief The radius of the bottom of the cylinder (the disk located along
-   * -Y.)
-   */
-  double radiusBottom = 0.25;
-
-  /**
-   * @brief The radius of the top of the cylinder (the disk located along +Y.)
-   */
-  double radiusTop = 0.25;
+  std::vector<double> size = {1, 1, 1};
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -40,10 +31,10 @@ struct CESIUMGLTF_API LegacyCylinder final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(LegacyCylinder));
+    accum += int64_t(sizeof(ExtensionKhrImplicitShapesBox));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
-
+    accum += int64_t(sizeof(double) * this->size.capacity());
     return accum;
   }
 };

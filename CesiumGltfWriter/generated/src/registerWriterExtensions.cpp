@@ -11,9 +11,9 @@
 #include <CesiumGltf/ExtensionExtGeospatialCrs.h>
 #include <CesiumGltf/ExtensionExtVoxels.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
+#include <CesiumGltf/ExtensionKhrImplicitShapesShape.h>
 #include <CesiumGltf/ExtensionModel3dTilesTileset.h>
 #include <CesiumGltf/FeatureIdTexture.h>
-#include <CesiumGltf/LegacyShape.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
@@ -249,10 +249,10 @@ void registerWriterExtensions(
       CesiumGltf::FeatureIdTexture,
       ExtensionKhrTextureTransformJsonWriter>();
   context.registerExtension<
-      CesiumGltf::LegacyShape,
+      CesiumGltf::ExtensionKhrImplicitShapesShape,
       ExtensionExtImplicitEllipsoidRegionJsonWriter>();
   context.registerExtension<
-      CesiumGltf::LegacyShape,
+      CesiumGltf::ExtensionKhrImplicitShapesShape,
       ExtensionExtImplicitCylinderRegionJsonWriter>();
   context.registerExtension<
       CesiumGltf::ExtensionKhrGaussianSplatting,

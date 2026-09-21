@@ -7,32 +7,19 @@
 
 namespace CesiumGltf {
 /**
- * @brief Parameters describing a capsule shape.
+ * @brief Parameters describing a sphere shape.
  */
-struct CESIUMGLTF_API LegacyCapsule final
+struct CESIUMGLTF_API ExtensionKhrImplicitShapesSphere final
     : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The original name of this type.
    */
-  static constexpr const char* TypeName = "LegacyCapsule";
+  static constexpr const char* TypeName = "ExtensionKhrImplicitShapesSphere";
 
   /**
-   * @brief The distance between the centers of the two capping spheres of
-   * capsule.
+   * @brief The radius of the sphere.
    */
-  double height = 0.5;
-
-  /**
-   * @brief The radius of the sphere located at the bottom of the capsule (i.e.
-   * the sphere at the half-height along -Y)
-   */
-  double radiusBottom = 0.25;
-
-  /**
-   * @brief The radius of the sphere located at the top of the capsule (i.e. the
-   * sphere at the half-height along +Y)
-   */
-  double radiusTop = 0.25;
+  double radius = 0.5;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -42,7 +29,7 @@ struct CESIUMGLTF_API LegacyCapsule final
    */
   int64_t getSizeBytes() const {
     int64_t accum = 0;
-    accum += int64_t(sizeof(LegacyCapsule));
+    accum += int64_t(sizeof(ExtensionKhrImplicitShapesSphere));
     accum += CesiumUtility::ExtensibleObject::getSizeBytes() -
              int64_t(sizeof(CesiumUtility::ExtensibleObject));
 

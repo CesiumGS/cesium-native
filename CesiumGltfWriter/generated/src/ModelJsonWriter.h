@@ -74,11 +74,11 @@ struct Content;
 struct Light;
 struct Spotlight;
 struct LineString;
-struct LegacyShape;
-struct LegacyCylinder;
-struct LegacyCapsule;
-struct LegacyBox;
-struct LegacySphere;
+struct ExtensionKhrImplicitShapesShape;
+struct ExtensionKhrImplicitShapesCylinder;
+struct ExtensionKhrImplicitShapesCapsule;
+struct ExtensionKhrImplicitShapesBox;
+struct ExtensionKhrImplicitShapesSphere;
 struct ExtensionNodeMaxarMeshVariantsMappingsValue;
 struct ExtensionModelMaxarMeshVariantsValue;
 struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
@@ -939,47 +939,47 @@ struct LineStringJsonWriter {
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct LegacyShapeJsonWriter {
-  using ValueType = CesiumGltf::LegacyShape;
+struct ExtensionKhrImplicitShapesShapeJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrImplicitShapesShape;
 
   static void write(
-      const CesiumGltf::LegacyShape& obj,
+      const CesiumGltf::ExtensionKhrImplicitShapesShape& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct LegacyCylinderJsonWriter {
-  using ValueType = CesiumGltf::LegacyCylinder;
+struct ExtensionKhrImplicitShapesCylinderJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrImplicitShapesCylinder;
 
   static void write(
-      const CesiumGltf::LegacyCylinder& obj,
+      const CesiumGltf::ExtensionKhrImplicitShapesCylinder& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct LegacyCapsuleJsonWriter {
-  using ValueType = CesiumGltf::LegacyCapsule;
+struct ExtensionKhrImplicitShapesCapsuleJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrImplicitShapesCapsule;
 
   static void write(
-      const CesiumGltf::LegacyCapsule& obj,
+      const CesiumGltf::ExtensionKhrImplicitShapesCapsule& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct LegacyBoxJsonWriter {
-  using ValueType = CesiumGltf::LegacyBox;
+struct ExtensionKhrImplicitShapesBoxJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrImplicitShapesBox;
 
   static void write(
-      const CesiumGltf::LegacyBox& obj,
+      const CesiumGltf::ExtensionKhrImplicitShapesBox& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
 
-struct LegacySphereJsonWriter {
-  using ValueType = CesiumGltf::LegacySphere;
+struct ExtensionKhrImplicitShapesSphereJsonWriter {
+  using ValueType = CesiumGltf::ExtensionKhrImplicitShapesSphere;
 
   static void write(
-      const CesiumGltf::LegacySphere& obj,
+      const CesiumGltf::ExtensionKhrImplicitShapesSphere& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };

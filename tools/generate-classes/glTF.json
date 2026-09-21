@@ -168,19 +168,19 @@
       "overrideName": "ExtensionKhrImplicitShapes"
     },
     "KHR_implicit_shapes Shape Resource": {
-      "overrideName": "LegacyShape"
+      "overrideName": "ExtensionKhrImplicitShapesShape"
     },
     "KHR_implicit_shapes Box Shape": {
-      "overrideName": "LegacyBox"
+      "overrideName": "ExtensionKhrImplicitShapesBox"
     },
     "KHR_implicit_shapes Capsule Shape": {
-      "overrideName": "LegacyCapsule"
+      "overrideName": "ExtensionKhrImplicitShapesCapsule"
     },
     "KHR_implicit_shapes Cylinder Shape": {
-      "overrideName": "LegacyCylinder"
+      "overrideName": "ExtensionKhrImplicitShapesCylinder"
     },
     "KHR_implicit_shapes Sphere Shape": {
-      "overrideName": "LegacySphere"
+      "overrideName": "ExtensionKhrImplicitShapesSphere"
     },
     "EXT_implicit_ellipsoid_region extension on KHR_implicit_shapes.shape": {
       "overrideName": "ExtensionExtImplicitEllipsoidRegion"

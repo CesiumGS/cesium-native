@@ -65,9 +65,9 @@
 #include <CesiumGltf/ExtensionExtGeospatialCrs.h>
 #include <CesiumGltf/ExtensionExtVoxels.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
+#include <CesiumGltf/ExtensionKhrImplicitShapesShape.h>
 #include <CesiumGltf/ExtensionModel3dTilesTileset.h>
 #include <CesiumGltf/FeatureIdTexture.h>
-#include <CesiumGltf/LegacyShape.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
 #include <CesiumGltf/MaterialOcclusionTextureInfo.h>
@@ -245,10 +245,10 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       CesiumGltf::FeatureIdTexture,
       ExtensionKhrTextureTransformJsonHandler>();
   options.registerExtension<
-      CesiumGltf::LegacyShape,
+      CesiumGltf::ExtensionKhrImplicitShapesShape,
       ExtensionExtImplicitEllipsoidRegionJsonHandler>();
   options.registerExtension<
-      CesiumGltf::LegacyShape,
+      CesiumGltf::ExtensionKhrImplicitShapesShape,
       ExtensionExtImplicitCylinderRegionJsonHandler>();
   options.registerExtension<
       CesiumGltf::ExtensionKhrGaussianSplatting,
