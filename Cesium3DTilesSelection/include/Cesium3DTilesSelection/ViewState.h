@@ -42,16 +42,6 @@ public:
       double distance,
       uint32_t depth) const = 0;
   /**
-   * @brief Test if a computed error measure for a tile meets a minimum
-   * criteria.
-   * @param errorMeasure the previously computed error measure for a tile
-   * @param tile the tile
-   * @return true if the error measure meets the threshold.
-   */
-  virtual bool
-  meetsErrorThreshold(double errorMeasure, const Tile& tile) const = 0;
-
-  /**
    * @brief destructor
    */
   virtual ~ErrorMeasureHandler() = default;
@@ -155,44 +145,20 @@ public:
    * @brief Creates a new instance of a view state from a bounding volume
    * associated with a geographic area, as opposed to a viewing projection. This
    * constructor does not specify a viewport, and so doesn't use Screen Space
-   * Error (SSE) as a selection criteria.
-   *
-   * @param boundingVolume The geographic viewing volume
-   * @param geometricErrorThreshold Value used for selection as an alternative
-   * to screen space error.
-   * @param ellipsoid The ellipsoid that will be used to compute the
-   * {@link ViewState#getPositionCartographic cartographic position} and other
-   * parameters for tile selection.
-   */
-  ViewState(
-      const BoundingVolume& boundingVolume,
-      double geometricErrorThreshold,
-      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
-
-  /**
-   * @brief Creates a new instance of a view state from a bounding volume
-   * associated with a geographic area, as opposed to a viewing projection. This
-   * constructor does not specify a viewport, and so doesn't use Screen Space
    * Error (SSE) as a selection criteria. Instead, a user-supplied functor
    * object calculates a measure used as a standin for SSE.
    *
    * @param boundingVolume The geographic viewing volume
-   * @param geometricErrorThreshold Value used for selection as an alternative
-   * to screen space error.
-   * @param functor `std::shared_ptr` to object that implements measure
-   * calculation and comparison.
+   * @param errorMeasureHandler `std::shared_ptr` to object that implements
+   * measure calculation
    * @param ellipsoid The ellipsoid that will be used to compute the
    * {@link ViewState#getPositionCartographic cartographic position} and other
    * parameters for tile selection.
    */
   ViewState(
       const BoundingVolume& boundingVolume,
-      double geometricErrorThreshold,
       std::shared_ptr<ErrorMeasureHandler> errorMeasureHandler,
-      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID)
-      : ViewState(boundingVolume, geometricErrorThreshold, ellipsoid) {
-    this->_errorMeasureHandler = std::move(errorMeasureHandler);
-  }
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Gets the position of the camera in Earth-centered, Earth-fixed
@@ -260,13 +226,6 @@ public:
   }
 
   /**
-   * @brief Gets the geometric error threshold.
-   */
-  std::optional<double> getGeometricErrorThreshold() const {
-    return this->_geometricErrorThreshold;
-  }
-
-  /**
    * @brief Returns whether the given @ref BoundingVolume is visible for this
    * camera
    *
@@ -328,16 +287,6 @@ public:
       double distance,
       uint32_t depth) const noexcept;
 
-  /**
-   * @brief Tests whether an fixed error measure meets the threshold test. This
-   * calles the error measure functor if there is one; otherwise, it uses the
-   * fixed geometric error assigned to this ViewState.
-   * @param errorMeasure the computed error measure
-   * @param tile the tile
-   * @return true if the error measure is satisfied for this tile.
-   */
-  bool meetsErrorThreshold(double errorMeasure, const Tile& tile) const;
-
 private:
   glm::dvec3 _position;
   glm::dvec3 _direction;
@@ -349,7 +298,6 @@ private:
   Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
-  std::optional<double> _geometricErrorThreshold;
   std::shared_ptr<ErrorMeasureHandler> _errorMeasureHandler;
 };
 

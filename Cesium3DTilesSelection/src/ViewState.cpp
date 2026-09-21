@@ -124,7 +124,7 @@ ViewState::ViewState(
 
 ViewState::ViewState(
     const BoundingVolume& boundingVolume,
-    double geometricErrorThreshold,
+    std::shared_ptr<ErrorMeasureHandler> errorMeasureHandler,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _position{0.0, 0.0, 1.0},
       _direction{0.0, 0.0, 1.0},
@@ -134,7 +134,7 @@ ViewState::ViewState(
       _cullingVolume(boundingVolume),
       _viewMatrix(1.0),
       _projectionMatrix(1.0),
-      _geometricErrorThreshold(geometricErrorThreshold) {
+      _errorMeasureHandler(errorMeasureHandler) {
   std::optional<GlobeRectangle> globeRectangle =
       estimateGlobeRectangle(boundingVolume, ellipsoid);
   if (!globeRectangle) {
@@ -229,14 +229,6 @@ double ViewState::computeScreenSpaceError(
 double ViewState::computeScreenSpaceError(
     double geometricError,
     double distance) const noexcept {
-  // If the view state is constructed with a geometric error threshold, then
-  // that is used instead as a stand-in for screen space error.
-  if (this->_geometricErrorThreshold) {
-    return *this->_geometricErrorThreshold;
-  }
-  // Otherwise, the projection matrix is valid and we can proceed with our
-  // projection-based calculation.
-  //
   // Avoid divide by zero when viewer is inside the tile
   distance = glm::max(distance, 1e-7);
   // This is a simplified version of the projection transform and homogeneous
@@ -265,11 +257,4 @@ double ViewState::getVerticalFieldOfView() const noexcept {
   return std::atan(-1.0 / this->_projectionMatrix[1][1]) * 2.0;
 }
 
-bool ViewState::meetsErrorThreshold(double errorMeasure, const Tile& tile)
-    const {
-  if (this->_errorMeasureHandler) {
-    return this->_errorMeasureHandler->meetsErrorThreshold(errorMeasure, tile);
-  }
-  return tile.getGeometricError() < errorMeasure;
-}
 } // namespace Cesium3DTilesSelection
