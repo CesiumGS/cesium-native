@@ -26,6 +26,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <variant>
 
 using namespace CesiumGeometry;
