@@ -4,7 +4,7 @@
 
 ##### Breaking Changes :mega:
 
-- The classes associated with `KHR_implicit_shapes` have been renamed from `Shape`, `Box`, `Capsule`, `Cylinder`, `Sphere` to `ExtensionKhrImplicitShapesShape`, `ExtensionKhrImplicitShapesBox`, `ExtensionKhrImplicitShapesCapsule`, `ExtensionKhrImplicitShapesCylinder`, and `ExtensionKhrImplicitShapesSphere` to deconflict with the shape classes generated for glTF 2.1.
+- The classes associated with `KHR_implicit_shapes` have been renamed from `Shape`, `Box`, `Capsule`, `Cylinder`, `Sphere` to `ExtensionKhrImplicitShapesShape`, `ExtensionKhrImplicitShapesBox`, `ExtensionKhrImplicitShapesCapsule`, `ExtensionKhrImplicitShapesCylinder`, `ExtensionKhrImplicitShapesSphere` to deconflict with the shape classes generated for glTF 2.1.
 
 ##### Additions :tada:
 
