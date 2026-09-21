@@ -4,6 +4,7 @@
 
 ##### Additions :tada:
 
+- Added draft support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added support for the `GS_3DT` reality data type in `ITwinRealityDataContentLoader`.
 - Added support for styling on `CesiumVectorOverlays::VectorTilesRasterOverlay` by specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
 
