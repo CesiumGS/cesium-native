@@ -4,6 +4,13 @@
 
 ##### Additions :tada:
 
+- Added support for the `GS_3DT` reality data type in `ITwinRealityDataContentLoader`.
+- Added support for styling on `CesiumVectorOverlays::VectorTilesRasterOverlay` by specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
+
+### v0.64.0 - 2026-09-01
+
+##### Additions :tada:
+
 - Added support for "area paging": selection of a region of terrain tiles at a fixed level of detail. The changes to `Cesium3DTilesSelection::ViewState` include support for for general culling volumes in addition to frustums.
 - Added intesection tests for `Cesium3DTilesSelection::BoundingVolume` objects.
 

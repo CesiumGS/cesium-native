@@ -3,6 +3,7 @@
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumVectorData/VectorStyle.h>
+#include <CesiumVectorOverlays/VectorStylingProvider.h>
 
 namespace CesiumVectorOverlays {
 
@@ -19,6 +20,13 @@ struct VectorTilesRasterOverlayOptions {
    * @brief HTTP headers to attach to requests made for this tileset.
    */
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
+
+  /**
+   * @brief An optional provider for styling information for features in the
+   * vector tileset. If not provided, the default style will be used for all
+   * features.
+   */
+  std::shared_ptr<VectorStylingProvider> pStylingProvider;
 };
 
 /**
