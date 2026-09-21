@@ -1857,7 +1857,6 @@ TEST_CASE("Test ErrorMeasureHandler") {
       nullptr};
 
   // Load until complete
-  ViewUpdateResult updateResult;
   BoundingRegion viewStateRegion(
       GlobeRectangle(-1.4, .7, -1.2, .5),
       0.0,
