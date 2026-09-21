@@ -24,6 +24,30 @@
     "Texture Info": {
       "isBaseClass": true
     },
+    "File Reference": {
+      "overrideName": "File"
+    },
+    "File Reference to External File Remap Alias": {
+      "overrideName": "Alias"
+    },
+    "Shape Resource": {
+      "overrideName": "Shape"
+    },
+    "Box Shape": {
+      "overrideName": "Box"
+    },
+    "Capsule Shape": {
+      "overrideName": "Capsule"
+    },
+    "Cylinder Shape": {
+      "overrideName": "Cylinder"
+    },
+    "Plane Shape": {
+      "overrideName": "Plane"
+    },
+    "Sphere Shape": {
+      "overrideName": "Sphere"
+    },
     "CESIUM_RTC": {
       "overrideName": "ExtensionCesiumRTC"
     },
@@ -68,6 +92,9 @@
     },
     "EXT_structural_metadata glTF Mesh Primitive extension": {
       "overrideName": "ExtensionMeshPrimitiveExtStructuralMetadata"
+    },
+    "EXT_structural_metadata EXT_voxels extension": {
+      "overrideName": "ExtensionExtVoxelsExtStructuralMetadata"
     },
     "Class Property in EXT_structural_metadata": {
       "overrideName": "ClassProperty"
@@ -141,19 +168,19 @@
       "overrideName": "ExtensionKhrImplicitShapes"
     },
     "KHR_implicit_shapes Shape Resource": {
-      "overrideName": "Shape"
+      "overrideName": "ExtensionKhrImplicitShapesShape"
     },
     "KHR_implicit_shapes Box Shape": {
-      "overrideName": "Box"
+      "overrideName": "ExtensionKhrImplicitShapesBox"
     },
     "KHR_implicit_shapes Capsule Shape": {
-      "overrideName": "Capsule"
+      "overrideName": "ExtensionKhrImplicitShapesCapsule"
     },
     "KHR_implicit_shapes Cylinder Shape": {
-      "overrideName": "Cylinder"
+      "overrideName": "ExtensionKhrImplicitShapesCylinder"
     },
     "KHR_implicit_shapes Sphere Shape": {
-      "overrideName": "Sphere"
+      "overrideName": "ExtensionKhrImplicitShapesSphere"
     },
     "EXT_implicit_ellipsoid_region extension on KHR_implicit_shapes.shape": {
       "overrideName": "ExtensionExtImplicitEllipsoidRegion"
@@ -205,12 +232,75 @@
     },
     "BENTLEY_materials_point_style extension": {
       "overrideName": "ExtensionBentleyMaterialsPointStyle"
+    },
+    "glTF.3DTILES_tileset": {
+      "overrideName": "ExtensionModel3dTilesTileset"
+    },
+    "node.3DTILES_tileset": {
+      "overrideName": "ExtensionNode3dTilesTileset"
+    },
+    "3DTILES_horizon_occlusion_point": {
+      "overrideName": "Extension3dTilesHorizonOcclusionPoint"
+    },
+    "3DTILES_implicit_tiling": {
+      "overrideName": "Extension3dTilesImplicitTiling"
+    },
+    "3DTILES_layers glTF Document extension": {
+      "overrideName": "ExtensionModel3dTilesLayers"
+    },
+    "3DTILES_layers node extension": {
+      "overrideName": "ExtensionNode3dTilesLayers"
+    },
+    "Layer in 3DTILES_layers": {
+      "overrideName": "Layer"
+    },
+    "3DTILES_shape_cylinder_region": {
+      "overrideName": "Extension3dTilesShapeCylinderRegion"
+    },
+    "3DTILES_shape_ellipsoid_region": {
+      "overrideName": "Extension3dTilesShapeEllipsoidRegion"
+    },
+    "3DTILES_shape_s2": {
+      "overrideName": "Extension3dTilesShapeS2"
+    },
+    "Subtree": {
+      "overrideName": "Extension3dTilesSubtree"
+    },
+    "3DTILES_tileset_vectors": {
+      "overrideName": "Extension3dTilesTilesetVectors"
+    },
+    "3DTILES_tileset_voxels": {
+      "overrideName": "Extension3dTilesTilesetVoxels"
+    },
+    "node.EXT_georeference": {
+      "overrideName": "ExtensionExtGeoreference"
+    },
+    "EXT_geospatial_crs": {
+      "overrideName": "ExtensionExtGeospatialCrs"
+    },
+    "EXT_geospatial_crs_wkid": {
+      "overrideName": "ExtensionExtGeospatialCrsWkid"
+    },
+    "EXT_geospatial_crs_wkt2": {
+      "overrideName": "ExtensionExtGeospatialCrsWkt2"
+    },
+    "EXT_node_visibility_conditions": {
+      "overrideName": "ExtensionNodeExtNodeVisibilityConditions"
+    },
+    "EXT_node_visibility_conditions extension": {
+      "overrideName": "ExtensionModelExtNodeVisibilityConditions"
+    },
+    "EXT_node_visibility_volume": {
+      "overrideName": "ExtensionExtNodeVisibilityVolume"
+    },
+    "EXT_voxels glTF Node extension": {
+      "overrideName": "ExtensionExtVoxels"
     }
   },
   "extensions": [
     {
       "extensionName": "CESIUM_RTC",
-      "schema": "../1.0/Vendor/CESIUM_RTC/CESIUM_RTC.schema.json",
+      "schema": "Vendor/CESIUM_RTC/CESIUM_RTC.schema.json",
       "attachTo": [
         "glTF"
       ]
@@ -247,7 +337,9 @@
       "schema": "Vendor/EXT_structural_metadata/schema/EXT_structural_metadata.schema.json",
       "attachTo": [
         "node",
-        "material"
+        "material",
+        "glTF.3DTILES_tileset",
+        "content"
       ]
     },
     {
@@ -257,6 +349,10 @@
     {
       "extensionName": "EXT_structural_metadata",
       "schema": "Vendor/EXT_structural_metadata/schema/mesh.primitive.EXT_structural_metadata.schema.json"
+    },
+    {
+      "extensionName": "EXT_structural_metadata",
+      "schema": "Vendor/EXT_structural_metadata/schema/node.EXT_voxels.EXT_structural_metadata.schema.json"
     },
     {
       "extensionName": "KHR_draco_mesh_compression",
@@ -381,6 +477,105 @@
     {
       "extensionName": "BENTLEY_materials_point_style",
       "schema": "Vendor/BENTLEY_materials_point_style/schema/material.BENTLEY_materials_point_style.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_tileset",
+      "schema": "Vendor/3DTILES_tileset/schema/glTF.3DTILES_tileset.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_tileset",
+      "schema": "Vendor/3DTILES_tileset/schema/node.3DTILES_tileset.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_horizon_occlusion_point",
+      "schema": "Vendor/3DTILES_horizon_occlusion_point/schema/3DTILES_horizon_occlusion_point.schema.json",
+      "attachTo": [
+        "content",
+        "node"
+      ]
+    },
+    {
+      "extensionName": "3DTILES_implicit_tiling",
+      "schema": "Vendor/3DTILES_implicit_tiling/schema/node.3DTILES_implicit_tiling.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_layers",
+      "schema": "Vendor/3DTILES_layers/schema/glTF.3DTILES_layers.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_layers",
+      "schema": "Vendor/3DTILES_layers/schema/node.3DTILES_layers.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_shape_cylinder_region",
+      "schema": "Vendor/3DTILES_shape_cylinder_region/schema/shape.3DTILES_shape_cylinder_region.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_shape_ellipsoid_region",
+      "schema": "Vendor/3DTILES_shape_ellipsoid_region/schema/shape.3DTILES_shape_ellipsoid_region.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_shape_s2",
+      "schema": "Vendor/3DTILES_shape_s2/schema/shape.3DTILES_shape_s2.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_subtree",
+      "schema": "Vendor/3DTILES_subtree/schema/glTF.3DTILES_subtree.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_tileset_vectors",
+      "schema": "Vendor/3DTILES_tileset_vectors/schema/glTF.3DTILES_tileset_vectors.schema.json"
+    },
+    {
+      "extensionName": "3DTILES_tileset_voxels",
+      "schema": "Vendor/3DTILES_tileset_voxels/schema/glTF.3DTILES_tileset_voxels.schema.json"
+    },
+    {
+      "extensionName": "EXT_georeference",
+      "schema": "Vendor/EXT_georeference/schema/node.EXT_georeference.schema.json"
+    },
+    {
+      "extensionName": "EXT_geospatial_crs",
+      "schema": "Vendor/EXT_geospatial_crs/schema/EXT_geospatial_crs.schema.json",
+      "attachTo": [
+        "glTF"
+      ]
+    },
+    {
+      "extensionName": "EXT_geospatial_crs_wkid",
+      "schema": "Vendor/EXT_geospatial_crs_wkid/schema/EXT_geospatial_crs_wkid.schema.json",
+      "attachTo": [
+        "EXT_geospatial_crs"
+      ]
+    },
+    {
+      "extensionName": "EXT_geospatial_crs_wkt2",
+      "schema": "Vendor/EXT_geospatial_crs_wkt2/schema/EXT_geospatial_crs_wkt2.schema.json",
+      "attachTo": [
+        "EXT_geospatial_crs"
+      ]
+    },
+    {
+      "extensionName": "EXT_node_visibility_conditions",
+      "schema": "Vendor/EXT_node_visibility_conditions/schema/EXT_node_visibility_conditions.schema.json",
+      "attachTo": [
+        "node"
+      ]
+    },
+    {
+      "extensionName": "EXT_node_visibility_conditions",
+      "schema": "Vendor/EXT_node_visibility_conditions/schema/glTF.EXT_node_visibility_conditions.schema.json"
+    },
+    {
+      "extensionName": "EXT_node_visibility_volume",
+      "schema": "Vendor/EXT_node_visibility_volume/schema/EXT_node_visibility_volume.schema.json",
+      "attachTo": [
+        "node"
+      ]
+    },
+    {
+      "extensionName": "EXT_voxels",
+      "schema": "Vendor/EXT_voxels/schema/node.EXT_voxels.schema.json"
     }
   ]
 }
