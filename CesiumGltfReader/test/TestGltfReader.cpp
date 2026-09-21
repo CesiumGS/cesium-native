@@ -1070,7 +1070,7 @@ TEST_CASE("Unknown MIME types are handled") {
         },
         "images": [
             {
-              "mimeType" : "image/webp"
+                "mimeType" : "image/webp"
             }
         ]
     }
