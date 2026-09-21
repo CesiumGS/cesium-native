@@ -7,6 +7,10 @@
 - Added support for the `GS_3DT` reality data type in `ITwinRealityDataContentLoader`.
 - Added support for styling on `CesiumVectorOverlays::VectorTilesRasterOverlay` by specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
 
+##### Fixes :wrench:
+
+- Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
+
 ### v0.64.0 - 2026-09-01
 
 ##### Additions :tada:
