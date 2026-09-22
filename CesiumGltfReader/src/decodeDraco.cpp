@@ -82,7 +82,6 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
   decodeBuffer.Init(reinterpret_cast<const char*>(data.data()), data.size());
 
   draco::Decoder decoder;
-  draco::Mesh mesh;
   draco::StatusOr<std::unique_ptr<draco::Mesh>> result =
       decoder.DecodeMeshFromBuffer(&decodeBuffer);
   if (!result.ok()) {
