@@ -23,12 +23,12 @@ namespace Cesium3DTilesSelection {
 class Tile;
 
 /**
- * @brief class for customizing calculation and comparison of the selection
- * measure for tiles. Usually this value is the screen space error, but it be
- * another criteria such as a fixed geometric error or the depth of a tile in
- * the tileset.
+ * @brief A handler for customizing calculation of the selection
+ * measure for tiles. By default that value is the screen space error, but it be
+ * another criteria such as absolute tile geometric error or the depth of a tile
+ * in the tileset.
  */
-class CESIUM3DTILESSELECTION_API ErrorMeasureHandler {
+class CESIUM3DTILESSELECTION_API ViewStateMeasureDelegate {
 public:
   /**
    * @brief compute the error measure, a generalization of screen space error.
@@ -37,14 +37,14 @@ public:
    * @param depth the depth (level) of the tile in the tileset.
    * @return the error measure
    */
-  virtual double computeErrorMeasure(
+  virtual double computeSelectionMeasure(
       const Tile& tile,
       double distance,
       uint32_t depth) const = 0;
   /**
    * @brief destructor
    */
-  virtual ~ErrorMeasureHandler() = default;
+  virtual ~ViewStateMeasureDelegate() = default;
 };
 
 /**
@@ -149,7 +149,7 @@ public:
    * object calculates a measure used as a standin for SSE.
    *
    * @param boundingVolume The geographic viewing volume
-   * @param errorMeasureHandler `std::shared_ptr` to object that implements
+   * @param measureDelegate `std::shared_ptr` to the delegate that implements
    * measure calculation
    * @param ellipsoid The ellipsoid that will be used to compute the
    * {@link ViewState#getPositionCartographic cartographic position} and other
@@ -157,7 +157,7 @@ public:
    */
   ViewState(
       const BoundingVolume& boundingVolume,
-      std::shared_ptr<ErrorMeasureHandler> errorMeasureHandler,
+      std::shared_ptr<ViewStateMeasureDelegate> measureDelegate,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
@@ -277,9 +277,9 @@ public:
    * The given distance will be clamped to a small positive value if
    * it is negative or too close to zero.
    *
-   * @param tile the tile
-   * @param distance The viewing distance
-   * @param depth level in the tileset traversal
+   * @param tile The tile
+   * @param distance The tile's distance from the ViewState origin.
+   * @param depth The tile's depth in in the tileset hierarchy.
    * @return The screen space error
    */
   double computeScreenSpaceError(
@@ -298,7 +298,7 @@ private:
   Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
-  std::shared_ptr<ErrorMeasureHandler> _errorMeasureHandler;
+  std::shared_ptr<ViewStateMeasureDelegate> _measureDelegate;
 };
 
 } // namespace Cesium3DTilesSelection

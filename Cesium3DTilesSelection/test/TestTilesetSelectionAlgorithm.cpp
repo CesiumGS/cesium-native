@@ -1812,12 +1812,13 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
   CHECK(updateResult.tilesFadingOut.size() == 2);
 }
 
-class FixedDepthHandler : public Cesium3DTilesSelection::ErrorMeasureHandler {
+class FixedDepthDelegate
+    : public Cesium3DTilesSelection::ViewStateMeasureDelegate {
 public:
-  FixedDepthHandler(uint32_t depthLimit)
+  FixedDepthDelegate(uint32_t depthLimit)
       : depthErrorMeasure(std::exp2(-int32_t(depthLimit))) {}
   double
-  computeErrorMeasure(const Tile&, double, uint32_t depth) const override {
+  computeSelectionMeasure(const Tile&, double, uint32_t depth) const override {
     return std::exp2(-int32_t(depth));
   }
   double depthErrorMeasure;
@@ -1875,25 +1876,25 @@ TEST_CASE("Test ErrorMeasureHandler") {
   };
   {
     // create tileset and call updateView() to give it a chance to load
-    auto fixedDepthHandler = std::make_shared<FixedDepthHandler>(0);
+    auto fixedDepthDelegate = std::make_shared<FixedDepthDelegate>(0);
     TilesetOptions options{};
-    options.maximumScreenSpaceError = fixedDepthHandler->depthErrorMeasure;
+    options.maximumScreenSpaceError = fixedDepthDelegate->depthErrorMeasure;
 
     Tileset tileset(tilesetExternals, "tileset.json", options);
     // create tileset and call updateView() to give it a chance to load
     initializeTileset(tileset);
-    ViewState viewState{viewStateRegion, fixedDepthHandler};
+    ViewState viewState{viewStateRegion, fixedDepthDelegate};
     ViewUpdateResult updateResult = loadTiles(tileset, viewState);
     CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
   }
   {
     // create tileset and call updateView() to give it a chance to load
-    auto fixedDepthHandler = std::make_shared<FixedDepthHandler>(1);
+    auto fixedDepthDelegate = std::make_shared<FixedDepthDelegate>(1);
     TilesetOptions options{};
-    options.maximumScreenSpaceError = fixedDepthHandler->depthErrorMeasure;
+    options.maximumScreenSpaceError = fixedDepthDelegate->depthErrorMeasure;
     Tileset tileset(tilesetExternals, "tileset.json", options);
     initializeTileset(tileset);
-    ViewState viewState{viewStateRegion, fixedDepthHandler};
+    ViewState viewState{viewStateRegion, fixedDepthDelegate};
     ViewUpdateResult updateResult = loadTiles(tileset, viewState);
     CHECK(updateResult.tilesToRenderThisFrame.size() == 3);
   }
