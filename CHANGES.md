@@ -11,6 +11,10 @@
 
 - Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
 
+##### Fixes :wrench:
+
+- Fixed a bug where a tile's level of detail could be driven by a view that cannot see it. In a view group mixing a wide and a narrow field of view, every tile the wide view saw was refined to the narrow view's screen-space error, visiting far more tiles than either view renders.
+
 ### v0.64.0 - 2026-09-01
 
 ##### Additions :tada:

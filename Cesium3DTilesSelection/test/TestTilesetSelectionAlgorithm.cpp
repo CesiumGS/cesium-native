@@ -1811,3 +1811,113 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
   CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
   CHECK(updateResult.tilesFadingOut.size() == 2);
 }
+
+TEST_CASE("A view that cannot see a tile still holds it to "
+          "culledScreenSpaceError") {
+  Cesium3DTilesContent::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "ReplaceTileset";
+  std::vector<std::string> files{
+      "tileset.json",
+      "parent.b3dm",
+      "ll.b3dm",
+      "lr.b3dm",
+      "ul.b3dm",
+      "ur.b3dm",
+      "ll_ll.b3dm"};
+
+  auto makeTilesetExternals = [&files, &testDataPath]() {
+    std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+        mockCompletedRequests;
+    for (const auto& file : files) {
+      std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+          std::make_unique<SimpleAssetResponse>(
+              static_cast<uint16_t>(200),
+              "doesn't matter",
+              CesiumAsync::HttpHeaders{},
+              readFile(testDataPath / file));
+      mockCompletedRequests.insert(
+          {file,
+           std::make_shared<SimpleAssetRequest>(
+               "GET",
+               file,
+               CesiumAsync::HttpHeaders{},
+               std::move(mockCompletedResponse))});
+    }
+    return TilesetExternals{
+        std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests)),
+        std::make_shared<SimplePrepareRendererResource>(),
+        AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+        nullptr};
+  };
+
+  // The first child is the only one with a child of its own, so it is the only
+  // tile that can be refined.
+  TilesetOptions options;
+  options.enableFrustumCulling = false;
+  options.maximumScreenSpaceError = 16.0;
+  options.culledScreenSpaceError = 8.0;
+  REQUIRE(options.enforceCulledScreenSpaceError);
+
+  struct Selection {
+    bool renderedFirstChild = false;
+    bool renderedGrandChild = false;
+  };
+
+  auto select = [&](bool addViewThatCannotSeeIt) {
+    TilesetExternals externals = makeTilesetExternals();
+    Tileset tileset(externals, "tileset.json", options);
+    initializeTileset(tileset);
+
+    const Tile* pTilesetJson = tileset.getRootTile();
+    REQUIRE(pTilesetJson != nullptr);
+    const Tile* pRoot = &pTilesetJson->getChildren()[0];
+    REQUIRE(pRoot->getChildren().size() == 4);
+    const Tile& firstChild = pRoot->getChildren()[0];
+    REQUIRE(firstChild.getChildren().size() == 1);
+    const Tile& grandChild = firstChild.getChildren()[0];
+
+    // Sees the first child comfortably within maximumScreenSpaceError, so on
+    // its own it renders that tile rather than refining it.
+    std::vector<ViewState> frustums{zoomToTileset(tileset)};
+    REQUIRE(frustums[0].isBoundingVolumeVisible(firstChild.getBoundingVolume()));
+
+    if (addViewThatCannotSeeIt) {
+      // The third child's viewpoint has the first child outside its frustum,
+      // while still close enough to exceed culledScreenSpaceError on it.
+      ViewState blockedView = zoomToTile(pRoot->getChildren()[2]);
+      REQUIRE(!blockedView.isBoundingVolumeVisible(
+          firstChild.getBoundingVolume()));
+      frustums.emplace_back(blockedView);
+    }
+
+    Selection selection{};
+    for (int i = 0; i < 5; ++i) {
+      externals.asyncSystem.dispatchMainThreadTasks();
+      const ViewUpdateResult& result =
+          tileset.updateViewGroup(tileset.getDefaultViewGroup(), frustums);
+      externals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
+
+      const auto& rendered = result.tilesToRenderThisFrame;
+      selection.renderedFirstChild =
+          std::find(rendered.begin(), rendered.end(), &firstChild) !=
+          rendered.end();
+      selection.renderedGrandChild =
+          std::find(rendered.begin(), rendered.end(), &grandChild) !=
+          rendered.end();
+    }
+    return selection;
+  };
+
+  const Selection alone = select(false);
+  REQUIRE(alone.renderedFirstChild);
+  REQUIRE(!alone.renderedGrandChild);
+
+  // The added view cannot see the first child, so culledScreenSpaceError is the
+  // budget it holds that tile to, and 10.8 exceeds the 8.0 set above.
+  const Selection withBlockedView = select(true);
+  CHECK(withBlockedView.renderedGrandChild);
+  CHECK(!withBlockedView.renderedFirstChild);
+}
