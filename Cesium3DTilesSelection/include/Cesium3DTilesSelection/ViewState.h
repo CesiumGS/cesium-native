@@ -268,14 +268,18 @@ public:
       const noexcept;
 
   /**
-   * @brief Computes the screen space error from a given geometric error
+   * @brief Computes the screen space error.
    *
-   * Computes the screen space error (SSE) that results from the given
-   * geometric error, when it is viewed with this camera from the given
+   * Computes the screen space error (SSE) that results from a tile's
+   * geometric error, when it is viewed with this camera at the specified
    * distance.
    *
    * The given distance will be clamped to a small positive value if
    * it is negative or too close to zero.
+   *
+   * If the ViewState object was ceated with a measure delegate, that is called
+   * for this computation. Otherwise. the projection-based screen space error
+   * calculation is performed.
    *
    * @param tile The tile
    * @param distance The tile's distance from the ViewState origin.
