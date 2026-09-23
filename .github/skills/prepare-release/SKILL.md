@@ -1,6 +1,6 @@
 ---
 name: prepare-release
-description: 'Prepare a Cesium Native release for a given version number. Use when asked to prepare, prep, or cut a release, bump the release version, or run release preparation for cesium-native. Verifies CI on the canonical CesiumGS/cesium-native main branch, reviews and expands CHANGES.md, and sets the version in package.json and CMakeLists.txt.'
+description: 'Prepare a Cesium Native release for a given version number. Use when asked to prepare or cut a release, bump the release version, or run release preparation for cesium-native. Verifies CI on the canonical CesiumGS/cesium-native main branch, reviews and expands CHANGES.md, and sets the version in package.json and CMakeLists.txt.'
 argument-hint: 'The release version number, for example 0.65.0'
 ---
 
