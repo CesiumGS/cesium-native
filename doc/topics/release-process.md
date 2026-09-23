@@ -4,7 +4,7 @@ This is the process we follow when releasing a new version of Cesium Native.
 
 ## Prepare for Release
 
-Run the `/prepare-release` skill in [.github/skills/prepare-release/SKILL.md](../../.github/skills/prepare-release/SKILL.md) and provide the release version number. It performs the first four steps for you:
+Run the `/prepare-release` skill in the [GitHub-hosted skill file](https://github.com/CesiumGS/cesium-native/tree/main/.github/skills/prepare-release/SKILL.md) and provide the release version number. You can do this in the GitHub Copilot chat by typing `/prepare-release <version-number>`. It performs these four steps for you:
 
 1. Verify that CI is passing on all platforms. Fix it if not.
 2. Verify that `CHANGES.md` is complete and accurate.
