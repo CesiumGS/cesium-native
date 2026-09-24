@@ -1876,25 +1876,25 @@ TEST_CASE("Test ErrorMeasureHandler") {
   };
   {
     // create tileset and call updateView() to give it a chance to load
-    auto fixedDepthDelegate = std::make_shared<FixedDepthDelegate>(0);
+    auto pFixedDepthDelegate = std::make_shared<FixedDepthDelegate>(0);
     TilesetOptions options{};
-    options.maximumScreenSpaceError = fixedDepthDelegate->depthErrorMeasure;
+    options.maximumScreenSpaceError = pFixedDepthDelegate->depthErrorMeasure;
 
     Tileset tileset(tilesetExternals, "tileset.json", options);
     // create tileset and call updateView() to give it a chance to load
     initializeTileset(tileset);
-    ViewState viewState{viewStateRegion, fixedDepthDelegate};
+    ViewState viewState{viewStateRegion, pFixedDepthDelegate};
     ViewUpdateResult updateResult = loadTiles(tileset, viewState);
     CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
   }
   {
     // create tileset and call updateView() to give it a chance to load
-    auto fixedDepthDelegate = std::make_shared<FixedDepthDelegate>(1);
+    auto pFixedDepthDelegate = std::make_shared<FixedDepthDelegate>(1);
     TilesetOptions options{};
-    options.maximumScreenSpaceError = fixedDepthDelegate->depthErrorMeasure;
+    options.maximumScreenSpaceError = pFixedDepthDelegate->depthErrorMeasure;
     Tileset tileset(tilesetExternals, "tileset.json", options);
     initializeTileset(tileset);
-    ViewState viewState{viewStateRegion, fixedDepthDelegate};
+    ViewState viewState{viewStateRegion, pFixedDepthDelegate};
     ViewUpdateResult updateResult = loadTiles(tileset, viewState);
     CHECK(updateResult.tilesToRenderThisFrame.size() == 3);
   }

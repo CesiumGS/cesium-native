@@ -31,11 +31,11 @@ class Tile;
 class CESIUM3DTILESSELECTION_API ViewStateMeasureDelegate {
 public:
   /**
-   * @brief compute the error measure, a generalization of screen space error.
-   * @param tile the tile being tested
-   * @param distance distance from the ViewState's position to the tile
-   * @param depth the depth (level) of the tile in the tileset.
-   * @return the error measure
+   * @brief Compute the error measure, a generalization of screen space error.
+   * @param tile The tile being tested.
+   * @param distance Distance from the ViewState's position to the tile.
+   * @param depth The depth (level) of the tile in the tileset.
+   * @return The error measure
    */
   virtual double computeSelectionMeasure(
       const Tile& tile,
@@ -149,7 +149,7 @@ public:
    * object calculates a measure used as a standin for SSE.
    *
    * @param boundingVolume The geographic viewing volume
-   * @param measureDelegate `std::shared_ptr` to the delegate that implements
+   * @param pMeasureDelegate `std::shared_ptr` to the delegate that implements
    * measure calculation
    * @param ellipsoid The ellipsoid that will be used to compute the
    * {@link ViewState#getPositionCartographic cartographic position} and other
@@ -157,7 +157,7 @@ public:
    */
   ViewState(
       const BoundingVolume& boundingVolume,
-      std::shared_ptr<ViewStateMeasureDelegate> measureDelegate,
+      std::shared_ptr<ViewStateMeasureDelegate> pMeasureDelegate,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
@@ -302,7 +302,7 @@ private:
   Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
-  std::shared_ptr<ViewStateMeasureDelegate> _measureDelegate;
+  std::shared_ptr<ViewStateMeasureDelegate> _pMeasureDelegate;
 };
 
 } // namespace Cesium3DTilesSelection

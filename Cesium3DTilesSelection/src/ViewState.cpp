@@ -127,7 +127,7 @@ ViewState::ViewState(
 
 ViewState::ViewState(
     const BoundingVolume& boundingVolume,
-    std::shared_ptr<ViewStateMeasureDelegate> measureDelegate,
+    std::shared_ptr<ViewStateMeasureDelegate> pMeasureDelegate,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _position{0.0, 0.0, 1.0},
       _direction{0.0, 0.0, 1.0},
@@ -137,7 +137,7 @@ ViewState::ViewState(
       _cullingVolume(boundingVolume),
       _viewMatrix(1.0),
       _projectionMatrix(1.0),
-      _measureDelegate(std::move(measureDelegate)) {
+      _pMeasureDelegate(std::move(pMeasureDelegate)) {
   std::optional<GlobeRectangle> globeRectangle =
       estimateGlobeRectangle(boundingVolume, ellipsoid);
   if (!globeRectangle) {
@@ -219,8 +219,8 @@ double ViewState::computeScreenSpaceError(
     const Tile& tile,
     double distance,
     uint32_t depth) const noexcept {
-  if (this->_measureDelegate) {
-    return this->_measureDelegate->computeSelectionMeasure(
+  if (this->_pMeasureDelegate) {
+    return this->_pMeasureDelegate->computeSelectionMeasure(
         tile,
         distance,
         depth);
