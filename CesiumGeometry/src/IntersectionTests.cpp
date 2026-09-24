@@ -242,10 +242,24 @@ std::optional<double> IntersectionTests::rayOBBParametric(
   // is fine!
   const glm::dmat3& halfAxes = obb.getHalfAxes();
   glm::dvec3 halfLengths = obb.getLengths() * 0.5;
-  glm::dmat3 rotationOnly(
-      halfAxes[0] / halfLengths.x,
-      halfAxes[1] / halfLengths.y,
-      halfAxes[2] / halfLengths.z);
+
+  // A zero-length half axis takes its direction from the other two.
+  glm::dmat3 rotationOnly(1.0);
+  glm::length_t degenerateAxis = 3;
+  for (glm::length_t i = 0; i < 3; ++i) {
+    if (halfLengths[i] > 0.0) {
+      rotationOnly[i] = halfAxes[i] / halfLengths[i];
+    } else if (degenerateAxis == 3) {
+      degenerateAxis = i;
+    } else {
+      return std::nullopt;
+    }
+  }
+  if (degenerateAxis < 3) {
+    rotationOnly[degenerateAxis] = glm::cross(
+        rotationOnly[(degenerateAxis + 1) % 3],
+        rotationOnly[(degenerateAxis + 2) % 3]);
+  }
   glm::dmat3 inverseRotation = glm::transpose(rotationOnly);
 
   // Find the equivalent ray in the coordinate system where the OBB is not
