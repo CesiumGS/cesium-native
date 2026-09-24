@@ -11,6 +11,10 @@
 
 - Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
 
+##### Fixes :wrench:
+
+- Fixed potential out-of-bounds access while decoding Draco-compressed glTFs.
+
 ### v0.64.0 - 2026-09-01
 
 ##### Additions :tada:
