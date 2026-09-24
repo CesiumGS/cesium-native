@@ -4,13 +4,16 @@ This is the process we follow when releasing a new version of Cesium Native.
 
 ## Prepare for Release
 
+Run the `/prepare-release` skill in the [GitHub-hosted skill file](https://github.com/CesiumGS/cesium-native/tree/main/.github/skills/prepare-release/SKILL.md) and provide the release version number. You can do this in the GitHub Copilot chat by typing `/prepare-release <version-number>`. It performs these four steps for you:
+
 1. Verify that CI is passing on all platforms. Fix it if not.
 2. Verify that `CHANGES.md` is complete and accurate.
    - Give the header of the section containing the latest changes an appropriate version number and date.
    - Diff main against the previous released version. This helps catch changes that are missing from the changelog, as well as changelog entries that were accidentally added to the wrong section.
 3. Set the `version` property in `package.json`.
 4. Set the `VERSION` property passed to the `project()` function in `CMakeLists.txt`.
-5. Commit these changes. You can push them directly to `main`.
+
+After the prompt has completed, review and commit these changes. You can push them directly to `main`.
 
 ## Release
 
