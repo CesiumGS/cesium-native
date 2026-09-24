@@ -268,12 +268,26 @@ std::optional<double> IntersectionTests::rayOBBParametric(
   glm::dvec3 rayOrigin(inverseRotation * relativeOrigin);
   glm::dvec3 rayDirection(inverseRotation * ray.getDirection());
 
+  // The columns are only orthonormal for a well-formed box. Normalizing keeps a
+  // skewed box from being rejected by the ray, and the length maps the hit
+  // distance back to the original ray.
+  const double directionScale = glm::length(rayDirection);
+  if (!std::isfinite(directionScale) || directionScale <= 0.0) {
+    return std::nullopt;
+  }
+  rayDirection /= directionScale;
+
   // Find the distance to the new ray's intersection with the AABB, which is
   // equivalent to the distance of the original ray intersection with the OBB.
   glm::dvec3 ll = -halfLengths;
   glm::dvec3 ur = +halfLengths;
   AxisAlignedBox aabb(ll.x, ll.y, ll.z, ur.x, ur.y, ur.z);
-  return rayAABBParametric(Ray(rayOrigin, rayDirection), aabb);
+  std::optional<double> t =
+      rayAABBParametric(Ray(rayOrigin, rayDirection), aabb);
+  if (t) {
+    *t /= directionScale;
+  }
+  return t;
 }
 
 std::optional<glm::dvec3>

@@ -9,7 +9,7 @@
 
 ##### Fixes :wrench:
 
-- Fixed a crash when sampling heights on a tileset whose bounding volumes include flat boxes or zero-radius spheres.
+- Fixed a crash when sampling heights on a tileset that contains flat or skewed bounding boxes.
 - Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
 
 ### v0.64.0 - 2026-09-01
