@@ -310,29 +310,20 @@ void addTileToRender(ViewUpdateResult& result, Tile& tile, double sse) {
 double computeSse(
     const TileSelectionContext& context,
     const TilesetFrameState& frameState,
-    const Tile& tile) noexcept {
+    const Tile& tile,
+    uint32_t depth) noexcept {
   double largestSse = 0.0;
   const auto& frustums = frameState.frustums;
   const auto& distances = context.scratchDistances;
   CESIUM_ASSERT(frustums.size() == distances.size());
   for (size_t i = 0; i < frustums.size(); ++i) {
-    const double sse = frustums[i].computeScreenSpaceError(
-        tile.getGeometricError(),
-        distances[i]);
+    const double sse =
+        frustums[i].computeScreenSpaceError(tile, distances[i], depth);
     if (sse > largestSse) {
       largestSse = sse;
     }
   }
   return largestSse;
-}
-
-bool meetsGeometricErrorThreshold(
-    const TileSelectionContext& context,
-    double geometricErrorThreshold,
-    bool culled,
-    const Tile& tile) {
-  return culled ? !context.options.enforceCulledScreenSpaceError
-                : tile.getGeometricError() < geometricErrorThreshold;
 }
 
 bool meetsSseThreshold(
@@ -1134,36 +1125,9 @@ TraversalDetails visitTileIfNeeded(
     ++result.culledTilesVisited;
   }
 
-  double tileSse = computeSse(context, frameState, tile);
-  auto minGeoErrorThresholdIt = std::min_element(
-      frameState.frustums.begin(),
-      frameState.frustums.end(),
-      [](const ViewState& a, const ViewState& b) {
-        std::optional<double> aThreshold = a.getGeometricErrorThreshold();
-        std::optional<double> bThreshold = b.getGeometricErrorThreshold();
-        if (!aThreshold && !bThreshold) {
-          return false;
-        }
-        if (!aThreshold) {
-          return true;
-        }
-        if (!bThreshold) {
-          return false;
-        }
-        return *aThreshold < *bThreshold;
-      });
-  bool meetsSse = false;
-  std::optional<double> geometricErrorThreshold =
-      minGeoErrorThresholdIt->getGeometricErrorThreshold();
-  if (geometricErrorThreshold) {
-    meetsSse = meetsGeometricErrorThreshold(
-        context,
-        *geometricErrorThreshold,
-        cullResult.culled,
-        tile);
-  } else {
-    meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
-  }
+  double tileSse = computeSse(context, frameState, tile, depth);
+  bool meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
+
   TraversalDetails details = visitTile(
       context,
       frameState,

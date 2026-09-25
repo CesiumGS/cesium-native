@@ -2,6 +2,10 @@
 
 ### ? - ?
 
+##### Breaking Changes :mega:
+
+- `Cesium3DTilesSelection::ViewState` can be supplied a delegate that computes a general tile error measure. The interface for setting a fixed geometric error in the `ViewState` object has been removed; that functionality can be implemented instead using the delegate.
+
 ##### Additions :tada:
 
 - Added support for the `GS_3DT` reality data type in `ITwinRealityDataContentLoader`.

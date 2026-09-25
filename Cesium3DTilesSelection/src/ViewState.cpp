@@ -1,5 +1,6 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/GeneralCullingVolume.h>
+#include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/ViewState.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
@@ -21,8 +22,11 @@
 #include <glm/geometric.hpp>
 
 #include <cmath>
+#include <cstdint>
 #include <limits>
+#include <memory>
 #include <optional>
+#include <utility>
 #include <variant>
 
 using namespace CesiumGeometry;
@@ -123,7 +127,7 @@ ViewState::ViewState(
 
 ViewState::ViewState(
     const BoundingVolume& boundingVolume,
-    double geometricErrorThreshold,
+    std::shared_ptr<ViewStateMeasureDelegate> pMeasureDelegate,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _position{0.0, 0.0, 1.0},
       _direction{0.0, 0.0, 1.0},
@@ -133,7 +137,7 @@ ViewState::ViewState(
       _cullingVolume(boundingVolume),
       _viewMatrix(1.0),
       _projectionMatrix(1.0),
-      _geometricErrorThreshold(geometricErrorThreshold) {
+      _pMeasureDelegate(std::move(pMeasureDelegate)) {
   std::optional<GlobeRectangle> globeRectangle =
       estimateGlobeRectangle(boundingVolume, ellipsoid);
   if (!globeRectangle) {
@@ -212,16 +216,22 @@ double ViewState::computeDistanceSquaredToBoundingVolume(
 }
 
 double ViewState::computeScreenSpaceError(
+    const Tile& tile,
+    double distance,
+    uint32_t depth) const noexcept {
+  if (this->_pMeasureDelegate) {
+    return this->_pMeasureDelegate->computeSelectionMeasure(
+        tile,
+        distance,
+        depth);
+  } else {
+    return this->computeScreenSpaceError(tile.getGeometricError(), distance);
+  }
+}
+
+double ViewState::computeScreenSpaceError(
     double geometricError,
     double distance) const noexcept {
-  // If the view state is constructed with a geometric error threshold, then
-  // that is used instead as a stand-in for screen space error.
-  if (this->_geometricErrorThreshold) {
-    return *this->_geometricErrorThreshold;
-  }
-  // Otherwise, the projection matrix is valid and we can proceed with our
-  // projection-based calculation.
-  //
   // Avoid divide by zero when viewer is inside the tile
   distance = glm::max(distance, 1e-7);
   // This is a simplified version of the projection transform and homogeneous
@@ -249,4 +259,5 @@ double ViewState::getHorizontalFieldOfView() const noexcept {
 double ViewState::getVerticalFieldOfView() const noexcept {
   return std::atan(-1.0 / this->_projectionMatrix[1][1]) * 2.0;
 }
+
 } // namespace Cesium3DTilesSelection
