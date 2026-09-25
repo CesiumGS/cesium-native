@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/ErrorList.h>
@@ -26,6 +26,12 @@ struct BatchTableToGltfStructuralMetadata {
       const rapidjson::Document& featureTableJson,
       const rapidjson::Document& batchTableJson,
       const std::span<const std::byte>& featureTableJsonData,
+      const std::span<const std::byte>& batchTableBinaryData,
+      CesiumGltf::Model& gltf);
+  
+  static CesiumUtility::ErrorList convertFromVctr(
+      const rapidjson::Document& featureTableJson,
+      const rapidjson::Document& batchTableJson,
       const std::span<const std::byte>& batchTableBinaryData,
       CesiumGltf::Model& gltf);
 };
