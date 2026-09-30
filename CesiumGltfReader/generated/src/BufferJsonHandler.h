@@ -31,6 +31,7 @@ protected:
 
 private:
   CesiumGltf::Buffer* _pObject = nullptr;
+  CesiumJsonReader::IntegerJsonHandler<int32_t> _chunk;
   CesiumJsonReader::StringJsonHandler _uri;
   CesiumJsonReader::IntegerJsonHandler<int64_t> _byteLength;
 };
