@@ -250,6 +250,65 @@ TEST_CASE("Can decompress meshes using EXT_meshopt_compression") {
   }
 }
 
+namespace {
+std::string meshOptExtension(
+    int64_t byteStride,
+    int64_t count,
+    int64_t byteOffset = 0,
+    int64_t byteLength = 32) {
+  return fmt::format(
+      R"({{"buffer":0,"byteOffset":{},"byteLength":{},"mode":"ATTRIBUTES","filter":"NONE","byteStride":{},"count":{}}})",
+      byteOffset,
+      byteLength,
+      byteStride,
+      count);
+}
+
+std::vector<std::byte> meshOptGltf(const std::string& extensionJson) {
+  // A 32-byte all-zero buffer, large enough to pass the compressed range check.
+  const std::string dataUri =
+      "data:application/octet-stream;base64," + std::string(43, 'A') + "=";
+  const std::string gltf = fmt::format(
+      R"({{"asset":{{"version":"2.0"}},"extensionsUsed":["EXT_meshopt_compression"],)"
+      R"("buffers":[{{"byteLength":32,"uri":"{}"}}],)"
+      R"("bufferViews":[{{"buffer":0,"byteOffset":0,"byteLength":32,)"
+      R"("extensions":{{"EXT_meshopt_compression":{}}}}}]}})",
+      dataUri,
+      extensionJson);
+  const std::byte* pStart = reinterpret_cast<const std::byte*>(gltf.data());
+  return std::vector<std::byte>(pStart, pStart + gltf.size());
+}
+} // namespace
+
+TEST_CASE("Rejects malformed EXT_meshopt_compression bufferViews") {
+  constexpr int64_t int64Max = std::numeric_limits<int64_t>::max();
+  std::string extensionJson;
+
+  SUBCASE("count times byteStride overflows to a small positive value") {
+    // The reported proof-of-concept: 4 * (2^62 + 4) wraps to 16.
+    extensionJson = meshOptExtension(4, (int64_t(1) << 62) + 4);
+  }
+  SUBCASE("count times byteStride is just above int64 max") {
+    extensionJson = meshOptExtension(4, int64Max / 4 + 1);
+  }
+  SUBCASE("count is zero") { extensionJson = meshOptExtension(4, 0); }
+  SUBCASE("count is negative") { extensionJson = meshOptExtension(4, -1); }
+  SUBCASE("byteStride is zero") { extensionJson = meshOptExtension(0, 8); }
+  SUBCASE("byteStride is negative") { extensionJson = meshOptExtension(-4, 8); }
+  SUBCASE("compressed byteOffset plus byteLength overflows") {
+    extensionJson = meshOptExtension(4, 8, int64Max, int64Max);
+  }
+
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(meshOptGltf(extensionJson));
+
+  REQUIRE(result.model);
+  CHECK(!result.warnings.empty());
+
+  // The bufferView must be left alone; no decoded buffer is appended.
+  CHECK(result.model->buffers.size() == 1);
+}
+
 TEST_CASE("Read TriangleWithoutIndices") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
   gltfFile /=
