@@ -849,10 +849,14 @@ public:
             pCreator,
             parameters,
             CesiumGeospatial::GeographicProjection(
-                CesiumGeospatial::Ellipsoid::WGS84),
+                (parameters.pOwner ? parameters.pOwner : pCreator)
+                    ->getOptions()
+                    .ellipsoid),
             projectRectangleSimple(
                 CesiumGeospatial::GeographicProjection(
-                    CesiumGeospatial::Ellipsoid::WGS84),
+                    (parameters.pOwner ? parameters.pOwner : pCreator)
+                        ->getOptions()
+                        .ellipsoid),
                 CesiumGeospatial::GlobeRectangle::MAXIMUM)),
         _options(),
         _pPrepareRendererResources(

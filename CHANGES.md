@@ -1,5 +1,11 @@
 # Change Log
 
+### vNext
+
+##### Fixes :wrench:
+
+- `CesiumVectorOverlays::VectorTilesRasterOverlay` now builds its geographic projection from the overlay ellipsoid instead of a hardcoded WGS84 ellipsoid. A hardcoded ellipsoid can disagree with the one stored by the host, which creates an extra texture-coordinate set and can crash when this overlay is combined with another geographic overlay.
+
 ### v0.65.0 - 2026-10-01
 
 ##### Breaking Changes :mega:
