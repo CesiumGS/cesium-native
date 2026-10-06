@@ -15,6 +15,7 @@
 
 - Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
 - Fixed potential out-of-bounds access while decoding Draco-compressed glTFs.
+- Fixed potential integer overflow and out-of-bounds write while decoding glTFs using `EXT_meshopt_compression`.
 
 ### v0.64.0 - 2026-09-01
 
