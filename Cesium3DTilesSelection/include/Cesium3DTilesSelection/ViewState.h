@@ -13,9 +13,39 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+#include <functional>
+#include <memory>
 #include <optional>
+#include <utility>
 
 namespace Cesium3DTilesSelection {
+
+class Tile;
+
+/**
+ * @brief A handler for customizing calculation of the selection
+ * measure for tiles. By default that value is the screen space error, but it be
+ * another criteria such as absolute tile geometric error or the depth of a tile
+ * in the tileset.
+ */
+class CESIUM3DTILESSELECTION_API ViewStateMeasureDelegate {
+public:
+  /**
+   * @brief Compute the error measure, a generalization of screen space error.
+   * @param tile The tile being tested.
+   * @param distance Distance from the ViewState's position to the tile.
+   * @param depth The depth (level) of the tile in the tileset.
+   * @return The error measure
+   */
+  virtual double computeSelectionMeasure(
+      const Tile& tile,
+      double distance,
+      uint32_t depth) const = 0;
+  /**
+   * @brief destructor
+   */
+  virtual ~ViewStateMeasureDelegate() = default;
+};
 
 /**
  * @brief The state of the view that is used during the traversal of a tileset.
@@ -115,18 +145,19 @@ public:
    * @brief Creates a new instance of a view state from a bounding volume
    * associated with a geographic area, as opposed to a viewing projection. This
    * constructor does not specify a viewport, and so doesn't use Screen Space
-   * Error (SSE) as a selection criteria.
+   * Error (SSE) as a selection criteria. Instead, a user-supplied functor
+   * object calculates a measure used as a standin for SSE.
    *
    * @param boundingVolume The geographic viewing volume
-   * @param geometricErrorThreshold Value used for selection as an alternative
-   * to screen space error.
+   * @param pMeasureDelegate `std::shared_ptr` to the delegate that implements
+   * measure calculation
    * @param ellipsoid The ellipsoid that will be used to compute the
    * {@link ViewState#getPositionCartographic cartographic position} and other
    * parameters for tile selection.
    */
   ViewState(
       const BoundingVolume& boundingVolume,
-      double geometricErrorThreshold,
+      std::shared_ptr<ViewStateMeasureDelegate> pMeasureDelegate,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
@@ -195,13 +226,6 @@ public:
   }
 
   /**
-   * @brief Gets the geometric error threshold.
-   */
-  std::optional<double> getGeometricErrorThreshold() const {
-    return this->_geometricErrorThreshold;
-  }
-
-  /**
    * @brief Returns whether the given @ref BoundingVolume is visible for this
    * camera
    *
@@ -243,6 +267,30 @@ public:
   double computeScreenSpaceError(double geometricError, double distance)
       const noexcept;
 
+  /**
+   * @brief Computes the screen space error.
+   *
+   * Computes the screen space error (SSE) that results from a tile's
+   * geometric error, when it is viewed with this camera at the specified
+   * distance.
+   *
+   * The given distance will be clamped to a small positive value if
+   * it is negative or too close to zero.
+   *
+   * If the ViewState object was ceated with a measure delegate, that is called
+   * for this computation. Otherwise. the projection-based screen space error
+   * calculation is performed.
+   *
+   * @param tile The tile
+   * @param distance The tile's distance from the ViewState origin.
+   * @param depth The tile's depth in in the tileset hierarchy.
+   * @return The screen space error
+   */
+  double computeScreenSpaceError(
+      const Tile& tile,
+      double distance,
+      uint32_t depth) const noexcept;
+
 private:
   glm::dvec3 _position;
   glm::dvec3 _direction;
@@ -254,7 +302,7 @@ private:
   Cesium3DTilesSelection::GeneralCullingVolume _cullingVolume;
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
-  std::optional<double> _geometricErrorThreshold;
+  std::shared_ptr<ViewStateMeasureDelegate> _pMeasureDelegate;
 };
 
 } // namespace Cesium3DTilesSelection

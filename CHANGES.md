@@ -1,16 +1,20 @@
 # Change Log
 
-### v0.66.0 - 2026-09-08
+### v0.65.0 - 2026-10-01
+
+##### Breaking Changes :mega:
+
+- `Cesium3DTilesSelection::ViewState` can be supplied a delegate that computes a general tile error measure. The interface for setting a fixed geometric error in the `ViewState` object has been removed; that functionality can be implemented instead using the delegate.
 
 ##### Additions :tada:
 
 - Added support for the `GS_3DT` reality data type in `ITwinRealityDataContentLoader`.
+- Added support for styling on `CesiumVectorOverlays::VectorTilesRasterOverlay` by specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
 
-### ? - ?
+##### Fixes :wrench:
 
-##### Additions :tada:
-
-- The `CesiumVectorOverlays::VectorTilesRasterOverlay` now supports styling via specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
+- Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
+- Fixed potential out-of-bounds access while decoding Draco-compressed glTFs.
 
 ### v0.64.0 - 2026-09-01
 

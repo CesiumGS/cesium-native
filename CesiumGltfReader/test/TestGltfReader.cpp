@@ -1120,6 +1120,22 @@ TEST_CASE("Decodes a Draco attribute with fewer components than its accessor") {
   }
 }
 
+TEST_CASE("Rejects a Draco bufferView whose byte range overflows") {
+  GltfReader reader;
+  GltfReaderOptions options;
+
+  GltfReaderResult result = createDracoModel(Accessor::Type::VEC3);
+  BufferView& bufferView = result.model->bufferViews[0];
+  bufferView.byteOffset = std::numeric_limits<int64_t>::max() - 1000;
+  bufferView.byteLength = 2000;
+
+  reader.postprocessGltf(result, options);
+
+  REQUIRE(result.model);
+  CHECK(hasWarningContaining(result, "extends beyond its buffer"));
+  CHECK(result.model->accessors[0].bufferView == -1);
+}
+
 TEST_CASE("Extensions deserialize to JsonVaue iff "
           "a default extension is registered") {
   const std::string s = R"(
