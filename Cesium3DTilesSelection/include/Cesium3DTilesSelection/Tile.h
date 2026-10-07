@@ -649,6 +649,16 @@ public:
    */
   bool hasReferencingContent() const noexcept;
 
+  void setGroup(int64_t group)
+  {
+    this->_group = group;
+  }
+
+  std::optional<int64_t> getGroup() const noexcept
+  {
+    return this->_group;
+  }
+  
 private:
   struct TileConstructorImpl {};
   template <
@@ -715,6 +725,8 @@ private:
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;
 
+  std::optional<int64_t> _group;
+  
 public:
   /**
    * @brief A @ref CesiumUtility::DoublyLinkedList for tile objects.

@@ -670,6 +670,9 @@ std::optional<Tile> parseTileJsonRecursively(
     tile.setViewerRequestVolume(tileViewerRequestVolume);
     tile.setGeometricError(tileGeometricError);
     tile.setRefine(tileRefine);
+    if (maybeContent && maybeContent->group) {
+      tile.setGroup(*maybeContent->group);
+    }
 
     parseImplicitTileset(*implicitTilingJson, contentUri, tile, currentLoader);
 

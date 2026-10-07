@@ -21,6 +21,7 @@
 namespace Cesium3DTilesSelection {
 
 class Tile;
+class ViewState;
 
 /**
  * @brief A handler for customizing calculation of the selection
@@ -38,9 +39,16 @@ public:
    * @return The error measure
    */
   virtual double computeSelectionMeasure(
+      const ViewState& viewState,
       const Tile& tile,
       double distance,
-      uint32_t depth) const = 0;
+      uint32_t depth) const;
+
+  /**
+   * @brief WIP
+   */
+  virtual bool isContentVisible(const ViewState& viewState, const Tile& tile) const;
+
   /**
    * @brief destructor
    */
@@ -291,6 +299,20 @@ public:
       double distance,
       uint32_t depth) const noexcept;
 
+  bool isContentVisible(const Tile& tile) const noexcept {
+    if (_pMeasureDelegate) {
+      return _pMeasureDelegate->isContentVisible(*this, tile);
+    }
+    return true;
+  }
+  std::shared_ptr<ViewStateMeasureDelegate> getMeasureDelegate() const {
+    return this->_pMeasureDelegate;
+  }
+  
+  void setMeasureDelegate(std::shared_ptr<ViewStateMeasureDelegate> measureDelegate) {
+    this->_pMeasureDelegate = std::move(measureDelegate);
+  }
+  
 private:
   glm::dvec3 _position;
   glm::dvec3 _direction;
