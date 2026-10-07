@@ -7,6 +7,7 @@
 #include <CesiumGltf/Cylinder.h>
 #include <CesiumGltf/Library.h>
 #include <CesiumGltf/NamedObject.h>
+#include <CesiumGltf/Plane.h>
 #include <CesiumGltf/Sphere.h>
 
 #include <optional>
@@ -14,7 +15,8 @@
 
 namespace CesiumGltf {
 /**
- * @brief Parameters describing an implicit shape.
+ * @brief A generic, re-usable shape definition with no inherent meaning
+ * attached to it.
  */
 struct CESIUMGLTF_API Shape final : public CesiumGltf::NamedObject {
   /**
@@ -23,55 +25,61 @@ struct CESIUMGLTF_API Shape final : public CesiumGltf::NamedObject {
   static constexpr const char* TypeName = "Shape";
 
   /**
-   * @brief Known values for Specifies the shape type.
+   * @brief Known values for The type of shape this shape object represents. If
+   * any properties are explicitly specified for the shape, the shape properties
+   * object MUST match the shape type.
    */
   struct Type {
-    /** @brief A sphere with a specified radius, centered at the origin in local
-     * space. */
-    inline static const std::string sphere = "sphere";
-
-    /** @brief An axis-aligned box with a size per-axis, centered at the origin
-     * in local space */
+    /** @brief `box` */
     inline static const std::string box = "box";
 
-    /** @brief A capsule shape, centered at the origin in local space,
-     * equivalent to the convex hull of two spheres located along the Y axis (in
-     * local space) at a specified distance. */
+    /** @brief `capsule` */
     inline static const std::string capsule = "capsule";
 
-    /** @brief A cylinder shape, centered at the origin in local space,
-     * equivalent to the convex hull of two circles in the X/Z plane positioned
-     * along the Y axis at a specified distance. */
+    /** @brief `cylinder` */
     inline static const std::string cylinder = "cylinder";
+
+    /** @brief `plane` */
+    inline static const std::string plane = "plane";
+
+    /** @brief `sphere` */
+    inline static const std::string sphere = "sphere";
   };
 
   /**
-   * @brief Specifies the shape type.
+   * @brief The type of shape this shape object represents. If any properties
+   * are explicitly specified for the shape, the shape properties object MUST
+   * match the shape type.
    *
    * Known values are defined in @ref Type.
    *
    */
-  std::string type = Type::sphere;
+  std::string type = Type::box;
 
   /**
-   * @brief A set of parameter values that are used to define a sphere shape.
-   */
-  std::optional<CesiumGltf::Sphere> sphere;
-
-  /**
-   * @brief A set of parameter values that are used to define a box shape.
+   * @brief Parameter values defining a box shape.
    */
   std::optional<CesiumGltf::Box> box;
 
   /**
-   * @brief A set of parameter values that are used to define a capsule shape.
+   * @brief Parameter values defining a capsule shape.
    */
   std::optional<CesiumGltf::Capsule> capsule;
 
   /**
-   * @brief A set of parameter values that are used to define a cylinder shape.
+   * @brief Parameter values defining a cylinder shape.
    */
   std::optional<CesiumGltf::Cylinder> cylinder;
+
+  /**
+   * @brief Parameter values defining a plane shape.
+   */
+  std::optional<CesiumGltf::Plane> plane;
+
+  /**
+   * @brief Parameter values defining a sphere shape.
+   */
+  std::optional<CesiumGltf::Sphere> sphere;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents
@@ -84,10 +92,6 @@ struct CESIUMGLTF_API Shape final : public CesiumGltf::NamedObject {
     accum += int64_t(sizeof(Shape));
     accum += CesiumGltf::NamedObject::getSizeBytes() -
              int64_t(sizeof(CesiumGltf::NamedObject));
-    if (this->sphere) {
-      accum +=
-          this->sphere->getSizeBytes() - int64_t(sizeof(CesiumGltf::Sphere));
-    }
     if (this->box) {
       accum += this->box->getSizeBytes() - int64_t(sizeof(CesiumGltf::Box));
     }
@@ -98,6 +102,13 @@ struct CESIUMGLTF_API Shape final : public CesiumGltf::NamedObject {
     if (this->cylinder) {
       accum += this->cylinder->getSizeBytes() -
                int64_t(sizeof(CesiumGltf::Cylinder));
+    }
+    if (this->plane) {
+      accum += this->plane->getSizeBytes() - int64_t(sizeof(CesiumGltf::Plane));
+    }
+    if (this->sphere) {
+      accum +=
+          this->sphere->getSizeBytes() - int64_t(sizeof(CesiumGltf::Sphere));
     }
     return accum;
   }

@@ -8,6 +8,8 @@
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Camera.h>
+#include <CesiumGltf/ExternalAsset.h>
+#include <CesiumGltf/File.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltf/Library.h>
 #include <CesiumGltf/Material.h>
@@ -15,6 +17,7 @@
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/Sampler.h>
 #include <CesiumGltf/Scene.h>
+#include <CesiumGltf/Shape.h>
 #include <CesiumGltf/Skin.h>
 #include <CesiumGltf/Texture.h>
 #include <CesiumUtility/ExtensibleObject.h>
@@ -83,6 +86,21 @@ struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
   std::vector<CesiumGltf::Camera> cameras;
 
   /**
+   * @brief An array of external assets.
+   *
+   * An external asset references a file in the `files` array and may be
+   * instantiated by any node.
+   */
+  std::vector<CesiumGltf::ExternalAsset> externalAssets;
+
+  /**
+   * @brief An array of file references.
+   *
+   * A file reference is a pointer to an external file.
+   */
+  std::vector<CesiumGltf::File> files;
+
+  /**
    * @brief An array of images.
    *
    * An image defines data used to create a texture.
@@ -126,6 +144,11 @@ struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
    * @brief An array of scenes.
    */
   std::vector<CesiumGltf::Scene> scenes;
+
+  /**
+   * @brief An array of shapes.
+   */
+  std::vector<CesiumGltf::Shape> shapes;
 
   /**
    * @brief An array of skins.
@@ -175,6 +198,16 @@ struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
     for (const CesiumGltf::Camera& value : this->cameras) {
       accum += value.getSizeBytes() - int64_t(sizeof(CesiumGltf::Camera));
     }
+    accum += int64_t(
+        sizeof(CesiumGltf::ExternalAsset) * this->externalAssets.capacity());
+    for (const CesiumGltf::ExternalAsset& value : this->externalAssets) {
+      accum +=
+          value.getSizeBytes() - int64_t(sizeof(CesiumGltf::ExternalAsset));
+    }
+    accum += int64_t(sizeof(CesiumGltf::File) * this->files.capacity());
+    for (const CesiumGltf::File& value : this->files) {
+      accum += value.getSizeBytes() - int64_t(sizeof(CesiumGltf::File));
+    }
     accum += int64_t(sizeof(CesiumGltf::Image) * this->images.capacity());
     for (const CesiumGltf::Image& value : this->images) {
       accum += value.getSizeBytes() - int64_t(sizeof(CesiumGltf::Image));
@@ -198,6 +231,10 @@ struct CESIUMGLTF_API ModelSpec : public CesiumUtility::ExtensibleObject {
     accum += int64_t(sizeof(CesiumGltf::Scene) * this->scenes.capacity());
     for (const CesiumGltf::Scene& value : this->scenes) {
       accum += value.getSizeBytes() - int64_t(sizeof(CesiumGltf::Scene));
+    }
+    accum += int64_t(sizeof(CesiumGltf::Shape) * this->shapes.capacity());
+    for (const CesiumGltf::Shape& value : this->shapes) {
+      accum += value.getSizeBytes() - int64_t(sizeof(CesiumGltf::Shape));
     }
     accum += int64_t(sizeof(CesiumGltf::Skin) * this->skins.capacity());
     for (const CesiumGltf::Skin& value : this->skins) {

@@ -7,7 +7,8 @@
 
 namespace CesiumGltf {
 /**
- * @brief Parameters describing a sphere shape.
+ * @brief A sphere, centered at the origin in local space with a radius equal in
+ * all directions, with normals facing outwards.
  */
 struct CESIUMGLTF_API Sphere final : public CesiumUtility::ExtensibleObject {
   /**
