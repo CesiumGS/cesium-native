@@ -393,6 +393,57 @@ TEST_CASE("IntersectionTests::rayOBB") {
   }
 }
 
+TEST_CASE("IntersectionTests::rayOBB with malformed half axes") {
+  const Ray ray(glm::dvec3(10.0, 20.0, 40.0), glm::dvec3(0.0, 0.0, -1.0));
+
+  SUBCASE("a flat box is hit on its face") {
+    // 4x4x0 obb at (10,20,30) that is rotated 45 degrees on the Z-axis.
+    OrientedBoundingBox obb(
+        glm::dvec3(10.0, 20.0, 30.0),
+        glm::dmat3(
+            glm::rotate(glm::radians(45.0), glm::dvec3(0.0, 0.0, 1.0))) *
+            glm::dmat3(glm::scale(glm::dvec3(2.0, 2.0, 0.0))));
+    std::optional<glm::dvec3> intersectionPoint =
+        IntersectionTests::rayOBB(ray, obb);
+    REQUIRE(intersectionPoint);
+    CHECK(glm::all(glm::lessThan(
+        glm::abs(*intersectionPoint - glm::dvec3(10.0, 20.0, 30.0)),
+        glm::dvec3(CesiumUtility::Math::Epsilon6))));
+  }
+
+  SUBCASE("a flat box is missed beside its face") {
+    // 4x4x0 obb at (15,20,30) that is not rotated, with the ray passing its
+    // plane at (0,20,30).
+    OrientedBoundingBox obb(
+        glm::dvec3(15.0, 20.0, 30.0),
+        glm::dmat3(glm::scale(glm::dvec3(2.0, 2.0, 0.0))));
+    const Ray angledRay(
+        glm::dvec3(10.0, 20.0, 40.0),
+        glm::normalize(glm::dvec3(-1.0, 0.0, -1.0)));
+    CHECK(!IntersectionTests::rayOBB(angledRay, obb));
+  }
+
+  SUBCASE("a box with no extent is never hit") {
+    OrientedBoundingBox obb(glm::dvec3(10.0, 20.0, 30.0), glm::dmat3(0.0));
+    CHECK(!IntersectionTests::rayOBB(ray, obb));
+  }
+
+  SUBCASE("a box with skewed half axes is still hit through its center") {
+    // Three nearly parallel half axes, as written by a tiler that stores
+    // corner points instead of axis vectors.
+    OrientedBoundingBox obb(
+        glm::dvec3(10.0, 20.0, 30.0),
+        glm::dmat3(
+            glm::dvec3(100.0, 0.0, 1000.0),
+            glm::dvec3(0.0, 100.0, 1000.0),
+            glm::dvec3(0.0, 0.0, 1100.0)));
+    std::optional<glm::dvec3> intersectionPoint =
+        IntersectionTests::rayOBB(ray, obb);
+    REQUIRE(intersectionPoint);
+    CHECK(intersectionPoint->z < 40.0);
+  }
+}
+
 TEST_CASE("IntersectionTests::raySphere") {
   struct TestCase {
     Ray ray;

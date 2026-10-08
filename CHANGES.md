@@ -23,6 +23,7 @@
 
 ##### Fixes :wrench:
 
+- Fixed a crash when sampling heights on a tileset that contains flat or skewed bounding boxes.
 - Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
 - Fixed potential out-of-bounds access while decoding Draco-compressed glTFs.
 
