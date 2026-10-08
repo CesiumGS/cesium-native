@@ -1,16 +1,16 @@
-#include <Cesium3DTiles/Availability.h>
-#include <Cesium3DTiles/Buffer.h>
-#include <Cesium3DTiles/BufferView.h>
-#include <Cesium3DTiles/Subtree.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
-#include <Cesium3DTilesReader/SubtreeFileReader.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumTilesetJson/Availability.h>
+#include <CesiumTilesetJson/Buffer.h>
+#include <CesiumTilesetJson/BufferView.h>
+#include <CesiumTilesetJson/Subtree.h>
+#include <CesiumTilesetJsonReader/SubtreeFileReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/joinToString.h>
 
@@ -28,8 +28,8 @@
 #include <variant>
 #include <vector>
 
-using namespace Cesium3DTiles;
-using namespace Cesium3DTilesReader;
+using namespace CesiumTilesetJson;
+using namespace CesiumTilesetJsonReader;
 using namespace CesiumJsonReader;
 
 namespace Cesium3DTilesContent {
@@ -37,13 +37,13 @@ namespace Cesium3DTilesContent {
 namespace {
 
 std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
-    const Cesium3DTiles::Availability& availability,
-    std::vector<Cesium3DTiles::Buffer>& buffers,
-    std::vector<Cesium3DTiles::BufferView>& bufferViews) {
+    const CesiumTilesetJson::Availability& availability,
+    std::vector<CesiumTilesetJson::Buffer>& buffers,
+    std::vector<CesiumTilesetJson::BufferView>& bufferViews) {
   if (availability.constant) {
     return SubtreeAvailability::SubtreeConstantAvailability{
         *availability.constant ==
-        Cesium3DTiles::Availability::Constant::AVAILABLE};
+        CesiumTilesetJson::Availability::Constant::AVAILABLE};
   }
 
   int64_t bufferViewIndex = -1;
@@ -62,12 +62,12 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
 
   if (bufferViewIndex >= 0 &&
       bufferViewIndex < static_cast<int64_t>(bufferViews.size())) {
-    const Cesium3DTiles::BufferView& bufferView =
+    const CesiumTilesetJson::BufferView& bufferView =
         bufferViews[size_t(bufferViewIndex)];
 
     if (bufferView.buffer >= 0 &&
         bufferView.buffer < static_cast<int64_t>(buffers.size())) {
-      Cesium3DTiles::Buffer& buffer = buffers[size_t(bufferView.buffer)];
+      CesiumTilesetJson::Buffer& buffer = buffers[size_t(bufferView.buffer)];
       std::vector<std::byte>& data = buffer.cesium.data;
       int64_t bufferSize =
           std::min(static_cast<int64_t>(data.size()), buffer.byteLength);
@@ -89,7 +89,7 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
 /*static*/ std::optional<SubtreeAvailability> SubtreeAvailability::fromSubtree(
     ImplicitTileSubdivisionScheme subdivisionScheme,
     uint32_t levelsInSubtree,
-    Cesium3DTiles::Subtree&& subtree) noexcept {
+    CesiumTilesetJson::Subtree&& subtree) noexcept {
   std::optional<SubtreeAvailability::AvailabilityView> maybeTileAvailability =
       parseAvailabilityView(
           subtree.tileAvailability,
@@ -138,12 +138,13 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
     bool setTilesAvailable) noexcept {
   Subtree subtree;
   subtree.tileAvailability.constant =
-      setTilesAvailable ? Cesium3DTiles::Availability::Constant::AVAILABLE
-                        : Cesium3DTiles::Availability::Constant::UNAVAILABLE;
+      setTilesAvailable
+          ? CesiumTilesetJson::Availability::Constant::AVAILABLE
+          : CesiumTilesetJson::Availability::Constant::UNAVAILABLE;
   subtree.contentAvailability.emplace_back().constant =
-      Cesium3DTiles::Availability::Constant::UNAVAILABLE;
+      CesiumTilesetJson::Availability::Constant::UNAVAILABLE;
   subtree.childSubtreeAvailability.constant =
-      Cesium3DTiles::Availability::Constant::UNAVAILABLE;
+      CesiumTilesetJson::Availability::Constant::UNAVAILABLE;
 
   return SubtreeAvailability::fromSubtree(
       subdivisionScheme,
@@ -198,7 +199,7 @@ SubtreeAvailability::SubtreeAvailability(
     AvailabilityView tileAvailability,
     AvailabilityView subtreeAvailability,
     std::vector<AvailabilityView>&& contentAvailability,
-    Cesium3DTiles::Subtree&& subtree)
+    CesiumTilesetJson::Subtree&& subtree)
     : _powerOf2{subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 2U : 3U},
       _levelsInSubtree{levelsInSubtree},
       _subtree{std::move(subtree)},

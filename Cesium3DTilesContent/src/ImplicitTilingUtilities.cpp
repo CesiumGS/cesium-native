@@ -1,4 +1,3 @@
-#include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/TileBoundingVolumes.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
@@ -11,6 +10,7 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumTilesetJson/BoundingVolume.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Uri.h>
 
@@ -176,11 +176,11 @@ ImplicitTilingUtilities::getParentID(
 
 namespace {
 template <typename T>
-Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
-    const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
+CesiumTilesetJson::BoundingVolume computeBoundingVolumeInternal(
+    const CesiumTilesetJson::BoundingVolume& rootBoundingVolume,
     const T& tileID,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
-  Cesium3DTiles::BoundingVolume result;
+  CesiumTilesetJson::BoundingVolume result;
 
   std::optional<OrientedBoundingBox> maybeBox =
       TileBoundingVolumes::getOrientedBoundingBox(rootBoundingVolume);
@@ -224,15 +224,17 @@ Cesium3DTiles::BoundingVolume computeBoundingVolumeInternal(
 }
 } // namespace
 
-Cesium3DTiles::BoundingVolume ImplicitTilingUtilities::computeBoundingVolume(
-    const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
+CesiumTilesetJson::BoundingVolume
+ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumTilesetJson::BoundingVolume& rootBoundingVolume,
     const CesiumGeometry::QuadtreeTileID& tileID,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   return computeBoundingVolumeInternal(rootBoundingVolume, tileID, ellipsoid);
 }
 
-Cesium3DTiles::BoundingVolume ImplicitTilingUtilities::computeBoundingVolume(
-    const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
+CesiumTilesetJson::BoundingVolume
+ImplicitTilingUtilities::computeBoundingVolume(
+    const CesiumTilesetJson::BoundingVolume& rootBoundingVolume,
     const CesiumGeometry::OctreeTileID& tileID,
     const CesiumGeospatial::Ellipsoid& ellipsoid) noexcept {
   return computeBoundingVolumeInternal(rootBoundingVolume, tileID, ellipsoid);
@@ -610,4 +612,4 @@ OctreeChildren::const_iterator OctreeChildren::end() const noexcept {
   return const_iterator(this->_tileID, true);
 }
 
-} // namespace Cesium3DTilesContent
+} // namespace CesiumTilesetJsonContent

@@ -62,10 +62,10 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 
 | Library                        | Description                                                                                                     |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| **Cesium3DTiles**              | Lightweight 3D Tiles classes.                                                                                   |
+| **CesiumTilesetJson**          | Lightweight 3D Tiles 1.1 classes.                                                                                   |
 | **Cesium3DTilesContent**       | Classes that support loading and converting 3D Tiles tile content.                                              |
-| **Cesium3DTilesReader**        | 3D Tiles deserialization, including 3D Tiles extension support.                                                 |
-| **Cesium3DTilesWriter**        | 3D Tiles serialization, including 3D Tiles extension support.                                                   |
+| **CesiumTilesetJsonReader**    | 3D Tiles 1.1 deserialization, including 3D Tiles extension support.                                                 |
+| **CesiumTilesetJsonWriter**    | 3D Tiles 1.1 serialization, including 3D Tiles extension support.                                                   |
 | **Cesium3DTilesSelection**     | Runtime streaming, level of detail selection, culling, cache management, and decoding of 3D Tiles.              |
 | **CesiumAsync**                | Classes for multi-threaded asynchronous tasks.                                                                  |
 | **CesiumClientCommon**         | Functionality shared between ion and iTwin client implementations, primarily shared authentication code.        |

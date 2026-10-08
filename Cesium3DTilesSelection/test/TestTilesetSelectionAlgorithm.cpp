@@ -1,8 +1,5 @@
 #include "SimplePrepareRendererResource.h"
 
-#include <Cesium3DTiles/GroupMetadata.h>
-#include <Cesium3DTiles/MetadataQuery.h>
-#include <Cesium3DTiles/Schema.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -25,6 +22,9 @@
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumTilesetJson/GroupMetadata.h>
+#include <CesiumTilesetJson/MetadataQuery.h>
+#include <CesiumTilesetJson/Schema.h>
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
@@ -1259,7 +1259,7 @@ TEST_CASE("Makes metadata available once root tile is loaded") {
   REQUIRE(pExternal);
 
   const TilesetMetadata& metadata = pExternal->metadata;
-  const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
+  const std::optional<CesiumTilesetJson::Schema>& schema = metadata.schema;
   REQUIRE(schema);
   CHECK(schema->id == "foo");
 }
@@ -1378,8 +1378,8 @@ TEST_CASE("Allows access to material variants") {
   REQUIRE(pMetadata->schema);
   REQUIRE(pMetadata->metadata);
 
-  std::optional<Cesium3DTiles::FoundMetadataProperty> found1 =
-      Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+  std::optional<CesiumTilesetJson::FoundMetadataProperty> found1 =
+      CesiumTilesetJson::MetadataQuery::findFirstPropertyWithSemantic(
           *pMetadata->schema,
           *pMetadata->metadata,
           "MATERIAL_VARIANTS");
@@ -1401,9 +1401,9 @@ TEST_CASE("Allows access to material variants") {
   CHECK(variants[3] == "BBB");
 
   std::vector<std::vector<std::string>> variantsByGroup;
-  for (const Cesium3DTiles::GroupMetadata& group : pMetadata->groups) {
-    std::optional<Cesium3DTiles::FoundMetadataProperty> found2 =
-        Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+  for (const CesiumTilesetJson::GroupMetadata& group : pMetadata->groups) {
+    std::optional<CesiumTilesetJson::FoundMetadataProperty> found2 =
+        CesiumTilesetJson::MetadataQuery::findFirstPropertyWithSemantic(
             *pMetadata->schema,
             group,
             "MATERIAL_VARIANTS");
@@ -1469,8 +1469,8 @@ TEST_CASE("Allows access to material variants in an external schema") {
         REQUIRE(pMetadata->schema);
         REQUIRE(pMetadata->metadata);
 
-        std::optional<Cesium3DTiles::FoundMetadataProperty> found1 =
-            Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+        std::optional<CesiumTilesetJson::FoundMetadataProperty> found1 =
+            CesiumTilesetJson::MetadataQuery::findFirstPropertyWithSemantic(
                 *pMetadata->schema,
                 *pMetadata->metadata,
                 "MATERIAL_VARIANTS");
@@ -1492,9 +1492,10 @@ TEST_CASE("Allows access to material variants in an external schema") {
         CHECK(variants[3] == "BBB");
 
         std::vector<std::vector<std::string>> variantsByGroup;
-        for (const Cesium3DTiles::GroupMetadata& group : pMetadata->groups) {
-          std::optional<Cesium3DTiles::FoundMetadataProperty> found2 =
-              Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+        for (const CesiumTilesetJson::GroupMetadata& group :
+             pMetadata->groups) {
+          std::optional<CesiumTilesetJson::FoundMetadataProperty> found2 =
+              CesiumTilesetJson::MetadataQuery::findFirstPropertyWithSemantic(
                   *pMetadata->schema,
                   group,
                   "MATERIAL_VARIANTS");

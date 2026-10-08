@@ -8,7 +8,7 @@
 
 #include <optional>
 
-namespace Cesium3DTiles {
+namespace CesiumTilesetJson {
 struct BoundingVolume;
 }
 
@@ -16,23 +16,23 @@ namespace Cesium3DTilesContent {
 
 /**
  * @brief Provides functions for extracting bounding volumes types from the
- * vectors stored in @ref Cesium3DTiles::BoundingVolume.
+ * vectors stored in @ref CesiumTilesetJson::BoundingVolume.
  */
 class TileBoundingVolumes {
 public:
   /**
    * @brief Gets the bounding box defined in a
-   * @ref Cesium3DTiles::BoundingVolume, if any.
+   * @ref CesiumTilesetJson::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the box.
    * @return The box, or `std::nullopt` if the bounding volume does not
    * define a box. The box is defined in the tile's coordinate system.
    */
   static std::optional<CesiumGeometry::OrientedBoundingBox>
-  getOrientedBoundingBox(const Cesium3DTiles::BoundingVolume& boundingVolume);
+  getOrientedBoundingBox(const CesiumTilesetJson::BoundingVolume& boundingVolume);
 
   /**
-   * @brief Sets the `box` property in a @ref Cesium3DTiles::BoundingVolume
+   * @brief Sets the `box` property in a @ref CesiumTilesetJson::BoundingVolume
    * based on an @ref CesiumGeometry::OrientedBoundingBox.
    *
    * Other bounding volume types, if any, are not modified.
@@ -41,12 +41,12 @@ public:
    * @param boundingBox The bounding box with which to set the property.
    */
   static void setOrientedBoundingBox(
-      Cesium3DTiles::BoundingVolume& boundingVolume,
+      CesiumTilesetJson::BoundingVolume& boundingVolume,
       const CesiumGeometry::OrientedBoundingBox& boundingBox);
 
   /**
    * @brief Gets the bounding region defined in a
-   * @ref Cesium3DTiles::BoundingVolume, if any.
+   * @ref CesiumTilesetJson::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the region.
    * @param ellipsoid The ellipsoid on which the region should be defined.
@@ -54,11 +54,11 @@ public:
    * define a region. The region is defined in geographic coordinates.
    */
   static std::optional<CesiumGeospatial::BoundingRegion> getBoundingRegion(
-      const Cesium3DTiles::BoundingVolume& boundingVolume,
+      const CesiumTilesetJson::BoundingVolume& boundingVolume,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
-   * @brief Sets the `region` property in a @ref Cesium3DTiles::BoundingVolume
+   * @brief Sets the `region` property in a @ref CesiumTilesetJson::BoundingVolume
    * based on a @ref CesiumGeospatial::BoundingRegion.
    *
    * Other bounding volume types, if any, are not modified.
@@ -67,22 +67,22 @@ public:
    * @param boundingRegion The bounding region with which to set the property.
    */
   static void setBoundingRegion(
-      Cesium3DTiles::BoundingVolume& boundingVolume,
+      CesiumTilesetJson::BoundingVolume& boundingVolume,
       const CesiumGeospatial::BoundingRegion& boundingRegion);
 
   /**
    * @brief Gets the bounding sphere defined in a
-   * @ref Cesium3DTiles::BoundingVolume, if any.
+   * @ref CesiumTilesetJson::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the sphere.
    * @return The sphere, or `std::nullopt` if the bounding volume does not
    * define a sphere. The sphere is defined in the tile's coordinate system.
    */
   static std::optional<CesiumGeometry::BoundingSphere>
-  getBoundingSphere(const Cesium3DTiles::BoundingVolume& boundingVolume);
+  getBoundingSphere(const CesiumTilesetJson::BoundingVolume& boundingVolume);
 
   /**
-   * @brief Sets the `sphere` property in a @ref Cesium3DTiles::BoundingVolume
+   * @brief Sets the `sphere` property in a @ref CesiumTilesetJson::BoundingVolume
    * based on a @ref CesiumGeometry::BoundingSphere.
    *
    * Other bounding volume types, if any, are not modified.
@@ -91,13 +91,13 @@ public:
    * @param boundingSphere The bounding sphere with which to set the property.
    */
   static void setBoundingSphere(
-      Cesium3DTiles::BoundingVolume& boundingVolume,
+      CesiumTilesetJson::BoundingVolume& boundingVolume,
       const CesiumGeometry::BoundingSphere& boundingSphere);
 
   /**
    * @brief Gets the S2 cell bounding volume defined in the
    * `3DTILES_bounding_volume_S2` extension of a
-   * @ref Cesium3DTiles::BoundingVolume, if any.
+   * @ref CesiumTilesetJson::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the S2 cell
    * bounding volume.
@@ -108,12 +108,12 @@ public:
    */
   static std::optional<CesiumGeospatial::S2CellBoundingVolume>
   getS2CellBoundingVolume(
-      const Cesium3DTiles::BoundingVolume& boundingVolume,
+      const CesiumTilesetJson::BoundingVolume& boundingVolume,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Adds the `3DTILES_bounding_volume_S2` extension to a
-   * @ref Cesium3DTiles::BoundingVolume based on a
+   * @ref CesiumTilesetJson::BoundingVolume based on a
    * @ref CesiumGeospatial::S2CellBoundingVolume.
    *
    * Other bounding volume types, if any, are not modified.
@@ -123,13 +123,13 @@ public:
    * property.
    */
   static void setS2CellBoundingVolume(
-      Cesium3DTiles::BoundingVolume& boundingVolume,
+      CesiumTilesetJson::BoundingVolume& boundingVolume,
       const CesiumGeospatial::S2CellBoundingVolume& s2BoundingVolume);
 
   /**
    * @brief Gets the bounding cylinder region defined in the
    * `3DTILES_bounding_volume_cylinder` extension of a \ref
-   * Cesium3DTiles::BoundingVolume, if any.
+   * CesiumTilesetJson::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the bounding
    * cylinder.
@@ -139,11 +139,11 @@ public:
    */
   static std::optional<CesiumGeometry::BoundingCylinderRegion>
   getBoundingCylinderRegion(
-      const Cesium3DTiles::BoundingVolume& boundingVolume);
+      const CesiumTilesetJson::BoundingVolume& boundingVolume);
 
   /**
    * @brief Adds the `3DTILES_bounding_volume_cylinder` extension to a
-   * \ref Cesium3DTiles::BoundingVolume based on a \ref
+   * \ref CesiumTilesetJson::BoundingVolume based on a \ref
    * CesiumGeometry::BoundingCylinderRegion.
    *
    * Other bounding volume types, if any, are not modified.
@@ -153,7 +153,7 @@ public:
    * set the property.
    */
   static void setBoundingCylinderRegion(
-      Cesium3DTiles::BoundingVolume& boundingVolume,
+      CesiumTilesetJson::BoundingVolume& boundingVolume,
       const CesiumGeometry::BoundingCylinderRegion& boundingCylinderRegion);
 };
 

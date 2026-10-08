@@ -4,7 +4,7 @@
 
 #include <optional>
 
-namespace Cesium3DTiles {
+namespace CesiumTilesetJson {
 struct Tile;
 }
 
@@ -12,7 +12,7 @@ namespace Cesium3DTilesContent {
 
 /**
  * @brief Convenience functions for getting and setting
- * @ref Cesium3DTiles::Tile::transform as a `glm::dmat4`.
+ * @ref CesiumTilesetJson::Tile::transform as a `glm::dmat4`.
  */
 class TileTransform {
 public:
@@ -24,10 +24,10 @@ public:
    *
    * @param tile The tile from which to get the transform.
    * @return The transform, or `std::nullopt` if the
-   * @ref Cesium3DTiles::Tile::transform has less than 16 elements.
+   * @ref CesiumTilesetJson::Tile::transform has less than 16 elements.
    */
   static std::optional<glm::dmat4>
-  getTransform(const Cesium3DTiles::Tile& tile);
+  getTransform(const CesiumTilesetJson::Tile& tile);
 
   /**
    * @brief Sets the tile's transform using the values of a `glm::dmat4`.
@@ -38,7 +38,7 @@ public:
    * @param newTransform The new transform.
    */
   static void
-  setTransform(Cesium3DTiles::Tile& tile, const glm::dmat4& newTransform);
+  setTransform(CesiumTilesetJson::Tile& tile, const glm::dmat4& newTransform);
 };
 
 } // namespace Cesium3DTilesContent
