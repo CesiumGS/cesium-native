@@ -1,13 +1,13 @@
-#include <CesiumTilesetJson/Buffer.h>
-#include <CesiumTilesetJsonReader/SubtreeFileReader.h>
-#include <CesiumTilesetJsonReader/SubtreeReader.h>
-#include <CesiumTilesetJsonReader/SubtreesReader.h>
-#include <CesiumTilesetJsonWriter/SubtreeWriter.h>
 #include <CesiumJsonWriter/ExtensionWriterContext.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumTilesetJson/Buffer.h>
+#include <CesiumTilesetJsonReader/SubtreeFileReader.h>
+#include <CesiumTilesetJsonReader/SubtreeReader.h>
+#include <CesiumTilesetJsonReader/SubtreesReader.h>
+#include <CesiumTilesetJsonWriter/SubtreeWriter.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <doctest/doctest.h>

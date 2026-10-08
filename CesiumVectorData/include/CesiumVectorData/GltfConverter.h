@@ -1,9 +1,9 @@
 #pragma once
 
-#include <CesiumTilesetJsonReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumTilesetJsonReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonDocument.h>

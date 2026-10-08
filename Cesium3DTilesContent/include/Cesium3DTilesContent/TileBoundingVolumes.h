@@ -29,7 +29,8 @@ public:
    * define a box. The box is defined in the tile's coordinate system.
    */
   static std::optional<CesiumGeometry::OrientedBoundingBox>
-  getOrientedBoundingBox(const CesiumTilesetJson::BoundingVolume& boundingVolume);
+  getOrientedBoundingBox(
+      const CesiumTilesetJson::BoundingVolume& boundingVolume);
 
   /**
    * @brief Sets the `box` property in a @ref CesiumTilesetJson::BoundingVolume
@@ -58,8 +59,9 @@ public:
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
-   * @brief Sets the `region` property in a @ref CesiumTilesetJson::BoundingVolume
-   * based on a @ref CesiumGeospatial::BoundingRegion.
+   * @brief Sets the `region` property in a @ref
+   * CesiumTilesetJson::BoundingVolume based on a @ref
+   * CesiumGeospatial::BoundingRegion.
    *
    * Other bounding volume types, if any, are not modified.
    *
@@ -82,8 +84,9 @@ public:
   getBoundingSphere(const CesiumTilesetJson::BoundingVolume& boundingVolume);
 
   /**
-   * @brief Sets the `sphere` property in a @ref CesiumTilesetJson::BoundingVolume
-   * based on a @ref CesiumGeometry::BoundingSphere.
+   * @brief Sets the `sphere` property in a @ref
+   * CesiumTilesetJson::BoundingVolume based on a @ref
+   * CesiumGeometry::BoundingSphere.
    *
    * Other bounding volume types, if any, are not modified.
    *

@@ -612,4 +612,4 @@ OctreeChildren::const_iterator OctreeChildren::end() const noexcept {
   return const_iterator(this->_tileID, true);
 }
 
-} // namespace CesiumTilesetJsonContent
+} // namespace Cesium3DTilesContent
