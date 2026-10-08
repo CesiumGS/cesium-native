@@ -2,7 +2,6 @@
 #include "MockTilesetContentManager.h"
 #include "SimplePrepareRendererResource.h"
 
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TileRefine.h>
@@ -17,6 +16,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -103,7 +103,7 @@ Future<TileLoadResult> loadTile(
 } // namespace
 
 TEST_CASE("Test create layer json terrain loader") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -593,7 +593,7 @@ TEST_CASE("Test create layer json terrain loader") {
 }
 
 TEST_CASE("Test load layer json tile content") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -965,7 +965,7 @@ TEST_CASE("Test load layer json tile content") {
 }
 
 TEST_CASE("Test creating tile children for layer json") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});

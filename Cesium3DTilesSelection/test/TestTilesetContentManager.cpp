@@ -3,7 +3,6 @@
 #include "TilesetContentManager.h"
 #include "TilesetJsonLoader.h"
 
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
@@ -33,6 +32,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/Scene.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
@@ -348,7 +348,7 @@ CesiumGltf::Model createSparseMesh(const GlobeRectangle& rectangle) {
 } // namespace
 
 TEST_CASE("Test the manager can be initialized with correct loaders") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -446,7 +446,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 }
 
 TEST_CASE("Test tile state machine") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -922,7 +922,7 @@ TEST_CASE("Test tile state machine") {
 }
 
 TEST_CASE("Test the tileset content manager's post processing for gltf") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -1904,7 +1904,7 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
 }
 
 TEST_CASE("Test glTF modifier state machine") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(

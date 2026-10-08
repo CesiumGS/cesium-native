@@ -1,4 +1,4 @@
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <Cesium3DTilesSelection/Tileset.h>
@@ -19,7 +19,6 @@
 #include <memory>
 #include <string>
 
-using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumAsync;
 using namespace CesiumGeospatial;
@@ -40,7 +39,7 @@ TEST_CASE("Tileset height queries") {
   // anchor, subtracting 0.5 from the height to account for "End" placing the
   // bottom of the cube on the surface instead of its center.
 
-  registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   std::shared_ptr<IAssetAccessor> pAccessor =
       std::make_shared<CesiumNativeTests::FileAccessor>();

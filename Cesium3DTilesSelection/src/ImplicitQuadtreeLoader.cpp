@@ -2,10 +2,8 @@
 
 #include "logTileLoadResult.h"
 
-#include <Cesium3DTilesContent/GltfConverterResult.h>
-#include <Cesium3DTilesContent/GltfConverters.h>
-#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
+#include <Cesium3DTiles/ImplicitTilingUtilities.h>
+#include <Cesium3DTiles/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -21,6 +19,8 @@
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltfConverters/GltfConverterResult.h>
+#include <CesiumGltfConverters/GltfConverters.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -38,7 +38,8 @@
 #include <variant>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
+using namespace CesiumGltfConverters;
 
 namespace Cesium3DTilesSelection {
 namespace {

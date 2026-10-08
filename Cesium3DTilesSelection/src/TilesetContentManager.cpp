@@ -828,7 +828,8 @@ TilesetContentManager::createFromUrl(
                 }
 
                 TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError("tileset json has unsupport format");
+                result.errors.emplaceError(
+                    "The input tileset is an unsupported format.");
                 return asyncSystem.createResolvedFuture(std::move(result));
               }
             })

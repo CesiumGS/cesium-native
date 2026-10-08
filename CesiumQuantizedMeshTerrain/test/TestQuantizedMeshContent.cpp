@@ -1,4 +1,3 @@
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/Rectangle.h>
@@ -12,6 +11,7 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumQuantizedMeshTerrain/QuantizedMeshLoader.h>
 #include <CesiumUtility/Math.h>
 
@@ -34,7 +34,7 @@
 #include <utility>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
+using namespace CesiumGltfConverters;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumGltf;
@@ -770,7 +770,7 @@ static void checkGltfSanity(const Model& model) {
 }
 
 TEST_CASE("Test converting quantized mesh to gltf with skirt") {
-  registerAllTileContentTypes();
+  registerAllConverterTypes();
 
   // mock context
   Ellipsoid ellipsoid = Ellipsoid::WGS84;
@@ -1083,7 +1083,7 @@ TEST_CASE("Test converting quantized mesh to gltf with skirt") {
 }
 
 TEST_CASE("Test converting ill-formed quantized mesh") {
-  registerAllTileContentTypes();
+  registerAllConverterTypes();
 
   // mock context
   CesiumGeometry::Rectangle rectangle(

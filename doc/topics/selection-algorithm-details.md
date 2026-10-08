@@ -227,7 +227,7 @@ The process of loading content and children for a tile is delegated to a pluggab
 
 The following `TilesetContentLoader` types are currently provided:
 
-* `TilesetJsonLoader` - The standard loader for explicit 3D Tiles based on `tileset.json`. Individual tile content is loaded via [GltfConverters](\ref Cesium3DTilesContent::GltfConverters).
+* `TilesetJsonLoader` - The standard loader for explicit 3D Tiles based on `tileset.json`. Individual tile content is loaded via [GltfConverters](\ref CesiumGltfConverters::GltfConverters).
 * `CesiumIonTilesetLoader` - Loads a 3D Tiles asset or `layer.json` / `quantized-mesh-1.0` terrain asset from [Cesium ion](https://cesium.com/platform/cesium-ion/), by delegating to one of the other loaders as appropriate. Automatically handles refreshing the token when it expires.
 * `LayerJsonTerrainLoader` - Loads terrain described by a `layer.json` and individual terrain tiles in `quantized-mesh-1.0` format.
 * `ImplicitQuadtreeLoader` - Loads a 3D Tiles 1.1 implicit quadtree.

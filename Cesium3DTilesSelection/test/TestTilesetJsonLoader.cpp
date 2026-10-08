@@ -4,7 +4,6 @@
 #include "SimplePrepareRendererResource.h"
 #include "TilesetJsonLoader.h"
 
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -22,6 +21,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTablePropertyView.h>
 #include <CesiumGltf/PropertyTableView.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -160,7 +160,7 @@ Cesium3DTilesSelection::createMockJsonTilesetExternals(
 }
 
 TEST_CASE("Test creating tileset json loader") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   SUBCASE("Create valid tileset json with REPLACE refinement") {
     auto loaderResult = createTilesetJsonLoader(
@@ -509,7 +509,7 @@ TEST_CASE("Test creating tileset json loader") {
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   SUBCASE("Load tile that has render content") {
     auto loaderResult = createTilesetJsonLoader(
