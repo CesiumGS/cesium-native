@@ -1,9 +1,6 @@
 #include "BatchTableToGltfStructuralMetadata.h"
 #include "MetadataProperty.h"
 
-#include <CesiumGltfConverters/GltfConverterResult.h>
-#include <CesiumGltfConverters/GltfConverters.h>
-#include <CesiumGltfConverters/PntsToGltfConverter.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGltf/Accessor.h>
@@ -18,6 +15,9 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/Scene.h>
+#include <CesiumGltfConverters/GltfConverterResult.h>
+#include <CesiumGltfConverters/GltfConverters.h>
+#include <CesiumGltfConverters/PntsToGltfConverter.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/AttributeCompression.h>

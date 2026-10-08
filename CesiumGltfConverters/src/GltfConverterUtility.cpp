@@ -1,9 +1,9 @@
-#include <CesiumGltfConverters/GltfConverterUtility.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumGltfConverters/GltfConverterUtility.h>
 #include <CesiumUtility/ErrorList.h>
 
 #include <glm/ext/matrix_double4x4.hpp>

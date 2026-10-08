@@ -1,10 +1,10 @@
 #pragma once
 
-#include <CesiumGltfConverters/GltfConverters.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/PropertyTransformations.h>
+#include <CesiumGltfConverters/GltfConverters.h>
 #include <CesiumUtility/ErrorList.h>
 
 #include <glm/fwd.hpp>

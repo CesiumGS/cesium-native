@@ -1,10 +1,10 @@
 #pragma once
 
-#include <CesiumGltfConverters/GltfConverterResult.h>
-#include <CesiumGltfConverters/Library.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/Axis.h>
+#include <CesiumGltfConverters/GltfConverterResult.h>
+#include <CesiumGltfConverters/Library.h>
 #include <CesiumGltfReader/GltfReader.h>
 
 #include <optional>

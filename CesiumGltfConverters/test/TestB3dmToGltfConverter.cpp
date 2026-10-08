@@ -1,12 +1,12 @@
 #include "ConvertToGltf.h"
 
-#include <CesiumGltfConverters/GltfConverterResult.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionCesiumRTC.h>
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfConverters/GltfConverterResult.h>
 
 #include <doctest/doctest.h>
 

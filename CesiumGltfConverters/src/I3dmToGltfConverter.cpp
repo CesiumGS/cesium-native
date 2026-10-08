@@ -1,10 +1,5 @@
 #include "BatchTableToGltfStructuralMetadata.h"
 
-#include <CesiumGltfConverters/BinaryToGltfConverter.h>
-#include <CesiumGltfConverters/GltfConverterResult.h>
-#include <CesiumGltfConverters/GltfConverterUtility.h>
-#include <CesiumGltfConverters/GltfConverters.h>
-#include <CesiumGltfConverters/I3dmToGltfConverter.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumGeospatial/LocalHorizontalCoordinateSystem.h>
 #include <CesiumGltf/Accessor.h>
@@ -15,6 +10,11 @@
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumGltfConverters/BinaryToGltfConverter.h>
+#include <CesiumGltfConverters/GltfConverterResult.h>
+#include <CesiumGltfConverters/GltfConverterUtility.h>
+#include <CesiumGltfConverters/GltfConverters.h>
+#include <CesiumGltfConverters/I3dmToGltfConverter.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/AttributeCompression.h>

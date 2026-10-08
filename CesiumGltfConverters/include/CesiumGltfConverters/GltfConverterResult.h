@@ -1,7 +1,7 @@
 #pragma once
 
-#include <CesiumGltfConverters/Library.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfConverters/Library.h>
 #include <CesiumUtility/ErrorList.h>
 
 #include <glm/common.hpp>

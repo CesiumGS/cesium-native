@@ -1,8 +1,8 @@
+#include <CesiumAsync/Future.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGltfConverters/BinaryToGltfConverter.h>
 #include <CesiumGltfConverters/GltfConverterResult.h>
 #include <CesiumGltfConverters/GltfConverters.h>
-#include <CesiumAsync/Future.h>
-#include <CesiumGeometry/Axis.h>
 #include <CesiumGltfReader/GltfReader.h>
 
 #include <cstddef>

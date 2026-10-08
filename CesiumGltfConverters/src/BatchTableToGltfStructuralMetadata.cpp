@@ -3,7 +3,6 @@
 #include "BatchTableHierarchyPropertyValues.h"
 #include "MetadataProperty.h"
 
-#include <CesiumGltfConverters/GltfConverterUtility.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -24,6 +23,7 @@
 #include <CesiumGltf/PropertyType.h>
 #include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumGltfConverters/GltfConverterUtility.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonValue.h>
