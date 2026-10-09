@@ -1,4 +1,4 @@
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
@@ -9,6 +9,9 @@
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumTilesetJson/BoundingVolume.h>
+#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeCylinder.h>
+#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeS2.h>
 
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double3x3.hpp>
@@ -23,7 +26,93 @@
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTiles {
+CesiumUtility::Result<BoundingVolume> parseBoundingVolume(
+    const CesiumTilesetJson::BoundingVolume& boundingVolume,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  if (boundingVolume.extensions.size() > 0) {
+    if (const auto* pS2 =
+            boundingVolume.getExtension<
+                CesiumTilesetJson::Extension3dTilesBoundingVolumeS2>()) {
+      return CesiumUtility::Result<BoundingVolume>(
+          CesiumGeospatial::S2CellBoundingVolume(
+              CesiumGeospatial::S2CellID::fromToken(pS2->token),
+              pS2->minimumHeight,
+              pS2->maximumHeight,
+              ellipsoid));
+    }
+
+    if (const auto* pCylinder =
+            boundingVolume.getExtension<
+                CesiumTilesetJson::Extension3dTilesBoundingVolumeCylinder>()) {
+      const std::vector<double>& translation = pCylinder->translation;
+      const std::vector<double>& rotation = pCylinder->rotation;
+
+      if (translation.size() >= 3 || rotation.size() >= 3) {
+        return CesiumUtility::Result<BoundingVolume>(
+            CesiumGeometry::BoundingCylinderRegion(
+                glm::dvec3(translation[0], translation[1], translation[2]),
+                glm::dquat(rotation[3], rotation[0], rotation[1], rotation[2]),
+                pCylinder->height,
+                glm::dvec2(pCylinder->minRadius, pCylinder->maxRadius),
+                glm::dvec2(pCylinder->minAngle, pCylinder->maxAngle)));
+      }
+    }
+  }
+
+  if (boundingVolume.box.size() >= 12) {
+    const std::vector<double>& box = boundingVolume.box;
+    return CesiumUtility::Result<BoundingVolume>(
+        CesiumGeometry::OrientedBoundingBox(
+            glm::dvec3(box[0], box[1], box[2]),
+            glm::dmat3(
+                box[3],
+                box[4],
+                box[5],
+                box[6],
+                box[7],
+                box[8],
+                box[9],
+                box[10],
+                box[11])));
+  }
+
+  if (boundingVolume.region.size() >= 6) {
+    const std::vector<double>& region = boundingVolume.region;
+    return CesiumUtility::Result<BoundingVolume>(
+        CesiumGeospatial::BoundingRegion(
+            CesiumGeospatial::GlobeRectangle(
+                region[0],
+                region[1],
+                region[2],
+                region[3]),
+            region[4],
+            region[5],
+            ellipsoid));
+  }
+
+  if (boundingVolume.sphere.size() >= 4) {
+    const std::vector<double>& sphere = boundingVolume.sphere;
+    return CesiumUtility::Result<BoundingVolume>(CesiumGeometry::BoundingSphere(
+        glm::dvec3(sphere[0], sphere[1], sphere[2]),
+        sphere[3]));
+  }
+
+  CesiumUtility::ErrorList errors;
+  errors.emplaceError("TODO");
+  return CesiumUtility::Result<BoundingVolume>(std::move(errors));
+}
+
+CesiumUtility::Result<BoundingVolume> parseBoundingVolume(
+    const CesiumGltf::Shape& shape,
+    const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID) {
+  //if (shape.box && shape.box->size.size() >= 3) {
+  //}
+
+  CesiumUtility::ErrorList errors;
+  errors.emplaceError("TODO");
+  return CesiumUtility::Result<BoundingVolume>(std::move(errors));
+}
 
 BoundingVolume transformBoundingVolume(
     const glm::dmat4x4& transform,
@@ -392,4 +481,4 @@ bool testIntersection(
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTiles

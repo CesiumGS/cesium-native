@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTilesSelection/GeneralCullingVolume.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <CesiumGeometry/CullingVolume.h>
@@ -156,7 +156,7 @@ public:
    * parameters for tile selection.
    */
   ViewState(
-      const BoundingVolume& boundingVolume,
+      const Cesium3DTiles::BoundingVolume& boundingVolume,
       std::shared_ptr<ViewStateMeasureDelegate> pMeasureDelegate,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
@@ -235,8 +235,8 @@ public:
    *
    * @return Whether the bounding volume is visible
    */
-  bool
-  isBoundingVolumeVisible(const BoundingVolume& boundingVolume) const noexcept;
+  bool isBoundingVolumeVisible(
+      const Cesium3DTiles::BoundingVolume& boundingVolume) const noexcept;
 
   /**
    * @brief Computes the squared distance to the given @ref BoundingVolume.
@@ -248,7 +248,7 @@ public:
    * @returns The squared distance
    */
   double computeDistanceSquaredToBoundingVolume(
-      const BoundingVolume& boundingVolume) const noexcept;
+      const Cesium3DTiles::BoundingVolume& boundingVolume) const noexcept;
 
   /**
    * @brief Computes the screen space error from a given geometric error

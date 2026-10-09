@@ -1,4 +1,4 @@
-#include "TilesetJsonLoader.h"
+#include "GltfTilesetLoader.h"
 
 #include "ImplicitOctreeLoader.h"
 #include "ImplicitQuadtreeLoader.h"
@@ -28,20 +28,16 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltf/Extension3dTilesImplicitTiling.h>
+#include <CesiumGltf/Extension3dTilesTilesetVoxels.h>
+#include <CesiumGltf/ExtensionModel3dTilesTileset.h>
+#include <CesiumGltf/ExtensionNode3dTilesTileset.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfConverters/GltfConverterResult.h>
 #include <CesiumGltfConverters/GltfConverters.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumJsonReader/JsonReader.h>
-#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeCylinder.h>
-#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeS2.h>
-#include <CesiumTilesetJson/ExtensionContent3dTilesContentVoxels.h>
-#include <CesiumTilesetJson/ExtensionMetadataEntityMaxarContentGeoJson.h>
-#include <CesiumTilesetJsonReader/BoundingVolumeReader.h>
-#include <CesiumTilesetJsonReader/ContentReader.h>
-#include <CesiumTilesetJsonReader/ExtensionContent3dTilesContentVoxelsReader.h>
-#include <CesiumTilesetJsonReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
-#include <CesiumTilesetJsonReader/TilesetReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -77,6 +73,7 @@
 #include <variant>
 #include <vector>
 
+using namespace CesiumGltf;
 using namespace CesiumGltfConverters;
 using namespace CesiumTilesetJson;
 using namespace CesiumTilesetJsonReader;
@@ -88,9 +85,9 @@ struct ExternalContentInitializer {
   // Have to use shared_ptr here to make this functor copyable. Otherwise,
   // std::function won't work with move-only type as it's a type-erasured
   // container. Unfortunately, std::move_only_function is scheduled for C++23.
-  std::shared_ptr<TilesetContentLoaderResult<TilesetJsonLoader>>
+  std::shared_ptr<TilesetContentLoaderResult<GltfTilesetLoader>>
       pExternalTilesetLoaders;
-  TilesetJsonLoader* tilesetJsonLoader;
+  GltfTilesetLoader* tilesetJsonLoader;
   TileExternalContent externalContent;
 
   void operator()(Tile& tile) {
@@ -168,29 +165,6 @@ CesiumGeometry::Axis obtainGltfUpAxis(
   return CesiumGeometry::Axis::Y;
 }
 
-std::optional<Cesium3DTiles::BoundingVolume> getBoundingVolumeProperty(
-    const rapidjson::Value& tileJson,
-    const std::string& key,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  const auto bvIt = tileJson.FindMember(key.c_str());
-  if (bvIt == tileJson.MemberEnd() || !bvIt->value.IsObject()) {
-    return std::nullopt;
-  }
-
-  CesiumTilesetJsonReader::BoundingVolumeReader reader;
-  CesiumJsonReader::ReadJsonResult<CesiumTilesetJson::BoundingVolume>
-      boundingVolumeResult = reader.readFromJson(bvIt->value);
-
-  if (!boundingVolumeResult.value) {
-    return std::nullopt;
-  }
-
-  const CesiumTilesetJson::BoundingVolume& result = *boundingVolumeResult.value;
-  CesiumUtility::Result<Cesium3DTiles::BoundingVolume> parsedBoundingVolume =
-      Cesium3DTiles::parseBoundingVolume(result, ellipsoid);
-  return parsedBoundingVolume.value;
-}
-
 using JsonFetcherResult = Result<rapidjson::Document>;
 
 CesiumAsync::Future<JsonFetcherResult> getJson(
@@ -239,12 +213,12 @@ CesiumAsync::Future<JsonFetcherResult> getJson(
 }
 
 void createImplicitQuadtreeLoader(
-    const char* contentUriTemplate,
-    const char* subtreeUriTemplate,
+    const std::string& contentUriTemplate,
+    const std::string& subtreeUriTemplate,
     uint32_t subtreeLevels,
     uint32_t availableLevels,
     Tile& implicitTile,
-    TilesetJsonLoader& currentLoader) {
+    GltfTilesetLoader& currentLoader) {
   // Quadtree does not support bounding sphere subdivision
   const Cesium3DTiles::BoundingVolume& boundingVolume =
       implicitTile.getBoundingVolume();
@@ -317,12 +291,12 @@ void createImplicitQuadtreeLoader(
 }
 
 void createImplicitOctreeLoader(
-    const char* contentUriTemplate,
-    const char* subtreeUriTemplate,
+    const std::string& contentUriTemplate,
+    const std::string& subtreeUriTemplate,
     uint32_t subtreeLevels,
     uint32_t availableLevels,
     Tile& implicitTile,
-    TilesetJsonLoader& currentLoader) {
+    GltfTilesetLoader& currentLoader) {
   const Cesium3DTiles::BoundingVolume& boundingVolume =
       implicitTile.getBoundingVolume();
   if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
@@ -387,54 +361,18 @@ void createImplicitOctreeLoader(
 }
 
 void parseImplicitTileset(
-    const rapidjson::Value& implicitExtensionJson,
-    const char* contentUri,
+    const CesiumGltf::Extension3dTilesImplicitTiling& implicitTilingExtension,
     Tile& tile,
-    TilesetJsonLoader& currentLoader) {
-  auto implicitTiling = implicitExtensionJson.GetObject();
-  auto tilingSchemeIt = implicitTiling.FindMember("subdivisionScheme");
-  auto subtreeLevelsIt = implicitTiling.FindMember("subtreeLevels");
-  auto subtreesIt = implicitTiling.FindMember("subtrees");
-  auto availableLevelsIt = implicitTiling.FindMember("availableLevels");
-  bool isMaximumLevel = false;
-  if (availableLevelsIt == implicitTiling.MemberEnd()) {
-    // old version of implicit uses maximumLevel instead of availableLevels.
-    // They have similar semantics, except that "maximum" = index while
-    // "available" = count
-    availableLevelsIt = implicitTiling.FindMember("maximumLevel");
-    isMaximumLevel = true;
-  }
+    GltfTilesetLoader& currentLoader) {
+  uint32_t subtreeLevels(implicitTilingExtension.subtreeLevels);
+  uint32_t availableLevels(implicitTilingExtension.availableLevels);
+  const std::string& contentUri = implicitTilingExtension.contentUri;
+  const std::string& subtreesUri = implicitTilingExtension.subtreeUri;
+  const std::string& subdivisionScheme =
+      implicitTilingExtension.subdivisionScheme;
 
-  // check that all the required properties above are available
-  bool hasTilingSchemeProp = tilingSchemeIt != implicitTiling.MemberEnd() &&
-                             tilingSchemeIt->value.IsString();
-  bool hasSubtreeLevelsProp = subtreeLevelsIt != implicitTiling.MemberEnd() &&
-                              subtreeLevelsIt->value.IsUint();
-  bool hasAvailableLevelsProp =
-      availableLevelsIt != implicitTiling.MemberEnd() &&
-      availableLevelsIt->value.IsUint();
-  bool hasSubtreesProp =
-      subtreesIt != implicitTiling.MemberEnd() && subtreesIt->value.IsObject();
-  if (!hasTilingSchemeProp || !hasSubtreeLevelsProp ||
-      !hasAvailableLevelsProp || !hasSubtreesProp) {
-    return;
-  }
-
-  auto subtrees = subtreesIt->value.GetObject();
-  auto subtreesUriIt = subtrees.FindMember("uri");
-  if (subtreesUriIt == subtrees.MemberEnd() ||
-      !subtreesUriIt->value.IsString()) {
-    return;
-  }
-
-  // create implicit loaders
-  uint32_t subtreeLevels = subtreeLevelsIt->value.GetUint();
-  uint32_t availableLevels =
-      availableLevelsIt->value.GetUint() + uint32_t(isMaximumLevel);
-  const char* subtreesUri = subtreesUriIt->value.GetString();
-  const char* subdivisionScheme = tilingSchemeIt->value.GetString();
-
-  if (std::strcmp(subdivisionScheme, "QUADTREE") == 0) {
+  if (subdivisionScheme ==
+      Extension3dTilesImplicitTiling::SubdivisionScheme::QUADTREE) {
     createImplicitQuadtreeLoader(
         contentUri,
         subtreesUri,
@@ -442,7 +380,9 @@ void parseImplicitTileset(
         availableLevels,
         tile,
         currentLoader);
-  } else if (std::strcmp(subdivisionScheme, "OCTREE") == 0) {
+  } else if (
+      subdivisionScheme ==
+      Extension3dTilesImplicitTiling::SubdivisionScheme::OCTREE) {
     createImplicitOctreeLoader(
         contentUri,
         subtreesUri,
@@ -453,71 +393,52 @@ void parseImplicitTileset(
   }
 }
 
-std::optional<Tile> parseGltfNode(
+std::optional<Tile> parseGltfNodeRecursively(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const CesiumGltf::Model& model,
     const CesiumGltf::Node& node,
     const glm::dmat4& parentTransform,
     Cesium3DTiles::TileRefine parentRefine,
     double parentGeometricError,
-    TilesetJsonLoader& currentLoader,
+    GltfTilesetLoader& currentLoader,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  // int32_t sceneIndex = std::max(model.scene, 0);
-  // const CesiumGltf::Scene* pScene = model.getSafe(&model.scenes,
-  // model.scene);
-
-  if (node.extensions.find())
-}
-
-std::optional<Tile> parseTileJsonRecursively(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const rapidjson::Value& tileJson,
-    const glm::dmat4& parentTransform,
-    Cesium3DTiles::TileRefine parentRefine,
-    double parentGeometricError,
-    TilesetJsonLoader& currentLoader,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  if (!tileJson.IsObject()) {
+  const auto* pTilesetExtension =
+      node.getExtension<CesiumGltf::ExtensionNode3dTilesTileset>();
+  if (!pTilesetExtension) {
+    // Per the spec, `3DTILES_tileset` MUST be defined on all nodes, so this is
+    // an error.
     return std::nullopt;
   }
 
-  // parse tile transform
+  // Parse tile transform
   const std::optional<glm::dmat4x4> transform =
-      CesiumUtility::JsonHelpers::getTransformProperty(tileJson, "transform");
+      CesiumGltfContent::GltfUtilities::getNodeTransform(node);
   glm::dmat4x4 tileTransform =
       parentTransform * transform.value_or(glm::dmat4x4(1.0));
 
-  // parse bounding volume
-  std::optional<Cesium3DTiles::BoundingVolume> boundingVolume =
-      getBoundingVolumeProperty(tileJson, "boundingVolume", ellipsoid);
-  if (!boundingVolume) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
+  const CesiumGltf::Shape* pBoundingVolume =
+      node.boundingVolume
+          ? model.getSafe(&model.shapes, node.boundingVolume->shape)
+          : nullptr;
+
+  if (!pBoundingVolume) {
+    SPDLOG_LOGGER_ERROR(pLogger, "Node did not contain a boundingVolume");
+    return std::nullopt;
+  }
+
+  CesiumUtility::Result<Cesium3DTiles::BoundingVolume> boundingVolume =
+      Cesium3DTiles::parseBoundingVolume(*pBoundingVolume, ellipsoid);
+  if (!boundingVolume.value) {
+    // TODO: LOG
     return std::nullopt;
   }
 
   auto tileBoundingVolume = Cesium3DTiles::transformBoundingVolume(
       tileTransform,
-      boundingVolume.value());
-
-  // parse viewer request volume
-  std::optional<Cesium3DTiles::BoundingVolume> tileViewerRequestVolume =
-      getBoundingVolumeProperty(tileJson, "viewerRequestVolume", ellipsoid);
-  if (tileViewerRequestVolume) {
-    tileViewerRequestVolume = Cesium3DTiles::transformBoundingVolume(
-        tileTransform,
-        tileViewerRequestVolume.value());
-  }
+      *boundingVolume.value);
 
   // parse geometric error
-  std::optional<double> geometricError =
-      CesiumUtility::JsonHelpers::getScalarProperty(tileJson, "geometricError");
-  if (!geometricError) {
-    geometricError = parentGeometricError * 0.5;
-    SPDLOG_LOGGER_WARN(
-        pLogger,
-        "Tile did not contain a geometricError. "
-        "Using half of the parent tile's geometric error.");
-  }
+  double geometricError = pTilesetExtension->geometricError;
 
   const glm::dvec3 scale = glm::dvec3(
       glm::length(tileTransform[0]),
@@ -525,14 +446,13 @@ std::optional<Tile> parseTileJsonRecursively(
       glm::length(tileTransform[2]));
   const double maxScaleComponent =
       glm::max(scale.x, glm::max(scale.y, scale.z));
-  double tileGeometricError = geometricError.value() * maxScaleComponent;
+  double tileGeometricError = geometricError * maxScaleComponent;
 
   // parse refinement
   Cesium3DTiles::TileRefine tileRefine = parentRefine;
-  const auto refineIt = tileJson.FindMember("refine");
-  if (refineIt != tileJson.MemberEnd() && refineIt->value.IsString()) {
+  if (pTilesetExtension->refine) {
     CesiumUtility::Result<Cesium3DTiles::TileRefine> parsedRefine =
-        Cesium3DTiles::parseTileRefine(refineIt->value.GetString());
+        Cesium3DTiles::parseTileRefine(*pTilesetExtension->refine);
     if (parsedRefine.value) {
       tileRefine = *parsedRefine.value;
     }
@@ -547,108 +467,84 @@ std::optional<Tile> parseTileJsonRecursively(
     }
   }
 
-  // Parse content member to determine tile content Url.
-  const auto contentIt = tileJson.FindMember("content");
-  bool hasContentMember =
-      (contentIt != tileJson.MemberEnd()) && (contentIt->value.IsObject());
-
-  std::optional<Content> maybeContent;
-  if (hasContentMember) {
-    ContentReader contentReader;
-    auto contentResult = contentReader.readFromJson(contentIt->value);
-    maybeContent = std::move(contentResult.value);
+  // Parse the external asset to determine tile content URL, if present.
+  const CesiumGltf::File* pFile = nullptr;
+  const CesiumGltf::ExternalAsset* pExternalAsset =
+      model.getSafe(&model.externalAssets, node.externalAsset);
+  if (pExternalAsset) {
+    pFile = model.getSafe(&model.files, pExternalAsset->file);
   }
 
-  if (maybeContent && maybeContent->uri.empty()) {
-    auto it = maybeContent->unknownProperties.find("url");
-    if (it != maybeContent->unknownProperties.end()) {
-      maybeContent->uri = it->second.getStringOrDefault({});
-    }
-  }
-
-  const char* contentUri = maybeContent ? maybeContent->uri.c_str() : nullptr;
+  const char* contentUri = pFile && pFile->uri ? pFile->uri->c_str() : nullptr;
+  // TODO: what about file bufferview
 
   // determine if tile has implicit tiling
-  const rapidjson::Value* implicitTilingJson = nullptr;
-  const auto implicitTilingIt = tileJson.FindMember("implicitTiling");
-  if (implicitTilingIt != tileJson.MemberEnd() &&
-      implicitTilingIt->value.IsObject()) {
-    // this is an external tile pointing to an implicit tileset
-    implicitTilingJson = &implicitTilingIt->value;
-  } else {
-    const auto extensionIt = tileJson.FindMember("extensions");
-    if (extensionIt != tileJson.MemberEnd()) {
-      // this is the legacy 3D Tiles Next implicit tiling extension
-      const auto& extensions = extensionIt->value;
-      const auto implicitExtensionIt =
-          extensions.FindMember("3DTILES_implicit_tiling");
-      if (implicitExtensionIt != extensions.MemberEnd() &&
-          implicitExtensionIt->value.IsObject()) {
-        implicitTilingJson = &implicitExtensionIt->value;
-      }
-    }
-  }
-
-  if (implicitTilingJson) {
+  if (const auto* pImplicitTiling =
+          node.getExtension<CesiumGltf::Extension3dTilesImplicitTiling>()) {
     // Mark this tile as external.
     auto pExternalContent = std::make_unique<TileExternalContent>();
 
     // Check for 3DTILES_content_voxels, which is currently only supported for
     // implicitly tiled tilesets.
-    if (maybeContent &&
-        maybeContent->hasExtension<ExtensionContent3dTilesContentVoxels>()) {
-      pExternalContent->extensions.emplace(
-          ExtensionContent3dTilesContentVoxels::ExtensionName,
-          std::move(maybeContent->extensions
-                        [ExtensionContent3dTilesContentVoxels::ExtensionName]));
+    if (const auto* pVoxels =
+            model.getExtension<CesiumGltf::Extension3dTilesTilesetVoxels>()) {
+      // pExternalContent->extensions.emplace(
+      //     ExtensionContent3dTilesContentVoxels::ExtensionName,
+      //     std::move(maybeContent->extensions
+      //                   [ExtensionContent3dTilesContentVoxels::ExtensionName]));
     }
 
     Tile tile{&currentLoader, TileID(), std::move(pExternalContent)};
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
-    tile.setViewerRequestVolume(tileViewerRequestVolume);
     tile.setGeometricError(tileGeometricError);
     tile.setRefine(tileRefine);
 
-    parseImplicitTileset(*implicitTilingJson, contentUri, tile, currentLoader);
+    parseImplicitTileset(*pImplicitTiling, tile, currentLoader);
 
     return tile;
   }
 
   // this is a regular tile, then parse the content bounding volume
   std::optional<Cesium3DTiles::BoundingVolume> tileContentBoundingVolume;
-  if (hasContentMember) {
-    tileContentBoundingVolume = getBoundingVolumeProperty(
-        contentIt->value,
-        "boundingVolume",
-        ellipsoid);
-    if (tileContentBoundingVolume) {
+  const CesiumGltf::Shape* pContentBoundingVolume = nullptr;
+
+  if (pTilesetExtension->content &&
+      pTilesetExtension->content->boundingVolume) {
+    pContentBoundingVolume = model.getSafe(
+        &model.shapes,
+        pTilesetExtension->content->boundingVolume->shape);
+  }
+
+  if (pContentBoundingVolume) {
+    CesiumUtility::Result<Cesium3DTiles::BoundingVolume> contentBoundingVolume =
+        Cesium3DTiles::parseBoundingVolume(*pContentBoundingVolume, ellipsoid);
+    if (contentBoundingVolume.value) {
       tileContentBoundingVolume = Cesium3DTiles::transformBoundingVolume(
           tileTransform,
-          tileContentBoundingVolume.value());
+          contentBoundingVolume.value.value());
     }
   }
 
-  // parse tile's children
+  // Recurse over node children.
   std::vector<Tile> childTiles;
-  const auto childrenIt = tileJson.FindMember("children");
-  if (childrenIt != tileJson.MemberEnd() && childrenIt->value.IsArray()) {
-    const auto& childrenJson = childrenIt->value;
-    childTiles.reserve(childrenJson.Size());
-    for (rapidjson::SizeType i = 0; i < childrenJson.Size(); ++i) {
-      const auto& childJson = childrenJson[i];
-      auto maybeChild = parseTileJsonRecursively(
-          pLogger,
-          childJson,
-          tileTransform,
-          tileRefine,
-          tileGeometricError,
-          currentLoader,
-          ellipsoid);
+  for (int32_t childIndex : node.children) {
+    const CesiumGltf::Node* pChild = model.getSafe(&model.nodes, childIndex);
+    if (!pChild) {
+      continue;
+    }
+    auto maybeChild = parseGltfNodeRecursively(
+        pLogger,
+        model,
+        *pChild,
+        tileTransform,
+        tileRefine,
+        tileGeometricError,
+        currentLoader,
+        ellipsoid);
 
-      if (maybeChild) {
-        childTiles.emplace_back(std::move(*maybeChild));
-      }
+    if (maybeChild) {
+      childTiles.emplace_back(std::move(*maybeChild));
     }
   }
 
@@ -656,7 +552,6 @@ std::optional<Tile> parseTileJsonRecursively(
   tile.setTileID(contentUri ? contentUri : std::string{});
   tile.setTransform(tileTransform);
   tile.setBoundingVolume(tileBoundingVolume);
-  tile.setViewerRequestVolume(tileViewerRequestVolume);
   tile.setGeometricError(tileGeometricError);
   tile.setRefine(tileRefine);
   tile.setContentBoundingVolume(tileContentBoundingVolume);
@@ -665,25 +560,36 @@ std::optional<Tile> parseTileJsonRecursively(
   return tile;
 }
 
-TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
+TilesetContentLoaderResult<GltfTilesetLoader> parseGltfTileset(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& baseUrl,
     std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
-    const rapidjson::Document& tilesetJson,
+    const CesiumGltf::Model& model,
     const glm::dmat4& parentTransform,
     Cesium3DTiles::TileRefine parentRefine,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   std::unique_ptr<Tile> pRootTile;
+  // TODO: obtain gltf coordinate system
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
   auto pLoader =
-      std::make_unique<TilesetJsonLoader>(baseUrl, gltfUpAxis, ellipsoid);
+      std::make_unique<GltfTilesetLoader>(baseUrl, gltfUpAxis, ellipsoid);
 
-  const auto rootIt = tilesetJson.FindMember("root");
-  if (rootIt != tilesetJson.MemberEnd()) {
-    const rapidjson::Value& rootJson = rootIt->value;
-    auto maybeRootTile = parseTileJsonRecursively(
+  int32_t sceneIndex = std::max(model.scene, 0);
+  const CesiumGltf::Scene* pScene = model.getSafe(&model.scenes, model.scene);
+
+  int32_t rootNodeIndex = 0;
+  if (pScene && pScene->nodes.size() > 0) {
+    rootNodeIndex = pScene->nodes[0];
+  }
+
+  const CesiumGltf::Node* pRootNode =
+      model.getSafe(&model.nodes, rootNodeIndex);
+
+  if (pRootNode) {
+    auto maybeRootTile = parseGltfNodeRecursively(
         pLogger,
-        rootJson,
+        model,
+        *pRootNode,
         parentTransform,
         parentRefine,
         10000000.0,
@@ -770,7 +676,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
   // Save the parsed external tileset into custom data.
   // We will propagate it back to tile later in the main
   // thread
-  TilesetContentLoaderResult<TilesetJsonLoader> externalTilesetLoader =
+  TilesetContentLoaderResult<GltfTilesetLoader> externalTilesetLoader =
       parseTilesetJson(
           pLogger,
           tileUrl,
@@ -893,21 +799,21 @@ TileLoadResult parseJsonContentInWorkerThread(
 }
 } // namespace
 
-TilesetJsonLoader::TilesetJsonLoader(
+GltfTilesetLoader::GltfTilesetLoader(
     const std::string& baseUrl,
     CesiumGeometry::Axis upAxis,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
     : _baseUrl{baseUrl}, _ellipsoid{ellipsoid}, _upAxis{upAxis}, _children{} {}
 
-CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
-TilesetJsonLoader::createLoader(
+CesiumAsync::Future<TilesetContentLoaderResult<GltfTilesetLoader>>
+GltfTilesetLoader::createLoader(
     const TilesetExternals& externals,
-    const std::string& tilesetJsonUrl,
+    const std::string& gltfUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
 
   return externals.pAssetAccessor
-      ->get(externals.asyncSystem, tilesetJsonUrl, requestHeaders)
+      ->get(externals.asyncSystem, gltfUrl, requestHeaders)
       .thenInWorkerThread([ellipsoid,
                            asyncSystem = externals.asyncSystem,
                            pAssetAccessor = externals.pAssetAccessor,
@@ -918,7 +824,7 @@ TilesetJsonLoader::createLoader(
             pCompletedRequest->response();
         const std::string& tileUrl = pCompletedRequest->url();
         if (!pResponse) {
-          TilesetContentLoaderResult<TilesetJsonLoader> result;
+          TilesetContentLoaderResult<GltfTilesetLoader> result;
           result.errors.emplaceError(fmt::format(
               "Did not receive a valid response for tile content {}",
               tileUrl));
@@ -927,7 +833,7 @@ TilesetJsonLoader::createLoader(
 
         uint16_t statusCode = pResponse->statusCode();
         if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-          TilesetContentLoaderResult<TilesetJsonLoader> result;
+          TilesetContentLoaderResult<GltfTilesetLoader> result;
           result.errors.emplaceError(fmt::format(
               "Received status code {} for tile content {}",
               statusCode,
@@ -937,46 +843,44 @@ TilesetJsonLoader::createLoader(
         }
 
         std::span<const std::byte> data = pResponse->data();
-
-        rapidjson::Document tilesetJson;
-        tilesetJson.Parse(
-            reinterpret_cast<const char*>(data.data()),
-            data.size());
-        if (tilesetJson.HasParseError()) {
-          TilesetContentLoaderResult<TilesetJsonLoader> result;
-          result.errors.emplaceError(fmt::format(
-              "Error when parsing tileset JSON, error code {} at byte offset "
-              "{}",
-              tilesetJson.GetParseError(),
-              tilesetJson.GetErrorOffset()));
-          return asyncSystem.createResolvedFuture(std::move(result));
+        CesiumGltfReader::GltfReader reader;
+        CesiumGltfReader::GltfReaderResult gltfResult = reader.readGltf(data);
+        if (!gltfResult.model) {
+          TilesetContentLoaderResult<GltfTilesetLoader> loaderResult;
+          for (size_t i = gltfResult.errors.size() - 1; i >= 0; i--) {
+            loaderResult.errors.errors = std::move(gltfResult.errors);
+            loaderResult.errors.warnings = std::move(gltfResult.warnings);
+          }
+          return asyncSystem.createResolvedFuture(std::move(loaderResult));
         }
 
-        return TilesetJsonLoader::createLoader(
+        // pLogger any glTF warnings?
+
+        return GltfTilesetLoader::createLoader(
             asyncSystem,
             pAssetAccessor,
             pLogger,
             pCompletedRequest->url(),
             pCompletedRequest->headers(),
-            std::move(tilesetJson),
+            std::move(*gltfResult.model),
             ellipsoid);
       });
 }
 
-CesiumAsync::Future<TilesetContentLoaderResult<TilesetJsonLoader>>
-TilesetJsonLoader::createLoader(
+CesiumAsync::Future<TilesetContentLoaderResult<GltfTilesetLoader>>
+GltfTilesetLoader::createLoader(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::string& tilesetJsonUrl,
+    const std::string& gltfUrl,
     const CesiumAsync::HttpHeaders& requestHeaders,
-    rapidjson::Document&& tilesetJson,
+    CesiumGltf::Model&& gltf,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  TilesetContentLoaderResult<TilesetJsonLoader> result = parseTilesetJson(
+  TilesetContentLoaderResult<GltfTilesetLoader> result = parseGltfTileset(
       pLogger,
-      tilesetJsonUrl,
+      gltfUrl,
       {requestHeaders.begin(), requestHeaders.end()},
-      tilesetJson,
+      gltf,
       glm::dmat4(1.0),
       Cesium3DTiles::TileRefine::Replace,
       ellipsoid);
@@ -1051,7 +955,7 @@ TilesetJsonLoader::createLoader(
       requestHeaders.end());
   return asyncSystem.createResolvedFuture(std::move(result))
       .thenInWorkerThread([asyncSystem, pAssetAccessor](
-                              TilesetContentLoaderResult<TilesetJsonLoader>&&
+                              TilesetContentLoaderResult<GltfTilesetLoader>&&
                                   result) {
         TileExternalContent* pExternal =
             result.pRootTile->getContent().getExternalContent();
@@ -1080,7 +984,7 @@ TilesetJsonLoader::createLoader(
            externalSchemaUrl,
            requestHeaders = std::move(requestHeaderVector),
            pLogger](
-              TilesetContentLoaderResult<TilesetJsonLoader>&& result) mutable {
+              TilesetContentLoaderResult<GltfTilesetLoader>&& result) mutable {
             if (!externalSchemaUrl.empty()) {
               return getJson(
                          asyncSystem,
@@ -1123,7 +1027,7 @@ TilesetJsonLoader::createLoader(
 }
 
 CesiumAsync::Future<TileLoadResult>
-TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
+GltfTilesetLoader::loadTileContent(const TileLoadInput& loadInput) {
   const Tile& tile = loadInput.tile;
   // check if this tile belongs to a child loader
   auto currentLoader = tile.getLoader();
@@ -1279,7 +1183,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
           });
 }
 
-TileChildrenResult TilesetJsonLoader::createTileChildren(
+TileChildrenResult GltfTilesetLoader::createTileChildren(
     const Tile& tile,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   auto pLoader = tile.getLoader();
@@ -1290,20 +1194,20 @@ TileChildrenResult TilesetJsonLoader::createTileChildren(
   return {{}, TileLoadResultState::Failed};
 }
 
-const std::string& TilesetJsonLoader::getBaseUrl() const noexcept {
+const std::string& GltfTilesetLoader::getBaseUrl() const noexcept {
   return this->_baseUrl;
 }
 
-CesiumGeometry::Axis TilesetJsonLoader::getUpAxis() const noexcept {
+CesiumGeometry::Axis GltfTilesetLoader::getUpAxis() const noexcept {
   return _upAxis;
 }
 
 const CesiumUtility::IntrusivePointer<CesiumGltf::Schema>&
-TilesetJsonLoader::getExternalSchema() const noexcept {
+GltfTilesetLoader::getExternalSchema() const noexcept {
   return _pExternalSchema;
 }
 
-void TilesetJsonLoader::addChildLoader(
+void GltfTilesetLoader::addChildLoader(
     std::unique_ptr<TilesetContentLoader> pLoader) {
   if (this->getOwner() != nullptr) {
     pLoader->setOwner(*this->getOwner());
@@ -1312,19 +1216,19 @@ void TilesetJsonLoader::addChildLoader(
   this->_children.emplace_back(std::move(pLoader));
 }
 
-void TilesetJsonLoader::setOwnerOfNestedLoaders(
+void GltfTilesetLoader::setOwnerOfNestedLoaders(
     TilesetContentManager& owner) noexcept {
   for (const std::unique_ptr<TilesetContentLoader>& pLoader : this->_children) {
     pLoader->setOwner(owner);
   }
 }
 
-void TilesetJsonLoader::setExternalSchema(CesiumGltf::Schema* schema) {
+void GltfTilesetLoader::setExternalSchema(CesiumGltf::Schema* schema) {
   this->_pExternalSchema = schema;
 }
 
 CesiumUtility::IntrusivePointer<CesiumGltf::Schema>
-TilesetJsonLoader::getExternalSchema() {
+GltfTilesetLoader::getExternalSchema() {
   return this->_pExternalSchema;
 }
 } // namespace Cesium3DTilesSelection

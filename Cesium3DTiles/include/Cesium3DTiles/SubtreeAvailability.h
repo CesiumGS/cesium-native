@@ -11,6 +11,10 @@ struct QuadtreeTileID;
 struct OctreeTileID;
 } // namespace CesiumGeometry
 
+namespace CesiumGltf {
+struct Model;
+}
+
 namespace CesiumTilesetJson {
 struct ImplicitTiling;
 } // namespace CesiumTilesetJson
@@ -39,7 +43,7 @@ enum class ImplicitTileSubdivisionScheme {
 class SubtreeAvailability {
 public:
   /**
-   * @brief Creates an instance from a `Subtree`.
+   * @brief Creates an instance from a @ref CesiumTilesetJson::Subtree.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
    * octree).
@@ -52,6 +56,22 @@ public:
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
       CesiumTilesetJson::Subtree&& subtree) noexcept;
+
+  /**
+   * @brief Creates an instance from a @ref CesiumGltf::Model with the @ref
+   * CesiumGltf::Extension3DTilesSubtree extension.
+   *
+   * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
+   * octree).
+   * @param levelsInSubtree The number of levels in this subtree.
+   * @param subtree The subtree.
+   * @return The subtree availability, or std::nullopt if the subtree definition
+   * is invalid.
+   */
+  static std::optional<SubtreeAvailability> fromGltf(
+      ImplicitTileSubdivisionScheme subdivisionScheme,
+      uint32_t levelsInSubtree,
+      CesiumGltf::Model&& model) noexcept;
 
   /**
    * @brief Creates an empty instance with the specified tile availability. All

@@ -1,0 +1,87 @@
+#pragma once
+
+#include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
+#include <Cesium3DTilesSelection/TilesetExternals.h>
+#include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
+#include <CesiumAsync/Future.h>
+#include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGltf/Schema.h>
+#include <CesiumUtility/IntrusivePointer.h>
+
+#include <rapidjson/fwd.h>
+
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace Cesium3DTilesSelection {
+class GltfTilesetLoader : public TilesetContentLoader {
+public:
+  GltfTilesetLoader(
+      const std::string& baseUrl,
+      CesiumGeometry::Axis upAxis,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  CesiumAsync::Future<TileLoadResult>
+  loadTileContent(const TileLoadInput& loadInput) override;
+
+  TileChildrenResult createTileChildren(
+      const Tile& tile,
+      const CesiumGeospatial::Ellipsoid& ellipsoid
+          CESIUM_DEFAULT_ELLIPSOID) override;
+
+  const std::string& getBaseUrl() const noexcept;
+
+  CesiumGeometry::Axis getUpAxis() const noexcept;
+
+  const CesiumUtility::IntrusivePointer<CesiumGltf::Schema>&
+  getExternalSchema() const noexcept;
+
+  void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);
+
+  static CesiumAsync::Future<TilesetContentLoaderResult<GltfTilesetLoader>>
+  createLoader(
+      const TilesetExternals& externals,
+      const std::string& gltfUrl,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  static CesiumAsync::Future<TilesetContentLoaderResult<GltfTilesetLoader>>
+  createLoader(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const std::string& gltfUrl,
+      const CesiumAsync::HttpHeaders& requestHeaders,
+      CesiumGltf::Model&& gltf,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  void setExternalSchema(CesiumGltf::Schema* schema) override;
+  virtual CesiumUtility::IntrusivePointer<CesiumGltf::Schema>
+  getExternalSchema() override;
+
+protected:
+  void setOwnerOfNestedLoaders(TilesetContentManager& owner) noexcept override;
+
+private:
+  std::string _baseUrl;
+  CesiumGeospatial::Ellipsoid _ellipsoid;
+  CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
+  CesiumUtility::IntrusivePointer<CesiumGltf::Schema> _pExternalSchema;
+
+  /**
+   * @brief The axis that was declared as the "up-axis" for glTF content.
+   *
+   * The glTF specification mandates that the Y-axis is the "up"-axis, so the
+   * default value is @ref Axis::Y. Older tilesets may contain a string
+   * property in the "assets" dictionary, named "gltfUpAxis", indicating a
+   * different up-axis. Although the "gltfUpAxis" property is no longer part of
+   * the 3D tiles specification, it is still considered for backward
+   * compatibility.
+   */
+  CesiumGeometry::Axis _upAxis;
+
+  std::vector<std::unique_ptr<TilesetContentLoader>> _children;
+};
+} // namespace Cesium3DTilesSelection
