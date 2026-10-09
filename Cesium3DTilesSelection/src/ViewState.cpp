@@ -34,6 +34,19 @@ using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {
 
+double ViewStateMeasureDelegate::computeSelectionMeasure(
+    const ViewState& viewState,
+    const Tile& tile,
+    double distance,
+    uint32_t) const {
+  return viewState.computeScreenSpaceError(tile.getGeometricError(), distance);
+}
+
+bool ViewStateMeasureDelegate::isContentVisible(const ViewState&, const Tile&)
+    const {
+  return true;
+}
+
 /* static */ ViewState ViewState::create(
     const glm::dvec3& position,
     const glm::dvec3& direction,
@@ -220,10 +233,8 @@ double ViewState::computeScreenSpaceError(
     double distance,
     uint32_t depth) const noexcept {
   if (this->_pMeasureDelegate) {
-    return this->_pMeasureDelegate->computeSelectionMeasure(
-        tile,
-        distance,
-        depth);
+    return this->_pMeasureDelegate
+        ->computeSelectionMeasure(*this, tile, distance, depth);
   } else {
     return this->computeScreenSpaceError(tile.getGeometricError(), distance);
   }

@@ -721,6 +721,9 @@ std::optional<Tile> parseTileJsonRecursively(
   tile.setGeometricError(tileGeometricError);
   tile.setRefine(tileRefine);
   tile.setContentBoundingVolume(tileContentBoundingVolume);
+  if (maybeContent && maybeContent->group) {
+    tile.setGroup(*maybeContent->group);
+  }
   tile.createChildTiles(std::move(childTiles));
 
   return tile;

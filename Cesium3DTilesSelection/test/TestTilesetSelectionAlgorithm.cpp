@@ -1818,7 +1818,8 @@ public:
   FixedDepthDelegate(uint32_t depthLimit)
       : depthErrorMeasure(std::exp2(-int32_t(depthLimit))) {}
   double
-  computeSelectionMeasure(const Tile&, double, uint32_t depth) const override {
+  computeSelectionMeasure(const ViewState&, const Tile&, double, uint32_t depth)
+      const override {
     return std::exp2(-int32_t(depth));
   }
   double depthErrorMeasure;
