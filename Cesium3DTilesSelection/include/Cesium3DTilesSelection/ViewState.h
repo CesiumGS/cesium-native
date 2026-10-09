@@ -291,7 +291,7 @@ public:
    * The given distance will be clamped to a small positive value if
    * it is negative or too close to zero.
    *
-   * If the ViewState object was ceated with a measure delegate, that is called
+   * If the ViewState object was created with a measure delegate, that is called
    * for this computation. Otherwise. the projection-based screen space error
    * calculation is performed.
    *
@@ -305,6 +305,12 @@ public:
       double distance,
       uint32_t depth) const noexcept;
 
+  /**
+   * @brief Use the measure delegate to deterimine if a tile is visible, or
+   * return true there isn't one.
+   * @param tile The tile.
+   * @return true if tile is visible.
+   */
   bool isContentVisible(const Tile& tile) const noexcept {
     if (_pMeasureDelegate) {
       return _pMeasureDelegate->isContentVisible(*this, tile);
