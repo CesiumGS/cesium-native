@@ -10,7 +10,18 @@ jobs:
       issues: write
       pull-requests: write
     steps:
-      - uses: CesiumGS/github-actions/check-for-cla@check-for-cla-action
+      # CesiumGS/github-actions is private, so it must be checked out with a PAT
+      # rather than referenced directly as `uses: CesiumGS/github-actions/...`.
+      - name: checkout CesiumGS/github-actions
+        uses: actions/checkout@v4
+        with:
+          repository: CesiumGS/github-actions
+          ref: check-for-cla-action
+          token: ${{ secrets.CESIUM_ACTIONS_REPO_TOKEN }}
+          path: cesium-github-actions
+          persist-credentials: false
+
+      - uses: ./cesium-github-actions/check-for-cla
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-id: ${{ github.event.number }}
