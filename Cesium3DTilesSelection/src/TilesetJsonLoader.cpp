@@ -670,9 +670,6 @@ std::optional<Tile> parseTileJsonRecursively(
     tile.setViewerRequestVolume(tileViewerRequestVolume);
     tile.setGeometricError(tileGeometricError);
     tile.setRefine(tileRefine);
-    if (maybeContent && maybeContent->group) {
-      tile.setGroup(*maybeContent->group);
-    }
 
     parseImplicitTileset(*implicitTilingJson, contentUri, tile, currentLoader);
 
@@ -724,6 +721,9 @@ std::optional<Tile> parseTileJsonRecursively(
   tile.setGeometricError(tileGeometricError);
   tile.setRefine(tileRefine);
   tile.setContentBoundingVolume(tileContentBoundingVolume);
+  if (maybeContent && maybeContent->group) {
+    tile.setGroup(*maybeContent->group);
+  }
   tile.createChildTiles(std::move(childTiles));
 
   return tile;
