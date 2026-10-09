@@ -33,6 +33,7 @@ class CESIUM3DTILESSELECTION_API ViewStateMeasureDelegate {
 public:
   /**
    * @brief Compute the error measure, a generalization of screen space error.
+   * @param viewState The ViewState object.
    * @param tile The tile being tested.
    * @param distance Distance from the ViewState's position to the tile.
    * @param depth The depth (level) of the tile in the tileset.
@@ -45,9 +46,14 @@ public:
       uint32_t depth) const;
 
   /**
-   * @brief WIP
+   * @brief Determine if this tile's content is visible. If the tile has
+   * external content, then this determines if the tile's children are visited.
+   * @param viewState The ViewState object.
+   * @param tile The tile.
+   * @return Whether or not tile's content is visible.
    */
-  virtual bool isContentVisible(const ViewState& viewState, const Tile& tile) const;
+  virtual bool
+  isContentVisible(const ViewState& viewState, const Tile& tile) const;
 
   /**
    * @brief destructor
@@ -305,14 +311,24 @@ public:
     }
     return true;
   }
+
+  /**
+   * @brief Get the measure delegate object.
+   * @return The measure delegate.
+   */
   std::shared_ptr<ViewStateMeasureDelegate> getMeasureDelegate() const {
     return this->_pMeasureDelegate;
   }
-  
-  void setMeasureDelegate(std::shared_ptr<ViewStateMeasureDelegate> measureDelegate) {
+
+  /**
+   * @brief Set the measure delegate object.
+   * @param measureDelegate The measure delegate.
+   */
+  void setMeasureDelegate(
+      std::shared_ptr<ViewStateMeasureDelegate> measureDelegate) {
     this->_pMeasureDelegate = std::move(measureDelegate);
   }
-  
+
 private:
   glm::dvec3 _position;
   glm::dvec3 _direction;

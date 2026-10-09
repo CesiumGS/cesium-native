@@ -124,7 +124,7 @@ bool isContentVisible(const TilesetFrameState& frameState, const Tile& tile) {
   return std::any_of(
       frameState.frustums.begin(),
       frameState.frustums.end(),
-      [&tile](const ViewState& viewState){
+      [&tile](const ViewState& viewState) {
         return viewState.isContentVisible(tile);
       });
 }
@@ -838,7 +838,13 @@ TraversalDetails visitTile(
   // If this is a leaf tile, just render it (it's already been deemed visible).
   if (isLeaf(tile)) {
     if (isContentVisible(frameState, tile)) {
-      return renderLeaf(context, frameState, tile, tilePriority, tileSse, result);
+      return renderLeaf(
+          context,
+          frameState,
+          tile,
+          tilePriority,
+          tileSse,
+          result);
     }
     return TraversalDetails{};
   }

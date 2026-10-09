@@ -42,7 +42,8 @@ double ViewStateMeasureDelegate::computeSelectionMeasure(
   return viewState.computeScreenSpaceError(tile.getGeometricError(), distance);
 }
 
-bool ViewStateMeasureDelegate::isContentVisible(const ViewState&, const Tile&) const {
+bool ViewStateMeasureDelegate::isContentVisible(const ViewState&, const Tile&)
+    const {
   return true;
 }
 
@@ -232,11 +233,8 @@ double ViewState::computeScreenSpaceError(
     double distance,
     uint32_t depth) const noexcept {
   if (this->_pMeasureDelegate) {
-    return this->_pMeasureDelegate->computeSelectionMeasure(
-        *this,
-        tile,
-        distance,
-        depth);
+    return this->_pMeasureDelegate
+        ->computeSelectionMeasure(*this, tile, distance, depth);
   } else {
     return this->computeScreenSpaceError(tile.getGeometricError(), distance);
   }
