@@ -16,9 +16,9 @@
 #include <vector>
 
 namespace Cesium3DTilesSelection {
-class GltfTilesetLoader : public TilesetContentLoader {
+class TilesetGltfLoader : public TilesetContentLoader {
 public:
-  GltfTilesetLoader(
+  TilesetGltfLoader(
       const std::string& baseUrl,
       CesiumGeometry::Axis upAxis,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
@@ -40,14 +40,14 @@ public:
 
   void addChildLoader(std::unique_ptr<TilesetContentLoader> pLoader);
 
-  static CesiumAsync::Future<TilesetContentLoaderResult<GltfTilesetLoader>>
+  static CesiumAsync::Future<TilesetContentLoaderResult<TilesetGltfLoader>>
   createLoader(
       const TilesetExternals& externals,
       const std::string& gltfUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
-  static CesiumAsync::Future<TilesetContentLoaderResult<GltfTilesetLoader>>
+  static CesiumAsync::Future<TilesetContentLoaderResult<TilesetGltfLoader>>
   createLoader(
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,

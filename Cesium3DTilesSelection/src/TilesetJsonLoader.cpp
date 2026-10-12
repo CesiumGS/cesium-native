@@ -453,22 +453,6 @@ void parseImplicitTileset(
   }
 }
 
-std::optional<Tile> parseGltfNode(
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const CesiumGltf::Model& model,
-    const CesiumGltf::Node& node,
-    const glm::dmat4& parentTransform,
-    Cesium3DTiles::TileRefine parentRefine,
-    double parentGeometricError,
-    TilesetJsonLoader& currentLoader,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  // int32_t sceneIndex = std::max(model.scene, 0);
-  // const CesiumGltf::Scene* pScene = model.getSafe(&model.scenes,
-  // model.scene);
-
-  if (node.extensions.find())
-}
-
 std::optional<Tile> parseTileJsonRecursively(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const rapidjson::Value& tileJson,

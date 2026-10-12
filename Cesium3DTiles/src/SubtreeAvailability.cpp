@@ -192,21 +192,16 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
   if (!maybeChildSubtreeAvailability)
     return std::nullopt;
 
-  // At least one element is required in contentAvailability.
-  // TODO: WHY?
-  if (!pSubtreeExtension->contentAvailability)
-    return std::nullopt;
-
+  // Only one contentAvailability stream is used in glTF, but it is placed in a
+  // vector for compatibility with the older spec.
   std::vector<SubtreeAvailability::AvailabilityView> contentAvailability;
-  contentAvailability.reserve(subtree.contentAvailability.size());
-
-  for (const auto& availabilityDesc : subtree.contentAvailability) {
-    auto maybeAvailability = parseAvailabilityView(
-        availabilityDesc,
-        subtree.buffers,
-        subtree.bufferViews);
-    if (maybeAvailability) {
-      contentAvailability.emplace_back(std::move(*maybeAvailability));
+  if (pSubtreeExtension->contentAvailability) {
+    std::optional<SubtreeAvailability::AvailabilityView>
+        maybeContentAvailability = parseAvailabilityView(
+            model,
+            *pSubtreeExtension->contentAvailability);
+    if (maybeContentAvailability) {
+      contentAvailability.emplace_back(std::move(*maybeContentAvailability));
     }
   }
 
@@ -216,7 +211,7 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
       *maybeTileAvailability,
       *maybeChildSubtreeAvailability,
       std::move(contentAvailability),
-      std::move(subtree));
+      std::move(model));
 }
 
 /*static*/ std::optional<SubtreeAvailability> SubtreeAvailability::createEmpty(
@@ -299,6 +294,26 @@ SubtreeAvailability::SubtreeAvailability(
   CESIUM_ASSERT(
       (this->_childCount == 4 || this->_childCount == 8) &&
       "Only support quadtree and octree");
+}
+
+  
+SubtreeAvailability::SubtreeAvailability(
+  ImplicitTileSubdivisionScheme subdivisionScheme,
+  uint32_t levelsInSubtree,
+  AvailabilityView tileAvailability,
+  AvailabilityView subtreeAvailability,
+  std::vector<AvailabilityView>&& contentAvailability,
+    CesiumGltf::Model&& model)
+    : _powerOf2{subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 2U : 3U},
+      _levelsInSubtree{levelsInSubtree},
+  //    _subtree{std::move(subtree)},
+      _childCount{
+          subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 4U
+                                                                       : 8U},
+      _tileAvailability{tileAvailability},
+      _subtreeAvailability{subtreeAvailability},
+      _contentAvailability{std::move(contentAvailability)} {
+// TODO how to store model?
 }
 
 bool SubtreeAvailability::isTileAvailable(

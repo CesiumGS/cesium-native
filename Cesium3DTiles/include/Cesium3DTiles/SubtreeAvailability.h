@@ -64,7 +64,7 @@ public:
    * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
    * octree).
    * @param levelsInSubtree The number of levels in this subtree.
-   * @param subtree The subtree.
+   * @param model The glTF model with the 3DTILES_subtree extension.
    * @return The subtree availability, or std::nullopt if the subtree definition
    * is invalid.
    */
@@ -168,6 +168,29 @@ public:
       AvailabilityView subtreeAvailability,
       std::vector<AvailabilityView>&& contentAvailability,
       CesiumTilesetJson::Subtree&& subtree);
+
+  /**
+   * @brief Constructs a new instance.
+   *
+   * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
+   * octree).
+   * @param levelsInSubtree The number of levels in this subtree.
+   * @param tileAvailability A view on the tile availability. If backed by a
+   * buffer, the buffer is expected to be in `subtree`.
+   * @param subtreeAvailability A view on the subtree availability. If backed by
+   * a buffer, the buffer is expected to be in `subtree`.
+   * @param contentAvailability A view on the content availability. If backed by
+   * a buffer, the buffer is expected to be in `subtree`.
+   * @param model The glTF model with which this instance queries and modifies
+   * availability information.
+   */
+  SubtreeAvailability(
+      ImplicitTileSubdivisionScheme subdivisionScheme,
+      uint32_t levelsInSubtree,
+      AvailabilityView tileAvailability,
+      AvailabilityView subtreeAvailability,
+      std::vector<AvailabilityView>&& contentAvailability,
+      CesiumGltf::Model&& model);
 
   /**
    * @brief Determines if a given tile in the quadtree is available.
