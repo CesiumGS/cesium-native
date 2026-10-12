@@ -120,6 +120,15 @@ TraversalDetails visitTileIfNeeded(
     Tile& tile,
     ViewUpdateResult& result);
 
+bool isContentVisible(const TilesetFrameState& frameState, const Tile& tile) {
+  return std::any_of(
+      frameState.frustums.begin(),
+      frameState.frustums.end(),
+      [&tile](const ViewState& viewState) {
+        return viewState.isContentVisible(tile);
+      });
+}
+
 } // namespace
 
 void selectTiles(
@@ -828,7 +837,16 @@ TraversalDetails visitTile(
 
   // If this is a leaf tile, just render it (it's already been deemed visible).
   if (isLeaf(tile)) {
-    return renderLeaf(context, frameState, tile, tilePriority, tileSse, result);
+    if (isContentVisible(frameState, tile)) {
+      return renderLeaf(
+          context,
+          frameState,
+          tile,
+          tilePriority,
+          tileSse,
+          result);
+    }
+    return TraversalDetails{};
   }
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();
@@ -947,14 +965,16 @@ TraversalDetails visitTile(
   TilesetViewGroup::LoadQueueCheckpoint loadQueueBeforeChildren =
       frameState.viewGroup.saveTileLoadQueueCheckpoint();
 
-  TraversalDetails traversalDetails = visitVisibleChildrenNearToFar(
-      context,
-      frameState,
-      depth,
-      ancestorMeetsSse,
-      tile,
-      result);
-
+  TraversalDetails traversalDetails;
+  if (!tile.isExternalContent() || isContentVisible(frameState, tile)) {
+    traversalDetails = visitVisibleChildrenNearToFar(
+        context,
+        frameState,
+        depth,
+        ancestorMeetsSse,
+        tile,
+        result);
+  }
   // Zero or more descendant tiles were added to the render list.
   // The traversalDetails tell us what happened while visiting the children.
 
