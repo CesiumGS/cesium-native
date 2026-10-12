@@ -1,0 +1,30 @@
+name: check-cla
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  CheckCLA:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      # CesiumGS/github-actions is private, so it must be checked out with a PAT
+      # rather than referenced directly as `uses: CesiumGS/github-actions/...`.
+      - name: checkout CesiumGS/github-actions
+        uses: actions/checkout@v4
+        with:
+          repository: CesiumGS/github-actions
+          ref: check-for-cla-action
+          token: ${{ secrets.CESIUM_ACTIONS_REPO_TOKEN }}
+          path: cesium-github-actions
+          persist-credentials: false
+
+      - uses: ./cesium-github-actions/check-for-cla
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-id: ${{ github.event.number }}
+          microsoft-graph-info-json: ${{ secrets.MICROSOFT_GRAPH_INFO_JSON }}
+          cla-url: https://cesium.com/learn/cesium-native/ref-doc/contributing.html#contributor-license-agreement-cla
+          pull-request-guidelines-url: https://cesium.com/learn/cesium-native/ref-doc/contributing.html#opening-a-pull-request
