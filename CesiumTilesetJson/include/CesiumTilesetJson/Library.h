@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * @brief Classes for using [3D Tiles 1.0
- * and 1.1](https://github.com/CesiumGS/3d-tiles).
+ * @brief Classes to represent a tileset.json from [3D
+ * Tiles 1.1](https://github.com/CesiumGS/3d-tiles).
  *
  * @mermaid-interactive{dependencies/CesiumTilesetJson}
  */

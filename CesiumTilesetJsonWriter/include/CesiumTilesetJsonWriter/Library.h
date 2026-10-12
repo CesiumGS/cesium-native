@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * @brief Classes for writing [3D Tiles 1.0
- * and 1.1](https://github.com/CesiumGS/3d-tiles).
+ * @brief Classes for writing a tileset.json from [3D
+ * Tiles 1.1](https://github.com/CesiumGS/3d-tiles).
  *
  * @mermaid-interactive{dependencies/CesiumTilesetJsonWriter}
  */

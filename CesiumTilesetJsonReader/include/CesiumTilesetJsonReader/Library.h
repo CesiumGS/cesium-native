@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * @brief Classes for reading [3D Tiles 1.0
- * and 1.1](https://github.com/CesiumGS/3d-tiles).
+ * @brief Classes for reading a tileset.json from [3D
+ * Tiles 1.1](https://github.com/CesiumGS/3d-tiles).
  *
  * @mermaid-interactive{dependencies/CesiumTilesetJsonReader}
  */
