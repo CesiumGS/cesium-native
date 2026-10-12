@@ -34,6 +34,7 @@
 #include <glm/ext/matrix_double4x4.hpp>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_float4.hpp>
 #include <glm/geometric.hpp>
 
 #include <algorithm>
@@ -1053,6 +1054,71 @@ bool hasWarningContaining(
   return false;
 }
 } // namespace
+
+TEST_CASE("Decodes a Draco attribute with more components than its accessor") {
+  GltfReader reader;
+  GltfReaderOptions options;
+
+  GltfReaderResult expected = createDracoModel(Accessor::Type::VEC3);
+  reader.postprocessGltf(expected, options);
+  REQUIRE(expected.model);
+
+  AccessorView<glm::vec3> expectedView(*expected.model, 0);
+  REQUIRE(expectedView.status() == AccessorViewStatus::Valid);
+
+  GltfReaderResult result = createDracoModel(Accessor::Type::VEC2);
+  reader.postprocessGltf(result, options);
+  REQUIRE(result.model);
+  CHECK(hasWarningContaining(result, "components, but its accessor has"));
+
+  // The extra component must be dropped rather than written past the end of
+  // the buffer that was sized for the accessor.
+  const Buffer& decoded = result.model->buffers.back();
+  CHECK(size_t(decoded.byteLength) == decoded.cesium.data.size());
+  CHECK(decoded.byteLength == expectedView.size() * 2 * 4);
+
+  AccessorView<glm::vec2> view(*result.model, 0);
+  REQUIRE(view.status() == AccessorViewStatus::Valid);
+  REQUIRE(view.size() == expectedView.size());
+  for (int64_t i = 0; i < view.size(); ++i) {
+    CHECK(view[i].x == expectedView[i].x);
+    CHECK(view[i].y == expectedView[i].y);
+  }
+}
+
+TEST_CASE("Decodes a Draco attribute with fewer components than its accessor") {
+  GltfReader reader;
+  GltfReaderOptions options;
+
+  GltfReaderResult expected = createDracoModel(Accessor::Type::VEC3);
+  reader.postprocessGltf(expected, options);
+  REQUIRE(expected.model);
+
+  AccessorView<glm::vec3> expectedView(*expected.model, 0);
+  REQUIRE(expectedView.status() == AccessorViewStatus::Valid);
+
+  GltfReaderResult result = createDracoModel(Accessor::Type::VEC4);
+  reader.postprocessGltf(result, options);
+  REQUIRE(result.model);
+  CHECK(hasWarningContaining(result, "components, but its accessor has"));
+
+  // The buffer must be sized for the accessor's four components, and the
+  // component Draco does not store must be zero-filled rather than left as
+  // overlapping or uninitialized data.
+  const Buffer& decoded = result.model->buffers.back();
+  CHECK(size_t(decoded.byteLength) == decoded.cesium.data.size());
+  CHECK(decoded.byteLength == expectedView.size() * 4 * 4);
+
+  AccessorView<glm::vec4> view(*result.model, 0);
+  REQUIRE(view.status() == AccessorViewStatus::Valid);
+  REQUIRE(view.size() == expectedView.size());
+  for (int64_t i = 0; i < view.size(); ++i) {
+    CHECK(view[i].x == expectedView[i].x);
+    CHECK(view[i].y == expectedView[i].y);
+    CHECK(view[i].z == expectedView[i].z);
+    CHECK(view[i].w == 0.0f);
+  }
+}
 
 TEST_CASE("Rejects a Draco bufferView whose byte range overflows") {
   GltfReader reader;

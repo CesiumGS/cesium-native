@@ -3,12 +3,24 @@
 
 #include "registerReaderExtensions.h"
 
+#include "Extension3dTilesHorizonOcclusionPointJsonHandler.h"
+#include "Extension3dTilesImplicitTilingJsonHandler.h"
+#include "Extension3dTilesShapeCylinderRegionJsonHandler.h"
+#include "Extension3dTilesShapeEllipsoidRegionJsonHandler.h"
+#include "Extension3dTilesShapeS2JsonHandler.h"
+#include "Extension3dTilesSubtreeJsonHandler.h"
+#include "Extension3dTilesTilesetVectorsJsonHandler.h"
+#include "Extension3dTilesTilesetVoxelsJsonHandler.h"
 #include "ExtensionBentleyMaterialsPointStyleJsonHandler.h"
 #include "ExtensionBufferExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionBufferViewExtMeshoptCompressionJsonHandler.h"
 #include "ExtensionCesiumPrimitiveOutlineJsonHandler.h"
 #include "ExtensionCesiumRTCJsonHandler.h"
 #include "ExtensionCesiumTileEdgesJsonHandler.h"
+#include "ExtensionExtGeoreferenceJsonHandler.h"
+#include "ExtensionExtGeospatialCrsJsonHandler.h"
+#include "ExtensionExtGeospatialCrsWkidJsonHandler.h"
+#include "ExtensionExtGeospatialCrsWkt2JsonHandler.h"
 #include "ExtensionExtImplicitCylinderRegionJsonHandler.h"
 #include "ExtensionExtImplicitEllipsoidRegionJsonHandler.h"
 #include "ExtensionExtInstanceFeaturesJsonHandler.h"
@@ -16,8 +28,11 @@
 #include "ExtensionExtMeshGpuInstancingJsonHandler.h"
 #include "ExtensionExtMeshPolygonJsonHandler.h"
 #include "ExtensionExtMeshPrimitiveEdgeVisibilityJsonHandler.h"
+#include "ExtensionExtNodeVisibilityVolumeJsonHandler.h"
 #include "ExtensionExtPrimitiveVoxelsJsonHandler.h"
 #include "ExtensionExtStructuralMetadataJsonHandler.h"
+#include "ExtensionExtVoxelsExtStructuralMetadataJsonHandler.h"
+#include "ExtensionExtVoxelsJsonHandler.h"
 #include "ExtensionKhrBillboardJsonHandler.h"
 #include "ExtensionKhrDracoMeshCompressionJsonHandler.h"
 #include "ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler.h"
@@ -30,17 +45,28 @@
 #include "ExtensionMeshPrimitiveBentleyMaterialsLineStyleJsonHandler.h"
 #include "ExtensionMeshPrimitiveExtStructuralMetadataJsonHandler.h"
 #include "ExtensionMeshPrimitiveKhrMaterialsVariantsJsonHandler.h"
+#include "ExtensionModel3dTilesLayersJsonHandler.h"
+#include "ExtensionModel3dTilesTilesetJsonHandler.h"
+#include "ExtensionModelExtNodeVisibilityConditionsJsonHandler.h"
 #include "ExtensionModelExtStructuralMetadataJsonHandler.h"
 #include "ExtensionModelKhrLightsPunctualJsonHandler.h"
 #include "ExtensionModelKhrMaterialsVariantsJsonHandler.h"
 #include "ExtensionModelMaxarMeshVariantsJsonHandler.h"
+#include "ExtensionNode3dTilesLayersJsonHandler.h"
+#include "ExtensionNode3dTilesTilesetJsonHandler.h"
+#include "ExtensionNodeExtNodeVisibilityConditionsJsonHandler.h"
 #include "ExtensionNodeKhrLightsPunctualJsonHandler.h"
 #include "ExtensionNodeMaxarMeshVariantsJsonHandler.h"
 #include "ExtensionTextureWebpJsonHandler.h"
 
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
+#include <CesiumGltf/Content.h>
+#include <CesiumGltf/ExtensionExtGeospatialCrs.h>
+#include <CesiumGltf/ExtensionExtVoxels.h>
 #include <CesiumGltf/ExtensionKhrGaussianSplatting.h>
+#include <CesiumGltf/ExtensionKhrImplicitShapesShape.h>
+#include <CesiumGltf/ExtensionModel3dTilesTileset.h>
 #include <CesiumGltf/FeatureIdTexture.h>
 #include <CesiumGltf/Material.h>
 #include <CesiumGltf/MaterialNormalTextureInfo.h>
@@ -74,6 +100,27 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Model,
       ExtensionModelKhrLightsPunctualJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModel3dTilesTilesetJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModel3dTilesLayersJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Model,
+      Extension3dTilesSubtreeJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Model,
+      Extension3dTilesTilesetVectorsJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Model,
+      Extension3dTilesTilesetVoxelsJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Model,
+      ExtensionExtGeospatialCrsJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Model,
+      ExtensionModelExtNodeVisibilityConditionsJsonHandler>();
   options.registerExtension<
       CesiumGltf::MeshPrimitive,
       ExtensionCesiumTileEdgesJsonHandler>();
@@ -125,6 +172,28 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       CesiumGltf::Node,
       ExtensionNodeKhrLightsPunctualJsonHandler>();
   options.registerExtension<
+      CesiumGltf::Node,
+      ExtensionNode3dTilesTilesetJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Node,
+      Extension3dTilesHorizonOcclusionPointJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Node,
+      Extension3dTilesImplicitTilingJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Node,
+      ExtensionNode3dTilesLayersJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Node,
+      ExtensionExtGeoreferenceJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Node,
+      ExtensionNodeExtNodeVisibilityConditionsJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Node,
+      ExtensionExtNodeVisibilityVolumeJsonHandler>();
+  options.registerExtension<CesiumGltf::Node, ExtensionExtVoxelsJsonHandler>();
+  options.registerExtension<
       CesiumGltf::Buffer,
       ExtensionBufferExtMeshoptCompressionJsonHandler>();
   options.registerExtension<
@@ -142,6 +211,18 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
   options.registerExtension<
       CesiumGltf::Material,
       ExtensionBentleyMaterialsPointStyleJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::ExtensionModel3dTilesTileset,
+      ExtensionExtStructuralMetadataJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Content,
+      ExtensionExtStructuralMetadataJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Content,
+      Extension3dTilesHorizonOcclusionPointJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::ExtensionExtVoxels,
+      ExtensionExtVoxelsExtStructuralMetadataJsonHandler>();
   options.registerExtension<
       CesiumGltf::Texture,
       ExtensionKhrTextureBasisuJsonHandler>();
@@ -164,13 +245,28 @@ void registerReaderExtensions(CesiumJsonReader::JsonReaderOptions& options) {
       CesiumGltf::FeatureIdTexture,
       ExtensionKhrTextureTransformJsonHandler>();
   options.registerExtension<
-      CesiumGltf::Shape,
+      CesiumGltf::ExtensionKhrImplicitShapesShape,
       ExtensionExtImplicitEllipsoidRegionJsonHandler>();
   options.registerExtension<
-      CesiumGltf::Shape,
+      CesiumGltf::ExtensionKhrImplicitShapesShape,
       ExtensionExtImplicitCylinderRegionJsonHandler>();
   options.registerExtension<
       CesiumGltf::ExtensionKhrGaussianSplatting,
       ExtensionKhrGaussianSplattingCompressionSpz2JsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Shape,
+      Extension3dTilesShapeCylinderRegionJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Shape,
+      Extension3dTilesShapeEllipsoidRegionJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::Shape,
+      Extension3dTilesShapeS2JsonHandler>();
+  options.registerExtension<
+      CesiumGltf::ExtensionExtGeospatialCrs,
+      ExtensionExtGeospatialCrsWkidJsonHandler>();
+  options.registerExtension<
+      CesiumGltf::ExtensionExtGeospatialCrs,
+      ExtensionExtGeospatialCrsWkt2JsonHandler>();
 }
 } // namespace CesiumGltfReader
