@@ -79,8 +79,8 @@ public:
       bool setTilesAvailable) noexcept;
 
   /**
-   * @brief Asynchronously loads a 3D Tiles 1.1 subtree from a URL. The resource downloaded
-   * from the URL may be either a JSON or a binary subtree file.
+   * @brief Asynchronously loads a 3D Tiles 1.1 subtree from a URL. The resource
+   * downloaded from the URL may be either a JSON or a binary subtree file.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
    * octree).
@@ -105,9 +105,9 @@ public:
       const std::string& subtreeUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
-    /**
-   * @brief Asynchronously loads a glTF subtree from a URL. The resource downloaded
-   * from the URL may be either a JSON or a binary glTF.
+  /**
+   * @brief Asynchronously loads a glTF subtree from a URL. The resource
+   * downloaded from the URL may be either a JSON or a binary glTF.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
    * octree).
