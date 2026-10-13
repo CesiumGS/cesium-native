@@ -564,7 +564,7 @@ TEST_CASE("Test SubtreeAvailability methods") {
   }
 }
 
-TEST_CASE("Test parsing subtree format") {
+TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
   uint32_t maxSubtreeLevels = 5;
 
   std::vector<CesiumGeometry::QuadtreeTileID> availableTileIDs{
@@ -664,7 +664,7 @@ TEST_CASE("Test parsing subtree format") {
 
     asyncSystem.dispatchMainThreadTasks();
     auto parsedSubtree = subtreeFuture.wait();
-    REQUIRE(parsedSubtree != std::nullopt);
+    REQUIRE_UNARY(parsedSubtree);
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
@@ -753,7 +753,7 @@ TEST_CASE("Test parsing subtree format") {
 
     asyncSystem.dispatchMainThreadTasks();
     auto parsedSubtree = subtreeFuture.wait();
-    REQUIRE(parsedSubtree != std::nullopt);
+    REQUIRE_UNARY(parsedSubtree);
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
@@ -837,7 +837,7 @@ TEST_CASE("Test parsing subtree format") {
 
     asyncSystem.dispatchMainThreadTasks();
     auto parsedSubtree = subtreeFuture.wait();
-    REQUIRE(parsedSubtree != std::nullopt);
+    REQUIRE_UNARY(parsedSubtree);
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
@@ -874,7 +874,7 @@ TEST_CASE("Test parsing subtree format") {
         std::move(subtreeBuffers),
         std::move(subtreeJson));
 
-    REQUIRE(parsedSubtree != std::nullopt);
+    REQUIRE_UNARY(parsedSubtree);
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
@@ -909,7 +909,7 @@ TEST_CASE("Test parsing subtree format") {
         std::move(subtreeBuffers),
         std::move(subtreeJson));
 
-    REQUIRE(parsedSubtree != std::nullopt);
+    REQUIRE_UNARY(parsedSubtree);
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
@@ -1002,6 +1002,65 @@ TEST_CASE("Test parsing subtree format") {
               std::move(subtreeJson)) == std::nullopt);
     }
   }
+}
+
+TEST_CASE("Test SubtreeAvailability::loadGltf") {
+  std::string gltfString = R"(
+    {
+      "asset": {
+        "version": "2.1"
+      },
+      "extensions": {
+        "3DTILES_subtree": {
+          "tileAvailability": {
+            "constant": 1
+          },
+          "contentAvailability": {
+            "constant": 1
+          },
+          "childSubtreeAvailability": {
+            "constant": 0
+          }
+        }
+      }
+    }
+  )";
+
+  std::vector<std::byte> buffer(gltfString.size());
+  std::memcpy(buffer.data(), gltfString.data(), gltfString.size());
+
+  // mock the request
+  auto pMockResponse = std::make_unique<SimpleAssetResponse>(
+      uint16_t(200),
+      "test",
+      CesiumAsync::HttpHeaders{},
+      std::move(buffer));
+  auto pMockRequest = std::make_unique<SimpleAssetRequest>(
+      "GET",
+      "test",
+      CesiumAsync::HttpHeaders{},
+      std::move(pMockResponse));
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest{
+      {"test", std::move(pMockRequest)}};
+  auto pMockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
+
+  // mock async system
+  auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
+  CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
+
+  auto subtreeFuture = SubtreeAvailability::loadGltf(
+      ImplicitTileSubdivisionScheme::Quadtree,
+      3,
+      asyncSystem,
+      pMockAssetAccessor,
+      spdlog::default_logger(),
+      "test",
+      {});
+
+  asyncSystem.dispatchMainThreadTasks();
+  auto parsedSubtree = subtreeFuture.wait();
+  REQUIRE_UNARY(parsedSubtree);
 }
 
 TEST_CASE("Test SubtreeAvailability::createEmpty") {

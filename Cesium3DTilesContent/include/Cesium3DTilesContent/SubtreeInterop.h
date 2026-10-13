@@ -85,13 +85,13 @@ public:
 
   /**
    * @brief Converts a @ref CesiumTilesetJson::Subtree to an equivalent @ref
-   * CesiumGltf::Model with the @ref CesiumGltf::Extension3DTilesSubtree
+   * CesiumGltf::Model with the @ref CesiumGltf::Extension3dTilesSubtree
    * extension.
    *
    * This attempts to merge all of @ref
-   * CesiumTilesetJson::Subtree:contentAvailability into one
+   * CesiumTilesetJson::Subtree::contentAvailability into one
    * @CesiumGltf::Availability on @ref
-   * CesiumGltf::Extension3DTilesSubtree::contentAvailability. Therefore, all
+   * CesiumGltf::Extension3dTilesSubtree::contentAvailability. Therefore, all
    * @ref CesiumTilesetJson::Subtree:buffers should be resolved and loaded into
    * memory to avoid conversion errors.
    *
@@ -103,7 +103,7 @@ public:
 
   /**
    * @brief Converts a @ref CesiumGltf::Model with the @ref
-   * CesiumGltf::Extension3DTilesSubtree extension to an equivalent @ref
+   * CesiumGltf::Extension3dTilesSubtree extension to an equivalent @ref
    * CesiumTilesetJson::Subtree.
    *
    * @param model The @ref CesiumGltf::Model to convert.

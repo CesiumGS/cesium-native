@@ -32,7 +32,7 @@ public:
    * @brief Creates an instance from a @ref CesiumTilesetJson::Subtree in 3D
    * Tiles 1.1. This upgrades the subtree to its equivalent representation in 3D
    * Tiles 2.0, as a @ref CesiumGltf::Model containing the
-   * @ref CesiumGltf::Extension3DTilesSubtree extension.
+   * @ref CesiumGltf::Extension3dTilesSubtree extension.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
    * octree).
@@ -48,7 +48,7 @@ public:
 
   /**
    * @brief Creates an instance from a @ref CesiumGltf::Model containing the
-   * @ref CesiumGltf::Extension3DTilesSubtree extension.
+   * @ref CesiumGltf::Extension3dTilesSubtree extension.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
    * octree).
@@ -176,7 +176,7 @@ public:
    * backed by a buffer, the buffer is expected to be in `subtree`.
    * @param model The glTF model with which this instance queries and modifies
    * availability information. If the model does not contain @ref
-   * CesiumGltf::Extension3DTilesSubtree, the extension will be added.
+   * CesiumGltf::Extension3dTilesSubtree, the extension will be added.
    */
   SubtreeAvailability(
       ImplicitTileSubdivisionScheme subdivisionScheme,
