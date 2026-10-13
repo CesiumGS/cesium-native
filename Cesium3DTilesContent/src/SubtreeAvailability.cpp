@@ -8,6 +8,7 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGltf/Extension3dTilesSubtree.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumTilesetJson/Availability.h>
 #include <CesiumTilesetJson/Buffer.h>
@@ -194,6 +195,47 @@ SubtreeAvailability::loadSubtree(
                 subdivisionScheme,
                 levelsInSubtree,
                 std::move(*subtree.value));
+          });
+}
+
+/*static*/ CesiumAsync::Future<std::optional<SubtreeAvailability>>
+SubtreeAvailability::loadGltf(
+    ImplicitTileSubdivisionScheme subdivisionScheme,
+    uint32_t levelsInSubtree,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& gltfUrl,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
+  auto pReader = std::make_shared<CesiumGltfReader::GltfReader>();
+  return pReader->loadGltf(asyncSystem, gltfUrl, requestHeaders, pAssetAccessor)
+      .thenInMainThread(
+          [pLogger, gltfUrl, subdivisionScheme, levelsInSubtree, pReader](
+              CesiumGltfReader::GltfReaderResult&& result)
+              -> std::optional<SubtreeAvailability> {
+            if (!result.errors.empty()) {
+              SPDLOG_LOGGER_ERROR(
+                  pLogger,
+                  "Errors while loading glTF subtree from {}:\n- {}",
+                  gltfUrl,
+                  CesiumUtility::joinToString(result.errors, "\n- "));
+            }
+            if (!result.warnings.empty()) {
+              SPDLOG_LOGGER_WARN(
+                  pLogger,
+                  "Warnings while loading glTF subtree from {}:\n- {}",
+                  gltfUrl,
+                  CesiumUtility::joinToString(result.warnings, "\n- "));
+            }
+
+            if (!result.model) {
+              return std::nullopt;
+            }
+
+            return SubtreeAvailability::fromGltf(
+                subdivisionScheme,
+                levelsInSubtree,
+                std::move(*result.model));
           });
 }
 

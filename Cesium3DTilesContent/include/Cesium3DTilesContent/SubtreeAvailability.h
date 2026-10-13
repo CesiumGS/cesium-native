@@ -79,7 +79,7 @@ public:
       bool setTilesAvailable) noexcept;
 
   /**
-   * @brief Asynchronously loads a subtree from a URL. The resource downloaded
+   * @brief Asynchronously loads a 3D Tiles 1.1 subtree from a URL. The resource downloaded
    * from the URL may be either a JSON or a binary subtree file.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
@@ -103,6 +103,33 @@ public:
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& subtreeUrl,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
+
+    /**
+   * @brief Asynchronously loads a glTF subtree from a URL. The resource downloaded
+   * from the URL may be either a JSON or a binary glTF.
+   *
+   * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
+   * octree).
+   * @param levelsInSubtree The number of levels in this subtree.
+   * @param asyncSystem The async system with which to do background work.
+   * @param pAssetAccessor The asset accessor to use to retrieve the subtree
+   * resource from the URL.
+   * @param pLogger The logger to which to load errors and warnings that occur
+   * during subtree load.
+   * @param gltfUrl The URL from which to retrieve the subtree gltf.
+   * @param requestHeaders HTTP headers to include in the request for the
+   * subtree file.
+   * @return A future that resolves to a `SubtreeAvailability` instance for the
+   * subtree file, or std::nullopt if something goes wrong.
+   */
+  static CesiumAsync::Future<std::optional<SubtreeAvailability>> loadGltf(
+      ImplicitTileSubdivisionScheme subdivisionScheme,
+      uint32_t levelsInSubtree,
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::shared_ptr<spdlog::logger>& pLogger,
+      const std::string& gltfUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
   /**

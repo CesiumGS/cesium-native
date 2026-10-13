@@ -5,11 +5,16 @@
 ##### Breaking Changes :mega:
 
 - `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter` have been renamed to `CesiumTilesetJson`, `CesiumTilesetJsonReader`, and `CesiumTilesetJsonWriter` respectively.
+- `Cesium3DTilesSelection::SubtreeAvailability` now follows the `3DTILES_subtree` extension in glTF 2.1:
+  - The `SubtreeAvailability` constructor now takes a single `AvailabilityView` for content availability and a `CesiumGltf::Model` to represent the subtree.
+  - `getSubtree()` has been replaced by `getModel` to retrieve the underlying glTF representation of the subtree.
+  - Removed `contentId` from the `isContentAvailable` and `setContentAvailable` overloads.
 - The classes associated with `KHR_implicit_shapes` have been renamed from `Shape`, `Box`, `Capsule`, `Cylinder`, `Sphere` to `ExtensionKhrImplicitShapesShape`, `ExtensionKhrImplicitShapesBox`, `ExtensionKhrImplicitShapesCapsule`, `ExtensionKhrImplicitShapesCylinder`, `ExtensionKhrImplicitShapesSphere` to deconflict with the shape classes generated for glTF 2.1.
 
 ##### Additions :tada:
 
 - Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added `fromGltf` and `loadGltf` methods to `Cesium3DTilesSelection::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
 
 ### v0.65.0 - 2026-10-01
 
