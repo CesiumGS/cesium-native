@@ -18,7 +18,7 @@ class OrientedBoundingBox;
 class BoundingCylinderRegion;
 } // namespace CesiumGeometry
 
-namespace Cesium3DTiles {
+namespace CesiumTilesetJson {
 struct BoundingVolume;
 }
 
@@ -424,30 +424,30 @@ public:
 
   /**
    * @brief Computes the bounding volume for an implicit quadtree tile with the
-   * given ID as a @ref Cesium3DTiles::BoundingVolume.
+   * given ID as a @ref CesiumTilesetJson::BoundingVolume.
    *
    * @param rootBoundingVolume The bounding volume of the root tile.
    * @param tileID The tile ID for which to compute the bounding volume.
    * @param ellipsoid The ellipsoid to use for this calculation.
    * @return The bounding volume for the given implicit tile.
    */
-  static Cesium3DTiles::BoundingVolume computeBoundingVolume(
-      const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
+  static CesiumTilesetJson::BoundingVolume computeBoundingVolume(
+      const CesiumTilesetJson::BoundingVolume& rootBoundingVolume,
       const CesiumGeometry::QuadtreeTileID& tileID,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) noexcept;
 
   /**
    * @brief Computes the bounding volume for an implicit octree tile with the
-   * given ID as a @ref Cesium3DTiles::BoundingVolume.
+   * given ID as a @ref CesiumTilesetJson::BoundingVolume.
    *
    * @param rootBoundingVolume The bounding volume of the root tile.
    * @param tileID The tile ID for which to compute the bounding volume.
    * @param ellipsoid The ellipsoid to use for this calculation.
    * @return The bounding volume for the given implicit tile.
    */
-  static Cesium3DTiles::BoundingVolume computeBoundingVolume(
-      const Cesium3DTiles::BoundingVolume& rootBoundingVolume,
+  static CesiumTilesetJson::BoundingVolume computeBoundingVolume(
+      const CesiumTilesetJson::BoundingVolume& rootBoundingVolume,
       const CesiumGeometry::OctreeTileID& tileID,
       const CesiumGeospatial::Ellipsoid& ellipsoid
           CESIUM_DEFAULT_ELLIPSOID) noexcept;

@@ -1,0 +1,48 @@
+#include "TilesetJsonWriter.h"
+#include "registerWriterExtensions.h"
+
+#include <CesiumJsonWriter/JsonWriter.h>
+#include <CesiumJsonWriter/PrettyJsonWriter.h>
+#include <CesiumTilesetJsonWriter/SchemaWriter.h>
+#include <CesiumUtility/Tracing.h>
+
+#include <memory>
+
+namespace CesiumTilesetJsonWriter {
+
+SchemaWriter::SchemaWriter() { registerWriterExtensions(this->_context); }
+
+CesiumJsonWriter::ExtensionWriterContext& SchemaWriter::getExtensions() {
+  return this->_context;
+}
+
+const CesiumJsonWriter::ExtensionWriterContext&
+SchemaWriter::getExtensions() const {
+  return this->_context;
+}
+
+SchemaWriterResult SchemaWriter::writeSchema(
+    const CesiumTilesetJson::Schema& schema,
+    const SchemaWriterOptions& options) const {
+  CESIUM_TRACE("SchemaWriter::writeSchema");
+
+  const CesiumJsonWriter::ExtensionWriterContext& context =
+      this->getExtensions();
+
+  SchemaWriterResult result;
+  std::unique_ptr<CesiumJsonWriter::JsonWriter> pWriter;
+
+  if (options.prettyPrint) {
+    pWriter = std::make_unique<CesiumJsonWriter::PrettyJsonWriter>();
+  } else {
+    pWriter = std::make_unique<CesiumJsonWriter::JsonWriter>();
+  }
+
+  SchemaJsonWriter::write(schema, *pWriter, context);
+  result.schemaBytes = pWriter->toBytes();
+  result.errors = pWriter->getErrors();
+  result.warnings = pWriter->getWarnings();
+
+  return result;
+}
+} // namespace CesiumTilesetJsonWriter

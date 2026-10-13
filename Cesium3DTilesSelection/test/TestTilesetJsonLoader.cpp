@@ -4,8 +4,6 @@
 #include "SimplePrepareRendererResource.h"
 #include "TilesetJsonLoader.h"
 
-#include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
-#include <Cesium3DTiles/Schema.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -29,6 +27,8 @@
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumTilesetJson/ExtensionContent3dTilesContentVoxels.h>
+#include <CesiumTilesetJson/Schema.h>
 #include <CesiumUtility/CreditSystem.h>
 
 #include <doctest/doctest.h>
@@ -482,7 +482,7 @@ TEST_CASE("Test creating tileset json loader") {
     REQUIRE(pExternal);
 
     const TilesetMetadata& metadata = pExternal->metadata;
-    const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
+    const std::optional<CesiumTilesetJson::Schema>& schema = metadata.schema;
     REQUIRE(schema);
     CHECK(schema->id == "foo");
   }
@@ -499,10 +499,10 @@ TEST_CASE("Test creating tileset json loader") {
         loaderResult.pRootTile->getContent().getExternalContent();
     REQUIRE(pExternal);
     CHECK(pExternal->hasExtension<
-          Cesium3DTiles::ExtensionContent3dTilesContentVoxels>());
+          CesiumTilesetJson::ExtensionContent3dTilesContentVoxels>());
 
     const TilesetMetadata& metadata = pExternal->metadata;
-    const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
+    const std::optional<CesiumTilesetJson::Schema>& schema = metadata.schema;
     REQUIRE(schema);
     CHECK(schema->id == "voxel");
   }

@@ -6,9 +6,7 @@ title: Cesium3DTilesSelection Dependency Graph
 graph TD
   classDef dependencyNode fill:#fff,stroke:#ccc,color:#666,font-weight:bold,font-size:28px
   classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px
-  Cesium3DTilesSelection[Cesium3DTilesSelection] --> Cesium3DTiles[Cesium3DTiles]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> Cesium3DTilesContent[Cesium3DTilesContent]
-  Cesium3DTilesSelection[Cesium3DTilesSelection] --> Cesium3DTilesReader[Cesium3DTilesReader]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumAsync[CesiumAsync]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumGeometry[CesiumGeometry]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumGeospatial[CesiumGeospatial]
@@ -17,6 +15,8 @@ graph TD
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumImage[CesiumImage]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumQuantizedMeshTerrain[CesiumQuantizedMeshTerrain]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumRasterOverlays[CesiumRasterOverlays]
+  Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumTilesetJson[CesiumTilesetJson]
+  Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumTilesetJsonReader[CesiumTilesetJsonReader]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumUtility[CesiumUtility]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> CesiumVectorData[CesiumVectorData]
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> draco_draco{{draco::draco}}
@@ -25,4 +25,4 @@ graph TD
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> spdlog_spdlog{{spdlog::spdlog}}
   Cesium3DTilesSelection[Cesium3DTilesSelection] --> tinyxml2_tinyxml2{{tinyxml2::tinyxml2}}
   class draco_draco,libmorton_libmorton,nonstd_expected-lite,spdlog_spdlog,tinyxml2_tinyxml2 dependencyNode
-  class Cesium3DTiles,Cesium3DTilesContent,Cesium3DTilesReader,CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfReader,CesiumImage,CesiumQuantizedMeshTerrain,CesiumRasterOverlays,CesiumUtility,CesiumVectorData,Cesium3DTilesSelection libraryNode
+  class Cesium3DTilesContent,CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfReader,CesiumImage,CesiumQuantizedMeshTerrain,CesiumRasterOverlays,CesiumTilesetJson,CesiumTilesetJsonReader,CesiumUtility,CesiumVectorData,Cesium3DTilesSelection libraryNode

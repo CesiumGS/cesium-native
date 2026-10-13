@@ -1,6 +1,3 @@
-#include <Cesium3DTiles/BoundingVolume.h>
-#include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
-#include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesContent/TileBoundingVolumes.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
@@ -8,6 +5,9 @@
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumTilesetJson/BoundingVolume.h>
+#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeCylinder.h>
+#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeS2.h>
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
@@ -16,10 +16,10 @@
 #include <optional>
 
 using namespace doctest;
-using namespace Cesium3DTiles;
 using namespace Cesium3DTilesContent;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
+using namespace CesiumTilesetJson;
 using namespace CesiumUtility;
 
 TEST_CASE("TileBoundingVolumes") {

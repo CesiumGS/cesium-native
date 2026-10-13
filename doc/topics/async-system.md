@@ -26,7 +26,7 @@ Unfortunately, there is inevitably at least a little bit of tile loading work th
 
 An `AsyncSystem` object manages the other objects we use to schedule work and wait for its completion. During initialization, an application [constructs an AsyncSystem object](#creating-an-asyncsystem) and passes it to Cesium Native, which in turn uses it in all operations that might complete asynchronously. `AsyncSystem` instances can be safely and efficiently stored and copied by value; this makes it easy to make them available wherever they're needed, including in lambda captures. On the other hand, holding a reference to an `AsyncSystem` object is very bug-prone in asynchronous code; the lifetime of the reference holder can be quite different from the code that uses it and hard to reason about. It is idiomatic to pass a `const` reference to an `AsyncSystem` object as a parameter to a function, but that reference must be copied to a value if it will be used outside of the lifetime of the function. For example, in the following code, the `asyncSystem` function parameter is copied to a constant value member in the inner lambda:
 
-\snippet{trimleft} Cesium3DTilesReader/src/SubtreeFileReader.cpp async-system-store-in-lambda
+\snippet{trimleft} CesiumTilesetJsonReader/src/SubtreeFileReader.cpp async-system-store-in-lambda
 
 ## Future<T> {#future}
 

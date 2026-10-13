@@ -1,12 +1,12 @@
 #pragma once
 
-#include <Cesium3DTiles/Asset.h>
-#include <Cesium3DTiles/GroupMetadata.h>
-#include <Cesium3DTiles/Properties.h>
-#include <Cesium3DTiles/Schema.h>
-#include <Cesium3DTiles/Statistics.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <CesiumAsync/SharedFuture.h>
+#include <CesiumTilesetJson/Asset.h>
+#include <CesiumTilesetJson/GroupMetadata.h>
+#include <CesiumTilesetJson/Properties.h>
+#include <CesiumTilesetJson/Schema.h>
+#include <CesiumTilesetJson/Statistics.h>
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <optional>
@@ -23,7 +23,7 @@ namespace Cesium3DTilesSelection {
 
 /**
  * @brief Holds the metadata associated with a @ref Tileset or an external
- * tileset. This holds all of the fields of @ref Cesium3DTiles::Tileset
+ * tileset. This holds all of the fields of @ref CesiumTilesetJson::Tileset
  * except for the root tile.
  */
 class CESIUM3DTILESSELECTION_API TilesetMetadata
@@ -34,18 +34,18 @@ public:
   /**
    * @brief Metadata about the entire tileset.
    */
-  Cesium3DTiles::Asset asset;
+  CesiumTilesetJson::Asset asset;
 
   /**
    * @brief A dictionary object of metadata about per-feature properties.
    */
-  std::unordered_map<std::string, Cesium3DTiles::Properties> properties;
+  std::unordered_map<std::string, CesiumTilesetJson::Properties> properties;
 
   /**
    * @brief An object defining the structure of metadata classes and enums. When
    * this is defined, then `schemaUri` shall be undefined.
    */
-  std::optional<Cesium3DTiles::Schema> schema;
+  std::optional<CesiumTilesetJson::Schema> schema;
 
   /**
    * @brief The URI (or IRI) of the external schema file. When this is defined,
@@ -56,19 +56,19 @@ public:
   /**
    * @brief An object containing statistics about metadata entities.
    */
-  std::optional<Cesium3DTiles::Statistics> statistics;
+  std::optional<CesiumTilesetJson::Statistics> statistics;
 
   /**
    * @brief An array of groups that tile content may belong to. Each element of
    * this array is a metadata entity that describes the group. The tile content
    * `group` property is an index into this array.
    */
-  std::vector<Cesium3DTiles::GroupMetadata> groups;
+  std::vector<CesiumTilesetJson::GroupMetadata> groups;
 
   /**
    * @brief A metadata entity that is associated with this tileset.
    */
-  std::optional<Cesium3DTiles::MetadataEntity> metadata;
+  std::optional<CesiumTilesetJson::MetadataEntity> metadata;
 
   /**
    * @brief The error, in meters, introduced if this tileset is not rendered. At

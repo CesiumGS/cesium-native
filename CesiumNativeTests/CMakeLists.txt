@@ -5,11 +5,8 @@ configure_cesium_library(cesium-native-tests)
 # Add tests here, ensure they define the TEST_SOURCES / TEST_HEADERS
 # properties.
 set(cesium_native_targets
-    Cesium3DTiles
     Cesium3DTilesContent
-    Cesium3DTilesReader
     Cesium3DTilesSelection
-    Cesium3DTilesWriter
     CesiumAsync
     CesiumGeometry
     CesiumGeospatial
@@ -25,6 +22,9 @@ set(cesium_native_targets
     CesiumVectorOverlays
     CesiumQuantizedMeshTerrain
     CesiumRasterOverlays
+    CesiumTilesetJson
+    CesiumTilesetJsonReader
+    CesiumTilesetJsonWriter
     CesiumUtility
 )
 
