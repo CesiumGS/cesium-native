@@ -1,8 +1,9 @@
 #pragma once
 
+#include <Cesium3DTilesContent/ImplicitTileSubdivisionScheme.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
-#include <CesiumTilesetJson/Subtree.h>
+#include <CesiumGltf/Model.h>
 
 #include <optional>
 
@@ -11,35 +12,27 @@ struct QuadtreeTileID;
 struct OctreeTileID;
 } // namespace CesiumGeometry
 
+namespace CesiumGltf {
+struct Extension3dTilesSubtree;
+struct Availability;
+} // namespace CesiumGltf
+
 namespace CesiumTilesetJson {
-struct ImplicitTiling;
+struct Subtree;
 } // namespace CesiumTilesetJson
 
 namespace Cesium3DTilesContent {
-
 /**
- * @brief Indicates how an implicit tile is subdivided.
- */
-enum class ImplicitTileSubdivisionScheme {
-  /**
-   * @brief Implicit tiles are divided into four children, forming a quadree.
-   */
-  Quadtree,
-
-  /**
-   * @brief Implicit tiles are divided into eight children, forming an octree.
-   */
-  Octree
-};
-
-/**
- * @brief Supports querying and modifying the various types of availablity
- * information included in a @ref CesiumTilesetJson::Subtree.
+ * @brief Supports querying and modifying the various types of availability
+ * information included in a 3D Tiles subtree.
  */
 class SubtreeAvailability {
 public:
   /**
-   * @brief Creates an instance from a `Subtree`.
+   * @brief Creates an instance from a @ref CesiumTilesetJson::Subtree in 3D
+   * Tiles 1.1. This upgrades the subtree to its equivalent representation in 3D
+   * Tiles 2.0, as a @ref CesiumGltf::Model containing the
+   * @ref CesiumGltf::Extension3DTilesSubtree extension.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
    * octree).
@@ -52,6 +45,22 @@ public:
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
       CesiumTilesetJson::Subtree&& subtree) noexcept;
+
+  /**
+   * @brief Creates an instance from a @ref CesiumGltf::Model containing the
+   * @ref CesiumGltf::Extension3DTilesSubtree extension.
+   *
+   * @param subdivisionScheme The subdivision scheme of the subtree (quadtree or
+   * octree).
+   * @param levelsInSubtree The number of levels in this subtree.
+   * @param model The glTF model with the 3DTILES_subtree extension.
+   * @return The subtree availability, or std::nullopt if the subtree definition
+   * is invalid.
+   */
+  static std::optional<SubtreeAvailability> fromGltf(
+      ImplicitTileSubdivisionScheme subdivisionScheme,
+      uint32_t levelsInSubtree,
+      CesiumGltf::Model&& model) noexcept;
 
   /**
    * @brief Creates an empty instance with the specified tile availability. All
@@ -136,18 +145,19 @@ public:
    * buffer, the buffer is expected to be in `subtree`.
    * @param subtreeAvailability A view on the subtree availability. If backed by
    * a buffer, the buffer is expected to be in `subtree`.
-   * @param contentAvailability A view on the content availability. If backed by
-   * a buffer, the buffer is expected to be in `subtree`.
-   * @param subtree The subtree with which this instance queries and modifies
-   * availability information.
+   * @param contentAvailability An optional view on the content availability. If
+   * backed by a buffer, the buffer is expected to be in `subtree`.
+   * @param model The glTF model with which this instance queries and modifies
+   * availability information. If the model does not contain @ref
+   * CesiumGltf::Extension3DTilesSubtree, the extension will be added.
    */
   SubtreeAvailability(
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
       AvailabilityView tileAvailability,
       AvailabilityView subtreeAvailability,
-      std::vector<AvailabilityView>&& contentAvailability,
-      CesiumTilesetJson::Subtree&& subtree);
+      AvailabilityView contentAvailability,
+      CesiumGltf::Model&& model);
 
   /**
    * @brief Determines if a given tile in the quadtree is available.
@@ -233,21 +243,18 @@ public:
    */
   bool isContentAvailable(
       const CesiumGeometry::QuadtreeTileID& subtreeId,
-      const CesiumGeometry::QuadtreeTileID& tileId,
-      size_t contentId) const noexcept;
+      const CesiumGeometry::QuadtreeTileID& tileId) const noexcept;
 
   /**
    * @brief Determines if content for a given tile in the octree is available.
    *
    * @param subtreeId The ID of the root tile of the subtree.
    * @param tileId The ID of the tile to query.
-   * @param contentId The ID of the content to query.
    * @return True if the tile's content is available; otherwise, false.
    */
   bool isContentAvailable(
       const CesiumGeometry::OctreeTileID& subtreeId,
-      const CesiumGeometry::OctreeTileID& tileId,
-      size_t contentId) const noexcept;
+      const CesiumGeometry::OctreeTileID& tileId) const noexcept;
 
   /**
    * @brief Determines if content for a given tile in the subtree is available.
@@ -256,13 +263,11 @@ public:
    * root of the subtree.
    * @param relativeTileMortonId The Morton ID of the tile to query. See
    * @ref ImplicitTilingUtilities::computeRelativeMortonIndex.
-   * @param contentId The ID of the content to query.
    * @return True if the tile's content is available; otherwise, false.
    */
   bool isContentAvailable(
       uint32_t relativeTileLevel,
-      uint64_t relativeTileMortonId,
-      size_t contentId) const noexcept;
+      uint64_t relativeTileMortonId) const noexcept;
 
   /**
    * @brief Sets the availability state of the content for a given tile in the
@@ -270,13 +275,11 @@ public:
    *
    * @param subtreeId The ID of the root tile of the subtree.
    * @param tileId The ID of the tile for which to set content availability.
-   * @param contentId The ID of the content to query.
    * @param isAvailable The new availability state for the tile's content.
    */
   void setContentAvailable(
       const CesiumGeometry::QuadtreeTileID& subtreeId,
       const CesiumGeometry::QuadtreeTileID& tileId,
-      size_t contentId,
       bool isAvailable) noexcept;
 
   /**
@@ -285,13 +288,11 @@ public:
    *
    * @param subtreeId The ID of the root tile of the subtree.
    * @param tileId The ID of the tile for which to set content availability.
-   * @param contentId The ID of the content to query.
    * @param isAvailable The new availability state for the tile's content.
    */
   void setContentAvailable(
       const CesiumGeometry::OctreeTileID& subtreeId,
       const CesiumGeometry::OctreeTileID& tileId,
-      size_t contentId,
       bool isAvailable) noexcept;
 
   /**
@@ -303,13 +304,11 @@ public:
    * @param relativeTileMortonId The Morton ID of the tile for which to set
    * content availability. See
    * @ref ImplicitTilingUtilities::computeRelativeMortonIndex.
-   * @param contentId The ID of the content to query.
    * @param isAvailable The new availability state for the tile's content.
    */
   void setContentAvailable(
       uint32_t relativeTileLevel,
       uint64_t relativeTileMortonId,
-      size_t contentId,
       bool isAvailable) noexcept;
 
   /**
@@ -406,11 +405,10 @@ public:
       bool isAvailable) noexcept;
 
   /**
-   * @brief Gets the subtree that this instance queries and modifies.
+   * Gets the @ref CesiumGltf::Model representation of the subtree that this
+   * instance queries and modifies.
    */
-  const CesiumTilesetJson::Subtree& getSubtree() const noexcept {
-    return this->_subtree;
-  }
+  const CesiumGltf::Model& getModel() const noexcept { return this->_model; }
 
 private:
   bool isAvailable(
@@ -421,7 +419,7 @@ private:
       uint32_t relativeTileLevel,
       uint64_t relativeTileMortonId,
       AvailabilityView& availabilityView,
-      CesiumTilesetJson::Availability& availability,
+      CesiumGltf::Availability& availability,
       bool isAvailable) noexcept;
 
   bool isAvailableUsingBufferView(
@@ -437,17 +435,18 @@ private:
   void updateAvailabilityViews();
 
   void convertConstantAvailabilityToBitstream(
-      CesiumTilesetJson::Subtree& subtree,
+      CesiumGltf::Model& model,
       uint64_t numberOfTiles,
       SubtreeAvailability::AvailabilityView& availabilityView,
-      CesiumTilesetJson::Availability& availability);
+      CesiumGltf::Availability& availability);
 
   uint32_t _powerOf2;
   uint32_t _levelsInSubtree;
-  CesiumTilesetJson::Subtree _subtree;
   uint32_t _childCount;
+  CesiumGltf::Model _model;
+  CesiumGltf::Extension3dTilesSubtree* _pSubtree;
   AvailabilityView _tileAvailability;
   AvailabilityView _subtreeAvailability;
-  std::vector<AvailabilityView> _contentAvailability;
+  AvailabilityView _contentAvailability;
 };
 } // namespace Cesium3DTilesContent

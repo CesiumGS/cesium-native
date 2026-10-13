@@ -118,8 +118,7 @@ std::vector<Tile> populateSubtree(
               relativeChildMortonID)) {
         if (subtreeAvailability.isContentAvailable(
                 relativeChildLevel,
-                relativeChildMortonID,
-                0)) {
+                relativeChildMortonID)) {
           children.emplace_back(&loader, childID);
         } else {
           children.emplace_back(&loader, childID, TileEmptyContent{});
@@ -314,7 +313,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // subtree is available, so check if tile has content or not. If it has, then
   // request it
-  if (!subtreeIt->second.isContentAvailable(subtreeID, *pOctreeID, 0)) {
+  if (!subtreeIt->second.isContentAvailable(subtreeID, *pOctreeID)) {
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
