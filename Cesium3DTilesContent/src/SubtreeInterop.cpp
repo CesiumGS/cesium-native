@@ -25,9 +25,9 @@ convertBufferCesium(CesiumGltf::BufferCesium&& buffer) {
 inline void moveCommonProperties(
     CesiumUtility::ExtensibleObject& destination,
     CesiumUtility::ExtensibleObject& source) {
-  source.extensions = std::move(destination.extensions);
-  source.extras = std::move(destination.extras);
-  source.unknownProperties = std::move(destination.unknownProperties);
+  destination.extensions = std::move(source.extensions);
+  destination.extras = std::move(source.extras);
+  destination.unknownProperties = std::move(source.unknownProperties);
 }
 } // namespace
 
@@ -35,7 +35,6 @@ CesiumGltf::Buffer
 SubtreeInterop::convertBuffer(CesiumTilesetJson::Buffer&& buffer) {
   CesiumGltf::Buffer result;
   moveCommonProperties(result, buffer);
-
   if (buffer.name) {
     result.name = std::move(*buffer.name);
   }
@@ -50,7 +49,6 @@ CesiumUtility::Result<CesiumTilesetJson::Buffer>
 SubtreeInterop::convertBuffer(CesiumGltf::Buffer&& buffer) {
   CesiumTilesetJson::Buffer result;
   moveCommonProperties(result, buffer);
-
   if (buffer.name.size() > 0) {
     result.name.emplace(std::move(buffer.name));
   }
@@ -90,6 +88,7 @@ SubtreeInterop::convertBufferView(CesiumTilesetJson::BufferView&& bufferView) {
   result.buffer = static_cast<int32_t>(bufferView.buffer);
   result.byteLength = bufferView.byteLength;
   result.byteOffset = bufferView.byteOffset;
+
   return result;
 }
 
@@ -114,6 +113,7 @@ SubtreeInterop::convertBufferView(CesiumGltf::BufferView&& bufferView) {
         "`unknownProperties`.");
     result.unknownProperties.emplace("byteStride", *bufferView.byteStride);
   }
+
   return Result(std::move(result), std::move(errors));
 }
 
@@ -125,12 +125,13 @@ CesiumGltf::Availability SubtreeInterop::convertAvailability(
   if (availability.bitstream) {
     result.bitstream = static_cast<int32_t>(*availability.bitstream);
   } else {
-    // old version uses bufferView property instead of bitstream. Same semantic
-    // either way
-    auto bufferViewIt = availability.unknownProperties.find("bufferView");
-    if (bufferViewIt != availability.unknownProperties.end()) {
+    // An older version of the subtree format uses "bufferView" instead of
+    // "bitstream". Same semantic either way
+    auto bufferViewIt = result.unknownProperties.find("bufferView");
+    if (bufferViewIt != result.unknownProperties.end()) {
       result.bitstream =
           bufferViewIt->second.getSafeNumberOrDefault<int32_t>(-1);
+      result.unknownProperties.erase(bufferViewIt);
     }
   }
   result.availableCount = availability.availableCount;
@@ -142,6 +143,7 @@ CesiumGltf::Availability SubtreeInterop::convertAvailability(
       CesiumGltf::Availability::Constant::AVAILABLE ==
       CesiumTilesetJson::Availability::Constant::AVAILABLE);
   result.constant = availability.constant;
+
   return result;
 }
 
