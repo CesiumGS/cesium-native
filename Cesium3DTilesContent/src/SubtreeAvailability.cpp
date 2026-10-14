@@ -1,3 +1,4 @@
+#include <Cesium3DTilesContent/ImplicitTileSubdivisionScheme.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <Cesium3DTilesContent/SubtreeInterop.h>
@@ -10,12 +11,10 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumJsonReader/JsonReader.h>
-#include <CesiumTilesetJson/Availability.h>
-#include <CesiumTilesetJson/Buffer.h>
-#include <CesiumTilesetJson/BufferView.h>
 #include <CesiumTilesetJson/Subtree.h>
 #include <CesiumTilesetJsonReader/SubtreeFileReader.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/joinToString.h>
 
 #include <spdlog/logger.h>

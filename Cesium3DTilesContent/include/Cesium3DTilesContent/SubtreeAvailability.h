@@ -265,7 +265,6 @@ public:
    *
    * @param subtreeId The ID of the root tile of the subtree.
    * @param tileId The ID of the tile to query.
-   * @param contentId The ID of the content to query.
    * @return True if the tile's content is available; otherwise, false.
    */
   bool isContentAvailable(

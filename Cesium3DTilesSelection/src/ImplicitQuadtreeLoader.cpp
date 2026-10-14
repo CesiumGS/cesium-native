@@ -4,6 +4,7 @@
 
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
+#include <Cesium3DTilesContent/ImplicitTileSubdivisionScheme.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/BoundingVolume.h>

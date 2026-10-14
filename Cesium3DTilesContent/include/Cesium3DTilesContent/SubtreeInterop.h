@@ -77,7 +77,7 @@ public:
    * @brief Converts a @ref CesiumGltf::Availability to a @ref
    * CesiumTilesetJson::Availability.
    *
-   * @param availability The @CesiumGltf::Availability to convert.
+   * @param availability The @ref CesiumGltf::Availability to convert.
    * @returns The converted availability.
    */
   static CesiumTilesetJson::Availability
@@ -90,9 +90,9 @@ public:
    *
    * This attempts to merge all of @ref
    * CesiumTilesetJson::Subtree::contentAvailability into one
-   * @CesiumGltf::Availability on @ref
+   * @ref CesiumGltf::Availability on @ref
    * CesiumGltf::Extension3dTilesSubtree::contentAvailability. Therefore, all
-   * @ref CesiumTilesetJson::Subtree:buffers should be resolved and loaded into
+   * @ref CesiumTilesetJson::Subtree::buffers should be resolved and loaded into
    * memory to avoid conversion errors.
    *
    * @param subtree The @ref CesiumTilesetJson::Subtree to convert.

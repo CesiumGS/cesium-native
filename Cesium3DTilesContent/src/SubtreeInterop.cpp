@@ -1,11 +1,15 @@
 #include <Cesium3DTilesContent/SubtreeInterop.h>
+#include <CesiumGltf/BufferCesium.h>
 #include <CesiumGltf/Extension3dTilesSubtree.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumTilesetJson/Subtree.h>
+#include <CesiumUtility/ExtensibleObject.h>
 
-#include <algorithm>
 #include <bit>
+#include <cstdint>
 #include <span>
+#include <string>
+#include <utility>
 
 using namespace CesiumUtility;
 
@@ -251,7 +255,7 @@ mergeContentAvailability(CesiumTilesetJson::Subtree& subtree) {
 
     std::span<std::byte> availabilityData(
         buffer.cesium.data.data() + bufferView.byteOffset,
-        bufferView.byteLength);
+        size_t(bufferView.byteLength));
     for (size_t i = 0; i < bitstreamData.size(); i++) {
       bitstreamData[i] |= availabilityData[i];
     }
