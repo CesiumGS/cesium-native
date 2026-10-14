@@ -1,4 +1,5 @@
-#include <Cesium3DTilesContent/B3dmToGltfConverter.h>
+﻿#include <Cesium3DTilesContent/B3dmToGltfConverter.h>
+#include <Cesium3DTilesContent/VctrToGltfConverter.h>
 #include <Cesium3DTilesContent/BinaryToGltfConverter.h>
 #include <Cesium3DTilesContent/CmptToGltfConverter.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
@@ -10,6 +11,7 @@ namespace Cesium3DTilesContent {
 
 void registerAllTileContentTypes() {
   GltfConverters::registerMagic("glTF", BinaryToGltfConverter::convert);
+  GltfConverters::registerMagic("vctr", VctrToGltfConverter::convert);
   GltfConverters::registerMagic("b3dm", B3dmToGltfConverter::convert);
   GltfConverters::registerMagic("cmpt", CmptToGltfConverter::convert);
   GltfConverters::registerMagic("i3dm", I3dmToGltfConverter::convert);
