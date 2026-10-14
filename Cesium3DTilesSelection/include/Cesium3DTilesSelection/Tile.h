@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesContent/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -288,7 +288,8 @@ public:
    *
    * @return The bounding volume.
    */
-  const BoundingVolume& getBoundingVolume() const noexcept {
+  const Cesium3DTilesContent::BoundingVolume&
+  getBoundingVolume() const noexcept {
     return this->_boundingVolume;
   }
 
@@ -299,7 +300,8 @@ public:
    *
    * @param value The bounding volume.
    */
-  void setBoundingVolume(const BoundingVolume& value) noexcept {
+  void setBoundingVolume(
+      const Cesium3DTilesContent::BoundingVolume& value) noexcept {
     this->_boundingVolume = value;
   }
 
@@ -314,7 +316,8 @@ public:
    *
    * @return The viewer request volume, or an empty optional.
    */
-  const std::optional<BoundingVolume>& getViewerRequestVolume() const noexcept {
+  const std::optional<Cesium3DTilesContent::BoundingVolume>&
+  getViewerRequestVolume() const noexcept {
     return this->_viewerRequestVolume;
   }
 
@@ -325,8 +328,9 @@ public:
    *
    * @param value The viewer request volume.
    */
-  void
-  setViewerRequestVolume(const std::optional<BoundingVolume>& value) noexcept {
+  void setViewerRequestVolume(
+      const std::optional<Cesium3DTilesContent::BoundingVolume>&
+          value) noexcept {
     this->_viewerRequestVolume = value;
   }
 
@@ -464,7 +468,7 @@ public:
    *
    * @see Tile::getBoundingVolume
    */
-  const std::optional<BoundingVolume>&
+  const std::optional<Cesium3DTilesContent::BoundingVolume>&
   getContentBoundingVolume() const noexcept {
     return this->_contentBoundingVolume;
   }
@@ -478,7 +482,8 @@ public:
    * @param value The content bounding volume
    */
   void setContentBoundingVolume(
-      const std::optional<BoundingVolume>& value) noexcept {
+      const std::optional<Cesium3DTilesContent::BoundingVolume>&
+          value) noexcept {
     this->_contentBoundingVolume = value;
   }
 
@@ -693,9 +698,9 @@ private:
   // Properties from tileset.json.
   // These are immutable after the tile leaves TileState::Unloaded.
   TileID _id;
-  BoundingVolume _boundingVolume;
-  std::optional<BoundingVolume> _viewerRequestVolume;
-  std::optional<BoundingVolume> _contentBoundingVolume;
+  Cesium3DTilesContent::BoundingVolume _boundingVolume;
+  std::optional<Cesium3DTilesContent::BoundingVolume> _viewerRequestVolume;
+  std::optional<Cesium3DTilesContent::BoundingVolume> _contentBoundingVolume;
   double _geometricError;
   TileRefine _refine;
   glm::dmat4x4 _transform;

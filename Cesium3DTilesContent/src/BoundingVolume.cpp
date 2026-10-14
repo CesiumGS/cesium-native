@@ -1,4 +1,4 @@
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesContent/BoundingVolume.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
@@ -23,7 +23,7 @@
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 
 BoundingVolume transformBoundingVolume(
     const glm::dmat4x4& transform,

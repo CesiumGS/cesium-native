@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesContent/BoundingVolume.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileID.h>
@@ -16,6 +16,8 @@
 #include <cstddef>
 #include <memory>
 #include <span>
+
+using namespace Cesium3DTilesContent;
 
 namespace Cesium3DTilesSelection {
 struct TileContentLoadInfo {

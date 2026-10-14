@@ -5,7 +5,7 @@
 #include "TileContentLoadInfo.h"
 #include "TilesetJsonLoader.h"
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesContent/BoundingVolume.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
@@ -80,6 +80,7 @@
 #include <variant>
 #include <vector>
 
+using namespace Cesium3DTilesContent;
 using namespace CesiumGltfContent;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;

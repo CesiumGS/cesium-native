@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesContent/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <CesiumGeometry/CullingVolume.h>
 
@@ -16,8 +16,9 @@ namespace Cesium3DTilesSelection {
  * Cesium3DTilesSelection::BoundingVolume, which allows more general filtering
  * (e.g., on geographic areas).
  */
-using GeneralCullingVolume =
-    std::variant<CesiumGeometry::CullingVolume, BoundingVolume>;
+using GeneralCullingVolume = std::variant<
+    CesiumGeometry::CullingVolume,
+    Cesium3DTilesContent::BoundingVolume>;
 
 /**
  * @brief Test if a general culling volume intersects a bounding volume.
@@ -28,6 +29,6 @@ using GeneralCullingVolume =
  */
 bool CESIUM3DTILESSELECTION_API isBoundingVolumeVisible(
     const GeneralCullingVolume& cullingVolume,
-    const BoundingVolume& boundingVolume);
+    const Cesium3DTilesContent::BoundingVolume& boundingVolume);
 
 } // namespace Cesium3DTilesSelection

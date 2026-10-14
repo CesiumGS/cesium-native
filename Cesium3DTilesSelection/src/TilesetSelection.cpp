@@ -1,4 +1,4 @@
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesContent/BoundingVolume.h>
 #include <Cesium3DTilesSelection/ITileExcluder.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -36,6 +36,7 @@
 #include <span>
 #include <vector>
 
+using namespace Cesium3DTilesContent;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumRasterOverlays;

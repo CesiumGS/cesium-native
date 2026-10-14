@@ -1,6 +1,6 @@
 #include "LayerJsonTerrainLoader.h"
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesContent/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -51,8 +51,9 @@
 #include <variant>
 #include <vector>
 
-using namespace CesiumAsync;
+using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
+using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumQuantizedMeshTerrain;

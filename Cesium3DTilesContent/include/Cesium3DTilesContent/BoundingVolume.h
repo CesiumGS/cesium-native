@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTilesContent/Library.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
@@ -13,7 +13,7 @@
 #include <optional>
 #include <variant>
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTilesContent {
 
 /**
  * @brief A bounding volume.
@@ -47,7 +47,7 @@ typedef std::variant<
  * @param boundingVolume The bounding volume.
  * @return The transformed bounding volume.
  */
-CESIUM3DTILESSELECTION_API BoundingVolume transformBoundingVolume(
+CESIUM3DTILESCONTENT_API BoundingVolume transformBoundingVolume(
     const glm::dmat4x4& transform,
     const BoundingVolume& boundingVolume);
 
@@ -57,7 +57,7 @@ CESIUM3DTILESSELECTION_API BoundingVolume transformBoundingVolume(
  * @param boundingVolume The bounding volume.
  * @return The center point.
  */
-CESIUM3DTILESSELECTION_API glm::dvec3
+CESIUM3DTILESCONTENT_API glm::dvec3
 getBoundingVolumeCenter(const BoundingVolume& boundingVolume);
 
 /**
@@ -68,7 +68,7 @@ getBoundingVolumeCenter(const BoundingVolume& boundingVolume);
  * @param ellipsoid The ellipsoid to use for globe calculations.
  * @return The bounding @ref CesiumGeospatial::GlobeRectangle.
  */
-CESIUM3DTILESSELECTION_API std::optional<CesiumGeospatial::GlobeRectangle>
+CESIUM3DTILESCONTENT_API std::optional<CesiumGeospatial::GlobeRectangle>
 estimateGlobeRectangle(
     const BoundingVolume& boundingVolume,
     const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
@@ -82,7 +82,7 @@ estimateGlobeRectangle(
  * @return A pointer to the bounding region, or nullptr is the bounding volume
  * is not a bounding region.
  */
-CESIUM3DTILESSELECTION_API const CesiumGeospatial::BoundingRegion*
+CESIUM3DTILESCONTENT_API const CesiumGeospatial::BoundingRegion*
 getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume);
 
 /**
@@ -93,7 +93,7 @@ getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume);
  * @param ellipsoid The ellipsoid used for this @ref BoundingVolume.
  * @return The oriented bounding box.
  */
-CESIUM3DTILESSELECTION_API CesiumGeometry::OrientedBoundingBox
+CESIUM3DTILESCONTENT_API CesiumGeometry::OrientedBoundingBox
 getOrientedBoundingBoxFromBoundingVolume(
     const BoundingVolume& boundingVolume,
     const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
@@ -101,6 +101,6 @@ getOrientedBoundingBoxFromBoundingVolume(
 /**
  * @brief Returns true if two bounding volumes intersect.
  */
-CESIUM3DTILESSELECTION_API bool
+CESIUM3DTILESCONTENT_API bool
 testIntersection(const BoundingVolume& volume0, const BoundingVolume& volume1);
 } // namespace Cesium3DTilesSelection

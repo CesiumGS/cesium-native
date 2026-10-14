@@ -3,6 +3,7 @@
 #include "TilesetContentManager.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTilesContent/BoundingVolume.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
@@ -75,6 +76,7 @@
 #include <vector>
 
 using namespace doctest;
+using namespace Cesium3DTilesContent;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
