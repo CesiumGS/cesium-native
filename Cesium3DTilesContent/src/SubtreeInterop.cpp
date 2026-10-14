@@ -7,6 +7,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumTilesetJson/Availability.h>
 #include <CesiumTilesetJson/Buffer.h>
+#include <CesiumTilesetJson/BufferCesium.h>
 #include <CesiumTilesetJson/BufferView.h>
 #include <CesiumTilesetJson/Subtree.h>
 #include <CesiumUtility/Assert.h>
@@ -15,6 +16,7 @@
 #include <CesiumUtility/Result.h>
 
 #include <bit>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <span>
