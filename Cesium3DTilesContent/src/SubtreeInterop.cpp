@@ -1,15 +1,26 @@
 #include <Cesium3DTilesContent/SubtreeInterop.h>
+#include <CesiumGltf/Availability.h>
+#include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferCesium.h>
+#include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/Extension3dTilesSubtree.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumTilesetJson/Availability.h>
+#include <CesiumTilesetJson/Buffer.h>
+#include <CesiumTilesetJson/BufferView.h>
 #include <CesiumTilesetJson/Subtree.h>
+#include <CesiumUtility/Assert.h>
+#include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/ExtensibleObject.h>
+#include <CesiumUtility/Result.h>
 
 #include <bit>
 #include <cstdint>
+#include <limits>
 #include <span>
 #include <string>
 #include <utility>
+#include <vector>
 
 using namespace CesiumUtility;
 
