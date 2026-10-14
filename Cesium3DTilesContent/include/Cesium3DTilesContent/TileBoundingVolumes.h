@@ -8,20 +8,35 @@
 
 #include <optional>
 
+namespace CesiumGltf {
+struct Shape;
+} // namespace CesiumGltf
+
 namespace CesiumTilesetJson {
 struct BoundingVolume;
-}
+} // namespace CesiumTilesetJson
 
 namespace Cesium3DTilesContent {
 
 /**
- * @brief Provides functions for extracting bounding volumes types from the
- * vectors stored in @ref CesiumTilesetJson::BoundingVolume.
+ * @brief Provides functions for extracting bounding volumes types from @ref
+ * CesiumGltf::Shape or @ref CesiumTilesetJson::BoundingVolume.
  */
 class TileBoundingVolumes {
 public:
   /**
    * @brief Gets the bounding box defined in a
+   * @ref CesiumGltf::Shape, if any.
+   *
+   * @param shape The shape from which to get the box.
+   * @return The box, or `std::nullopt` if the shape does not
+   * define a box. The box is defined in the tile's coordinate system.
+   */
+  static std::optional<CesiumGeometry::OrientedBoundingBox>
+  getOrientedBoundingBox(const CesiumGltf::Shape& shape);
+
+  /**
+   * @brief Gets a bounding box defined in a
    * @ref CesiumTilesetJson::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the box.
@@ -44,6 +59,20 @@ public:
   static void setOrientedBoundingBox(
       CesiumTilesetJson::BoundingVolume& boundingVolume,
       const CesiumGeometry::OrientedBoundingBox& boundingBox);
+
+  /**
+   * @brief Gets the bounding region defined in a
+   * @ref CesiumGltf::Shape with the @ref
+   * CesiumGltf::Extension3DTilesShapeEllipsoidRegion, if any.
+   *
+   * @param shape The shape from which to get the region.
+   * @param ellipsoid The ellipsoid on which the region should be defined.
+   * @return The region, or `std::nullopt` if the bounding volume does not
+   * define a region. The region is defined in geographic coordinates.
+   */
+  static std::optional<CesiumGeospatial::BoundingRegion> getBoundingRegion(
+      const CesiumGltf::Shape& shape,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Gets the bounding region defined in a
@@ -74,6 +103,17 @@ public:
 
   /**
    * @brief Gets the bounding sphere defined in a
+   * @ref CesiumGltf::Shape, if any.
+   *
+   * @param shape The shape from which to get the sphere.
+   * @return The sphere, or `std::nullopt` if the shape does not
+   * define a sphere. The sphere is defined in the tile's coordinate system.
+   */
+  static std::optional<CesiumGeometry::BoundingSphere>
+  getBoundingSphere(const CesiumGltf::Shape& shape);
+
+  /**
+   * @brief Gets the bounding sphere defined in a
    * @ref CesiumTilesetJson::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the sphere.
@@ -96,6 +136,22 @@ public:
   static void setBoundingSphere(
       CesiumTilesetJson::BoundingVolume& boundingVolume,
       const CesiumGeometry::BoundingSphere& boundingSphere);
+
+  /**
+   * @brief Gets the S2 cell bounding volume defined in the
+   * `3DTILES_shape_S2` extension of a
+   * @ref CesiumGltf::Shape, if any.
+   *
+   * @param shape The shape from which to get the S2 cell bounding volume.
+   * @param ellipsoid The ellipsoid on which the S2 cell should be defined.
+   * @return The S2 cell bounding volume, or `std::nullopt` if the shape does
+   * not define an S2 cell bounding volume. The S2 cell bounding volume is
+   * defined in geographic coordinates.
+   */
+  static std::optional<CesiumGeospatial::S2CellBoundingVolume>
+  getS2CellBoundingVolume(
+      const CesiumGltf::Shape& shape,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   /**
    * @brief Gets the S2 cell bounding volume defined in the
@@ -128,6 +184,17 @@ public:
   static void setS2CellBoundingVolume(
       CesiumTilesetJson::BoundingVolume& boundingVolume,
       const CesiumGeospatial::S2CellBoundingVolume& s2BoundingVolume);
+
+  /**
+   * @brief Gets the bounding cylinder region defined in the
+   * `3DTILES_shape_cylinder` extension of a @ref CesiumGltf::Shape, if any.
+   *
+   * @param shape The shape from which to get the bounding cylinder.
+   * @return The cylinder region, or `std::nullopt` if the shape does not define
+   * such a region. The cylinder is defined in the tile's coordinate system.
+   */
+  static std::optional<CesiumGeometry::BoundingCylinderRegion>
+  getBoundingCylinderRegion(const CesiumGltf::Shape& shape);
 
   /**
    * @brief Gets the bounding cylinder region defined in the

@@ -6,6 +6,10 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltf/Extension3dTilesShapeCylinderRegion.h>
+#include <CesiumGltf/Extension3dTilesShapeEllipsoidRegion.h>
+#include <CesiumGltf/Extension3dTilesShapeS2.h>
+#include <CesiumGltf/Shape.h>
 #include <CesiumTilesetJson/BoundingVolume.h>
 #include <CesiumTilesetJson/Extension3dTilesBoundingVolumeCylinder.h>
 #include <CesiumTilesetJson/Extension3dTilesBoundingVolumeS2.h>
@@ -15,13 +19,31 @@
 #include <optional>
 #include <vector>
 
+using namespace CesiumGltf;
 using namespace CesiumTilesetJson;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesContent {
 
-std::optional<OrientedBoundingBox> TileBoundingVolumes::getOrientedBoundingBox(
+/*static*/ std::optional<OrientedBoundingBox>
+TileBoundingVolumes::getOrientedBoundingBox(const CesiumGltf::Shape& shape) {
+  if (!shape.box) {
+    return std::nullopt;
+  }
+
+  const std::vector<double>& size = shape.box->size;
+  if (size.size() < 3) {
+    return std::nullopt;
+  }
+
+  return CesiumGeometry::OrientedBoundingBox(
+      glm::dvec3(0.0),
+      glm::dmat3(size[0], 0.0, 0.0, 0.0, size[1], 0.0, 0.0, 0.0, size[2]));
+}
+
+/*static*/ std::optional<OrientedBoundingBox>
+TileBoundingVolumes::getOrientedBoundingBox(
     const BoundingVolume& boundingVolume) {
   if (boundingVolume.box.size() < 12)
     return std::nullopt;
@@ -32,7 +54,7 @@ std::optional<OrientedBoundingBox> TileBoundingVolumes::getOrientedBoundingBox(
       glm::dmat3(a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11]));
 }
 
-void TileBoundingVolumes::setOrientedBoundingBox(
+/*static*/ void TileBoundingVolumes::setOrientedBoundingBox(
     CesiumTilesetJson::BoundingVolume& boundingVolume,
     const CesiumGeometry::OrientedBoundingBox& boundingBox) {
   const glm::dvec3& center = boundingBox.getCenter();
@@ -52,7 +74,27 @@ void TileBoundingVolumes::setOrientedBoundingBox(
       halfAxes[2].z};
 }
 
-std::optional<BoundingRegion> TileBoundingVolumes::getBoundingRegion(
+/*static*/ std::optional<BoundingRegion> TileBoundingVolumes::getBoundingRegion(
+    const CesiumGltf::Shape& shape,
+    const Ellipsoid& ellipsoid) {
+  const auto* pRegionExtension =
+      shape.getExtension<CesiumGltf::Extension3dTilesShapeEllipsoidRegion>();
+
+  if (!pRegionExtension)
+    return std::nullopt;
+
+  return CesiumGeospatial::BoundingRegion(
+      CesiumGeospatial::GlobeRectangle(
+          pRegionExtension->minimumLongitude,
+          pRegionExtension->minimumLatitude,
+          pRegionExtension->maximumLongitude,
+          pRegionExtension->maximumLatitude),
+      pRegionExtension->minimumHeight,
+      pRegionExtension->maximumHeight,
+      ellipsoid);
+}
+
+/*static*/ std::optional<BoundingRegion> TileBoundingVolumes::getBoundingRegion(
     const BoundingVolume& boundingVolume,
     const Ellipsoid& ellipsoid) {
   if (boundingVolume.region.size() < 6)
@@ -81,6 +123,22 @@ void TileBoundingVolumes::setBoundingRegion(
 }
 
 std::optional<BoundingSphere>
+TileBoundingVolumes::getBoundingSphere(const CesiumGltf::Shape& shape) {
+  if (!shape.sphere)
+    return std::nullopt;
+
+  return BoundingSphere(glm::dvec3(0.0), shape.sphere->radius);
+}
+
+void TileBoundingVolumes::setBoundingSphere(
+    CesiumTilesetJson::BoundingVolume& boundingVolume,
+    const CesiumGeometry::BoundingSphere& boundingSphere) {
+  const glm::dvec3& center = boundingSphere.getCenter();
+  boundingVolume
+      .sphere = {center.x, center.y, center.z, boundingSphere.getRadius()};
+}
+
+std::optional<BoundingSphere>
 TileBoundingVolumes::getBoundingSphere(const BoundingVolume& boundingVolume) {
   if (boundingVolume.sphere.size() < 4)
     return std::nullopt;
@@ -95,6 +153,21 @@ void TileBoundingVolumes::setBoundingSphere(
   const glm::dvec3& center = boundingSphere.getCenter();
   boundingVolume
       .sphere = {center.x, center.y, center.z, boundingSphere.getRadius()};
+}
+
+std::optional<S2CellBoundingVolume>
+TileBoundingVolumes::getS2CellBoundingVolume(
+    const CesiumGltf::Shape& shape,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  const auto* pExtension = shape.getExtension<Extension3dTilesShapeS2>();
+  if (!pExtension)
+    return std::nullopt;
+
+  return CesiumGeospatial::S2CellBoundingVolume(
+      CesiumGeospatial::S2CellID::fromToken(pExtension->token),
+      pExtension->minimumHeight,
+      pExtension->maximumHeight,
+      ellipsoid);
 }
 
 std::optional<S2CellBoundingVolume>
@@ -121,6 +194,21 @@ void TileBoundingVolumes::setS2CellBoundingVolume(
   extension.token = s2BoundingVolume.getCellID().toToken();
   extension.minimumHeight = s2BoundingVolume.getMinimumHeight();
   extension.maximumHeight = s2BoundingVolume.getMaximumHeight();
+}
+
+std::optional<BoundingCylinderRegion>
+TileBoundingVolumes::getBoundingCylinderRegion(const CesiumGltf::Shape& shape) {
+  const auto* pExtension =
+      shape.getExtension<Extension3dTilesShapeCylinderRegion>();
+  if (!pExtension)
+    return std::nullopt;
+
+  return CesiumGeometry::BoundingCylinderRegion(
+      glm::dvec3(0.0),
+      glm::dquat(1.0, 0.0, 0.0, 0.0),
+      pExtension->height,
+      glm::dvec2(pExtension->minimumRadius, pExtension->maximumRadius),
+      glm::dvec2(pExtension->minimumAngle, pExtension->maximumAngle));
 }
 
 std::optional<BoundingCylinderRegion>
