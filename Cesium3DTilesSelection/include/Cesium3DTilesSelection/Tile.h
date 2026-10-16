@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileID.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <CesiumUtility/DoublyLinkedList.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -111,10 +111,10 @@ enum class TileLoadState {
  * The @ref Tile::getGeometricError function returns the geometric
  * error of the representation of the renderable content of a tile.
  *
- * The @ref BoundingVolume is given by the @ref Tile::getBoundingVolume
- * function. This bounding volume encloses the renderable content of the
- * tile itself, as well as the renderable content of all children, yielding
- * a spatially coherent hierarchy of bounding volumes.
+ * The @ref Cesium3DTiles::BoundingVolume is given by the @ref
+ * Tile::getBoundingVolume function. This bounding volume encloses the
+ * renderable content of the tile itself, as well as the renderable content of
+ * all children, yielding a spatially coherent hierarchy of bounding volumes.
  *
  * The bounding volume of the content of an individual tile is given
  * by the @ref Tile::getContentBoundingVolume function.
@@ -279,7 +279,7 @@ public:
   void createChildTiles(std::vector<Tile>&& children);
 
   /**
-   * @brief Returns the @ref BoundingVolume of this tile.
+   * @brief Returns the @ref Cesium3DTiles::BoundingVolume of this tile.
    *
    * This is a bounding volume that encloses the content of this tile,
    * as well as the content of all child tiles.
@@ -288,33 +288,34 @@ public:
    *
    * @return The bounding volume.
    */
-  const BoundingVolume& getBoundingVolume() const noexcept {
+  const Cesium3DTiles::BoundingVolume& getBoundingVolume() const noexcept {
     return this->_boundingVolume;
   }
 
   /**
-   * @brief Set the @ref BoundingVolume of this tile.
+   * @brief Set the @ref Cesium3DTiles::BoundingVolume of this tile.
    *
    * This function is not supposed to be called by clients.
    *
    * @param value The bounding volume.
    */
-  void setBoundingVolume(const BoundingVolume& value) noexcept {
+  void setBoundingVolume(const Cesium3DTiles::BoundingVolume& value) noexcept {
     this->_boundingVolume = value;
   }
 
   /**
    * @brief Returns the viewer request volume of this tile.
    *
-   * The viewer request volume is an optional @ref BoundingVolume that
-   * may be associated with a tile. It allows controlling the rendering
+   * The viewer request volume is an optional @ref Cesium3DTiles::BoundingVolume
+   * that may be associated with a tile. It allows controlling the rendering
    * process of the tile content: If the viewer request volume is present,
    * then the content of the tile will only be rendered when the viewer
    * (i.e. the camera position) is inside the viewer request volume.
    *
    * @return The viewer request volume, or an empty optional.
    */
-  const std::optional<BoundingVolume>& getViewerRequestVolume() const noexcept {
+  const std::optional<Cesium3DTiles::BoundingVolume>&
+  getViewerRequestVolume() const noexcept {
     return this->_viewerRequestVolume;
   }
 
@@ -325,8 +326,8 @@ public:
    *
    * @param value The viewer request volume.
    */
-  void
-  setViewerRequestVolume(const std::optional<BoundingVolume>& value) noexcept {
+  void setViewerRequestVolume(
+      const std::optional<Cesium3DTiles::BoundingVolume>& value) noexcept {
     this->_viewerRequestVolume = value;
   }
 
@@ -395,15 +396,14 @@ public:
   /**
    * @brief The refinement strategy of this tile.
    *
-   * Returns the @ref TileRefine value that indicates the refinement strategy
-   * for this tile. This is `Add` when the content of the
-   * child tiles is *added* to the content of this tile during refinement, and
-   * `Replace` when the content of the child tiles *replaces*
-   * the content of this tile during refinement.
-   *
-   * @return The refinement strategy.
+   * @returns The @ref Cesium3DTiles::TileRefine value that indicates the
+   * refinement strategy for this tile. This is @ref
+   * Cesium3DTiles::TileRefine::Add when the content of the child tiles is
+   * *added* to the content of this tile during refinement, and
+   * @ref Cesium3DTiles::TileRefine::Replace when the content of the child tiles
+   * *replaces* the content of this tile during refinement.
    */
-  TileRefine getRefine() const noexcept { return this->_refine; }
+  Cesium3DTiles::TileRefine getRefine() const noexcept { return this->_refine; }
 
   /**
    * @brief Set the refinement strategy of this tile.
@@ -412,7 +412,9 @@ public:
    *
    * @param value The refinement strategy.
    */
-  void setRefine(TileRefine value) noexcept { this->_refine = value; }
+  void setRefine(Cesium3DTiles::TileRefine value) noexcept {
+    this->_refine = value;
+  }
 
   /**
    * @brief Gets the transformation matrix for this tile.
@@ -454,8 +456,8 @@ public:
   void setTileID(const TileID& id) noexcept { this->_id = id; }
 
   /**
-   * @brief Returns the @ref BoundingVolume of the renderable content of this
-   * tile.
+   * @brief Returns the @ref Cesium3DTiles::BoundingVolume of the renderable
+   * content of this tile.
    *
    * The content bounding volume is a bounding volume that tightly fits only the
    * renderable content of the tile. This enables tighter view frustum culling,
@@ -464,21 +466,21 @@ public:
    *
    * @see Tile::getBoundingVolume
    */
-  const std::optional<BoundingVolume>&
+  const std::optional<Cesium3DTiles::BoundingVolume>&
   getContentBoundingVolume() const noexcept {
     return this->_contentBoundingVolume;
   }
 
   /**
-   * @brief Set the @ref BoundingVolume of the renderable content of this
-   * tile.
+   * @brief Set the @ref Cesium3DTiles::BoundingVolume of the renderable content
+   * of this tile.
    *
    * This function is not supposed to be called by clients.
    *
    * @param value The content bounding volume
    */
   void setContentBoundingVolume(
-      const std::optional<BoundingVolume>& value) noexcept {
+      const std::optional<Cesium3DTiles::BoundingVolume>& value) noexcept {
     this->_contentBoundingVolume = value;
   }
 
@@ -693,11 +695,11 @@ private:
   // Properties from tileset.json.
   // These are immutable after the tile leaves TileState::Unloaded.
   TileID _id;
-  BoundingVolume _boundingVolume;
-  std::optional<BoundingVolume> _viewerRequestVolume;
-  std::optional<BoundingVolume> _contentBoundingVolume;
+  Cesium3DTiles::BoundingVolume _boundingVolume;
+  std::optional<Cesium3DTiles::BoundingVolume> _viewerRequestVolume;
+  std::optional<Cesium3DTiles::BoundingVolume> _contentBoundingVolume;
   double _geometricError;
-  TileRefine _refine;
+  Cesium3DTiles::TileRefine _refine;
   glm::dmat4x4 _transform;
 
   // tile content

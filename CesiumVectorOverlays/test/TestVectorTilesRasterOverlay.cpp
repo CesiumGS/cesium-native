@@ -1,5 +1,4 @@
-#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTiles/ImplicitTilingUtilities.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
@@ -7,6 +6,7 @@
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/FileAccessor.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
@@ -35,7 +35,7 @@ using namespace CesiumVectorOverlays;
 using namespace CesiumVectorData;
 
 TEST_CASE("Test VectorTilesRasterOverlay polylines") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   const std::filesystem::path dataPath =
       std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR);
@@ -110,7 +110,7 @@ TEST_CASE("Test VectorTilesRasterOverlay polylines") {
 }
 
 TEST_CASE("Test VectorTilesRasterOverlay polygons") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   const std::filesystem::path dataPath =
       std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR);
@@ -127,7 +127,7 @@ TEST_CASE("Test VectorTilesRasterOverlay polygons") {
   // A rough rectangle around the Albertgarten in Vienna, as an arbitrary
   // testing area.
   const CesiumGeospatial::BoundingRegion& tileRegion =
-      Cesium3DTilesContent::ImplicitTilingUtilities::computeBoundingVolume(
+      Cesium3DTiles::ImplicitTilingUtilities::computeBoundingVolume(
           CesiumGeospatial::BoundingRegion{
               CesiumGeospatial::GlobeRectangle{
                   0.10511435661024317,
@@ -323,7 +323,7 @@ public:
 } // namespace
 
 TEST_CASE("VectorTilesRasterOverlay works with a styling provider") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   const glm::dvec2 imageSize(256, 256);
   const std::filesystem::path dataPath =
@@ -400,7 +400,7 @@ TEST_CASE("VectorTilesRasterOverlay works with a styling provider") {
 
 TEST_CASE(
     "VectorTilesRasterOverlay vienna-streets benchmark" * doctest::skip()) {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   const std::filesystem::path dataPath =
       std::filesystem::path(CesiumVectorOverlays_TEST_DATA_DIR);

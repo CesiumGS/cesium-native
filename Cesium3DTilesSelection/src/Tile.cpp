@@ -1,12 +1,12 @@
 #include "TilesetContentManager.h"
 
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileID.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -95,7 +95,7 @@ Tile::Tile(
       _viewerRequestVolume(),
       _contentBoundingVolume(),
       _geometricError(0.0),
-      _refine(TileRefine::Replace),
+      _refine(Cesium3DTiles::TileRefine::Replace),
       _transform(1.0),
       _unusedTilesLinks(),
       _content{std::forward<TileContentArgs>(args)...},
