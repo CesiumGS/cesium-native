@@ -1,6 +1,6 @@
 #include "TileUtilities.h"
 
-#include <Cesium3DTilesContent/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
@@ -8,7 +8,7 @@
 #include <optional>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
 using namespace CesiumGeospatial;
 
 namespace Cesium3DTilesSelection {

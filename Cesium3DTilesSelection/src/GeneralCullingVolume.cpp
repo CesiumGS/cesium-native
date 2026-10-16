@@ -1,4 +1,4 @@
-#include <Cesium3DTilesContent/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTilesSelection/GeneralCullingVolume.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
@@ -11,7 +11,7 @@
 
 #include <variant>
 
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 

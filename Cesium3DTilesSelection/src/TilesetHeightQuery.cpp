@@ -2,12 +2,12 @@
 
 #include "TilesetContentManager.h"
 
-#include <Cesium3DTilesContent/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/ITilesetHeightSampler.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <CesiumAsync/Promise.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/IntersectionTests.h>
@@ -31,7 +31,7 @@
 #include <variant>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumGeometry;

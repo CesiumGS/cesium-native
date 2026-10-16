@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Cesium3DTilesContent/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileID.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentOptions.h>
 #include <Cesium3DTilesSelection/TilesetSharedAssetSystem.h>
 #include <CesiumAsync/AsyncSystem.h>
@@ -17,7 +17,7 @@
 #include <memory>
 #include <span>
 
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
 
 namespace Cesium3DTilesSelection {
 struct TileContentLoadInfo {

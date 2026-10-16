@@ -5,7 +5,8 @@
 #include "TileContentLoadInfo.h"
 #include "TilesetJsonLoader.h"
 
-#include <Cesium3DTilesContent/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
@@ -17,7 +18,6 @@
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileLoadRequester.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
@@ -80,7 +80,7 @@
 #include <variant>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
 using namespace CesiumGltfContent;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;

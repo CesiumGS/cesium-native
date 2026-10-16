@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Cesium3DTilesContent/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileID.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <CesiumUtility/DoublyLinkedList.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -288,8 +288,7 @@ public:
    *
    * @return The bounding volume.
    */
-  const Cesium3DTilesContent::BoundingVolume&
-  getBoundingVolume() const noexcept {
+  const Cesium3DTiles::BoundingVolume& getBoundingVolume() const noexcept {
     return this->_boundingVolume;
   }
 
@@ -300,8 +299,7 @@ public:
    *
    * @param value The bounding volume.
    */
-  void setBoundingVolume(
-      const Cesium3DTilesContent::BoundingVolume& value) noexcept {
+  void setBoundingVolume(const Cesium3DTiles::BoundingVolume& value) noexcept {
     this->_boundingVolume = value;
   }
 
@@ -316,7 +314,7 @@ public:
    *
    * @return The viewer request volume, or an empty optional.
    */
-  const std::optional<Cesium3DTilesContent::BoundingVolume>&
+  const std::optional<Cesium3DTiles::BoundingVolume>&
   getViewerRequestVolume() const noexcept {
     return this->_viewerRequestVolume;
   }
@@ -329,8 +327,7 @@ public:
    * @param value The viewer request volume.
    */
   void setViewerRequestVolume(
-      const std::optional<Cesium3DTilesContent::BoundingVolume>&
-          value) noexcept {
+      const std::optional<Cesium3DTiles::BoundingVolume>& value) noexcept {
     this->_viewerRequestVolume = value;
   }
 
@@ -399,15 +396,14 @@ public:
   /**
    * @brief The refinement strategy of this tile.
    *
-   * Returns the @ref TileRefine value that indicates the refinement strategy
-   * for this tile. This is `Add` when the content of the
-   * child tiles is *added* to the content of this tile during refinement, and
-   * `Replace` when the content of the child tiles *replaces*
-   * the content of this tile during refinement.
-   *
-   * @return The refinement strategy.
+   * @returns The @ref Cesium3DTiles::TileRefine value that indicates the
+   * refinement strategy for this tile. This is @ref
+   * Cesium3DTiles::TileRefine::Add when the content of the child tiles is
+   * *added* to the content of this tile during refinement, and
+   * @ref Cesium3DTiles::TileRefine::Replace when the content of the child tiles
+   * *replaces* the content of this tile during refinement.
    */
-  TileRefine getRefine() const noexcept { return this->_refine; }
+  Cesium3DTiles::TileRefine getRefine() const noexcept { return this->_refine; }
 
   /**
    * @brief Set the refinement strategy of this tile.
@@ -416,7 +412,9 @@ public:
    *
    * @param value The refinement strategy.
    */
-  void setRefine(TileRefine value) noexcept { this->_refine = value; }
+  void setRefine(Cesium3DTiles::TileRefine value) noexcept {
+    this->_refine = value;
+  }
 
   /**
    * @brief Gets the transformation matrix for this tile.
@@ -468,7 +466,7 @@ public:
    *
    * @see Tile::getBoundingVolume
    */
-  const std::optional<Cesium3DTilesContent::BoundingVolume>&
+  const std::optional<Cesium3DTiles::BoundingVolume>&
   getContentBoundingVolume() const noexcept {
     return this->_contentBoundingVolume;
   }
@@ -482,8 +480,7 @@ public:
    * @param value The content bounding volume
    */
   void setContentBoundingVolume(
-      const std::optional<Cesium3DTilesContent::BoundingVolume>&
-          value) noexcept {
+      const std::optional<Cesium3DTiles::BoundingVolume>& value) noexcept {
     this->_contentBoundingVolume = value;
   }
 
@@ -698,11 +695,11 @@ private:
   // Properties from tileset.json.
   // These are immutable after the tile leaves TileState::Unloaded.
   TileID _id;
-  Cesium3DTilesContent::BoundingVolume _boundingVolume;
-  std::optional<Cesium3DTilesContent::BoundingVolume> _viewerRequestVolume;
-  std::optional<Cesium3DTilesContent::BoundingVolume> _contentBoundingVolume;
+  Cesium3DTiles::BoundingVolume _boundingVolume;
+  std::optional<Cesium3DTiles::BoundingVolume> _viewerRequestVolume;
+  std::optional<Cesium3DTiles::BoundingVolume> _contentBoundingVolume;
   double _geometricError;
-  TileRefine _refine;
+  Cesium3DTiles::TileRefine _refine;
   glm::dmat4x4 _transform;
 
   // tile content

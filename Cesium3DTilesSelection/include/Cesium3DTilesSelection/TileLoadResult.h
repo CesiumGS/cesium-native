@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesContent/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumGeometry/Axis.h>
@@ -89,15 +89,14 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * its content. If this field is set, the tile's bounding volume will be
    * updated after the loading is finished.
    */
-  std::optional<Cesium3DTilesContent::BoundingVolume> updatedBoundingVolume;
+  std::optional<Cesium3DTiles::BoundingVolume> updatedBoundingVolume;
 
   /**
    * @brief A tile can potentially store a more fit content bounding volume
    * along with its content. If this field is set, the tile's content bounding
    * volume will be updated after the loading is finished.
    */
-  std::optional<Cesium3DTilesContent::BoundingVolume>
-      updatedContentBoundingVolume;
+  std::optional<Cesium3DTiles::BoundingVolume> updatedContentBoundingVolume;
 
   /**
    * @brief Holds details of the @ref TileRenderContent that are useful
@@ -152,7 +151,7 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * to `updatedBoundingVolume`, which contains the modified bounding volume for
    * the tile.
    */
-  std::optional<Cesium3DTilesContent::BoundingVolume> initialBoundingVolume =
+  std::optional<Cesium3DTiles::BoundingVolume> initialBoundingVolume =
       std::nullopt;
 
   /**
@@ -162,8 +161,8 @@ struct CESIUM3DTILESSELECTION_API TileLoadResult {
    * volume. See `updatedContentBoundingVolume` for the modified content
    * bounding volume.
    */
-  std::optional<Cesium3DTilesContent::BoundingVolume>
-      initialContentBoundingVolume = std::nullopt;
+  std::optional<Cesium3DTiles::BoundingVolume> initialContentBoundingVolume =
+      std::nullopt;
 
   /**
    * @brief Create a result with Failed state
