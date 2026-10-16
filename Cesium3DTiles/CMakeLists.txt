@@ -3,15 +3,12 @@ configure_cesium_library(Cesium3DTiles)
 
 cesium_glob_files(CESIUM_3DTILES_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.cpp
 )
 cesium_glob_files(CESIUM_3DTILES_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/src/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/src/*.h
 )
 cesium_glob_files(CESIUM_3DTILES_PUBLIC_HEADERS
     ${CMAKE_CURRENT_LIST_DIR}/include/Cesium3DTiles/*.h
-    ${CMAKE_CURRENT_LIST_DIR}/generated/include/Cesium3DTiles/*.h
 )
 cesium_glob_files(CESIUM_3DTILES_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/test/*.cpp
@@ -44,7 +41,6 @@ target_include_directories(
     Cesium3DTiles
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/generated/include>
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/src
@@ -57,12 +53,12 @@ target_link_libraries(Cesium3DTiles
         CesiumGeometry
         CesiumGeospatial
         CesiumGltf
-        CesiumGltfContent
-        CesiumGltfConverters
         CesiumGltfReader
+        CesiumJsonReader
         CesiumTilesetJson
         CesiumTilesetJsonReader
         CesiumUtility
     PRIVATE
+        glm::glm
         libmorton::libmorton
 )

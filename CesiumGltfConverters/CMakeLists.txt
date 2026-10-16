@@ -56,5 +56,6 @@ target_link_libraries(CesiumGltfConverters
         CesiumGltfReader
         CesiumUtility
     PRIVATE
-        libmorton::libmorton
+        draco::draco
+        glm::glm
 )

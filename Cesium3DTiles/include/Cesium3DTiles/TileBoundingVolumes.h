@@ -15,13 +15,13 @@ struct BoundingVolume;
 namespace Cesium3DTiles {
 
 /**
- * @brief Provides functions for extracting bounding volumes types from @ref
- * CesiumGltf::Shape or @ref CesiumTilesetJson::BoundingVolume.
+ * @brief Provides functions for extracting bounding volumes types from the
+ * vectors stored in @ref CesiumTilesetJson::BoundingVolume.
  */
 class TileBoundingVolumes {
 public:
   /**
-   * @brief Gets a bounding box defined in a
+   * @brief Gets the bounding box defined in a
    * @ref CesiumTilesetJson::BoundingVolume, if any.
    *
    * @param boundingVolume The bounding volume from which to get the box.

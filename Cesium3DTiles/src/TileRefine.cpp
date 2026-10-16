@@ -1,7 +1,10 @@
 #include <Cesium3DTiles/TileRefine.h>
 #include <CesiumGltf/ExtensionNode3dTilesTileset.h>
+#include <CesiumUtility/Result.h>
 
 #include <algorithm>
+#include <string>
+#include <type_traits>
 
 using namespace CesiumGltf;
 

@@ -66,7 +66,7 @@ TileBoundingVolumes::getOrientedBoundingBox(
       ellipsoid);
 }
 
-void TileBoundingVolumes::setBoundingRegion(
+/*static*/ void TileBoundingVolumes::setBoundingRegion(
     CesiumTilesetJson::BoundingVolume& boundingVolume,
     const CesiumGeospatial::BoundingRegion& boundingRegion) {
   const CesiumGeospatial::GlobeRectangle& rectangle =
@@ -80,7 +80,7 @@ void TileBoundingVolumes::setBoundingRegion(
       boundingRegion.getMaximumHeight()};
 }
 
-std::optional<BoundingSphere>
+/*static*/ std::optional<BoundingSphere>
 TileBoundingVolumes::getBoundingSphere(const BoundingVolume& boundingVolume) {
   if (boundingVolume.sphere.size() < 4)
     return std::nullopt;
@@ -89,7 +89,7 @@ TileBoundingVolumes::getBoundingSphere(const BoundingVolume& boundingVolume) {
   return CesiumGeometry::BoundingSphere(glm::dvec3(a[0], a[1], a[2]), a[3]);
 }
 
-void TileBoundingVolumes::setBoundingSphere(
+/*static*/ void TileBoundingVolumes::setBoundingSphere(
     CesiumTilesetJson::BoundingVolume& boundingVolume,
     const CesiumGeometry::BoundingSphere& boundingSphere) {
   const glm::dvec3& center = boundingSphere.getCenter();
@@ -97,7 +97,7 @@ void TileBoundingVolumes::setBoundingSphere(
       .sphere = {center.x, center.y, center.z, boundingSphere.getRadius()};
 }
 
-std::optional<S2CellBoundingVolume>
+/*static*/ std::optional<S2CellBoundingVolume>
 TileBoundingVolumes::getS2CellBoundingVolume(
     const BoundingVolume& boundingVolume,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
@@ -113,7 +113,7 @@ TileBoundingVolumes::getS2CellBoundingVolume(
       ellipsoid);
 }
 
-void TileBoundingVolumes::setS2CellBoundingVolume(
+/*static*/ void TileBoundingVolumes::setS2CellBoundingVolume(
     CesiumTilesetJson::BoundingVolume& boundingVolume,
     const CesiumGeospatial::S2CellBoundingVolume& s2BoundingVolume) {
   Extension3dTilesBoundingVolumeS2& extension =
@@ -123,7 +123,7 @@ void TileBoundingVolumes::setS2CellBoundingVolume(
   extension.maximumHeight = s2BoundingVolume.getMaximumHeight();
 }
 
-std::optional<BoundingCylinderRegion>
+/*static*/ std::optional<BoundingCylinderRegion>
 TileBoundingVolumes::getBoundingCylinderRegion(
     const BoundingVolume& boundingVolume) {
   const Extension3dTilesBoundingVolumeCylinder* pExtension =
@@ -152,7 +152,7 @@ TileBoundingVolumes::getBoundingCylinderRegion(
       glm::dvec2(pExtension->minAngle, pExtension->maxAngle));
 }
 
-void TileBoundingVolumes::setBoundingCylinderRegion(
+/*static*/ void TileBoundingVolumes::setBoundingCylinderRegion(
     CesiumTilesetJson::BoundingVolume& boundingVolume,
     const CesiumGeometry::BoundingCylinderRegion& boundingCylinderRegion) {
   Extension3dTilesBoundingVolumeCylinder& extension =

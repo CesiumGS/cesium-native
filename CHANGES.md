@@ -6,8 +6,9 @@
 
 - `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter` have been renamed to `CesiumTilesetJson`, `CesiumTilesetJsonReader`, and `CesiumTilesetJsonWriter` respectively.
 - `Cesium3DTilesContent::GltfConverters` and its related classes have been moved to the new `CesiumGltfConverters` library.
+  - `registerAllTileContentTypes` has been renamed to `registerAllConverterTypes`.
 - `Cesium3DTilesContent` has been renamed to `Cesium3DTiles`.
-- `BoundingVolume` and `TileRefine` have been removed from `Cesium3DTilesSelection` to `Cesium3DTiles`.
+- `BoundingVolume` and `TileRefine` have been moved from `Cesium3DTilesSelection` to `Cesium3DTiles`.
 - `Cesium3DTiles::SubtreeAvailability` now follows the `3DTILES_subtree` extension in glTF 2.1:
   - The `SubtreeAvailability` constructor now takes a single `AvailabilityView` for content availability and a `CesiumGltf::Model` to represent the subtree.
   - `getSubtree` has been replaced by `getModel` to retrieve the underlying glTF representation of the subtree.
