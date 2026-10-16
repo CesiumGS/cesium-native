@@ -8,12 +8,15 @@
 #include "BufferJsonHandler.h"
 #include "BufferViewJsonHandler.h"
 #include "CameraJsonHandler.h"
+#include "ExternalAssetJsonHandler.h"
+#include "FileJsonHandler.h"
 #include "ImageJsonHandler.h"
 #include "MaterialJsonHandler.h"
 #include "MeshJsonHandler.h"
 #include "NodeJsonHandler.h"
 #include "SamplerJsonHandler.h"
 #include "SceneJsonHandler.h"
+#include "ShapeJsonHandler.h"
 #include "SkinJsonHandler.h"
 #include "TextureJsonHandler.h"
 
@@ -65,6 +68,10 @@ private:
           _bufferViews;
   CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Camera, CameraJsonHandler>
       _cameras;
+  CesiumJsonReader::
+      ArrayJsonHandler<CesiumGltf::ExternalAsset, ExternalAssetJsonHandler>
+          _externalAssets;
+  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::File, FileJsonHandler> _files;
   CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Image, ImageJsonHandler>
       _images;
   CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Material, MaterialJsonHandler>
@@ -76,6 +83,8 @@ private:
   CesiumJsonReader::IntegerJsonHandler<int32_t> _scene;
   CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Scene, SceneJsonHandler>
       _scenes;
+  CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Shape, ShapeJsonHandler>
+      _shapes;
   CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Skin, SkinJsonHandler> _skins;
   CesiumJsonReader::ArrayJsonHandler<CesiumGltf::Texture, TextureJsonHandler>
       _textures;

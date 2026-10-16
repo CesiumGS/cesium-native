@@ -6,6 +6,7 @@
 #include "CapsuleJsonHandler.h"
 #include "CylinderJsonHandler.h"
 #include "NamedObjectJsonHandler.h"
+#include "PlaneJsonHandler.h"
 #include "SphereJsonHandler.h"
 
 #include <CesiumGltf/Shape.h>
@@ -35,9 +36,10 @@ protected:
 private:
   CesiumGltf::Shape* _pObject = nullptr;
   CesiumJsonReader::StringJsonHandler _type;
-  SphereJsonHandler _sphere;
   BoxJsonHandler _box;
   CapsuleJsonHandler _capsule;
   CylinderJsonHandler _cylinder;
+  PlaneJsonHandler _plane;
+  SphereJsonHandler _sphere;
 };
 } // namespace CesiumGltfReader

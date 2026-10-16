@@ -17,22 +17,21 @@ After the prompt has completed, review and commit these changes. You can push th
 
 ## Release
 
-Releasing is simply a matter of tagging the release and pushing the tag to GitHub. Replace the version number with the one used in the preparation steps above.
+Use the release helper script to tag the release, push the tag to GitHub, and fast-forward the [cesium.com](https://github.com/CesiumGS/cesium-native/tree/cesium.com) branch to the new tag. Replace the version number with the one used in the preparation steps above.
 
-1. `git tag -a v0.56.0 -m "0.56.0 release"`
-2. `git push origin v0.56.0`
+```bash
+npm run publish-release -- 0.56.0
+```
 
-## Publish Updated Reference Docs
+Use `--dry-run` to preview the commands without changing anything, `--yes` to skip the confirmation prompt, or `--remote <name>` to target a non-default remote.
 
-A CI job automatically publishes the documentation to the web site at https://cesium.com/learn/cesium-native/ref-doc/ when it is merged into the [cesium.com](https://github.com/CesiumGS/cesium-native/tree/cesium.com) branch. So do the following:
+This script performs the release and docs publication steps in one operation:
 
-1. `git checkout cesium.com`
-2. `git pull --ff-only`
-3. `git merge v0.56.0 --ff-only`
-4. `git push`
-5. `git checkout main`
+1. Creates and pushes the `v0.56.0` tag.
+2. Checks out `cesium.com` and fast-forwards it to the tag.
+3. Pushes the updated `cesium.com` branch.
+4. Returns to `main`.
 
-The `--ff-only` flags ensure that no new commits are created in the process. We only want to bring over commits from the release tag. If the pull or merge fails, something unusual has probably happened with the git history and it warrants a little investigation before proceeding.
 
 # Release Schedule
 
