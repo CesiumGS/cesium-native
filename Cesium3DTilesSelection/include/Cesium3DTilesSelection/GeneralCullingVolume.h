@@ -13,8 +13,8 @@ namespace Cesium3DTilesSelection {
  *
  * While CesiumGeometry::CullingVolume represents orthographic and perspective
  * view frustums, GeneralCullingVolume also includes @ref
- * Cesium3DTilesSelection::BoundingVolume, which allows more general filtering
- * (e.g., on geographic areas).
+ * Cesium3DTiles::BoundingVolume, which allows more general filtering (e.g., on
+ * geographic areas).
  */
 using GeneralCullingVolume =
     std::variant<CesiumGeometry::CullingVolume, Cesium3DTiles::BoundingVolume>;

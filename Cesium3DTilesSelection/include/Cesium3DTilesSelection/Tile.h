@@ -111,7 +111,7 @@ enum class TileLoadState {
  * The @ref Tile::getGeometricError function returns the geometric
  * error of the representation of the renderable content of a tile.
  *
- * The @ref BoundingVolume is given by the @ref Tile::getBoundingVolume
+ * The @ref Cesium3DTiles::BoundingVolume is given by the @ref Tile::getBoundingVolume
  * function. This bounding volume encloses the renderable content of the
  * tile itself, as well as the renderable content of all children, yielding
  * a spatially coherent hierarchy of bounding volumes.
@@ -279,7 +279,7 @@ public:
   void createChildTiles(std::vector<Tile>&& children);
 
   /**
-   * @brief Returns the @ref BoundingVolume of this tile.
+   * @brief Returns the @ref Cesium3DTiles::BoundingVolume of this tile.
    *
    * This is a bounding volume that encloses the content of this tile,
    * as well as the content of all child tiles.
@@ -293,7 +293,7 @@ public:
   }
 
   /**
-   * @brief Set the @ref BoundingVolume of this tile.
+   * @brief Set the @ref Cesium3DTiles::BoundingVolume of this tile.
    *
    * This function is not supposed to be called by clients.
    *
@@ -306,7 +306,7 @@ public:
   /**
    * @brief Returns the viewer request volume of this tile.
    *
-   * The viewer request volume is an optional @ref BoundingVolume that
+   * The viewer request volume is an optional @ref Cesium3DTiles::BoundingVolume that
    * may be associated with a tile. It allows controlling the rendering
    * process of the tile content: If the viewer request volume is present,
    * then the content of the tile will only be rendered when the viewer
@@ -456,7 +456,7 @@ public:
   void setTileID(const TileID& id) noexcept { this->_id = id; }
 
   /**
-   * @brief Returns the @ref BoundingVolume of the renderable content of this
+   * @brief Returns the @ref Cesium3DTiles::BoundingVolume of the renderable content of this
    * tile.
    *
    * The content bounding volume is a bounding volume that tightly fits only the
@@ -472,7 +472,7 @@ public:
   }
 
   /**
-   * @brief Set the @ref BoundingVolume of the renderable content of this
+   * @brief Set the @ref Cesium3DTiles::BoundingVolume of the renderable content of this
    * tile.
    *
    * This function is not supposed to be called by clients.

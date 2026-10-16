@@ -226,8 +226,8 @@ public:
   }
 
   /**
-   * @brief Returns whether the given @ref BoundingVolume is visible for this
-   * camera
+   * @brief Returns whether the given @ref Cesium3DTiles::BoundingVolume is
+   * visible for this camera
    *
    * Returns whether the given bounding volume is visible for this camera,
    * meaning that the given volume is at least partially contained in
@@ -239,7 +239,8 @@ public:
       const Cesium3DTiles::BoundingVolume& boundingVolume) const noexcept;
 
   /**
-   * @brief Computes the squared distance to the given @ref BoundingVolume.
+   * @brief Computes the squared distance to the given @ref
+   * Cesium3DTiles::BoundingVolume.
    *
    * Computes the squared euclidean distance from the position of this camera
    * to the closest point of the given bounding volume.
