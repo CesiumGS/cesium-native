@@ -11,6 +11,10 @@
 - Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added a `CESIUM_DISABLE_SPZ` CMake option to build Cesium Native without Niantic SPZ support.
 
+##### Fixes :wrench:
+
+- Fixed potential integer overflow and out-of-bounds write while decoding glTFs using `EXT_meshopt_compression`.
+
 ### v0.65.0 - 2026-10-01
 
 ##### Breaking Changes :mega:
@@ -26,7 +30,6 @@
 
 - Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
 - Fixed potential out-of-bounds access while decoding Draco-compressed glTFs.
-- Fixed potential integer overflow and out-of-bounds write while decoding glTFs using `EXT_meshopt_compression`.
 
 ### v0.64.0 - 2026-09-01
 
