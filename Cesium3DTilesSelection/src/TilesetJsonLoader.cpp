@@ -185,76 +185,9 @@ std::optional<Cesium3DTiles::BoundingVolume> getBoundingVolumeProperty(
   }
 
   const CesiumTilesetJson::BoundingVolume& result = *boundingVolumeResult.value;
-
-  if (result.extensions.size() > 0) {
-    const CesiumTilesetJson::Extension3dTilesBoundingVolumeS2* pS2 =
-        result.getExtension<
-            CesiumTilesetJson::Extension3dTilesBoundingVolumeS2>();
-    if (pS2) {
-      return CesiumGeospatial::S2CellBoundingVolume(
-          CesiumGeospatial::S2CellID::fromToken(pS2->token),
-          pS2->minimumHeight,
-          pS2->maximumHeight,
-          ellipsoid);
-    }
-
-    const CesiumTilesetJson::Extension3dTilesBoundingVolumeCylinder* pCylinder =
-        result.getExtension<
-            CesiumTilesetJson::Extension3dTilesBoundingVolumeCylinder>();
-    if (pCylinder) {
-      const std::vector<double>& translation = pCylinder->translation;
-      const std::vector<double>& rotation = pCylinder->rotation;
-
-      if (translation.size() < 3 || rotation.size() < 3) {
-        return std::nullopt;
-      }
-
-      return CesiumGeometry::BoundingCylinderRegion(
-          glm::dvec3(translation[0], translation[1], translation[2]),
-          glm::dquat(rotation[3], rotation[0], rotation[1], rotation[2]),
-          pCylinder->height,
-          glm::dvec2(pCylinder->minRadius, pCylinder->maxRadius),
-          glm::dvec2(pCylinder->minAngle, pCylinder->maxAngle));
-    }
-  }
-
-  if (result.box.size() >= 12) {
-    const std::vector<double>& box = result.box;
-    return CesiumGeometry::OrientedBoundingBox(
-        glm::dvec3(box[0], box[1], box[2]),
-        glm::dmat3(
-            box[3],
-            box[4],
-            box[5],
-            box[6],
-            box[7],
-            box[8],
-            box[9],
-            box[10],
-            box[11]));
-  }
-
-  if (result.region.size() >= 6) {
-    const std::vector<double>& region = result.region;
-    return CesiumGeospatial::BoundingRegion(
-        CesiumGeospatial::GlobeRectangle(
-            region[0],
-            region[1],
-            region[2],
-            region[3]),
-        region[4],
-        region[5],
-        ellipsoid);
-  }
-
-  if (result.sphere.size() >= 4) {
-    const std::vector<double>& sphere = result.sphere;
-    return CesiumGeometry::BoundingSphere(
-        glm::dvec3(sphere[0], sphere[1], sphere[2]),
-        sphere[3]);
-  }
-
-  return std::nullopt;
+  CesiumUtility::Result<Cesium3DTiles::BoundingVolume> parsedBoundingVolume =
+      Cesium3DTiles::getBoundingVolume(result, ellipsoid);
+  return parsedBoundingVolume.value;
 }
 
 using JsonFetcherResult = Result<rapidjson::Document>;
