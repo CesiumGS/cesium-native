@@ -10,7 +10,7 @@
 - `BoundingVolume` and `TileRefine` have been removed from `Cesium3DTilesSelection` to `Cesium3DTiles`.
 - `Cesium3DTiles::SubtreeAvailability` now follows the `3DTILES_subtree` extension in glTF 2.1:
   - The `SubtreeAvailability` constructor now takes a single `AvailabilityView` for content availability and a `CesiumGltf::Model` to represent the subtree.
-  - `getSubtree()` has been replaced by `getModel` to retrieve the underlying glTF representation of the subtree.
+  - `getSubtree` has been replaced by `getModel` to retrieve the underlying glTF representation of the subtree.
   - Removed `contentId` from the `isContentAvailable` and `setContentAvailable` overloads.
 - The classes associated with `KHR_implicit_shapes` have been renamed from `Shape`, `Box`, `Capsule`, `Cylinder`, `Sphere` to `ExtensionKhrImplicitShapesShape`, `ExtensionKhrImplicitShapesBox`, `ExtensionKhrImplicitShapesCapsule`, `ExtensionKhrImplicitShapesCylinder`, `ExtensionKhrImplicitShapesSphere` to deconflict with the shape classes generated for glTF 2.1.
 
