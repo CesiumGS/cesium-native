@@ -252,28 +252,56 @@ TEST_CASE("Can decompress meshes using EXT_meshopt_compression") {
 }
 
 namespace {
-std::string meshOptExtension(
+std::string writeMeshOptExtension(
     int64_t byteStride,
     int64_t count,
     int64_t byteOffset = 0,
     int64_t byteLength = 32) {
   return fmt::format(
-      R"({{"buffer":0,"byteOffset":{},"byteLength":{},"mode":"ATTRIBUTES","filter":"NONE","byteStride":{},"count":{}}})",
+      R"(
+        {{
+          "buffer": 0,
+          "byteOffset": {},
+          "byteLength": {},
+          "mode": "ATTRIBUTES",
+          "filter": "NONE",
+          "byteStride": {},
+          "count":{}
+        }})",
       byteOffset,
       byteLength,
       byteStride,
       count);
 }
 
-std::vector<std::byte> meshOptGltf(const std::string& extensionJson) {
+std::vector<std::byte> writeMeshOptGltf(const std::string& extensionJson) {
   // A 32-byte all-zero buffer, large enough to pass the compressed range check.
   const std::string dataUri =
       "data:application/octet-stream;base64," + std::string(43, 'A') + "=";
   const std::string gltf = fmt::format(
-      R"({{"asset":{{"version":"2.0"}},"extensionsUsed":["EXT_meshopt_compression"],)"
-      R"("buffers":[{{"byteLength":32,"uri":"{}"}}],)"
-      R"("bufferViews":[{{"buffer":0,"byteOffset":0,"byteLength":32,)"
-      R"("extensions":{{"EXT_meshopt_compression":{}}}}}]}})",
+      R"(
+        {{
+          "asset":{{
+            "version": "2.0"
+            }},
+          "extensionsUsed": ["EXT_meshopt_compression"],
+          "buffers":[
+            {{
+              "byteLength": 32,
+              "uri": "{}"
+            }}
+          ],
+          "bufferViews":[
+            {{
+              "buffer": 0,
+              "byteOffset": 0,
+              "byteLength": 32,
+              "extensions": {{
+                "EXT_meshopt_compression": {}
+              }}
+            }}
+          ]
+       }})",
       dataUri,
       extensionJson);
   const std::byte* pStart = reinterpret_cast<const std::byte*>(gltf.data());
@@ -287,21 +315,50 @@ TEST_CASE("Rejects malformed EXT_meshopt_compression bufferViews") {
 
   SUBCASE("count times byteStride overflows to a small positive value") {
     // The reported proof-of-concept: 4 * (2^62 + 4) wraps to 16.
-    extensionJson = meshOptExtension(4, (int64_t(1) << 62) + 4);
+    extensionJson = writeMeshOptExtension(
+        4, /* byteStride */
+        (int64_t(1) << 62) + 4 /* count */);
   }
+
   SUBCASE("count times byteStride is just above int64 max") {
-    extensionJson = meshOptExtension(4, int64Max / 4 + 1);
+    extensionJson = writeMeshOptExtension(
+        4, /* byteStride */
+        int64Max / 4 + 1 /* count */);
   }
-  SUBCASE("count is zero") { extensionJson = meshOptExtension(4, 0); }
-  SUBCASE("count is negative") { extensionJson = meshOptExtension(4, -1); }
-  SUBCASE("byteStride is zero") { extensionJson = meshOptExtension(0, 8); }
-  SUBCASE("byteStride is negative") { extensionJson = meshOptExtension(-4, 8); }
+
+  SUBCASE("count is zero") {
+    extensionJson = writeMeshOptExtension(
+        4, /* byteStride */
+        0 /* count */);
+  }
+  SUBCASE("count is negative") {
+    extensionJson = writeMeshOptExtension(
+        4, /* byteStride */
+        -1 /* count */);
+  }
+
+  SUBCASE("byteStride is zero") {
+    extensionJson = writeMeshOptExtension(
+        0, /* byteStride */
+        8 /* count */);
+  }
+
+  SUBCASE("byteStride is negative") {
+    extensionJson = writeMeshOptExtension(
+        -4, /* byteStride */
+        8 /* count */);
+  }
+
   SUBCASE("compressed byteOffset plus byteLength overflows") {
-    extensionJson = meshOptExtension(4, 8, int64Max, int64Max);
+    extensionJson = writeMeshOptExtension(
+        -4,       /* byteStride */
+        8,        /* count */
+        int64Max, /* byteOffset */
+        int64Max /* byteLength */);
   }
 
   GltfReader reader;
-  GltfReaderResult result = reader.readGltf(meshOptGltf(extensionJson));
+  GltfReaderResult result = reader.readGltf(writeMeshOptGltf(extensionJson));
 
   REQUIRE(result.model);
   CHECK(!result.warnings.empty());
@@ -1042,7 +1099,8 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
           ->getValuePtrForKey("POSITION")
           ->getSafeNumberOrDefault<int64_t>(1) == 0);
 
-  // Repeat test but this time the extension should not be deserialized at all.
+  // Repeat test but this time the extension should not be deserialized at
+  // all.
   reader.getOptions().setExtensionState(
       "KHR_draco_mesh_compression",
       CesiumJsonReader::ExtensionState::Disabled);
@@ -1067,7 +1125,8 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
 namespace {
 // Builds a model with a single primitive whose POSITION attribute is
 // Draco-compressed, reusing the compressed bitstream from the CesiumMilkTruck
-// test data. In that bitstream, POSITION has unique ID 1 and three components.
+// test data. In that bitstream, POSITION has unique ID 1 and three
+// components.
 GltfReaderResult createDracoModel(const std::string& positionType) {
   GltfReaderResult result;
   Model& model = result.model.emplace();
@@ -1511,8 +1570,8 @@ TEST_CASE("GltfReader::loadGltf") {
     GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
     REQUIRE(result.model);
     CHECK(result.errors.empty());
-    // There will be warnings, because this model has accessors that don't match
-    // the Draco-decoded size. It seems to be ambiguous whether this is
+    // There will be warnings, because this model has accessors that don't
+    // match the Draco-decoded size. It seems to be ambiguous whether this is
     // technically allowed or not. See:
     // https://github.com/KhronosGroup/glTF/issues/1342
 
@@ -1529,8 +1588,8 @@ TEST_CASE("GltfReader::loadGltf") {
     }
   }
 
-  SUBCASE(
-      "does not resolve external images when resolveExternalImages is false") {
+  SUBCASE("does not resolve external images when resolveExternalImages is "
+          "false") {
     GltfReaderOptions options;
     options.resolveExternalImages = false;
     GltfReader reader{};
@@ -1539,8 +1598,8 @@ TEST_CASE("GltfReader::loadGltf") {
     GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
     REQUIRE(result.model);
     CHECK(result.errors.empty());
-    // There will be warnings, because this model has accessors that don't match
-    // the Draco-decoded size. It seems to be ambiguous whether this is
+    // There will be warnings, because this model has accessors that don't
+    // match the Draco-decoded size. It seems to be ambiguous whether this is
     // technically allowed or not. See:
     // https://github.com/KhronosGroup/glTF/issues/1342
 
