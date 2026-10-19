@@ -18,8 +18,13 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
 #include <CesiumGltfConverters/GltfConverterResult.h>
 #include <CesiumGltfConverters/GltfConverters.h>
 #include <CesiumGltfReader/GltfReader.h>
@@ -43,6 +48,35 @@ using namespace Cesium3DTiles;
 using namespace CesiumGltfConverters;
 
 namespace Cesium3DTilesSelection {
+
+std::optional<ImplicitQuadtreeBoundingVolume>
+getAsImplicitQuadtreeBoundingVolume(
+    const Cesium3DTiles::BoundingVolume& boundingVolume) {
+  if (const auto* pRegion =
+          std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume)) {
+    return ImplicitQuadtreeBoundingVolume(*pRegion);
+  }
+
+  if (const auto* pBox =
+          std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume)) {
+    return ImplicitQuadtreeBoundingVolume(*pBox);
+  }
+
+  if (const auto* pS2Cell = std::get_if<CesiumGeospatial::S2CellBoundingVolume>(
+          &boundingVolume)) {
+    return ImplicitQuadtreeBoundingVolume(*pS2Cell);
+  }
+
+  if (const auto* pCylinder =
+          std::get_if<CesiumGeometry::BoundingCylinderRegion>(
+              &boundingVolume)) {
+    return ImplicitQuadtreeBoundingVolume(*pCylinder);
+  }
+
+  // Quadtree does not support bounding sphere subdivision.
+  return std::nullopt;
+}
+
 namespace {
 struct BoundingVolumeSubdivision {
 

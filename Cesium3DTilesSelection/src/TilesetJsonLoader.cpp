@@ -21,19 +21,11 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/BoundingSphere.h>
-#include <CesiumGeometry/OrientedBoundingBox.h>
-#include <CesiumGeospatial/BoundingRegion.h>
-#include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/S2CellBoundingVolume.h>
-#include <CesiumGeospatial/S2CellID.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfConverters/GltfConverterResult.h>
 #include <CesiumGltfConverters/GltfConverters.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumJsonReader/JsonReader.h>
-#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeCylinder.h>
-#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeS2.h>
 #include <CesiumTilesetJson/ExtensionContent3dTilesContentVoxels.h>
 #include <CesiumTilesetJson/ExtensionMetadataEntityMaxarContentGeoJson.h>
 #include <CesiumTilesetJsonReader/BoundingVolumeReader.h>
@@ -53,7 +45,6 @@
 #include <fmt/format.h>
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
-#include <glm/ext/quaternion_double.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -185,76 +176,9 @@ std::optional<Cesium3DTiles::BoundingVolume> getBoundingVolumeProperty(
   }
 
   const CesiumTilesetJson::BoundingVolume& result = *boundingVolumeResult.value;
-
-  if (result.extensions.size() > 0) {
-    const CesiumTilesetJson::Extension3dTilesBoundingVolumeS2* pS2 =
-        result.getExtension<
-            CesiumTilesetJson::Extension3dTilesBoundingVolumeS2>();
-    if (pS2) {
-      return CesiumGeospatial::S2CellBoundingVolume(
-          CesiumGeospatial::S2CellID::fromToken(pS2->token),
-          pS2->minimumHeight,
-          pS2->maximumHeight,
-          ellipsoid);
-    }
-
-    const CesiumTilesetJson::Extension3dTilesBoundingVolumeCylinder* pCylinder =
-        result.getExtension<
-            CesiumTilesetJson::Extension3dTilesBoundingVolumeCylinder>();
-    if (pCylinder) {
-      const std::vector<double>& translation = pCylinder->translation;
-      const std::vector<double>& rotation = pCylinder->rotation;
-
-      if (translation.size() < 3 || rotation.size() < 3) {
-        return std::nullopt;
-      }
-
-      return CesiumGeometry::BoundingCylinderRegion(
-          glm::dvec3(translation[0], translation[1], translation[2]),
-          glm::dquat(rotation[3], rotation[0], rotation[1], rotation[2]),
-          pCylinder->height,
-          glm::dvec2(pCylinder->minRadius, pCylinder->maxRadius),
-          glm::dvec2(pCylinder->minAngle, pCylinder->maxAngle));
-    }
-  }
-
-  if (result.box.size() >= 12) {
-    const std::vector<double>& box = result.box;
-    return CesiumGeometry::OrientedBoundingBox(
-        glm::dvec3(box[0], box[1], box[2]),
-        glm::dmat3(
-            box[3],
-            box[4],
-            box[5],
-            box[6],
-            box[7],
-            box[8],
-            box[9],
-            box[10],
-            box[11]));
-  }
-
-  if (result.region.size() >= 6) {
-    const std::vector<double>& region = result.region;
-    return CesiumGeospatial::BoundingRegion(
-        CesiumGeospatial::GlobeRectangle(
-            region[0],
-            region[1],
-            region[2],
-            region[3]),
-        region[4],
-        region[5],
-        ellipsoid);
-  }
-
-  if (result.sphere.size() >= 4) {
-    const std::vector<double>& sphere = result.sphere;
-    return CesiumGeometry::BoundingSphere(
-        glm::dvec3(sphere[0], sphere[1], sphere[2]),
-        sphere[3]);
-  }
-
-  return std::nullopt;
+  CesiumUtility::Result<Cesium3DTiles::BoundingVolume> parsedBoundingVolume =
+      Cesium3DTiles::getBoundingVolume(result, ellipsoid);
+  return parsedBoundingVolume.value;
 }
 
 using JsonFetcherResult = Result<rapidjson::Document>;
@@ -311,65 +235,22 @@ void createImplicitQuadtreeLoader(
     uint32_t availableLevels,
     Tile& implicitTile,
     TilesetJsonLoader& currentLoader) {
-  // Quadtree does not support bounding sphere subdivision
-  const Cesium3DTiles::BoundingVolume& boundingVolume =
-      implicitTile.getBoundingVolume();
-  if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
+  std::optional<ImplicitQuadtreeBoundingVolume> quadtreeBoundingVolume =
+      getAsImplicitQuadtreeBoundingVolume(implicitTile.getBoundingVolume());
+  if (!quadtreeBoundingVolume) {
     return;
   }
 
-  const CesiumGeospatial::BoundingRegion* pRegion =
-      std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
-  const CesiumGeometry::OrientedBoundingBox* pBox =
-      std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
-  const CesiumGeospatial::S2CellBoundingVolume* pS2Cell =
-      std::get_if<CesiumGeospatial::S2CellBoundingVolume>(&boundingVolume);
-  const CesiumGeometry::BoundingCylinderRegion* pCylinder =
-      std::get_if<CesiumGeometry::BoundingCylinderRegion>(&boundingVolume);
+  auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
+      currentLoader.getBaseUrl(),
+      contentUriTemplate,
+      subtreeUriTemplate,
+      subtreeLevels,
+      availableLevels,
+      *quadtreeBoundingVolume);
 
-  // the implicit loader will be the child loader of this tileset json loader
-  TilesetContentLoader* pImplicitLoader = nullptr;
-  if (pRegion) {
-    auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
-        currentLoader.getBaseUrl(),
-        contentUriTemplate,
-        subtreeUriTemplate,
-        subtreeLevels,
-        availableLevels,
-        *pRegion);
-    pImplicitLoader = pLoader.get();
-    currentLoader.addChildLoader(std::move(pLoader));
-  } else if (pBox) {
-    auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
-        currentLoader.getBaseUrl(),
-        contentUriTemplate,
-        subtreeUriTemplate,
-        subtreeLevels,
-        availableLevels,
-        *pBox);
-    pImplicitLoader = pLoader.get();
-    currentLoader.addChildLoader(std::move(pLoader));
-  } else if (pS2Cell) {
-    auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
-        currentLoader.getBaseUrl(),
-        contentUriTemplate,
-        subtreeUriTemplate,
-        subtreeLevels,
-        availableLevels,
-        *pS2Cell);
-    pImplicitLoader = pLoader.get();
-    currentLoader.addChildLoader(std::move(pLoader));
-  } else if (pCylinder) {
-    auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
-        currentLoader.getBaseUrl(),
-        contentUriTemplate,
-        subtreeUriTemplate,
-        subtreeLevels,
-        availableLevels,
-        *pCylinder);
-    pImplicitLoader = pLoader.get();
-    currentLoader.addChildLoader(std::move(pLoader));
-  }
+  TilesetContentLoader* pImplicitLoader = pLoader.get();
+  currentLoader.addChildLoader(std::move(pLoader));
 
   // create an implicit root to associate with the above implicit loader
   std::vector<Tile> implicitRootTile;
@@ -389,57 +270,22 @@ void createImplicitOctreeLoader(
     uint32_t availableLevels,
     Tile& implicitTile,
     TilesetJsonLoader& currentLoader) {
-  const Cesium3DTiles::BoundingVolume& boundingVolume =
-      implicitTile.getBoundingVolume();
-  if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
+  std::optional<ImplicitOctreeBoundingVolume> octreeBoundingVolume =
+      getAsImplicitOctreeBoundingVolume(implicitTile.getBoundingVolume());
+  if (!octreeBoundingVolume) {
     return;
   }
 
-  if (std::holds_alternative<CesiumGeospatial::S2CellBoundingVolume>(
-          boundingVolume)) {
-    return;
-  }
+  auto pLoader = std::make_unique<ImplicitOctreeLoader>(
+      currentLoader.getBaseUrl(),
+      contentUriTemplate,
+      subtreeUriTemplate,
+      subtreeLevels,
+      availableLevels,
+      *octreeBoundingVolume);
 
-  const CesiumGeospatial::BoundingRegion* pRegion =
-      std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume);
-  const CesiumGeometry::OrientedBoundingBox* pBox =
-      std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
-  const CesiumGeometry::BoundingCylinderRegion* pCylinder =
-      std::get_if<CesiumGeometry::BoundingCylinderRegion>(&boundingVolume);
-
-  // the implicit loader will be the child loader of this tileset json loader
-  TilesetContentLoader* pImplicitLoader = nullptr;
-  if (pRegion) {
-    auto pLoader = std::make_unique<ImplicitOctreeLoader>(
-        currentLoader.getBaseUrl(),
-        contentUriTemplate,
-        subtreeUriTemplate,
-        subtreeLevels,
-        availableLevels,
-        *pRegion);
-    pImplicitLoader = pLoader.get();
-    currentLoader.addChildLoader(std::move(pLoader));
-  } else if (pBox) {
-    auto pLoader = std::make_unique<ImplicitOctreeLoader>(
-        currentLoader.getBaseUrl(),
-        contentUriTemplate,
-        subtreeUriTemplate,
-        subtreeLevels,
-        availableLevels,
-        *pBox);
-    pImplicitLoader = pLoader.get();
-    currentLoader.addChildLoader(std::move(pLoader));
-  } else if (pCylinder) {
-    auto pLoader = std::make_unique<ImplicitOctreeLoader>(
-        currentLoader.getBaseUrl(),
-        contentUriTemplate,
-        subtreeUriTemplate,
-        subtreeLevels,
-        availableLevels,
-        *pCylinder);
-    pImplicitLoader = pLoader.get();
-    currentLoader.addChildLoader(std::move(pLoader));
-  }
+  TilesetContentLoader* pImplicitLoader = pLoader.get();
+  currentLoader.addChildLoader(std::move(pLoader));
 
   // create an implicit root to associate with the above implicit loader
   std::vector<Tile> implicitRootTile;
