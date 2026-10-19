@@ -1,8 +1,7 @@
-#include "TestTilesetJsonLoader.h"
-
 #include "ImplicitQuadtreeLoader.h"
 #include "SimplePrepareRendererResource.h"
 #include "TilesetJsonLoader.h"
+#include "TilesetLoaderTestUtility.h"
 
 #include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -110,55 +109,6 @@ TileLoadResult loadTileContent(
 }
 } // namespace
 
-Cesium3DTilesSelection::TilesetContentLoaderResult<TilesetJsonLoader>
-Cesium3DTilesSelection::createTilesetJsonLoader(
-    const std::filesystem::path& tilesetPath) {
-  std::string tilesetPathStr = tilesetPath.string();
-  auto pAccessor = std::make_shared<SimpleAssetAccessor>(
-      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
-  auto externals = createMockJsonTilesetExternals(tilesetPathStr, pAccessor);
-  auto loaderResultFuture =
-      TilesetJsonLoader::createLoader(externals, tilesetPathStr, {});
-  externals.asyncSystem.dispatchMainThreadTasks();
-
-  return loaderResultFuture.wait();
-}
-Cesium3DTilesSelection::TilesetExternals
-Cesium3DTilesSelection::createMockJsonTilesetExternals(
-    const std::string& tilesetPath,
-    std::shared_ptr<CesiumNativeTests::SimpleAssetAccessor>& pAssetAccessor) {
-  auto tilesetContent = readFile(tilesetPath);
-  auto pMockCompletedResponse =
-      std::make_unique<CesiumNativeTests::SimpleAssetResponse>(
-          static_cast<uint16_t>(200),
-          "doesn't matter",
-          CesiumAsync::HttpHeaders{},
-          std::move(tilesetContent));
-
-  auto pMockCompletedRequest =
-      std::make_shared<CesiumNativeTests::SimpleAssetRequest>(
-          "GET",
-          "tileset.json",
-          CesiumAsync::HttpHeaders{},
-          std::move(pMockCompletedResponse));
-
-  pAssetAccessor->mockCompletedRequests.insert(
-      {tilesetPath, std::move(pMockCompletedRequest)});
-
-  auto pMockPrepareRendererResource =
-      std::make_shared<SimplePrepareRendererResource>();
-
-  auto pMockCreditSystem = std::make_shared<CesiumUtility::CreditSystem>();
-
-  CesiumAsync::AsyncSystem asyncSystem{
-      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>()};
-
-  return TilesetExternals{
-      std::move(pAssetAccessor),
-      std::move(pMockPrepareRendererResource),
-      std::move(asyncSystem),
-      std::move(pMockCreditSystem)};
-}
 
 TEST_CASE("Test creating tileset json loader") {
   CesiumGltfConverters::registerAllConverterTypes();

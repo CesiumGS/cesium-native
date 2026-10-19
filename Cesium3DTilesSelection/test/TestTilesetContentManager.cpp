@@ -1,7 +1,7 @@
 #include "SimplePrepareRendererResource.h"
-#include "TestTilesetJsonLoader.h"
 #include "TilesetContentManager.h"
 #include "TilesetJsonLoader.h"
+#include "TilesetLoaderTestUtility.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/TileRefine.h>
