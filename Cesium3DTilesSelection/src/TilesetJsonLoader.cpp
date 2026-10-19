@@ -4,14 +4,12 @@
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
 
-#include <Cesium3DTilesContent/GltfConverterResult.h>
-#include <Cesium3DTilesContent/GltfConverters.h>
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileID.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetContentOptions.h>
@@ -30,6 +28,8 @@
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumGltfConverters/GltfConverterResult.h>
+#include <CesiumGltfConverters/GltfConverters.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumJsonReader/JsonReader.h>
 #include <CesiumTilesetJson/Extension3dTilesBoundingVolumeCylinder.h>
@@ -76,7 +76,7 @@
 #include <variant>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
+using namespace CesiumGltfConverters;
 using namespace CesiumTilesetJson;
 using namespace CesiumTilesetJsonReader;
 using namespace CesiumUtility;
@@ -167,7 +167,7 @@ CesiumGeometry::Axis obtainGltfUpAxis(
   return CesiumGeometry::Axis::Y;
 }
 
-std::optional<BoundingVolume> getBoundingVolumeProperty(
+std::optional<Cesium3DTiles::BoundingVolume> getBoundingVolumeProperty(
     const rapidjson::Value& tileJson,
     const std::string& key,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
@@ -312,7 +312,8 @@ void createImplicitQuadtreeLoader(
     Tile& implicitTile,
     TilesetJsonLoader& currentLoader) {
   // Quadtree does not support bounding sphere subdivision
-  const BoundingVolume& boundingVolume = implicitTile.getBoundingVolume();
+  const Cesium3DTiles::BoundingVolume& boundingVolume =
+      implicitTile.getBoundingVolume();
   if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
     return;
   }
@@ -388,7 +389,8 @@ void createImplicitOctreeLoader(
     uint32_t availableLevels,
     Tile& implicitTile,
     TilesetJsonLoader& currentLoader) {
-  const BoundingVolume& boundingVolume = implicitTile.getBoundingVolume();
+  const Cesium3DTiles::BoundingVolume& boundingVolume =
+      implicitTile.getBoundingVolume();
   if (std::holds_alternative<CesiumGeometry::BoundingSphere>(boundingVolume)) {
     return;
   }
@@ -521,7 +523,7 @@ std::optional<Tile> parseTileJsonRecursively(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const rapidjson::Value& tileJson,
     const glm::dmat4& parentTransform,
-    TileRefine parentRefine,
+    Cesium3DTiles::TileRefine parentRefine,
     double parentGeometricError,
     TilesetJsonLoader& currentLoader,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
@@ -536,22 +538,24 @@ std::optional<Tile> parseTileJsonRecursively(
       parentTransform * transform.value_or(glm::dmat4x4(1.0));
 
   // parse bounding volume
-  std::optional<BoundingVolume> boundingVolume =
+  std::optional<Cesium3DTiles::BoundingVolume> boundingVolume =
       getBoundingVolumeProperty(tileJson, "boundingVolume", ellipsoid);
   if (!boundingVolume) {
     SPDLOG_LOGGER_ERROR(pLogger, "Tile did not contain a boundingVolume");
     return std::nullopt;
   }
 
-  auto tileBoundingVolume =
-      transformBoundingVolume(tileTransform, boundingVolume.value());
+  auto tileBoundingVolume = Cesium3DTiles::transformBoundingVolume(
+      tileTransform,
+      boundingVolume.value());
 
   // parse viewer request volume
-  std::optional<BoundingVolume> tileViewerRequestVolume =
+  std::optional<Cesium3DTiles::BoundingVolume> tileViewerRequestVolume =
       getBoundingVolumeProperty(tileJson, "viewerRequestVolume", ellipsoid);
   if (tileViewerRequestVolume) {
-    tileViewerRequestVolume =
-        transformBoundingVolume(tileTransform, tileViewerRequestVolume.value());
+    tileViewerRequestVolume = Cesium3DTiles::transformBoundingVolume(
+        tileTransform,
+        tileViewerRequestVolume.value());
   }
 
   // parse geometric error
@@ -574,39 +578,25 @@ std::optional<Tile> parseTileJsonRecursively(
   double tileGeometricError = geometricError.value() * maxScaleComponent;
 
   // parse refinement
-  TileRefine tileRefine = parentRefine;
+  Cesium3DTiles::TileRefine tileRefine = parentRefine;
   const auto refineIt = tileJson.FindMember("refine");
   if (refineIt != tileJson.MemberEnd() && refineIt->value.IsString()) {
-    std::string refine = refineIt->value.GetString();
-    if (refine == "REPLACE") {
-      tileRefine = TileRefine::Replace;
-    } else if (refine == "ADD") {
-      tileRefine = TileRefine::Add;
+    CesiumUtility::Result<Cesium3DTiles::TileRefine> parsedResult =
+        Cesium3DTiles::getTileRefine(refineIt->value.GetString());
+    if (parsedResult.value) {
+      tileRefine = *parsedResult.value;
     } else {
-      std::string refineUpper = refine;
-      std::transform(
-          refineUpper.begin(),
-          refineUpper.end(),
-          refineUpper.begin(),
-          [](unsigned char c) -> unsigned char {
-            return static_cast<unsigned char>(std::toupper(c));
-          });
-      if (refineUpper == "REPLACE" || refineUpper == "ADD") {
-        SPDLOG_LOGGER_WARN(
-            pLogger,
-            "Tile refine value '{}' should be uppercase: '{}'",
-            refine,
-            refineUpper);
-        tileRefine =
-            refineUpper == "REPLACE" ? TileRefine::Replace : TileRefine::Add;
-      } else {
-        SPDLOG_LOGGER_WARN(
-            pLogger,
-            "Tile contained an unknown refine value: {}",
-            refine);
+      for (const std::string& error : parsedResult.errors.errors) {
+        SPDLOG_LOGGER_WARN(pLogger, error);
       }
+      SPDLOG_LOGGER_WARN(
+          pLogger,
+          "Found errors while parsing tile's refine value. The parent value "
+          "will be used instead.");
     }
-  } else {
+    for (const std::string& error : parsedResult.errors.warnings) {
+      SPDLOG_LOGGER_WARN(pLogger, error);
+    }
   }
 
   // Parse content member to determine tile content Url.
@@ -678,14 +668,14 @@ std::optional<Tile> parseTileJsonRecursively(
   }
 
   // this is a regular tile, then parse the content bounding volume
-  std::optional<BoundingVolume> tileContentBoundingVolume;
+  std::optional<Cesium3DTiles::BoundingVolume> tileContentBoundingVolume;
   if (hasContentMember) {
     tileContentBoundingVolume = getBoundingVolumeProperty(
         contentIt->value,
         "boundingVolume",
         ellipsoid);
     if (tileContentBoundingVolume) {
-      tileContentBoundingVolume = transformBoundingVolume(
+      tileContentBoundingVolume = Cesium3DTiles::transformBoundingVolume(
           tileTransform,
           tileContentBoundingVolume.value());
     }
@@ -733,7 +723,7 @@ TilesetContentLoaderResult<TilesetJsonLoader> parseTilesetJson(
     std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
     const rapidjson::Document& tilesetJson,
     const glm::dmat4& parentTransform,
-    TileRefine parentRefine,
+    Cesium3DTiles::TileRefine parentRefine,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   std::unique_ptr<Tile> pRootTile;
   auto gltfUpAxis = obtainGltfUpAxis(tilesetJson, pLogger);
@@ -821,7 +811,7 @@ void removeRootPropertyAndParseTilesetMetadata(
 TileLoadResult parseExternalTilesetInWorkerThread(
     const glm::dmat4& tileTransform,
     CesiumGeometry::Axis upAxis,
-    TileRefine tileRefine,
+    Cesium3DTiles::TileRefine tileRefine,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
@@ -883,7 +873,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
 TileLoadResult parseJsonContentInWorkerThread(
     const glm::dmat4& tileTransform,
     CesiumGeometry::Axis upAxis,
-    TileRefine tileRefine,
+    Cesium3DTiles::TileRefine tileRefine,
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
@@ -1041,7 +1031,7 @@ TilesetJsonLoader::createLoader(
       {requestHeaders.begin(), requestHeaders.end()},
       tilesetJson,
       glm::dmat4(1.0),
-      TileRefine::Replace,
+      Cesium3DTiles::TileRefine::Replace,
       ellipsoid);
 
   if (!result.pRootTile) {
@@ -1202,7 +1192,7 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   }
 
   const glm::dmat4& tileTransform = tile.getTransform();
-  TileRefine tileRefine = tile.getRefine();
+  Cesium3DTiles::TileRefine tileRefine = tile.getRefine();
 
   ExternalContentInitializer externalContentInitializer{nullptr, this, {}};
 
