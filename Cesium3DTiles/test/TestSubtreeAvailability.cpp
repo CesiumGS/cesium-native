@@ -1004,7 +1004,7 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
   }
 }
 
-TEST_CASE("Test SubtreeAvailability::loadGltf") {
+TEST_CASE("Test SubtreeAvailability::loadSubtree for glTF") {
   std::string gltfString = R"(
     {
       "asset": {
@@ -1032,16 +1032,16 @@ TEST_CASE("Test SubtreeAvailability::loadGltf") {
   // mock the request
   auto pMockResponse = std::make_unique<SimpleAssetResponse>(
       uint16_t(200),
-      "test",
+      "test.subtree.gltf",
       CesiumAsync::HttpHeaders{},
       std::move(buffer));
   auto pMockRequest = std::make_unique<SimpleAssetRequest>(
       "GET",
-      "test",
+      "test.subtree.gltf",
       CesiumAsync::HttpHeaders{},
       std::move(pMockResponse));
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest{
-      {"test", std::move(pMockRequest)}};
+      {"test.subtree.gltf", std::move(pMockRequest)}};
   auto pMockAssetAccessor =
       std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
 
@@ -1049,13 +1049,13 @@ TEST_CASE("Test SubtreeAvailability::loadGltf") {
   auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
   CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
 
-  auto subtreeFuture = SubtreeAvailability::loadGltf(
+  auto subtreeFuture = SubtreeAvailability::loadSubtree(
       ImplicitTileSubdivisionScheme::Quadtree,
       3,
       asyncSystem,
       pMockAssetAccessor,
       spdlog::default_logger(),
-      "test",
+      "test.subtree.gltf",
       {});
 
   asyncSystem.dispatchMainThreadTasks();
