@@ -32,11 +32,10 @@
 namespace CesiumGltfReader {
 namespace {
 
-const float SH_C0 = 0.282095f;
-
 const std::string ALTERNATE_EXT_NAME1 = "KHR_spz_gaussian_splats_compression";
 const std::string ALTERNATE_EXT_NAME2 =
     "KHR_gaussian_splatting_compression_spz";
+const float SH0 = 0.2820947917738781f;
 
 std::optional<spz::GaussianCloud> decodeBufferViewToGaussianCloud(
     GltfReaderResult& readGltf,
@@ -166,6 +165,85 @@ void copyShCoeff(
   }
 }
 
+template <typename ComponentT>
+size_t createBufferViewFor(
+    CesiumGltf::Model& model,
+    CesiumGltf::Buffer& buffer,
+    CesiumGltf::Accessor& accessor,
+    size_t numElements) {
+  accessor.bufferView = static_cast<int32_t>(model.bufferViews.size());
+  CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
+  bufferView.buffer = static_cast<int32_t>(model.buffers.size() - 1);
+  bufferView.byteLength =
+      static_cast<int64_t>(numElements * sizeof(ComponentT));
+
+  size_t start = buffer.cesium.data.size();
+  buffer.cesium.data.resize(start + static_cast<size_t>(bufferView.byteLength));
+  bufferView.byteOffset = static_cast<int64_t>(start);
+  return start;
+}
+
+template <typename ComponentT> ComponentT toNormalizedComponent(float val);
+template <> float toNormalizedComponent(float val) { return val; }
+template <> uint8_t toNormalizedComponent(float val) {
+  return static_cast<uint8_t>(val * 255.0f);
+}
+template <> uint16_t toNormalizedComponent(float val) {
+  return static_cast<uint16_t>(val * 65535.0f);
+}
+template <> int8_t toNormalizedComponent(float val) {
+  return static_cast<int8_t>(val * 127.0f);
+}
+template <> int16_t toNormalizedComponent(float val) {
+  return static_cast<int16_t>(val * 32767.0f);
+}
+
+template <typename ComponentT>
+void writeColorAccessor(
+    const spz::GaussianCloud& gaussian,
+    CesiumGltf::Model& model,
+    CesiumGltf::Buffer& buffer,
+    CesiumGltf::Accessor& colorAccessor) {
+  size_t start = createBufferViewFor<ComponentT>(
+      model,
+      buffer,
+      colorAccessor,
+      gaussian.colors.size() + gaussian.alphas.size());
+
+  for (size_t i = 0; i < gaussian.alphas.size(); i++) {
+    std::byte* base =
+        buffer.cesium.data.data() + start + i * sizeof(ComponentT) * 4;
+    const ComponentT r =
+        toNormalizedComponent<ComponentT>(gaussian.colors[i * 3] * SH0 + 0.5f);
+    const ComponentT g = toNormalizedComponent<ComponentT>(
+        gaussian.colors[i * 3 + 1] * SH0 + 0.5f);
+    const ComponentT b = toNormalizedComponent<ComponentT>(
+        gaussian.colors[i * 3 + 2] * SH0 + 0.5f);
+    const ComponentT a = toNormalizedComponent<ComponentT>(
+        1.0f / (1.0f + std::exp(-gaussian.alphas[i])));
+    memcpy(base, &r, sizeof(ComponentT));
+    memcpy(base + sizeof(ComponentT), &g, sizeof(ComponentT));
+    memcpy(base + 2 * sizeof(ComponentT), &b, sizeof(ComponentT));
+    memcpy(base + 3 * sizeof(ComponentT), &a, sizeof(ComponentT));
+  }
+}
+
+template <typename ComponentT>
+void writeConvertedAccessor(
+    const std::vector<float>& input,
+    CesiumGltf::Model& model,
+    CesiumGltf::Buffer& buffer,
+    CesiumGltf::Accessor& accessor) {
+  size_t start =
+      createBufferViewFor<ComponentT>(model, buffer, accessor, input.size());
+  for (size_t i = 0; i < input.size(); i++) {
+    std::byte* base =
+        buffer.cesium.data.data() + start + i * sizeof(ComponentT);
+    const ComponentT value = toNormalizedComponent<ComponentT>(input[i]);
+    memcpy(base, &value, sizeof(ComponentT));
+  }
+}
+
 void decodePrimitive(
     GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& primitive,
@@ -176,6 +254,15 @@ void decodePrimitive(
   const std::optional<spz::GaussianCloud> gaussian =
       decodeBufferViewToGaussianCloud(readGltf, primitive, spz);
   if (!gaussian) {
+    return;
+  }
+
+  // Validate bounds before continuing.
+  if (gaussian->colors.size() != gaussian->alphas.size() * 3) {
+    // Should be an equal pairing of RGB to A. If there isn't we're in danger of
+    // going off the end of the buffer.
+    readGltf.errors.emplace_back(
+        "Invalid Gaussian cloud: colors size does not match alphas size.");
     return;
   }
 
@@ -194,19 +281,11 @@ void decodePrimitive(
       findAccessor(readGltf, primitive, "POSITION");
   if (pPosAccessor) {
     pPosAccessor->type = CesiumGltf::Accessor::Type::VEC3;
-    pPosAccessor->bufferView =
-        static_cast<int32_t>(readGltf.model->bufferViews.size());
-    CesiumGltf::BufferView& bufferView =
-        readGltf.model->bufferViews.emplace_back();
-    bufferView.buffer =
-        static_cast<int32_t>(readGltf.model->buffers.size() - 1);
-    bufferView.byteLength =
-        static_cast<int64_t>(sizeof(float) * gaussian->positions.size());
-
-    size_t start = buffer.cesium.data.size();
-    bufferView.byteOffset = static_cast<int64_t>(start);
-    buffer.cesium.data.resize(
-        start + static_cast<size_t>(bufferView.byteLength));
+    size_t start = createBufferViewFor<float>(
+        *readGltf.model,
+        buffer,
+        *pPosAccessor,
+        gaussian->positions.size());
     memcpy(
         buffer.cesium.data.data() + start,
         gaussian->positions.data(),
@@ -217,23 +296,42 @@ void decodePrimitive(
       findAccessor(readGltf, primitive, "KHR_gaussian_splatting:ROTATION");
   if (pRotAccessor) {
     pRotAccessor->type = CesiumGltf::Accessor::Type::VEC4;
-    pRotAccessor->bufferView =
-        static_cast<int32_t>(readGltf.model->bufferViews.size());
-    CesiumGltf::BufferView& bufferView =
-        readGltf.model->bufferViews.emplace_back();
-    bufferView.buffer =
-        static_cast<int32_t>(readGltf.model->buffers.size() - 1);
-    bufferView.byteLength =
-        static_cast<int64_t>(sizeof(float) * gaussian->rotations.size());
-
-    size_t start = buffer.cesium.data.size();
-    bufferView.byteOffset = static_cast<int64_t>(start);
-    buffer.cesium.data.resize(
-        start + static_cast<size_t>(bufferView.byteLength));
-    memcpy(
-        buffer.cesium.data.data() + start,
-        gaussian->rotations.data(),
-        sizeof(float) * gaussian->rotations.size());
+    if (pRotAccessor->componentType ==
+        CesiumGltf::Accessor::ComponentType::BYTE) {
+      writeConvertedAccessor<int8_t>(
+          gaussian->rotations,
+          *readGltf.model,
+          buffer,
+          *pRotAccessor);
+    } else if (
+        pRotAccessor->componentType ==
+        CesiumGltf::Accessor::ComponentType::SHORT) {
+      writeConvertedAccessor<int16_t>(
+          gaussian->rotations,
+          *readGltf.model,
+          buffer,
+          *pRotAccessor);
+    } else {
+      if (pRotAccessor->componentType !=
+          CesiumGltf::Accessor::ComponentType::FLOAT) {
+        const std::string prevComponentTypeName =
+            CesiumGltf::convertPropertyComponentTypeToString(
+                CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
+                    pRotAccessor->componentType));
+        readGltf.warnings.push_back(fmt::format(
+            "SPZ glTF KHR_gaussian_splatting:ROTATION accessor is unsupported "
+            "type {} - changing type "
+            "to FLOAT",
+            prevComponentTypeName));
+        pRotAccessor->componentType =
+            CesiumGltf::Accessor::ComponentType::FLOAT;
+      }
+      writeConvertedAccessor<float>(
+          gaussian->rotations,
+          *readGltf.model,
+          buffer,
+          *pRotAccessor);
+    }
   }
 
   // Color needs to be interleaved with alphas
@@ -241,42 +339,134 @@ void decodePrimitive(
       findAccessor(readGltf, primitive, "COLOR_0");
   if (pColorAccessor) {
     pColorAccessor->type = CesiumGltf::Accessor::Type::VEC4;
-    if (pColorAccessor->componentType !=
+    if (pColorAccessor->componentType ==
+        CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE) {
+      writeColorAccessor<uint8_t>(
+          *gaussian,
+          *readGltf.model,
+          buffer,
+          *pColorAccessor);
+    } else if (
+        pColorAccessor->componentType ==
+        CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT) {
+      writeColorAccessor<uint16_t>(
+          *gaussian,
+          *readGltf.model,
+          buffer,
+          *pColorAccessor);
+    } else {
+      if (pColorAccessor->componentType !=
+          CesiumGltf::Accessor::ComponentType::FLOAT) {
+        const std::string prevComponentTypeName =
+            CesiumGltf::convertPropertyComponentTypeToString(
+                CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
+                    pColorAccessor->componentType));
+        readGltf.warnings.push_back(fmt::format(
+            "SPZ glTF COLOR_0 accessor is unsupported type {} - changing type "
+            "to FLOAT",
+            prevComponentTypeName));
+        pColorAccessor->componentType =
+            CesiumGltf::Accessor::ComponentType::FLOAT;
+      }
+      writeColorAccessor<float>(
+          *gaussian,
+          *readGltf.model,
+          buffer,
+          *pColorAccessor);
+    }
+  }
+
+  // Write raw alpha to KHR_gaussian_splatting:OPACITY accessor
+  CesiumGltf::Accessor* pOpacityAccessor =
+      findAccessor(readGltf, primitive, "KHR_gaussian_splatting:OPACITY");
+  if (pOpacityAccessor) {
+    pOpacityAccessor->type = CesiumGltf::Accessor::Type::SCALAR;
+    if (pOpacityAccessor->componentType ==
+        CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE) {
+      writeConvertedAccessor<uint8_t>(
+          gaussian->alphas,
+          *readGltf.model,
+          buffer,
+          *pOpacityAccessor);
+    } else if (
+        pOpacityAccessor->componentType ==
+        CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT) {
+      writeConvertedAccessor<uint16_t>(
+          gaussian->alphas,
+          *readGltf.model,
+          buffer,
+          *pOpacityAccessor);
+    } else {
+      if (pOpacityAccessor->componentType !=
+          CesiumGltf::Accessor::ComponentType::FLOAT) {
+        const std::string prevComponentTypeName =
+            CesiumGltf::convertPropertyComponentTypeToString(
+                CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
+                    pOpacityAccessor->componentType));
+        readGltf.warnings.push_back(fmt::format(
+            "SPZ glTF KHR_gaussian_splatting:OPACITY accessor is unsupported "
+            "type {} - changing type "
+            "to FLOAT",
+            prevComponentTypeName));
+        pOpacityAccessor->componentType =
+            CesiumGltf::Accessor::ComponentType::FLOAT;
+      }
+      writeConvertedAccessor<float>(
+          gaussian->alphas,
+          *readGltf.model,
+          buffer,
+          *pOpacityAccessor);
+    }
+  }
+
+  // Write raw color to KHR_gaussian_splatting:SH_DEGREE_0_COEF_0 accessor
+  CesiumGltf::Accessor* pDegree0Accessor = findAccessor(
+      readGltf,
+      primitive,
+      "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0");
+  if (pDegree0Accessor) {
+    pDegree0Accessor->type = CesiumGltf::Accessor::Type::VEC3;
+    if (pDegree0Accessor->componentType !=
         CesiumGltf::Accessor::ComponentType::FLOAT) {
-      // Since the data returned from spz is float, it makes more sense to
-      // return the exact values instead of converting it to a byte or short.
       const std::string prevComponentTypeName =
           CesiumGltf::convertPropertyComponentTypeToString(
               CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
-                  pColorAccessor->componentType));
+                  pDegree0Accessor->componentType));
       readGltf.warnings.push_back(fmt::format(
-          "SPZ glTF COLOR_0 accessor is type {} - changing type to FLOAT",
+          "SPZ glTF KHR_gaussian_splatting:SH_DEGREE_0_COEF_0 accessor is "
+          "unsupported "
+          "type {} - changing type "
+          "to FLOAT",
           prevComponentTypeName));
+      pDegree0Accessor->componentType =
+          CesiumGltf::Accessor::ComponentType::FLOAT;
     }
-    pColorAccessor->componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
-    pColorAccessor->bufferView =
-        static_cast<int32_t>(readGltf.model->bufferViews.size());
-    CesiumGltf::BufferView& bufferView =
-        readGltf.model->bufferViews.emplace_back();
-    bufferView.buffer =
-        static_cast<int32_t>(readGltf.model->buffers.size() - 1);
-    bufferView.byteLength = static_cast<int64_t>(
-        (gaussian->colors.size() + gaussian->alphas.size()) * sizeof(float));
 
-    size_t start = buffer.cesium.data.size();
-    buffer.cesium.data.resize(
-        start + static_cast<size_t>(bufferView.byteLength));
-    bufferView.byteOffset = static_cast<int64_t>(start);
-    for (size_t i = 0; i < gaussian->alphas.size(); i++) {
-      glm::fvec4 color(
-          0.5 + gaussian->colors[i * 3] * SH_C0,
-          0.5 + gaussian->colors[i * 3 + 1] * SH_C0,
-          0.5 + gaussian->colors[i * 3 + 2] * SH_C0,
-          1.0 / (1.0 + exp(-gaussian->alphas[i])));
-      memcpy(
-          buffer.cesium.data.data() + start + i * sizeof(glm::fvec4),
-          &color,
-          sizeof(glm::fvec4));
+    // Just being defensive here. Without this, we might start the for loop on a
+    // valid index that doesn't have a complete set of RGB components, and
+    // memcpy to somewhere we don't intend to.
+    const size_t rem = gaussian->colors.size() % 3;
+    if (rem > 0) {
+      readGltf.warnings.emplace_back(fmt::format(
+          "SPZ glTF KHR_gaussian_splatting:SH_DEGREE_0_COEF_0 accessor has {} "
+          "extra color components that will be ignored",
+          rem));
+    }
+
+    // For all normal SPZ files `rem` should be 0, but if it's not, avoid
+    // processing the extra components.
+    const size_t numElements = gaussian->colors.size() - rem;
+
+    size_t start = createBufferViewFor<float>(
+        *readGltf.model,
+        buffer,
+        *pDegree0Accessor,
+        numElements);
+    for (size_t i = 0; i < numElements; i += 3) {
+      std::byte* pBase = buffer.cesium.data.data() + start + i * sizeof(float);
+      memcpy(pBase, &gaussian->colors[i], sizeof(float));
+      memcpy(pBase, &gaussian->colors[i + 1], sizeof(float));
+      memcpy(pBase, &gaussian->colors[i + 2], sizeof(float));
     }
   }
 
@@ -285,25 +475,41 @@ void decodePrimitive(
       findAccessor(readGltf, primitive, "KHR_gaussian_splatting:SCALE");
   if (pScaleAccessor) {
     pScaleAccessor->type = CesiumGltf::Accessor::Type::VEC3;
-    pScaleAccessor->bufferView =
-        static_cast<int32_t>(readGltf.model->bufferViews.size());
-    CesiumGltf::BufferView& bufferView =
-        readGltf.model->bufferViews.emplace_back();
-    bufferView.buffer =
-        static_cast<int32_t>(readGltf.model->buffers.size() - 1);
-    bufferView.byteLength =
-        static_cast<int64_t>(sizeof(float) * gaussian->scales.size());
-
-    size_t start = buffer.cesium.data.size();
-    buffer.cesium.data.resize(
-        start + static_cast<size_t>(bufferView.byteLength));
-    bufferView.byteOffset = static_cast<int64_t>(start);
-    for (size_t i = 0; i < gaussian->scales.size(); i++) {
-      float scale = exp(gaussian->scales[i]);
-      memcpy(
-          buffer.cesium.data.data() + start + i * sizeof(float),
-          &scale,
-          sizeof(float));
+    if (pScaleAccessor->componentType ==
+        CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE) {
+      writeConvertedAccessor<uint8_t>(
+          gaussian->scales,
+          *readGltf.model,
+          buffer,
+          *pScaleAccessor);
+    } else if (
+        pScaleAccessor->componentType ==
+        CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT) {
+      writeConvertedAccessor<uint16_t>(
+          gaussian->scales,
+          *readGltf.model,
+          buffer,
+          *pScaleAccessor);
+    } else {
+      if (pScaleAccessor->componentType !=
+          CesiumGltf::Accessor::ComponentType::FLOAT) {
+        const std::string prevComponentTypeName =
+            CesiumGltf::convertPropertyComponentTypeToString(
+                CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
+                    pScaleAccessor->componentType));
+        readGltf.warnings.push_back(fmt::format(
+            "SPZ glTF KHR_gaussian_splatting:ROTATION accessor is unsupported "
+            "type {} - changing type "
+            "to FLOAT",
+            prevComponentTypeName));
+        pScaleAccessor->componentType =
+            CesiumGltf::Accessor::ComponentType::FLOAT;
+      }
+      writeConvertedAccessor<float>(
+          gaussian->scales,
+          *readGltf.model,
+          buffer,
+          *pScaleAccessor);
     }
   }
 
