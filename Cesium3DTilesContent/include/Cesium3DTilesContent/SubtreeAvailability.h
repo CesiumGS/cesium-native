@@ -76,8 +76,11 @@ public:
       bool setTilesAvailable) noexcept;
 
   /**
-   * @brief Asynchronously loads a 3D Tiles 1.1 subtree from a URL. The resource
-   * downloaded from the URL may be either a JSON or a binary subtree file.
+   * @brief Asynchronously loads a subtree from a URL. The resource
+   * downloaded from the URL may be:
+   *
+   * - A 3D Tiles 1.1 subtree, as either a JSON or ainary subtree file.
+   * - A 3D Tiles 2.0 subtree (glTF 2.1), as either a JSON or binary glTF.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree.
    * @param levelsInSubtree The number of levels in this subtree.
@@ -99,32 +102,6 @@ public:
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& subtreeUrl,
-      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
-
-  /**
-   * @brief Asynchronously loads a glTF 2.1 subtree from a URL. The resource
-   * downloaded from the URL may be either a JSON or a binary glTF.
-   *
-   * @param subdivisionScheme The subdivision scheme of the subtree.
-   * @param levelsInSubtree The number of levels in this subtree.
-   * @param asyncSystem The async system with which to do background work.
-   * @param pAssetAccessor The asset accessor to use to retrieve the subtree
-   * resource from the URL.
-   * @param pLogger The logger to which to load errors and warnings that occur
-   * during subtree load.
-   * @param gltfUrl The URL from which to retrieve the glTF subtree.
-   * @param requestHeaders HTTP headers to include in the request for the
-   * glTF subtree.
-   * @return A future that resolves to a @ref SubtreeAvailability instance for
-   * the glTF, or std::nullopt if something goes wrong.
-   */
-  static CesiumAsync::Future<std::optional<SubtreeAvailability>> loadGltf(
-      ImplicitTileSubdivisionScheme subdivisionScheme,
-      uint32_t levelsInSubtree,
-      const CesiumAsync::AsyncSystem& asyncSystem,
-      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<spdlog::logger>& pLogger,
-      const std::string& gltfUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
   /**

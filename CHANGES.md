@@ -14,7 +14,7 @@
 ##### Additions :tada:
 
 - Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
-- Added `fromGltf` and `loadGltf` methods to `Cesium3DTilesSelection::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
+- Added `fromGltf` method to `Cesium3DTilesSelection::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
 
 ### v0.65.0 - 2026-10-01
 
