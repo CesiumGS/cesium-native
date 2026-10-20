@@ -21,6 +21,7 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
+#include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfConverters/GltfConverterResult.h>
 #include <CesiumGltfConverters/GltfConverters.h>
