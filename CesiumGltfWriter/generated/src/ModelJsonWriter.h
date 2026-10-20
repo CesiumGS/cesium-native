@@ -83,6 +83,9 @@ struct ExtensionNodeMaxarMeshVariantsMappingsValue;
 struct ExtensionModelMaxarMeshVariantsValue;
 struct ExtensionMeshPrimitiveKhrMaterialsVariantsMappingsValue;
 struct ExtensionModelKhrMaterialsVariantsValue;
+struct Statistics;
+struct ClassStatistics;
+struct PropertyStatistics;
 struct PropertyAttribute;
 struct PropertyAttributeProperty;
 struct PropertyTexture;
@@ -1018,6 +1021,33 @@ struct ExtensionModelKhrMaterialsVariantsValueJsonWriter {
 
   static void write(
       const CesiumGltf::ExtensionModelKhrMaterialsVariantsValue& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct StatisticsJsonWriter {
+  using ValueType = CesiumGltf::Statistics;
+
+  static void write(
+      const CesiumGltf::Statistics& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct ClassStatisticsJsonWriter {
+  using ValueType = CesiumGltf::ClassStatistics;
+
+  static void write(
+      const CesiumGltf::ClassStatistics& obj,
+      CesiumJsonWriter::JsonWriter& jsonWriter,
+      const CesiumJsonWriter::ExtensionWriterContext& context);
+};
+
+struct PropertyStatisticsJsonWriter {
+  using ValueType = CesiumGltf::PropertyStatistics;
+
+  static void write(
+      const CesiumGltf::PropertyStatistics& obj,
       CesiumJsonWriter::JsonWriter& jsonWriter,
       const CesiumJsonWriter::ExtensionWriterContext& context);
 };
