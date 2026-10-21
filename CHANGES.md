@@ -1,4 +1,10 @@
 # Change Log
+### ??
+
+##### Additions :tada:
+
+- Added the `group` property from a tile's content to Cesium3DTilesSelection::Tile`.
+- Added `Cesium3DTilesSelection::ViewStateMeasureDelegate::isContentVisible()` predicate. This is called in tileset selection to decide whether to display a tile's contents or descend into external content.
 
 ### ? - ?
 
