@@ -60,12 +60,12 @@ auto testDataPath =
     std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "2.0";
 } // namespace
 
-TEST_CASE("Test creating tileset gltf loader") {
+TEST_CASE("Test TilesetGltfLoader") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  SUBCASE("Create valid tileset json with REPLACE refinement") {
+  SUBCASE("Loads tileset with REPLACE refinement") {
     auto loaderResult = createTilesetGltfLoader(
-        testDataPath / "ReplacementTileset" / "sample.tileset.gltf");
+        testDataPath / "ReplacementTileset" / "root.tileset.gltf");
 
     CHECK_FALSE(loaderResult.errors.hasErrors());
 
@@ -137,12 +137,12 @@ TEST_CASE("Test creating tileset gltf loader") {
         children[3].getBoundingVolume()));
 
     // check loader up axis
-    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Y);
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
   }
 
-  SUBCASE("Create valid tileset json with ADD refinement") {
+  SUBCASE("Loads tileset with ADD refinement") {
     auto loaderResult = createTilesetGltfLoader(
-        testDataPath / "AdditiveTileset" / "sample.tileset.gltf");
+        testDataPath / "AdditiveTileset" / "root.tileset.gltf");
 
     CHECK_FALSE(loaderResult.errors.hasErrors());
 
@@ -185,12 +185,33 @@ TEST_CASE("Test creating tileset gltf loader") {
     }
 
     // check loader up axis
-    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Y);
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
   }
 
-  SUBCASE("Load tile that has external content with implicit tiling") {
+  SUBCASE("Loads tileset with box bounding volume") {
     auto loaderResult = createTilesetGltfLoader(
-        testDataPath / "ImplicitTileset" / "sample.tileset.gltf");
+        testDataPath / "MinimalTilesets" / "BoxBoundingVolume.tileset.gltf");
+
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+
+    const Tile& rootTile = loaderResult.pRootTile->getChildren()[0];
+    const auto* pBox = std::get_if<CesiumGeometry::OrientedBoundingBox>(
+        &rootTile.getBoundingVolume());
+    REQUIRE(pBox);
+
+    // Since the glTF is defined in local space, a y-up to z-up transform will
+    // have been applied to the bounding volume.
+    const glm::dmat3& halfAxis = pBox->getHalfAxes();
+    CHECK_EQ(halfAxis[0], glm::dvec3(100.0, 0.0, 0.0));
+    CHECK_EQ(halfAxis[1], glm::dvec3(0.0, 0.0, 10.0));
+    CHECK_EQ(halfAxis[2], glm::dvec3(0.0, -100.0, 0.0));
+    CHECK_EQ(pBox->getCenter(), glm::dvec3(0.0, 0.0, 10.0));
+  }
+
+  SUBCASE("Loads tile that has external content through implicit tiling") {
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "ImplicitTileset" / "root.tileset.gltf");
 
     REQUIRE(loaderResult.pRootTile);
     CHECK(loaderResult.pRootTile->isExternalContent());

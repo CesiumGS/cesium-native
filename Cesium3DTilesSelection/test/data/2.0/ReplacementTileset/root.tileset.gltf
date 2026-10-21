@@ -6,6 +6,15 @@
     "3DTILES_tileset": {
       "geometricError": 240
     },
+    "EXT_geospatial_crs": {
+      "format": "wkid",
+      "extensions": {
+        "EXT_geospatial_crs_wkid": {
+          "authority": "EPSG",
+          "wkid": 4978
+        }
+      }
+    },
     "EXT_structural_metadata": {
       "schema": {
         "id": "ID_batch_table",
@@ -68,8 +77,16 @@
       }
     } 
   },
-  "extensionsUsed": ["3DTILES_tileset", "EXT_structural_metadata"],
-  "extensionsRequired": ["3DTILES_tileset"],
+  "extensionsUsed": [
+    "3DTILES_tileset",
+    "3DTILES_shape_ellipsoid_region",
+    "EXT_geospatial_crs",
+    "EXT_structural_metadata"
+  ],
+  "extensionsRequired": [
+    "3DTILES_tileset",
+    "3DTILES_shape_ellipsoid_region"
+  ],
   "externalAssets": [
     {
       "file": 0
