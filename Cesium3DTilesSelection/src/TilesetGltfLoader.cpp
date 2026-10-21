@@ -254,39 +254,44 @@ std::optional<Tile> parseGltfNodeRecursively(
   const auto* pTilesetExtension =
       node.getExtension<CesiumGltf::ExtensionNode3dTilesTileset>();
   if (!pTilesetExtension) {
-    // Per the spec, `3DTILES_tileset` MUST be defined on all nodes, so this is
-    // an error.
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Found a node that is missing the `3DTILES_tileset` extension. All "
+        "nodes within the glTF MUST contain this extension.");
     return std::nullopt;
   }
 
-  // Parse tile transform
-  const std::optional<glm::dmat4x4> transform =
-      CesiumGltfContent::GltfUtilities::getNodeTransform(node);
-  glm::dmat4x4 tileTransform =
-      parentTransform * transform.value_or(glm::dmat4x4(1.0));
-
+  // Parse bounding volume
   const CesiumGltf::Shape* pBoundingVolume =
       node.boundingVolume
           ? model.getSafe(&model.shapes, node.boundingVolume->shape)
           : nullptr;
 
   if (!pBoundingVolume) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Node did not contain a boundingVolume");
+    SPDLOG_LOGGER_ERROR(pLogger, "Node did not contain a boundingVolume.");
     return std::nullopt;
   }
 
   CesiumUtility::Result<Cesium3DTiles::BoundingVolume> boundingVolume =
       Cesium3DTiles::getBoundingVolume(*pBoundingVolume, ellipsoid);
   if (!boundingVolume.value) {
-    // TODO: LOG
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Node contained an improperly defined boundingVolume.");
     return std::nullopt;
   }
+
+  // Parse and apply the tile transform
+  const std::optional<glm::dmat4x4> transform =
+      CesiumGltfContent::GltfUtilities::getNodeTransform(node);
+  glm::dmat4x4 tileTransform =
+      parentTransform * transform.value_or(glm::dmat4x4(1.0));
 
   auto tileBoundingVolume = Cesium3DTiles::transformBoundingVolume(
       tileTransform,
       *boundingVolume.value);
 
-  // parse geometric error
+  // Parse geometric error
   double geometricError = pTilesetExtension->geometricError;
 
   const glm::dvec3 scale = glm::dvec3(
@@ -297,7 +302,7 @@ std::optional<Tile> parseGltfNodeRecursively(
       glm::max(scale.x, glm::max(scale.y, scale.z));
   double tileGeometricError = geometricError * maxScaleComponent;
 
-  // parse refinement
+  // Parse tile refinement
   Cesium3DTiles::TileRefine tileRefine = parentRefine;
   if (pTilesetExtension->refine) {
     CesiumUtility::Result<Cesium3DTiles::TileRefine> parsedRefine =

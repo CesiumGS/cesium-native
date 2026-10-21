@@ -42,10 +42,12 @@ std::string ImplicitTilingUtilities::resolveUrl(
         if (placeholder == "level") {
           return std::to_string(quadtreeID.level);
         }
-        if (placeholder == "x") {
+        // 3D Tiles 1.1 uses {x}/{y}
+        // 3DTILES_implicit_tiling uses {right}/{forward}
+        if (placeholder == "x" || placeholder == "right") {
           return std::to_string(quadtreeID.x);
         }
-        if (placeholder == "y") {
+        if (placeholder == "y" || placeholder == "forward") {
           return std::to_string(quadtreeID.y);
         }
 
@@ -65,13 +67,15 @@ std::string ImplicitTilingUtilities::resolveUrl(
         if (placeholder == "level") {
           return std::to_string(octreeID.level);
         }
-        if (placeholder == "x") {
+        // 3D Tiles 1.1 uses {x}/{y}{z}
+        // 3DTILES_implicit_tiling uses {right}/{forward}/{up}
+        if (placeholder == "x" || placeholder == "right") {
           return std::to_string(octreeID.x);
         }
-        if (placeholder == "y") {
+        if (placeholder == "y" || placeholder == "forward") {
           return std::to_string(octreeID.y);
         }
-        if (placeholder == "z") {
+        if (placeholder == "z" || placeholder == "up") {
           return std::to_string(octreeID.z);
         }
 

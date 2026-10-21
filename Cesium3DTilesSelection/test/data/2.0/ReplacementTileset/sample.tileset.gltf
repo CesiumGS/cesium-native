@@ -1,0 +1,293 @@
+{
+  "asset": {
+    "version": "2.1"
+  },
+  "extensions": {
+    "3DTILES_tileset": {
+      "geometricError": 240
+    },
+    "EXT_structural_metadata": {
+      "schema": {
+        "id": "ID_batch_table",
+        "classes": {
+          "class_batch_table": {
+            "properties": {
+              "id": {
+                "type": "SCALAR",
+                "required": true,
+                "name": "id",
+                "description": "Generated from id",
+                "componentType": "UINT8"
+              },
+              "Longitude": {
+                "type": "SCALAR",
+                "required": true,
+                "name": "Longitude",
+                "description": "Generated from Longitude",
+                "componentType": "FLOAT32"
+              },
+              "Latitude": {
+                "type": "SCALAR",
+                "required": true,
+                "name": "Latitude",
+                "description": "Generated from Latitude",
+                "componentType": "FLOAT32"
+              },
+              "Height": {
+                "type": "SCALAR",
+                "required": true,
+                "name": "Height",
+                "description": "Generated from Height",
+                "componentType": "FLOAT32"
+              }
+            }
+          }
+        }
+      },
+      "statistics": {
+        "classes": {
+          "class_batch_table": {
+            "id": {
+              "min": 0,
+              "max": 9
+            },
+            "Longitude": {
+              "min": -1.3197192952275933,
+              "max": -1.319644104024109
+            },
+            "Latitude": {
+              "min": 0.698848878034009,
+              "max": 0.6989046192460953
+            },
+            "Height": {
+              "min": 6.161747192963958,
+              "max": 85.41026367992163
+            }
+          }
+        }
+      }
+    } 
+  },
+  "extensionsUsed": ["3DTILES_tileset", "EXT_structural_metadata"],
+  "extensionsRequired": ["3DTILES_tileset"],
+  "externalAssets": [
+    {
+      "file": 0
+    },
+    {
+      "file": 1
+    },
+    {
+      "file": 2
+    },
+    {
+      "file": 3
+    },
+    {
+      "file": 4
+    },
+    {
+      "file": 5
+    }
+  ],
+  "files": [
+    {
+      "uri": "parent.glb",
+      "mimeType": "model/gltf-binary"
+    },
+    {
+      "uri": "ll.glb",
+      "mimeType": "model/gltf-binary"
+    },
+    {
+      "uri": "lr.glb",
+      "mimeType": "model/gltf-binary"
+    },
+    {
+      "uri": "ul.glb",
+      "mimeType": "model/gltf-binary"
+    },
+    {
+      "uri": "ur.glb",
+      "mimeType": "model/gltf-binary"
+    },
+    {
+      "uri": "ll_ll.glb",
+      "mimeType": "model/gltf-binary"
+    }
+  ],
+  "nodes": [
+    {
+      "name": "root",
+      "extensions": {
+        "3DTILES_tileset": {
+          "geometricError": 70,
+          "refine": "REPLACE",
+          "content": {
+            "boundingVolume": {
+              "shape": 1
+            }
+          }
+        }
+      },
+      "boundingVolume": {
+        "shape": 0
+      },
+      "externalAsset": 0,
+      "children": [1, 2, 3, 4]
+    },
+    {
+      "name": "ll",
+      "extensions": {
+        "3DTILES_tileset": {
+          "geometricError": 5
+        }
+      },
+      "boundingVolume": {
+        "shape": 2
+      },
+      "externalAsset": 1,
+      "children": [5]
+    },
+    {
+      "name": "lr",
+      "extensions": {
+        "3DTILES_tileset": {
+          "geometricError": 0
+        }
+      },
+      "boundingVolume": {
+        "shape": 3
+      },
+      "externalAsset": 2
+    },
+    {
+      "name": "ul",
+      "extensions": {
+        "3DTILES_tileset": {
+          "geometricError": 0
+        }
+      },
+      "boundingVolume": {
+        "shape": 4
+      },
+      "externalAsset": 3
+    },
+    {
+      "name": "ur",
+      "extensions": {
+        "3DTILES_tileset": {
+          "geometricError": 0
+        }
+      },
+      "boundingVolume": {
+        "shape": 5
+      },
+      "externalAsset": 4
+    },
+    {
+      "name": "ll_ll",
+      "extensions": {
+        "3DTILES_tileset": {
+          "geometricError": 0
+        }
+      },
+      "boundingVolume": {
+        "shape": 2
+      },
+      "externalAsset": 5
+    }
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [0]
+    }
+  ],
+  "shapes": [
+    {
+      "name": "root node bounding volume",
+      "type": "ellipsoid region",
+      "extensions": {
+        "3DTILES_shape_ellipsoid_region": {
+          "minimumHeight": 0.0,
+          "maximumHeight": 88,
+          "minimumLongitude": -1.3197209591796106,
+          "maximumLongitude": -1.3196390408203893,
+          "minimumLatitude": 0.6988424218,
+          "maximumLatitude": 0.6989055782
+        }
+      }
+    },
+    {
+      "name": "root content bounding volume",
+      "type": "ellipsoid region",
+      "extensions": {
+        "3DTILES_shape_ellipsoid_region": {
+          "minimumHeight": 0.0,
+          "maximumHeight": 88,
+          "minimumLongitude": -1.3197004795898053,
+          "maximumLongitude": -1.3196595204101946,
+          "minimumLatitude": 0.6988582109,
+          "maximumLatitude": 0.6988897891
+        }
+      }
+    },
+    {
+      "name": "ll node bounding volume",
+      "type": "ellipsoid region",
+      "extensions": {
+        "3DTILES_shape_ellipsoid_region": {
+          "minimumHeight": 0.0,
+          "maximumHeight": 20,
+          "minimumLongitude": -1.3197209591796106,
+          "maximumLongitude": -1.31968,
+          "minimumLatitude": 0.6988424218,
+          "maximumLatitude": 0.698874
+        }
+      }
+    },
+    {
+      "name": "lr node bounding volume",
+      "type": "ellipsoid region",
+      "extensions": {
+        "3DTILES_shape_ellipsoid_region": {
+          "minimumHeight": 0.0,
+          "maximumHeight": 20,
+          "minimumLongitude": -1.31968,
+          "maximumLongitude": -1.3196390408203893,
+          "minimumLatitude": 0.6988424218,
+          "maximumLatitude": 0.698874
+        }
+      }
+    },
+    {
+      "name": "ul node bounding volume",
+      "type": "ellipsoid region",
+      "extensions": {
+        "3DTILES_shape_ellipsoid_region": {
+          "minimumHeight": 0.0,
+          "maximumHeight": 20,
+          "minimumLongitude": -1.3197209591796106,
+          "maximumLongitude": -1.31968,
+          "minimumLatitude": 0.698874,
+          "maximumLatitude": 0.6989055782
+        }
+      }
+    },
+    {
+      "name": "ur node bounding volume",
+      "type": "ellipsoid region",
+      "extensions": {
+        "3DTILES_shape_ellipsoid_region": {
+          "minimumHeight": 0.0,
+          "maximumHeight": 20,
+          "minimumLongitude": -1.31968,
+          "maximumLongitude": -1.3196390408203893,
+          "minimumLatitude": 0.698874,
+          "maximumLatitude": 0.6989055782
+        }
+      }
+    }
+  ]
+}
