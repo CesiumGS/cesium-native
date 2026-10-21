@@ -188,6 +188,27 @@ TEST_CASE("Test TilesetGltfLoader") {
     CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
   }
 
+  SUBCASE("Loads tileset with sphere bounding volume") {
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "MinimalTilesets" / "SphereBoundingVolume.tileset.gltf");
+
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+
+    const Tile& rootTile = loaderResult.pRootTile->getChildren()[0];
+    const auto* pSphere = std::get_if<CesiumGeometry::BoundingSphere>(
+        &rootTile.getBoundingVolume());
+    REQUIRE(pSphere);
+
+    // Since the tileset glTF is defined in local space, a y-up to z-up
+    // transform will have been applied to the bounding volume.
+    CHECK_EQ(pSphere->getCenter(), glm::dvec3(0.0, 0.0, 10.0));
+    CHECK_EQ(pSphere->getRadius(), 141.4214);
+
+    // check loader up axis
+    CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
+  }
+
   SUBCASE("Loads tileset with box bounding volume") {
     auto loaderResult = createTilesetGltfLoader(
         testDataPath / "MinimalTilesets" / "BoxBoundingVolume.tileset.gltf");
@@ -200,13 +221,16 @@ TEST_CASE("Test TilesetGltfLoader") {
         &rootTile.getBoundingVolume());
     REQUIRE(pBox);
 
-    // Since the glTF is defined in local space, a y-up to z-up transform will
-    // have been applied to the bounding volume.
+    // Since the tileset glTF is defined in local space, a y-up to z-up
+    // transform will have been applied to the bounding volume.
     const glm::dmat3& halfAxis = pBox->getHalfAxes();
     CHECK_EQ(halfAxis[0], glm::dvec3(100.0, 0.0, 0.0));
     CHECK_EQ(halfAxis[1], glm::dvec3(0.0, 0.0, 10.0));
     CHECK_EQ(halfAxis[2], glm::dvec3(0.0, -100.0, 0.0));
     CHECK_EQ(pBox->getCenter(), glm::dvec3(0.0, 0.0, 10.0));
+
+    // check loader up axis
+    CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
   }
 
   SUBCASE("Loads tile that has external content through implicit tiling") {

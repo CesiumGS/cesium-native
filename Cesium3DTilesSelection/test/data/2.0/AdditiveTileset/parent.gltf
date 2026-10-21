@@ -81,6 +81,18 @@
       "target": 34963
     }
   ],
+  "extensions": {
+    "EXT_geospatial_crs": {
+      "format": "wkid",
+      "extensions": {
+        "EXT_geospatial_crs_wkid": {
+          "authority": "EPSG",
+          "wkid": 4978
+        }
+      }
+    }
+  },
+  "extensionsUsed": ["EXT_geospatial_crs"],
   "materials": [
     {
       "pbrMetallicRoughness": {
@@ -118,30 +130,6 @@
     }
   ],
   "nodes": [
-    {
-      "name": "Z_UP_TO_Y_UP",
-      "matrix": [
-        1,
-        0,
-        0,
-        0,
-        0,
-        0,
-        -1,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0,
-        0,
-        0,
-        1
-      ],
-      "children": [
-        1
-      ]
-    },
     {
       "name": "RTC_CENTER",
       "translation": [
