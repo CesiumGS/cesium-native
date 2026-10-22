@@ -5,7 +5,6 @@
 #include "logTileLoadResult.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
-#include <Cesium3DTiles/TileBoundingVolumes.h>
 #include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -22,41 +21,32 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
-#include <CesiumGeometry/BoundingSphere.h>
-#include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/Transforms.h>
-#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
-#include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
 #include <CesiumGltf/Extension3dTilesImplicitTiling.h>
 #include <CesiumGltf/Extension3dTilesTilesetVoxels.h>
 #include <CesiumGltf/ExtensionExtGeospatialCrs.h>
-#include <CesiumGltf/ExtensionExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionModel3dTilesTileset.h>
-#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionNode3dTilesTileset.h>
+#include <CesiumGltf/ExternalAsset.h>
+#include <CesiumGltf/File.h>
+#include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
-#include <CesiumUtility/JsonHelpers.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/Uri.h>
-#include <CesiumVectorData/GeoJsonDocument.h>
-#include <CesiumVectorData/GltfConverter.h>
 
 #include <fmt/format.h>
 #include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
-#include <glm/ext/quaternion_double.hpp>
 #include <glm/ext/vector_double3.hpp>
 #include <glm/geometric.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <rapidjson/document.h>
-#include <rapidjson/rapidjson.h>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 
@@ -65,7 +55,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <iterator>
 #include <memory>
 #include <optional>
 #include <span>
@@ -550,47 +539,6 @@ TileLoadResult parseExternalTilesetInWorkerThread(
       TileLoadResultState::Success,
       ellipsoid};
 }
-
-TileLoadResult parseJsonContentInWorkerThread(
-    const glm::dmat4& tileTransform,
-    CesiumGeometry::Axis upAxis,
-    Cesium3DTiles::TileRefine tileRefine,
-    const std::shared_ptr<spdlog::logger>& pLogger,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
-    ExternalContentInitializer&& externalContentInitializer,
-    const CesiumGeospatial::Ellipsoid& ellipsoid,
-    const IntrusivePointer<CesiumGltf::Schema>& /*pExternalSchema*/) {
-  const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
-  const auto& responseData = pResponse->data();
-
-  CesiumGltfReader::GltfReader gltfReader;
-  CesiumGltfReader::GltfReaderResult result = gltfReader.readGltf(responseData);
-  if (!result.model) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Error(s) when parsing tileset glTF:");
-    for (const std::string& error : result.errors) {
-      SPDLOG_LOGGER_ERROR(pLogger, error);
-    }
-  }
-
-  if (result.warnings.size() > 0) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Warning(s) when parsing tileset glTF:");
-    for (const std::string& warning : result.warnings) {
-      SPDLOG_LOGGER_ERROR(pLogger, warning);
-    }
-  }
-
-  return parseExternalTilesetInWorkerThread(
-      tileTransform,
-      upAxis,
-      tileRefine,
-      pLogger,
-      pAssetAccessor,
-      std::move(pCompletedRequest),
-      std::move(externalContentInitializer),
-      ellipsoid,
-      std::move(*result.model));
-}
 } // namespace
 
 TilesetGltfLoader::TilesetGltfLoader(
@@ -819,7 +767,7 @@ TilesetGltfLoader::loadTileContent(const TileLoadInput& loadInput) {
            tileTransform,
            tileRefine,
            ellipsoid,
-           upAxis = _upAxis,
+           upAxis = this->_upAxis,
            externalContentInitializer = std::move(externalContentInitializer),
            pAssetAccessor,
            asyncSystem,
@@ -871,22 +819,46 @@ TilesetGltfLoader::loadTileContent(const TileLoadInput& loadInput) {
                     gltfOptions)
                 .thenImmediately(
                     [ellipsoid,
+                     asyncSystem,
                      pLogger,
+                     tileTransform,
                      upAxis,
+                     externalContentInitializer =
+                         std::move(externalContentInitializer),
+                     tileRefine,
                      tileUrl,
                      pAssetAccessor,
-                     pCompletedRequest = std::move(pCompletedRequest)](
+                     pCompletedRequest = std::move(pCompletedRequest),
+                     pExternalSchema](
                         CesiumGltfReader::GltfReaderResult&& result) mutable {
                       CesiumUtility::ErrorList errors{
                           std::move(result.errors),
                           std::move(result.warnings)};
                       logTileLoadResult(pLogger, tileUrl, errors);
                       if (errors.hasErrors()) {
-                        return TileLoadResult::createFailedResult(
-                            pAssetAccessor,
-                            std::move(pCompletedRequest));
+                        return asyncSystem.createResolvedFuture(
+                            TileLoadResult::createFailedResult(
+                                pAssetAccessor,
+                                std::move(pCompletedRequest)));
                       }
-                      return TileLoadResult{
+
+                      if (result.model->hasExtension<
+                              CesiumGltf::ExtensionModel3dTilesTileset>()) {
+                        // This is an external tileset.
+                        return asyncSystem.createResolvedFuture(
+                            parseExternalTilesetInWorkerThread(
+                                tileTransform,
+                                upAxis,
+                                tileRefine,
+                                pLogger,
+                                pAssetAccessor,
+                                std::move(pCompletedRequest),
+                                std::move(externalContentInitializer),
+                                ellipsoid,
+                                std::move(*result.model)));
+                      }
+
+                      return asyncSystem.createResolvedFuture(TileLoadResult{
                           std::move(*result.model),
                           upAxis,
                           std::nullopt,
@@ -896,7 +868,7 @@ TilesetGltfLoader::loadTileContent(const TileLoadInput& loadInput) {
                           std::move(pCompletedRequest),
                           {},
                           TileLoadResultState::Success,
-                          ellipsoid};
+                          ellipsoid});
                     });
           });
 }

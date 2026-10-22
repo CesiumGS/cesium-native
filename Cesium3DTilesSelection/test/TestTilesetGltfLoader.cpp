@@ -13,6 +13,7 @@
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/BoundingSphere.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/MeshPrimitive.h>
@@ -136,7 +137,6 @@ TEST_CASE("Test TilesetGltfLoader") {
     CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
         children[3].getBoundingVolume()));
 
-    // check loader up axis
     CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
   }
 
@@ -184,7 +184,6 @@ TEST_CASE("Test TilesetGltfLoader") {
       ++expectedUrlIt;
     }
 
-    // check loader up axis
     CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
   }
 
@@ -205,8 +204,7 @@ TEST_CASE("Test TilesetGltfLoader") {
     CHECK_EQ(pSphere->getCenter(), glm::dvec3(0.0, 0.0, 10.0));
     CHECK_EQ(pSphere->getRadius(), 141.4214);
 
-    // check loader up axis
-    CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Y);
   }
 
   SUBCASE("Loads tileset with box bounding volume") {
@@ -229,8 +227,144 @@ TEST_CASE("Test TilesetGltfLoader") {
     CHECK_EQ(halfAxis[2], glm::dvec3(0.0, -100.0, 0.0));
     CHECK_EQ(pBox->getCenter(), glm::dvec3(0.0, 0.0, 10.0));
 
-    // check loader up axis
-    CHECK(loaderResult.pLoader->getUpAxis() == CesiumGeometry::Axis::Y);
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Y);
+  }
+
+  SUBCASE("Ignores tiles with missing bounding volumes") {
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "MinimalTilesets" /
+        "MissingBoundingVolumes.tileset.gltf");
+
+    CHECK_FALSE(loaderResult.errors.hasErrors());
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+
+    // None of the children defined a bounding volume, so they should not be
+    // loaded.
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+    CHECK(pRootTile->getChildren().empty());
+
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
+  }
+
+  SUBCASE("Handles tiles with improperly capitalized Refinement field") {
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "MinimalTilesets" / "UncapitalizedRefine.tileset.gltf");
+
+    CHECK_FALSE(loaderResult.errors.hasErrors());
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+    CHECK_EQ(pRootTile->getGeometricError(), Approx(70.0));
+    CHECK_EQ(pRootTile->getRefine(), TileRefine::Add);
+    CHECK_EQ(pRootTile->getChildren().size(), 4);
+    for (const Tile& child : pRootTile->getChildren()) {
+      CHECK_EQ(child.getGeometricError(), Approx(5.0));
+      CHECK_EQ(child.getRefine(), TileRefine::Replace);
+    }
+
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
+  }
+
+  SUBCASE("Scales geometric error with tile transform") {
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "MinimalTilesets" / "ScaleGeometricError.tileset.gltf");
+
+    CHECK_FALSE(loaderResult.errors.hasErrors());
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+    CHECK_EQ(pRootTile->getGeometricError(), Approx(210.0));
+    CHECK_EQ(pRootTile->getChildren().size(), 4);
+    for (const Tile& child : pRootTile->getChildren()) {
+      CHECK_EQ(child.getGeometricError(), Approx(15.0));
+    }
+
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
+  }
+
+  SUBCASE("Loads tile with render content") {
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "ReplacementTileset" / "root.tileset.gltf");
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+
+    const auto* pTileId = std::get_if<std::string>(&pRootTile->getTileID());
+    REQUIRE(pTileId);
+    CHECK_EQ(*pTileId, "parent.glb");
+
+    // check tile content
+    auto tileLoadResult = mockLoadTileContent(
+        testDataPath / "ReplacementTileset" / *pTileId,
+        *loaderResult.pLoader,
+        *pRootTile);
+    CHECK(
+        std::holds_alternative<CesiumGltf::Model>(tileLoadResult.contentKind));
+    CHECK_UNARY_FALSE(tileLoadResult.updatedBoundingVolume);
+    CHECK_UNARY_FALSE(tileLoadResult.updatedContentBoundingVolume);
+    CHECK_EQ(tileLoadResult.state, TileLoadResultState::Success);
+    CHECK_FALSE(tileLoadResult.tileInitializer);
+  }
+
+  SUBCASE("Load tile that has external content") {
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "AdditiveExternalTilesets" / "root.tileset.gltf");
+
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+
+    const auto* pTileId = std::get_if<std::string>(&pRootTile->getTileID());
+    REQUIRE(pTileId);
+    CHECK_EQ(*pTileId, "external.tileset.gltf");
+
+    // check tile content
+    auto tileLoadResult = mockLoadTileContent(
+        testDataPath / "AdditiveExternalTilesets" / *pTileId,
+        *loaderResult.pLoader,
+        *pRootTile);
+    CHECK_UNARY_FALSE(tileLoadResult.updatedBoundingVolume);
+    CHECK_UNARY_FALSE(tileLoadResult.updatedContentBoundingVolume);
+    CHECK(std::holds_alternative<TileExternalContent>(
+        tileLoadResult.contentKind));
+    CHECK_EQ(tileLoadResult.state, TileLoadResultState::Success);
+    CHECK(tileLoadResult.tileInitializer);
+
+    // check that tile is really an external tile
+    pRootTile->getContent().setContentKind(
+        std::make_unique<TileExternalContent>(
+            std::get<TileExternalContent>(tileLoadResult.contentKind)));
+    tileLoadResult.tileInitializer(*pRootTile);
+    const auto& children = pRootTile->getChildren();
+    REQUIRE_EQ(children.size(), 1);
+
+    const Tile& parentTile = children[0];
+    const auto* pParentTileId =
+        std::get_if<std::string>(&parentTile.getTileID());
+    REQUIRE(pParentTileId);
+    CHECK_EQ(*pParentTileId, "parent.gltf");
+    CHECK_EQ(parentTile.getGeometricError(), Approx(70.0));
+
+    std::vector<std::string> expectedChildUrls{
+        "tileset3/ll.tileset.gltf",
+        "lr.gltf",
+        "ul.gltf",
+        "ur.gltf"};
+    const auto& parentChildren = parentTile.getChildren();
+    for (std::size_t i = 0; i < parentChildren.size(); ++i) {
+      const Tile& child = parentChildren[i];
+      const auto* pChildTileId = std::get_if<std::string>(&child.getTileID());
+      REQUIRE(pChildTileId);
+      CHECK_EQ(*pChildTileId, expectedChildUrls[i]);
+      CHECK_EQ(child.getGeometricError(), Approx(0.0));
+      CHECK_EQ(child.getRefine(), TileRefine::Add);
+      CHECK(std::holds_alternative<CesiumGeospatial::BoundingRegion>(
+          child.getBoundingVolume()));
+    }
   }
 
   SUBCASE("Loads tile that has external content through implicit tiling") {
@@ -330,5 +464,124 @@ TEST_CASE("Test TilesetGltfLoader") {
       CHECK_EQ(implicitContentResult.state, TileLoadResultState::Success);
       CHECK_FALSE(implicitContentResult.tileInitializer);
     }
+  }
+
+  SUBCASE("Loads tileset with tile missing content") {
+    auto pLog = std::make_shared<spdlog::sinks::ringbuffer_sink_mt>(3);
+    spdlog::default_logger()->sinks().emplace_back(pLog);
+
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "MinimalTilesets" / "ErrorMissingContent.tileset.gltf");
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+
+    const auto* pTileID = std::get_if<std::string>(&pRootTile->getTileID());
+    REQUIRE(pTileID);
+    CHECK_EQ(*pTileID, "nonexistent.gltf");
+
+    auto tileLoadResult = mockLoadTileContent(
+        testDataPath / "MinimalTilesets" / *pTileID,
+        *loaderResult.pLoader,
+        *pRootTile);
+    CHECK_EQ(tileLoadResult.state, TileLoadResultState::Failed);
+
+    std::vector<std::string> logMessages = pLog->last_formatted();
+    REQUIRE_EQ(logMessages.size(), 1);
+    REQUIRE(
+        logMessages.back()
+            .substr(0, logMessages.back().find_last_not_of("\n\r") + 1)
+            .ends_with(
+                "Received status code 404 for tile content nonexistent.gltf"));
+  }
+
+  SUBCASE("Loads tileset with empty tile") {
+    std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor =
+        std::make_shared<SimpleAssetAccessor>(
+            std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
+    AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "MinimalTilesets" / "EmptyTile.tileset.gltf");
+    CHECK_FALSE(loaderResult.errors.hasErrors());
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+    CHECK_EQ(pRootTile->getGeometricError(), Approx(70.0));
+    CHECK_EQ(pRootTile->getChildren().size(), 1);
+
+    Tile& child = pRootTile->getChildren().front();
+    auto future = loaderResult.pLoader->loadTileContent(TileLoadInput{
+        child,
+        {},
+        asyncSystem,
+        pMockAssetAccessor,
+        spdlog::default_logger(),
+        {}});
+    TileLoadResult result = future.wait();
+    REQUIRE_EQ(result.state, TileLoadResultState::Success);
+    TileEmptyContent* pEmptyContent =
+        std::get_if<TileEmptyContent>(&result.contentKind);
+    REQUIRE(pEmptyContent);
+    child.getContent().setContentKind(*pEmptyContent);
+    CHECK(child.isEmptyContent());
+
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
+  }
+
+  SUBCASE("Loads tileset with quadtree implicit tile") {
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "MinimalTilesets" / "ImplicitQuadtree.tileset.gltf");
+    CHECK_FALSE(loaderResult.errors.hasErrors());
+    REQUIRE(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->isExternalContent());
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+    CHECK(pRootTile->isExternalContent());
+    REQUIRE_EQ(pRootTile->getChildren().size(), 1);
+
+    const Tile& child = pRootTile->getChildren().front();
+    CHECK_NE(child.getLoader(), loaderResult.pLoader.get());
+    CHECK_EQ(child.getGeometricError(), pRootTile->getGeometricError());
+    CHECK_EQ(child.getRefine(), pRootTile->getRefine());
+    CHECK_EQ(child.getTransform(), pRootTile->getTransform());
+    CHECK_EQ(
+        std::get<CesiumGeometry::QuadtreeTileID>(child.getTileID()),
+        CesiumGeometry::QuadtreeTileID(0, 0, 0));
+
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Y);
+    CHECK_EQ(
+        pRootTile->getTransform(),
+        CesiumGeometry::Transforms::Y_UP_TO_Z_UP * glm::dmat4(glm::dmat3(2.0)));
+  }
+
+  SUBCASE("Loads tileset with octree implicit tile") {
+    auto loaderResult = createTilesetGltfLoader(
+        testDataPath / "MinimalTilesets" / "ImplicitOctree.tileset.gltf");
+    CHECK_FALSE(loaderResult.errors.hasErrors());
+    REQUIRE(loaderResult.pRootTile);
+    CHECK(loaderResult.pRootTile->isExternalContent());
+    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+    CHECK(pRootTile->isExternalContent());
+    REQUIRE_EQ(pRootTile->getChildren().size(), 1);
+
+    const Tile& child = pRootTile->getChildren().front();
+    CHECK_NE(child.getLoader(), loaderResult.pLoader.get());
+    CHECK_EQ(child.getGeometricError(), pRootTile->getGeometricError());
+    CHECK_EQ(child.getRefine(), pRootTile->getRefine());
+    CHECK_EQ(child.getTransform(), pRootTile->getTransform());
+    CHECK_EQ(
+        std::get<CesiumGeometry::OctreeTileID>(child.getTileID()),
+        CesiumGeometry::OctreeTileID(0, 0, 0, 0));
+
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Y);
+    CHECK_EQ(
+        pRootTile->getTransform(),
+        CesiumGeometry::Transforms::Y_UP_TO_Z_UP * glm::dmat4(glm::dmat3(2.0)));
   }
 }
