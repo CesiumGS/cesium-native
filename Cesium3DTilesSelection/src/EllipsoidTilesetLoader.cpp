@@ -1,11 +1,11 @@
-#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
+#include <Cesium3DTiles/ImplicitTilingUtilities.h>
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/EllipsoidTilesetLoader.h>
 #include <Cesium3DTilesSelection/ITilesetHeightSampler.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/Tileset.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
@@ -43,7 +43,7 @@ using namespace CesiumAsync;
 using namespace CesiumUtility;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
 
 namespace Cesium3DTilesSelection {
 EllipsoidTilesetLoader::EllipsoidTilesetLoader(const Ellipsoid& ellipsoid)
