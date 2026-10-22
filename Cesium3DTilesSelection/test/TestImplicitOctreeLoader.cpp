@@ -732,7 +732,6 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
     availability.setContentAvailable(
         OctreeTileID{0, 0, 0, 0},
         OctreeTileID{1, 1, 1, 1},
-        0,
         true);
     loader.addSubtreeAvailability(
         OctreeTileID{0, 0, 0, 0},
