@@ -97,41 +97,20 @@ TEST_CASE("ImplicitTilingUtilities::resolveUrl") {
   SUBCASE("quadtree") {
     QuadtreeTileID tileID(11, 2, 3);
 
-    SUBCASE("from 3D Tiles 1.1") {
-      std::string url = ImplicitTilingUtilities::resolveUrl(
-          "https://example.com",
-          "tiles/{level}/{x}/{y}",
-          tileID);
-      CHECK_EQ(url, "https://example.com/tiles/11/2/3");
-    }
-
-    SUBCASE("from 3DTILES_implicit_tiling") {
-      std::string url = ImplicitTilingUtilities::resolveUrl(
-          "https://example.com",
-          "tiles/{level}/{right}/{forward}",
-          tileID);
-      CHECK_EQ(url, "https://example.com/tiles/11/2/3");
-    }
+    std::string url = ImplicitTilingUtilities::resolveUrl(
+        "https://example.com",
+        "tiles/{level}/{x}/{y}",
+        tileID);
+    CHECK_EQ(url, "https://example.com/tiles/11/2/3");
   }
 
   SUBCASE("octree") {
     OctreeTileID tileID(11, 2, 3, 4);
-
-    SUBCASE("from 3D Tiles 1.1") {
-      std::string url = ImplicitTilingUtilities::resolveUrl(
-          "https://example.com",
-          "tiles/{level}/{x}/{y}/{z}",
-          tileID);
-      CHECK_EQ(url, "https://example.com/tiles/11/2/3/4");
-    }
-
-    SUBCASE("from 3DTILES_implicit_tiling") {
-      std::string url = ImplicitTilingUtilities::resolveUrl(
-          "https://example.com",
-          "tiles/{level}/{right}/{forward}/{up}",
-          tileID);
-      CHECK_EQ(url, "https://example.com/tiles/11/2/3/4");
-    }
+    std::string url = ImplicitTilingUtilities::resolveUrl(
+        "https://example.com",
+        "tiles/{level}/{x}/{y}/{z}",
+        tileID);
+    CHECK_EQ(url, "https://example.com/tiles/11/2/3/4");
   }
 }
 

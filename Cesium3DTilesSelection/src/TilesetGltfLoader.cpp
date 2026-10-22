@@ -87,6 +87,61 @@ inline CesiumGeometry::Axis obtainUpAxis(const CesiumGltf::Model& model) {
              : CesiumGeometry::Axis::Y;
 }
 
+/**
+ * @brief Rewrites a URI with glTF 2.1 implicit tiling parameters such that:
+ * - `{right}` becomes `{x}`
+ * - `{forward}` becomes `{y}`
+ * - `{up}` becomes `{z}`
+ *
+ * This does not replace any computation required to resolve the difference
+ * between the glTF's up axis (y-up in standard) and @ref
+ * Cesium3DTiles::ImplicitTilingUtilities (z-up). Such a transform, if
+ * necessary, should be applied to the associated @ref
+ * Cesium3DTiles::BoundingVolume before using it with @ref
+ * Cesium3DTiles::ImplicitTilingUtilities::computeBoundingVolume.
+ *
+ * @param uriTemplate The original URI template from the glTF.
+ * @return The template with the replaced parameters.
+ */
+std::string convertToXyzTemplate(const std::string& uriTemplate) {
+  return CesiumUtility::Uri::substituteTemplateParameters(
+      uriTemplate,
+      [](const std::string& placeholder) {
+        if (placeholder == "right") {
+          return std::string("{x}");
+        }
+        if (placeholder == "forward") {
+          return std::string("{y}");
+        }
+        if (placeholder == "up") {
+          return std::string("{z}");
+        }
+        return "{" + placeholder + "}";
+      });
+}
+
+void transformBoundingVolumeForImplicitTiling(
+    Cesium3DTiles::BoundingVolume& boundingVolume) {
+  if (const auto* pBox =
+          std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume)) {
+    // 3DTILES_implicit_tiling uses {right}/{forward}/{up}, which aligns with
+    // the -x, +z, and +y axes in glTF respectively.
+    //
+    // Since ImplicitTilingUtilities works along the +x, +y, +z axes of the
+    // bounding box (as does 3D Tiles 1.1), its halfAxes must be swizzled and
+    // scaled to reflect the coordinate differences.
+    // clang-format off
+    glm::dmat4 transform(
+      -1.0, 0.0, 0.0, 0.0,
+       0.0, 0.0, 1.0, 0.0,
+       0.0, 1.0, 0.0, 0.0,
+       0.0, 0.0, 0.0, 1.0);
+    // clang-format on
+    boundingVolume =
+        Cesium3DTiles::transformBoundingVolume(transform, boundingVolume);
+  }
+}
+
 void createImplicitQuadtreeLoader(
     const std::string& contentUriTemplate,
     const std::string& subtreeUriTemplate,
@@ -102,8 +157,8 @@ void createImplicitQuadtreeLoader(
 
   auto pLoader = std::make_unique<ImplicitQuadtreeLoader>(
       currentLoader.getBaseUrl(),
-      contentUriTemplate,
-      subtreeUriTemplate,
+      convertToXyzTemplate(contentUriTemplate),
+      convertToXyzTemplate(subtreeUriTemplate),
       subtreeLevels,
       availableLevels,
       *quadtreeBoundingVolume);
@@ -137,8 +192,8 @@ void createImplicitOctreeLoader(
 
   auto pLoader = std::make_unique<ImplicitOctreeLoader>(
       currentLoader.getBaseUrl(),
-      contentUriTemplate,
-      subtreeUriTemplate,
+      convertToXyzTemplate(contentUriTemplate),
+      convertToXyzTemplate(subtreeUriTemplate),
       subtreeLevels,
       availableLevels,
       *octreeBoundingVolume);
@@ -231,15 +286,11 @@ std::optional<Tile> parseGltfNodeRecursively(
     return std::nullopt;
   }
 
-  // Parse and apply the tile transform
+  // Parse the tile transform
   const std::optional<glm::dmat4x4> transform =
       CesiumGltfContent::GltfUtilities::getNodeTransform(node);
   glm::dmat4x4 tileTransform =
       parentTransform * transform.value_or(glm::dmat4x4(1.0));
-
-  auto tileBoundingVolume = Cesium3DTiles::transformBoundingVolume(
-      tileTransform,
-      *boundingVolume.value);
 
   // Parse geometric error
   double geometricError = pTilesetExtension->geometricError;
@@ -297,6 +348,11 @@ std::optional<Tile> parseGltfNodeRecursively(
           *pVoxels);
     }
 
+    transformBoundingVolumeForImplicitTiling(*boundingVolume.value);
+    auto tileBoundingVolume = Cesium3DTiles::transformBoundingVolume(
+        tileTransform,
+        *boundingVolume.value);
+
     Tile tile{&currentLoader, TileID(), std::move(pExternalContent)};
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
@@ -350,6 +406,11 @@ std::optional<Tile> parseGltfNodeRecursively(
       childTiles.emplace_back(std::move(*maybeChild));
     }
   }
+
+  // Apply the tile transform to the bounding volume.
+  auto tileBoundingVolume = Cesium3DTiles::transformBoundingVolume(
+      tileTransform,
+      *boundingVolume.value);
 
   Tile tile{&currentLoader};
   tile.setTileID(contentUri ? contentUri : std::string{});
@@ -691,8 +752,8 @@ TilesetGltfLoader::loadTileContent(const TileLoadInput& loadInput) {
   }
 
   // this loader only handles Url ID
-  const std::string* url = std::get_if<std::string>(&tile.getTileID());
-  if (!url) {
+  const std::string* pUrl = std::get_if<std::string>(&tile.getTileID());
+  if (!pUrl) {
     return loadInput.asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult::createFailedResult(loadInput.pAssetAccessor, nullptr));
   }
@@ -717,7 +778,7 @@ TilesetGltfLoader::loadTileContent(const TileLoadInput& loadInput) {
   // If the URL is empty, this tile is empty content and we don't need to make a
   // web request to complete the loading process (in fact, a web request would
   // produce incorrect results as it would just be a request for _baseUrl).
-  if (url->empty()) {
+  if (pUrl->empty()) {
     return loadInput.asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult{
             TileEmptyContent{},
@@ -733,7 +794,7 @@ TilesetGltfLoader::loadTileContent(const TileLoadInput& loadInput) {
   }
 
   std::string resolvedUrl =
-      CesiumUtility::Uri::resolve(this->_baseUrl, *url, true);
+      CesiumUtility::Uri::resolve(this->_baseUrl, *pUrl, true);
   return pAssetAccessor->get(asyncSystem, resolvedUrl, requestHeaders)
       .thenInWorkerThread(
           [pLogger,
