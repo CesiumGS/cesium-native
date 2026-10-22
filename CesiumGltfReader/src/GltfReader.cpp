@@ -364,7 +364,7 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
   }
 
   if (options.decodeSpz && hasSpzExtension(readGltf)) {
-    decodeSpz(readGltf);
+    decodeSpz(options.spzDecoderOptions, readGltf);
   }
 
   if (options.dequantizeMeshData &&
