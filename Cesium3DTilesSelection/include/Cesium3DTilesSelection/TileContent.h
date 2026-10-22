@@ -53,9 +53,21 @@ struct CESIUM3DTILESSELECTION_API TileEmptyContent {};
 struct CESIUM3DTILESSELECTION_API TileExternalContent
     : public CesiumUtility::ExtensibleObject {
   /**
+   * @brief Construct the external content object.
+   *
+   * @param implicit whether the tile is the root of an implicit tileset.
+   */
+  TileExternalContent(bool implicit = false) : isImplicit(implicit) {}
+  
+  /**
    * @brief The metadata associated with this tileset.
    */
   TilesetMetadata metadata;
+
+  /**
+   * @brief Indicates that the tile is the root of an implicit tileset.
+   */
+  bool isImplicit;
 };
 
 /**

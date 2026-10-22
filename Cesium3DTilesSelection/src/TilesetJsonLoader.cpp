@@ -628,7 +628,11 @@ std::optional<Tile> parseTileJsonRecursively(
   }
 
   const char* contentUri = maybeContent ? maybeContent->uri.c_str() : nullptr;
-
+  std::optional<int64_t> group;
+  if (maybeContent) {
+    group = maybeContent->group;
+  }
+  
   // determine if tile has implicit tiling
   const rapidjson::Value* implicitTilingJson = nullptr;
   const auto implicitTilingIt = tileJson.FindMember("implicitTiling");
@@ -652,7 +656,7 @@ std::optional<Tile> parseTileJsonRecursively(
 
   if (implicitTilingJson) {
     // Mark this tile as external.
-    auto pExternalContent = std::make_unique<TileExternalContent>();
+    auto pExternalContent = std::make_unique<TileExternalContent>(true);
 
     // Check for 3DTILES_content_voxels, which is currently only supported for
     // implicitly tiled tilesets.
@@ -670,6 +674,9 @@ std::optional<Tile> parseTileJsonRecursively(
     tile.setViewerRequestVolume(tileViewerRequestVolume);
     tile.setGeometricError(tileGeometricError);
     tile.setRefine(tileRefine);
+    if (group) {
+      tile.setGroup(*group);
+    }
 
     parseImplicitTileset(*implicitTilingJson, contentUri, tile, currentLoader);
 
@@ -721,8 +728,8 @@ std::optional<Tile> parseTileJsonRecursively(
   tile.setGeometricError(tileGeometricError);
   tile.setRefine(tileRefine);
   tile.setContentBoundingVolume(tileContentBoundingVolume);
-  if (maybeContent && maybeContent->group) {
-    tile.setGroup(*maybeContent->group);
+  if (group) {
+    tile.setGroup(*group);
   }
   tile.createChildTiles(std::move(childTiles));
 

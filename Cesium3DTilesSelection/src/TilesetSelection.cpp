@@ -966,7 +966,9 @@ TraversalDetails visitTile(
       frameState.viewGroup.saveTileLoadQueueCheckpoint();
 
   TraversalDetails traversalDetails;
-  if (!tile.isExternalContent() || isContentVisible(frameState, tile)) {
+  if (!tile.isExternalContent()
+      || tile.getContent().getExternalContent()->isImplicit
+      || isContentVisible(frameState, tile)) {
     traversalDetails = visitVisibleChildrenNearToFar(
         context,
         frameState,

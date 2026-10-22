@@ -1,20 +1,17 @@
 # Change Log
-### ??
-
-##### Additions :tada:
-
-- Added the `group` property from a tile's content to Cesium3DTilesSelection::Tile`.
-- Added `Cesium3DTilesSelection::ViewStateMeasureDelegate::isContentVisible()` predicate. This is called in tileset selection to decide whether to display a tile's contents or descend into external content.
 
 ### ? - ?
 
 ##### Breaking Changes :mega:
 
 - The classes associated with `KHR_implicit_shapes` have been renamed from `Shape`, `Box`, `Capsule`, `Cylinder`, `Sphere` to `ExtensionKhrImplicitShapesShape`, `ExtensionKhrImplicitShapesBox`, `ExtensionKhrImplicitShapesCapsule`, `ExtensionKhrImplicitShapesCylinder`, `ExtensionKhrImplicitShapesSphere` to deconflict with the shape classes generated for glTF 2.1.
+- `ViewStateMeasureDelegate::computeSelectionMeasure` and `ViewStateMeasureDelegate::isContentVisible` now takes the view state as an argument.
 
 ##### Additions :tada:
 
 - Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
+- Added `Cesium3DTilesSelection::ViewStateMeasureDelegate::isContentVisible()` predicate. This is called in tileset selection to decide whether to display a tile's contents or descend into external content.
 
 ### v0.65.0 - 2026-10-01
 
