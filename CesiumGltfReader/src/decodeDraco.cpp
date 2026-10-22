@@ -7,6 +7,7 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
@@ -164,7 +165,9 @@ void copyDecodedIndices(
   default:
     readGltf.warnings.emplace_back(
         "indices accessor has a componentType (" +
-        std::to_string(pIndicesAccessor->componentType) +
+        CesiumGltf::convertPropertyComponentTypeToString(
+            CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
+                pIndicesAccessor->componentType)) +
         ") that is not a valid glTF index componentType; using a "
         "componentType derived from the decoded Draco point count instead.");
     pIndicesAccessor->componentType = supposedComponentType;
