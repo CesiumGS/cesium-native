@@ -1,5 +1,6 @@
 #include "TilesetGltfLoader.h"
 
+#include "ExternalContentInitializer.h"
 #include "ImplicitOctreeLoader.h"
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
@@ -68,43 +69,14 @@ using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
-struct ExternalContentInitializer {
-  // Have to use shared_ptr here to make this functor copyable. Otherwise,
-  // std::function won't work with move-only type as it's a type-erasured
-  // container. Unfortunately, std::move_only_function is scheduled for C++23.
-  std::shared_ptr<TilesetContentLoaderResult<TilesetGltfLoader>>
-      pExternalTilesetLoaders;
-  TilesetGltfLoader* pTilesetGltfLoader;
-  TileExternalContent externalContent;
-
-  void operator()(Tile& tile) {
-    TileExternalContent* pExternalContent =
-        tile.getContent().getExternalContent();
-    if (pExternalContent) {
-      *pExternalContent = std::move(externalContent);
-      std::unique_ptr<Tile>& pExternalRoot = pExternalTilesetLoaders->pRootTile;
-      if (pExternalRoot) {
-        // propagate all the external tiles to be the children of this tile
-        std::vector<Tile> children;
-        children.emplace_back(std::move(*pExternalRoot));
-        tile.createChildTiles(std::move(children));
-
-        // save the loader of the external tileset in this loader
-        pTilesetGltfLoader->addChildLoader(
-            std::move(pExternalTilesetLoaders->pLoader));
-      }
-    }
-  }
-};
-
 /**
  * @brief Obtains the up-axis that should be used for glTF content of the
  * tileset.
  *
- * The glTF standard is y-up. However, a glTF may contain @ref
- * CesiumGltf::ExtensionExtGeospatialCrs, which indicates the use of a different
- * coordinate reference system. Most of these geospatial CRS's are z-up, so this
- * operates on that blanket assumption for now.
+ * The glTF specification mandates that the Y-axis is the "up"-axis. However, a
+ * glTF may contain @ref CesiumGltf::ExtensionExtGeospatialCrs, which indicates
+ * the use of a different coordinate reference system. Most of these geospatial
+ * CRS's are z-up, so this operates on that blanket assumption for now.
  *
  * @param model The glTF
  * @return The up-axis to use for its content
@@ -484,7 +456,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
-    ExternalContentInitializer&& externalContentInitializer,
+    ExternalContentInitializer<TilesetGltfLoader>&& externalContentInitializer,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     CesiumGltf::Model&& tilesetGltf) {
   const auto& tileUrl = pCompletedRequest->url();
@@ -674,7 +646,6 @@ TilesetGltfLoader::createLoader(
   TileExternalContent* pExternal =
       result.pRootTile->getContent().getExternalContent();
   CESIUM_ASSERT(pExternal);
-  std::string externalSchemaUrl;
   if (pExternal) {
     parseTilesetMetadata(pLogger, gltfUrl, std::move(gltf), *pExternal);
   }
@@ -729,7 +700,10 @@ TilesetGltfLoader::loadTileContent(const TileLoadInput& loadInput) {
   const glm::dmat4& tileTransform = tile.getTransform();
   Cesium3DTiles::TileRefine tileRefine = tile.getRefine();
 
-  ExternalContentInitializer externalContentInitializer{nullptr, this, {}};
+  ExternalContentInitializer<TilesetGltfLoader> externalContentInitializer{
+      nullptr,
+      this,
+      {}};
 
   const auto& ellipsoid = this->_ellipsoid;
   const auto& asyncSystem = loadInput.asyncSystem;

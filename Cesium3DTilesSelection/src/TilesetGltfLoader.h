@@ -71,9 +71,11 @@ private:
   CesiumUtility::IntrusivePointer<CesiumGltf::Schema> _pExternalSchema;
 
   /**
-   * @brief The axis that was declared as the "up-axis" for glTF content.
+   * @brief The axis used as the "up-axis" for glTF content.
    *
-   * TODO: this could get affected by EXT_geospatial_crs.
+   * The glTF specification mandates that the Y-axis is the "up"-axis, However,
+   * a glTF may contain @ref CesiumGltf::ExtensionExtGeospatialCrs, which
+   * indicates the use of a different coordinate reference system.
    */
   CesiumGeometry::Axis _upAxis;
 
