@@ -15,11 +15,12 @@
 #include <CesiumUtility/Tracing.h>
 
 #include <fmt/format.h>
-#include <glm/fwd.hpp>
 #include <load-spz.h>
 #include <splat-types.h>
 
+#include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -109,16 +110,16 @@ CesiumGltf::Accessor* findAccessor(
 }
 
 CesiumGltf::Accessor* addAccessor(
-    GltfReaderResult& readGltf,
+    CesiumGltf::Model& model,
     CesiumGltf::MeshPrimitive& primitive,
     const std::string& attributeName,
     const std::string& type,
     int32_t componentType) {
-  CesiumGltf::Accessor& accessor = readGltf.model->accessors.emplace_back();
+  CesiumGltf::Accessor& accessor = model.accessors.emplace_back();
   accessor.type = type;
   accessor.componentType = componentType;
   primitive.attributes[attributeName] =
-      static_cast<int32_t>(readGltf.model->accessors.size() - 1);
+      static_cast<int32_t>(model.accessors.size() - 1);
   return &accessor;
 }
 
@@ -259,6 +260,27 @@ void writeConvertedAccessor(
   }
 }
 
+void coerceToFloatAndWarn(
+    GltfReaderResult& readGltf,
+    const SpzDecoderOptions& options,
+    const std::string& accessorName,
+    CesiumGltf::Accessor& accessor) {
+  if (accessor.componentType != CesiumGltf::Accessor::ComponentType::FLOAT) {
+    if (!options.forceFloatAccessors) {
+      const std::string prevComponentTypeName =
+          CesiumGltf::convertPropertyComponentTypeToString(
+              CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
+                  accessor.componentType));
+      readGltf.warnings.push_back(fmt::format(
+          "SPZ glTF {} accessor is "
+          "unsupported type {} - changing type to FLOAT",
+          accessorName,
+          prevComponentTypeName));
+    }
+    accessor.componentType = CesiumGltf::Accessor::ComponentType::FLOAT;
+  }
+}
+
 void decodePrimitive(
     const SpzDecoderOptions& options,
     GltfReaderResult& readGltf,
@@ -282,6 +304,8 @@ void decodePrimitive(
     return;
   }
 
+  // Make a best guess on the size of the buffer we will need.
+  // If we need more, `createBufferViewFor` will resize.
   const size_t bufferLength =
       sizeof(float) *
       (gaussian->positions.size() + gaussian->scales.size() +
@@ -330,22 +354,11 @@ void decodePrimitive(
           buffer,
           *pRotAccessor);
     } else {
-      if (pRotAccessor->componentType !=
-          CesiumGltf::Accessor::ComponentType::FLOAT) {
-        if (!options.forceFloatAccessors) {
-          const std::string prevComponentTypeName =
-              CesiumGltf::convertPropertyComponentTypeToString(
-                  CesiumGltf::
-                      convertAccessorComponentTypeToPropertyComponentType(
-                          pRotAccessor->componentType));
-          readGltf.warnings.push_back(fmt::format(
-              "SPZ glTF KHR_gaussian_splatting:ROTATION accessor is "
-              "unsupported type {} - changing type to FLOAT",
-              prevComponentTypeName));
-        }
-        pRotAccessor->componentType =
-            CesiumGltf::Accessor::ComponentType::FLOAT;
-      }
+      coerceToFloatAndWarn(
+          readGltf,
+          options,
+          "KHR_gaussian_splatting:ROTATION",
+          *pRotAccessor);
       writeConvertedAccessor<float>(
           gaussian->rotations,
           *readGltf.model,
@@ -377,22 +390,7 @@ void decodePrimitive(
           buffer,
           *pColorAccessor);
     } else {
-      if (pColorAccessor->componentType !=
-          CesiumGltf::Accessor::ComponentType::FLOAT) {
-        if (!options.forceFloatAccessors) {
-          const std::string prevComponentTypeName =
-              CesiumGltf::convertPropertyComponentTypeToString(
-                  CesiumGltf::
-                      convertAccessorComponentTypeToPropertyComponentType(
-                          pColorAccessor->componentType));
-          readGltf.warnings.push_back(fmt::format(
-              "SPZ glTF COLOR_0 accessor is unsupported type {} - changing "
-              "type to FLOAT",
-              prevComponentTypeName));
-        }
-        pColorAccessor->componentType =
-            CesiumGltf::Accessor::ComponentType::FLOAT;
-      }
+      coerceToFloatAndWarn(readGltf, options, "COLOR_0", *pColorAccessor);
       writeColorAccessor<float>(
           *gaussian,
           *readGltf.model,
@@ -408,11 +406,12 @@ void decodePrimitive(
     // Attribute is required by spec and we want runtimes to be able to count on
     // having raw alpha data available.
     pOpacityAccessor = addAccessor(
-        readGltf,
+        *readGltf.model,
         primitive,
         "KHR_gaussian_splatting:OPACITY",
         CesiumGltf::Accessor::Type::SCALAR,
         CesiumGltf::Accessor::ComponentType::FLOAT);
+    pOpacityAccessor->count = static_cast<int64_t>(gaussian->alphas.size());
   }
   if (pOpacityAccessor) {
     pOpacityAccessor->type = CesiumGltf::Accessor::Type::SCALAR;
@@ -432,20 +431,11 @@ void decodePrimitive(
           buffer,
           *pOpacityAccessor);
     } else {
-      if (pOpacityAccessor->componentType !=
-          CesiumGltf::Accessor::ComponentType::FLOAT) {
-        const std::string prevComponentTypeName =
-            CesiumGltf::convertPropertyComponentTypeToString(
-                CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
-                    pOpacityAccessor->componentType));
-        readGltf.warnings.push_back(fmt::format(
-            "SPZ glTF KHR_gaussian_splatting:OPACITY accessor is unsupported "
-            "type {} - changing type "
-            "to FLOAT",
-            prevComponentTypeName));
-        pOpacityAccessor->componentType =
-            CesiumGltf::Accessor::ComponentType::FLOAT;
-      }
+      coerceToFloatAndWarn(
+          readGltf,
+          options,
+          "KHR_gaussian_splatting:OPACITY",
+          *pOpacityAccessor);
       writeConvertedAccessor<float>(
           gaussian->alphas,
           *readGltf.model,
@@ -463,29 +453,20 @@ void decodePrimitive(
     // Attribute is required by spec and we want runtimes to be able to count on
     // having raw SH0 data.
     pDegree0Accessor = addAccessor(
-        readGltf,
+        *readGltf.model,
         primitive,
         "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0",
         CesiumGltf::Accessor::Type::VEC3,
         CesiumGltf::Accessor::ComponentType::FLOAT);
+    pDegree0Accessor->count = static_cast<int64_t>(gaussian->colors.size() / 3);
   }
   if (pDegree0Accessor) {
     pDegree0Accessor->type = CesiumGltf::Accessor::Type::VEC3;
-    if (pDegree0Accessor->componentType !=
-        CesiumGltf::Accessor::ComponentType::FLOAT) {
-      if (!options.forceFloatAccessors) {
-        const std::string prevComponentTypeName =
-            CesiumGltf::convertPropertyComponentTypeToString(
-                CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
-                    pDegree0Accessor->componentType));
-        readGltf.warnings.push_back(fmt::format(
-            "SPZ glTF KHR_gaussian_splatting:SH_DEGREE_0_COEF_0 accessor is "
-            "unsupported type {} - changing type to FLOAT",
-            prevComponentTypeName));
-      }
-      pDegree0Accessor->componentType =
-          CesiumGltf::Accessor::ComponentType::FLOAT;
-    }
+    coerceToFloatAndWarn(
+        readGltf,
+        options,
+        "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0",
+        *pOpacityAccessor);
 
     // Just being defensive here. Without this, we might start the for loop on a
     // valid index that doesn't have a complete set of RGB components, and
@@ -510,8 +491,11 @@ void decodePrimitive(
     for (size_t i = 0; i < numElements; i += 3) {
       std::byte* pBase = buffer.cesium.data.data() + start + i * sizeof(float);
       memcpy(pBase, &gaussian->colors[i], sizeof(float));
-      memcpy(pBase, &gaussian->colors[i + 1], sizeof(float));
-      memcpy(pBase, &gaussian->colors[i + 2], sizeof(float));
+      memcpy(pBase + sizeof(float), &gaussian->colors[i + 1], sizeof(float));
+      memcpy(
+          pBase + 2 * sizeof(float),
+          &gaussian->colors[i + 2],
+          sizeof(float));
     }
   }
 
@@ -538,24 +522,11 @@ void decodePrimitive(
           buffer,
           *pScaleAccessor);
     } else {
-      if (pScaleAccessor->componentType !=
-          CesiumGltf::Accessor::ComponentType::FLOAT) {
-        if (!options.forceFloatAccessors) {
-          const std::string prevComponentTypeName =
-              CesiumGltf::convertPropertyComponentTypeToString(
-                  CesiumGltf::
-                      convertAccessorComponentTypeToPropertyComponentType(
-                          pScaleAccessor->componentType));
-          readGltf.warnings.push_back(fmt::format(
-              "SPZ glTF KHR_gaussian_splatting:ROTATION accessor is "
-              "unsupported "
-              "type {} - changing type "
-              "to FLOAT",
-              prevComponentTypeName));
-        }
-        pScaleAccessor->componentType =
-            CesiumGltf::Accessor::ComponentType::FLOAT;
-      }
+      coerceToFloatAndWarn(
+          readGltf,
+          options,
+          "KHR_gaussian_splatting:SCALE",
+          *pOpacityAccessor);
       writeConvertedAccessor<float>(
           gaussian->scales,
           *readGltf.model,

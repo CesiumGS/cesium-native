@@ -1662,7 +1662,7 @@ TEST_CASE("SPZ decoding works properly") {
     const std::unordered_map<std::string, int32_t>& attributes =
         model.meshes[0].primitives[0].attributes;
 
-    CHECK(attributes.size() == 4);
+    CHECK(attributes.size() == 6);
 
     REQUIRE(attributes.contains("POSITION"));
     AccessorView<glm::vec3> positionView(model, attributes.at("POSITION"));
@@ -1695,5 +1695,22 @@ TEST_CASE("SPZ decoding works properly") {
     CHECK(
         scaleView[0] ==
         glm::vec3(3.000000003824261, 2.0000000150316017, 0.9999999711365299));
+
+    REQUIRE(attributes.contains("KHR_gaussian_splatting:OPACITY"));
+    AccessorView<float> opacityView(
+        model,
+        attributes.at("KHR_gaussian_splatting:OPACITY"));
+    REQUIRE(opacityView.status() == AccessorViewStatus::Valid);
+    REQUIRE(opacityView.size() == 1);
+    CHECK(opacityView[0] == 0.00784329232f);
+
+    REQUIRE(attributes.contains("KHR_gaussian_splatting:SH_DEGREE_0_COEF_0"));
+    AccessorView<glm::vec3> sh0View(
+        model,
+        attributes.at("KHR_gaussian_splatting:SH_DEGREE_0_COEF_0"));
+    REQUIRE(sh0View.status() == AccessorViewStatus::Valid);
+    REQUIRE(sh0View.size() == 1);
+    glm::vec3 sh0 = sh0View[0];
+    CHECK(sh0 == glm::vec3(0.248366192f, 0.50980407f, 0.745098173f));
   }
 }
