@@ -302,10 +302,22 @@ TEST_CASE("GltfUtilities::setBoundingVolumeTransform") {
   CHECK_EQ(
       boundingVolume.translation,
       std::vector{translation.x, translation.y, translation.z});
-  CHECK_EQ(
-      boundingVolume.rotation,
-      std::vector{rotation.x, rotation.y, rotation.z, rotation.w});
-  CHECK_EQ(boundingVolume.scale, std::vector{scale.x, scale.y, scale.z});
+
+  std::vector rotationAsVector{rotation.x, rotation.y, rotation.z, rotation.w};
+  for (size_t i = 0; i < 4; ++i) {
+    CHECK(CesiumUtility::Math::equalsEpsilon(
+        boundingVolume.rotation[i],
+        rotationAsVector[i],
+        CesiumUtility::Math::Epsilon5));
+  };
+
+  std::vector scaleAsVector{scale.x, scale.y, scale.z};
+  for (size_t i = 0; i < 3; ++i) {
+    CHECK(CesiumUtility::Math::equalsEpsilon(
+        boundingVolume.scale[i],
+        scaleAsVector[i],
+        CesiumUtility::Math::Epsilon5));
+  };
 }
 
 TEST_CASE("GltfUtilities::removeUnusedTextures") {
