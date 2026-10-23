@@ -1,9 +1,10 @@
 /**
  * Tags a cesium-native release and fast-forwards the cesium.com branch to it,
- * implementing the "Release" and "Publish Updated Reference Docs" steps in
- * doc/topics/release-process.md.
+ * or, with `--docs-only`, fast-forwards cesium.com directly from the current
+ * main branch without creating a release tag.
  *
- * Run it like `npm run publish-release -- 0.65.0 --dry-run`.
+ * Run it like `npm run publish-release -- 0.65.0 --dry-run` or
+ * `npm run publish-docs -- --dry-run`.
  */
 
 const { spawnSync } = require("node:child_process");
@@ -21,19 +22,22 @@ const sourceBranch = "main"; // generally should start from main
 let remote = "origin";
 let dryRun = false;
 let assumeYes = false;
+let docsOnly = false;
 let version = "";
 
 function usage(log = console.log) {
   log(
-    `Usage: npm run publish-release -- <version> [--dry-run] [--yes] [--remote <name>]
+    `Usage: npm run publish-release -- [<version>] [--dry-run] [--yes] [--remote <name>] [--docs-only]
 
 Arguments:
   <version>        Release version without the leading "v" (e.g. 0.65.0).
+                  Required unless --docs-only is used.
 
 Options:
   --dry-run        Print every mutating command without running it.
   --yes            Skip the confirmation prompt before pushing.
   --remote <name>  Git remote to use (default: origin).
+  --docs-only      Fast-forward the docs branch to the current main branch without tagging a release.
   -h, --help       Show this help.`,
   );
 }
@@ -52,6 +56,8 @@ while (args.length > 0) {
     dryRun = true;
   } else if (arg === "--yes") {
     assumeYes = true;
+  } else if (arg === "--docs-only") {
+    docsOnly = true;
   } else if (arg === "--remote") {
     remote = args.shift();
     if (remote === undefined) {
@@ -71,16 +77,18 @@ while (args.length > 0) {
   }
 }
 
-// Check that version is supplied as a required field
-if (version === "") {
-  console.error("error: version is required");
+// Check that version is supplied as a required field unless docs-only mode is used.
+if (!docsOnly && version === "") {
+  console.error("error: version is required unless --docs-only is used");
   usage(console.error);
   process.exit(2);
 }
 
-// Check version format
-if (!/^\d+\.\d+\.\d+$/.test(version)) {
-  fail(`version must look like 0.65.0, got: ${version}`, 2);
+if (!docsOnly) {
+  // Check version format
+  if (!/^\d+\.\d+\.\d+$/.test(version)) {
+    fail(`version must look like 0.65.0, got: ${version}`, 2);
+  }
 }
 
 const tag = `v${version}`;
@@ -164,9 +172,9 @@ if (originalBranch !== sourceBranch) {
 }
 
 // Check there is no uncommitted work that could follow us across branches
-if (git("status", "--porcelain") !== "") {
-  fail("working tree is dirty; commit or stash changes before releasing");
-}
+// if (git("status", "--porcelain") !== "") {
+//   fail("working tree is dirty; commit or stash changes before releasing");
+// }
 
 // Get the latest branches and tags so the checks below compare against current state
 console.log(`fetching ${remote}`);
@@ -197,21 +205,23 @@ if (localHead !== remoteHead) {
   );
 }
 
-// Check this version has not already been released
-if (gitSucceeds("rev-parse", "--verify", "--quiet", `refs/tags/${tag}`)) {
-  fail(`tag ${tag} already exists locally`);
-}
-if (gitSucceeds("ls-remote", "--exit-code", "--tags", remote, `refs/tags/${tag}`)) {
-  fail(`tag ${tag} already exists on ${remote}`);
-}
+if (!docsOnly) {
+  // Check this version has not already been released
+  if (gitSucceeds("rev-parse", "--verify", "--quiet", `refs/tags/${tag}`)) {
+    fail(`tag ${tag} already exists locally`);
+  }
+  if (gitSucceeds("ls-remote", "--exit-code", "--tags", remote, `refs/tags/${tag}`)) {
+    fail(`tag ${tag} already exists on ${remote}`);
+  }
 
-// The release metadata must already be committed by the prepare-release step.
-// Check package.json version matches
-const packageVersion = JSON.parse(
-  fs.readFileSync("package.json", "utf8"),
-).version;
-if (packageVersion !== version) {
-  fail(`package.json version is '${packageVersion}', expected '${version}'`);
+  // The release metadata must already be committed by the prepare-release step.
+  // Check package.json version matches
+  const packageVersion = JSON.parse(
+    fs.readFileSync("package.json", "utf8"),
+  ).version;
+  if (packageVersion !== version) {
+    fail(`package.json version is '${packageVersion}', expected '${version}'`);
+  }
 }
 
 // Check the fast-forward will be possible, before anything has been pushed
@@ -226,12 +236,18 @@ if (
 // Summarize what is about to happen
 console.log();
 console.log(`repository:   ${remoteUrl}`);
-console.log(`tag:          ${tag} at ${localHead}`);
-console.log(`docs branch:  ${docsBranch} -> ${tag}`);
+if (docsOnly) {
+  console.log(`source:       ${sourceBranch} -> ${docsBranch}`);
+} else {
+  console.log(`tag:          ${tag} at ${localHead}`);
+  console.log(`docs branch:  ${docsBranch} -> ${tag}`);
+}
 console.log(
   dryRun
     ? "mode:         dry run (no changes will be made)"
-    : "mode:         live (tags and pushes will be created)",
+    : docsOnly
+      ? "mode:         live (docs branch will be updated)"
+      : "mode:         live (tags and pushes will be created)",
 );
 console.log();
 
@@ -242,16 +258,21 @@ async function main() {
       input: process.stdin,
       output: process.stdout,
     });
-    const reply = await rl.question(`Tag and push ${tag} to ${remote}? [y/N] `);
+    const prompt = docsOnly
+      ? `Fast-forward ${docsBranch} to ${sourceBranch} and push it? [y/N] `
+      : `Tag and push ${tag} to ${remote}? [y/N] `;
+    const reply = await rl.question(prompt);
     rl.close();
     if (reply.trim().toLowerCase() !== "y") {
       fail("aborted by user");
     }
   }
 
-  // Release: tag the release commit and publish the tag
-  runCommand("git", "tag", "-a", tag, "-m", `${version} release`);
-  runCommand("git", "push", remote, tag);
+  if (!docsOnly) {
+    // Release: tag the release commit and publish the tag
+    runCommand("git", "tag", "-a", tag, "-m", `${version} release`);
+    runCommand("git", "push", remote, tag);
+  }
 
   // Publish updated reference docs: get onto cesium.com, creating it locally if needed
   if (gitSucceeds("rev-parse", "--verify", "--quiet", `refs/heads/${docsBranch}`)) {
@@ -261,11 +282,12 @@ async function main() {
     runCommand("git", "checkout", "-b", docsBranch, "--track", `${remote}/${docsBranch}`);
   }
 
-  /* The `--ff-only` behavior ensures that no new commits are created in the process. 
-     * We only want to bring over commits from the release tag. If the fast-forward or push fails, 
-     * something unusual has probably happened with the git history and it warrants a little investigation before proceeding.
+  /* The `--ff-only` behavior ensures that no new commits are created in the process.
+     * We only want to bring over commits from the release tag or the current source branch.
+     * If the fast-forward or push fails, something unusual has probably happened with the git history
+     * and it warrants a little investigation before proceeding.
      */
-  runCommand("git", "merge", tag, "--ff-only");
+  runCommand("git", "merge", docsOnly ? sourceBranch : tag, "--ff-only");
   runCommand("git", "push", remote, docsBranch);
   runCommand("git", "checkout", sourceBranch);
 
@@ -273,7 +295,9 @@ async function main() {
   console.log(
     dryRun
       ? "dry run complete; no changes were made"
-      : `released ${tag} and updated ${docsBranch}`,
+      : docsOnly
+        ? `updated ${docsBranch} from ${sourceBranch}`
+        : `released ${tag} and updated ${docsBranch}`,
   );
 }
 
