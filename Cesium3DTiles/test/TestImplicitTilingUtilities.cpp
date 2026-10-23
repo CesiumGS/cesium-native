@@ -96,11 +96,12 @@ TEST_CASE("ImplicitTilingUtilities child tile iteration") {
 TEST_CASE("ImplicitTilingUtilities::resolveUrl") {
   SUBCASE("quadtree") {
     QuadtreeTileID tileID(11, 2, 3);
+
     std::string url = ImplicitTilingUtilities::resolveUrl(
         "https://example.com",
         "tiles/{level}/{x}/{y}",
         tileID);
-    CHECK(url == "https://example.com/tiles/11/2/3");
+    CHECK_EQ(url, "https://example.com/tiles/11/2/3");
   }
 
   SUBCASE("octree") {
@@ -109,7 +110,7 @@ TEST_CASE("ImplicitTilingUtilities::resolveUrl") {
         "https://example.com",
         "tiles/{level}/{x}/{y}/{z}",
         tileID);
-    CHECK(url == "https://example.com/tiles/11/2/3/4");
+    CHECK_EQ(url, "https://example.com/tiles/11/2/3/4");
   }
 }
 

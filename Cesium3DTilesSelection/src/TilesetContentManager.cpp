@@ -3,6 +3,7 @@
 #include "LayerJsonTerrainLoader.h"
 #include "RasterOverlayUpsampler.h"
 #include "TileContentLoadInfo.h"
+#include "TilesetGltfLoader.h"
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
@@ -40,6 +41,7 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
@@ -771,12 +773,45 @@ TilesetContentManager::createFromUrl(
                 return asyncSystem.createResolvedFuture(std::move(result));
               }
 
+              const auto& responseData = pResponse->data();
+
+              // 3D Tiles 2.0 supports both glTF and glb tilesets. Attempting to
+              // parse a JSON from a glb will fail, so go off of the file
+              // extension first.
+              if (url.ends_with(".gltf") || url.ends_with(".glb")) {
+
+                CesiumGltfReader::GltfReader gltfReader;
+                CesiumGltfReader::GltfReaderResult gltfResult =
+                    gltfReader.readGltf(responseData);
+
+                if (!gltfResult.model) {
+                  std::string error = "Errors while trying to read glTF: ";
+                  for (const std::string& e : gltfResult.errors) {
+                    error += "- " + e + "\n";
+                  }
+                  TilesetContentLoaderResult<TilesetContentLoader> result;
+                  result.errors.emplaceError(error);
+                  return asyncSystem.createResolvedFuture(std::move(result));
+                }
+
+                return TilesetGltfLoader::createLoader(
+                           asyncSystem,
+                           pAssetAccessor,
+                           pLogger,
+                           url,
+                           pCompletedRequest->headers(),
+                           std::move(*gltfResult.model),
+                           ellipsoid)
+                    .thenImmediately(
+                        [](TilesetContentLoaderResult<TilesetContentLoader>&&
+                               result) { return std::move(result); });
+              }
+
               // Parse Json response
-              std::span<const std::byte> tilesetJsonBinary = pResponse->data();
               rapidjson::Document tilesetJson;
               tilesetJson.Parse(
-                  reinterpret_cast<const char*>(tilesetJsonBinary.data()),
-                  tilesetJsonBinary.size());
+                  reinterpret_cast<const char*>(responseData.data()),
+                  responseData.size());
               if (tilesetJson.HasParseError()) {
                 TilesetContentLoaderResult<TilesetContentLoader> result;
                 result.errors.emplaceError(fmt::format(
@@ -787,8 +822,7 @@ TilesetContentManager::createFromUrl(
                 return asyncSystem.createResolvedFuture(std::move(result));
               }
 
-              // Check if the json is a tileset.json format or layer.json format
-              // and create corresponding loader
+              // Check if the json is a 3D Tiles 1.1 tileset.json.
               const auto rootIt = tilesetJson.FindMember("root");
               if (rootIt != tilesetJson.MemberEnd()) {
                 return TilesetJsonLoader::createLoader(
@@ -802,36 +836,38 @@ TilesetContentManager::createFromUrl(
                     .thenImmediately(
                         [](TilesetContentLoaderResult<TilesetContentLoader>&&
                                result) { return std::move(result); });
-              } else {
-                const auto formatIt = tilesetJson.FindMember("format");
-                bool isLayerJsonFormat = formatIt != tilesetJson.MemberEnd() &&
-                                         formatIt->value.IsString();
-                isLayerJsonFormat = isLayerJsonFormat &&
-                                    std::string(formatIt->value.GetString()) ==
-                                        "quantized-mesh-1.0";
-                if (isLayerJsonFormat) {
-                  const CesiumAsync::HttpHeaders& completedRequestHeaders =
-                      pCompletedRequest->headers();
-                  std::vector<CesiumAsync::IAssetAccessor::THeader> flatHeaders(
-                      completedRequestHeaders.begin(),
-                      completedRequestHeaders.end());
-                  return LayerJsonTerrainLoader::createLoader(
-                             asyncSystem,
-                             pAssetAccessor,
-                             contentOptions,
-                             url,
-                             flatHeaders,
-                             tilesetJson,
-                             ellipsoid)
-                      .thenImmediately(
-                          [](TilesetContentLoaderResult<TilesetContentLoader>&&
-                                 result) { return std::move(result); });
-                }
-
-                TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError("tileset json has unsupport format");
-                return asyncSystem.createResolvedFuture(std::move(result));
               }
+
+              // Check if the json is a quantized-mesh layer.json.
+              const auto formatIt = tilesetJson.FindMember("format");
+              bool isLayerJsonFormat = formatIt != tilesetJson.MemberEnd() &&
+                                       formatIt->value.IsString();
+              isLayerJsonFormat = isLayerJsonFormat &&
+                                  std::string(formatIt->value.GetString()) ==
+                                      "quantized-mesh-1.0";
+              if (isLayerJsonFormat) {
+                const CesiumAsync::HttpHeaders& completedRequestHeaders =
+                    pCompletedRequest->headers();
+                std::vector<CesiumAsync::IAssetAccessor::THeader> flatHeaders(
+                    completedRequestHeaders.begin(),
+                    completedRequestHeaders.end());
+                return LayerJsonTerrainLoader::createLoader(
+                           asyncSystem,
+                           pAssetAccessor,
+                           contentOptions,
+                           url,
+                           flatHeaders,
+                           tilesetJson,
+                           ellipsoid)
+                    .thenImmediately(
+                        [](TilesetContentLoaderResult<TilesetContentLoader>&&
+                               result) { return std::move(result); });
+              }
+
+              TilesetContentLoaderResult<TilesetContentLoader> result;
+              result.errors.emplaceError(
+                  "Tileset URL points to an asset with an unsupported format");
+              return asyncSystem.createResolvedFuture(std::move(result));
             })
         .thenInMainThread(
             [pManager](

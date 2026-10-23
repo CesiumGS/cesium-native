@@ -1,7 +1,7 @@
 #include "SimplePrepareRendererResource.h"
-#include "TestTilesetJsonLoader.h"
 #include "TilesetContentManager.h"
 #include "TilesetJsonLoader.h"
+#include "TilesetLoaderTestUtility.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/TileRefine.h>
@@ -85,7 +85,8 @@ using namespace CesiumNativeTests;
 using namespace CesiumRasterOverlays;
 
 namespace {
-std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
 
 class SimpleTilesetContentLoader : public TilesetContentLoader {
 public:
@@ -392,13 +393,15 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     CHECK(pRootTile->getRefine() == TileRefine::Add);
   }
 
+  auto terrainPath =
+      std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) /
+      "quantized-mesh";
+
   SUBCASE("Initialize manager with layer.json url") {
     // create mock request
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json",
-         createMockRequest(
-             testDataPath / "CesiumTerrainTileJson" /
-             "QuantizedMesh.tile.json")});
+         createMockRequest(terrainPath / "QuantizedMesh.tile.json")});
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =
@@ -427,9 +430,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
   SUBCASE("Initialize manager with wrong format") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json",
-         createMockRequest(
-             testDataPath / "CesiumTerrainTileJson" /
-             "WithAttribution.tile.json")});
+         createMockRequest(terrainPath / "WithAttribution.tile.json")});
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =

@@ -48,6 +48,11 @@ using namespace CesiumGltf;
 using namespace CesiumGltfConverters;
 using namespace CesiumUtility;
 
+namespace {
+std::filesystem::path testFilePath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
+} // namespace
+
 template <typename ExpectedType, typename PropertyViewType = ExpectedType>
 static void checkNonArrayProperty(
     const Model& model,
@@ -404,10 +409,10 @@ std::set<int32_t> getUniqueBufferViewIds(
 }
 
 TEST_CASE("Converts JSON B3DM batch table to EXT_structural_metadata") {
-  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath = testFilePath / "BatchTables" / "batchedWithJson.b3dm";
+  std::filesystem::path path =
+      testFilePath / "BatchTables" / "batchedWithJson.b3dm";
 
-  GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromB3dm(path);
 
   REQUIRE(result.model);
 
@@ -602,11 +607,10 @@ TEST_CASE("Converts JSON B3DM batch table to EXT_structural_metadata") {
 }
 
 TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
-  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath =
+  std::filesystem::path path =
       testFilePath / "BatchTables" / "batchedWithBatchTableBinary.b3dm";
 
-  GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromB3dm(path);
 
   REQUIRE(!result.errors);
   REQUIRE(result.model);
@@ -781,10 +785,10 @@ TEST_CASE("Convert binary B3DM batch table to EXT_structural_metadata") {
 }
 
 TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
-  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath = testFilePath / "PointCloud" / "pointCloudBatched.pnts";
+  std::filesystem::path path =
+      testFilePath / "PointCloud" / "pointCloudBatched.pnts";
 
-  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(path);
 
   REQUIRE(result.model);
   const Model& gltf = *result.model;
@@ -929,11 +933,10 @@ TEST_CASE("Converts batched PNTS batch table to EXT_structural_metadata") {
 }
 
 TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
-  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath =
+  std::filesystem::path path =
       testFilePath / "PointCloud" / "pointCloudWithPerPointProperties.pnts";
 
-  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(path);
 
   REQUIRE(result.model);
   const Model& gltf = *result.model;
@@ -1083,15 +1086,13 @@ TEST_CASE("Converts per-point PNTS batch table to EXT_structural_metadata") {
 }
 
 TEST_CASE("Draco-compressed b3dm uses _FEATURE_ID_0 attribute name in glTF") {
-  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath =
+  std::filesystem::path path =
       testFilePath / "BatchTables" / "batchedWithBatchTable-draco.b3dm";
 
   CesiumGltfReader::GltfReaderOptions options;
   options.decodeDraco = false;
 
-  GltfConverterResult result =
-      ConvertTileToGltf::fromB3dm(testFilePath, options);
+  GltfConverterResult result = ConvertTileToGltf::fromB3dm(path, options);
   CHECK(result.errors.errors.empty());
   CHECK(result.errors.warnings.empty());
   REQUIRE(result.model);
@@ -1117,10 +1118,10 @@ TEST_CASE("Draco-compressed b3dm uses _FEATURE_ID_0 attribute name in glTF") {
 
 TEST_CASE("Converts Draco per-point PNTS batch table to "
           "EXT_structural_metadata") {
-  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath = testFilePath / "PointCloud" / "pointCloudDraco.pnts";
+  std::filesystem::path path =
+      testFilePath / "PointCloud" / "pointCloudDraco.pnts";
 
-  GltfConverterResult result = ConvertTileToGltf::fromPnts(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromPnts(path);
 
   REQUIRE(result.model);
   const Model& gltf = *result.model;
@@ -1270,11 +1271,10 @@ TEST_CASE("Converts Draco per-point PNTS batch table to "
 }
 
 TEST_CASE("Upgrade nested JSON metadata to string") {
-  std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testFilePath =
+  std::filesystem::path path =
       testFilePath / "BatchTables" / "batchedWithStringAndNestedJson.b3dm";
 
-  GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
+  GltfConverterResult result = ConvertTileToGltf::fromB3dm(path);
 
   REQUIRE(!result.errors);
   REQUIRE(result.model);

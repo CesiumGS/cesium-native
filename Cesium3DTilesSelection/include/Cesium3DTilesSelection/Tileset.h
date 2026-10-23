@@ -39,6 +39,9 @@ class TilesetFrameState;
  * href="https://github.com/CesiumGS/3d-tiles/tree/master/specification">3D
  * Tiles tileset</a>, used for streaming massive heterogeneous 3D geospatial
  * datasets.
+ *
+ * This supports both `tileset.json` (3D Tiles 1.0) and `*.tileset.gltf` (3D
+ * Tiles 2.0) assets, as well as `layer.json` quantized-mesh assets.
  */
 class CESIUM3DTILESSELECTION_API Tileset final {
 public:
@@ -57,9 +60,9 @@ public:
       const TilesetOptions& options = TilesetOptions());
 
   /**
-   * @brief Constructs a new instance with a given `tileset.json` URL.
+   * @brief Constructs a new instance with a given URL.
    * @param externals The external interfaces to use.
-   * @param url The URL of the `tileset.json`.
+   * @param url The URL of the tileset.
    * @param options Additional options for the tileset.
    */
   Tileset(

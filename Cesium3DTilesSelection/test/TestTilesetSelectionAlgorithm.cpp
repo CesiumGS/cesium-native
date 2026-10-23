@@ -53,6 +53,11 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 
+namespace {
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
+}
+
 static bool doesTileMeetSSE(
     const ViewState& viewState,
     const Tile& tile,
@@ -147,8 +152,7 @@ TEST_CASE("Test replace refinement for render") {
   //
   // ll_ll.b3dm
   //
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "ReplaceTileset";
+  std::filesystem::path path = testDataPath / "ReplaceTileset";
   std::vector<std::string> files{
       "tileset.json",
       "parent.b3dm",
@@ -167,7 +171,7 @@ TEST_CASE("Test replace refinement for render") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -585,8 +589,7 @@ TEST_CASE("Test replace refinement for render") {
 TEST_CASE("Test additive refinement") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "AddTileset";
+  std::filesystem::path path = testDataPath / "AddTileset";
   std::vector<std::string> files{
       "tileset.json",
       "tileset2.json",
@@ -605,7 +608,7 @@ TEST_CASE("Test additive refinement") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -761,8 +764,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
           "additive refinement") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "ErrorChildrenAddTileset";
+  std::filesystem::path path = testDataPath / "ErrorChildrenAddTileset";
   std::vector<std::string> files{
       "tileset.json",
       "parent.b3dm",
@@ -779,7 +781,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -864,8 +866,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
 TEST_CASE("Test multiple frustums") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "ReplaceTileset";
+  std::filesystem::path path = testDataPath / "ReplaceTileset";
   std::vector<std::string> files{
       "tileset.json",
       "parent.b3dm",
@@ -884,7 +885,7 @@ TEST_CASE("Test multiple frustums") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1210,8 +1211,7 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
 TEST_CASE("Makes metadata available once root tile is loaded") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "WithMetadata";
+  std::filesystem::path path = testDataPath / "WithMetadata";
   std::vector<std::string> files{
       "tileset.json",
       "external-tileset.json",
@@ -1229,7 +1229,7 @@ TEST_CASE("Makes metadata available once root tile is loaded") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1267,8 +1267,7 @@ TEST_CASE("Makes metadata available once root tile is loaded") {
 TEST_CASE("Makes metadata available on external tilesets") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "WithMetadata";
+  std::filesystem::path path = testDataPath / "WithMetadata";
   std::vector<std::string> files{
       "tileset.json",
       "external-tileset.json",
@@ -1286,7 +1285,7 @@ TEST_CASE("Makes metadata available on external tilesets") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1339,8 +1338,7 @@ TEST_CASE("Makes metadata available on external tilesets") {
 TEST_CASE("Allows access to material variants") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "MaterialVariants";
+  std::filesystem::path path = testDataPath / "MaterialVariants";
   std::vector<std::string> files{"tileset.json", "parent.b3dm"};
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
@@ -1351,7 +1349,7 @@ TEST_CASE("Allows access to material variants") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1423,8 +1421,7 @@ TEST_CASE("Allows access to material variants") {
 TEST_CASE("Allows access to material variants in an external schema") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "MaterialVariants";
+  std::filesystem::path path = testDataPath / "MaterialVariants";
   std::vector<std::string> files{
       "tileset-external-schema.json",
       "schema.json",
@@ -1438,7 +1435,7 @@ TEST_CASE("Allows access to material variants in an external schema") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1520,8 +1517,7 @@ TEST_CASE("Allows access to material variants in an external schema") {
 TEST_CASE("Future from loadSchema rejects if schemaUri can't be loaded") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "MaterialVariants";
+  std::filesystem::path path = testDataPath / "MaterialVariants";
   std::vector<std::string> files{"tileset-external-schema.json", "parent.b3dm"};
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
@@ -1532,7 +1528,7 @@ TEST_CASE("Future from loadSchema rejects if schemaUri can't be loaded") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1742,8 +1738,7 @@ TEST_CASE("An unconditionally-refined tile is not rendered") {
 TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "AdditiveThreeLevels";
+  std::filesystem::path path = testDataPath / "AdditiveThreeLevels";
   std::vector<std::string> files{"tileset.json", "content.b3dm"};
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
@@ -1754,7 +1749,7 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1828,8 +1823,7 @@ public:
 TEST_CASE("Test ErrorMeasureHandler") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "AdditiveThreeLevels";
+  std::filesystem::path path = testDataPath / "AdditiveThreeLevels";
   std::vector<std::string> files{"tileset.json", "content.b3dm"};
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
@@ -1840,7 +1834,7 @@ TEST_CASE("Test ErrorMeasureHandler") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
