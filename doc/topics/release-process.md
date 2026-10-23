@@ -35,7 +35,7 @@ This script performs the release and docs publication steps in one operation:
 If you only want to fast-forward `cesium.com` to the current `main` branch without creating a new tag, use the docs-only mode instead.
 
 ```bash
-npm run publish-docs -- --dry-run
+npm run publish-docs [-- --dry-run]
 ```
 
 `publish-docs` is equivalent to `publish-release --docs-only` and updates the docs branch without tagging or pushing a release.
