@@ -5,11 +5,14 @@
 ##### Breaking Changes :mega:
 
 - The classes associated with `KHR_implicit_shapes` have been renamed from `Shape`, `Box`, `Capsule`, `Cylinder`, `Sphere` to `ExtensionKhrImplicitShapesShape`, `ExtensionKhrImplicitShapesBox`, `ExtensionKhrImplicitShapesCapsule`, `ExtensionKhrImplicitShapesCylinder`, `ExtensionKhrImplicitShapesSphere` to deconflict with the shape classes generated for glTF 2.1.
+- Decoded SPZ scales written to the `KHR_gaussian_splatting:SCALE` attribute are now written as-is. To replicate the previous behavior, calculate the base-e exponential of each component (i.e. `std::exp(x)`) before using.
+- SPZ color components are no longer automatically converted to the `FLOAT` component type when read. To replicate the previous behavior, set `options.spzDecoderOptions.forceFloatAccessors` to `true` on `GltfReaderOptions`.
 
 ##### Additions :tada:
 
 - Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added a `CESIUM_DISABLE_SPZ` CMake option to build Cesium Native without Niantic SPZ support.
+- SPZ decoder now matches the `KHR_gaussian_splatting` specification more accurately, including support for `KHR_gaussian_splatting:OPACITY` and `KHR_gaussian_splatting:SH_DEGREE_0_COEF_0` attributes, and component types other than `FLOAT` where allowed by the specification.
 
 ##### Fixes :wrench:
 

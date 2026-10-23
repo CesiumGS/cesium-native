@@ -52,6 +52,11 @@ struct CESIUM3DTILESSELECTION_API TilesetContentOptions {
   CesiumGltfReader::MeshPrimitiveModeOptions primitiveModeOptions;
 
   /**
+   * @brief Options for decoding SPZ data within glTFs.
+   */
+  CesiumGltfReader::SpzDecoderOptions spzDecoderOptions;
+
+  /**
    * @brief Extracts options related to loading glTFs to a new instance of @ref
    * CesiumGltfReader::GltfReaderOptions .
    */
