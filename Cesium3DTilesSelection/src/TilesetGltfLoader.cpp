@@ -244,18 +244,16 @@ std::optional<Tile> parseGltfNodeRecursively(
   }
 
   // Parse bounding volume
-  const CesiumGltf::Shape* pBoundingVolume =
-      node.boundingVolume
-          ? model.getSafe(&model.shapes, node.boundingVolume->shape)
-          : nullptr;
-
-  if (!pBoundingVolume) {
-    SPDLOG_LOGGER_ERROR(pLogger, "Node did not contain a boundingVolume.");
+  if (!node.boundingVolume) {
+    SPDLOG_LOGGER_ERROR(
+        pLogger,
+        "Node does not contain a boundingVolume, which is required for "
+        "3DTILES_tileset.");
     return std::nullopt;
   }
 
   CesiumUtility::Result<Cesium3DTiles::BoundingVolume> boundingVolumeResult =
-      Cesium3DTiles::getBoundingVolume(*pBoundingVolume, ellipsoid);
+      Cesium3DTiles::getBoundingVolume(model, *node.boundingVolume, ellipsoid);
   if (!boundingVolumeResult.value) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
@@ -326,8 +324,8 @@ std::optional<Tile> parseGltfNodeRecursively(
           *pVoxels);
     }
 
-    if (const auto* pBox =
-            std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume)) {
+    if (std::holds_alternative<CesiumGeometry::OrientedBoundingBox>(
+            boundingVolume)) {
       // 3DTILES_implicit_tiling uses {right}/{forward}/{up}, which aligns with
       // the -x, +z, and +y axes in glTF respectively.
       //
@@ -363,18 +361,14 @@ std::optional<Tile> parseGltfNodeRecursively(
 
   // This is a non-implicit tile, so parse the content bounding volume.
   std::optional<Cesium3DTiles::BoundingVolume> tileContentBoundingVolume;
-  const CesiumGltf::Shape* pContentBoundingVolume = nullptr;
 
   if (pTilesetExtension->content &&
       pTilesetExtension->content->boundingVolume) {
-    pContentBoundingVolume = model.getSafe(
-        &model.shapes,
-        pTilesetExtension->content->boundingVolume->shape);
-  }
-
-  if (pContentBoundingVolume) {
     CesiumUtility::Result<Cesium3DTiles::BoundingVolume> contentBoundingVolume =
-        Cesium3DTiles::getBoundingVolume(*pContentBoundingVolume, ellipsoid);
+        Cesium3DTiles::getBoundingVolume(
+            model,
+            *pTilesetExtension->content->boundingVolume,
+            ellipsoid);
     if (contentBoundingVolume.value) {
       tileContentBoundingVolume = Cesium3DTiles::transformBoundingVolume(
           tileTransform,
