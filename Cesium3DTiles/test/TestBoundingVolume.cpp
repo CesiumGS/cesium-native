@@ -9,9 +9,11 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltf/BoundingVolume.h>
 #include <CesiumGltf/Extension3dTilesShapeCylinderRegion.h>
 #include <CesiumGltf/Extension3dTilesShapeEllipsoidRegion.h>
 #include <CesiumGltf/Extension3dTilesShapeS2.h>
+#include <CesiumGltf/Model.h>
 #include <CesiumGltf/Shape.h>
 #include <CesiumTilesetJson/BoundingVolume.h>
 #include <CesiumTilesetJson/Extension3dTilesBoundingVolumeCylinder.h>
@@ -145,42 +147,46 @@ TEST_CASE("getBoundingVolume") {
   }
 
   SUBCASE("from glTF") {
+    CesiumGltf::Model model;
+    CesiumGltf::Shape& shape = model.shapes.emplace_back();
+    CesiumGltf::BoundingVolume bv;
+    bv.shape = 0;
+    bv.translation = {1.0, 0.0, 3.0};
+    bv.scale = {2.0, 2.0, 2.0};
+
     SUBCASE("box") {
-      CesiumGltf::Shape shape;
       shape.box.emplace().size = {1.0, 2.0, 3.0};
 
       Result<Cesium3DTiles::BoundingVolume> result =
-          getBoundingVolume(shape, CesiumGeospatial::Ellipsoid::WGS84);
+          getBoundingVolume(model, bv, CesiumGeospatial::Ellipsoid::WGS84);
       REQUIRE_UNARY(result.value);
 
       Cesium3DTiles::BoundingVolume& boundingVolume = *result.value;
       auto* pBox =
           std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume);
       REQUIRE(pBox);
-      CHECK_EQ(pBox->getCenter(), glm::dvec3(0.0));
+      CHECK_EQ(pBox->getCenter(), glm::dvec3(1.0, 0.0, 3.0));
       CHECK_EQ(
           pBox->getHalfAxes(),
-          glm::dmat3(1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0));
+          glm::dmat3(2.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 6.0));
     }
 
     SUBCASE("sphere") {
-      CesiumGltf::Shape shape;
       shape.sphere.emplace().radius = 5.5;
 
       Result<Cesium3DTiles::BoundingVolume> result =
-          getBoundingVolume(shape, CesiumGeospatial::Ellipsoid::WGS84);
+          getBoundingVolume(model, bv, CesiumGeospatial::Ellipsoid::WGS84);
       REQUIRE_UNARY(result.value);
 
       Cesium3DTiles::BoundingVolume& boundingVolume = *result.value;
       auto* pSphere =
           std::get_if<CesiumGeometry::BoundingSphere>(&boundingVolume);
       REQUIRE(pSphere);
-      CHECK_EQ(pSphere->getCenter(), glm::dvec3(0.0));
-      CHECK_EQ(pSphere->getRadius(), 5.5);
+      CHECK_EQ(pSphere->getCenter(), glm::dvec3(1.0, 0.0, 3.0));
+      CHECK_EQ(pSphere->getRadius(), Approx(11.0));
     }
 
     SUBCASE("region") {
-      CesiumGltf::Shape shape;
       auto& extension =
           shape
               .addExtension<CesiumGltf::Extension3dTilesShapeEllipsoidRegion>();
@@ -192,7 +198,7 @@ TEST_CASE("getBoundingVolume") {
       extension.maximumHeight = 20.0;
 
       Result<Cesium3DTiles::BoundingVolume> result =
-          getBoundingVolume(shape, CesiumGeospatial::Ellipsoid::WGS84);
+          getBoundingVolume(model, bv, CesiumGeospatial::Ellipsoid::WGS84);
       REQUIRE_UNARY(result.value);
 
       Cesium3DTiles::BoundingVolume& boundingVolume = *result.value;
@@ -208,7 +214,6 @@ TEST_CASE("getBoundingVolume") {
     }
 
     SUBCASE("S2") {
-      CesiumGltf::Shape shape;
       auto& extension =
           shape.addExtension<CesiumGltf::Extension3dTilesShapeS2>();
       extension.token = "89c6c7";
@@ -216,7 +221,7 @@ TEST_CASE("getBoundingVolume") {
       extension.maximumHeight = 1000.0;
 
       Result<Cesium3DTiles::BoundingVolume> result =
-          getBoundingVolume(shape, CesiumGeospatial::Ellipsoid::WGS84);
+          getBoundingVolume(model, bv, CesiumGeospatial::Ellipsoid::WGS84);
       REQUIRE_UNARY(result.value);
 
       Cesium3DTiles::BoundingVolume& boundingVolume = *result.value;
@@ -228,7 +233,6 @@ TEST_CASE("getBoundingVolume") {
     }
 
     SUBCASE("cylinder") {
-      CesiumGltf::Shape shape;
       auto& extension =
           shape.addExtension<CesiumGltf::Extension3dTilesShapeCylinderRegion>();
       extension.height = 2.0;
@@ -238,16 +242,16 @@ TEST_CASE("getBoundingVolume") {
       extension.maximumAngle = Math::PiOverTwo;
 
       Result<Cesium3DTiles::BoundingVolume> result =
-          getBoundingVolume(shape, CesiumGeospatial::Ellipsoid::WGS84);
+          getBoundingVolume(model, bv, CesiumGeospatial::Ellipsoid::WGS84);
       REQUIRE_UNARY(result.value);
 
       Cesium3DTiles::BoundingVolume& boundingVolume = *result.value;
       auto* pCylinder =
           std::get_if<CesiumGeometry::BoundingCylinderRegion>(&boundingVolume);
-      CHECK_EQ(pCylinder->getTranslation(), glm::dvec3(0.0));
+      CHECK_EQ(pCylinder->getTranslation(), glm::dvec3(1.0, 0.0, 3.0));
       CHECK_EQ(pCylinder->getRotation(), glm::dquat(1.0, 0.0, 0.0, 0.0));
-      CHECK_EQ(pCylinder->getHeight(), 2.0);
-      CHECK_EQ(pCylinder->getRadialBounds(), glm::dvec2(1.0, 2.0));
+      CHECK_EQ(pCylinder->getHeight(), 4.0);
+      CHECK_EQ(pCylinder->getRadialBounds(), glm::dvec2(2.0, 4.0));
       CHECK_EQ(
           pCylinder->getAngularBounds(),
           glm::dvec2(-Math::PiOverTwo, Math::PiOverTwo));
