@@ -70,16 +70,15 @@ using namespace CesiumUtility;
 namespace Cesium3DTilesSelection {
 namespace {
 /**
- * @brief Obtains the up-axis that should be used for glTF content of the
- * tileset.
+ * @brief Obtains the up-axis used for glTF content of the tileset.
  *
- * The glTF specification mandates that the Y-axis is the "up"-axis. However, a
- * glTF may contain @ref CesiumGltf::ExtensionExtGeospatialCrs, which indicates
- * the use of a different coordinate reference system. Most of these geospatial
- * CRS's are z-up, so this operates on that blanket assumption for now.
+ * Although the glTF specification mandates that the Y-axis be "up", the @ref
+ * CesiumGltf::ExtensionExtGeospatialCrs extension can indicate the use of a
+ * different coordinate reference system. Most geospatial CRS's are
+ * z-up, so this function operates on that blanket assumption for now.
  *
  * @param model The glTF
- * @return The up-axis to use for its content
+ * @return The up-axis used for its content
  */
 inline CesiumGeometry::Axis obtainUpAxis(const CesiumGltf::Model& model) {
   return model.hasExtension<CesiumGltf::ExtensionExtGeospatialCrs>()
@@ -118,28 +117,6 @@ std::string convertToXyzTemplate(const std::string& uriTemplate) {
         }
         return "{" + placeholder + "}";
       });
-}
-
-void transformBoundingVolumeForImplicitTiling(
-    Cesium3DTiles::BoundingVolume& boundingVolume) {
-  if (const auto* pBox =
-          std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume)) {
-    // 3DTILES_implicit_tiling uses {right}/{forward}/{up}, which aligns with
-    // the -x, +z, and +y axes in glTF respectively.
-    //
-    // Since ImplicitTilingUtilities works along the +x, +y, +z axes of the
-    // bounding box (as does 3D Tiles 1.1), its halfAxes must be swizzled and
-    // scaled to reflect the coordinate differences.
-    // clang-format off
-    glm::dmat4 transform(
-      -1.0, 0.0, 0.0, 0.0,
-       0.0, 0.0, 1.0, 0.0,
-       0.0, 1.0, 0.0, 0.0,
-       0.0, 0.0, 0.0, 1.0);
-    // clang-format on
-    boundingVolume =
-        Cesium3DTiles::transformBoundingVolume(transform, boundingVolume);
-  }
 }
 
 void createImplicitQuadtreeLoader(
@@ -277,14 +254,15 @@ std::optional<Tile> parseGltfNodeRecursively(
     return std::nullopt;
   }
 
-  CesiumUtility::Result<Cesium3DTiles::BoundingVolume> boundingVolume =
+  CesiumUtility::Result<Cesium3DTiles::BoundingVolume> boundingVolumeResult =
       Cesium3DTiles::getBoundingVolume(*pBoundingVolume, ellipsoid);
-  if (!boundingVolume.value) {
+  if (!boundingVolumeResult.value) {
     SPDLOG_LOGGER_ERROR(
         pLogger,
         "Node contained an improperly defined boundingVolume.");
     return std::nullopt;
   }
+  auto boundingVolume = std::move(*boundingVolumeResult.value);
 
   // Parse the tile transform
   const std::optional<glm::dmat4x4> transform =
@@ -348,10 +326,29 @@ std::optional<Tile> parseGltfNodeRecursively(
           *pVoxels);
     }
 
-    transformBoundingVolumeForImplicitTiling(*boundingVolume.value);
-    auto tileBoundingVolume = Cesium3DTiles::transformBoundingVolume(
-        tileTransform,
-        *boundingVolume.value);
+    if (const auto* pBox =
+            std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume)) {
+      // 3DTILES_implicit_tiling uses {right}/{forward}/{up}, which aligns with
+      // the -x, +z, and +y axes in glTF respectively.
+      //
+      // Since ImplicitTilingUtilities works along the +x, +y, +z axes of the
+      // bounding box (as does 3D Tiles 1.1), its halfAxes must be scaled to
+      // reflect the coordinate differences.
+      //
+      // clang-format off
+    glm::dmat4 boxTransform(
+      -1.0, 0.0, 0.0, 0.0,
+       0.0, 1.0, 0.0, 0.0,
+       0.0, 0.0, -1.0, 0.0,
+       0.0, 0.0, 0.0, 1.0);
+      // clang-format on
+
+      boundingVolume =
+          Cesium3DTiles::transformBoundingVolume(boxTransform, boundingVolume);
+    }
+
+    auto tileBoundingVolume =
+        Cesium3DTiles::transformBoundingVolume(tileTransform, boundingVolume);
 
     Tile tile{&currentLoader, TileID(), std::move(pExternalContent)};
     tile.setTransform(tileTransform);
@@ -408,9 +405,8 @@ std::optional<Tile> parseGltfNodeRecursively(
   }
 
   // Apply the tile transform to the bounding volume.
-  auto tileBoundingVolume = Cesium3DTiles::transformBoundingVolume(
-      tileTransform,
-      *boundingVolume.value);
+  auto tileBoundingVolume =
+      Cesium3DTiles::transformBoundingVolume(tileTransform, boundingVolume);
 
   Tile tile{&currentLoader};
   tile.setTileID(contentUri ? contentUri : std::string{});
@@ -430,11 +426,9 @@ TilesetContentLoaderResult<TilesetGltfLoader> parseTilesetGltf(
     std::vector<CesiumAsync::IAssetAccessor::THeader>&& requestHeaders,
     const CesiumGltf::Model& model,
     const glm::dmat4& parentTransform,
-    CesiumGeometry::Axis upAxis,
     Cesium3DTiles::TileRefine parentRefine,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  auto pLoader =
-      std::make_unique<TilesetGltfLoader>(baseUrl, upAxis, ellipsoid);
+  auto pLoader = std::make_unique<TilesetGltfLoader>(baseUrl, ellipsoid);
 
   int32_t sceneIndex = std::max(model.scene, 0);
   const CesiumGltf::Scene* pScene = model.getSafe(&model.scenes, sceneIndex);
@@ -533,7 +527,6 @@ TileLoadResult parseExternalTilesetInWorkerThread(
            pCompletedRequest->headers().end()},
           tilesetGltf,
           tileTransform,
-          upAxis,
           tileRefine,
           ellipsoid);
 
@@ -576,9 +569,8 @@ TileLoadResult parseExternalTilesetInWorkerThread(
 
 TilesetGltfLoader::TilesetGltfLoader(
     const std::string& baseUrl,
-    CesiumGeometry::Axis upAxis,
     const CesiumGeospatial::Ellipsoid& ellipsoid)
-    : _baseUrl{baseUrl}, _ellipsoid{ellipsoid}, _upAxis{upAxis}, _children{} {}
+    : _baseUrl{baseUrl}, _ellipsoid{ellipsoid}, _children{} {}
 
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetGltfLoader>>
 TilesetGltfLoader::createLoader(
@@ -647,18 +639,20 @@ TilesetGltfLoader::createLoader(
     const CesiumAsync::HttpHeaders& requestHeaders,
     CesiumGltf::Model&& gltf,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  CesiumGeometry::Axis upAxis = obtainUpAxis(gltf);
-  glm::dmat4 transform = (upAxis == CesiumGeometry::Axis::Y)
-                             ? CesiumGeometry::Transforms::Y_UP_TO_Z_UP
-                             : glm::dmat4(1.0);
+  CesiumGeometry::Axis originalUpAxis = obtainUpAxis(gltf);
+
+  // If the glTF is Y-up, apply a one-time transform to make it Z-up for the
+  // loader.
+  glm::dmat4 rootTransform = (originalUpAxis == CesiumGeometry::Axis::Y)
+                                 ? CesiumGeometry::Transforms::Y_UP_TO_Z_UP
+                                 : glm::dmat4(1.0);
 
   TilesetContentLoaderResult<TilesetGltfLoader> result = parseTilesetGltf(
       pLogger,
       gltfUrl,
       {requestHeaders.begin(), requestHeaders.end()},
       gltf,
-      transform,
-      upAxis,
+      rootTransform,
       Cesium3DTiles::TileRefine::Replace,
       ellipsoid);
 
@@ -782,7 +776,7 @@ TilesetGltfLoader::loadTileContent(const TileLoadInput& loadInput) {
     return loadInput.asyncSystem.createResolvedFuture<TileLoadResult>(
         TileLoadResult{
             TileEmptyContent{},
-            this->_upAxis,
+            _upAxis,
             std::nullopt,
             std::nullopt,
             std::nullopt,
@@ -802,7 +796,7 @@ TilesetGltfLoader::loadTileContent(const TileLoadInput& loadInput) {
            tileTransform,
            tileRefine,
            ellipsoid,
-           upAxis = this->_upAxis,
+           upAxis = _upAxis,
            externalContentInitializer = std::move(externalContentInitializer),
            pAssetAccessor,
            asyncSystem,

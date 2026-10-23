@@ -204,7 +204,7 @@ TEST_CASE("Test TilesetGltfLoader") {
     CHECK_EQ(pSphere->getCenter(), glm::dvec3(0.0, 0.0, 10.0));
     CHECK_EQ(pSphere->getRadius(), 141.4214);
 
-    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Y);
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
   }
 
   SUBCASE("Loads tileset with box bounding volume") {
@@ -227,7 +227,7 @@ TEST_CASE("Test TilesetGltfLoader") {
     CHECK_EQ(halfAxis[2], glm::dvec3(0.0, -100.0, 0.0));
     CHECK_EQ(pBox->getCenter(), glm::dvec3(0.0, 0.0, 10.0));
 
-    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Y);
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
   }
 
   SUBCASE("Ignores tiles with missing bounding volumes") {
@@ -552,7 +552,7 @@ TEST_CASE("Test TilesetGltfLoader") {
         std::get<CesiumGeometry::QuadtreeTileID>(child.getTileID()),
         CesiumGeometry::QuadtreeTileID(0, 0, 0));
 
-    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Y);
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
     CHECK_EQ(
         pRootTile->getTransform(),
         CesiumGeometry::Transforms::Y_UP_TO_Z_UP * glm::dmat4(glm::dmat3(2.0)));
@@ -579,7 +579,7 @@ TEST_CASE("Test TilesetGltfLoader") {
         std::get<CesiumGeometry::OctreeTileID>(child.getTileID()),
         CesiumGeometry::OctreeTileID(0, 0, 0, 0));
 
-    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Y);
+    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
     CHECK_EQ(
         pRootTile->getTransform(),
         CesiumGeometry::Transforms::Y_UP_TO_Z_UP * glm::dmat4(glm::dmat3(2.0)));

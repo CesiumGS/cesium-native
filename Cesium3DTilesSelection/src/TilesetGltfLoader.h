@@ -20,7 +20,6 @@ class TilesetGltfLoader : public TilesetContentLoader {
 public:
   TilesetGltfLoader(
       const std::string& baseUrl,
-      CesiumGeometry::Axis upAxis,
       const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
   CesiumAsync::Future<TileLoadResult>
@@ -70,15 +69,19 @@ private:
   CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem> _pSharedAssetSystem;
   CesiumUtility::IntrusivePointer<CesiumGltf::Schema> _pExternalSchema;
 
-  /**
-   * @brief The axis used as the "up-axis" for glTF content.
-   *
-   * The glTF specification mandates that the Y-axis is the "up"-axis, However,
-   * a glTF may contain @ref CesiumGltf::ExtensionExtGeospatialCrs, which
-   * indicates the use of a different coordinate reference system.
-   */
-  CesiumGeometry::Axis _upAxis;
-
   std::vector<std::unique_ptr<TilesetContentLoader>> _children;
+
+  /**
+   * @brief The axis that is used as the "up-axis" for glTF content loaded
+   * through @ref TilesetGltfLoader.
+   *
+   * When a tileset is represented in glTF, it may be y-up (for a local tileset)
+   * or z-up (for a tileset with @ref ExtensionExtGeospatialCrs). In a local
+   * tileset, it is sufficient to transform the root tile from y-up to z-up; all
+   * children tiles will then be z-up as well. Thus, it's simpler to hardcode
+   * this as z-up, provided that the correct transform is added to the root
+   * tile.
+   */
+  static const CesiumGeometry::Axis _upAxis = CesiumGeometry::Axis::Z;
 };
 } // namespace Cesium3DTilesSelection
