@@ -18,7 +18,7 @@ process.chdir(rootDir);
 
 // Defaults, overridable by the options below
 const docsBranch = "cesium.com";
-const sourceBranch = "main"; // generally should start from main
+const sourceBranch = "docs-publish-script"; // generally should start from main
 let remote = "origin";
 let dryRun = false;
 let assumeYes = false;
