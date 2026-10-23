@@ -1,3 +1,5 @@
+#include <CesiumGeometry/Transforms.h>
+#include <CesiumGltf/BoundingVolume.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -207,6 +209,115 @@ TEST_CASE("GltfUtilities::setNodeTransform") {
     CHECK(node.scale[1] == 1.0);
     CHECK(node.scale[2] == 1.0);
   }
+}
+
+TEST_CASE("GltfUtilities::getBoundingVolumeTransform") {
+  BoundingVolume boundingvolume;
+
+  SUBCASE("gets translation/rotation/scale") {
+    glm::dquat ninetyDegreesAboutX =
+        glm::angleAxis(Math::degreesToRadians(90.0), glm::dvec3(1.0, 0.0, 0.0));
+
+    boundingvolume.translation = {1.0, 2.0, 3.0};
+    boundingvolume.rotation = {
+        ninetyDegreesAboutX.x,
+        ninetyDegreesAboutX.y,
+        ninetyDegreesAboutX.z,
+        ninetyDegreesAboutX.w};
+    boundingvolume.scale = {2.0, 4.0, 8.0};
+
+    std::optional<glm::dmat4x4> maybeMatrix =
+        GltfUtilities::getBoundingVolumeTransform(boundingvolume);
+    REQUIRE_UNARY(maybeMatrix);
+
+    glm::dmat4x4 m = *maybeMatrix;
+
+    // glTF Spec section 5.25:
+    // TRS properties are converted to matrices and postmultiplied in the
+    // `T * R * S` order to compose the transformation matrix; first the scale
+    // is applied to the vertices, then the rotation, and then the translation.
+    glm::dvec4 someVector(10.0, 20.0, 30.0, 1.0);
+    glm::dvec4 transformed = m * someVector;
+
+    glm::dvec4 expectedAfterScaling(
+        someVector.x * 2.0,
+        someVector.y * 4.0,
+        someVector.z * 8.0,
+        1.0);
+    glm::dvec4 expectedAfterRotating(
+        expectedAfterScaling.x,
+        -expectedAfterScaling.z,
+        expectedAfterScaling.y,
+        1.0);
+    glm::dvec4 expectedAfterTranslating(
+        expectedAfterRotating.x + 1.0,
+        expectedAfterRotating.y + 2.0,
+        expectedAfterRotating.z + 3.0,
+        1.0);
+
+    CHECK(Math::equalsEpsilon(
+        transformed,
+        expectedAfterTranslating,
+        Math::Epsilon14));
+  }
+
+  SUBCASE("returns std::nullopt if translation has too few elements") {
+    boundingvolume.translation = {1.0, 2.0};
+    std::optional<glm::dmat4x4> maybeMatrix =
+        GltfUtilities::getBoundingVolumeTransform(boundingvolume);
+    REQUIRE_UNARY_FALSE(maybeMatrix);
+  }
+
+  SUBCASE("returns std::nullopt if rotation has too few elements") {
+    boundingvolume.rotation = {1.0, 2.0, 3.0};
+    std::optional<glm::dmat4x4> maybeMatrix =
+        GltfUtilities::getBoundingVolumeTransform(boundingvolume);
+    REQUIRE_UNARY_FALSE(maybeMatrix);
+  }
+
+  SUBCASE("returns std::nullopt if scale has too few elements") {
+    boundingvolume.scale = {1.0, 2.0};
+    std::optional<glm::dmat4x4> maybeMatrix =
+        GltfUtilities::getBoundingVolumeTransform(boundingvolume);
+    REQUIRE_UNARY_FALSE(maybeMatrix);
+  }
+}
+
+TEST_CASE("GltfUtilities::setBoundingVolumeTransform") {
+  BoundingVolume boundingVolume;
+
+  glm::dquat rotation =
+      glm::angleAxis(Math::degreesToRadians(90.0), glm::dvec3(1.0, 0.0, 0.0));
+
+  glm::dvec3 translation(1.0, 2.0, 3.0);
+  glm::dvec3 scale(2.0, 4.0, 8.0);
+
+  glm::dmat4 m =
+      CesiumGeometry::Transforms::createTranslationRotationScaleMatrix(
+          translation,
+          rotation,
+          scale);
+
+  GltfUtilities::setBoundingVolumeTransform(boundingVolume, m);
+  CHECK_EQ(
+      boundingVolume.translation,
+      std::vector{translation.x, translation.y, translation.z});
+
+  std::vector rotationAsVector{rotation.x, rotation.y, rotation.z, rotation.w};
+  for (size_t i = 0; i < 4; ++i) {
+    CHECK(CesiumUtility::Math::equalsEpsilon(
+        boundingVolume.rotation[i],
+        rotationAsVector[i],
+        CesiumUtility::Math::Epsilon5));
+  };
+
+  std::vector scaleAsVector{scale.x, scale.y, scale.z};
+  for (size_t i = 0; i < 3; ++i) {
+    CHECK(CesiumUtility::Math::equalsEpsilon(
+        boundingVolume.scale[i],
+        scaleAsVector[i],
+        CesiumUtility::Math::Epsilon5));
+  };
 }
 
 TEST_CASE("GltfUtilities::removeUnusedTextures") {

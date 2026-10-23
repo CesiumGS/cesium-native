@@ -18,7 +18,10 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltfConverters/GltfConverterResult.h>
 #include <CesiumGltfConverters/GltfConverters.h>
@@ -42,6 +45,28 @@ using namespace Cesium3DTiles;
 using namespace CesiumGltfConverters;
 
 namespace Cesium3DTilesSelection {
+std::optional<ImplicitOctreeBoundingVolume> getAsImplicitOctreeBoundingVolume(
+    const Cesium3DTiles::BoundingVolume& boundingVolume) {
+  if (const auto* pRegion =
+          std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume)) {
+    return ImplicitOctreeBoundingVolume(*pRegion);
+  }
+
+  if (const auto* pBox =
+          std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume)) {
+    return ImplicitOctreeBoundingVolume(*pBox);
+  }
+
+  if (const auto* pCylinder =
+          std::get_if<CesiumGeometry::BoundingCylinderRegion>(
+              &boundingVolume)) {
+    return ImplicitOctreeBoundingVolume(*pCylinder);
+  }
+
+  // Octree does not support bounding sphere or S2 subdivision.
+  return std::nullopt;
+}
+
 namespace {
 struct BoundingVolumeSubdivision {
   BoundingVolume operator()(const CesiumGeospatial::BoundingRegion& region) {

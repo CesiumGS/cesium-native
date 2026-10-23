@@ -18,6 +18,8 @@
 ##### Additions :tada:
 
 - Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added `getBoundingVolumeTransform` and `setBoundingVolumeTransform` to `CesiumGltfContent::GltfUtilities` to interact with transforms on `CesiumGltf::BoundingVolume`s.
+- Added `Cesium3DTiles::getBoundingVolume` methods to create a `Cesium3DTiles::BoundingVolume` from either `CesiumTilesetJson::BoundingVolume` or `CesiumGltf::BoundingVolume`.
 - Added `fromGltf` method to `Cesium3DTilesSelection::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
 
 ### v0.65.0 - 2026-10-01
