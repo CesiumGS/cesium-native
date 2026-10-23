@@ -11,6 +11,7 @@
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/Animation.h>
 #include <CesiumGltf/AnimationSampler.h>
+#include <CesiumGltf/BoundingVolume.h>
 #include <CesiumGltf/BufferView.h>
 #include <CesiumGltf/ExtensionBufferExtMeshoptCompression.h>
 #include <CesiumGltf/ExtensionBufferViewExtMeshoptCompression.h>
@@ -67,7 +68,42 @@ namespace CesiumGltfContent {
 
 namespace {
 std::vector<int32_t> getIndexMap(const std::vector<bool>& usedIndices);
+
+std::optional<glm::dmat4x4>
+getTransformFromTranslationRotationScale(const auto& object) {
+  glm::dmat4x4 translation(1.0);
+  if (object.translation.size() >= 3) {
+    translation[3] = glm::dvec4(
+        object.translation[0],
+        object.translation[1],
+        object.translation[2],
+        1.0);
+  } else if (!object.translation.empty()) {
+    return std::nullopt;
+  }
+
+  glm::dquat rotationQuat(1.0, 0.0, 0.0, 0.0);
+  if (object.rotation.size() >= 4) {
+    rotationQuat[0] = object.rotation[0];
+    rotationQuat[1] = object.rotation[1];
+    rotationQuat[2] = object.rotation[2];
+    rotationQuat[3] = object.rotation[3];
+  } else if (!object.rotation.empty()) {
+    return std::nullopt;
+  }
+
+  glm::dmat4x4 scale(1.0);
+  if (object.scale.size() >= 3) {
+    scale[0].x = object.scale[0];
+    scale[1].y = object.scale[1];
+    scale[2].z = object.scale[2];
+  } else if (!object.scale.empty()) {
+    return std::nullopt;
+  }
+
+  return translation * glm::dmat4x4(rotationQuat) * scale;
 }
+} // namespace
 
 /*static*/ std::optional<glm::dmat4x4>
 GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
@@ -99,37 +135,7 @@ GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
 
   if (!node.translation.empty() || !node.rotation.empty() ||
       !node.scale.empty()) {
-    glm::dmat4x4 translation(1.0);
-    if (node.translation.size() >= 3) {
-      translation[3] = glm::dvec4(
-          node.translation[0],
-          node.translation[1],
-          node.translation[2],
-          1.0);
-    } else if (!node.translation.empty()) {
-      return std::nullopt;
-    }
-
-    glm::dquat rotationQuat(1.0, 0.0, 0.0, 0.0);
-    if (node.rotation.size() >= 4) {
-      rotationQuat[0] = node.rotation[0];
-      rotationQuat[1] = node.rotation[1];
-      rotationQuat[2] = node.rotation[2];
-      rotationQuat[3] = node.rotation[3];
-    } else if (!node.rotation.empty()) {
-      return std::nullopt;
-    }
-
-    glm::dmat4x4 scale(1.0);
-    if (node.scale.size() >= 3) {
-      scale[0].x = node.scale[0];
-      scale[1].y = node.scale[1];
-      scale[2].z = node.scale[2];
-    } else if (!node.scale.empty()) {
-      return std::nullopt;
-    }
-
-    return translation * glm::dmat4x4(rotationQuat) * scale;
+    return getTransformFromTranslationRotationScale(node);
   }
 
   return glm::dmat4x4(1.0);
@@ -162,6 +168,34 @@ GltfUtilities::getNodeTransform(const CesiumGltf::Node& node) {
   node.matrix[13] = m[3].y;
   node.matrix[14] = m[3].z;
   node.matrix[15] = m[3].w;
+}
+
+/*static*/ std::optional<glm::dmat4x4>
+GltfUtilities::getBoundingVolumeTransform(
+    const CesiumGltf::BoundingVolume& boundingVolume) {
+  if (!boundingVolume.translation.empty() || !boundingVolume.rotation.empty() ||
+      !boundingVolume.scale.empty()) {
+    return getTransformFromTranslationRotationScale(boundingVolume);
+  }
+
+  return glm::dmat4x4(1.0);
+}
+
+/*static*/ void GltfUtilities::setBoundingVolumeTransform(
+    CesiumGltf::BoundingVolume& boundingVolume,
+    const glm::dmat4x4& newTransform) {
+  glm::dvec3 translation, scale;
+  glm::dquat rotation;
+  CesiumGeometry::Transforms::computeTranslationRotationScaleFromMatrix(
+      newTransform,
+      &translation,
+      &rotation,
+      &scale);
+
+  // Reset these fields to their default, indicating they're not to be used.
+  boundingVolume.translation = {translation.x, translation.y, translation.z};
+  boundingVolume.scale = {scale.x, scale.y, scale.z};
+  boundingVolume.rotation = {rotation.x, rotation.y, rotation.z, rotation.w};
 }
 
 /*static*/ glm::dmat4x4 GltfUtilities::applyRtcCenter(

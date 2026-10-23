@@ -10,10 +10,13 @@
 #include <CesiumGeospatial/GlobeTransforms.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltf/BoundingVolume.h>
 #include <CesiumGltf/Extension3dTilesShapeCylinderRegion.h>
 #include <CesiumGltf/Extension3dTilesShapeEllipsoidRegion.h>
 #include <CesiumGltf/Extension3dTilesShapeS2.h>
+#include <CesiumGltf/Model.h>
 #include <CesiumGltf/Shape.h>
+#include <CesiumGltfContent/GltfUtilities.h>
 #include <CesiumTilesetJson/BoundingVolume.h>
 #include <CesiumTilesetJson/Extension3dTilesBoundingVolumeCylinder.h>
 #include <CesiumTilesetJson/Extension3dTilesBoundingVolumeS2.h>
@@ -112,62 +115,89 @@ CesiumUtility::Result<BoundingVolume> getBoundingVolume(
 }
 
 CesiumUtility::Result<BoundingVolume> getBoundingVolume(
-    const CesiumGltf::Shape& shape,
+    const CesiumGltf::Model& model,
+    const CesiumGltf::BoundingVolume& boundingVolume,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
-  if (shape.extensions.size() > 0) {
-    if (const auto* pRegion =
-            shape.getExtension<
-                CesiumGltf::Extension3dTilesShapeEllipsoidRegion>()) {
-      return CesiumUtility::Result<BoundingVolume>(
-          CesiumGeospatial::BoundingRegion(
-              CesiumGeospatial::GlobeRectangle(
-                  pRegion->minimumLongitude,
-                  pRegion->minimumLatitude,
-                  pRegion->maximumLongitude,
-                  pRegion->maximumLatitude),
-              pRegion->minimumHeight,
-              pRegion->maximumHeight,
-              ellipsoid));
-    }
-
-    if (const auto* pS2 =
-            shape.getExtension<CesiumGltf::Extension3dTilesShapeS2>()) {
-      return CesiumUtility::Result<BoundingVolume>(
-          CesiumGeospatial::S2CellBoundingVolume(
-              CesiumGeospatial::S2CellID::fromToken(pS2->token),
-              pS2->minimumHeight,
-              pS2->maximumHeight,
-              ellipsoid));
-    }
-
-    if (const auto* pCylinder =
-            shape.getExtension<
-                CesiumGltf::Extension3dTilesShapeCylinderRegion>()) {
-      return CesiumUtility::Result<BoundingVolume>(
-          CesiumGeometry::BoundingCylinderRegion(
-              glm::dvec3(0.0),
-              glm::dquat(1.0, 0.0, 0.0, 0.0),
-              pCylinder->height,
-              glm::dvec2(pCylinder->minimumRadius, pCylinder->maximumRadius),
-              glm::dvec2(pCylinder->minimumAngle, pCylinder->maximumAngle)));
-    }
+  const CesiumGltf::Shape* pShape =
+      model.getSafe(&model.shapes, boundingVolume.shape);
+  if (!pShape) {
+    return CesiumUtility::Result<BoundingVolume>(
+        CesiumUtility::ErrorList::error(
+            "glTF bounding volume did not reference a valid shape."));
   }
 
-  if (shape.box && shape.box->size.size() >= 3) {
-    const std::vector<double>& box = shape.box->size;
+  if (const auto* pRegion =
+          pShape->getExtension<
+              CesiumGltf::Extension3dTilesShapeEllipsoidRegion>()) {
     return CesiumUtility::Result<BoundingVolume>(
-        CesiumGeometry::OrientedBoundingBox(
-            glm::dvec3(0.0),
-            glm::dmat3(box[0], 0.0, 0.0, 0.0, box[1], 0.0, 0.0, 0.0, box[2])));
+        CesiumGeospatial::BoundingRegion(
+            CesiumGeospatial::GlobeRectangle(
+                pRegion->minimumLongitude,
+                pRegion->minimumLatitude,
+                pRegion->maximumLongitude,
+                pRegion->maximumLatitude),
+            pRegion->minimumHeight,
+            pRegion->maximumHeight,
+            ellipsoid));
   }
 
-  if (shape.sphere) {
+  if (const auto* pS2 =
+          pShape->getExtension<CesiumGltf::Extension3dTilesShapeS2>()) {
     return CesiumUtility::Result<BoundingVolume>(
-        CesiumGeometry::BoundingSphere(glm::dvec3(0.0), shape.sphere->radius));
+        CesiumGeospatial::S2CellBoundingVolume(
+            CesiumGeospatial::S2CellID::fromToken(pS2->token),
+            pS2->minimumHeight,
+            pS2->maximumHeight,
+            ellipsoid));
+  }
+
+  std::optional<glm::dmat4x4> transform =
+      CesiumGltfContent::GltfUtilities::getBoundingVolumeTransform(
+          boundingVolume);
+  if (!transform) {
+    return CesiumUtility::Result<BoundingVolume>(
+        CesiumUtility::ErrorList::error(
+            "glTF bounding volume specified an invalid transform."));
+  }
+
+  if (const auto* pCylinder =
+          pShape->getExtension<
+              CesiumGltf::Extension3dTilesShapeCylinderRegion>()) {
+    CesiumGeometry::BoundingCylinderRegion cylinder(
+        glm::dvec3(0.0),
+        glm::dquat(1.0, 0.0, 0.0, 0.0),
+        pCylinder->height,
+        glm::dvec2(pCylinder->minimumRadius, pCylinder->maximumRadius),
+        glm::dvec2(pCylinder->minimumAngle, pCylinder->maximumAngle));
+
+    return CesiumUtility::Result<BoundingVolume>(
+        transformBoundingVolume(*transform, cylinder));
+  }
+
+  if (pShape->box && pShape->box->size.size() >= 3) {
+    const std::vector<double>& size = pShape->box->size;
+    // clang-format off
+    CesiumGeometry::OrientedBoundingBox box(
+        glm::dvec3(0.0),
+        glm::dmat3(
+            size[0], 0.0, 0.0,
+            0.0, size[1], 0.0,
+            0.0, 0.0, size[2]));
+    // clang-format on
+    return CesiumUtility::Result<BoundingVolume>(
+        transformBoundingVolume(*transform, box));
+  }
+
+  if (pShape->sphere) {
+    CesiumGeometry::BoundingSphere sphere(
+        glm::dvec3(0.0),
+        pShape->sphere->radius);
+    return CesiumUtility::Result<BoundingVolume>(
+        transformBoundingVolume(*transform, sphere));
   }
 
   return CesiumUtility::Result<BoundingVolume>(CesiumUtility::ErrorList::error(
-      "Could not parse a valid bounding volume from the given glTF shape."));
+      "Could not parse a valid bounding volume from the glTF."));
 }
 
 BoundingVolume transformBoundingVolume(

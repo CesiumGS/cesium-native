@@ -15,7 +15,8 @@
 #include <variant>
 
 namespace CesiumGltf {
-struct Shape;
+struct BoundingVolume;
+struct Model;
 } // namespace CesiumGltf
 
 namespace CesiumTilesetJson {
@@ -64,20 +65,22 @@ CESIUM3DTILES_API CesiumUtility::Result<BoundingVolume> getBoundingVolume(
 
 /**
  * @brief Creates a @ref Cesium3DTiles::BoundingVolume from a @ref
- * CesiumGltf::Shape, if possible.
+ * CesiumGltf::BoundingVolume in a @ref CesiumGltf::Model, if possible.
  *
  * If the resulting volume is a @ref CesiumGeospatial::BoundingRegion or @ref
  * CesiumGeospatial::S2CellBoundingVolume, then the volume is defined in
  * geographic coordinates. Otherwise, the volume is defined relative to the
  * coordinate system of the node it came from.
  *
- * @param shape The shape from the glTF.
+ * @param model The glTF model.
+ * @param boundingVolume The bounding volume from the glTF model.
  * @param ellipsoid The ellipsoid to use for globe calculations.
  * @return The bounding volume, or a list of errors if construction was not
  * successful.
  */
 CESIUM3DTILES_API CesiumUtility::Result<BoundingVolume> getBoundingVolume(
-    const CesiumGltf::Shape& shape,
+    const CesiumGltf::Model& model,
+    const CesiumGltf::BoundingVolume& boundingVolume,
     const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
 
 /**
