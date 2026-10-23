@@ -18,7 +18,7 @@ process.chdir(rootDir);
 
 // Defaults, overridable by the options below
 const docsBranch = "cesium.com";
-const sourceBranch = "docs-publish-script"; // generally should start from main
+const sourceBranch = "main"; // generally should start from main
 let remote = "origin";
 let dryRun = false;
 let assumeYes = false;
@@ -172,9 +172,9 @@ if (originalBranch !== sourceBranch) {
 }
 
 // Check there is no uncommitted work that could follow us across branches
-// if (git("status", "--porcelain") !== "") {
-//   fail("working tree is dirty; commit or stash changes before releasing");
-// }
+if (git("status", "--porcelain") !== "") {
+  fail("working tree is dirty; commit or stash changes before releasing");
+}
 
 // Get the latest branches and tags so the checks below compare against current state
 console.log(`fetching ${remote}`);
