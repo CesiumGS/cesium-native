@@ -1,5 +1,6 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -49,6 +50,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 using namespace CesiumAsync;
@@ -1696,4 +1698,61 @@ TEST_CASE("SPZ decoding works properly") {
     REQUIRE(scaleView.size() == 1);
     CHECK(scaleView[0] == glm::vec3(20.085537, 7.38905621, 2.71828175));
   }
+}
+
+TEST_CASE("Replaces an illegal Draco indices accessor componentType") {
+  GltfReader reader;
+  GltfReaderOptions options;
+
+  GltfReaderResult result = createDracoModel(Accessor::Type::VEC3);
+
+  Accessor& indicesAccessor = result.model->accessors.emplace_back();
+  indicesAccessor.type = Accessor::Type::SCALAR;
+
+  bool expectWarning = true;
+  SUBCASE("unknown componentType") { indicesAccessor.componentType = 9999; }
+  SUBCASE("FLOAT componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::FLOAT;
+  }
+  SUBCASE("signed componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::SHORT;
+  }
+  SUBCASE("normalized componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::UNSIGNED_SHORT;
+    indicesAccessor.normalized = true;
+    expectWarning = false;
+  }
+  SUBCASE("too narrow componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    expectWarning = false;
+  }
+
+  const int32_t indicesAccessorIndex =
+      static_cast<int32_t>(result.model->accessors.size() - 1);
+  result.model->meshes[0].primitives[0].indices = indicesAccessorIndex;
+
+  reader.postprocessGltf(result, options);
+
+  REQUIRE(result.model);
+  if (expectWarning) {
+    CHECK(hasWarningContaining(result, "not a valid glTF index componentType"));
+  }
+
+  // The componentType must end up as a legal glTF index type wide enough for
+  // the decoded Draco point count, so the indices buffer is sized and
+  // interpreted consistently and the canonical index accessor reader accepts
+  // the result.
+  const Accessor& fixedAccessor =
+      result.model->accessors[static_cast<size_t>(indicesAccessorIndex)];
+  CHECK(fixedAccessor.componentType == Accessor::ComponentType::UNSIGNED_SHORT);
+  CHECK(fixedAccessor.type == Accessor::Type::SCALAR);
+  CHECK(!fixedAccessor.normalized);
+
+  IndexAccessorType indexView = getIndexAccessorView(
+      *result.model,
+      result.model->meshes[0].primitives[0]);
+  const auto* pView = std::get_if<AccessorView<uint16_t>>(&indexView);
+  REQUIRE(pView);
+  REQUIRE(pView->status() == AccessorViewStatus::Valid);
+  CHECK(pView->size() == fixedAccessor.count);
 }

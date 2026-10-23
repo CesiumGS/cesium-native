@@ -14,6 +14,7 @@
 ##### Fixes :wrench:
 
 - Fixed potential integer overflow and out-of-bounds write while decoding glTFs using `EXT_meshopt_compression`.
+- Fixed decoding of Draco-compressed glTFs with invalid index accessor component types or incorrectly normalized index accessors.
 
 ### v0.65.0 - 2026-10-01
 
