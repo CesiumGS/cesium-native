@@ -2201,7 +2201,7 @@ TEST_CASE("Test invalidated raster overlay tiles are reloaded without "
     CHECK(!activated.isTileInvalidated(*pOriginal));
 
     update();
-    CHECK(mapped.getReadyTile() == pOriginal);
+    CHECK(mapped.getReadyTile() == pOriginal.get());
     CHECK(mapped.getLoadingTile() == nullptr);
     CHECK(provider.loadCount == 1);
   }
@@ -2213,7 +2213,7 @@ TEST_CASE("Test invalidated raster overlay tiles are reloaded without "
     // This starts the reload, but its result is delivered on the main thread,
     // so it isn't done yet.
     pManager->updateTileContent(tile, {});
-    CHECK(mapped.getReadyTile() == pOriginal);
+    CHECK(mapped.getReadyTile() == pOriginal.get());
     CHECK(mapped.getLoadingTile() != nullptr);
     CHECK(
         mapped.getState() ==
@@ -2223,7 +2223,7 @@ TEST_CASE("Test invalidated raster overlay tiles are reloaded without "
     pManager->updateTileContent(tile, {});
 
     REQUIRE(mapped.getReadyTile() != nullptr);
-    CHECK(mapped.getReadyTile() != pOriginal);
+    CHECK(mapped.getReadyTile() != pOriginal.get());
     CHECK(mapped.getLoadingTile() == nullptr);
     CHECK(mapped.getState() == RasterMappedTo3DTile::AttachmentState::Attached);
     CHECK(getPixel(*mapped.getReadyTile()) == 2);
@@ -2241,7 +2241,7 @@ TEST_CASE("Test invalidated raster overlay tiles are reloaded without "
     update();
     update();
 
-    CHECK(mapped.getReadyTile() == pOriginal);
+    CHECK(mapped.getReadyTile() == pOriginal.get());
     CHECK(mapped.getLoadingTile() == nullptr);
     CHECK(mapped.getState() == RasterMappedTo3DTile::AttachmentState::Attached);
     CHECK(provider.loadCount == 1);
@@ -2251,7 +2251,7 @@ TEST_CASE("Test invalidated raster overlay tiles are reloaded without "
     update();
     update();
     REQUIRE(mapped.getReadyTile() != nullptr);
-    CHECK(mapped.getReadyTile() != pOriginal);
+    CHECK(mapped.getReadyTile() != pOriginal.get());
     CHECK(getPixel(*mapped.getReadyTile()) == 2);
   }
 }

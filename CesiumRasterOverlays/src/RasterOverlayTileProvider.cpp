@@ -321,16 +321,17 @@ bool RasterOverlayTileProvider::isInvalidatedSince(
   for (auto it = this->_invalidations.rbegin();
        it != this->_invalidations.rend() && it->generation > generation;
        ++it) {
-    if (!it->rectangle) {
+    const std::optional<Rectangle>& maybeRectangle = it->rectangle;
+    if (!maybeRectangle) {
       return true;
     }
 
     const glm::dvec2 padding = projectedUnitsPerPixel * it->paddingPixels;
     const Rectangle padded(
-        it->rectangle->minimumX - padding.x,
-        it->rectangle->minimumY - padding.y,
-        it->rectangle->maximumX + padding.x,
-        it->rectangle->maximumY + padding.y);
+        maybeRectangle->minimumX - padding.x,
+        maybeRectangle->minimumY - padding.y,
+        maybeRectangle->maximumX + padding.x,
+        maybeRectangle->maximumY + padding.y);
     if (rectanglesTouch(padded, rectangle)) {
       return true;
     }
