@@ -19,7 +19,8 @@ RasterOverlayTile::RasterOverlayTile(
       _state(LoadState::Placeholder),
       _pImage(nullptr),
       _pRendererResources(nullptr),
-      _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
+      _moreDetailAvailable(MoreDetailAvailable::Unknown),
+      _loadGeneration(0) {}
 
 RasterOverlayTile::RasterOverlayTile(
     ActivatedRasterOverlay& activatedOverlay,
@@ -32,7 +33,8 @@ RasterOverlayTile::RasterOverlayTile(
       _state(LoadState::Unloaded),
       _pImage(nullptr),
       _pRendererResources(nullptr),
-      _moreDetailAvailable(MoreDetailAvailable::Unknown) {}
+      _moreDetailAvailable(MoreDetailAvailable::Unknown),
+      _loadGeneration(0) {}
 
 RasterOverlayTile::~RasterOverlayTile() {
   this->_pActivatedOverlay->removeTile(this);

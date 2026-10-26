@@ -6,6 +6,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
 
+#include <cstdint>
 #include <vector>
 
 namespace CesiumUtility {
@@ -272,5 +273,7 @@ private:
   CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> _pImage;
   void* _pRendererResources;
   MoreDetailAvailable _moreDetailAvailable;
+  // The tile provider's invalidation generation when this tile began loading.
+  uint64_t _loadGeneration;
 };
 } // namespace CesiumRasterOverlays
