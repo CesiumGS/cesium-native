@@ -11,12 +11,16 @@
 - Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added a `CESIUM_DISABLE_SPZ` CMake option to build Cesium Native without Niantic SPZ support.
 - Added `invalidate` to `RasterOverlayTileProvider` and `ActivatedRasterOverlay`, which marks all of an overlay's tile images, or those in a region, as out of date. Tilesets reload the affected raster overlay tiles and keep showing the current images until the replacements are ready, so the overlay does not flicker.
+- Added `setDocument`, `refreshStyles`, `getDefaultStyle`, and `setDefaultStyle` to `GeoJsonDocumentRasterOverlay`, so a GeoJSON overlay can be restyled or given new geometry without being recreated. Only the tiles that look different are re-rasterized.
 - Added `RasterMappedTo3DTile::reloadIfInvalidated`.
 
 ##### Fixes :wrench:
 
 - Fixed potential integer overflow and out-of-bounds write while decoding glTFs using `EXT_meshopt_compression`.
 - Fixed decoding of Draco-compressed glTFs with invalid index accessor component types or incorrectly normalized index accessors.
+- `GeoJsonDocumentRasterOverlay` now copies the styles it needs when its tile provider is created, instead of keeping pointers into the document. Changing a document's styles in place no longer races with rasterization on worker threads, and no longer leaves dangling pointers when a style is reset. Call `refreshStyles` to apply such changes.
+- Fixed a crash when a `GeoJsonDocumentRasterOverlay` was added to more than one tileset, or removed from a tileset and added again.
+- Fixed undefined behavior when a `GeoJsonDocumentRasterOverlay` rendered a document with no geometry.
 
 ### v0.65.0 - 2026-10-01
 
