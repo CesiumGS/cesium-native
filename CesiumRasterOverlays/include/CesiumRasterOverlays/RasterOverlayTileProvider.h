@@ -1,6 +1,8 @@
 #pragma once
 
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumRasterOverlays/Library.h>
@@ -12,9 +14,12 @@
 #include <CesiumUtility/ReferenceCounted.h>
 #include <CesiumUtility/Tracing.h>
 
+#include <glm/vec2.hpp>
 #include <spdlog/fwd.h>
 
+#include <cstdint>
 #include <optional>
+#include <vector>
 
 namespace CesiumImage {
 struct ImageAsset;
@@ -274,6 +279,66 @@ public:
    */
   virtual void tick() {}
 
+  /**
+   * @brief Marks every tile image loaded by this provider as out of date.
+   *
+   * Tiles that were loaded, or started loading, before this call will be
+   * reloaded by @ref loadTileImage. Until the replacement images are ready, the
+   * existing images remain in use, so the overlay does not flicker.
+   *
+   * This method must be called from the main thread.
+   */
+  void invalidate() noexcept;
+
+  /**
+   * @brief Marks the tile images loaded by this provider that overlap the given
+   * region as out of date.
+   *
+   * Tiles that overlap the region and were loaded, or started loading, before
+   * this call will be reloaded by @ref loadTileImage. Until the replacement
+   * images are ready, the existing images remain in use, so the overlay does
+   * not flicker.
+   *
+   * This method must be called from the main thread.
+   *
+   * @param region The region that changed.
+   * @param paddingPixels An additional margin around the region, measured in
+   * pixels of each tile at the resolution it's meant to be drawn at (its
+   * target screen pixels divided by the overlay's maximum screen space
+   * error). Use this when content in the region can draw outside of it, such
+   * as lines whose width is specified in pixels.
+   */
+  void invalidate(
+      const CesiumGeospatial::GlobeRectangle& region,
+      double paddingPixels = 0.0) noexcept;
+
+  /**
+   * @brief Gets a number that increases every time @ref invalidate is called.
+   *
+   * A tile image loaded when this value was `N` is out of date if a later
+   * invalidation covers it. Use @ref isInvalidatedSince to check.
+   */
+  uint64_t getInvalidationGeneration() const noexcept;
+
+  /**
+   * @brief Determines whether a tile image loaded at the given invalidation
+   * generation is now out of date.
+   *
+   * @param generation The value of @ref getInvalidationGeneration when the tile
+   * image began loading.
+   * @param rectangle The tile's rectangle, in this provider's projected
+   * coordinates.
+   * @param projectedUnitsPerPixel The size of one of the tile's pixels, in this
+   * provider's projected coordinates. This is used to apply the padding given
+   * to @ref invalidate.
+   * @returns `true` if any invalidation after `generation` overlaps the
+   * rectangle.
+   */
+  bool isInvalidatedSince(
+      uint64_t generation,
+      const CesiumGeometry::Rectangle& rectangle,
+      const glm::dvec2& projectedUnitsPerPixel) const noexcept;
+
 protected:
   /**
    * @brief Loads an image from a URL and optionally some request headers.
@@ -303,5 +368,20 @@ private:
   CesiumGeometry::Rectangle _coverageRectangle;
   std::optional<DestructionCompleteDetails> _destructionCompleteDetails;
   std::shared_ptr<CesiumUtility::CreditSource> _pCreditSource;
+
+  struct Invalidation {
+    uint64_t generation;
+    // std::nullopt means the entire provider was invalidated.
+    std::optional<CesiumGeometry::Rectangle> rectangle;
+    double paddingPixels;
+  };
+
+  void addInvalidation(
+      const std::optional<CesiumGeometry::Rectangle>& rectangle,
+      double paddingPixels) noexcept;
+
+  uint64_t _invalidationGeneration = 0;
+  // Ordered by generation, oldest first.
+  std::vector<Invalidation> _invalidations;
 };
 } // namespace CesiumRasterOverlays

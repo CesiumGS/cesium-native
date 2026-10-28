@@ -71,7 +71,10 @@ RasterMappedTo3DTile::RasterMappedTo3DTile(
       _translation(0.0, 0.0),
       _scale(1.0, 1.0),
       _state(AttachmentState::Unattached),
-      _originalFailed(false) {
+      _originalFailed(false),
+      _reloading(false),
+      _reloadGeneration(0),
+      _failedReloadGeneration() {
   CESIUM_ASSERT(this->_pLoadingTile != nullptr);
 }
 
@@ -79,6 +82,33 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
     IPrepareRendererResources& prepareRendererResources,
     Tile& tile) {
   CESIUM_ASSERT(this->_pLoadingTile != nullptr || this->_pReadyTile != nullptr);
+
+  if (this->_reloading) {
+    if (this->_pLoadingTile == nullptr ||
+        this->_pLoadingTile->getState() ==
+            RasterOverlayTile::LoadState::Failed) {
+      // The replacement failed to load, so keep using the current image, and
+      // don't try again until something else is invalidated.
+      this->_failedReloadGeneration = this->_reloadGeneration;
+      this->_pLoadingTile = nullptr;
+      this->_reloading = false;
+      this->_state = AttachmentState::Attached;
+    } else if (
+        this->_pLoadingTile->getState() <
+        RasterOverlayTile::LoadState::Loaded) {
+      // Still loading. The ready tile stays attached in the meantime. Make sure
+      // a load that was throttled earlier gets started.
+      this->loadThrottled();
+      return this->_pReadyTile && this->_pReadyTile->isMoreDetailAvailable() !=
+                                      RasterOverlayTile::MoreDetailAvailable::No
+                 ? RasterOverlayTile::MoreDetailAvailable::Yes
+                 : RasterOverlayTile::MoreDetailAvailable::No;
+    } else {
+      // The replacement is ready. The code below swaps it in for the ready
+      // tile.
+      this->_reloading = false;
+    }
+  }
 
   if (this->getState() == AttachmentState::Attached) {
     return !this->_originalFailed && this->_pReadyTile &&
@@ -249,6 +279,86 @@ bool RasterMappedTo3DTile::loadThrottled() noexcept {
 
   ActivatedRasterOverlay& activated = pLoading->getActivatedOverlay();
   return activated.loadTileThrottled(*pLoading);
+}
+
+bool RasterMappedTo3DTile::reloadIfInvalidated(
+    double maximumScreenSpaceError,
+    Tile& tile,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  // A loading tile, if any, is the one that will eventually be shown, so that's
+  // the one to check. Otherwise, check the tile we're showing.
+  RasterOverlayTile* pCurrent =
+      this->_pLoadingTile ? this->_pLoadingTile.get() : this->_pReadyTile.get();
+  if (pCurrent == nullptr) {
+    return false;
+  }
+
+  // After a load failure, the ready tile may belong to an ancestor. That
+  // ancestor's own mapping takes care of reloading it.
+  if (this->_pLoadingTile == nullptr && this->_originalFailed) {
+    return false;
+  }
+
+  ActivatedRasterOverlay& activated = pCurrent->getActivatedOverlay();
+  if (!activated.isTileInvalidated(*pCurrent)) {
+    return false;
+  }
+
+  RasterOverlayTileProvider* pProvider = activated.getTileProvider();
+  const TileRenderContent* pRenderContent =
+      tile.getContent().getRenderContent();
+  if (pProvider == nullptr || pRenderContent == nullptr) {
+    return false;
+  }
+
+  // If reloading already failed and nothing was invalidated since, keep the
+  // current image rather than retrying every frame.
+  const uint64_t generation = pProvider->getInvalidationGeneration();
+  if (this->_pLoadingTile == nullptr &&
+      this->_failedReloadGeneration == generation) {
+    return false;
+  }
+
+  // Request a new tile the same way mapOverlayToTile does for a loaded tile.
+  const Projection& projection = pProvider->getProjection();
+  const RasterOverlayDetails& overlayDetails =
+      pRenderContent->getRasterOverlayDetails();
+  const Rectangle* pRectangle =
+      overlayDetails.findRectangleForOverlayProjection(projection);
+  if (pRectangle == nullptr) {
+    return false;
+  }
+
+  const glm::dvec2 screenPixels =
+      RasterOverlayUtilities::computeDesiredScreenPixels(
+          tile.getNonZeroGeometricError(),
+          maximumScreenSpaceError,
+          projection,
+          *pRectangle,
+          ellipsoid);
+  IntrusivePointer<RasterOverlayTile> pReplacement =
+      activated.getTile(*pRectangle, screenPixels);
+  if (pReplacement == nullptr) {
+    return false;
+  }
+
+  const bool replacingReadyTile = this->_pLoadingTile == nullptr;
+  this->_pLoadingTile = pReplacement;
+  this->_reloadGeneration = generation;
+  this->_failedReloadGeneration.reset();
+
+  if ((replacingReadyTile || this->_reloading) &&
+      this->_state != AttachmentState::Unattached) {
+    // Keep showing the ready tile until the replacement has loaded. (If it's
+    // not attached, the normal loading path in `update` handles it.)
+    this->_reloading = true;
+    this->_state = AttachmentState::TemporarilyAttached;
+  } else {
+    this->_reloading = false;
+  }
+
+  this->loadThrottled();
+  return true;
 }
 
 namespace {

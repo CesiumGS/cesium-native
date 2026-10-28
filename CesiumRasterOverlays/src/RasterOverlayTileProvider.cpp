@@ -4,6 +4,7 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Rectangle.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumImage/ImageDecoder.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
@@ -19,9 +20,12 @@
 #include <CesiumUtility/Tracing.h>
 
 #include <fmt/format.h>
+#include <glm/ext/vector_double2.hpp>
 #include <spdlog/fwd.h>
 
+#include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <span>
@@ -239,6 +243,101 @@ RasterOverlayTileProvider::loadTileImageFromUrl(
                     std::move(loadedImage.warnings)},
                 options.moreDetailAvailable};
           });
+}
+
+namespace {
+// When the invalidation log grows beyond this many entries, it is collapsed
+// into a single entry covering all of them. That reloads some tiles that didn't
+// strictly need it, but it keeps checking a tile cheap.
+const size_t MAXIMUM_INVALIDATIONS = 256;
+
+// Unlike Rectangle::overlaps, this counts rectangles that only touch, or that
+// have zero area (such as a single point), as overlapping.
+bool rectanglesTouch(const Rectangle& a, const Rectangle& b) noexcept {
+  return a.minimumX <= b.maximumX && b.minimumX <= a.maximumX &&
+         a.minimumY <= b.maximumY && b.minimumY <= a.maximumY;
+}
+} // namespace
+
+void RasterOverlayTileProvider::invalidate() noexcept {
+  this->addInvalidation(std::nullopt, 0.0);
+}
+
+void RasterOverlayTileProvider::invalidate(
+    const CesiumGeospatial::GlobeRectangle& region,
+    double paddingPixels) noexcept {
+  const auto [first, second] = region.splitAtAntiMeridian();
+  std::optional<Rectangle> projected =
+      projectRectangleSimple(this->_projection, first);
+  if (second) {
+    projected = projected->computeUnion(
+        projectRectangleSimple(this->_projection, *second));
+  }
+  this->addInvalidation(projected, paddingPixels);
+}
+
+void RasterOverlayTileProvider::addInvalidation(
+    const std::optional<Rectangle>& rectangle,
+    double paddingPixels) noexcept {
+  ++this->_invalidationGeneration;
+
+  if (!rectangle) {
+    // A full invalidation supersedes every earlier one.
+    this->_invalidations.clear();
+  } else if (this->_invalidations.size() >= MAXIMUM_INVALIDATIONS) {
+    Invalidation merged{
+        this->_invalidationGeneration,
+        rectangle,
+        paddingPixels};
+    for (const Invalidation& invalidation : this->_invalidations) {
+      if (!invalidation.rectangle) {
+        merged.rectangle = std::nullopt;
+      } else if (merged.rectangle) {
+        merged.rectangle =
+            merged.rectangle->computeUnion(*invalidation.rectangle);
+      }
+      merged.paddingPixels =
+          std::max(merged.paddingPixels, invalidation.paddingPixels);
+    }
+    this->_invalidations.clear();
+    this->_invalidations.emplace_back(merged);
+    return;
+  }
+
+  this->_invalidations.emplace_back(
+      Invalidation{this->_invalidationGeneration, rectangle, paddingPixels});
+}
+
+uint64_t RasterOverlayTileProvider::getInvalidationGeneration() const noexcept {
+  return this->_invalidationGeneration;
+}
+
+bool RasterOverlayTileProvider::isInvalidatedSince(
+    uint64_t generation,
+    const Rectangle& rectangle,
+    const glm::dvec2& projectedUnitsPerPixel) const noexcept {
+  // The log is ordered by generation, so walk it backwards and stop at the
+  // first entry that's not newer than the tile.
+  for (auto it = this->_invalidations.rbegin();
+       it != this->_invalidations.rend() && it->generation > generation;
+       ++it) {
+    const std::optional<Rectangle>& maybeRectangle = it->rectangle;
+    if (!maybeRectangle) {
+      return true;
+    }
+
+    const glm::dvec2 padding = projectedUnitsPerPixel * it->paddingPixels;
+    const Rectangle padded(
+        maybeRectangle->minimumX - padding.x,
+        maybeRectangle->minimumY - padding.y,
+        maybeRectangle->maximumX + padding.x,
+        maybeRectangle->maximumY + padding.y);
+    if (rectanglesTouch(padded, rectangle)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 } // namespace CesiumRasterOverlays

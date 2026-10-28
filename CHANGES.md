@@ -10,6 +10,8 @@
 
 - Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added a `CESIUM_DISABLE_SPZ` CMake option to build Cesium Native without Niantic SPZ support.
+- Added `invalidate` to `RasterOverlayTileProvider` and `ActivatedRasterOverlay`, which marks all of an overlay's tile images, or those in a region, as out of date. Tilesets reload the affected raster overlay tiles and keep showing the current images until the replacements are ready, so the overlay does not flicker.
+- Added `RasterMappedTo3DTile::reloadIfInvalidated`.
 
 ##### Fixes :wrench:
 
