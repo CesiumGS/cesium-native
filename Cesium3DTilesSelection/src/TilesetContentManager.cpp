@@ -2208,6 +2208,11 @@ void TilesetContentManager::notifyTileDoneLoading(const Tile* pTile) noexcept {
 void TilesetContentManager::notifyTileUnloading(const Tile* pTile) noexcept {
   if (pTile) {
     this->_tilesDataUsed -= pTile->computeByteSize();
+    // Give the loader a chance to release per-tile auxiliary data (e.g. cached
+    // node pages) so it participates in Cesium's memory-budget system.
+    if (pTile->getLoader()) {
+      pTile->getLoader()->onTileContentUnloaded(*pTile);
+    }
   }
 
   --this->_loadedTilesCount;
