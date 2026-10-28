@@ -18,6 +18,10 @@
 - Fixed a heap overflow when decoding Draco-compressed glTFs whose attributes declare a different number of components than the corresponding accessor.
 - Fixed decoding of Draco-compressed glTFs with invalid index accessor component types or incorrectly normalized index accessors.
 
+##### Fixes :wrench:
+
+- `CesiumVectorOverlays::VectorTilesRasterOverlay` now builds its geographic projection from the overlay ellipsoid instead of a hardcoded WGS84 ellipsoid. A hardcoded ellipsoid can disagree with the one stored by the host, which creates an extra texture-coordinate set and can crash when this overlay is combined with another geographic overlay.
+
 ### v0.65.0 - 2026-10-01
 
 ##### Breaking Changes :mega:
