@@ -47,7 +47,8 @@
         88
       ]
     },
-    "geometricError": 70,
+    "geometricError": 240,
+    "refine": "ADD",
     "children": [
       {
         "boundingVolume": {

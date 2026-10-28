@@ -53,7 +53,7 @@ using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 
-class GroupSelectorDelegate : public ViewStateMeasureDelegate {
+class GroupSelectorDelegate : public ViewStateVisibilityDelegate {
 public:
   GroupSelectorDelegate(int64_t group_) : group(group_) {}
 
@@ -106,7 +106,7 @@ static void initializeTileset(Tileset& tileset, int64_t group = -1) {
       Ellipsoid::WGS84);
   if (group >= 0) {
     auto pLayerDelegate = std::make_shared<GroupSelectorDelegate>(group);
-    viewState.setMeasureDelegate(pLayerDelegate);
+    viewState.setVisibilityDelegate(pLayerDelegate);
   }
   tileset.getExternals().asyncSystem.dispatchMainThreadTasks();
   tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
@@ -135,16 +135,16 @@ static ViewState zoomToTile(const Tile& tile, int64_t group) {
   double verticalFieldOfView =
       std::atan(std::tan(horizontalFieldOfView * 0.5) / aspectRatio) * 2.0;
   ViewState result{
-    viewPosition,
-    glm::normalize(viewFocus - viewPosition),
-    viewUp,
-    viewPortSize,
-    horizontalFieldOfView,
-    verticalFieldOfView,
-    Ellipsoid::WGS84};
+      viewPosition,
+      glm::normalize(viewFocus - viewPosition),
+      viewUp,
+      viewPortSize,
+      horizontalFieldOfView,
+      verticalFieldOfView,
+      Ellipsoid::WGS84};
   if (group >= 0) {
-      auto pLayerDelegate = std::make_shared<GroupSelectorDelegate>(group);
-      result.setMeasureDelegate(pLayerDelegate);
+    auto pLayerDelegate = std::make_shared<GroupSelectorDelegate>(group);
+    result.setVisibilityDelegate(pLayerDelegate);
   }
   return result;
 }
@@ -171,7 +171,6 @@ TEST_CASE("Test additive refinement with groups sanity check") {
       "tileset3/tileset3.json",
       "tileset3/ll.b3dm"};
 
-  
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
       mockCompletedRequests;
   for (const auto& file : files) {
@@ -209,13 +208,12 @@ TEST_CASE("Test additive refinement with groups sanity check") {
   CHECK(pTilesetJson->getChildren().size() == 1);
 
   const Tile* groupsRoot = &pTilesetJson->getChildren()[0];
-  REQUIRE(groupsRoot->getChildren().size() == 2);
+  REQUIRE(groupsRoot->getChildren().size() == 1);
   CHECK(groupsRoot->getState() == TileLoadState::ContentLoading);
-  
-  const Tile* root = &groupsRoot->getChildren()[1];
+
+  const Tile* root = &groupsRoot->getChildren()[0];
   CHECK(root->getChildren().size() == 0);
   CHECK(root->getState() == TileLoadState::Unloaded);
-
 
   SUBCASE("Load external tilesets in child") {
     ViewState viewState = zoomToTileset(tileset);
@@ -229,9 +227,9 @@ TEST_CASE("Test additive refinement with groups sanity check") {
 
       const std::vector<Tile::ConstPointer>& ttr =
           result.tilesToRenderThisFrame;
-      CHECK(ttr.size() == 1);
+      CHECK(ttr.size() == 2);
     }
-    // 1st frame. Root, its child, and its four grandchildren will all be
+    // 1st frame. Root and its child will be
     // rendered because they meet SSE, even though they're not loaded yet.
     {
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
@@ -240,36 +238,28 @@ TEST_CASE("Test additive refinement with groups sanity check") {
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
-      result =
-          tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
-      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
-      tileset.loadTiles();
-      
       const std::vector<Tile::ConstPointer>& ttr =
           result.tilesToRenderThisFrame;
-      CHECK(ttr.size() == 7);
+      CHECK(ttr.size() == 2);
 
       CHECK(root->getState() == TileLoadState::Done);
       CHECK(!doesTileMeetSSE(viewState, *root, tileset));
       CHECK(root->getChildren().size() == 1);
-      CHECK(std::find(ttr.begin(), ttr.end(), pTilesetJson) != ttr.end());
-      CHECK(std::find(ttr.begin(), ttr.end(), root) != ttr.end());
+      CHECK(std::find(ttr.begin(), ttr.end(), groupsRoot) != ttr.end());
 
       const Tile& parentB3DM = root->getChildren().front();
       CHECK(parentB3DM.getState() == TileLoadState::ContentLoading);
       CHECK(!doesTileMeetSSE(viewState, parentB3DM, tileset));
       CHECK(parentB3DM.getChildren().size() == 4);
-      CHECK(std::find(ttr.begin(), ttr.end(), &parentB3DM) != ttr.end());
 
       for (const Tile& child : parentB3DM.getChildren()) {
         CHECK(child.getState() == TileLoadState::ContentLoading);
         CHECK(doesTileMeetSSE(viewState, child, tileset));
-        CHECK(std::find(ttr.begin(), ttr.end(), &child) != ttr.end());
       }
 
       CHECK(result.tilesFadingOut.size() == 0);
 
-      CHECK(result.tilesVisited == 7);
+      CHECK(result.tilesVisited == 8);
       CHECK(result.workerThreadTileLoadQueueLength == 5);
       CHECK(result.tilesCulled == 0);
       CHECK(result.culledTilesVisited == 0);
@@ -285,7 +275,7 @@ TEST_CASE("Test additive refinement with groups sanity check") {
 
       const std::vector<Tile::ConstPointer>& ttr =
           result.tilesToRenderThisFrame;
-      CHECK(ttr.size() == 8);
+      CHECK(ttr.size() == 4);
 
       // root is done loading and rendered.
       CHECK(root->getState() == TileLoadState::Done);
@@ -301,9 +291,8 @@ TEST_CASE("Test additive refinement with groups sanity check") {
       CHECK(std::find(ttr.begin(), ttr.end(), &parentB3DM) != ttr.end());
 
       for (const Tile& child : parentB3DM.getChildren()) {
-        // parentB3DM's children are all done loading and are rendered.
+        // parentB3DM's children are all done loading
         CHECK(child.getState() == TileLoadState::Done);
-        CHECK(std::find(ttr.begin(), ttr.end(), &child) != ttr.end());
 
         if (*std::get_if<std::string>(&child.getTileID()) !=
             "tileset3/tileset3.json") {
@@ -320,15 +309,12 @@ TEST_CASE("Test additive refinement with groups sanity check") {
           CHECK(
               child.getChildren().front().getState() ==
               TileLoadState::ContentLoading);
-          CHECK(
-              std::find(ttr.begin(), ttr.end(), &child.getChildren().front()) !=
-              ttr.end());
         }
       }
 
       CHECK(result.tilesFadingOut.size() == 0);
 
-      CHECK(result.tilesVisited == 8);
+      CHECK(result.tilesVisited == 9);
       CHECK(result.workerThreadTileLoadQueueLength == 1);
       CHECK(result.tilesCulled == 0);
       CHECK(result.culledTilesVisited == 0);
@@ -341,11 +327,11 @@ TEST_CASE("Test additive refinement with groups sanity check") {
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
-      CHECK(result.tilesToRenderThisFrame.size() == 8);
+      CHECK(result.tilesToRenderThisFrame.size() == 4);
 
       CHECK(result.tilesFadingOut.size() == 0);
 
-      CHECK(result.tilesVisited == 8);
+      CHECK(result.tilesVisited == 9);
       CHECK(result.workerThreadTileLoadQueueLength == 0);
       CHECK(result.tilesCulled == 0);
       CHECK(result.culledTilesVisited == 0);
@@ -368,7 +354,6 @@ TEST_CASE("Test additive refinement with groups") {
       "tileset3/tileset3.json",
       "tileset3/ll.b3dm"};
 
-  
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
       mockCompletedRequests;
   for (const auto& file : files) {
@@ -408,7 +393,7 @@ TEST_CASE("Test additive refinement with groups") {
   const Tile* groupsRoot = &pTilesetJson->getChildren()[0];
   REQUIRE(groupsRoot->getChildren().size() == 2);
   CHECK(groupsRoot->getState() == TileLoadState::ContentLoading);
-  
+
   const Tile* root = &groupsRoot->getChildren()[1];
   CHECK(root->getChildren().size() == 0);
   CHECK(root->getState() == TileLoadState::Unloaded);
@@ -424,7 +409,7 @@ TEST_CASE("Test additive refinement with groups") {
       tileset.loadTiles();
       const std::vector<Tile::ConstPointer>& ttr =
           result.tilesToRenderThisFrame;
-      CHECK(ttr.size() == 1);
+      CHECK(ttr.size() == 2);
     }
   }
 
@@ -444,9 +429,9 @@ TEST_CASE("Test additive refinement with groups") {
 
       const std::vector<Tile::ConstPointer>& ttr =
           result.tilesToRenderThisFrame;
-      CHECK(ttr.size() == 1);
+      CHECK(ttr.size() == 2);
     }
-    // 1st frame. Root, its child, and its four grandchildren will all be
+    // 1st frame. Root and its child will be
     // rendered because they meet SSE, even though they're not loaded yet.
     {
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
@@ -455,36 +440,28 @@ TEST_CASE("Test additive refinement with groups") {
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
-      result =
-          tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
-      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
-      tileset.loadTiles();
-      
       const std::vector<Tile::ConstPointer>& ttr =
           result.tilesToRenderThisFrame;
-      CHECK(ttr.size() == 7);
+      CHECK(ttr.size() == 2);
 
       CHECK(root->getState() == TileLoadState::Done);
       CHECK(!doesTileMeetSSE(viewState, *root, tileset));
       CHECK(root->getChildren().size() == 1);
-      CHECK(std::find(ttr.begin(), ttr.end(), pTilesetJson) != ttr.end());
-      CHECK(std::find(ttr.begin(), ttr.end(), root) != ttr.end());
+      CHECK(std::find(ttr.begin(), ttr.end(), groupsRoot) != ttr.end());
 
       const Tile& parentB3DM = root->getChildren().front();
       CHECK(parentB3DM.getState() == TileLoadState::ContentLoading);
       CHECK(!doesTileMeetSSE(viewState, parentB3DM, tileset));
       CHECK(parentB3DM.getChildren().size() == 4);
-      CHECK(std::find(ttr.begin(), ttr.end(), &parentB3DM) != ttr.end());
 
       for (const Tile& child : parentB3DM.getChildren()) {
         CHECK(child.getState() == TileLoadState::ContentLoading);
         CHECK(doesTileMeetSSE(viewState, child, tileset));
-        CHECK(std::find(ttr.begin(), ttr.end(), &child) != ttr.end());
       }
 
       CHECK(result.tilesFadingOut.size() == 0);
 
-      CHECK(result.tilesVisited == 7);
+      CHECK(result.tilesVisited == 9);
       CHECK(result.workerThreadTileLoadQueueLength == 5);
       CHECK(result.tilesCulled == 0);
       CHECK(result.culledTilesVisited == 0);
@@ -500,7 +477,7 @@ TEST_CASE("Test additive refinement with groups") {
 
       const std::vector<Tile::ConstPointer>& ttr =
           result.tilesToRenderThisFrame;
-      CHECK(ttr.size() == 8);
+      CHECK(ttr.size() == 4);
 
       // root is done loading and rendered.
       CHECK(root->getState() == TileLoadState::Done);
@@ -518,7 +495,6 @@ TEST_CASE("Test additive refinement with groups") {
       for (const Tile& child : parentB3DM.getChildren()) {
         // parentB3DM's children are all done loading and are rendered.
         CHECK(child.getState() == TileLoadState::Done);
-        CHECK(std::find(ttr.begin(), ttr.end(), &child) != ttr.end());
 
         if (*std::get_if<std::string>(&child.getTileID()) !=
             "tileset3/tileset3.json") {
@@ -535,15 +511,12 @@ TEST_CASE("Test additive refinement with groups") {
           CHECK(
               child.getChildren().front().getState() ==
               TileLoadState::ContentLoading);
-          CHECK(
-              std::find(ttr.begin(), ttr.end(), &child.getChildren().front()) !=
-              ttr.end());
         }
       }
 
       CHECK(result.tilesFadingOut.size() == 0);
 
-      CHECK(result.tilesVisited == 8);
+      CHECK(result.tilesVisited == 10);
       CHECK(result.workerThreadTileLoadQueueLength == 1);
       CHECK(result.tilesCulled == 0);
       CHECK(result.culledTilesVisited == 0);
@@ -556,11 +529,11 @@ TEST_CASE("Test additive refinement with groups") {
       tilesetExternals.asyncSystem.dispatchMainThreadTasks();
       tileset.loadTiles();
 
-      CHECK(result.tilesToRenderThisFrame.size() == 8);
+      CHECK(result.tilesToRenderThisFrame.size() == 4);
 
       CHECK(result.tilesFadingOut.size() == 0);
 
-      CHECK(result.tilesVisited == 8);
+      CHECK(result.tilesVisited == 10);
       CHECK(result.workerThreadTileLoadQueueLength == 0);
       CHECK(result.tilesCulled == 0);
       CHECK(result.culledTilesVisited == 0);

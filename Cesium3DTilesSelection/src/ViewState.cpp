@@ -42,8 +42,9 @@ double ViewStateMeasureDelegate::computeSelectionMeasure(
   return viewState.computeScreenSpaceError(tile.getGeometricError(), distance);
 }
 
-bool ViewStateMeasureDelegate::isContentVisible(const ViewState&, const Tile&)
-    const {
+bool ViewStateVisibilityDelegate::isContentVisible(
+    const ViewState&,
+    const Tile&) const {
   return true;
 }
 

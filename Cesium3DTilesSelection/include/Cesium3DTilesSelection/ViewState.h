@@ -46,6 +46,18 @@ public:
       uint32_t depth) const;
 
   /**
+   * @brief destructor
+   */
+  virtual ~ViewStateMeasureDelegate() = default;
+};
+
+/**
+ * @brief A delegate for determining if a tile is visible, using user-defined
+ * criteria. For example, a tile's group might be tested.
+ */
+class CESIUM3DTILESSELECTION_API ViewStateVisibilityDelegate {
+public:
+  /**
    * @brief Determine if this tile's content is visible. If the tile has
    * external content, then this determines if the tile's children are visited.
    * @param viewState The ViewState object.
@@ -58,7 +70,7 @@ public:
   /**
    * @brief destructor
    */
-  virtual ~ViewStateMeasureDelegate() = default;
+  virtual ~ViewStateVisibilityDelegate() = default;
 };
 
 /**
@@ -312,8 +324,8 @@ public:
    * @return true if tile is visible.
    */
   bool isContentVisible(const Tile& tile) const noexcept {
-    if (_pMeasureDelegate) {
-      return _pMeasureDelegate->isContentVisible(*this, tile);
+    if (_pVisibilityDelegate) {
+      return _pVisibilityDelegate->isContentVisible(*this, tile);
     }
     return true;
   }
@@ -335,6 +347,23 @@ public:
     this->_pMeasureDelegate = std::move(measureDelegate);
   }
 
+  /**
+   * @brief Get the visibility delegate object.
+   * @return The visibility delegate.
+   */
+  std::shared_ptr<ViewStateVisibilityDelegate> getVisibilityDelegate() const {
+    return this->_pVisibilityDelegate;
+  }
+
+  /**
+   * @brief Set the visibility delegate object.
+   * @param visibilityDelegate The visibility delegate.
+   */
+  void setVisibilityDelegate(
+      std::shared_ptr<ViewStateVisibilityDelegate> visibilityDelegate) {
+    this->_pVisibilityDelegate = std::move(visibilityDelegate);
+  }
+
 private:
   glm::dvec3 _position;
   glm::dvec3 _direction;
@@ -347,6 +376,7 @@ private:
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
   std::shared_ptr<ViewStateMeasureDelegate> _pMeasureDelegate;
+  std::shared_ptr<ViewStateVisibilityDelegate> _pVisibilityDelegate;
 };
 
 } // namespace Cesium3DTilesSelection
