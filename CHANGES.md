@@ -17,6 +17,7 @@
 - Fixed potential integer overflow and out-of-bounds write while decoding glTFs using `EXT_meshopt_compression`.
 - Fixed a heap overflow when decoding Draco-compressed glTFs whose attributes declare a different number of components than the corresponding accessor.
 - Fixed decoding of Draco-compressed glTFs with invalid index accessor component types or incorrectly normalized index accessors.
+- Fixed a dangling `VectorStyle` reference in `GeoJsonDocumentRasterOverlay` when the GeoJSON root object is a single `Feature`, which could cause features to be rendered with the wrong style or crash.
 
 ### v0.65.0 - 2026-10-01
 
