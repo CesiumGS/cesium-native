@@ -40,6 +40,7 @@
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/CreateRasterOverlayTileProviderParameters.h>
 #include <CesiumRasterOverlays/DebugColorizeTilesRasterOverlay.h>
 #include <CesiumRasterOverlays/IPrepareRasterOverlayRendererResources.h>
@@ -2048,5 +2049,209 @@ TEST_CASE("Test glTF modifier state machine") {
   SUBCASE("Unload tile after main-thread phase of glTF modifier") {
     CHECK(pManager->unloadTileContent(tile));
     CHECK(pMockedPrepareRendererResources->totalAllocation == 0);
+  }
+}
+
+namespace {
+// A tile provider whose images contain a single pixel holding the number of
+// images it has produced so far, so tests can tell which load an image came
+// from.
+class CountingRasterOverlayTileProvider : public RasterOverlayTileProvider {
+public:
+  CountingRasterOverlayTileProvider(
+      const CesiumUtility::IntrusivePointer<const RasterOverlay>& pCreator,
+      const CreateRasterOverlayTileProviderParameters& parameters)
+      : RasterOverlayTileProvider(
+            pCreator,
+            parameters,
+            CesiumGeospatial::GeographicProjection(),
+            projectRectangleSimple(
+                CesiumGeospatial::GeographicProjection(),
+                GlobeRectangle::MAXIMUM)) {}
+
+  CesiumAsync::Future<LoadedRasterOverlayImage>
+  loadTileImage(const RasterOverlayTile& overlayTile) override {
+    if (this->failNextLoad) {
+      this->failNextLoad = false;
+      return this->getAsyncSystem().createResolvedFuture(
+          LoadedRasterOverlayImage{});
+    }
+
+    ++this->loadCount;
+    CesiumUtility::IntrusivePointer<CesiumImage::ImageAsset> pImage;
+    CesiumImage::ImageAsset& image = pImage.emplace();
+    image.width = 1;
+    image.height = 1;
+    image.channels = 1;
+    image.bytesPerChannel = 1;
+    image.pixelData.resize(1, std::byte(this->loadCount));
+
+    return this->getAsyncSystem().createResolvedFuture(LoadedRasterOverlayImage{
+        std::move(pImage),
+        overlayTile.getRectangle(),
+        {},
+        {},
+        false});
+  }
+
+  uint8_t loadCount = 0;
+  bool failNextLoad = false;
+};
+
+class CountingRasterOverlay : public RasterOverlay {
+public:
+  CountingRasterOverlay() : RasterOverlay("Counting") {}
+
+  CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
+      const CreateRasterOverlayTileProviderParameters& parameters)
+      const override {
+    return parameters.externals.asyncSystem.createResolvedFuture(
+        CreateTileProviderResult(
+            CesiumUtility::IntrusivePointer<RasterOverlayTileProvider>(
+                new CountingRasterOverlayTileProvider(this, parameters))));
+  }
+};
+
+uint8_t getPixel(const RasterOverlayTile& tile) {
+  REQUIRE(tile.getImage() != nullptr);
+  REQUIRE(!tile.getImage()->pixelData.empty());
+  return static_cast<uint8_t>(tile.getImage()->pixelData[0]);
+}
+} // namespace
+
+TEST_CASE("Test invalidated raster overlay tiles are reloaded without "
+          "flickering") {
+  Cesium3DTilesContent::registerAllTileContentTypes();
+
+  auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
+  auto pMockedPrepareRendererResources =
+      std::make_shared<SimplePrepareRendererResource>();
+  CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+  auto pMockedCreditSystem = std::make_shared<CreditSystem>();
+
+  TilesetExternals externals{
+      pMockedAssetAccessor,
+      pMockedPrepareRendererResources,
+      asyncSystem,
+      pMockedCreditSystem};
+
+  auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+  const GlobeRectangle tileRectangle =
+      GlobeRectangle::fromDegrees(0.0010, 0.0011, 0.0012, 0.0013);
+  pMockedLoader->mockLoadTileContent = {
+      createSparseMesh(tileRectangle),
+      CesiumGeometry::Axis::Z,
+      std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      nullptr,
+      nullptr,
+      {},
+      TileLoadResultState::Success,
+      Ellipsoid::WGS84};
+  pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Success};
+
+  auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
+  pRootTile->setTileID("foo");
+
+  IntrusivePointer<TilesetContentManager> pManager =
+      TilesetContentManager::createFromLoader(
+          externals,
+          {},
+          std::move(pMockedLoader),
+          std::move(pRootTile));
+
+  pManager->getRasterOverlayCollection().add(new CountingRasterOverlay());
+  pManager->waitUntilIdle(5000.0);
+
+  Tile& tile = *pManager->getRootTile();
+  auto update = [&]() {
+    pManager->loadTileContent(tile, {});
+    asyncSystem.dispatchMainThreadTasks();
+    pManager->updateTileContent(tile, {});
+    asyncSystem.dispatchMainThreadTasks();
+  };
+
+  for (int i = 0; i < 100; ++i) {
+    if (tile.getState() == TileLoadState::Done &&
+        tile.getMappedRasterTiles().size() == 1 &&
+        tile.getMappedRasterTiles()[0].getState() ==
+            RasterMappedTo3DTile::AttachmentState::Attached) {
+      break;
+    }
+    update();
+  }
+
+  REQUIRE(tile.getMappedRasterTiles().size() == 1);
+  RasterMappedTo3DTile& mapped = tile.getMappedRasterTiles()[0];
+  REQUIRE(mapped.getState() == RasterMappedTo3DTile::AttachmentState::Attached);
+
+  IntrusivePointer<RasterOverlayTile> pOriginal = mapped.getReadyTile();
+  REQUIRE(pOriginal != nullptr);
+  CHECK(getPixel(*pOriginal) == 1);
+
+  ActivatedRasterOverlay& activated =
+      *pManager->getRasterOverlayCollection().getActivatedOverlays()[0];
+  auto& provider = static_cast<CountingRasterOverlayTileProvider&>(
+      *activated.getTileProvider());
+
+  SUBCASE("An invalidation elsewhere does not reload the tile") {
+    activated.invalidate(GlobeRectangle::fromDegrees(10.0, 10.0, 11.0, 11.0));
+    CHECK(!activated.isTileInvalidated(*pOriginal));
+
+    update();
+    CHECK(mapped.getReadyTile() == pOriginal.get());
+    CHECK(mapped.getLoadingTile() == nullptr);
+    CHECK(provider.loadCount == 1);
+  }
+
+  SUBCASE("The current image stays attached until its replacement loads") {
+    activated.invalidate(tileRectangle);
+    CHECK(activated.isTileInvalidated(*pOriginal));
+
+    // This starts the reload, but its result is delivered on the main thread,
+    // so it isn't done yet.
+    pManager->updateTileContent(tile, {});
+    CHECK(mapped.getReadyTile() == pOriginal.get());
+    CHECK(mapped.getLoadingTile() != nullptr);
+    CHECK(
+        mapped.getState() ==
+        RasterMappedTo3DTile::AttachmentState::TemporarilyAttached);
+
+    asyncSystem.dispatchMainThreadTasks();
+    pManager->updateTileContent(tile, {});
+
+    REQUIRE(mapped.getReadyTile() != nullptr);
+    CHECK(mapped.getReadyTile() != pOriginal.get());
+    CHECK(mapped.getLoadingTile() == nullptr);
+    CHECK(mapped.getState() == RasterMappedTo3DTile::AttachmentState::Attached);
+    CHECK(getPixel(*mapped.getReadyTile()) == 2);
+    CHECK(!activated.isTileInvalidated(*mapped.getReadyTile()));
+
+    // Nothing more to do once the replacement is shown.
+    update();
+    CHECK(provider.loadCount == 2);
+  }
+
+  SUBCASE("A failed reload keeps the current image and isn't retried until "
+          "the next invalidation") {
+    provider.failNextLoad = true;
+    activated.invalidate();
+    update();
+    update();
+
+    CHECK(mapped.getReadyTile() == pOriginal.get());
+    CHECK(mapped.getLoadingTile() == nullptr);
+    CHECK(mapped.getState() == RasterMappedTo3DTile::AttachmentState::Attached);
+    CHECK(provider.loadCount == 1);
+
+    // Another invalidation tries again, and this time it works.
+    activated.invalidate();
+    update();
+    update();
+    REQUIRE(mapped.getReadyTile() != nullptr);
+    CHECK(mapped.getReadyTile() != pOriginal.get());
+    CHECK(getPixel(*mapped.getReadyTile()) == 2);
   }
 }

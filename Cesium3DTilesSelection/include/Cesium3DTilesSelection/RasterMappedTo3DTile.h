@@ -6,7 +6,9 @@
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
+#include <cstdint>
 #include <memory>
+#include <optional>
 
 namespace CesiumRasterOverlays {
 class ActivatedRasterOverlay;
@@ -199,6 +201,29 @@ public:
   bool loadThrottled() noexcept;
 
   /**
+   * @brief Starts reloading the mapped raster overlay tile if its image is out
+   * of date because the overlay was invalidated.
+   *
+   * See \ref CesiumRasterOverlays::ActivatedRasterOverlay::invalidate. The
+   * current image stays attached to the tile until the replacement has loaded,
+   * so the overlay does not flicker. If the replacement fails to load, the
+   * current image is kept.
+   *
+   * This is only supposed to be called by
+   * \ref RasterOverlayCollection::updateTileOverlays, before \ref update.
+   *
+   * @param maximumScreenSpaceError The maximum screen space error that is used
+   * for the current tile.
+   * @param tile The owner tile.
+   * @param ellipsoid The \ref CesiumGeospatial::Ellipsoid.
+   * @return `true` if a reload was started.
+   */
+  bool reloadIfInvalidated(
+      double maximumScreenSpaceError,
+      Tile& tile,
+      const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+  /**
    * @brief Creates a maping between a @ref CesiumRasterOverlays::RasterOverlay
    * and a @ref Tile.
    *
@@ -246,6 +271,14 @@ private:
   glm::dvec2 _scale;
   AttachmentState _state;
   bool _originalFailed;
+  // True while `_pLoadingTile` is a replacement for an out-of-date
+  // `_pReadyTile` that remains attached in the meantime.
+  bool _reloading;
+  // The tile provider's invalidation generation when the current reload began.
+  uint64_t _reloadGeneration;
+  // Set when a reload fails, so that it isn't retried until the overlay is
+  // invalidated again.
+  std::optional<uint64_t> _failedReloadGeneration;
 };
 
 } // namespace Cesium3DTilesSelection

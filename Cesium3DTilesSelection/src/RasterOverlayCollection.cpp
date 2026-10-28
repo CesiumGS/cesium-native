@@ -226,6 +226,13 @@ TileRasterOverlayStatus RasterOverlayCollection::updateTileOverlays(
       continue;
     }
 
+    // If the overlay was invalidated since this tile's image was loaded, start
+    // loading a replacement.
+    mappedRasterTile.reloadIfInvalidated(
+        tilesetOptions.maximumScreenSpaceError,
+        tile,
+        tilesetOptions.ellipsoid);
+
     const RasterOverlayTile::MoreDetailAvailable moreDetailAvailable =
         mappedRasterTile.update(
             *this->_externals.pPrepareRendererResources,

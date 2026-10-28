@@ -11,6 +11,7 @@
 #include <CesiumNativeTests/writeTga.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayTile.h>
+#include <CesiumUtility/Color.h>
 #include <CesiumUtility/Math.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorOverlays/GeoJsonDocumentRasterOverlay.h>
@@ -22,6 +23,7 @@
 #include <filesystem>
 #include <memory>
 #include <random>
+#include <vector>
 
 using namespace CesiumAsync;
 using namespace CesiumGeospatial;
@@ -685,4 +687,340 @@ TEST_CASE("GeoJsonDocumentRasterOverlay can render a MultiPoint") {
 
   // The MultiPoint's fill color should appear in the rasterized tile.
   CHECK(imageHasPixelWithColor(image, 0, 255, 0, 255));
+}
+
+namespace {
+VectorStyle createLineStyle(const Color& color, double width = 2.0) {
+  return VectorStyle{
+      LineStyle{
+          ColorStyle{color, ColorMode::Normal},
+          width,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+}
+
+const Color RED{255, 0, 0, 255};
+const Color GREEN{0, 255, 0, 255};
+const Color BLUE{0, 0, 255, 255};
+
+bool imageHasColor(const CesiumImage::ImageAsset& image, const Color& color) {
+  return imageHasPixelWithColor(image, color.r, color.g, color.b, color.a);
+}
+
+// A FeatureCollection with one unstyled line feature per entry, each along the
+// equator from `west` to `west + 5` degrees.
+std::shared_ptr<GeoJsonDocument>
+createLinesDocument(const std::vector<double>& wests) {
+  GeoJsonFeatureCollection collection;
+  for (double west : wests) {
+    GeoJsonLineString lineString;
+    lineString.coordinates = {
+        glm::dvec3(west, 0.0, 0.0),
+        glm::dvec3(west + 5.0, 0.0, 0.0)};
+
+    GeoJsonFeature feature;
+    feature.geometry =
+        std::make_unique<GeoJsonObject>(GeoJsonObject{std::move(lineString)});
+    collection.features.push_back(GeoJsonObject{std::move(feature)});
+  }
+  return std::make_shared<GeoJsonDocument>(
+      GeoJsonObject{std::move(collection)},
+      std::vector<VectorDocumentAttribution>{});
+}
+
+GeoJsonFeature& getFeature(GeoJsonDocument& document, size_t index) {
+  GeoJsonFeatureCollection* pCollection =
+      document.rootObject.getIf<GeoJsonFeatureCollection>();
+  REQUIRE(pCollection != nullptr);
+  REQUIRE(index < pCollection->features.size());
+  GeoJsonFeature* pFeature =
+      pCollection->features[index].getIf<GeoJsonFeature>();
+  REQUIRE(pFeature != nullptr);
+  return *pFeature;
+}
+
+GlobeRectangle aroundLine(double west) {
+  return GlobeRectangle::fromDegrees(west - 1.0, -5.0, west + 6.0, 5.0);
+}
+
+IntrusivePointer<ActivatedRasterOverlay>
+activateOverlay(const AsyncSystem& asyncSystem, const RasterOverlay& overlay) {
+  std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor =
+      std::make_shared<CesiumNativeTests::SimpleAssetAccessor>(
+          std::map<
+              std::string,
+              std::shared_ptr<CesiumNativeTests::SimpleAssetRequest>>());
+
+  IntrusivePointer<ActivatedRasterOverlay> pActivated = overlay.activate(
+      RasterOverlayExternals{
+          .pAssetAccessor = pAssetAccessor,
+          .pPrepareRendererResources = nullptr,
+          .asyncSystem = asyncSystem,
+          .pCreditSystem = nullptr,
+          .pLogger = spdlog::default_logger()},
+      Ellipsoid::WGS84);
+  pActivated->getReadyEvent().waitInMainThread();
+  REQUIRE(pActivated->getTileProvider() != nullptr);
+  return pActivated;
+}
+
+IntrusivePointer<RasterOverlayTile> loadTile(
+    AsyncSystem& asyncSystem,
+    ActivatedRasterOverlay& activated,
+    const GlobeRectangle& rectangle) {
+  GeographicProjection projection(Ellipsoid::WGS84);
+  IntrusivePointer<RasterOverlayTile> pTile =
+      activated.getTile(projection.project(rectangle), glm::dvec2(256, 256));
+  REQUIRE(pTile != nullptr);
+  activated.loadTile(*pTile);
+  while (pTile->getState() != RasterOverlayTile::LoadState::Loaded &&
+         pTile->getState() != RasterOverlayTile::LoadState::Failed) {
+    asyncSystem.dispatchMainThreadTasks();
+  }
+  REQUIRE(pTile->getState() == RasterOverlayTile::LoadState::Loaded);
+  REQUIRE(pTile->getImage() != nullptr);
+  return pTile;
+}
+
+// Gives the overlay's tile provider a chance to pick up changes, like a tileset
+// does every frame.
+void update(AsyncSystem& asyncSystem, ActivatedRasterOverlay& activated) {
+  activated.tick();
+  asyncSystem.dispatchMainThreadTasks();
+}
+
+const GeoJsonDocumentRasterOverlayOptions defaultOptions{
+    createLineStyle(RED),
+    Ellipsoid::WGS84,
+    0};
+} // namespace
+
+TEST_CASE("GeoJsonDocumentRasterOverlay refreshStyles re-rasterizes only the "
+          "tiles whose styles changed") {
+  AsyncSystem asyncSystem(
+      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
+  std::shared_ptr<GeoJsonDocument> pDocument = createLinesDocument({0.0, 50.0});
+  IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay =
+      new GeoJsonDocumentRasterOverlay(
+          asyncSystem,
+          "overlay",
+          pDocument,
+          defaultOptions);
+  IntrusivePointer<ActivatedRasterOverlay> pActivated =
+      activateOverlay(asyncSystem, *pOverlay);
+
+  IntrusivePointer<RasterOverlayTile> pTileA =
+      loadTile(asyncSystem, *pActivated, aroundLine(0.0));
+  IntrusivePointer<RasterOverlayTile> pTileB =
+      loadTile(asyncSystem, *pActivated, aroundLine(50.0));
+  CHECK(imageHasColor(*pTileA->getImage(), RED));
+
+  // Changing a style in place has no effect until refreshStyles is called. In
+  // particular, tiles rasterized in the meantime still use the old style.
+  getFeature(*pDocument, 0).style = createLineStyle(BLUE);
+  update(asyncSystem, *pActivated);
+  CHECK(!pActivated->isTileInvalidated(*pTileA));
+  IntrusivePointer<RasterOverlayTile> pTileA2 =
+      loadTile(asyncSystem, *pActivated, aroundLine(0.0));
+  CHECK(imageHasColor(*pTileA2->getImage(), RED));
+  CHECK_FALSE(imageHasColor(*pTileA2->getImage(), BLUE));
+
+  pOverlay->refreshStyles();
+  update(asyncSystem, *pActivated);
+
+  CHECK(pActivated->isTileInvalidated(*pTileA));
+  CHECK(pActivated->isTileInvalidated(*pTileA2));
+  CHECK(!pActivated->isTileInvalidated(*pTileB));
+
+  IntrusivePointer<RasterOverlayTile> pTileA3 =
+      loadTile(asyncSystem, *pActivated, aroundLine(0.0));
+  CHECK(imageHasColor(*pTileA3->getImage(), BLUE));
+  CHECK_FALSE(imageHasColor(*pTileA3->getImage(), RED));
+  CHECK(!pActivated->isTileInvalidated(*pTileA3));
+
+  // Refreshing again without changes invalidates nothing.
+  pOverlay->refreshStyles();
+  update(asyncSystem, *pActivated);
+  CHECK(!pActivated->isTileInvalidated(*pTileA3));
+  CHECK(!pActivated->isTileInvalidated(*pTileB));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay refreshStyles invalidates neighboring "
+          "tiles that a line with a pixel width spills into") {
+  AsyncSystem asyncSystem(
+      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
+  std::shared_ptr<GeoJsonDocument> pDocument = createLinesDocument({0.0});
+  IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay =
+      new GeoJsonDocumentRasterOverlay(
+          asyncSystem,
+          "overlay",
+          pDocument,
+          defaultOptions);
+  IntrusivePointer<ActivatedRasterOverlay> pActivated =
+      activateOverlay(asyncSystem, *pOverlay);
+
+  // The line ends at 5 degrees. This tile starts just east of that, closer
+  // than the line's width in this tile's pixels (each about 0.04 degrees).
+  IntrusivePointer<RasterOverlayTile> pNear = loadTile(
+      asyncSystem,
+      *pActivated,
+      GlobeRectangle::fromDegrees(5.05, -5.0, 10.0, 5.0));
+  // This one is well clear of it.
+  IntrusivePointer<RasterOverlayTile> pFar = loadTile(
+      asyncSystem,
+      *pActivated,
+      GlobeRectangle::fromDegrees(7.0, -5.0, 12.0, 5.0));
+
+  getFeature(*pDocument, 0).style = createLineStyle(BLUE, 4.0);
+  pOverlay->refreshStyles();
+  update(asyncSystem, *pActivated);
+
+  CHECK(pActivated->isTileInvalidated(*pNear));
+  CHECK(!pActivated->isTileInvalidated(*pFar));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay setDefaultStyle re-rasterizes "
+          "geometry that uses the default style") {
+  AsyncSystem asyncSystem(
+      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
+  std::shared_ptr<GeoJsonDocument> pDocument = createLinesDocument({0.0, 50.0});
+  // The second line has its own style, so the default doesn't apply to it.
+  getFeature(*pDocument, 1).style = createLineStyle(BLUE);
+
+  IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay =
+      new GeoJsonDocumentRasterOverlay(
+          asyncSystem,
+          "overlay",
+          pDocument,
+          defaultOptions);
+  IntrusivePointer<ActivatedRasterOverlay> pActivated =
+      activateOverlay(asyncSystem, *pOverlay);
+
+  IntrusivePointer<RasterOverlayTile> pTileA =
+      loadTile(asyncSystem, *pActivated, aroundLine(0.0));
+  IntrusivePointer<RasterOverlayTile> pTileB =
+      loadTile(asyncSystem, *pActivated, aroundLine(50.0));
+  CHECK(imageHasColor(*pTileA->getImage(), RED));
+
+  pOverlay->setDefaultStyle(createLineStyle(GREEN));
+  CHECK(pOverlay->getDefaultStyle() == createLineStyle(GREEN));
+  update(asyncSystem, *pActivated);
+
+  CHECK(pActivated->isTileInvalidated(*pTileA));
+  CHECK(!pActivated->isTileInvalidated(*pTileB));
+
+  IntrusivePointer<RasterOverlayTile> pTileA2 =
+      loadTile(asyncSystem, *pActivated, aroundLine(0.0));
+  CHECK(imageHasColor(*pTileA2->getImage(), GREEN));
+  CHECK_FALSE(imageHasColor(*pTileA2->getImage(), RED));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay setDocument re-rasterizes the old and "
+          "new geometry") {
+  AsyncSystem asyncSystem(
+      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
+  IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay =
+      new GeoJsonDocumentRasterOverlay(
+          asyncSystem,
+          "overlay",
+          createLinesDocument({0.0}),
+          defaultOptions);
+  IntrusivePointer<ActivatedRasterOverlay> pActivated =
+      activateOverlay(asyncSystem, *pOverlay);
+
+  IntrusivePointer<RasterOverlayTile> pOld =
+      loadTile(asyncSystem, *pActivated, aroundLine(0.0));
+  IntrusivePointer<RasterOverlayTile> pNew =
+      loadTile(asyncSystem, *pActivated, aroundLine(50.0));
+  IntrusivePointer<RasterOverlayTile> pElsewhere =
+      loadTile(asyncSystem, *pActivated, aroundLine(100.0));
+  CHECK(imageHasColor(*pOld->getImage(), RED));
+  CHECK_FALSE(imageHasColor(*pNew->getImage(), RED));
+
+  pOverlay->setDocument(createLinesDocument({50.0}));
+  update(asyncSystem, *pActivated);
+
+  CHECK(pActivated->isTileInvalidated(*pOld));
+  CHECK(pActivated->isTileInvalidated(*pNew));
+  CHECK(!pActivated->isTileInvalidated(*pElsewhere));
+
+  IntrusivePointer<RasterOverlayTile> pOld2 =
+      loadTile(asyncSystem, *pActivated, aroundLine(0.0));
+  IntrusivePointer<RasterOverlayTile> pNew2 =
+      loadTile(asyncSystem, *pActivated, aroundLine(50.0));
+  CHECK_FALSE(imageHasColor(*pOld2->getImage(), RED));
+  CHECK(imageHasColor(*pNew2->getImage(), RED));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay can be activated more than once") {
+  AsyncSystem asyncSystem(
+      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
+  IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay =
+      new GeoJsonDocumentRasterOverlay(
+          asyncSystem,
+          "overlay",
+          createLinesDocument({0.0}),
+          defaultOptions);
+
+  SUBCASE("at the same time, as when added to two tilesets") {
+    IntrusivePointer<ActivatedRasterOverlay> pFirst =
+        activateOverlay(asyncSystem, *pOverlay);
+    IntrusivePointer<ActivatedRasterOverlay> pSecond =
+        activateOverlay(asyncSystem, *pOverlay);
+
+    IntrusivePointer<RasterOverlayTile> pFirstTile =
+        loadTile(asyncSystem, *pFirst, aroundLine(0.0));
+    IntrusivePointer<RasterOverlayTile> pSecondTile =
+        loadTile(asyncSystem, *pSecond, aroundLine(0.0));
+    CHECK(imageHasColor(*pFirstTile->getImage(), RED));
+    CHECK(imageHasColor(*pSecondTile->getImage(), RED));
+
+    // A change to the overlay reaches both.
+    pOverlay->setDefaultStyle(createLineStyle(GREEN));
+    update(asyncSystem, *pFirst);
+    update(asyncSystem, *pSecond);
+    CHECK(pFirst->isTileInvalidated(*pFirstTile));
+    CHECK(pSecond->isTileInvalidated(*pSecondTile));
+  }
+
+  SUBCASE("one after another, as when removed and added again") {
+    {
+      IntrusivePointer<ActivatedRasterOverlay> pFirst =
+          activateOverlay(asyncSystem, *pOverlay);
+      IntrusivePointer<RasterOverlayTile> pTile =
+          loadTile(asyncSystem, *pFirst, aroundLine(0.0));
+      CHECK(imageHasColor(*pTile->getImage(), RED));
+    }
+
+    IntrusivePointer<ActivatedRasterOverlay> pSecond =
+        activateOverlay(asyncSystem, *pOverlay);
+    IntrusivePointer<RasterOverlayTile> pTile =
+        loadTile(asyncSystem, *pSecond, aroundLine(0.0));
+    CHECK(imageHasColor(*pTile->getImage(), RED));
+  }
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay renders a document with no geometry") {
+  AsyncSystem asyncSystem(
+      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
+  IntrusivePointer<GeoJsonDocumentRasterOverlay> pOverlay =
+      new GeoJsonDocumentRasterOverlay(
+          asyncSystem,
+          "overlay",
+          createLinesDocument({}),
+          defaultOptions);
+  IntrusivePointer<ActivatedRasterOverlay> pActivated =
+      activateOverlay(asyncSystem, *pOverlay);
+
+  IntrusivePointer<RasterOverlayTile> pTile =
+      loadTile(asyncSystem, *pActivated, aroundLine(0.0));
+  CHECK_FALSE(imageHasColor(*pTile->getImage(), RED));
+
+  // Geometry added later shows up.
+  pOverlay->setDocument(createLinesDocument({0.0}));
+  update(asyncSystem, *pActivated);
+  CHECK(pActivated->isTileInvalidated(*pTile));
+  IntrusivePointer<RasterOverlayTile> pTile2 =
+      loadTile(asyncSystem, *pActivated, aroundLine(0.0));
+  CHECK(imageHasColor(*pTile2->getImage(), RED));
 }

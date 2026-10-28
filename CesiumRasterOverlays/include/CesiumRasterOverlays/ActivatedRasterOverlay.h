@@ -5,6 +5,7 @@
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumRasterOverlays/Library.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/ReferenceCounted.h>
@@ -266,6 +267,51 @@ public:
    * method on all attached raster overlays automatically.
    */
   void tick();
+
+  /**
+   * @brief Marks every tile image of this overlay as out of date, so it is
+   * reloaded.
+   *
+   * Tiles mapped to a \ref Cesium3DTilesSelection::Tileset keep showing their
+   * current image until the replacement has loaded, so the overlay does not
+   * flicker. If the tile provider isn't ready yet, this does nothing, because
+   * no tiles have been loaded.
+   *
+   * This method must be called from the main thread.
+   */
+  void invalidate() noexcept;
+
+  /**
+   * @brief Marks the tile images of this overlay that overlap the given region
+   * as out of date, so they are reloaded.
+   *
+   * Tiles mapped to a \ref Cesium3DTilesSelection::Tileset keep showing their
+   * current image until the replacement has loaded, so the overlay does not
+   * flicker. If the tile provider isn't ready yet, this does nothing, because
+   * no tiles have been loaded.
+   *
+   * This method must be called from the main thread.
+   *
+   * @param region The region that changed.
+   * @param paddingPixels An additional margin around the region, measured in
+   * pixels of each tile. See
+   * \ref RasterOverlayTileProvider::invalidate.
+   */
+  void invalidate(
+      const CesiumGeospatial::GlobeRectangle& region,
+      double paddingPixels = 0.0) noexcept;
+
+  /**
+   * @brief Determines whether the given tile's image is out of date because of
+   * a call to \ref invalidate (on this instance or on its tile provider) made
+   * after the tile began loading.
+   *
+   * Tiles that haven't started loading, placeholders, and tiles that failed to
+   * load are never considered out of date.
+   *
+   * @param tile A tile created by this instance.
+   */
+  bool isTileInvalidated(const RasterOverlayTile& tile) const noexcept;
 
 private:
   CesiumAsync::Future<RasterOverlayTileLoadResult>

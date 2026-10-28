@@ -2,6 +2,7 @@
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeometry/Rectangle.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumImage/ImageAsset.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
@@ -12,6 +13,7 @@
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Tracing.h>
 
+#include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <spdlog/logger.h>
 
@@ -265,6 +267,9 @@ ActivatedRasterOverlay::doLoad(RasterOverlayTile& tile, bool isThrottledLoad) {
   // Don't let this tile be destroyed while it's loading.
   tile.setState(RasterOverlayTile::LoadState::Loading);
 
+  // Invalidations after this point make this tile's image out of date.
+  tile._loadGeneration = this->_pTileProvider->getInvalidationGeneration();
+
   this->beginTileLoad(isThrottledLoad);
 
   // Keep the tile and tile provider alive while the async operation is in
@@ -348,6 +353,59 @@ void ActivatedRasterOverlay::tick() {
   if (this->_pTileProvider != nullptr) {
     this->_pTileProvider->tick();
   }
+}
+
+void ActivatedRasterOverlay::invalidate() noexcept {
+  if (this->_pTileProvider != nullptr) {
+    this->_pTileProvider->invalidate();
+  }
+}
+
+void ActivatedRasterOverlay::invalidate(
+    const GlobeRectangle& region,
+    double paddingPixels) noexcept {
+  if (this->_pTileProvider != nullptr) {
+    this->_pTileProvider->invalidate(region, paddingPixels);
+  }
+}
+
+bool ActivatedRasterOverlay::isTileInvalidated(
+    const RasterOverlayTile& tile) const noexcept {
+  if (this->_pTileProvider == nullptr) {
+    return false;
+  }
+
+  const RasterOverlayTile::LoadState state = tile.getState();
+  if (state != RasterOverlayTile::LoadState::Loading &&
+      state != RasterOverlayTile::LoadState::Loaded &&
+      state != RasterOverlayTile::LoadState::Done) {
+    return false;
+  }
+
+  // Fast path: nothing has been invalidated since this tile began loading.
+  if (tile._loadGeneration ==
+      this->_pTileProvider->getInvalidationGeneration()) {
+    return false;
+  }
+
+  // Compute the size of one of the tile's pixels in projected units, so that
+  // invalidation padding can be applied. Use the resolution the tile is meant
+  // to be drawn at rather than the size of its image, because a provider may
+  // return a tiny image for a tile with nothing in it.
+  const RasterOverlayOptions& options = this->_pOverlay->getOptions();
+  const Rectangle& rectangle = tile.getRectangle();
+  const glm::dvec2 imageSize = glm::clamp(
+      tile.getTargetScreenPixels() / options.maximumScreenSpaceError,
+      glm::dvec2(1.0),
+      glm::dvec2(static_cast<double>(options.maximumTextureSize)));
+  const glm::dvec2 unitsPerPixel =
+      glm::dvec2(rectangle.computeWidth(), rectangle.computeHeight()) /
+      imageSize;
+
+  return this->_pTileProvider->isInvalidatedSince(
+      tile._loadGeneration,
+      rectangle,
+      unitsPerPixel);
 }
 
 RasterOverlayTileLoadResult::RasterOverlayTileLoadResult(

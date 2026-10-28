@@ -1,6 +1,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/SharedFuture.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumGeometry/QuadtreeTilingScheme.h>
 #include <CesiumGeometry/Rectangle.h>
@@ -32,13 +33,17 @@
 #include <glm/ext/vector_double3.hpp>
 #include <glm/ext/vector_int2.hpp>
 #include <nonstd/expected.hpp>
+#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
+#include <initializer_list>
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -65,9 +70,10 @@ struct QuadtreeGeometryData {
    */
   const GeoJsonObject* pObject;
   /**
-   * @brief A pointer to the `VectorStyle` to apply to this geometry object.
+   * @brief The index into `Quadtree::styles` of the `VectorStyle` to apply to
+   * this geometry object.
    */
-  const VectorStyle* pStyle;
+  uint32_t styleIndex;
   /**
    * @brief The bounding rectangle encompassing this geometry.
    */
@@ -87,34 +93,36 @@ struct QuadtreeGeometryData {
    * where the line width is specified in `LineWidthMode::Pixels`, this result
    * can change depending on texture size and bounds.
    *
+   * @param style The style of this geometry, `Quadtree::styles[styleIndex]`.
    * @param tileBounds The bounding box of this tile.
    * @param textureSize The size of the texture this tile will be rasterized
    * into.
    */
   GlobeRectangle calculateBoundingRectangleForTileSize(
+      const VectorStyle& style,
       const GlobeRectangle& tileBounds,
       const glm::ivec2& textureSize) {
     LineStyle activeLineStyle;
     if (this->pObject->isType<GeoJsonPolygon>() ||
         this->pObject->isType<GeoJsonMultiPolygon>()) {
-      if (!this->pStyle->polygon.outline) {
+      if (!style.polygon.outline) {
         return this->rectangle;
       }
 
-      activeLineStyle = *this->pStyle->polygon.outline;
+      activeLineStyle = *style.polygon.outline;
     } else if (
         this->pObject->isType<GeoJsonPoint>() ||
         this->pObject->isType<GeoJsonMultiPoint>()) {
       // A point's pixel footprint is its radius (plus its outline width) in
       // every direction. Encode that as an equivalent line width (the full
       // diameter) so the shared pixel padding math below applies to it too.
-      activeLineStyle.width = 2.0 * this->pStyle->point.radius;
-      if (this->pStyle->point.outline) {
-        activeLineStyle.width += this->pStyle->point.outline->width;
+      activeLineStyle.width = 2.0 * style.point.radius;
+      if (style.point.outline) {
+        activeLineStyle.width += style.point.outline->width;
       }
       activeLineStyle.widthMode = LineWidthMode::Pixels;
     } else {
-      activeLineStyle = this->pStyle->line;
+      activeLineStyle = style.line;
     }
 
     // We already accounted for meters when building the rectangle in the first
@@ -226,7 +234,12 @@ struct QuadtreeNode {
 struct Quadtree {
   GlobeRectangle rectangle = GlobeRectangle::EMPTY;
   uint32_t rootId = 0;
-  VectorStyle defaultStyle;
+  /**
+   * @brief Copies of every style used by `data`. They are copied on the main
+   * thread when the tree is built, so the styles in the document may be
+   * changed afterward without affecting rasterization on worker threads.
+   */
+  std::vector<VectorStyle> styles;
   std::vector<QuadtreeNode> nodes;
   std::vector<QuadtreeGeometryData> data;
   /**
@@ -374,102 +387,127 @@ struct RectangleAndLineWidthFromObjectVisitor {
   }
 };
 
-void addPrimitivesToData(
-    const GeoJsonObject* pGeoJsonObject,
-    std::vector<QuadtreeGeometryData>& data,
-    BoundingRegionBuilder& documentRegionBuilder,
-    const VectorStyle& style,
-    const Ellipsoid& ellipsoid);
-
-struct GeoJsonChildVisitor {
-  std::vector<QuadtreeGeometryData>& data;
-  BoundingRegionBuilder& documentRegionBuilder;
-  const VectorStyle& style;
-  const Ellipsoid& ellipsoid;
-
-  void operator()(const GeoJsonFeature& feature) {
-    if (feature.geometry) {
-      const std::optional<VectorStyle>& geometryStyle =
-          feature.geometry->getStyle();
-      const std::optional<VectorStyle>& featureStyle =
-          geometryStyle ? geometryStyle : feature.style;
-      addPrimitivesToData(
-          feature.geometry.get(),
-          data,
-          documentRegionBuilder,
-          featureStyle.value_or(style),
-          ellipsoid);
-    }
-  }
-
-  void operator()(const GeoJsonFeatureCollection& collection) {
-    for (const GeoJsonObject& feature : collection.features) {
-      const GeoJsonFeature* pFeature = feature.getIf<GeoJsonFeature>();
-      if (pFeature && pFeature->geometry) {
-        const std::optional<VectorStyle>& geometryStyle =
-            pFeature->geometry->getStyle();
-        const std::optional<VectorStyle>& featureStyle =
-            geometryStyle ? geometryStyle : pFeature->style;
-        const std::optional<VectorStyle>& collectionStyle =
-            featureStyle ? featureStyle : collection.style;
-        addPrimitivesToData(
-            pFeature->geometry.get(),
-            data,
-            documentRegionBuilder,
-            collectionStyle ? *collectionStyle : style,
-            ellipsoid);
-      }
-    }
-  }
-
-  void operator()(const GeoJsonGeometryCollection& collection) {
-    for (const GeoJsonObject& geometry : collection.geometries) {
-      const std::optional<VectorStyle>& childStyle = geometry.getStyle();
-      const std::optional<VectorStyle>& useStyle =
-          childStyle ? childStyle : collection.style;
-      addPrimitivesToData(
-          &geometry,
-          data,
-          documentRegionBuilder,
-          useStyle ? *useStyle : style,
-          ellipsoid);
-    }
-  }
-
-  void operator()(const auto& /*catchAll*/) {}
+/**
+ * @brief A geometry object to render and the style it resolved to, before its
+ * bounds have been computed.
+ */
+struct ResolvedPrimitive {
+  const GeoJsonObject* pObject;
+  uint32_t styleIndex;
 };
 
-void addPrimitivesToData(
-    const GeoJsonObject* geoJsonObject,
-    std::vector<QuadtreeGeometryData>& data,
-    BoundingRegionBuilder& documentRegionBuilder,
-    const VectorStyle& style,
-    const Ellipsoid& ellipsoid) {
-  std::optional<GlobeRectangle> rect;
-  double maxLineWidthPixels = 0.0;
-  std::visit(
-      RectangleAndLineWidthFromObjectVisitor{
-          rect,
-          maxLineWidthPixels,
-          style,
-          ellipsoid},
-      geoJsonObject->value);
-  // Features, FeatureCollections, and GeometryCollections produce no bounding
-  // box of their own: though they may contain geometry, they themselves have
-  // nothing to render. Their children are handled by GeoJsonChildVisitor below.
-  if (rect) {
-    documentRegionBuilder.expandToIncludeGlobeRectangle(*rect);
-    QuadtreeGeometryData primitive{
-        geoJsonObject,
-        &style,
-        std::move(*rect),
-        maxLineWidthPixels};
-    data.emplace_back(primitive);
+/**
+ * @brief The geometry objects of a document with copies of their resolved
+ * styles.
+ *
+ * This is created on the main thread, where it's safe to read the document's
+ * styles, and is then used to build a `Quadtree` on a worker thread.
+ */
+struct ResolvedDocument {
+  std::vector<ResolvedPrimitive> primitives;
+  std::vector<VectorStyle> styles;
+};
+
+/**
+ * @brief Walks a document and resolves the style of each geometry object: the
+ * geometry's own style, then its feature's, then its collection's, then the
+ * default style.
+ */
+class StyleResolver {
+public:
+  explicit StyleResolver(ResolvedDocument& result) : _result(result) {}
+
+  void addObject(const GeoJsonObject& object, const VectorStyle& style) {
+    // Features and collections have nothing to render themselves; only their
+    // children do.
+    if (!object.isType<GeoJsonFeature>() &&
+        !object.isType<GeoJsonFeatureCollection>() &&
+        !object.isType<GeoJsonGeometryCollection>()) {
+      this->_result.primitives.emplace_back(
+          ResolvedPrimitive{&object, this->getStyleIndex(style)});
+    }
+
+    std::visit(ChildVisitor{*this, style}, object.value);
   }
 
-  std::visit(
-      GeoJsonChildVisitor{data, documentRegionBuilder, style, ellipsoid},
-      geoJsonObject->value);
+private:
+  // Every style passed in here lives in the document or is the default style,
+  // so its address identifies it while the document is being walked. That lets
+  // us store one copy per distinct style rather than one per object.
+  uint32_t getStyleIndex(const VectorStyle& style) {
+    auto [it, inserted] = this->_indices.try_emplace(
+        &style,
+        static_cast<uint32_t>(this->_result.styles.size()));
+    if (inserted) {
+      this->_result.styles.emplace_back(style);
+    }
+    return it->second;
+  }
+
+  struct ChildVisitor {
+    StyleResolver& resolver;
+    const VectorStyle& style;
+
+    void operator()(const GeoJsonFeature& feature) {
+      if (feature.geometry) {
+        const std::optional<VectorStyle>& geometryStyle =
+            feature.geometry->getStyle();
+        const std::optional<VectorStyle>& featureStyle =
+            geometryStyle ? geometryStyle : feature.style;
+        resolver.addObject(
+            *feature.geometry,
+            featureStyle ? *featureStyle : style);
+      }
+    }
+
+    void operator()(const GeoJsonFeatureCollection& collection) {
+      for (const GeoJsonObject& feature : collection.features) {
+        const GeoJsonFeature* pFeature = feature.getIf<GeoJsonFeature>();
+        if (pFeature && pFeature->geometry) {
+          const std::optional<VectorStyle>& geometryStyle =
+              pFeature->geometry->getStyle();
+          const std::optional<VectorStyle>& featureStyle =
+              geometryStyle ? geometryStyle : pFeature->style;
+          const std::optional<VectorStyle>& collectionStyle =
+              featureStyle ? featureStyle : collection.style;
+          resolver.addObject(
+              *pFeature->geometry,
+              collectionStyle ? *collectionStyle : style);
+        }
+      }
+    }
+
+    void operator()(const GeoJsonGeometryCollection& collection) {
+      for (const GeoJsonObject& geometry : collection.geometries) {
+        const std::optional<VectorStyle>& childStyle = geometry.getStyle();
+        const std::optional<VectorStyle>& useStyle =
+            childStyle ? childStyle : collection.style;
+        resolver.addObject(geometry, useStyle ? *useStyle : style);
+      }
+    }
+
+    void operator()(const auto& /*catchAll*/) {}
+  };
+
+  ResolvedDocument& _result;
+  std::unordered_map<const VectorStyle*, uint32_t> _indices;
+};
+
+/**
+ * @brief Resolves the style of every geometry object in the document. Must be
+ * called on the main thread.
+ */
+ResolvedDocument resolveDocument(
+    const GeoJsonDocument& document,
+    const VectorStyle& defaultStyle) {
+  ResolvedDocument result;
+  StyleResolver resolver(result);
+  const std::optional<VectorStyle>& rootObjectStyle =
+      document.rootObject.getStyle();
+  resolver.addObject(
+      document.rootObject,
+      rootObjectStyle ? *rootObjectStyle : defaultStyle);
+  return result;
 }
 
 uint32_t buildQuadtreeNode(
@@ -592,22 +630,38 @@ uint32_t buildQuadtreeNode(
   return resultId;
 }
 
+/**
+ * @brief Builds the quadtree for a resolved document. This may be called on a
+ * worker thread, as long as the document's geometry isn't modified.
+ */
 void buildQuadtree(
     Quadtree& tree,
-    const std::shared_ptr<GeoJsonDocument>& document,
-    const VectorStyle& defaultStyle,
+    ResolvedDocument&& resolved,
     const Ellipsoid& ellipsoid) {
-  tree.defaultStyle = defaultStyle;
+  tree.styles = std::move(resolved.styles);
 
   BoundingRegionBuilder builder;
-  const std::optional<VectorStyle>& rootObjectStyle =
-      document->rootObject.getStyle();
-  addPrimitivesToData(
-      &document->rootObject,
-      tree.data,
-      builder,
-      rootObjectStyle ? *rootObjectStyle : tree.defaultStyle,
-      ellipsoid);
+  tree.data.reserve(resolved.primitives.size());
+  for (const ResolvedPrimitive& primitive : resolved.primitives) {
+    std::optional<GlobeRectangle> rect;
+    double maxLineWidthPixels = 0.0;
+    std::visit(
+        RectangleAndLineWidthFromObjectVisitor{
+            rect,
+            maxLineWidthPixels,
+            tree.styles[primitive.styleIndex],
+            ellipsoid},
+        primitive.pObject->value);
+    // Geometry without any coordinates has nothing to render.
+    if (rect) {
+      builder.expandToIncludeGlobeRectangle(*rect);
+      tree.data.emplace_back(QuadtreeGeometryData{
+          primitive.pObject,
+          primitive.styleIndex,
+          *rect,
+          maxLineWidthPixels});
+    }
+  }
 
   tree.rectangle = builder.toGlobeRectangle();
 
@@ -657,7 +711,7 @@ void rasterizeQuadtreeNode(
       }
       primitivesRendered[dataIdx] = true;
       const QuadtreeGeometryData& data = tree.data[dataIdx];
-      rasterizer.drawGeoJsonObject(*data.pObject, *data.pStyle);
+      rasterizer.drawGeoJsonObject(*data.pObject, tree.styles[data.styleIndex]);
     }
   } else {
     for (size_t i = 0; i < 2; i++) {
@@ -710,21 +764,103 @@ void rasterizeVectorData(
 }
 } // namespace
 
+struct GeoJsonDocumentRasterOverlay::SharedState {
+  /**
+   * @brief The document passed to the constructor.
+   *
+   * This is shared, so that every tile provider created for the overlay (for
+   * example when it's added to more than one tileset, or removed and added
+   * again) can use it.
+   */
+  CesiumAsync::SharedFuture<std::shared_ptr<GeoJsonDocument>> documentFuture;
+
+  /**
+   * @brief The document set by `setDocument`, which replaces the one from
+   * `documentFuture`.
+   */
+  std::shared_ptr<const GeoJsonDocument> pDocument;
+
+  VectorStyle defaultStyle;
+
+  /**
+   * @brief Incremented every time the document, its styles, or the default
+   * style change. Each tile provider rebuilds its quadtree when this no longer
+   * matches the version it was built from.
+   */
+  uint64_t version = 0;
+};
+
+namespace {
+
+/**
+ * @brief Finds the regions where a rebuilt quadtree renders differently than
+ * the old one, and invalidates them.
+ */
+void invalidateChangedRegions(
+    RasterOverlayTileProvider& provider,
+    const Quadtree& oldTree,
+    const Quadtree& newTree,
+    bool sameDocument) {
+  bool sameGeometry =
+      sameDocument && oldTree.data.size() == newTree.data.size();
+  for (size_t i = 0; sameGeometry && i < oldTree.data.size(); ++i) {
+    sameGeometry = oldTree.data[i].pObject == newTree.data[i].pObject;
+  }
+
+  if (sameGeometry) {
+    // Only styles changed. Invalidate each geometry whose style changed,
+    // covering both its old and new extent, since a style can change the area
+    // a geometry covers (line widths in meters) or the number of pixels it
+    // spills over (line widths and point sizes in pixels).
+    for (size_t i = 0; i < oldTree.data.size(); ++i) {
+      const QuadtreeGeometryData& oldData = oldTree.data[i];
+      const QuadtreeGeometryData& newData = newTree.data[i];
+      if (oldTree.styles[oldData.styleIndex] ==
+          newTree.styles[newData.styleIndex]) {
+        continue;
+      }
+
+      provider.invalidate(
+          oldData.rectangle.computeUnion(newData.rectangle),
+          std::max(oldData.maxLineWidthPixels, newData.maxLineWidthPixels));
+    }
+    return;
+  }
+
+  // The geometry changed, so we can't match up the old and new objects.
+  // Invalidate everything either tree rendered.
+  for (const Quadtree* pTree : {&oldTree, &newTree}) {
+    if (pTree->nodes.empty()) {
+      continue;
+    }
+    provider.invalidate(
+        pTree->rectangle,
+        pTree->nodes[pTree->rootId].maxLineWidthPixels);
+  }
+}
+
+} // namespace
+
 class CESIUMVECTOROVERLAYS_API GeoJsonDocumentRasterOverlayTileProvider final
     : public RasterOverlayTileProvider {
 
 private:
-  std::shared_ptr<GeoJsonDocument> _pDocument;
+  std::shared_ptr<GeoJsonDocumentRasterOverlay::SharedState> _pState;
+  std::shared_ptr<const GeoJsonDocument> _pDocument;
   std::shared_ptr<Quadtree> _pTree;
   Ellipsoid _ellipsoid;
   uint32_t _mipLevels;
+  // The value of `SharedState::version` that `_pTree` reflects.
+  uint64_t _builtVersion;
+  bool _rebuildInProgress;
 
 public:
   GeoJsonDocumentRasterOverlayTileProvider(
       const IntrusivePointer<const RasterOverlay>& pCreator,
       const CreateRasterOverlayTileProviderParameters& parameters,
       const GeoJsonDocumentRasterOverlayOptions& geoJsonOptions,
-      std::shared_ptr<CesiumVectorData::GeoJsonDocument>&& pDocument)
+      const std::shared_ptr<GeoJsonDocumentRasterOverlay::SharedState>& pState,
+      std::shared_ptr<const CesiumVectorData::GeoJsonDocument>&& pDocument)
       : RasterOverlayTileProvider(
             pCreator,
             parameters,
@@ -732,17 +868,66 @@ public:
             projectRectangleSimple(
                 GeographicProjection(geoJsonOptions.ellipsoid),
                 GlobeRectangle::MAXIMUM)),
+        _pState(pState),
         _pDocument(std::move(pDocument)),
         _pTree(),
         _ellipsoid(geoJsonOptions.ellipsoid),
-        _mipLevels(geoJsonOptions.mipLevels) {
+        _mipLevels(geoJsonOptions.mipLevels),
+        _builtVersion(pState->version),
+        _rebuildInProgress(false) {
     CESIUM_ASSERT(this->_pDocument);
     this->_pTree = std::make_shared<Quadtree>();
     buildQuadtree(
         *this->_pTree,
-        this->_pDocument,
-        geoJsonOptions.defaultStyle,
-        geoJsonOptions.ellipsoid);
+        resolveDocument(*this->_pDocument, this->_pState->defaultStyle),
+        this->_ellipsoid);
+  }
+
+  virtual void tick() override {
+    if (this->_rebuildInProgress ||
+        this->_builtVersion == this->_pState->version) {
+      return;
+    }
+
+    // Resolve and copy the styles here, on the main thread, because the caller
+    // may change the document's styles in place on the main thread. The
+    // geometry isn't allowed to change, so the rest of the work can happen on
+    // a worker thread.
+    const uint64_t version = this->_pState->version;
+    std::shared_ptr<const GeoJsonDocument> pDocument =
+        this->_pState->pDocument ? this->_pState->pDocument : this->_pDocument;
+    ResolvedDocument resolved =
+        resolveDocument(*pDocument, this->_pState->defaultStyle);
+
+    this->_rebuildInProgress = true;
+
+    IntrusivePointer<GeoJsonDocumentRasterOverlayTileProvider> thiz = this;
+    this->getAsyncSystem()
+        .runInWorkerThread([pDocument,
+                            resolved = std::move(resolved),
+                            ellipsoid = this->_ellipsoid]() mutable {
+          // `pDocument` is captured to keep the geometry alive while the tree
+          // is built.
+          std::shared_ptr<Quadtree> pTree = std::make_shared<Quadtree>();
+          buildQuadtree(*pTree, std::move(resolved), ellipsoid);
+          return pTree;
+        })
+        .thenInMainThread([thiz, version, pDocument](
+                              std::shared_ptr<Quadtree>&& pNewTree) mutable {
+          thiz->finishRebuild(
+              version,
+              std::move(pDocument),
+              std::move(pNewTree));
+        })
+        .catchInMainThread([thiz, version](const std::exception& e) {
+          SPDLOG_LOGGER_ERROR(
+              thiz->getLogger(),
+              "Failed to update GeoJSON raster overlay: {}",
+              e.what());
+          // Don't retry the same version over and over.
+          thiz->_builtVersion = version;
+          thiz->_rebuildInProgress = false;
+        });
   }
 
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
@@ -777,7 +962,9 @@ public:
               tileRectangle.computeWidth() / (double)textureSize.x / 2.0,
               tileRectangle.computeHeight() / (double)textureSize.y / 2.0);
 
-          if (!tree.nodes[tree.rootId]
+          // A document with nothing to render has no quadtree nodes at all.
+          if (tree.nodes.empty() ||
+              !tree.nodes[tree.rootId]
                    .getRectangleScaledWithPixelSize(halfPixelSize)
                    .computeIntersection(tileRectangle)
                    .has_value()) {
@@ -833,6 +1020,26 @@ public:
           return result;
         });
   }
+
+private:
+  void finishRebuild(
+      uint64_t version,
+      std::shared_ptr<const GeoJsonDocument>&& pDocument,
+      std::shared_ptr<Quadtree>&& pNewTree) {
+    // Tiles that are already loading keep their own references to the old
+    // tree and document, so it's safe to replace them here.
+    const std::shared_ptr<Quadtree> pOldTree = std::move(this->_pTree);
+    const bool sameDocument = pDocument == this->_pDocument;
+
+    this->_pTree = std::move(pNewTree);
+    this->_pDocument = std::move(pDocument);
+    this->_builtVersion = version;
+    this->_rebuildInProgress = false;
+
+    // Tiles loaded from now on use the new tree; invalidate the ones that were
+    // loaded from the old one and look different now.
+    invalidateChangedRegions(*this, *pOldTree, *this->_pTree, sameDocument);
+  }
 };
 
 GeoJsonDocumentRasterOverlay::GeoJsonDocumentRasterOverlay(
@@ -842,8 +1049,12 @@ GeoJsonDocumentRasterOverlay::GeoJsonDocumentRasterOverlay(
     const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
-      _documentFuture(asyncSystem.createResolvedFuture(
-          std::shared_ptr<GeoJsonDocument>(document))),
+      _pState(std::make_shared<SharedState>(SharedState{
+          asyncSystem
+              .createResolvedFuture(std::shared_ptr<GeoJsonDocument>(document))
+              .share(),
+          nullptr,
+          vectorOverlayOptions.defaultStyle})),
       _options(vectorOverlayOptions) {}
 
 GeoJsonDocumentRasterOverlay::GeoJsonDocumentRasterOverlay(
@@ -853,7 +1064,10 @@ GeoJsonDocumentRasterOverlay::GeoJsonDocumentRasterOverlay(
     const GeoJsonDocumentRasterOverlayOptions& vectorOverlayOptions,
     const RasterOverlayOptions& overlayOptions)
     : RasterOverlay(name, overlayOptions),
-      _documentFuture(std::move(documentFuture)),
+      _pState(std::make_shared<SharedState>(SharedState{
+          std::move(documentFuture).share(),
+          nullptr,
+          vectorOverlayOptions.defaultStyle})),
       _options(vectorOverlayOptions) {}
 
 GeoJsonDocumentRasterOverlay::~GeoJsonDocumentRasterOverlay() = default;
@@ -864,25 +1078,51 @@ GeoJsonDocumentRasterOverlay::createTileProvider(
 
   IntrusivePointer<const GeoJsonDocumentRasterOverlay> thiz = this;
 
-  return std::move(
-             const_cast<GeoJsonDocumentRasterOverlay*>(this)->_documentFuture)
-      .thenInMainThread(
-          [thiz, parameters](std::shared_ptr<GeoJsonDocument>&& pDocument)
-              -> CreateTileProviderResult {
-            if (!pDocument) {
-              return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
-                  .type = RasterOverlayLoadType::Unknown,
-                  .pRequest = nullptr,
-                  .message = "GeoJSON document failed to load."});
-            }
+  return this->_pState->documentFuture.thenInMainThread(
+      [thiz, parameters, pState = this->_pState](
+          const std::shared_ptr<GeoJsonDocument>& pLoadedDocument)
+          -> CreateTileProviderResult {
+        std::shared_ptr<const GeoJsonDocument> pDocument =
+            pState->pDocument ? pState->pDocument : pLoadedDocument;
+        if (!pDocument) {
+          return nonstd::make_unexpected(RasterOverlayLoadFailureDetails{
+              .type = RasterOverlayLoadType::Unknown,
+              .pRequest = nullptr,
+              .message = "GeoJSON document failed to load."});
+        }
 
-            return IntrusivePointer<RasterOverlayTileProvider>(
-                new GeoJsonDocumentRasterOverlayTileProvider(
-                    thiz,
-                    parameters,
-                    thiz->_options,
-                    std::move(pDocument)));
-          });
+        return IntrusivePointer<RasterOverlayTileProvider>(
+            new GeoJsonDocumentRasterOverlayTileProvider(
+                thiz,
+                parameters,
+                thiz->_options,
+                pState,
+                std::move(pDocument)));
+      });
+}
+
+void GeoJsonDocumentRasterOverlay::setDocument(
+    const std::shared_ptr<const GeoJsonDocument>& pDocument) {
+  CESIUM_ASSERT(pDocument);
+  if (!pDocument) {
+    return;
+  }
+
+  this->_pState->pDocument = pDocument;
+  ++this->_pState->version;
+}
+
+void GeoJsonDocumentRasterOverlay::refreshStyles() { ++this->_pState->version; }
+
+const VectorStyle&
+GeoJsonDocumentRasterOverlay::getDefaultStyle() const noexcept {
+  return this->_pState->defaultStyle;
+}
+
+void GeoJsonDocumentRasterOverlay::setDefaultStyle(const VectorStyle& style) {
+  this->_pState->defaultStyle = style;
+  this->_options.defaultStyle = style;
+  ++this->_pState->version;
 }
 
 } // namespace CesiumVectorOverlays
