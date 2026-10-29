@@ -632,7 +632,7 @@ std::optional<Tile> parseTileJsonRecursively(
   if (maybeContent) {
     group = maybeContent->group;
   }
-  
+
   // determine if tile has implicit tiling
   const rapidjson::Value* implicitTilingJson = nullptr;
   const auto implicitTilingIt = tileJson.FindMember("implicitTiling");
