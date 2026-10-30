@@ -10,10 +10,16 @@
 #include <CesiumUtility/ExtensibleObject.h>
 
 #include <memory>
+#include <optional>
 #include <variant>
 #include <vector>
 
+namespace CesiumRasterOverlays {
+struct RasterOverlayDetails;
+}
+
 namespace Cesium3DTilesSelection {
+
 /**
  * @brief A content tag that indicates the @ref TilesetContentLoader does not
  * know if a tile's content will point to a mesh content or an external
@@ -240,8 +246,10 @@ public:
    * @ref IPrepareRendererResources::prepareInLoadThread.
    */
   void setModifiedModelAndRenderResources(
-      CesiumGltf::Model&& modifiedModel,
-      void* pModifiedRenderResources) noexcept;
+      CesiumGltf::Model&& loadResult,
+      void* pModifiedRenderResources,
+      std::optional<CesiumRasterOverlays::RasterOverlayDetails>&&
+          rasterOverlayDetails = std::nullopt) noexcept;
 
   /**
    * @brief Resets the modified model and renderer resources after they have
@@ -285,6 +293,8 @@ private:
 
   GltfModifierState _modifierState;
   std::optional<CesiumGltf::Model> _modifiedModel;
+  std::optional<CesiumRasterOverlays::RasterOverlayDetails>
+      _modifiedRasterOverlayDetails;
   void* _pModifiedRenderResources;
   mutable int32_t _activeUpSamplingTaskCount;
 

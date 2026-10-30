@@ -6,6 +6,7 @@
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
+#include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -23,6 +24,7 @@
 #include <CesiumGeospatial/GeographicProjection.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
+#include <CesiumGeospatial/WebMercatorProjection.h>
 #include <CesiumGltf/Accessor.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/AccessorWriter.h>
@@ -2093,8 +2095,7 @@ TEST_CASE("Test glTF modifier reapplies raster overlay attributes") {
     }
   };
 
-  auto pGltfModifier =
-      std::make_shared<RemoveRasterOverlayAttributeModifier>();
+  auto pGltfModifier = std::make_shared<RemoveRasterOverlayAttributeModifier>();
   externals.pGltfModifier = pGltfModifier;
 
   auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
@@ -2157,11 +2158,510 @@ TEST_CASE("Test glTF modifier reapplies raster overlay attributes") {
 
   const auto& modifiedPrimitive =
       pRenderContent->getModel().meshes.front().primitives.front();
-  auto overlayAttribute =
-      modifiedPrimitive.attributes.find("_CESIUMOVERLAY_0");
+  auto overlayAttribute = modifiedPrimitive.attributes.find("_CESIUMOVERLAY_0");
   REQUIRE(overlayAttribute != modifiedPrimitive.attributes.end());
   CesiumGltf::AccessorView<glm::vec2> uv{
       pRenderContent->getModel(),
       overlayAttribute->second};
   CHECK(uv.status() == CesiumGltf::AccessorViewStatus::Valid);
+}
+
+TEST_CASE("Test glTF modifier preserves raster overlay mappings") {
+  class ReplacementModifier : public GltfModifier {
+  public:
+    std::optional<CesiumGltf::Model> replacement;
+
+    CesiumAsync::Future<std::optional<GltfModifierOutput>>
+    apply(GltfModifierInput&& input) override {
+      CesiumGltf::Model model =
+          replacement ? *replacement : input.previousModel;
+      model.extras["gltfUpAxis"] = static_cast<int>(Axis::Z);
+      for (auto& mesh : model.meshes) {
+        for (auto& primitive : mesh.primitives) {
+          std::erase_if(primitive.attributes, [](const auto& attribute) {
+            return attribute.first.starts_with("_CESIUMOVERLAY_");
+          });
+        }
+      }
+      return input.asyncSystem.createResolvedFuture(
+          std::make_optional(GltfModifierOutput{std::move(model)}));
+    }
+
+  protected:
+    CesiumAsync::Future<void> onRegister(
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>&,
+        const std::shared_ptr<spdlog::logger>&,
+        const TilesetMetadata&,
+        const Tile&) override {
+      return asyncSystem.createResolvedFuture();
+    }
+  };
+
+  class SolidOverlay : public RasterOverlay {
+  public:
+    explicit SolidOverlay(const Projection& projection)
+        : RasterOverlay("Solid"), _projection(projection) {}
+
+    CesiumAsync::Future<CreateTileProviderResult> createTileProvider(
+        const CreateRasterOverlayTileProviderParameters& parameters)
+        const override {
+      class Provider : public RasterOverlayTileProvider {
+      public:
+        Provider(
+            const IntrusivePointer<const RasterOverlay>& pOwner,
+            const CreateRasterOverlayTileProviderParameters& parameters,
+            const Projection& projection)
+            : RasterOverlayTileProvider(
+                  pOwner,
+                  parameters,
+                  projection,
+                  projectRectangleSimple(
+                      projection,
+                      GlobeRectangle::fromDegrees(-180, -80, 180, 80))) {}
+
+        CesiumAsync::Future<LoadedRasterOverlayImage>
+        loadTileImage(const RasterOverlayTile& tile) override {
+          LoadedRasterOverlayImage image;
+          auto& asset = image.pImage.emplace();
+          asset.width = 1;
+          asset.height = 1;
+          asset.channels = 4;
+          asset.bytesPerChannel = 1;
+          asset.pixelData.resize(4, std::byte(255));
+          image.rectangle = tile.getRectangle();
+          image.moreDetailAvailable = false;
+          return this->getAsyncSystem().createResolvedFuture(std::move(image));
+        }
+      };
+
+      return parameters.externals.asyncSystem
+          .createResolvedFuture<CreateTileProviderResult>(
+              IntrusivePointer<RasterOverlayTileProvider>(
+                  new Provider(this, parameters, this->_projection)));
+    }
+
+  private:
+    Projection _projection;
+  };
+
+  class RecordingRenderer : public SimplePrepareRendererResource {
+  public:
+    struct Attachment {
+      size_t generation;
+      int32_t coordinateID;
+      glm::dvec2 translation;
+      glm::dvec2 scale;
+    };
+
+    size_t generation = 0;
+    std::vector<Attachment> attachments;
+
+    void* prepareInMainThread(Tile& tile, void* pResult) override {
+      ++generation;
+      return SimplePrepareRendererResource::prepareInMainThread(tile, pResult);
+    }
+
+    void attachRasterInMainThread(
+        const Tile& tile,
+        int32_t coordinateID,
+        const RasterOverlayTile& raster,
+        void* pResources,
+        const glm::dvec2& translation,
+        const glm::dvec2& scale) override {
+      attachments.push_back({generation, coordinateID, translation, scale});
+      SimplePrepareRendererResource::attachRasterInMainThread(
+          tile,
+          coordinateID,
+          raster,
+          pResources,
+          translation,
+          scale);
+    }
+  };
+
+  Cesium3DTilesContent::registerAllTileContentTypes();
+  auto pRenderer = std::make_shared<RecordingRenderer>();
+  auto pModifier = std::make_shared<ReplacementModifier>();
+  TilesetExternals externals{
+      std::make_shared<SimpleAssetAccessor>(
+          std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{}),
+      pRenderer,
+      CesiumAsync::AsyncSystem{std::make_shared<SimpleTaskProcessor>()},
+      std::make_shared<CreditSystem>()};
+  externals.pGltfModifier = pModifier;
+
+  const Cartographic start{glm::radians(32.0), glm::radians(48.0), 100.0};
+  auto pLoader = std::make_unique<SimpleTilesetContentLoader>();
+  auto* pLoaderRaw = pLoader.get();
+  const auto resetLoadResult = [&]() {
+    pLoaderRaw->mockLoadTileContent = {
+        createGlobeGrid(start, 3, 3, 0.01),
+        Axis::Z,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt,
+        nullptr,
+        nullptr,
+        {},
+        TileLoadResultState::Success,
+        Ellipsoid::WGS84};
+    pLoaderRaw->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
+  };
+  resetLoadResult();
+  auto pRoot = std::make_unique<Tile>(pLoader.get());
+  pRoot->setTileID("reloadable");
+  pRoot->setBoundingVolume(BoundingSphere(
+      Ellipsoid::WGS84.cartographicToCartesian(start),
+      1000000.0));
+  TilesetOptions options;
+  auto pManager = TilesetContentManager::createFromLoader(
+      externals,
+      options,
+      std::move(pLoader),
+      std::move(pRoot));
+  auto& overlays = pManager->getRasterOverlayCollection();
+  IntrusivePointer<const RasterOverlay> geographic =
+      new SolidOverlay(GeographicProjection());
+  IntrusivePointer<const RasterOverlay> mercator =
+      new SolidOverlay(WebMercatorProjection());
+  overlays.add(geographic);
+  overlays.add(mercator);
+  REQUIRE(pManager->waitUntilIdle(5000.0));
+  Tile& tile = *pManager->getRootTile();
+  pManager->loadTileContent(tile, options);
+  REQUIRE(pManager->waitUntilIdle(5000.0));
+
+  const auto allAttached = [&]() {
+    return !tile.getMappedRasterTiles().empty() &&
+           std::all_of(
+               tile.getMappedRasterTiles().begin(),
+               tile.getMappedRasterTiles().end(),
+               [](const auto& mapped) {
+                 return mapped.getState() ==
+                        RasterMappedTo3DTile::AttachmentState::Attached;
+               });
+  };
+  const auto attachOverlays = [&]() {
+    for (int i = 0; i < 10 && !allAttached(); ++i) {
+      pManager->updateTileContent(tile, options);
+      pManager->loadTileContent(tile, options);
+      REQUIRE(pManager->waitUntilIdle(5000.0));
+    }
+    REQUIRE(tile.getState() == TileLoadState::Done);
+    REQUIRE(allAttached());
+  };
+  size_t attachedDuringFinish = 0;
+  const auto reapply = [&]() {
+    const RasterOverlayDetails previousDetails =
+        tile.getContent().getRenderContent()->getRasterOverlayDetails();
+    std::vector<std::pair<const RasterOverlayTile*, int32_t>> previousMappings;
+    for (const auto& mapped : tile.getMappedRasterTiles()) {
+      previousMappings.emplace_back(
+          mapped.getReadyTile(),
+          mapped.getTextureCoordinateID());
+    }
+    const size_t detachCount = pRenderer->rasterDetachCount;
+    pModifier->trigger();
+    REQUIRE(tile.needsWorkerThreadLoading(pModifier.get()));
+    pManager->loadTileContent(tile, options);
+    REQUIRE(pManager->waitUntilIdle(5000.0));
+    REQUIRE(tile.needsMainThreadLoading(pModifier.get()));
+    CHECK(pRenderer->rasterDetachCount == detachCount);
+    REQUIRE(tile.getMappedRasterTiles().size() == previousMappings.size());
+    for (size_t i = 0; i < previousMappings.size(); ++i) {
+      CHECK(
+          tile.getMappedRasterTiles()[i].getReadyTile() ==
+          previousMappings[i].first);
+      CHECK(
+          tile.getMappedRasterTiles()[i].getTextureCoordinateID() ==
+          previousMappings[i].second);
+    }
+    CHECK(GlobeRectangle::equalsEpsilon(
+        tile.getContent()
+            .getRenderContent()
+            ->getRasterOverlayDetails()
+            .boundingRegion.getRectangle(),
+        previousDetails.boundingRegion.getRectangle(),
+        1e-8));
+    pManager->finishLoading(tile, options);
+    attachedDuringFinish = static_cast<size_t>(std::count_if(
+        pRenderer->attachments.begin(),
+        pRenderer->attachments.end(),
+        [&](const auto& attachment) {
+          return attachment.generation == pRenderer->generation;
+        }));
+    pManager->updateTileContent(tile, options);
+  };
+  const auto checkUVs = [&](int32_t id,
+                            const Projection& projection,
+                            const Cartographic& origin,
+                            double dimension) {
+    const auto& model = tile.getContent().getRenderContent()->getModel();
+    REQUIRE(!model.meshes.empty());
+    const auto& attributes = model.meshes.front().primitives.front().attributes;
+    const auto it = attributes.find("_CESIUMOVERLAY_" + std::to_string(id));
+    REQUIRE(it != attributes.end());
+    CesiumGltf::AccessorView<glm::vec2> uv(model, it->second);
+    REQUIRE(uv.status() == CesiumGltf::AccessorViewStatus::Valid);
+    REQUIRE(uv.size() == 9);
+    const auto southwest = projectPosition(projection, origin);
+    const auto northeast = projectPosition(
+        projection,
+        Cartographic(
+            origin.longitude + dimension * 2.0,
+            origin.latitude + dimension * 2.0,
+            origin.height));
+    const auto center = projectPosition(
+        projection,
+        Cartographic(
+            origin.longitude + dimension,
+            origin.latitude + dimension,
+            origin.height));
+    CHECK(uv[0].x == Approx(0.0).epsilon(1e-5));
+    CHECK(uv[0].y == Approx(0.0).epsilon(1e-5));
+    CHECK(
+        uv[4].x ==
+        Approx((center.x - southwest.x) / (northeast.x - southwest.x))
+            .epsilon(1e-5));
+    CHECK(
+        uv[4].y ==
+        Approx((center.y - southwest.y) / (northeast.y - southwest.y))
+            .epsilon(1e-5));
+    CHECK(uv[8].x == Approx(1.0).epsilon(1e-5));
+    CHECK(uv[8].y == Approx(1.0).epsilon(1e-5));
+  };
+
+  SUBCASE(
+      "Attached imagery is attached to each replacement renderer resource") {
+    attachOverlays();
+    for (int cycle = 0; cycle < 2; ++cycle) {
+      const auto* pFirstReady = tile.getMappedRasterTiles()[0].getReadyTile();
+      const auto* pSecondReady = tile.getMappedRasterTiles()[1].getReadyTile();
+      const size_t previousGeneration = pRenderer->generation;
+      pRenderer->attachments.clear();
+      reapply();
+      CHECK(tile.getState() == TileLoadState::Done);
+      REQUIRE(tile.getMappedRasterTiles().size() == 2);
+      CHECK(tile.getMappedRasterTiles()[0].getReadyTile() == pFirstReady);
+      CHECK(tile.getMappedRasterTiles()[1].getReadyTile() == pSecondReady);
+      CHECK(tile.getMappedRasterTiles()[0].getTextureCoordinateID() == 0);
+      CHECK(tile.getMappedRasterTiles()[1].getTextureCoordinateID() == 1);
+      CHECK(pRenderer->generation == previousGeneration + 1);
+      CHECK(attachedDuringFinish == 2);
+      CHECK(pRenderer->attachments.size() == 2);
+      for (const auto& attachment : pRenderer->attachments) {
+        CHECK(attachment.generation == pRenderer->generation);
+      }
+      checkUVs(0, GeographicProjection(), start, 0.01);
+      checkUVs(1, WebMercatorProjection(), start, 0.01);
+    }
+  }
+
+  SUBCASE("Imagery covering a smaller extent is reattached immediately") {
+    attachOverlays();
+    const auto* pFirstReady = tile.getMappedRasterTiles()[0].getReadyTile();
+    const auto* pSecondReady = tile.getMappedRasterTiles()[1].getReadyTile();
+    const Cartographic innerStart{
+        start.longitude + 0.005,
+        start.latitude + 0.005,
+        start.height};
+    pModifier->replacement = createGlobeGrid(innerStart, 3, 3, 0.004);
+    pRenderer->attachments.clear();
+    reapply();
+    CHECK(attachedDuringFinish == 2);
+    REQUIRE(tile.getMappedRasterTiles().size() == 2);
+    CHECK(tile.getMappedRasterTiles()[0].getReadyTile() == pFirstReady);
+    CHECK(tile.getMappedRasterTiles()[1].getReadyTile() == pSecondReady);
+    CHECK(allAttached());
+    checkUVs(0, GeographicProjection(), innerStart, 0.004);
+    checkUVs(1, WebMercatorProjection(), innerStart, 0.004);
+
+    const auto& details =
+        tile.getContent().getRenderContent()->getRasterOverlayDetails();
+    REQUIRE(pRenderer->attachments.size() == 2);
+    for (const auto& attachment : pRenderer->attachments) {
+      CHECK(attachment.generation == pRenderer->generation);
+      const size_t i = static_cast<size_t>(attachment.coordinateID);
+      REQUIRE(i < details.rasterOverlayRectangles.size());
+      const Rectangle& geometry = details.rasterOverlayRectangles[i];
+      const Rectangle& image =
+          tile.getMappedRasterTiles()[i].getReadyTile()->getRectangle();
+      CHECK(
+          attachment.translation.x ==
+          Approx((geometry.minimumX - image.minimumX) / image.computeWidth()));
+      CHECK(
+          attachment.translation.y ==
+          Approx((geometry.minimumY - image.minimumY) / image.computeHeight()));
+      CHECK(
+          attachment.scale.x ==
+          Approx(geometry.computeWidth() / image.computeWidth()));
+      CHECK(
+          attachment.scale.y ==
+          Approx(geometry.computeHeight() / image.computeHeight()));
+      CHECK(attachment.scale.x < 1.0);
+      CHECK(attachment.scale.y < 1.0);
+    }
+  }
+
+  SUBCASE("Removed overlays do not renumber remaining projection coordinates") {
+    attachOverlays();
+    overlays.remove(geographic);
+    REQUIRE(tile.getMappedRasterTiles().size() == 1);
+    REQUIRE(tile.getMappedRasterTiles()[0].getTextureCoordinateID() == 1);
+    reapply();
+    REQUIRE(tile.getMappedRasterTiles().size() == 1);
+    CHECK(tile.getMappedRasterTiles()[0].getTextureCoordinateID() == 1);
+    checkUVs(1, WebMercatorProjection(), start, 0.01);
+  }
+
+  SUBCASE("A newly added projection uses the normal reload mechanism") {
+    attachOverlays();
+    overlays.remove(mercator);
+    REQUIRE(pManager->unloadTileContent(tile));
+    resetLoadResult();
+    pManager->loadTileContent(tile, options);
+    REQUIRE(pManager->waitUntilIdle(5000.0));
+    attachOverlays();
+    REQUIRE(
+        tile.getContent()
+            .getRenderContent()
+            ->getRasterOverlayDetails()
+            .rasterOverlayProjections.size() == 1);
+    overlays.add(mercator);
+    REQUIRE(pManager->waitUntilIdle(5000.0));
+    reapply();
+    CHECK(tile.getState() == TileLoadState::Unloaded);
+    resetLoadResult();
+    pManager->loadTileContent(tile, options);
+    REQUIRE(pManager->waitUntilIdle(5000.0));
+    attachOverlays();
+    REQUIRE(tile.getMappedRasterTiles().size() == 2);
+    checkUVs(0, GeographicProjection(), start, 0.01);
+    checkUVs(1, WebMercatorProjection(), start, 0.01);
+  }
+
+  SUBCASE("Changed and empty models publish their new overlay bounds") {
+    bool contentLoaded = false;
+    bool empty = false;
+    SUBCASE("Changed extent on an already rendered tile") {}
+    SUBCASE("Changed extent before main-thread preparation") {
+      contentLoaded = true;
+    }
+    SUBCASE("Empty model on an already rendered tile") { empty = true; }
+    SUBCASE("Empty model before main-thread preparation") {
+      contentLoaded = true;
+      empty = true;
+    }
+    if (contentLoaded) {
+      REQUIRE(tile.getState() == TileLoadState::ContentLoaded);
+    } else {
+      attachOverlays();
+    }
+    const Cartographic movedStart{
+        start.longitude + 0.03,
+        start.latitude + 0.04,
+        200.0};
+    pModifier->replacement =
+        empty ? CesiumGltf::Model() : createGlobeGrid(movedStart, 3, 3, 0.02);
+
+    pRenderer->attachments.clear();
+    pModifier->trigger();
+    pManager->loadTileContent(tile, options);
+    REQUIRE(pManager->waitUntilIdle(5000.0));
+    if (contentLoaded) {
+      pManager->updateTileContent(tile, options);
+    } else {
+      pManager->finishLoading(tile, options);
+      pManager->updateTileContent(tile, options);
+    }
+    REQUIRE(tile.getState() == TileLoadState::Done);
+    if (!empty) {
+      attachOverlays();
+    }
+    const auto& details =
+        tile.getContent().getRenderContent()->getRasterOverlayDetails();
+    CHECK(details.boundingRegion.getRectangle().isEmpty() == empty);
+    if (!empty) {
+      CHECK(GlobeRectangle::equalsEpsilon(
+          details.boundingRegion.getRectangle(),
+          GlobeRectangle(
+              movedStart.longitude,
+              movedStart.latitude,
+              movedStart.longitude + 0.04,
+              movedStart.latitude + 0.04),
+          1e-8));
+      REQUIRE(details.rasterOverlayRectangles.size() == 2);
+      checkUVs(0, GeographicProjection(), movedStart, 0.02);
+      checkUVs(1, WebMercatorProjection(), movedStart, 0.02);
+      CHECK(pRenderer->attachments.size() == 2);
+      for (size_t i = 0; i < details.rasterOverlayProjections.size(); ++i) {
+        const auto expected = projectRectangleSimple(
+            details.rasterOverlayProjections[i],
+            GlobeRectangle(
+                movedStart.longitude,
+                movedStart.latitude,
+                movedStart.longitude + 0.04,
+                movedStart.latitude + 0.04));
+        const auto& actual = details.rasterOverlayRectangles[i];
+        CHECK(actual.minimumX == Approx(expected.minimumX));
+        CHECK(actual.minimumY == Approx(expected.minimumY));
+        CHECK(actual.maximumX == Approx(expected.maximumX));
+        CHECK(actual.maximumY == Approx(expected.maximumY));
+        const auto attachment = std::find_if(
+            pRenderer->attachments.begin(),
+            pRenderer->attachments.end(),
+            [&](const auto& candidate) {
+              return candidate.generation == pRenderer->generation &&
+                     candidate.coordinateID == static_cast<int32_t>(i);
+            });
+        if (attachment != pRenderer->attachments.end()) {
+          const auto* pRaster = tile.getMappedRasterTiles()[i].getReadyTile();
+          REQUIRE(pRaster != nullptr);
+          const Rectangle& image = pRaster->getRectangle();
+          CHECK(
+              attachment->translation.x ==
+              Approx(
+                  (expected.minimumX - image.minimumX) / image.computeWidth()));
+          CHECK(
+              attachment->translation.y ==
+              Approx(
+                  (expected.minimumY - image.minimumY) /
+                  image.computeHeight()));
+          CHECK(
+              attachment->scale.x ==
+              Approx(expected.computeWidth() / image.computeWidth()));
+          CHECK(
+              attachment->scale.y ==
+              Approx(expected.computeHeight() / image.computeHeight()));
+        } else {
+          FAIL_CHECK(
+              "No imagery attachment to the replacement renderer resource");
+        }
+      }
+    } else {
+      CHECK(tile.getContent().getRenderContent()->getModel().meshes.empty());
+      CHECK(tile.getMappedRasterTiles().empty());
+      CHECK(
+          details.boundingRegion.getMinimumHeight() >
+          details.boundingRegion.getMaximumHeight());
+      for (int i = 0; i < 3; ++i) {
+        pManager->updateTileContent(tile, options);
+        CHECK(tile.getState() == TileLoadState::Done);
+        CHECK(tile.getChildren().empty());
+        CHECK(tile.getMappedRasterTiles().empty());
+      }
+      pModifier->replacement = createGlobeGrid(start, 3, 3, 0.01);
+      reapply();
+      CHECK(!tile.getContent()
+                 .getRenderContent()
+                 ->getRasterOverlayDetails()
+                 .boundingRegion.getRectangle()
+                 .isEmpty());
+      checkUVs(0, GeographicProjection(), start, 0.01);
+      CHECK(tile.getMappedRasterTiles().size() == 2);
+      attachOverlays();
+      CHECK(tile.getMappedRasterTiles().size() == 2);
+    }
+  }
 }

@@ -14,6 +14,8 @@ class SimplePrepareRendererResource
     : public Cesium3DTilesSelection::IPrepareRendererResources {
 public:
   std::atomic<size_t> totalAllocation{};
+  std::atomic<size_t> rasterAttachCount{};
+  std::atomic<size_t> rasterDetachCount{};
 
   struct AllocationResult {
     AllocationResult(std::atomic<size_t>& allocCount_)
@@ -110,13 +112,17 @@ public:
       const CesiumRasterOverlays::RasterOverlayTile& /*rasterTile*/,
       void* /*pMainThreadRendererResources*/,
       const glm::dvec2& /*translation*/,
-      const glm::dvec2& /*scale*/) override {}
+      const glm::dvec2& /*scale*/) override {
+    ++rasterAttachCount;
+  }
 
   virtual void detachRasterInMainThread(
       const Cesium3DTilesSelection::Tile& /*tile*/,
       int32_t /*overlayTextureCoordinateID*/,
       const CesiumRasterOverlays::RasterOverlayTile& /*rasterTile*/,
-      void* /*pMainThreadRendererResources*/) noexcept override {}
+      void* /*pMainThreadRendererResources*/) noexcept override {
+    ++rasterDetachCount;
+  }
 
   std::function<void(const TileLoadResult&)> prepareInLoadThreadTestCallback =
       [](const TileLoadResult& /*result*/) {};

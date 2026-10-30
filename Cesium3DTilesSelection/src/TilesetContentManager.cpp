@@ -580,8 +580,7 @@ postProcessContentInWorkerThread(
     postProcessGltfInWorkerThread(result, std::move(projections), tileLoadInfo);
   }
 
-  auto applyGltfModifier = [&](std::vector<CesiumGeospatial::Projection>&&
-                                   projections) {
+  auto applyGltfModifier = [&]() {
     // Apply the glTF modifier right away, otherwise it will be
     // triggered immediately after the renderer-side resources
     // have been created, which is both inefficient and a cause
@@ -628,7 +627,7 @@ postProcessContentInWorkerThread(
 
   CesiumAsync::Future<std::tuple<TileContentLoadInfo, TileLoadResult>> future =
       needsApplyGltfModifier
-          ? applyGltfModifier(std::move(projections))
+          ? applyGltfModifier()
           : tileLoadInfo.asyncSystem.createResolvedFuture(std::move(result))
                 .thenPassThrough(std::move(tileLoadInfo));
 
@@ -1008,15 +1007,8 @@ void TilesetContentManager::reapplyGltfModifier(
   CESIUM_ASSERT(externals.pGltfModifier->getCurrentVersion());
   int64_t version = externals.pGltfModifier->getCurrentVersion().value_or(-1);
 
-  // Ensure raster overlays will be recomputed for this tile, BUT restore
-  // overlay details afterwards, or the tile could be unloaded in
-  // #updateDoneState (see test on status.firstIndexWithMissingProjection).
-  auto const rasterOverlayDetails =
-      pRenderContent->getRasterOverlayDetails();
-  pRenderContent->setRasterOverlayDetails({});
   std::vector<CesiumGeospatial::Projection> projections =
-      this->_overlayCollection.addTileOverlays(tile, tilesetOptions);
-  pRenderContent->setRasterOverlayDetails(rasterOverlayDetails);
+      pRenderContent->getRasterOverlayDetails().rasterOverlayProjections;
 
   TileContentLoadInfo tileLoadInfo{
       this->_externals.asyncSystem,
@@ -1051,70 +1043,69 @@ void TilesetContentManager::reapplyGltfModifier(
             .previousModel = previousModel,
             .tileTransform = tileTransform});
       })
-      .thenInWorkerThread([&externals,
-                           &previousModel,
-                           pRenderContent,
-                           tileTransform = tile.getTransform(),
-                           tileBoundingVolume = tile.getBoundingVolume(),
-                           tileContentBoundingVolume =
-                               tile.getContentBoundingVolume(),
-                           rendererOptions = tilesetOptions.rendererOptions,
-                           tileLoadInfo = std::move(tileLoadInfo),
-                           ellipsoid = tilesetOptions.ellipsoid,
-                           projections = std::move(projections)](
-                              std::optional<GltfModifierOutput>&&
-                                  modified) mutable {
-        TileLoadResult tileLoadResult;
-        tileLoadResult.state = TileLoadResultState::Success;
-        tileLoadResult.pAssetAccessor = externals.pAssetAccessor;
-        tileLoadResult.initialBoundingVolume = tileBoundingVolume;
-        tileLoadResult.initialContentBoundingVolume = tileContentBoundingVolume;
+      .thenInWorkerThread(
+          [&externals,
+           &previousModel,
+           tileTransform = tile.getTransform(),
+           tileBoundingVolume = tile.getBoundingVolume(),
+           tileContentBoundingVolume = tile.getContentBoundingVolume(),
+           rendererOptions = tilesetOptions.rendererOptions,
+           tileLoadInfo = std::move(tileLoadInfo),
+           ellipsoid = tilesetOptions.ellipsoid,
+           projections = std::move(projections)](
+              std::optional<GltfModifierOutput>&& modified) mutable {
+            TileLoadResult tileLoadResult;
+            tileLoadResult.state = TileLoadResultState::Success;
+            tileLoadResult.pAssetAccessor = externals.pAssetAccessor;
+            tileLoadResult.initialBoundingVolume = tileBoundingVolume;
+            tileLoadResult.initialContentBoundingVolume =
+                tileContentBoundingVolume;
 
-        {
-          const CesiumGltf::Model& model =
-              modified ? modified->modifiedModel : previousModel;
-          const auto it = model.extras.find("gltfUpAxis");
-          if (it != model.extras.end()) {
-            tileLoadResult.glTFUpAxis = static_cast<CesiumGeometry::Axis>(
-                it->second.getSafeNumberOrDefault(1));
-          }
-        }
+            {
+              const CesiumGltf::Model& model =
+                  modified ? modified->modifiedModel : previousModel;
+              const auto it = model.extras.find("gltfUpAxis");
+              if (it != model.extras.end()) {
+                tileLoadResult.glTFUpAxis = static_cast<CesiumGeometry::Axis>(
+                    it->second.getSafeNumberOrDefault(1));
+              }
+            }
 
-        tileLoadResult.ellipsoid = ellipsoid;
-        if (modified) {
-          tileLoadResult.contentKind = std::move(modified->modifiedModel);
+            tileLoadResult.ellipsoid = ellipsoid;
+            if (modified) {
+              tileLoadResult.contentKind = std::move(modified->modifiedModel);
 
-          // Apply post-process to the modified model.
-          postProcessGltfInWorkerThread(
-              tileLoadResult,
-              std::move(projections),
-              tileLoadInfo);
-          if (tileLoadResult.rasterOverlayDetails) {
-            pRenderContent->setRasterOverlayDetails(
-                *tileLoadResult.rasterOverlayDetails);
-          }
-        } else {
-          // No modification could be reapplied => we'll keep previous model and
-          // render resources.
-          tileLoadResult.contentKind = previousModel;
-          tileLoadResult.state = TileLoadResultState::Failed;
-        }
+              // Apply post-process to the modified model.
+              postProcessGltfInWorkerThread(
+                  tileLoadResult,
+                  std::move(projections),
+                  tileLoadInfo);
+            } else {
+              // No modification could be reapplied => we'll keep previous model
+              // and render resources.
+              tileLoadResult.contentKind = previousModel;
+              tileLoadResult.state = TileLoadResultState::Failed;
+            }
 
-        if (modified && externals.pPrepareRendererResources) {
-          return externals.pPrepareRendererResources->prepareInLoadThread(
-              externals.asyncSystem,
-              std::move(tileLoadResult),
-              tileTransform,
-              rendererOptions);
-        } else {
-          return externals.asyncSystem
-              .createResolvedFuture<TileLoadResultAndRenderResources>(
-                  TileLoadResultAndRenderResources{
-                      std::move(tileLoadResult),
-                      nullptr});
-        }
-      })
-      .thenInMainThread([this, version, pTile = Tile::Pointer(&tile)](
+            if (modified && externals.pPrepareRendererResources) {
+              return externals.pPrepareRendererResources->prepareInLoadThread(
+                  externals.asyncSystem,
+                  std::move(tileLoadResult),
+                  tileTransform,
+                  rendererOptions);
+            } else {
+              return externals.asyncSystem
+                  .createResolvedFuture<TileLoadResultAndRenderResources>(
+                      TileLoadResultAndRenderResources{
+                          std::move(tileLoadResult),
+                          nullptr});
+            }
+          })
+      .thenInMainThread([this,
+                         version,
+                         pTile = Tile::Pointer(&tile),
+                         maximumScreenSpaceError =
+                             tilesetOptions.maximumScreenSpaceError](
                             TileLoadResultAndRenderResources&& pair) {
         TileRenderContent* pRenderContent =
             pTile->getContent().getRenderContent();
@@ -1150,6 +1141,16 @@ void TilesetContentManager::reapplyGltfModifier(
               std::move(std::get<CesiumGltf::Model>(pair.result.contentKind)));
           pRenderContent->setRenderResources(pair.pRenderResources);
           pRenderContent->setGltfModifierState(GltfModifierState::Idle);
+          if (pair.result.rasterOverlayDetails) {
+            pRenderContent->setRasterOverlayDetails(
+                std::move(*pair.result.rasterOverlayDetails));
+          }
+
+          // Raster overlays aren't attached to a tile until it is Done, so
+          // there's nothing to detach here.
+          this->_overlayCollection.updateTileOverlaysForReplacedContent(
+              *pTile,
+              maximumScreenSpaceError);
 
           // The model is now up-to-date with the version that triggered this
           // run.
@@ -1172,7 +1173,8 @@ void TilesetContentManager::reapplyGltfModifier(
           if (pair.result.state == TileLoadResultState::Success) {
             pRenderContent->setModifiedModelAndRenderResources(
                 std::move(modifiedModel),
-                pair.pRenderResources);
+                pair.pRenderResources,
+                std::move(pair.result.rasterOverlayDetails));
             this->_externals.pGltfModifier->onWorkerThreadApplyComplete(*pTile);
           }
         }
@@ -1664,6 +1666,16 @@ void TilesetContentManager::finishLoading(
       return;
     }
 
+    // Detach raster overlays from the outdated render resources before freeing
+    // them.
+    if (this->_externals.pPrepareRendererResources) {
+      for (RasterMappedTo3DTile& mapped : tile.getMappedRasterTiles()) {
+        mapped.detachFromTile(
+            *this->_externals.pPrepareRendererResources,
+            tile);
+      }
+    }
+
     // Free outdated render resources before replacing them.
     if (this->_externals.pPrepareRendererResources) {
       this->_externals.pPrepareRendererResources->free(
@@ -1687,6 +1699,14 @@ void TilesetContentManager::finishLoading(
     }
 
     pRenderContent->setGltfModifierState(GltfModifierState::Idle);
+
+    // Reattach raster overlays to the new render resources right away, rather
+    // than in the next update, so that the new content is never rendered
+    // without its overlays.
+    this->_overlayCollection.updateTileOverlaysForReplacedContent(
+        tile,
+        tilesetOptions.maximumScreenSpaceError);
+    this->_overlayCollection.updateTileOverlays(tile, tilesetOptions);
     return;
   }
 

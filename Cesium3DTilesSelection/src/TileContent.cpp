@@ -1,5 +1,6 @@
 #include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/TileContent.h>
+#include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/CreditSystem.h>
@@ -57,8 +58,11 @@ TileRenderContent::getModifiedModel() const noexcept {
 
 void TileRenderContent::setModifiedModelAndRenderResources(
     CesiumGltf::Model&& modifiedModel,
-    void* pModifiedRenderResources) noexcept {
+    void* pModifiedRenderResources,
+    std::optional<CesiumRasterOverlays::RasterOverlayDetails>&&
+        rasterOverlayDetails) noexcept {
   this->_modifiedModel = std::move(modifiedModel);
+  this->_modifiedRasterOverlayDetails = std::move(rasterOverlayDetails);
   this->_pModifiedRenderResources = pModifiedRenderResources;
 }
 
@@ -68,6 +72,7 @@ void* TileRenderContent::getModifiedRenderResources() const noexcept {
 
 void TileRenderContent::resetModifiedModelAndRenderResources() noexcept {
   this->_pModifiedRenderResources = nullptr;
+  this->_modifiedRasterOverlayDetails.reset();
   this->_modifiedModel.reset();
 }
 
@@ -81,6 +86,11 @@ void TileRenderContent::replaceWithModifiedModel() noexcept {
     this->_modifiedModel.reset();
     this->_pRenderResources = this->_pModifiedRenderResources;
     this->_pModifiedRenderResources = nullptr;
+    if (this->_modifiedRasterOverlayDetails) {
+      this->_rasterOverlayDetails =
+          std::move(*this->_modifiedRasterOverlayDetails);
+      this->_modifiedRasterOverlayDetails.reset();
+    }
   }
 }
 
