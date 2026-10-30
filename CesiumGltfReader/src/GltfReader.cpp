@@ -367,7 +367,7 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
 
 #ifndef CESIUM_DISABLE_SPZ
   if (options.decodeSpz && hasSpzExtension(readGltf)) {
-    decodeSpz(readGltf);
+    decodeSpz(options.spzDecoderOptions, readGltf);
   }
 #endif
 

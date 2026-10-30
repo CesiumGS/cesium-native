@@ -173,7 +173,7 @@ VertexAttributeRange getVertexAttributeRange(const Model& model) {
           const Mesh&,
           const MeshPrimitive& primitive,
           const glm::dmat4& transform) {
-        for (std::pair<const std::string, int32_t> attribute :
+        for (const std::pair<const std::string, int32_t>& attribute :
              primitive.attributes) {
           const std::string& attributeName = attribute.first;
           if (attributeName == "POSITION") {
@@ -183,7 +183,7 @@ VertexAttributeRange getVertexAttributeRange(const Model& model) {
           } else if (attributeName == "NORMAL") {
             var.normalRange =
                 glm::normalize(getRange<glm::vec3>(model, attribute.second));
-          } else if (attributeName.find("TEXCOORD") == 0) {
+          } else if (attributeName.starts_with("TEXCOORD")) {
             var.texCoordRange = getRange<glm::vec2>(model, attribute.second);
           }
         }
@@ -1664,7 +1664,7 @@ TEST_CASE("SPZ decoding works properly") {
     const std::unordered_map<std::string, int32_t>& attributes =
         model.meshes[0].primitives[0].attributes;
 
-    CHECK(attributes.size() == 4);
+    CHECK(attributes.size() == 6);
 
     REQUIRE(attributes.contains("POSITION"));
     AccessorView<glm::vec3> positionView(model, attributes.at("POSITION"));
@@ -1673,12 +1673,10 @@ TEST_CASE("SPZ decoding works properly") {
     CHECK(positionView[0] == glm::vec3(1.0, 2.0, 3.0));
 
     REQUIRE(attributes.contains("COLOR_0"));
-    AccessorView<glm::vec4> colorView(model, attributes.at("COLOR_0"));
+    AccessorView<glm::u8vec4> colorView(model, attributes.at("COLOR_0"));
     REQUIRE(colorView.status() == AccessorViewStatus::Valid);
     REQUIRE(colorView.size() == 1);
-    CHECK(
-        colorView[0] ==
-        glm::vec4(0.570062876, 0.643813193, 0.710188448, 0.501960814));
+    CHECK(colorView[0] == glm::u8vec4(145, 164, 181, 128));
 
     REQUIRE(attributes.contains("KHR_gaussian_splatting:ROTATION"));
     AccessorView<glm::vec4> rotationView(
@@ -1696,7 +1694,26 @@ TEST_CASE("SPZ decoding works properly") {
         attributes.at("KHR_gaussian_splatting:SCALE"));
     REQUIRE(scaleView.status() == AccessorViewStatus::Valid);
     REQUIRE(scaleView.size() == 1);
-    CHECK(scaleView[0] == glm::vec3(20.085537, 7.38905621, 2.71828175));
+    CHECK(
+        scaleView[0] ==
+        glm::vec3(3.000000003824261, 2.0000000150316017, 0.9999999711365299));
+
+    REQUIRE(attributes.contains("KHR_gaussian_splatting:OPACITY"));
+    AccessorView<float> opacityView(
+        model,
+        attributes.at("KHR_gaussian_splatting:OPACITY"));
+    REQUIRE(opacityView.status() == AccessorViewStatus::Valid);
+    REQUIRE(opacityView.size() == 1);
+    CHECK(opacityView[0] == 0.00784329232f);
+
+    REQUIRE(attributes.contains("KHR_gaussian_splatting:SH_DEGREE_0_COEF_0"));
+    AccessorView<glm::vec3> sh0View(
+        model,
+        attributes.at("KHR_gaussian_splatting:SH_DEGREE_0_COEF_0"));
+    REQUIRE(sh0View.status() == AccessorViewStatus::Valid);
+    REQUIRE(sh0View.size() == 1);
+    glm::vec3 sh0 = sh0View[0];
+    CHECK(sh0 == glm::vec3(0.248366192f, 0.50980407f, 0.745098173f));
   }
 }
 

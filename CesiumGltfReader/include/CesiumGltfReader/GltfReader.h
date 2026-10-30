@@ -23,6 +23,20 @@
 namespace CesiumGltfReader {
 
 /**
+ * @brief Options for decoding SPZ data.
+ */
+struct CESIUMGLTFREADER_API SpzDecoderOptions {
+  /**
+   * @brief If true, all accessors will be forced to use the FLOAT component
+   * type, regardless of the original data type.
+   *
+   * As the spz library outputs float data directly, this option can avoid
+   * unnecessary conversions to other component types.
+   */
+  bool forceFloatAccessors = false;
+};
+
+/**
  * @brief The result of reading a glTF model with @ref GltfReader::readGltf.
  */
 struct CESIUMGLTFREADER_API GltfReaderResult {
@@ -162,6 +176,11 @@ struct CESIUMGLTFREADER_API GltfReaderOptions {
    * that appear in a glTF mesh primitive.
    */
   MeshPrimitiveModeOptions primitiveModeOptions;
+
+  /**
+   * @brief Options for decoding SPZ data.
+   */
+  SpzDecoderOptions spzDecoderOptions;
 };
 
 /**
