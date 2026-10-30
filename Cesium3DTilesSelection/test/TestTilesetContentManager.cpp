@@ -2050,3 +2050,118 @@ TEST_CASE("Test glTF modifier state machine") {
     CHECK(pMockedPrepareRendererResources->totalAllocation == 0);
   }
 }
+
+TEST_CASE("Test glTF modifier reapplies raster overlay attributes") {
+  Cesium3DTilesContent::registerAllTileContentTypes();
+
+  auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
+      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
+  auto pMockedPrepareRendererResources =
+      std::make_shared<SimplePrepareRendererResource>();
+  CesiumAsync::AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
+  auto pMockedCreditSystem = std::make_shared<CreditSystem>();
+
+  TilesetExternals externals{
+      pMockedAssetAccessor,
+      pMockedPrepareRendererResources,
+      asyncSystem,
+      pMockedCreditSystem};
+
+  class RemoveRasterOverlayAttributeModifier : public GltfModifier {
+  public:
+    CesiumAsync::Future<std::optional<GltfModifierOutput>>
+    apply(GltfModifierInput&& input) override {
+      GltfModifierOutput output{.modifiedModel = input.previousModel};
+      for (CesiumGltf::Mesh& mesh : output.modifiedModel.meshes) {
+        for (CesiumGltf::MeshPrimitive& primitive : mesh.primitives) {
+          primitive.attributes.erase("_CESIUMOVERLAY_0");
+        }
+      }
+
+      return input.asyncSystem.createResolvedFuture(
+          std::make_optional(std::move(output)));
+    }
+
+  protected:
+    CesiumAsync::Future<void> onRegister(
+        const CesiumAsync::AsyncSystem& asyncSystem,
+        const std::shared_ptr<CesiumAsync::IAssetAccessor>&,
+        const std::shared_ptr<spdlog::logger>&,
+        const TilesetMetadata&,
+        const Tile&) override {
+      return asyncSystem.createResolvedFuture();
+    }
+  };
+
+  auto pGltfModifier =
+      std::make_shared<RemoveRasterOverlayAttributeModifier>();
+  externals.pGltfModifier = pGltfModifier;
+
+  auto pMockedLoader = std::make_unique<SimpleTilesetContentLoader>();
+  Cartographic beginCarto{glm::radians(32.0), glm::radians(48.0), 100.0};
+  pMockedLoader->mockLoadTileContent = {
+      createGlobeGrid(beginCarto, 10, 10, 0.01),
+      CesiumGeometry::Axis::Z,
+      std::nullopt,
+      std::nullopt,
+      std::nullopt,
+      nullptr,
+      nullptr,
+      {},
+      TileLoadResultState::Success,
+      Ellipsoid::WGS84};
+  pMockedLoader->mockCreateTileChildren = {{}, TileLoadResultState::Failed};
+
+  auto pRootTile = std::make_unique<Tile>(pMockedLoader.get());
+  pRootTile->setTileID("foo");
+
+  TilesetOptions options{};
+  IntrusivePointer<TilesetContentManager> pManager =
+      TilesetContentManager::createFromLoader(
+          externals,
+          options,
+          std::move(pMockedLoader),
+          std::move(pRootTile));
+  pManager->getRasterOverlayCollection().add(
+      new DebugColorizeTilesRasterOverlay("DebugOverlay"));
+  pManager->waitUntilIdle(5000.0);
+
+  Tile& tile = *pManager->getRootTile();
+  pManager->loadTileContent(tile, options);
+  pManager->waitUntilIdle(5000.0);
+  pManager->updateTileContent(tile, options);
+  REQUIRE(tile.getState() == TileLoadState::Done);
+
+  const auto* pRenderContent = tile.getContent().getRenderContent();
+  REQUIRE(pRenderContent != nullptr);
+  const auto& originalPrimitive =
+      pRenderContent->getModel().meshes.front().primitives.front();
+  REQUIRE(
+      originalPrimitive.attributes.find("_CESIUMOVERLAY_0") !=
+      originalPrimitive.attributes.end());
+
+  pGltfModifier->trigger();
+  REQUIRE(tile.needsWorkerThreadLoading(pGltfModifier.get()));
+  pManager->loadTileContent(tile, options);
+  pManager->waitUntilIdle(5000.0);
+  REQUIRE(tile.needsMainThreadLoading(pGltfModifier.get()));
+  pManager->finishLoading(tile, options);
+
+  REQUIRE(tile.getState() == TileLoadState::Done);
+  pRenderContent = tile.getContent().getRenderContent();
+  REQUIRE(pRenderContent != nullptr);
+  REQUIRE(!pRenderContent->getRasterOverlayDetails()
+               .rasterOverlayProjections.empty());
+  REQUIRE(!pRenderContent->getRasterOverlayDetails()
+               .rasterOverlayRectangles.empty());
+
+  const auto& modifiedPrimitive =
+      pRenderContent->getModel().meshes.front().primitives.front();
+  auto overlayAttribute =
+      modifiedPrimitive.attributes.find("_CESIUMOVERLAY_0");
+  REQUIRE(overlayAttribute != modifiedPrimitive.attributes.end());
+  CesiumGltf::AccessorView<glm::vec2> uv{
+      pRenderContent->getModel(),
+      overlayAttribute->second};
+  CHECK(uv.status() == CesiumGltf::AccessorViewStatus::Valid);
+}
