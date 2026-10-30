@@ -1811,3 +1811,91 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
   CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
   CHECK(updateResult.tilesFadingOut.size() == 2);
 }
+
+class FixedDepthDelegate
+    : public Cesium3DTilesSelection::ViewStateMeasureDelegate {
+public:
+  FixedDepthDelegate(uint32_t depthLimit)
+      : depthErrorMeasure(std::exp2(-int32_t(depthLimit))) {}
+  double
+  computeSelectionMeasure(const Tile&, double, uint32_t depth) const override {
+    return std::exp2(-int32_t(depth));
+  }
+  double depthErrorMeasure;
+};
+
+TEST_CASE("Test ErrorMeasureHandler") {
+  Cesium3DTilesContent::registerAllTileContentTypes();
+
+  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+  testDataPath = testDataPath / "AdditiveThreeLevels";
+  std::vector<std::string> files{"tileset.json", "content.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(testDataPath / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // Load until complete
+  BoundingRegion viewStateRegion(
+      GlobeRectangle(-1.4, .7, -1.2, .5),
+      0.0,
+      100.0,
+      Ellipsoid::WGS84);
+  auto loadTiles = [&](Tileset& tileset, ViewState& viewState) {
+    ViewUpdateResult updateResult;
+    do {
+      updateResult =
+          tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
+    } while (tileset.getNumberOfTilesLoaded() == 0 ||
+             tileset.computeLoadProgress() < 100.0f);
+    return updateResult;
+  };
+  {
+    // create tileset and call updateView() to give it a chance to load
+    auto pFixedDepthDelegate = std::make_shared<FixedDepthDelegate>(0);
+    TilesetOptions options{};
+    options.maximumScreenSpaceError = pFixedDepthDelegate->depthErrorMeasure;
+
+    Tileset tileset(tilesetExternals, "tileset.json", options);
+    // create tileset and call updateView() to give it a chance to load
+    initializeTileset(tileset);
+    ViewState viewState{viewStateRegion, pFixedDepthDelegate};
+    ViewUpdateResult updateResult = loadTiles(tileset, viewState);
+    CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
+  }
+  {
+    // create tileset and call updateView() to give it a chance to load
+    auto pFixedDepthDelegate = std::make_shared<FixedDepthDelegate>(1);
+    TilesetOptions options{};
+    options.maximumScreenSpaceError = pFixedDepthDelegate->depthErrorMeasure;
+    Tileset tileset(tilesetExternals, "tileset.json", options);
+    initializeTileset(tileset);
+    ViewState viewState{viewStateRegion, pFixedDepthDelegate};
+    ViewUpdateResult updateResult = loadTiles(tileset, viewState);
+    CHECK(updateResult.tilesToRenderThisFrame.size() == 3);
+  }
+}

@@ -2,10 +2,43 @@
 
 ### ? - ?
 
+##### Fixes :wrench:
+
+- Fixed potential crashes when using the glTF modifier on a tileset also using raster overlays (such as cartographic polygons).
+
+### v0.66.0 - 2026-11-02
+
+##### Breaking Changes :mega:
+
+- The classes associated with `KHR_implicit_shapes` have been renamed from `Shape`, `Box`, `Capsule`, `Cylinder`, `Sphere` to `ExtensionKhrImplicitShapesShape`, `ExtensionKhrImplicitShapesBox`, `ExtensionKhrImplicitShapesCapsule`, `ExtensionKhrImplicitShapesCylinder`, `ExtensionKhrImplicitShapesSphere` to deconflict with the shape classes generated for glTF 2.1.
+
 ##### Additions :tada:
 
-- The `CesiumVectorOverlays::VectorTilesRasterOverlay` now supports styling via specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
-- Fixed potential crashes when using the glTF modifier on a tileset also using raster overlays (such as cartographic polygons).
+- Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added a `CESIUM_DISABLE_SPZ` CMake option to build Cesium Native without Niantic SPZ support.
+- Added support for the new `statistics` property under `ExtensionModelExtStructuralMetadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+
+##### Fixes :wrench:
+
+- Fixed potential integer overflow and out-of-bounds write while decoding glTFs using `EXT_meshopt_compression`.
+- Fixed a heap overflow when decoding Draco-compressed glTFs whose attributes declare a different number of components than the corresponding accessor.
+- Fixed decoding of Draco-compressed glTFs with invalid index accessor component types or incorrectly normalized index accessors.
+
+### v0.65.0 - 2026-10-01
+
+##### Breaking Changes :mega:
+
+- `Cesium3DTilesSelection::ViewState` can be supplied a delegate that computes a general tile error measure. The interface for setting a fixed geometric error in the `ViewState` object has been removed; that functionality can be implemented instead using the delegate.
+
+##### Additions :tada:
+
+- Added support for the `GS_3DT` reality data type in `ITwinRealityDataContentLoader`.
+- Added support for styling on `CesiumVectorOverlays::VectorTilesRasterOverlay` by specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
+
+##### Fixes :wrench:
+
+- Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
+- Fixed potential out-of-bounds access while decoding Draco-compressed glTFs.
 
 ### v0.64.0 - 2026-09-01
 

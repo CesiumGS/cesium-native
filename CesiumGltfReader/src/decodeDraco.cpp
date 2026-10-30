@@ -7,6 +7,7 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/Tracing.h>
@@ -66,9 +67,10 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
 
   CesiumGltf::Buffer& buffer = *pBuffer;
 
+  const int64_t bufferSize = static_cast<int64_t>(buffer.cesium.data.size());
   if (bufferView.byteOffset < 0 || bufferView.byteLength < 0 ||
-      bufferView.byteOffset + bufferView.byteLength >
-          static_cast<int64_t>(buffer.cesium.data.size())) {
+      bufferView.byteOffset > bufferSize ||
+      bufferView.byteLength > bufferSize - bufferView.byteOffset) {
     readGltf.warnings.emplace_back(
         "Draco bufferView extends beyond its buffer.");
     return nullptr;
@@ -82,7 +84,6 @@ std::unique_ptr<draco::Mesh> decodeBufferViewToDracoMesh(
   decodeBuffer.Init(reinterpret_cast<const char*>(data.data()), data.size());
 
   draco::Decoder decoder;
-  draco::Mesh mesh;
   draco::StatusOr<std::unique_ptr<draco::Mesh>> result =
       decoder.DecodeMeshFromBuffer(&decodeBuffer);
   if (!result.ok()) {
@@ -149,9 +150,31 @@ void copyDecodedIndices(
     supposedComponentType = CesiumGltf::Accessor::ComponentType::UNSIGNED_INT;
   }
 
-  if (supposedComponentType > pIndicesAccessor->componentType) {
+  // mesh.primitive.indices requires the accessor to have SCALAR type and an
+  // unsigned integer componentType; getIndexAccessorView additionally
+  // rejects normalized accessors. Replace an illegal componentType, and
+  // widen a legal one that is too narrow for the decoded point count.
+  switch (pIndicesAccessor->componentType) {
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT:
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_INT:
+    if (supposedComponentType > pIndicesAccessor->componentType) {
+      pIndicesAccessor->componentType = supposedComponentType;
+    }
+    break;
+  default:
+    readGltf.warnings.emplace_back(
+        "indices accessor has a componentType (" +
+        CesiumGltf::convertPropertyComponentTypeToString(
+            CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
+                pIndicesAccessor->componentType)) +
+        ") that is not a valid glTF index componentType; using a "
+        "componentType derived from the decoded Draco point count instead.");
     pIndicesAccessor->componentType = supposedComponentType;
+    break;
   }
+  pIndicesAccessor->type = CesiumGltf::Accessor::Type::SCALAR;
+  pIndicesAccessor->normalized = false;
 
   pIndicesAccessor->bufferView = static_cast<int32_t>(model.bufferViews.size());
   CesiumGltf::BufferView& indicesBufferView = model.bufferViews.emplace_back();
@@ -168,8 +191,14 @@ void copyDecodedIndices(
   indicesBufferView.byteOffset = 0;
   indicesBufferView.target =
       CesiumGltf::BufferView::Target::ELEMENT_ARRAY_BUFFER;
-  pIndicesAccessor->type = CesiumGltf::Accessor::Type::SCALAR;
   pIndicesAccessor->byteOffset = 0;
+
+  if (pMesh->num_faces() == 0) {
+    // The zero-length buffer created above is already correct; there is
+    // nothing to copy, and draco::Mesh::face cannot be called on an empty
+    // mesh.
+    return;
+  }
 
   static_assert(sizeof(draco::PointIndex) == sizeof(uint32_t));
 
@@ -177,22 +206,10 @@ void copyDecodedIndices(
       reinterpret_cast<const uint32_t*>(&pMesh->face(draco::FaceIndex(0))[0]);
 
   switch (pIndicesAccessor->componentType) {
-  case CesiumGltf::Accessor::ComponentType::BYTE:
-    copyData(
-        pSourceIndices,
-        reinterpret_cast<int8_t*>(indicesBuffer.cesium.data.data()),
-        pIndicesAccessor->count);
-    break;
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
     copyData(
         pSourceIndices,
         reinterpret_cast<uint8_t*>(indicesBuffer.cesium.data.data()),
-        pIndicesAccessor->count);
-    break;
-  case CesiumGltf::Accessor::ComponentType::SHORT:
-    copyData(
-        pSourceIndices,
-        reinterpret_cast<int16_t*>(indicesBuffer.cesium.data.data()),
         pIndicesAccessor->count);
     break;
   case CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT:
@@ -207,16 +224,17 @@ void copyDecodedIndices(
         reinterpret_cast<uint32_t*>(indicesBuffer.cesium.data.data()),
         pIndicesAccessor->count);
     break;
-  case CesiumGltf::Accessor::ComponentType::FLOAT:
-    copyData(
-        pSourceIndices,
-        reinterpret_cast<float*>(indicesBuffer.cesium.data.data()),
-        pIndicesAccessor->count);
+  default:
+    // Unreachable: componentType is validated to be one of the above values
+    // before this point.
+    CESIUM_ASSERT(false);
     break;
   }
 }
 
-void copyDecodedAttribute(
+// Returns false if the attribute cannot be decoded and must be removed from
+// the primitive.
+bool copyDecodedAttribute(
     GltfReaderResult& readGltf,
     CesiumGltf::MeshPrimitive& /* primitive */,
     CesiumGltf::Accessor* pAccessor,
@@ -225,6 +243,16 @@ void copyDecodedAttribute(
   CESIUM_TRACE("CesiumGltfReader::copyDecodedAttribute");
   CESIUM_ASSERT(readGltf.model.has_value());
   CesiumGltf::Model& model = readGltf.model.value();
+
+  // An explicit mapping must contain an entry for every mesh point to avoid
+  // out-of-bounds access in the mapped_index() calls below.
+  if (!pAttribute->is_mapping_identity() &&
+      pAttribute->indices_map_size() < pMesh->num_points()) {
+    readGltf.warnings.emplace_back(
+        "Draco attribute maps fewer points than the mesh contains, so the "
+        "attribute is removed from the primitive.");
+    return false;
+  }
 
   if (pAccessor->count != pMesh->num_points()) {
     readGltf.warnings.emplace_back("Attribute accessor.count doesn't match "
@@ -240,6 +268,15 @@ void copyDecodedAttribute(
   CesiumGltf::Buffer& buffer = model.buffers.emplace_back();
 
   const int8_t numberOfComponents = pAccessor->computeNumberOfComponents();
+  if (pAttribute->num_components() != numberOfComponents) {
+    readGltf.warnings.emplace_back(
+        "Draco attribute has " +
+        std::to_string(int32_t(pAttribute->num_components())) +
+        " components, but its accessor has " +
+        std::to_string(int32_t(numberOfComponents)) +
+        ". Extra components are ignored and missing ones are zero-filled.");
+  }
+
   const int64_t stride = static_cast<int64_t>(
       numberOfComponents * pAccessor->computeByteSizeOfComponent());
   const int64_t sizeBytes = pAccessor->count * stride;
@@ -256,7 +293,7 @@ void copyDecodedAttribute(
     for (draco::PointIndex i(0); i < pMesh->num_points(); ++i) {
       const draco::AttributeValueIndex valueIndex = pAttribute->mapped_index(i);
       pAttribute->ConvertValue(valueIndex, numberOfComponents, pOut);
-      pOut += pAttribute->num_components();
+      pOut += numberOfComponents;
     }
   };
 
@@ -285,6 +322,8 @@ void copyDecodedAttribute(
         std::to_string(int32_t(pAccessor->componentType)));
     break;
   }
+
+  return true;
 }
 
 void decodePrimitive(
@@ -334,12 +373,17 @@ void decodePrimitive(
       continue;
     }
 
-    copyDecodedAttribute(
-        readGltf,
-        primitive,
-        pAccessor,
-        pMesh.get(),
-        pAttribute);
+    if (!copyDecodedAttribute(
+            readGltf,
+            primitive,
+            pAccessor,
+            pMesh.get(),
+            pAttribute)) {
+      // The accessor was not rewritten with decoded data; leaving it in the
+      // primitive would advertise the still-compressed accessor after the
+      // Draco extension is stripped below.
+      primitive.attributes.erase(primitiveAttrIt);
+    }
   }
 }
 } // namespace
