@@ -78,7 +78,7 @@ void TileRenderContent::resetModifiedModelAndRenderResources() noexcept {
 
 void TileRenderContent::replaceWithModifiedModel() noexcept {
   CESIUM_ASSERT(this->_modifiedModel);
-  CESIUM_ASSERT(!this->isBeingUpSampled());
+  CESIUM_ASSERT(!this->isBeingUpsampled());
   if (this->_modifiedModel) {
     this->_model = std::move(*this->_modifiedModel);
     // reset after move because this is tested for nullopt in
@@ -94,15 +94,15 @@ void TileRenderContent::replaceWithModifiedModel() noexcept {
   }
 }
 
-bool TileRenderContent::isBeingUpSampled() const noexcept {
+bool TileRenderContent::isBeingUpsampled() const noexcept {
   return this->_activeUpSamplingTaskCount > 0;
 }
 
-void TileRenderContent::incrementUpSamplingTaskCount() const noexcept {
+void TileRenderContent::incrementUpsamplingTaskCount() const noexcept {
   this->_activeUpSamplingTaskCount++;
 }
 
-void TileRenderContent::decrementUpSamplingTaskCount() const noexcept {
+void TileRenderContent::decrementUpsamplingTaskCount() const noexcept {
   CESIUM_ASSERT(this->_activeUpSamplingTaskCount > 0);
   this->_activeUpSamplingTaskCount--;
 }

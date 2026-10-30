@@ -1659,7 +1659,7 @@ void TilesetContentManager::finishLoading(
   if (this->_externals.pGltfModifier &&
       this->_externals.pGltfModifier->needsMainThreadModification(tile)) {
 
-    if (pRenderContent->isBeingUpSampled()) {
+    if (pRenderContent->isBeingUpsampled()) {
       // If this tile is currently being up-sampled in a worker thread, we
       // cannot replace its model. Return so that we do not block the main
       // thread (finishLoading will be called again later).

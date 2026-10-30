@@ -270,22 +270,22 @@ public:
   void replaceWithModifiedModel() noexcept;
 
   /**
-   * @brief Returns whether this tile is currently being up-sampled.
+   * @brief Returns whether this tile is currently being upsampled.
    * It should only be called by the main thread.
    */
-  bool isBeingUpSampled() const noexcept;
+  bool isBeingUpsampled() const noexcept;
 
   /**
-   * @brief Increment the current up-sampling task count.
+   * @brief Increment the current upsampling task count.
    * It should only be called by the main thread.
    */
-  void incrementUpSamplingTaskCount() const noexcept;
+  void incrementUpsamplingTaskCount() const noexcept;
 
   /**
-   * @brief Decrement the current up-sampling task count.
+   * @brief Decrement the current upsampling task count.
    * It should only be called by the main thread.
    */
-  void decrementUpSamplingTaskCount() const noexcept;
+  void decrementUpsamplingTaskCount() const noexcept;
 
 private:
   CesiumGltf::Model _model;

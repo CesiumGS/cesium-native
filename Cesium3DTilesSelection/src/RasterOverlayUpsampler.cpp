@@ -93,7 +93,7 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
 
   const CesiumGltf::Model& parentModel = pParentRenderContent->getModel();
 
-  pParentRenderContent->incrementUpSamplingTaskCount();
+  pParentRenderContent->incrementUpsamplingTaskCount();
   return loadInput.asyncSystem
       .runInWorkerThread([&parentModel,
                           pParentRenderContent,
@@ -145,8 +145,8 @@ RasterOverlayUpsampler::loadTileContent(const TileLoadInput& loadInput) {
             ellipsoid};
       })
       .thenInMainThread([pParentRenderContent](TileLoadResult&& result) {
-        CESIUM_ASSERT(pParentRenderContent->isBeingUpSampled());
-        pParentRenderContent->decrementUpSamplingTaskCount();
+        CESIUM_ASSERT(pParentRenderContent->isBeingUpsampled());
+        pParentRenderContent->decrementUpsamplingTaskCount();
         return std::move(result);
       });
 }
