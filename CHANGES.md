@@ -1,6 +1,12 @@
 # Change Log
 
-### ? - ?
+### ? - ? 
+
+##### Additions :tada:
+
+- SPZ decoder now matches the `KHR_gaussian_splatting` specification more accurately, including support for `KHR_gaussian_splatting:OPACITY` and `KHR_gaussian_splatting:SH_DEGREE_0_COEF_0` attributes, and component types other than `FLOAT` where allowed by the specification.
+
+### v0.66.0 - 2026-11-02
 
 ##### Breaking Changes :mega:
 
@@ -12,11 +18,13 @@
 
 - Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 - Added a `CESIUM_DISABLE_SPZ` CMake option to build Cesium Native without Niantic SPZ support.
-- SPZ decoder now matches the `KHR_gaussian_splatting` specification more accurately, including support for `KHR_gaussian_splatting:OPACITY` and `KHR_gaussian_splatting:SH_DEGREE_0_COEF_0` attributes, and component types other than `FLOAT` where allowed by the specification.
+- Added support for the new `statistics` property under `ExtensionModelExtStructuralMetadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
 
 ##### Fixes :wrench:
 
 - Fixed potential integer overflow and out-of-bounds write while decoding glTFs using `EXT_meshopt_compression`.
+- Fixed a heap overflow when decoding Draco-compressed glTFs whose attributes declare a different number of components than the corresponding accessor.
+- Fixed decoding of Draco-compressed glTFs with invalid index accessor component types or incorrectly normalized index accessors.
 
 ### v0.65.0 - 2026-10-01
 
