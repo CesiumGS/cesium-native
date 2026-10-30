@@ -574,12 +574,6 @@ postProcessContentInWorkerThread(
   result.initialBoundingVolume = tileLoadInfo.tileBoundingVolume;
   result.initialContentBoundingVolume = tileLoadInfo.tileContentBoundingVolume;
 
-  // Important: post-process must be performed *after* GltfModifier, as it does
-  // add attribute _CESIUMOVERLAY_xxx, which is required for raster overlays.
-  if (!needsApplyGltfModifier) {
-    postProcessGltfInWorkerThread(result, std::move(projections), tileLoadInfo);
-  }
-
   auto applyGltfModifier = [&]() {
     // Apply the glTF modifier right away, otherwise it will be
     // triggered immediately after the renderer-side resources
@@ -624,6 +618,12 @@ postProcessContentInWorkerThread(
                   std::move(result));
             });
   };
+
+  // Important: post-process must be performed *after* GltfModifier, as it does
+  // add attribute _CESIUMOVERLAY_xxx, which is required for raster overlays.
+  if (!needsApplyGltfModifier) {
+    postProcessGltfInWorkerThread(result, std::move(projections), tileLoadInfo);
+  }
 
   CesiumAsync::Future<std::tuple<TileContentLoadInfo, TileLoadResult>> future =
       needsApplyGltfModifier

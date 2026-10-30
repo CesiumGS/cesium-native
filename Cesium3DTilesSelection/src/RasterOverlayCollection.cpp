@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include <utility>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
