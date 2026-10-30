@@ -1,4 +1,5 @@
 #include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/Tile.h>
@@ -88,6 +89,13 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
                : RasterOverlayTile::MoreDetailAvailable::No;
   }
 
+  auto const isTileUpToDate = [](Tile const& testedTile) {
+    const TileRenderContent* pRenderContent =
+        testedTile.getContent().getRenderContent();
+    return testedTile.getState() == TileLoadState::Done && pRenderContent &&
+           pRenderContent->getGltfModifierState() == GltfModifierState::Idle;
+  };
+
   // If the loading tile has failed, try its parent's loading tile.
   Tile* pTile = &tile;
   while (this->_pLoadingTile &&
@@ -143,7 +151,8 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
           *pTile,
           this->_pLoadingTile->getTileProvider().getOwner());
       if (pCandidate &&
-          pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded) {
+          pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded &&
+          isTileUpToDate(*pTile)) {
         break;
       }
       pTile = pTile->getParent();
@@ -151,7 +160,7 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
 
     if (pCandidate &&
         pCandidate->getState() >= RasterOverlayTile::LoadState::Loaded &&
-        this->_pReadyTile != pCandidate) {
+        isTileUpToDate(*pTile) && this->_pReadyTile != pCandidate) {
       if (this->getState() != AttachmentState::Unattached) {
         prepareRendererResources.detachRasterInMainThread(
             tile,
@@ -180,7 +189,8 @@ RasterOverlayTile::MoreDetailAvailable RasterMappedTo3DTile::update(
 
   // Attach the ready tile if it's not already attached.
   if (this->_pReadyTile &&
-      this->getState() == RasterMappedTo3DTile::AttachmentState::Unattached) {
+      this->getState() == RasterMappedTo3DTile::AttachmentState::Unattached &&
+      isTileUpToDate(tile)) {
     this->_pReadyTile->loadInMainThread();
 
     prepareRendererResources.attachRasterInMainThread(
@@ -238,6 +248,75 @@ void RasterMappedTo3DTile::detachFromTile(
   }
 
   this->_state = AttachmentState::Unattached;
+}
+
+namespace {
+
+bool coversRectangle(
+    const RasterOverlayTile& overlayTile,
+    const Rectangle& rectangle) {
+  const Rectangle& overlayRectangle = overlayTile.getRectangle();
+  const glm::dvec2& pixels = overlayTile.getTargetScreenPixels();
+
+  // Allow the geometry to extend past the image by up to half a texel, so that
+  // numerical noise doesn't force an unnecessary reload of the imagery.
+  const double toleranceX =
+      pixels.x > 0.0 ? 0.5 * overlayRectangle.computeWidth() / pixels.x : 0.0;
+  const double toleranceY =
+      pixels.y > 0.0 ? 0.5 * overlayRectangle.computeHeight() / pixels.y : 0.0;
+
+  Rectangle allowedOverlayRectangle = Rectangle(
+      overlayRectangle.minimumX - toleranceX,
+      overlayRectangle.minimumY - toleranceY,
+      overlayRectangle.maximumX + toleranceX,
+      overlayRectangle.maximumY + toleranceY);
+
+  return allowedOverlayRectangle.fullyContains(rectangle);
+}
+
+} // namespace
+
+bool RasterMappedTo3DTile::prepareForReplacedContent(
+    const Tile& tile) noexcept {
+  RasterOverlayTile* pOwnTile =
+      this->_pLoadingTile ? this->_pLoadingTile.get() : this->_pReadyTile.get();
+  if (!pOwnTile) {
+    return false;
+  }
+
+  if (pOwnTile->getState() == RasterOverlayTile::LoadState::Placeholder) {
+    // Placeholders are replaced with real tiles, using the tile's current
+    // content, by RasterOverlayCollection::updateTileOverlays.
+    return true;
+  }
+
+  const TileRenderContent* pRenderContent =
+      tile.getContent().getRenderContent();
+  if (!pRenderContent) {
+    return false;
+  }
+
+  const Rectangle* pRectangle =
+      pRenderContent->getRasterOverlayDetails()
+          .findRectangleForOverlayProjection(
+              pOwnTile->getTileProvider().getProjection());
+  if (!pRectangle || !coversRectangle(*pOwnTile, *pRectangle)) {
+    return false;
+  }
+
+  if (this->_pReadyTile) {
+    if (this->_pReadyTile->getState() == RasterOverlayTile::LoadState::Failed) {
+      // A failed tile is considered attached without ever being given to the
+      // renderer. See `update`.
+      if (!this->_pLoadingTile) {
+        this->_state = AttachmentState::Attached;
+      }
+    } else {
+      this->computeTranslationAndScale(tile);
+    }
+  }
+
+  return true;
 }
 
 bool RasterMappedTo3DTile::loadThrottled() noexcept {
