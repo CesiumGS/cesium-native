@@ -19,8 +19,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <utility>
+#include <vector>
 
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
