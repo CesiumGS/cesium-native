@@ -1,6 +1,11 @@
 # Change Log
 
-### ? - ? 
+### ? - ?
+
+##### Breaking Changes :mega:
+
+- Decoded SPZ scales written to the `KHR_gaussian_splatting:SCALE` attribute are now written as-is. To replicate the previous behavior, calculate the base-e exponential of each component (i.e. `std::exp(x)`) before using.
+- SPZ color components are no longer automatically converted to the `FLOAT` component type when read. To replicate the previous behavior, set `options.spzDecoderOptions.forceFloatAccessors` to `true` on `GltfReaderOptions`.
 
 ##### Additions :tada:
 
@@ -11,8 +16,6 @@
 ##### Breaking Changes :mega:
 
 - The classes associated with `KHR_implicit_shapes` have been renamed from `Shape`, `Box`, `Capsule`, `Cylinder`, `Sphere` to `ExtensionKhrImplicitShapesShape`, `ExtensionKhrImplicitShapesBox`, `ExtensionKhrImplicitShapesCapsule`, `ExtensionKhrImplicitShapesCylinder`, `ExtensionKhrImplicitShapesSphere` to deconflict with the shape classes generated for glTF 2.1.
-- Decoded SPZ scales written to the `KHR_gaussian_splatting:SCALE` attribute are now written as-is. To replicate the previous behavior, calculate the base-e exponential of each component (i.e. `std::exp(x)`) before using.
-- SPZ color components are no longer automatically converted to the `FLOAT` component type when read. To replicate the previous behavior, set `options.spzDecoderOptions.forceFloatAccessors` to `true` on `GltfReaderOptions`.
 
 ##### Additions :tada:
 
