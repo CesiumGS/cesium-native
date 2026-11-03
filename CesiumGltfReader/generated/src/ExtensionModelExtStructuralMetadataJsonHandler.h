@@ -6,6 +6,7 @@
 #include "PropertyTableJsonHandler.h"
 #include "PropertyTextureJsonHandler.h"
 #include "SchemaJsonHandler.h"
+#include "StatisticsJsonHandler.h"
 
 #include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumJsonReader/ArrayJsonHandler.h>
@@ -60,5 +61,6 @@ private:
       CesiumGltf::PropertyAttribute,
       PropertyAttributeJsonHandler>
       _propertyAttributes;
+  StatisticsJsonHandler _statistics;
 };
 } // namespace CesiumGltfReader

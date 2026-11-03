@@ -4,7 +4,9 @@
 #include "decodeDataUrls.h"
 #include "decodeDraco.h"
 #include "decodeMeshOpt.h"
+#ifndef CESIUM_DISABLE_SPZ
 #include "decodeSpz.h"
+#endif
 #include "dequantizeMeshData.h"
 #include "registerReaderExtensions.h"
 
@@ -363,9 +365,11 @@ void postprocess(GltfReaderResult& readGltf, const GltfReaderOptions& options) {
     decodeMeshOpt(model, readGltf);
   }
 
+#ifndef CESIUM_DISABLE_SPZ
   if (options.decodeSpz && hasSpzExtension(readGltf)) {
     decodeSpz(readGltf);
   }
+#endif
 
   if (options.dequantizeMeshData &&
       std::find(

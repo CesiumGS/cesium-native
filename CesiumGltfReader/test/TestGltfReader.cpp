@@ -1,5 +1,6 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGltf/Accessor.h>
+#include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
 #include <CesiumGltf/Buffer.h>
 #include <CesiumGltf/BufferView.h>
@@ -49,6 +50,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 using namespace CesiumAsync;
@@ -249,6 +251,122 @@ TEST_CASE("Can decompress meshes using EXT_meshopt_compression") {
           error));
     }
   }
+}
+
+namespace {
+std::string writeMeshOptExtension(
+    int64_t byteStride,
+    int64_t count,
+    int64_t byteOffset = 0,
+    int64_t byteLength = 32) {
+  return fmt::format(
+      R"(
+        {{
+          "buffer": 0,
+          "byteOffset": {},
+          "byteLength": {},
+          "mode": "ATTRIBUTES",
+          "filter": "NONE",
+          "byteStride": {},
+          "count":{}
+        }})",
+      byteOffset,
+      byteLength,
+      byteStride,
+      count);
+}
+
+std::vector<std::byte> writeMeshOptGltf(const std::string& extensionJson) {
+  // A 32-byte all-zero buffer, large enough to pass the compressed range check.
+  const std::string dataUri =
+      "data:application/octet-stream;base64," + std::string(43, 'A') + "=";
+  const std::string gltf = fmt::format(
+      R"(
+        {{
+          "asset":{{
+            "version": "2.0"
+            }},
+          "extensionsUsed": ["EXT_meshopt_compression"],
+          "buffers":[
+            {{
+              "byteLength": 32,
+              "uri": "{}"
+            }}
+          ],
+          "bufferViews":[
+            {{
+              "buffer": 0,
+              "byteOffset": 0,
+              "byteLength": 32,
+              "extensions": {{
+                "EXT_meshopt_compression": {}
+              }}
+            }}
+          ]
+       }})",
+      dataUri,
+      extensionJson);
+  const std::byte* pStart = reinterpret_cast<const std::byte*>(gltf.data());
+  return std::vector<std::byte>(pStart, pStart + gltf.size());
+}
+} // namespace
+
+TEST_CASE("Rejects malformed EXT_meshopt_compression bufferViews") {
+  constexpr int64_t int64Max = std::numeric_limits<int64_t>::max();
+  std::string extensionJson;
+
+  SUBCASE("count times byteStride overflows to a small positive value") {
+    // The reported proof-of-concept: 4 * (2^62 + 4) wraps to 16.
+    extensionJson = writeMeshOptExtension(
+        4, /* byteStride */
+        (int64_t(1) << 62) + 4 /* count */);
+  }
+
+  SUBCASE("count times byteStride is just above int64 max") {
+    extensionJson = writeMeshOptExtension(
+        4, /* byteStride */
+        int64Max / 4 + 1 /* count */);
+  }
+
+  SUBCASE("count is zero") {
+    extensionJson = writeMeshOptExtension(
+        4, /* byteStride */
+        0 /* count */);
+  }
+  SUBCASE("count is negative") {
+    extensionJson = writeMeshOptExtension(
+        4, /* byteStride */
+        -1 /* count */);
+  }
+
+  SUBCASE("byteStride is zero") {
+    extensionJson = writeMeshOptExtension(
+        0, /* byteStride */
+        8 /* count */);
+  }
+
+  SUBCASE("byteStride is negative") {
+    extensionJson = writeMeshOptExtension(
+        -4, /* byteStride */
+        8 /* count */);
+  }
+
+  SUBCASE("compressed byteOffset plus byteLength overflows") {
+    extensionJson = writeMeshOptExtension(
+        -4,       /* byteStride */
+        8,        /* count */
+        int64Max, /* byteOffset */
+        int64Max /* byteLength */);
+  }
+
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(writeMeshOptGltf(extensionJson));
+
+  REQUIRE(result.model);
+  CHECK(!result.warnings.empty());
+
+  // The bufferView must be left alone; no decoded buffer is appended.
+  CHECK(result.model->buffers.size() == 1);
 }
 
 TEST_CASE("Read TriangleWithoutIndices") {
@@ -983,7 +1101,8 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
           ->getValuePtrForKey("POSITION")
           ->getSafeNumberOrDefault<int64_t>(1) == 0);
 
-  // Repeat test but this time the extension should not be deserialized at all.
+  // Repeat test but this time the extension should not be deserialized at
+  // all.
   reader.getOptions().setExtensionState(
       "KHR_draco_mesh_compression",
       CesiumJsonReader::ExtensionState::Disabled);
@@ -1008,7 +1127,8 @@ TEST_CASE("Can deserialize KHR_draco_mesh_compression") {
 namespace {
 // Builds a model with a single primitive whose POSITION attribute is
 // Draco-compressed, reusing the compressed bitstream from the CesiumMilkTruck
-// test data. In that bitstream, POSITION has unique ID 1 and three components.
+// test data. In that bitstream, POSITION has unique ID 1 and three
+// components.
 GltfReaderResult createDracoModel(const std::string& positionType) {
   GltfReaderResult result;
   Model& model = result.model.emplace();
@@ -1258,6 +1378,66 @@ TEST_CASE("Can parse doubles with no fractions as integers") {
       std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
       options);
   CHECK(!result.warnings.empty());
+
+  // The largest double below 2^63 is representable as int64 and must parse.
+  s = R"(
+    {
+      "accessors": [
+        {
+          "count": 9223372036854774784.0,
+          "componentType": 5121
+        }
+      ]
+    }
+  )";
+  result = reader.readGltf(
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  CHECK(result.warnings.empty());
+  CHECK(result.model.value().accessors[0].count == 9223372036854774784LL);
+}
+
+TEST_CASE("Rejects doubles that cannot be represented as integers") {
+  GltfReaderOptions options;
+  GltfReader reader;
+
+  // A double literal with no fractional part but a magnitude outside the
+  // range of the target integer type must also be rejected, rather than
+  // being cast to a garbage value.
+  std::string s = R"(
+    {
+      "accessors": [
+        {
+          "count": 1e20,
+          "componentType": 5121
+        }
+      ]
+    }
+  )";
+  GltfReaderResult result = reader.readGltf(
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  CHECK(!result.warnings.empty());
+  CHECK(result.model.value().accessors[0].count == 0);
+
+  // 2^63 is the first invalid value for a 64-bit signed count, and it is
+  // exactly what static_cast<double>(int64 max) rounds up to, so it must be
+  // rejected rather than slipping past a rounded bound.
+  s = R"(
+    {
+      "accessors": [
+        {
+          "count": 9223372036854775808.0,
+          "componentType": 5121
+        }
+      ]
+    }
+  )";
+  result = reader.readGltf(
+      std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+      options);
+  CHECK(!result.warnings.empty());
+  CHECK(result.model.value().accessors[0].count == 0);
 }
 
 TEST_CASE("Test KTX2") {
@@ -1452,8 +1632,8 @@ TEST_CASE("GltfReader::loadGltf") {
     GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
     REQUIRE(result.model);
     CHECK(result.errors.empty());
-    // There will be warnings, because this model has accessors that don't match
-    // the Draco-decoded size. It seems to be ambiguous whether this is
+    // There will be warnings, because this model has accessors that don't
+    // match the Draco-decoded size. It seems to be ambiguous whether this is
     // technically allowed or not. See:
     // https://github.com/KhronosGroup/glTF/issues/1342
 
@@ -1470,8 +1650,8 @@ TEST_CASE("GltfReader::loadGltf") {
     }
   }
 
-  SUBCASE(
-      "does not resolve external images when resolveExternalImages is false") {
+  SUBCASE("does not resolve external images when resolveExternalImages is "
+          "false") {
     GltfReaderOptions options;
     options.resolveExternalImages = false;
     GltfReader reader{};
@@ -1480,8 +1660,8 @@ TEST_CASE("GltfReader::loadGltf") {
     GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
     REQUIRE(result.model);
     CHECK(result.errors.empty());
-    // There will be warnings, because this model has accessors that don't match
-    // the Draco-decoded size. It seems to be ambiguous whether this is
+    // There will be warnings, because this model has accessors that don't
+    // match the Draco-decoded size. It seems to be ambiguous whether this is
     // technically allowed or not. See:
     // https://github.com/KhronosGroup/glTF/issues/1342
 
@@ -1578,4 +1758,61 @@ TEST_CASE("SPZ decoding works properly") {
     REQUIRE(scaleView.size() == 1);
     CHECK(scaleView[0] == glm::vec3(20.085537, 7.38905621, 2.71828175));
   }
+}
+
+TEST_CASE("Replaces an illegal Draco indices accessor componentType") {
+  GltfReader reader;
+  GltfReaderOptions options;
+
+  GltfReaderResult result = createDracoModel(Accessor::Type::VEC3);
+
+  Accessor& indicesAccessor = result.model->accessors.emplace_back();
+  indicesAccessor.type = Accessor::Type::SCALAR;
+
+  bool expectWarning = true;
+  SUBCASE("unknown componentType") { indicesAccessor.componentType = 9999; }
+  SUBCASE("FLOAT componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::FLOAT;
+  }
+  SUBCASE("signed componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::SHORT;
+  }
+  SUBCASE("normalized componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::UNSIGNED_SHORT;
+    indicesAccessor.normalized = true;
+    expectWarning = false;
+  }
+  SUBCASE("too narrow componentType") {
+    indicesAccessor.componentType = Accessor::ComponentType::UNSIGNED_BYTE;
+    expectWarning = false;
+  }
+
+  const int32_t indicesAccessorIndex =
+      static_cast<int32_t>(result.model->accessors.size() - 1);
+  result.model->meshes[0].primitives[0].indices = indicesAccessorIndex;
+
+  reader.postprocessGltf(result, options);
+
+  REQUIRE(result.model);
+  if (expectWarning) {
+    CHECK(hasWarningContaining(result, "not a valid glTF index componentType"));
+  }
+
+  // The componentType must end up as a legal glTF index type wide enough for
+  // the decoded Draco point count, so the indices buffer is sized and
+  // interpreted consistently and the canonical index accessor reader accepts
+  // the result.
+  const Accessor& fixedAccessor =
+      result.model->accessors[static_cast<size_t>(indicesAccessorIndex)];
+  CHECK(fixedAccessor.componentType == Accessor::ComponentType::UNSIGNED_SHORT);
+  CHECK(fixedAccessor.type == Accessor::Type::SCALAR);
+  CHECK(!fixedAccessor.normalized);
+
+  IndexAccessorType indexView = getIndexAccessorView(
+      *result.model,
+      result.model->meshes[0].primitives[0]);
+  const auto* pView = std::get_if<AccessorView<uint16_t>>(&indexView);
+  REQUIRE(pView);
+  REQUIRE(pView->status() == AccessorViewStatus::Valid);
+  CHECK(pView->size() == fixedAccessor.count);
 }
