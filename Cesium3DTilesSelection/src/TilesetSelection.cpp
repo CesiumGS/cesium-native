@@ -311,9 +311,15 @@ void addTileToLoadQueue(
       context.externals.pGltfModifier);
 }
 
-void addTileToRender(ViewUpdateResult& result, Tile& tile, double sse) {
-  result.tilesToRenderThisFrame.emplace_back(&tile);
-  result.tileScreenSpaceErrorThisFrame.emplace_back(sse);
+void addTileToRenderIfContentIsVisible(
+    const TilesetFrameState& frameState,
+    ViewUpdateResult& result,
+    Tile& tile,
+    double sse) {
+  if (isContentVisible(frameState, tile)) {
+    result.tilesToRenderThisFrame.emplace_back(&tile);
+    result.tileScreenSpaceErrorThisFrame.emplace_back(sse);
+  }
 }
 
 double computeSse(
@@ -617,7 +623,7 @@ TraversalDetails renderLeaf(
     ViewUpdateResult& result) {
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  addTileToRender(result, tile, tileSse);
+  addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
   addTileToLoadQueue(
       context,
       frameState,
@@ -638,7 +644,7 @@ TraversalDetails renderInnerTile(
       result);
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  addTileToRender(result, tile, tileSse);
+  addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
   return createTraversalDetailsForSingleTile(frameState, tile);
 }
 
@@ -671,7 +677,7 @@ bool loadAndRenderAdditiveRefinedTile(
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
-    addTileToRender(result, tile, tileSse);
+    addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
     if (!queuedForLoad) {
       addTileToLoadQueue(
           context,
@@ -738,7 +744,7 @@ bool kickDescendantsAndRenderTile(
       sseList.end());
 
   if (tile.getRefine() != TileRefine::Add) {
-    addTileToRender(result, tile, tileSse);
+    addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
   }
 
   traversalState.currentState() =
