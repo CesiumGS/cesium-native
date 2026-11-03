@@ -30,10 +30,26 @@ struct CESIUMGLTFREADER_API SpzDecoderOptions {
    * @brief If true, all accessors will be forced to use the FLOAT component
    * type, regardless of the original data type.
    *
-   * As the spz library outputs float data directly, this option can avoid
+   * As the `spz` library outputs float data directly, this option can avoid
    * unnecessary conversions to other component types.
    */
   bool forceFloatAccessors = false;
+
+  /**
+   * @brief If true, the `KHR_gaussian_splatting:OPACITY` accessor will have
+   * the sigmoid function applied to its values.
+   *
+   * Disabling this will pass the opacity values from `spz` directly to the glTF
+   * accessor. This setting does not affect the alpha component of `COLOR_0`,
+   * which will always have the transformation applied.
+   */
+  bool applySigmoidToOpacity = true;
+
+  /**
+   * @brief If true, `KHR_gaussian_splatting:SCALE` values will be preserved in
+   * their logarithmic form, without applying any conversion.
+   */
+  bool preserveLogScaleValues = false;
 };
 
 /**
