@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <span>
 #include <utility>
 #include <vector>
@@ -122,20 +123,38 @@ void decodeMeshOpt(Model& model, CesiumGltfReader::GltfReaderResult& readGltf) {
         continue;
       }
 
+      const int64_t bufferSize =
+          static_cast<int64_t>(pBuffer->cesium.data.size());
+      // Phrased as a subtraction so that byteOffset + byteLength is never
+      // computed; that addition can itself overflow.
       if (pMeshOpt->byteOffset < 0 || pMeshOpt->byteLength < 0 ||
-          static_cast<size_t>(pMeshOpt->byteOffset + pMeshOpt->byteLength) >
-              pBuffer->cesium.data.size()) {
+          pMeshOpt->byteOffset > bufferSize ||
+          pMeshOpt->byteLength > bufferSize - pMeshOpt->byteOffset) {
         readGltf.warnings.emplace_back(
             "The EXT_meshopt_compression extension has a bufferView that "
             "extends beyond its buffer.");
         continue;
       }
-      int64_t byteLength = pMeshOpt->byteStride * pMeshOpt->count;
-      if (byteLength < 0) {
-        readGltf.warnings.emplace_back("The EXT_meshopt_compression extension "
-                                       "has a negative byte length.");
+
+      if (pMeshOpt->count <= 0 || pMeshOpt->byteStride <= 0) {
+        readGltf.warnings.emplace_back(
+            "The EXT_meshopt_compression extension has a non-positive count or "
+            "byteStride.");
         continue;
       }
+
+      // Division rather than multiplication, because signed overflow is
+      // undefined behavior; the product must never be computed unless it is
+      // already known to fit.
+      if (pMeshOpt->count >
+          std::numeric_limits<int64_t>::max() / pMeshOpt->byteStride) {
+        readGltf.warnings.emplace_back(
+            "The EXT_meshopt_compression extension has a count and byteStride "
+            "whose product overflows.");
+        continue;
+      }
+
+      const int64_t byteLength = pMeshOpt->count * pMeshOpt->byteStride;
 
       std::vector<std::byte> data;
       data.resize(static_cast<size_t>(byteLength));
