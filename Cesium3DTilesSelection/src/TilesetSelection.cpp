@@ -620,6 +620,9 @@ TraversalDetails renderLeaf(
     double tilePriority,
     double tileSse,
     ViewUpdateResult& result) {
+  if (!isContentVisible(frameState, tile)) {
+    return TraversalDetails{};
+  }
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
   addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
@@ -842,16 +845,7 @@ TraversalDetails visitTile(
 
   // If this is a leaf tile, just render it (it's already been deemed visible).
   if (isLeaf(tile)) {
-    if (isContentVisible(frameState, tile)) {
-      return renderLeaf(
-          context,
-          frameState,
-          tile,
-          tilePriority,
-          tileSse,
-          result);
-    }
-    return TraversalDetails{};
+    return renderLeaf(context, frameState, tile, tilePriority, tileSse, result);
   }
 
   const bool unconditionallyRefine = tile.getUnconditionallyRefine();

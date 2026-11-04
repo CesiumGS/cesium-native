@@ -207,11 +207,11 @@ TEST_CASE("Test additive refinement with groups sanity check") {
   REQUIRE(pTilesetJson);
   CHECK(pTilesetJson->getChildren().size() == 1);
 
-  const Tile* groupsRoot = &pTilesetJson->getChildren()[0];
-  REQUIRE(groupsRoot->getChildren().size() == 1);
-  CHECK(groupsRoot->getState() == TileLoadState::ContentLoading);
+  const Tile* pGroupsRoot = &pTilesetJson->getChildren()[0];
+  REQUIRE(pGroupsRoot->getChildren().size() == 1);
+  CHECK(pGroupsRoot->getState() == TileLoadState::ContentLoading);
 
-  const Tile* pRoot = &groupsRoot->getChildren()[0];
+  const Tile* pRoot = &pGroupsRoot->getChildren()[0];
   CHECK(pRoot->getChildren().size() == 0);
   CHECK(pRoot->getState() == TileLoadState::Unloaded);
 
@@ -245,7 +245,7 @@ TEST_CASE("Test additive refinement with groups sanity check") {
       CHECK(pRoot->getState() == TileLoadState::Done);
       CHECK(!doesTileMeetSSE(viewState, *pRoot, tileset));
       CHECK(pRoot->getChildren().size() == 1);
-      CHECK(std::find(ttr.begin(), ttr.end(), groupsRoot) != ttr.end());
+      CHECK(std::find(ttr.begin(), ttr.end(), pGroupsRoot) != ttr.end());
 
       const Tile& parentB3DM = pRoot->getChildren().front();
       CHECK(parentB3DM.getState() == TileLoadState::ContentLoading);
