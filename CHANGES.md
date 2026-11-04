@@ -1,5 +1,15 @@
 # Change Log
 
+### ? - ?
+
+##### Additions :tada:
+
+- Added `RasterOverlayCollection::updateTileOverlaysForReplacedContent` and `RasterMappedTo3DTile::prepareForReplacedContent`, which update a tile's raster overlay mappings after its content is replaced, such as by a `GltfModifier`.
+
+##### Fixes :wrench:
+
+- Fixed bugs and potential crashes when using the `GltfModifier` on a tileset with raster overlays (such as cartographic polygons).
+
 ### v0.66.0 - 2026-11-02
 
 ##### Breaking Changes :mega:
