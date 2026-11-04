@@ -340,11 +340,11 @@ public:
 
   /**
    * @brief Set the measure delegate object.
-   * @param measureDelegate The measure delegate.
+   * @param pMeasureDelegate The measure delegate.
    */
   void setMeasureDelegate(
-      std::shared_ptr<ViewStateMeasureDelegate> measureDelegate) {
-    this->_pMeasureDelegate = std::move(measureDelegate);
+      std::shared_ptr<ViewStateMeasureDelegate> pMeasureDelegate) {
+    this->_pMeasureDelegate = std::move(pMeasureDelegate);
   }
 
   /**
@@ -357,11 +357,11 @@ public:
 
   /**
    * @brief Set the visibility delegate object.
-   * @param visibilityDelegate The visibility delegate.
+   * @param pVisibilityDelegate The visibility delegate.
    */
   void setVisibilityDelegate(
-      std::shared_ptr<ViewStateVisibilityDelegate> visibilityDelegate) {
-    this->_pVisibilityDelegate = std::move(visibilityDelegate);
+      std::shared_ptr<ViewStateVisibilityDelegate> pVisibilityDelegate) {
+    this->_pVisibilityDelegate = std::move(pVisibilityDelegate);
   }
 
 private:

@@ -24,13 +24,11 @@
   "geometricError": 240,
   "groups": [
     {
-      "class": "tileset",
       "properties": {
         "name" : "group 0"
       }
     },
     {
-      "class": "tileset",
       "properties": {
         "name" : "group 1"
       }
