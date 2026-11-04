@@ -144,6 +144,41 @@ GeoJsonDocument createFeatureCollectionWithLineString(
   return GeoJsonDocument(GeoJsonObject{std::move(collection)}, {});
 }
 
+GeoJsonDocument createRootFeatureWithLineString(
+    const std::optional<VectorStyle>& geometryStyle,
+    const std::optional<VectorStyle>& featureStyle) {
+  GeoJsonLineString lineString;
+  lineString.coordinates = {
+      glm::dvec3(0.0, 0.0, 0.0),
+      glm::dvec3(5.0, 0.0, 0.0)};
+  lineString.style = geometryStyle;
+
+  GeoJsonFeature feature;
+  feature.geometry =
+      std::make_unique<GeoJsonObject>(GeoJsonObject{std::move(lineString)});
+  feature.style = featureStyle;
+
+  return GeoJsonDocument(GeoJsonObject{std::move(feature)}, {});
+}
+
+GeoJsonDocument createRootFeatureWithGeometryCollection(
+    const std::optional<VectorStyle>& featureStyle) {
+  GeoJsonLineString lineString;
+  lineString.coordinates = {
+      glm::dvec3(0.0, 0.0, 0.0),
+      glm::dvec3(5.0, 0.0, 0.0)};
+
+  GeoJsonGeometryCollection geometryCollection;
+  geometryCollection.geometries.push_back(GeoJsonObject{std::move(lineString)});
+
+  GeoJsonFeature feature;
+  feature.geometry = std::make_unique<GeoJsonObject>(
+      GeoJsonObject{std::move(geometryCollection)});
+  feature.style = featureStyle;
+
+  return GeoJsonDocument(GeoJsonObject{std::move(feature)}, {});
+}
+
 GeoJsonDocument createDocumentWithPoint(const glm::dvec3& coordinates) {
   GeoJsonPoint point;
   point.coordinates = coordinates;
@@ -564,6 +599,135 @@ TEST_CASE("GeoJsonDocumentRasterOverlay FeatureCollection falls back to "
       options);
 
   CHECK(imageHasPixelWithColor(image, 255, 0, 0, 255));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay root Feature uses geometry style over "
+          "feature style") {
+  const VectorStyle geometryStyle{
+      LineStyle{
+          ColorStyle{Color{0, 255, 0, 255}, ColorMode::Normal},
+          2.0,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+  const VectorStyle featureStyle{
+      LineStyle{
+          ColorStyle{Color{0, 0, 255, 255}, ColorMode::Normal},
+          2.0,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+      glm::dvec2(256, 256),
+      createRootFeatureWithLineString(geometryStyle, featureStyle),
+      options);
+
+  CHECK(imageHasPixelWithColor(image, 0, 255, 0, 255));
+  CHECK_FALSE(imageHasPixelWithColor(image, 0, 0, 255, 255));
+  CHECK_FALSE(imageHasPixelWithColor(image, 255, 0, 0, 255));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay root Feature falls back to feature "
+          "style when geometry has no style") {
+  const VectorStyle featureStyle{
+      LineStyle{
+          ColorStyle{Color{0, 0, 255, 255}, ColorMode::Normal},
+          2.0,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+      glm::dvec2(256, 256),
+      createRootFeatureWithLineString(std::nullopt, featureStyle),
+      options);
+
+  CHECK(imageHasPixelWithColor(image, 0, 0, 255, 255));
+  CHECK_FALSE(imageHasPixelWithColor(image, 255, 0, 0, 255));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay root Feature falls back to default "
+          "style when no styles are set") {
+  // Previously the default style was passed as a temporary copy whose address
+  // was kept in the quadtree, so rasterizing read a dangling reference.
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
+      GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+      glm::dvec2(256, 256),
+      createRootFeatureWithLineString(std::nullopt, std::nullopt),
+      options);
+
+  CHECK(imageHasPixelWithColor(image, 255, 0, 0, 255));
+}
+
+TEST_CASE("GeoJsonDocumentRasterOverlay root Feature with a GeometryCollection "
+          "passes its style down to the collection's geometries") {
+  const VectorStyle featureStyle{
+      LineStyle{
+          ColorStyle{Color{0, 0, 255, 255}, ColorMode::Normal},
+          2.0,
+          LineWidthMode::Pixels},
+      PolygonStyle{std::nullopt, std::nullopt}};
+
+  GeoJsonDocumentRasterOverlayOptions options{
+      VectorStyle{
+          LineStyle{
+              ColorStyle{Color{255, 0, 0, 255}, ColorMode::Normal},
+              2.0,
+              LineWidthMode::Pixels},
+          PolygonStyle{std::nullopt, std::nullopt}},
+      Ellipsoid::WGS84,
+      0};
+
+  {
+    CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
+        GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+        glm::dvec2(256, 256),
+        createRootFeatureWithGeometryCollection(featureStyle),
+        options);
+
+    CHECK(imageHasPixelWithColor(image, 0, 0, 255, 255));
+    CHECK_FALSE(imageHasPixelWithColor(image, 255, 0, 0, 255));
+  }
+
+  {
+    CesiumImage::ImageAsset image = rasterizeOverlayTileFromDocument(
+        GlobeRectangle::fromDegrees(-1.0, -5.0, 6.0, 5.0),
+        glm::dvec2(256, 256),
+        createRootFeatureWithGeometryCollection(std::nullopt),
+        options);
+
+    CHECK(imageHasPixelWithColor(image, 255, 0, 0, 255));
+  }
 }
 
 TEST_CASE(
