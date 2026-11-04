@@ -290,15 +290,15 @@ public:
 private:
   CesiumGltf::Model _model;
   void* _pRenderResources;
+  CesiumRasterOverlays::RasterOverlayDetails _rasterOverlayDetails;
 
   GltfModifierState _modifierState;
   std::optional<CesiumGltf::Model> _modifiedModel;
+  void* _pModifiedRenderResources;
   std::optional<CesiumRasterOverlays::RasterOverlayDetails>
       _modifiedRasterOverlayDetails;
-  void* _pModifiedRenderResources;
-  mutable int32_t _activeUpSamplingTaskCount;
+  mutable int32_t _activeUpsamplingTaskCount;
 
-  CesiumRasterOverlays::RasterOverlayDetails _rasterOverlayDetails;
   std::vector<CesiumUtility::Credit> _credits;
   float _lodTransitionFadePercentage;
 };

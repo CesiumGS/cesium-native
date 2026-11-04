@@ -17,11 +17,12 @@ namespace Cesium3DTilesSelection {
 TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
     : _model{std::move(model)},
       _pRenderResources{nullptr},
+      _rasterOverlayDetails{},
       _modifierState{GltfModifierState::Idle},
       _modifiedModel{},
       _pModifiedRenderResources(nullptr),
-      _activeUpSamplingTaskCount(0),
-      _rasterOverlayDetails{},
+      _modifiedRasterOverlayDetails{},
+      _activeUpsamplingTaskCount(0),
       _credits{},
       _lodTransitionFadePercentage{0.0f} {}
 
@@ -94,16 +95,16 @@ void TileRenderContent::replaceWithModifiedModel() noexcept {
 }
 
 bool TileRenderContent::isBeingUpsampled() const noexcept {
-  return this->_activeUpSamplingTaskCount > 0;
+  return this->_activeUpsamplingTaskCount > 0;
 }
 
 void TileRenderContent::incrementUpsamplingTaskCount() const noexcept {
-  this->_activeUpSamplingTaskCount++;
+  this->_activeUpsamplingTaskCount++;
 }
 
 void TileRenderContent::decrementUpsamplingTaskCount() const noexcept {
-  CESIUM_ASSERT(this->_activeUpSamplingTaskCount > 0);
-  this->_activeUpSamplingTaskCount--;
+  CESIUM_ASSERT(this->_activeUpsamplingTaskCount > 0);
+  this->_activeUpsamplingTaskCount--;
 }
 
 const RasterOverlayDetails&
