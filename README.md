@@ -106,7 +106,7 @@ In addition, Cesium Native has been used by the community to build projects incl
 - [3D Tiles for Godot](https://github.com/Battle-Road-Labs/3D-Tiles-For-Godot) integrates Cesium Native with the Godot game engine.
 - [cesium_3d_native](https://github.com/odd-io/cesium_3d_native) provides a Dart wrapper around Cesium Native, allowing integration with Dart/Flutter applications.
 - [cesium-native-python](https://github.com/calebbuffa/cesium-native-python.git) provides python bindings for Cesium Native.
-  - [blender_ogc3dtiles](https://github.com/Iconem/blender_ogc3dtiles) uses cesium-native-python to stream 3D Tiles of meshes, point clouds and Gaussian splats into Blender.
+- [blender_ogc3dtiles](https://github.com/Iconem/blender_ogc3dtiles) uses cesium-native-python to stream 3D Tiles of meshes, point clouds and gaussian splats into Blender.
 
 If you have a project that integrates with Cesium Native that isn't on this list yet, please let us know!
 
