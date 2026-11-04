@@ -115,12 +115,12 @@ static void initializeTileset(Tileset& tileset, int64_t group = -1) {
 }
 
 static ViewState zoomToTile(const Tile& tile, int64_t group) {
-  const BoundingRegion* region =
+  const BoundingRegion* pRegion =
       std::get_if<BoundingRegion>(&tile.getBoundingVolume());
-  REQUIRE(region != nullptr);
+  REQUIRE(pRegion != nullptr);
 
-  const GlobeRectangle& rectangle = region->getRectangle();
-  double maxHeight = region->getMaximumHeight();
+  const GlobeRectangle& rectangle = pRegion->getRectangle();
+  double maxHeight = pRegion->getMaximumHeight();
   Cartographic center = rectangle.computeCenter();
   Cartographic corner = rectangle.getNorthwest();
   corner.height = maxHeight;
