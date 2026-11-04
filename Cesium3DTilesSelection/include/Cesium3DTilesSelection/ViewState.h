@@ -52,8 +52,8 @@ public:
 };
 
 /**
- * @brief A delegate for determining if a tile is visible, using user-defined
- * criteria. For example, a tile's group might be tested.
+ * @brief A delegate for determining if a tile's content is visible, using
+ * user-defined criteria. For example, a tile's group might be tested.
  */
 class CESIUM3DTILESSELECTION_API ViewStateVisibilityDelegate {
 public:
@@ -62,7 +62,7 @@ public:
    * external content, then this determines if the tile's children are visited.
    * @param viewState The ViewState object.
    * @param tile The tile.
-   * @return Whether or not tile's content is visible.
+   * @return Whether or not the tile's content is visible.
    */
   virtual bool
   isContentVisible(const ViewState& viewState, const Tile& tile) const;
@@ -318,10 +318,11 @@ public:
       uint32_t depth) const noexcept;
 
   /**
-   * @brief Use the measure delegate to deterimine if a tile is visible, or
-   * return true there isn't one.
+   * @brief Reports whether a tile's content is visible. This will use the
+   * @ref ViewStateVisibilityDelegate on this @ref ViewState if specified,
+   * otherwise this returns true by default.
    * @param tile The tile.
-   * @return true if tile is visible.
+   * @return True if the tile's content is visible; false otherwise.
    */
   bool isContentVisible(const Tile& tile) const noexcept {
     if (_pVisibilityDelegate) {

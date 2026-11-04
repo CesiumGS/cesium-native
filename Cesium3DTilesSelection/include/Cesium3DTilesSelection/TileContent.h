@@ -55,7 +55,7 @@ struct CESIUM3DTILESSELECTION_API TileExternalContent
   /**
    * @brief Construct the external content object.
    *
-   * @param implicit whether the tile is the root of an implicit tileset.
+   * @param implicit Whether the tile is the root of an implicit tileset.
    */
   TileExternalContent(bool implicit = false) : isImplicit(implicit) {}
 
