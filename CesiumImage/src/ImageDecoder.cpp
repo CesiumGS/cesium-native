@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <optional>
 #include <span>
 #include <string>
@@ -302,21 +303,33 @@ ImageReaderResult ImageDecoder::readImage(
       CESIUM_TRACE("Decode JPG");
       image.bytesPerChannel = 1;
       image.channels = 4;
-      const auto lastByte =
-          image.width * image.height * image.channels * image.bytesPerChannel;
-      image.pixelData.resize(static_cast<std::size_t>(lastByte));
-      if (tjDecompress2(
-              tjInstance,
-              reinterpret_cast<const unsigned char*>(data.data()),
-              static_cast<unsigned long>(data.size()), // NOLINT
-              reinterpret_cast<unsigned char*>(image.pixelData.data()),
-              image.width,
-              0,
-              image.height,
-              TJPF_RGBA,
-              0)) {
+      const int64_t bytesPerPixel =
+          static_cast<int64_t>(image.channels) * image.bytesPerChannel;
+      // Division rather than multiplication, because the product must never be
+      // computed unless it is already known to fit.
+      if (image.width <= 0 || image.height <= 0 ||
+          static_cast<int64_t>(image.width) >
+              std::numeric_limits<int64_t>::max() /
+                  (static_cast<int64_t>(image.height) * bytesPerPixel)) {
         result.errors.emplace_back("Unable to decode JPEG");
         result.pImage = nullptr;
+      } else {
+        const int64_t lastByte =
+            static_cast<int64_t>(image.width) * image.height * bytesPerPixel;
+        image.pixelData.resize(static_cast<std::size_t>(lastByte));
+        if (tjDecompress2(
+                tjInstance,
+                reinterpret_cast<const unsigned char*>(data.data()),
+                static_cast<unsigned long>(data.size()), // NOLINT
+                reinterpret_cast<unsigned char*>(image.pixelData.data()),
+                image.width,
+                0,
+                image.height,
+                TJPF_RGBA,
+                0)) {
+          result.errors.emplace_back("Unable to decode JPEG");
+          result.pImage = nullptr;
+        }
       }
     } else
 #endif // !CESIUM_DISABLE_LIBJPEG_TURBO
