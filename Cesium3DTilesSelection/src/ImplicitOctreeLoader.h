@@ -19,6 +19,9 @@ using ImplicitOctreeBoundingVolume = std::variant<
     CesiumGeometry::OrientedBoundingBox,
     CesiumGeometry::BoundingCylinderRegion>;
 
+std::optional<ImplicitOctreeBoundingVolume> getAsImplicitOctreeBoundingVolume(
+    const Cesium3DTiles::BoundingVolume& boundingVolume);
+
 class ImplicitOctreeLoader : public TilesetContentLoader {
 public:
   template <typename ImplicitBoundingVolumeType>

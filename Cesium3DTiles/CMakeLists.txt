@@ -53,6 +53,7 @@ target_link_libraries(Cesium3DTiles
         CesiumGeometry
         CesiumGeospatial
         CesiumGltf
+        CesiumGltfContent
         CesiumGltfReader
         CesiumJsonReader
         CesiumTilesetJson
