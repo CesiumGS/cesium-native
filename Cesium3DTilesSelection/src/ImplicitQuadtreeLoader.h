@@ -2,6 +2,7 @@
 
 #include <Cesium3DTiles/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -34,13 +35,15 @@ public:
       const std::string& subtreeUrlTemplate,
       uint32_t subtreeLevels,
       uint32_t availableLevels,
-      ImplicitBoundingVolumeType&& volume)
+      ImplicitBoundingVolumeType&& volume,
+      CesiumGeometry::Axis upAxis)
       : _baseUrl{baseUrl},
         _contentUrlTemplate{contentUrlTemplate},
         _subtreeUrlTemplate{subtreeUrlTemplate},
         _subtreeLevels{subtreeLevels},
         _availableLevels{availableLevels},
         _boundingVolume{std::forward<ImplicitBoundingVolumeType>(volume)},
+        _upAxis{upAxis},
         _loadedSubtrees(static_cast<size_t>(std::ceil(
             static_cast<float>(availableLevels) /
             static_cast<float>(subtreeLevels)))) {}
@@ -70,6 +73,8 @@ private:
   uint32_t _subtreeLevels;
   uint32_t _availableLevels;
   ImplicitQuadtreeBoundingVolume _boundingVolume;
+  CesiumGeometry::Axis _upAxis;
+
   std::vector<std::unordered_map<uint64_t, Cesium3DTiles::SubtreeAvailability>>
       _loadedSubtrees;
 };

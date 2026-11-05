@@ -16,13 +16,18 @@
 using namespace CesiumGltfConverters;
 using namespace CesiumGltf;
 
+namespace {
+auto testFilePath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1" /
+    "Instanced";
+} // namespace
+
 TEST_CASE("I3dmToGltfConverter") {
   SUBCASE("loads a simple i3dm") {
-    std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-    testFilePath = testFilePath / "i3dm" / "InstancedWithBatchTable" /
-                   "instancedWithBatchTable.i3dm";
+    std::filesystem::path path = testFilePath / "InstancedWithBatchTable" /
+                                 "instancedWithBatchTable.i3dm";
 
-    GltfConverterResult result = ConvertTileToGltf::fromI3dm(testFilePath);
+    GltfConverterResult result = ConvertTileToGltf::fromI3dm(path);
 
     REQUIRE(result.model);
     CHECK(result.model->isExtensionUsed(
@@ -44,11 +49,10 @@ TEST_CASE("I3dmToGltfConverter") {
   }
 
   SUBCASE("loads a simple i3dm with orientations") {
-    std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-    testFilePath = testFilePath / "i3dm" / "InstancedOrientation" /
-                   "instancedOrientation.i3dm";
+    std::filesystem::path path =
+        testFilePath / "InstancedOrientation" / "instancedOrientation.i3dm";
 
-    GltfConverterResult result = ConvertTileToGltf::fromI3dm(testFilePath);
+    GltfConverterResult result = ConvertTileToGltf::fromI3dm(path);
 
     REQUIRE(result.model);
     CHECK(result.model->isExtensionUsed(
@@ -77,22 +81,20 @@ TEST_CASE("I3dmToGltfConverter") {
   }
 
   SUBCASE("reports an error if the glTF is v1, which is unsupported") {
-    std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-    testFilePath =
-        testFilePath / "i3dm" / "ObsoleteGltf" / "instancedWithBatchTable.i3dm";
+    std::filesystem::path path =
+        testFilePath / "ObsoleteGltf" / "instancedWithBatchTable.i3dm";
 
-    GltfConverterResult result = ConvertTileToGltf::fromI3dm(testFilePath);
+    GltfConverterResult result = ConvertTileToGltf::fromI3dm(path);
 
     REQUIRE(!result.model);
     CHECK(result.errors.hasErrors());
   }
 
   SUBCASE("loads an i3dm with metadata") {
-    std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-    testFilePath = testFilePath / "i3dm" / "InstancedWithBatchTable" /
-                   "instancedWithBatchTable.i3dm";
+    std::filesystem::path path = testFilePath / "InstancedWithBatchTable" /
+                                 "instancedWithBatchTable.i3dm";
 
-    GltfConverterResult result = ConvertTileToGltf::fromI3dm(testFilePath);
+    GltfConverterResult result = ConvertTileToGltf::fromI3dm(path);
 
     REQUIRE(result.model);
     CHECK(result.model->isExtensionUsed(
@@ -126,11 +128,10 @@ TEST_CASE("I3dmToGltfConverter") {
   }
 
   SUBCASE("loads an i3dm with explicit batch ids") {
-    std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-    testFilePath = testFilePath / "i3dm" / "InstancedWithBatchIds" /
-                   "instancedWithBatchIds.i3dm";
+    std::filesystem::path path =
+        testFilePath / "InstancedWithBatchIds" / "instancedWithBatchIds.i3dm";
 
-    GltfConverterResult result = ConvertTileToGltf::fromI3dm(testFilePath);
+    GltfConverterResult result = ConvertTileToGltf::fromI3dm(path);
 
     REQUIRE(result.model);
     CHECK(result.model->isExtensionUsed(
@@ -164,11 +165,10 @@ TEST_CASE("I3dmToGltfConverter") {
   }
 
   SUBCASE("reports an error for an i3dm with invalid feature data") {
-    std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
-    testFilePath = testFilePath / "i3dm" / "InvalidFeatureTable" /
-                   "cesiumNativeIssue1127.i3dm";
+    std::filesystem::path path =
+        testFilePath / "InvalidFeatureTable" / "cesiumNativeIssue1127.i3dm";
 
-    GltfConverterResult result = ConvertTileToGltf::fromI3dm(testFilePath);
+    GltfConverterResult result = ConvertTileToGltf::fromI3dm(path);
     REQUIRE(result.errors.hasErrors());
     REQUIRE(!result.model.has_value());
   }
