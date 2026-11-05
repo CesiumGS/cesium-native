@@ -9,7 +9,7 @@
 ##### Additions :tada:
 
 - Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
-- Added `Cesium3DTilesSelection::ViewStateMeasureDelegate::isContentVisible()` predicate. This is called in tileset selection to decide whether to display a tile's contents or descend into external content.
+- Added `Cesium3DTilesSelection::ViewStateVisibilityDelegate`, which can be specified on a `ViewState` for conditional control over whether to display a tile's content.
 - Added `RasterOverlayCollection::updateTileOverlaysForReplacedContent` and `RasterMappedTo3DTile::prepareForReplacedContent`, which update a tile's raster overlay mappings after its content is replaced, such as by a `GltfModifier`.
 
 ##### Fixes :wrench:
