@@ -1,0 +1,106 @@
+#pragma once
+
+#include <Cesium3DTiles/Library.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
+#include <CesiumGeometry/BoundingSphere.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
+#include <CesiumGeospatial/BoundingRegionWithLooseFittingHeights.h>
+#include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
+
+#include <optional>
+#include <variant>
+
+namespace Cesium3DTiles {
+
+/**
+ * @brief A bounding volume.
+ *
+ * This is a `std::variant` for different types of bounding volumes.
+ *
+ * @see CesiumGeometry::BoundingSphere
+ * @see CesiumGeometry::OrientedBoundingBox
+ * @see CesiumGeospatial::BoundingRegion
+ * @see CesiumGeospatial::BoundingRegionWithLooseFittingHeights
+ * @see CesiumGeospatial::S2CellBoundingVolume
+ * @see CesiumGeometry::BoundingCylinderRegion
+ */
+typedef std::variant<
+    CesiumGeometry::BoundingSphere,
+    CesiumGeometry::OrientedBoundingBox,
+    CesiumGeospatial::BoundingRegion,
+    CesiumGeospatial::BoundingRegionWithLooseFittingHeights,
+    CesiumGeospatial::S2CellBoundingVolume,
+    CesiumGeometry::BoundingCylinderRegion>
+    BoundingVolume;
+
+/**
+ * @brief Transform the given @ref BoundingVolume with the given matrix.
+ *
+ * If the given bounding volume is a @ref CesiumGeometry::BoundingSphere
+ * or @ref CesiumGeometry::OrientedBoundingBox, then it will be transformed
+ * with the given matrix. Bounding regions will not be transformed.
+ *
+ * @param transform The transform matrix.
+ * @param boundingVolume The bounding volume.
+ * @return The transformed bounding volume.
+ */
+CESIUM3DTILES_API BoundingVolume transformBoundingVolume(
+    const glm::dmat4x4& transform,
+    const BoundingVolume& boundingVolume);
+
+/**
+ * @brief Returns the center of the given @ref BoundingVolume.
+ *
+ * @param boundingVolume The bounding volume.
+ * @return The center point.
+ */
+CESIUM3DTILES_API glm::dvec3
+getBoundingVolumeCenter(const BoundingVolume& boundingVolume);
+
+/**
+ * @brief Estimates the bounding @ref CesiumGeospatial::GlobeRectangle of the
+ * given @ref BoundingVolume.
+ *
+ * @param boundingVolume The bounding volume.
+ * @param ellipsoid The ellipsoid to use for globe calculations.
+ * @return The bounding @ref CesiumGeospatial::GlobeRectangle.
+ */
+CESIUM3DTILES_API std::optional<CesiumGeospatial::GlobeRectangle>
+estimateGlobeRectangle(
+    const BoundingVolume& boundingVolume,
+    const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+/**
+ * @brief Returns the bounding region if the bounding volume is a
+ * @ref CesiumGeospatial::BoundingRegion or a @ref
+ * CesiumGeospatial::BoundingRegionWithLooseFittingHeights.
+ *
+ * @param boundingVolume The bounding volume.
+ * @return A pointer to the bounding region, or nullptr is the bounding volume
+ * is not a bounding region.
+ */
+CESIUM3DTILES_API const CesiumGeospatial::BoundingRegion*
+getBoundingRegionFromBoundingVolume(const BoundingVolume& boundingVolume);
+
+/**
+ * @brief Returns an oriented bounding box that contains the given @ref
+ * BoundingVolume.
+ *
+ * @param boundingVolume The bounding volume.
+ * @param ellipsoid The ellipsoid used for this @ref BoundingVolume.
+ * @return The oriented bounding box.
+ */
+CESIUM3DTILES_API CesiumGeometry::OrientedBoundingBox
+getOrientedBoundingBoxFromBoundingVolume(
+    const BoundingVolume& boundingVolume,
+    const CesiumGeospatial::Ellipsoid& ellipsoid CESIUM_DEFAULT_ELLIPSOID);
+
+/**
+ * @brief Returns true if two bounding volumes intersect.
+ */
+CESIUM3DTILES_API bool
+testIntersection(const BoundingVolume& volume0, const BoundingVolume& volume1);
+} // namespace Cesium3DTiles
