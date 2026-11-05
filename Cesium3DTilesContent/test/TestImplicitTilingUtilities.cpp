@@ -1,4 +1,3 @@
-#include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/TileBoundingVolumes.h>
 #include <CesiumGeometry/OctreeTileID.h>
@@ -9,6 +8,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumTilesetJson/BoundingVolume.h>
 
 #include <doctest/doctest.h>
 #include <glm/ext/matrix_double3x3.hpp>
@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-using namespace Cesium3DTiles;
+using namespace CesiumTilesetJson;
 using namespace Cesium3DTilesContent;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

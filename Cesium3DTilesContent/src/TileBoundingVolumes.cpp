@@ -1,6 +1,3 @@
-#include <Cesium3DTiles/BoundingVolume.h>
-#include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
-#include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
 #include <Cesium3DTilesContent/TileBoundingVolumes.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/BoundingSphere.h>
@@ -9,13 +6,16 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumTilesetJson/BoundingVolume.h>
+#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeCylinder.h>
+#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeS2.h>
 
 #include <glm/ext/quaternion_double.hpp>
 
 #include <optional>
 #include <vector>
 
-using namespace Cesium3DTiles;
+using namespace CesiumTilesetJson;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 
@@ -33,7 +33,7 @@ std::optional<OrientedBoundingBox> TileBoundingVolumes::getOrientedBoundingBox(
 }
 
 void TileBoundingVolumes::setOrientedBoundingBox(
-    Cesium3DTiles::BoundingVolume& boundingVolume,
+    CesiumTilesetJson::BoundingVolume& boundingVolume,
     const CesiumGeometry::OrientedBoundingBox& boundingBox) {
   const glm::dvec3& center = boundingBox.getCenter();
   const glm::dmat3& halfAxes = boundingBox.getHalfAxes();
@@ -67,7 +67,7 @@ std::optional<BoundingRegion> TileBoundingVolumes::getBoundingRegion(
 }
 
 void TileBoundingVolumes::setBoundingRegion(
-    Cesium3DTiles::BoundingVolume& boundingVolume,
+    CesiumTilesetJson::BoundingVolume& boundingVolume,
     const CesiumGeospatial::BoundingRegion& boundingRegion) {
   const CesiumGeospatial::GlobeRectangle& rectangle =
       boundingRegion.getRectangle();
@@ -90,7 +90,7 @@ TileBoundingVolumes::getBoundingSphere(const BoundingVolume& boundingVolume) {
 }
 
 void TileBoundingVolumes::setBoundingSphere(
-    Cesium3DTiles::BoundingVolume& boundingVolume,
+    CesiumTilesetJson::BoundingVolume& boundingVolume,
     const CesiumGeometry::BoundingSphere& boundingSphere) {
   const glm::dvec3& center = boundingSphere.getCenter();
   boundingVolume
@@ -114,7 +114,7 @@ TileBoundingVolumes::getS2CellBoundingVolume(
 }
 
 void TileBoundingVolumes::setS2CellBoundingVolume(
-    Cesium3DTiles::BoundingVolume& boundingVolume,
+    CesiumTilesetJson::BoundingVolume& boundingVolume,
     const CesiumGeospatial::S2CellBoundingVolume& s2BoundingVolume) {
   Extension3dTilesBoundingVolumeS2& extension =
       boundingVolume.addExtension<Extension3dTilesBoundingVolumeS2>();
@@ -153,7 +153,7 @@ TileBoundingVolumes::getBoundingCylinderRegion(
 }
 
 void TileBoundingVolumes::setBoundingCylinderRegion(
-    Cesium3DTiles::BoundingVolume& boundingVolume,
+    CesiumTilesetJson::BoundingVolume& boundingVolume,
     const CesiumGeometry::BoundingCylinderRegion& boundingCylinderRegion) {
   Extension3dTilesBoundingVolumeCylinder& extension =
       boundingVolume.addExtension<Extension3dTilesBoundingVolumeCylinder>();

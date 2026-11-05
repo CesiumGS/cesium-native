@@ -1,5 +1,5 @@
-#include <Cesium3DTiles/Tile.h>
 #include <Cesium3DTilesContent/TileTransform.h>
+#include <CesiumTilesetJson/Tile.h>
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
@@ -11,7 +11,7 @@ using namespace CesiumUtility;
 
 TEST_CASE("TileTransform::getTransform") {
   SUBCASE("correctly interprets a valid transform") {
-    Cesium3DTiles::Tile tile;
+    CesiumTilesetJson::Tile tile;
     tile.transform = {
         1.0,
         2.0,
@@ -52,7 +52,7 @@ TEST_CASE("TileTransform::getTransform") {
   }
 
   SUBCASE("returns nullopt on too few elements") {
-    Cesium3DTiles::Tile tile;
+    CesiumTilesetJson::Tile tile;
     tile.transform = {
         1.0,
         2.0,
@@ -75,7 +75,7 @@ TEST_CASE("TileTransform::getTransform") {
   }
 
   SUBCASE("ignores extra elements") {
-    Cesium3DTiles::Tile tile;
+    CesiumTilesetJson::Tile tile;
     tile.transform = {
         1.0,
         2.0,
@@ -125,7 +125,7 @@ TEST_CASE("TileTransform::setTransform") {
         glm::dvec4(9.0, 10.0, 11.0, 12.0),
         glm::dvec4(13.0, 14.0, 15.0, 16.0));
 
-    Cesium3DTiles::Tile tile;
+    CesiumTilesetJson::Tile tile;
     Cesium3DTilesContent::TileTransform::setTransform(tile, transform);
 
     REQUIRE(tile.transform.size() == 16);
@@ -154,7 +154,7 @@ TEST_CASE("TileTransform::setTransform") {
         glm::dvec4(9.0, 10.0, 11.0, 12.0),
         glm::dvec4(13.0, 14.0, 15.0, 16.0));
 
-    Cesium3DTiles::Tile tile;
+    CesiumTilesetJson::Tile tile;
     tile.transform = {
         101.0,
         102.0,

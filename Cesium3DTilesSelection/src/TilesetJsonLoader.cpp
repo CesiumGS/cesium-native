@@ -4,17 +4,8 @@
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
 
-#include <Cesium3DTiles/Extension3dTilesBoundingVolumeCylinder.h>
-#include <Cesium3DTiles/Extension3dTilesBoundingVolumeS2.h>
-#include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
-#include <Cesium3DTiles/ExtensionMetadataEntityMaxarContentGeoJson.h>
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
-#include <Cesium3DTilesReader/BoundingVolumeReader.h>
-#include <Cesium3DTilesReader/ContentReader.h>
-#include <Cesium3DTilesReader/ExtensionContent3dTilesContentVoxelsReader.h>
-#include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
-#include <Cesium3DTilesReader/TilesetReader.h>
 #include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -41,6 +32,15 @@
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumJsonReader/JsonReader.h>
+#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeCylinder.h>
+#include <CesiumTilesetJson/Extension3dTilesBoundingVolumeS2.h>
+#include <CesiumTilesetJson/ExtensionContent3dTilesContentVoxels.h>
+#include <CesiumTilesetJson/ExtensionMetadataEntityMaxarContentGeoJson.h>
+#include <CesiumTilesetJsonReader/BoundingVolumeReader.h>
+#include <CesiumTilesetJsonReader/ContentReader.h>
+#include <CesiumTilesetJsonReader/ExtensionContent3dTilesContentVoxelsReader.h>
+#include <CesiumTilesetJsonReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
+#include <CesiumTilesetJsonReader/TilesetReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -76,9 +76,9 @@
 #include <variant>
 #include <vector>
 
-using namespace Cesium3DTiles;
-using namespace Cesium3DTilesReader;
 using namespace Cesium3DTilesContent;
+using namespace CesiumTilesetJson;
+using namespace CesiumTilesetJsonReader;
 using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
@@ -176,19 +176,20 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
     return std::nullopt;
   }
 
-  Cesium3DTilesReader::BoundingVolumeReader reader;
-  CesiumJsonReader::ReadJsonResult<Cesium3DTiles::BoundingVolume>
+  CesiumTilesetJsonReader::BoundingVolumeReader reader;
+  CesiumJsonReader::ReadJsonResult<CesiumTilesetJson::BoundingVolume>
       boundingVolumeResult = reader.readFromJson(bvIt->value);
 
   if (!boundingVolumeResult.value) {
     return std::nullopt;
   }
 
-  const Cesium3DTiles::BoundingVolume& result = *boundingVolumeResult.value;
+  const CesiumTilesetJson::BoundingVolume& result = *boundingVolumeResult.value;
 
   if (result.extensions.size() > 0) {
-    const Cesium3DTiles::Extension3dTilesBoundingVolumeS2* pS2 =
-        result.getExtension<Cesium3DTiles::Extension3dTilesBoundingVolumeS2>();
+    const CesiumTilesetJson::Extension3dTilesBoundingVolumeS2* pS2 =
+        result.getExtension<
+            CesiumTilesetJson::Extension3dTilesBoundingVolumeS2>();
     if (pS2) {
       return CesiumGeospatial::S2CellBoundingVolume(
           CesiumGeospatial::S2CellID::fromToken(pS2->token),
@@ -197,9 +198,9 @@ std::optional<BoundingVolume> getBoundingVolumeProperty(
           ellipsoid);
     }
 
-    const Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder* pCylinder =
+    const CesiumTilesetJson::Extension3dTilesBoundingVolumeCylinder* pCylinder =
         result.getExtension<
-            Cesium3DTiles::Extension3dTilesBoundingVolumeCylinder>();
+            CesiumTilesetJson::Extension3dTilesBoundingVolumeCylinder>();
     if (pCylinder) {
       const std::vector<double>& translation = pCylinder->translation;
       const std::vector<double>& rotation = pCylinder->rotation;
@@ -774,7 +775,7 @@ void removeRootPropertyAndParseTilesetMetadata(
   // tree will take too long, and we don't need it.
   tilesetJson.RemoveMember("root");
 
-  Cesium3DTilesReader::TilesetReader tilesetReader;
+  CesiumTilesetJsonReader::TilesetReader tilesetReader;
   auto tilesetResult = tilesetReader.readFromJson(tilesetJson);
 
   if (!tilesetResult.errors.empty() || !tilesetResult.warnings.empty()) {
@@ -794,7 +795,7 @@ void removeRootPropertyAndParseTilesetMetadata(
   }
 
   if (tilesetResult.value) {
-    Cesium3DTiles::Tileset& tileset = *tilesetResult.value;
+    CesiumTilesetJson::Tileset& tileset = *tilesetResult.value;
     Cesium3DTilesSelection::TilesetMetadata& metadata =
         externalContent.metadata;
 
@@ -1070,7 +1071,7 @@ TilesetJsonLoader::createLoader(
   auto pContent = std::make_unique<TileExternalContent>();
   if (maybeVoxelExtension) {
     pContent->extensions.emplace(
-        Cesium3DTiles::ExtensionContent3dTilesContentVoxels::ExtensionName,
+        CesiumTilesetJson::ExtensionContent3dTilesContentVoxels::ExtensionName,
         std::move(*maybeVoxelExtension));
   }
 
@@ -1136,49 +1137,52 @@ TilesetJsonLoader::createLoader(
               return std::move(result);
             });
       })
-      .thenInWorkerThread([asyncSystem,
-                           pAssetAccessor,
-                           externalSchemaUrl,
-                           requestHeaders = std::move(requestHeaderVector),
-                           pLogger](
-                              TilesetContentLoaderResult<TilesetJsonLoader>&&
-                                  result) mutable {
-        if (!externalSchemaUrl.empty()) {
-          return getJson(
-                     asyncSystem,
-                     pAssetAccessor,
-                     externalSchemaUrl,
-                     std::move(requestHeaders))
-              .thenInWorkerThread([result = std::move(result), pLogger](
-                                      JsonFetcherResult&& jsonResult) mutable {
-                if (jsonResult.value) {
-                  Cesium3DTilesReader::ExtensionSchemaMaxarContentGeoJsonReader
-                      maxarSchemaReader;
-                  auto schemaReadResult =
-                      maxarSchemaReader.readFromJson(*jsonResult.value);
-                  if (!schemaReadResult.value ||
-                      !schemaReadResult.errors.empty()) {
-                    SPDLOG_LOGGER_ERROR(
-                        pLogger,
-                        "Error reading GeoJSON schema");
-                  } else {
-                    CesiumVectorData::ConvertSchemaResult schemaResult =
-                        CesiumVectorData::GltfConverter::convertSchema(
-                            *schemaReadResult.value);
-                    if (schemaResult.pValue) {
-                      result.pLoader->_pExternalSchema = schemaResult.pValue;
-                    } else {
-                      SPDLOG_LOGGER_ERROR(
-                          pLogger,
-                          "Error converting GeoJSON schema");
-                    }
-                  }
-                }
-                return std::move(result);
-              });
-        }
-        return asyncSystem.createResolvedFuture(std::move(result));
-      });
+      .thenInWorkerThread(
+          [asyncSystem,
+           pAssetAccessor,
+           externalSchemaUrl,
+           requestHeaders = std::move(requestHeaderVector),
+           pLogger](
+              TilesetContentLoaderResult<TilesetJsonLoader>&& result) mutable {
+            if (!externalSchemaUrl.empty()) {
+              return getJson(
+                         asyncSystem,
+                         pAssetAccessor,
+                         externalSchemaUrl,
+                         std::move(requestHeaders))
+                  .thenInWorkerThread(
+                      [result = std::move(result),
+                       pLogger](JsonFetcherResult&& jsonResult) mutable {
+                        if (jsonResult.value) {
+                          CesiumTilesetJsonReader::
+                              ExtensionSchemaMaxarContentGeoJsonReader
+                                  maxarSchemaReader;
+                          auto schemaReadResult =
+                              maxarSchemaReader.readFromJson(*jsonResult.value);
+                          if (!schemaReadResult.value ||
+                              !schemaReadResult.errors.empty()) {
+                            SPDLOG_LOGGER_ERROR(
+                                pLogger,
+                                "Error reading GeoJSON schema");
+                          } else {
+                            CesiumVectorData::ConvertSchemaResult schemaResult =
+                                CesiumVectorData::GltfConverter::convertSchema(
+                                    *schemaReadResult.value);
+                            if (schemaResult.pValue) {
+                              result.pLoader->_pExternalSchema =
+                                  schemaResult.pValue;
+                            } else {
+                              SPDLOG_LOGGER_ERROR(
+                                  pLogger,
+                                  "Error converting GeoJSON schema");
+                            }
+                          }
+                        }
+                        return std::move(result);
+                      });
+            }
+            return asyncSystem.createResolvedFuture(std::move(result));
+          });
 }
 
 CesiumAsync::Future<TileLoadResult>
