@@ -50,14 +50,14 @@ endif()
 
 target_link_libraries(CesiumVectorData
   PUBLIC
-        Cesium3DTilesReader
-        CesiumUtility
+        CesiumAsync
         CesiumGeometry
         CesiumGeospatial
-        CesiumAsync
         CesiumGltf
         CesiumGltfContent
         CesiumImage
+        CesiumTilesetJsonReader
+        CesiumUtility
     PRIVATE
         blend2d::blend2d
         $<BUILD_INTERFACE:earcut>

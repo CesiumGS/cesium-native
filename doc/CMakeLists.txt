@@ -3,12 +3,7 @@ find_package(Doxygen)
 if(DOXYGEN_FOUND)
     set(
         LIB_DIRS
-        ../Cesium3DTiles/include
-        ../Cesium3DTiles/generated/include
         ../Cesium3DTilesContent/include
-        ../Cesium3DTilesReader/include
-        ../Cesium3DTilesReader/generated/include
-        ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
         ../CesiumAsync/include
         ../CesiumClientCommon/include
@@ -29,6 +24,11 @@ if(DOXYGEN_FOUND)
         ../CesiumQuantizedMeshTerrain/include
         ../CesiumQuantizedMeshTerrain/generated/include
         ../CesiumRasterOverlays/include
+        ../CesiumTilesetJson/include
+        ../CesiumTilesetJson/generated/include
+        ../CesiumTilesetJsonReader/include
+        ../CesiumTilesetJsonReader/generated/include
+        ../CesiumTilesetJsonWriter/include
         ../CesiumUtility/include
         ../CesiumVectorData/include
         ../CesiumVectorOverlays/include
@@ -51,11 +51,11 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_MACRO_EXPANSION YES)
     set(DOXYGEN_EXPAND_ONLY_PREDEF NO)
     set(DOXYGEN_PREDEFINED
-        "CESIUM3DTILES_API"
+        "CESIUMTILESETJSON_API"
         "CESIUM3DTILESCONTENT_API"
-        "CESIUM3DTILESREADER_API"
+        "CESIUMTILESETJSONREADER_API"
         "CESIUM3DTILESSELECTION_API"
-        "CESIUM3DTILESWRITER_API"
+        "CESIUMTILESETJSONWRITER_API"
         "CESIUMASYNC_API"
         "CESIUMCURL_API"
         "CESIUMCLIENTCOMMON_API"

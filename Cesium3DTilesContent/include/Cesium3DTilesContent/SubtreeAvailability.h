@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Cesium3DTiles/Subtree.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumTilesetJson/Subtree.h>
 
 #include <optional>
 
@@ -11,9 +11,9 @@ struct QuadtreeTileID;
 struct OctreeTileID;
 } // namespace CesiumGeometry
 
-namespace Cesium3DTiles {
+namespace CesiumTilesetJson {
 struct ImplicitTiling;
-} // namespace Cesium3DTiles
+} // namespace CesiumTilesetJson
 
 namespace Cesium3DTilesContent {
 
@@ -34,7 +34,7 @@ enum class ImplicitTileSubdivisionScheme {
 
 /**
  * @brief Supports querying and modifying the various types of availablity
- * information included in a @ref Cesium3DTiles::Subtree.
+ * information included in a @ref CesiumTilesetJson::Subtree.
  */
 class SubtreeAvailability {
 public:
@@ -51,7 +51,7 @@ public:
   static std::optional<SubtreeAvailability> fromSubtree(
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
-      Cesium3DTiles::Subtree&& subtree) noexcept;
+      CesiumTilesetJson::Subtree&& subtree) noexcept;
 
   /**
    * @brief Creates an empty instance with the specified tile availability. All
@@ -147,7 +147,7 @@ public:
       AvailabilityView tileAvailability,
       AvailabilityView subtreeAvailability,
       std::vector<AvailabilityView>&& contentAvailability,
-      Cesium3DTiles::Subtree&& subtree);
+      CesiumTilesetJson::Subtree&& subtree);
 
   /**
    * @brief Determines if a given tile in the quadtree is available.
@@ -408,7 +408,7 @@ public:
   /**
    * @brief Gets the subtree that this instance queries and modifies.
    */
-  const Cesium3DTiles::Subtree& getSubtree() const noexcept {
+  const CesiumTilesetJson::Subtree& getSubtree() const noexcept {
     return this->_subtree;
   }
 
@@ -421,7 +421,7 @@ private:
       uint32_t relativeTileLevel,
       uint64_t relativeTileMortonId,
       AvailabilityView& availabilityView,
-      Cesium3DTiles::Availability& availability,
+      CesiumTilesetJson::Availability& availability,
       bool isAvailable) noexcept;
 
   bool isAvailableUsingBufferView(
@@ -437,14 +437,14 @@ private:
   void updateAvailabilityViews();
 
   void convertConstantAvailabilityToBitstream(
-      Cesium3DTiles::Subtree& subtree,
+      CesiumTilesetJson::Subtree& subtree,
       uint64_t numberOfTiles,
       SubtreeAvailability::AvailabilityView& availabilityView,
-      Cesium3DTiles::Availability& availability);
+      CesiumTilesetJson::Availability& availability);
 
   uint32_t _powerOf2;
   uint32_t _levelsInSubtree;
-  Cesium3DTiles::Subtree _subtree;
+  CesiumTilesetJson::Subtree _subtree;
   uint32_t _childCount;
   AvailabilityView _tileAvailability;
   AvailabilityView _subtreeAvailability;

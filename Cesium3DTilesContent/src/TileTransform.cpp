@@ -1,5 +1,5 @@
-#include <Cesium3DTiles/Tile.h>
 #include <Cesium3DTilesContent/TileTransform.h>
+#include <CesiumTilesetJson/Tile.h>
 
 #include <glm/ext/matrix_double4x4.hpp>
 
@@ -9,7 +9,7 @@
 namespace Cesium3DTilesContent {
 
 std::optional<glm::dmat4>
-TileTransform::getTransform(const Cesium3DTiles::Tile& tile) {
+TileTransform::getTransform(const CesiumTilesetJson::Tile& tile) {
   if (tile.transform.size() < 16)
     return std::nullopt;
 
@@ -22,7 +22,7 @@ TileTransform::getTransform(const Cesium3DTiles::Tile& tile) {
 }
 
 void TileTransform::setTransform(
-    Cesium3DTiles::Tile& tile,
+    CesiumTilesetJson::Tile& tile,
     const glm::dmat4& newTransform) {
   tile.transform.resize(16);
   tile.transform[0] = newTransform[0].x;

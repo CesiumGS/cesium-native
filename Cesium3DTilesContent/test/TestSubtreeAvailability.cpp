@@ -1,4 +1,3 @@
-#include <Cesium3DTiles/Subtree.h>
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -8,6 +7,7 @@
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/ThreadTaskProcessor.h>
 #include <CesiumNativeTests/waitForFuture.h>
+#include <CesiumTilesetJson/Subtree.h>
 
 #include <doctest/doctest.h>
 #include <libmorton/morton.h>
@@ -31,7 +31,7 @@
 #include <variant>
 #include <vector>
 
-using namespace Cesium3DTiles;
+using namespace CesiumTilesetJson;
 using namespace Cesium3DTilesContent;
 using namespace CesiumGeometry;
 using namespace CesiumNativeTests;
