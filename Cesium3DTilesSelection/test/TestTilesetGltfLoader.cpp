@@ -1,4 +1,3 @@
-#include "ImplicitQuadtreeLoader.h"
 #include "SimplePrepareRendererResource.h"
 #include "TilesetLoaderTestUtility.h"
 

@@ -220,7 +220,8 @@ void createImplicitQuadtreeLoader(
       subtreeUriTemplate,
       subtreeLevels,
       availableLevels,
-      *quadtreeBoundingVolume);
+      *quadtreeBoundingVolume,
+      currentLoader.getUpAxis());
 
   TilesetContentLoader* pImplicitLoader = pLoader.get();
   currentLoader.addChildLoader(std::move(pLoader));
@@ -255,7 +256,8 @@ void createImplicitOctreeLoader(
       subtreeUriTemplate,
       subtreeLevels,
       availableLevels,
-      *octreeBoundingVolume);
+      *octreeBoundingVolume,
+      currentLoader.getUpAxis());
 
   TilesetContentLoader* pImplicitLoader = pLoader.get();
   currentLoader.addChildLoader(std::move(pLoader));
