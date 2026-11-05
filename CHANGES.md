@@ -5,6 +5,14 @@
 ##### Breaking Changes :mega:
 
 - `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter` have been renamed to `CesiumTilesetJson`, `CesiumTilesetJsonReader`, and `CesiumTilesetJsonWriter` respectively.
+- `Cesium3DTilesSelection::SubtreeAvailability` now follows the `3DTILES_subtree` extension in glTF 2.1:
+  - The `SubtreeAvailability` constructor now takes a single `AvailabilityView` for content availability and a `CesiumGltf::Model` to represent the subtree.
+  - `getSubtree` has been replaced by `getModel` to retrieve the underlying glTF representation of the subtree.
+  - Removed `contentId` from the `isContentAvailable` and `setContentAvailable` overloads.
+
+##### Additions :tada:
+
+- Added `fromGltf` method to `Cesium3DTilesSelection::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
 
 ### v0.66.0 - 2026-11-02
 

@@ -590,7 +590,6 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
     availability.setContentAvailable(
         QuadtreeTileID{0, 0, 0},
         QuadtreeTileID{1, 1, 1},
-        0,
         true);
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},
