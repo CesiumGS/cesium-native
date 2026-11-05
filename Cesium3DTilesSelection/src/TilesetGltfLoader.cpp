@@ -268,6 +268,10 @@ std::optional<Tile> parseGltfNodeRecursively(
   glm::dmat4x4 tileTransform =
       parentTransform * transform.value_or(glm::dmat4x4(1.0));
 
+  // Apply the tile transform to the bounding volume.
+  auto tileBoundingVolume =
+      Cesium3DTiles::transformBoundingVolume(tileTransform, boundingVolume);
+
   // Parse geometric error
   double geometricError = pTilesetExtension->geometricError;
 
@@ -324,30 +328,6 @@ std::optional<Tile> parseGltfNodeRecursively(
           *pVoxels);
     }
 
-    if (std::holds_alternative<CesiumGeometry::OrientedBoundingBox>(
-            boundingVolume)) {
-      // 3DTILES_implicit_tiling uses {right}/{forward}/{up}, which aligns with
-      // the -x, +z, and +y axes in glTF respectively.
-      //
-      // Since ImplicitTilingUtilities works along the +x, +y, +z axes of the
-      // bounding box (as does 3D Tiles 1.1), its halfAxes must be scaled to
-      // reflect the coordinate differences.
-      //
-      // clang-format off
-    glm::dmat4 boxTransform(
-      -1.0, 0.0, 0.0, 0.0,
-       0.0, 1.0, 0.0, 0.0,
-       0.0, 0.0, -1.0, 0.0,
-       0.0, 0.0, 0.0, 1.0);
-      // clang-format on
-
-      boundingVolume =
-          Cesium3DTiles::transformBoundingVolume(boxTransform, boundingVolume);
-    }
-
-    auto tileBoundingVolume =
-        Cesium3DTiles::transformBoundingVolume(tileTransform, boundingVolume);
-
     Tile tile{&currentLoader, TileID(), std::move(pExternalContent)};
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
@@ -397,10 +377,6 @@ std::optional<Tile> parseGltfNodeRecursively(
       childTiles.emplace_back(std::move(*maybeChild));
     }
   }
-
-  // Apply the tile transform to the bounding volume.
-  auto tileBoundingVolume =
-      Cesium3DTiles::transformBoundingVolume(tileTransform, boundingVolume);
 
   Tile tile{&currentLoader};
   tile.setTileID(contentUri ? contentUri : std::string{});
