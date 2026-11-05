@@ -310,7 +310,7 @@ void addTileToLoadQueue(
       context.externals.pGltfModifier);
 }
 
-void addTileToRenderIfContentIsVisible(
+bool addTileToRenderIfContentIsVisible(
     const TilesetFrameState& frameState,
     ViewUpdateResult& result,
     Tile& tile,
@@ -318,7 +318,9 @@ void addTileToRenderIfContentIsVisible(
   if (isContentVisible(frameState, tile)) {
     result.tilesToRenderThisFrame.emplace_back(&tile);
     result.tileScreenSpaceErrorThisFrame.emplace_back(sse);
+    return true;
   }
+  return false;
 }
 
 double computeSse(
@@ -620,12 +622,11 @@ TraversalDetails renderLeaf(
     double tilePriority,
     double tileSse,
     ViewUpdateResult& result) {
-  if (!isContentVisible(frameState, tile)) {
+  if (!addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse)) {
     return TraversalDetails{};
   }
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
   addTileToLoadQueue(
       context,
       frameState,
