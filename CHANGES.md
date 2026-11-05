@@ -1,9 +1,15 @@
 # Change Log
 
-### ? - ?
+### ? -?
+
+##### Breaking Changes :mega:
+
+- `ViewStateMeasureDelegate::computeSelectionMeasure` now takes the view state as an argument.
 
 ##### Additions :tada:
 
+- Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
+- Added `Cesium3DTilesSelection::ViewStateMeasureDelegate::isContentVisible()` predicate. This is called in tileset selection to decide whether to display a tile's contents or descend into external content.
 - Added `RasterOverlayCollection::updateTileOverlaysForReplacedContent` and `RasterMappedTo3DTile::prepareForReplacedContent`, which update a tile's raster overlay mappings after its content is replaced, such as by a `GltfModifier`.
 
 ##### Fixes :wrench:
