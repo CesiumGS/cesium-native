@@ -4,12 +4,20 @@
 
 ##### Breaking Changes :mega:
 
-- The classes associated with `KHR_implicit_shapes` have been renamed from `Shape`, `Box`, `Capsule`, `Cylinder`, `Sphere` to `ExtensionKhrImplicitShapesShape`, `ExtensionKhrImplicitShapesBox`, `ExtensionKhrImplicitShapesCapsule`, `ExtensionKhrImplicitShapesCylinder`, `ExtensionKhrImplicitShapesSphere` to deconflict with the shape classes generated for glTF 2.1.
+- `ViewStateMeasureDelegate::computeSelectionMeasure` now takes the view state as an argument.
 - SPZ color components are no longer automatically converted to the `FLOAT` component type when read. To replicate the previous behavior, set `options.spzDecoderOptions.forceFloatAccessors` to `true` on `GltfReaderOptions`.
 
 ##### Additions :tada:
 
+- Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
+- Added `Cesium3DTilesSelection::ViewStateVisibilityDelegate`, which can be specified on a `ViewState` for conditional control over whether to display a tile's content.
+- Added `RasterOverlayCollection::updateTileOverlaysForReplacedContent` and `RasterMappedTo3DTile::prepareForReplacedContent`, which update a tile's raster overlay mappings after its content is replaced, such as by a `GltfModifier`.
 - SPZ decoder now matches the `KHR_gaussian_splatting` specification more accurately, including support for `KHR_gaussian_splatting:OPACITY` and `KHR_gaussian_splatting:SH_DEGREE_0_COEF_0` attributes, and component types other than `FLOAT` where allowed by the specification.
+
+##### Fixes :wrench:
+
+- `CesiumVectorOverlays::VectorTilesRasterOverlay` now builds its geographic projection from the overlay ellipsoid instead of a hardcoded WGS84 ellipsoid. A hardcoded ellipsoid can disagree with the one stored by the host, which creates an extra texture-coordinate set and can crash when this overlay is combined with another geographic overlay.
+- Fixed bugs and potential crashes when using the `GltfModifier` on a tileset with raster overlays (such as cartographic polygons).
 
 ### v0.66.0 - 2026-11-02
 
