@@ -369,6 +369,147 @@ TEST_CASE("Rejects malformed EXT_meshopt_compression bufferViews") {
   CHECK(result.model->buffers.size() == 1);
 }
 
+namespace {
+std::vector<std::byte> writeQuantizedGltf(
+    int64_t count,
+    int64_t accessorByteOffset = 0,
+    int64_t bufferViewByteOffset = 0,
+    int64_t byteStride = 4,
+    const std::string& accessorType = "VEC2",
+    const std::string& accessorBounds = "") {
+  // Little-endian unsigned shorts 1 through 16.
+  const std::string dataUri = "data:application/octet-stream;base64,"
+                              "AQACAAMABAAFAAYABwAIAAkACgALAAwADQAOAA8AEAA=";
+  const std::string gltf = fmt::format(
+      R"(
+        {{
+          "asset":{{
+            "version": "2.0"
+            }},
+          "extensionsUsed": ["KHR_mesh_quantization"],
+          "extensionsRequired": ["KHR_mesh_quantization"],
+          "meshes":[
+            {{
+              "primitives":[
+                {{
+                  "attributes": {{
+                    "POSITION": 0
+                  }}
+                }}
+              ]
+            }}
+          ],
+          "accessors":[
+            {{
+              "bufferView": 0,
+              "byteOffset": {},
+              "componentType": 5123,
+              "count": {},
+              "type": "{}"{}
+            }}
+          ],
+          "buffers":[
+            {{
+              "byteLength": 32,
+              "uri": "{}"
+            }}
+          ],
+          "bufferViews":[
+            {{
+              "buffer": 0,
+              "byteOffset": {},
+              "byteLength": 32,
+              "byteStride": {}
+            }}
+          ]
+       }})",
+      accessorByteOffset,
+      count,
+      accessorType,
+      accessorBounds,
+      dataUri,
+      bufferViewByteOffset,
+      byteStride);
+  const std::byte* pStart = reinterpret_cast<const std::byte*>(gltf.data());
+  return std::vector<std::byte>(pStart, pStart + gltf.size());
+}
+} // namespace
+
+TEST_CASE("Rejects malformed KHR_mesh_quantization accessors") {
+  constexpr int64_t int64Max = std::numeric_limits<int64_t>::max();
+  std::vector<std::byte> gltf;
+
+  SUBCASE("count times byteStride overflows to a small positive value") {
+    // The reported count wraps the source length to 8 and output length to 16.
+    gltf = writeQuantizedGltf((int64_t(1) << 62) + 2);
+  }
+
+  SUBCASE("count times byteStride is just above int64 max") {
+    gltf = writeQuantizedGltf(int64Max / 4 + 1);
+  }
+
+  SUBCASE("count is zero") { gltf = writeQuantizedGltf(0); }
+
+  SUBCASE("count is negative") { gltf = writeQuantizedGltf(-1); }
+
+  SUBCASE("count exceeds the buffer") { gltf = writeQuantizedGltf(9); }
+
+  SUBCASE("accessor byteOffset is negative") {
+    gltf = writeQuantizedGltf(4, -8);
+  }
+
+  SUBCASE("bufferView byteOffset is negative") {
+    gltf = writeQuantizedGltf(4, 0, -8);
+  }
+
+  SUBCASE("the offsets sum beyond int64 max") {
+    gltf = writeQuantizedGltf(4, int64Max, int64Max);
+  }
+
+  SUBCASE("byteStride is smaller than one element") {
+    gltf = writeQuantizedGltf(4, 0, 0, 2);
+  }
+
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(gltf);
+
+  REQUIRE(result.model);
+  REQUIRE(result.model->accessors.size() == 1);
+
+  // The accessor must be left quantized and no decoded buffer appended.
+  CHECK(
+      result.model->accessors[0].componentType ==
+      Accessor::ComponentType::UNSIGNED_SHORT);
+  CHECK(result.model->buffers.size() == 1);
+  CHECK(result.model->bufferViews.size() == 1);
+}
+
+TEST_CASE("Dequantizes a well-formed KHR_mesh_quantization accessor") {
+  GltfReader reader;
+  GltfReaderResult result = reader.readGltf(writeQuantizedGltf(
+      3,
+      0,
+      0,
+      8,
+      "VEC3",
+      ",\"min\":[1,2,3],\"max\":[9,10,11]"));
+
+  REQUIRE(result.model);
+  REQUIRE(result.model->accessors.size() == 1);
+  CHECK(
+      result.model->accessors[0].componentType ==
+      Accessor::ComponentType::FLOAT);
+  REQUIRE(result.model->buffers.size() == 2);
+  CHECK(result.model->buffers[1].cesium.data.size() == 3 * 3 * sizeof(float));
+
+  AccessorView<glm::vec3> positions(*result.model, 0);
+  REQUIRE(positions.status() == AccessorViewStatus::Valid);
+  REQUIRE(positions.size() == 3);
+  CHECK(positions[0] == glm::vec3(1.0f, 2.0f, 3.0f));
+  CHECK(positions[1] == glm::vec3(5.0f, 6.0f, 7.0f));
+  CHECK(positions[2] == glm::vec3(9.0f, 10.0f, 11.0f));
+}
+
 TEST_CASE("Read TriangleWithoutIndices") {
   std::filesystem::path gltfFile = CesiumGltfReader_TEST_DATA_DIR;
   gltfFile /=

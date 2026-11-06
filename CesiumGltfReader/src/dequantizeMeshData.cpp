@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -83,17 +84,38 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
     byteStride = accessor.computeByteStride(model);
   }
 
-  if (static_cast<size_t>(
-          pBufferView->byteOffset + accessor.byteOffset +
-          accessor.count * byteStride) > pBuffer->cesium.data.size() ||
+  const int64_t bufferSize = static_cast<int64_t>(pBuffer->cesium.data.size());
+
+  if (pBufferView->byteOffset < 0 || accessor.byteOffset < 0 ||
+      accessor.count <= 0 || byteStride <= 0 ||
       static_cast<int64_t>(sizeof(T) * N) > byteStride) {
     return;
   }
 
-  int64_t byteLength = accessor.count * static_cast<int64_t>(N * sizeof(float));
-  if (byteLength < 0) {
+  // Division rather than multiplication, because signed overflow is undefined
+  // behavior; a product must never be computed unless it is already known to
+  // fit.
+  if (accessor.count > std::numeric_limits<int64_t>::max() / byteStride) {
     return;
   }
+
+  const int64_t sourceLength = accessor.count * byteStride;
+
+  // Phrased as subtractions so the offsets and length are never summed; those
+  // additions can themselves overflow.
+  if (pBufferView->byteOffset > bufferSize ||
+      accessor.byteOffset > bufferSize - pBufferView->byteOffset ||
+      sourceLength >
+          bufferSize - pBufferView->byteOffset - accessor.byteOffset) {
+    return;
+  }
+
+  constexpr int64_t outputStride = static_cast<int64_t>(N * sizeof(float));
+  if (accessor.count > std::numeric_limits<int64_t>::max() / outputStride) {
+    return;
+  }
+
+  const int64_t byteLength = accessor.count * outputStride;
 
   std::vector<std::byte> data;
   data.resize(static_cast<size_t>(byteLength));
