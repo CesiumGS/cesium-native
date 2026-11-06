@@ -212,7 +212,11 @@ jobs:
         run: |
           cp doc/cmake-presets/CMakeUserPresets.json .
           cmake --preset=vcpkg -DCMAKE_BUILD_TYPE:STRING=${{matrix.build_type}} $EXTRA_CMAKE_OPTIONS
-          cmake --build build --parallel
+          if [[ "${{ matrix.platform }}" == "macos-15" ]]; then
+            cmake --build build --parallel 3
+          else
+            cmake --build build --parallel
+          fi
       - name: Test ${{matrix.build_type}} Configuration
         run: |
           cd build
