@@ -4,6 +4,7 @@
 
 ##### Breaking Changes :mega:
 
+- Removed `Cesium3DTilesSelection::TilesetContentLoader::setExternalSchema`. External tileset loaders no longer receive a `MAXAR_content_geojson` schema by pointer from their parent.
 - `ViewStateMeasureDelegate::computeSelectionMeasure` now takes the view state as an argument.
 - SPZ color components are no longer automatically converted to the `FLOAT` component type when read. To replicate the previous behavior, set `options.spzDecoderOptions.forceFloatAccessors` to `true` on `GltfReaderOptions`.
 
@@ -16,6 +17,7 @@
 
 ##### Fixes :wrench:
 
+- `MAXAR_content_geojson` property schemas are now loaded through `TilesetSharedAssetSystem`. The Maxar document is converted to a glTF schema and cached by its resolved URL, so external tileset loaders that refer to one schema share that object. A relative schema URI is resolved against the root tileset, which is where these schemas live when an external tileset does not contain a full schema URL.
 - Fixed `CesiumCurl::CurlAssetAccessor` ignoring `allowDirectoryCreation` on macOS, causing uploads to `file:` URLs in missing directories to fail.
 - `CesiumVectorOverlays::VectorTilesRasterOverlay` now builds its geographic projection from the overlay ellipsoid instead of a hardcoded WGS84 ellipsoid. A hardcoded ellipsoid can disagree with the one stored by the host, which creates an extra texture-coordinate set and can crash when this overlay is combined with another geographic overlay.
 - Fixed bugs and potential crashes when using the `GltfModifier` on a tileset with raster overlays (such as cartographic polygons).
