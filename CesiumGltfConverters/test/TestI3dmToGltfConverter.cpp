@@ -166,7 +166,7 @@ TEST_CASE("I3dmToGltfConverter") {
 
   SUBCASE("reports an error for an i3dm with invalid feature data") {
     std::filesystem::path path =
-        testDataPath / "InvalidFeatureTable" / "cesiumNativeIssue1127.i3dm";
+        testDataPath / "InvalidFeatureTable" / "invalidFeatureTable.i3dm";
 
     GltfConverterResult result = ConvertTileToGltf::fromI3dm(path);
     REQUIRE(result.errors.hasErrors());
