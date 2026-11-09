@@ -17,10 +17,12 @@ namespace Cesium3DTilesSelection {
 TileRenderContent::TileRenderContent(CesiumGltf::Model&& model)
     : _model{std::move(model)},
       _pRenderResources{nullptr},
+      _rasterOverlayDetails{},
       _modifierState{GltfModifierState::Idle},
       _modifiedModel{},
       _pModifiedRenderResources(nullptr),
-      _rasterOverlayDetails{},
+      _modifiedRasterOverlayDetails{},
+      _activeUpsamplingTaskCount(0),
       _credits{},
       _lodTransitionFadePercentage{0.0f} {}
 
@@ -56,8 +58,11 @@ TileRenderContent::getModifiedModel() const noexcept {
 
 void TileRenderContent::setModifiedModelAndRenderResources(
     CesiumGltf::Model&& modifiedModel,
-    void* pModifiedRenderResources) noexcept {
+    void* pModifiedRenderResources,
+    std::optional<CesiumRasterOverlays::RasterOverlayDetails>&&
+        rasterOverlayDetails) noexcept {
   this->_modifiedModel = std::move(modifiedModel);
+  this->_modifiedRasterOverlayDetails = std::move(rasterOverlayDetails);
   this->_pModifiedRenderResources = pModifiedRenderResources;
 }
 
@@ -67,11 +72,13 @@ void* TileRenderContent::getModifiedRenderResources() const noexcept {
 
 void TileRenderContent::resetModifiedModelAndRenderResources() noexcept {
   this->_pModifiedRenderResources = nullptr;
+  this->_modifiedRasterOverlayDetails.reset();
   this->_modifiedModel.reset();
 }
 
 void TileRenderContent::replaceWithModifiedModel() noexcept {
   CESIUM_ASSERT(this->_modifiedModel);
+  CESIUM_ASSERT(!this->isBeingUpsampled());
   if (this->_modifiedModel) {
     this->_model = std::move(*this->_modifiedModel);
     // reset after move because this is tested for nullopt in
@@ -79,7 +86,25 @@ void TileRenderContent::replaceWithModifiedModel() noexcept {
     this->_modifiedModel.reset();
     this->_pRenderResources = this->_pModifiedRenderResources;
     this->_pModifiedRenderResources = nullptr;
+    if (this->_modifiedRasterOverlayDetails) {
+      this->_rasterOverlayDetails =
+          std::move(*this->_modifiedRasterOverlayDetails);
+      this->_modifiedRasterOverlayDetails.reset();
+    }
   }
+}
+
+bool TileRenderContent::isBeingUpsampled() const noexcept {
+  return this->_activeUpsamplingTaskCount > 0;
+}
+
+void TileRenderContent::incrementUpsamplingTaskCount() const noexcept {
+  this->_activeUpsamplingTaskCount++;
+}
+
+void TileRenderContent::decrementUpsamplingTaskCount() const noexcept {
+  CESIUM_ASSERT(this->_activeUpsamplingTaskCount > 0);
+  this->_activeUpsamplingTaskCount--;
 }
 
 const RasterOverlayDetails&

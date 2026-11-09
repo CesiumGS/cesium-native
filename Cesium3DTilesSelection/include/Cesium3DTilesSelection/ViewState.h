@@ -21,6 +21,7 @@
 namespace Cesium3DTilesSelection {
 
 class Tile;
+class ViewState;
 
 /**
  * @brief A handler for customizing calculation of the selection
@@ -32,19 +33,44 @@ class CESIUM3DTILESSELECTION_API ViewStateMeasureDelegate {
 public:
   /**
    * @brief Compute the error measure, a generalization of screen space error.
+   * @param viewState The ViewState object.
    * @param tile The tile being tested.
    * @param distance Distance from the ViewState's position to the tile.
    * @param depth The depth (level) of the tile in the tileset.
    * @return The error measure
    */
   virtual double computeSelectionMeasure(
+      const ViewState& viewState,
       const Tile& tile,
       double distance,
-      uint32_t depth) const = 0;
+      uint32_t depth) const;
+
   /**
    * @brief destructor
    */
   virtual ~ViewStateMeasureDelegate() = default;
+};
+
+/**
+ * @brief A delegate for determining if a tile's content is visible, using
+ * user-defined criteria. For example, a tile's group might be tested.
+ */
+class CESIUM3DTILESSELECTION_API ViewStateVisibilityDelegate {
+public:
+  /**
+   * @brief Determine if this tile's content is visible. If the tile has
+   * external content, then this determines if the tile's children are visited.
+   * @param viewState The ViewState object.
+   * @param tile The tile.
+   * @return Whether or not the tile's content is visible.
+   */
+  virtual bool
+  isContentVisible(const ViewState& viewState, const Tile& tile) const;
+
+  /**
+   * @brief destructor
+   */
+  virtual ~ViewStateVisibilityDelegate() = default;
 };
 
 /**
@@ -278,7 +304,7 @@ public:
    * The given distance will be clamped to a small positive value if
    * it is negative or too close to zero.
    *
-   * If the ViewState object was ceated with a measure delegate, that is called
+   * If the ViewState object was created with a measure delegate, that is called
    * for this computation. Otherwise. the projection-based screen space error
    * calculation is performed.
    *
@@ -292,6 +318,54 @@ public:
       double distance,
       uint32_t depth) const noexcept;
 
+  /**
+   * @brief Reports whether a tile's content is visible. This will use the
+   * @ref ViewStateVisibilityDelegate on this @ref ViewState if specified,
+   * otherwise this returns true by default.
+   * @param tile The tile.
+   * @return True if the tile's content is visible; false otherwise.
+   */
+  bool isContentVisible(const Tile& tile) const noexcept {
+    if (_pVisibilityDelegate) {
+      return _pVisibilityDelegate->isContentVisible(*this, tile);
+    }
+    return true;
+  }
+
+  /**
+   * @brief Get the measure delegate object.
+   * @return The measure delegate.
+   */
+  std::shared_ptr<ViewStateMeasureDelegate> getMeasureDelegate() const {
+    return this->_pMeasureDelegate;
+  }
+
+  /**
+   * @brief Set the measure delegate object.
+   * @param pMeasureDelegate The measure delegate.
+   */
+  void setMeasureDelegate(
+      std::shared_ptr<ViewStateMeasureDelegate> pMeasureDelegate) {
+    this->_pMeasureDelegate = std::move(pMeasureDelegate);
+  }
+
+  /**
+   * @brief Get the visibility delegate object.
+   * @return The visibility delegate.
+   */
+  std::shared_ptr<ViewStateVisibilityDelegate> getVisibilityDelegate() const {
+    return this->_pVisibilityDelegate;
+  }
+
+  /**
+   * @brief Set the visibility delegate object.
+   * @param pVisibilityDelegate The visibility delegate.
+   */
+  void setVisibilityDelegate(
+      std::shared_ptr<ViewStateVisibilityDelegate> pVisibilityDelegate) {
+    this->_pVisibilityDelegate = std::move(pVisibilityDelegate);
+  }
+
 private:
   glm::dvec3 _position;
   glm::dvec3 _direction;
@@ -304,6 +378,7 @@ private:
   glm::dmat4 _viewMatrix;
   glm::dmat4 _projectionMatrix;
   std::shared_ptr<ViewStateMeasureDelegate> _pMeasureDelegate;
+  std::shared_ptr<ViewStateVisibilityDelegate> _pVisibilityDelegate;
 };
 
 } // namespace Cesium3DTilesSelection
