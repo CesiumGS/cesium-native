@@ -2056,7 +2056,7 @@ TEST_CASE("Test glTF modifier state machine") {
 }
 
 TEST_CASE("Test glTF modifier reapplies raster overlay attributes") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -2282,7 +2282,7 @@ TEST_CASE("Test glTF modifier preserves raster overlay mappings") {
     }
   };
 
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
   auto pRenderer = std::make_shared<RecordingRenderer>();
   auto pModifier = std::make_shared<ReplacementModifier>();
   TilesetExternals externals{
