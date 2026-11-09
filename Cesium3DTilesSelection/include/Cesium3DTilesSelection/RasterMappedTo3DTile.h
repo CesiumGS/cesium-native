@@ -199,6 +199,28 @@ public:
   bool loadThrottled() noexcept;
 
   /**
+   * @brief Prepares this mapping for use with new content that has replaced
+   * the tile's previous content, such as a model produced by a
+   * @ref GltfModifier.
+   *
+   * This mapping must already be detached from the previous content with
+   * @ref detachFromTile, and the tile's @ref TileRenderContent must already
+   * hold the new content and its
+   * @ref CesiumRasterOverlays::RasterOverlayDetails.
+   *
+   * If the @ref CesiumRasterOverlays::RasterOverlayTile mapped by this instance
+   * still covers the new content, the texture translation and scale are
+   * recomputed for the new content, and the mapping can be reattached by the
+   * next call to @ref update. Otherwise, this mapping should be replaced by a
+   * new one created with @ref mapOverlayToTile.
+   *
+   * @param tile The owner tile.
+   * @return true if this mapping can still be used with the new content, or
+   * false if it needs to be replaced.
+   */
+  bool prepareForReplacedContent(const Tile& tile) noexcept;
+
+  /**
    * @brief Creates a maping between a @ref CesiumRasterOverlays::RasterOverlay
    * and a @ref Tile.
    *

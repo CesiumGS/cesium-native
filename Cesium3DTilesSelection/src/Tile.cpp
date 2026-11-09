@@ -126,7 +126,8 @@ Tile::Tile(Tile&& rhs) noexcept
       _loadState{rhs._loadState},
       _mightHaveLatentChildren{rhs._mightHaveLatentChildren},
       _rasterTiles(std::move(rhs._rasterTiles)),
-      _referenceCount(0) {
+      _referenceCount(0),
+      _group(rhs._group) {
   if (this->hasReferencingContent()) {
     this->addReference("Move constructor with content");
     rhs.releaseReference("RHS passed to move constructor");

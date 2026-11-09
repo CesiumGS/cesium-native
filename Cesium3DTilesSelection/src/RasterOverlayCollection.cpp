@@ -2,19 +2,24 @@
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
+#include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
+#include <CesiumRasterOverlays/RasterOverlayDetails.h>
 #include <CesiumRasterOverlays/RasterOverlayLoadFailureDetails.h>
+#include <CesiumRasterOverlays/RasterOverlayTile.h>
 #include <CesiumRasterOverlays/RasterOverlayTileProvider.h>
 #include <CesiumUtility/IntrusivePointer.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 using namespace CesiumGeometry;
@@ -243,6 +248,66 @@ TileRasterOverlayStatus RasterOverlayCollection::updateTileOverlays(
   }
 
   return result;
+}
+
+void RasterOverlayCollection::updateTileOverlaysForReplacedContent(
+    Tile& tile,
+    double maximumScreenSpaceError) noexcept {
+  std::vector<RasterMappedTo3DTile>& rasterTiles = tile.getMappedRasterTiles();
+
+  const TileRenderContent* pRenderContent =
+      tile.getContent().getRenderContent();
+  if (!pRenderContent) {
+    rasterTiles.clear();
+    return;
+  }
+
+  // Default-constructed details also have an empty rectangle, so only treat
+  // the content as empty if texture coordinates were actually generated for
+  // it.
+  const RasterOverlayDetails& details =
+      pRenderContent->getRasterOverlayDetails();
+  if (!details.rasterOverlayProjections.empty() &&
+      details.boundingRegion.getRectangle().isEmpty()) {
+    rasterTiles.clear();
+    return;
+  }
+
+  std::vector<RasterMappedTo3DTile> previous = std::move(rasterTiles);
+  rasterTiles.clear();
+  rasterTiles.reserve(this->_activatedOverlays.size());
+
+  for (const IntrusivePointer<ActivatedRasterOverlay>& pActivated :
+       this->_activatedOverlays) {
+    auto it = std::find_if(
+        previous.begin(),
+        previous.end(),
+        [&pActivated](const RasterMappedTo3DTile& mapped) noexcept {
+          const RasterOverlayTile* pOverlayTile = mapped.getLoadingTile()
+                                                      ? mapped.getLoadingTile()
+                                                      : mapped.getReadyTile();
+          return pOverlayTile &&
+                 &pOverlayTile->getActivatedOverlay() == pActivated.get();
+        });
+    if (it != previous.end() && it->prepareForReplacedContent(tile)) {
+      // This mapping is still valid for the new content.
+      rasterTiles.emplace_back(std::move(*it));
+      continue;
+    }
+
+    // Overlays that were not mapped to the tile before, or whose mapped
+    // overlay tile doesn't cover the new content, are mapped again.
+    std::vector<CesiumGeospatial::Projection> missingProjections;
+    RasterMappedTo3DTile* pMapped = RasterMappedTo3DTile::mapOverlayToTile(
+        maximumScreenSpaceError,
+        *pActivated,
+        tile,
+        missingProjections,
+        this->_ellipsoid);
+    if (pMapped) {
+      pMapped->loadThrottled();
+    }
+  }
 }
 
 RasterOverlayCollection::const_iterator

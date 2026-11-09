@@ -651,6 +651,18 @@ public:
    */
   bool hasReferencingContent() const noexcept;
 
+  /**
+   * @brief Set the group ID for this tile.
+   * @param group The group ID.
+   */
+  void setGroup(int64_t group) { this->_group = group; }
+
+  /**
+   * @brief Get the group ID for this tile.
+   * @returns the group ID.
+   */
+  std::optional<int64_t> getGroup() const noexcept { return this->_group; }
+
 private:
   struct TileConstructorImpl {};
   template <
@@ -716,6 +728,8 @@ private:
 
   friend class TilesetContentManager;
   friend class MockTilesetContentManagerTestFixture;
+
+  std::optional<int64_t> _group;
 
 public:
   /**
