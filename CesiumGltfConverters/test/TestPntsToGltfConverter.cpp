@@ -39,7 +39,7 @@ using namespace CesiumGltfConverters;
 using namespace CesiumUtility;
 
 namespace {
-auto testFilePath =
+auto testDataPath =
     std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1" /
     "PointCloud";
 } // namespace
@@ -152,7 +152,7 @@ static void checkAttribute(
 }
 
 TEST_CASE("Converts simple point cloud to glTF") {
-  std::filesystem::path path = testFilePath / "pointCloudPositionsOnly.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudPositionsOnly.pnts";
   const int32_t pointsLength = 8;
 
   GltfConverterResult result = ConvertTileToGltf::fromPnts(path);
@@ -261,7 +261,7 @@ TEST_CASE("Converts simple point cloud to glTF") {
 }
 
 TEST_CASE("Converts point cloud with RGBA to glTF") {
-  std::filesystem::path path = testFilePath / "pointCloudRGBA.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudRGBA.pnts";
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 2;
 
@@ -325,7 +325,7 @@ TEST_CASE("Converts point cloud with RGBA to glTF") {
 }
 
 TEST_CASE("Converts point cloud with RGB to glTF") {
-  std::filesystem::path path = testFilePath / "pointCloudRGB.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudRGB.pnts";
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 2;
 
@@ -389,7 +389,7 @@ TEST_CASE("Converts point cloud with RGB to glTF") {
 }
 
 TEST_CASE("Converts point cloud with RGB565 to glTF") {
-  std::filesystem::path path = testFilePath / "pointCloudRGB565.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudRGB565.pnts";
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 2;
 
@@ -453,7 +453,7 @@ TEST_CASE("Converts point cloud with RGB565 to glTF") {
 }
 
 TEST_CASE("Converts point cloud with CONSTANT_RGBA") {
-  std::filesystem::path path = testFilePath / "pointCloudConstantRGBA.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudConstantRGBA.pnts";
   GltfConverterResult result = ConvertTileToGltf::fromPnts(path);
   const int32_t pointsLength = 8;
 
@@ -501,7 +501,7 @@ TEST_CASE("Converts point cloud with CONSTANT_RGBA") {
 }
 
 TEST_CASE("Converts point cloud with quantized positions to glTF") {
-  std::filesystem::path path = testFilePath / "pointCloudQuantized.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudQuantized.pnts";
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 2;
 
@@ -576,7 +576,7 @@ TEST_CASE("Converts point cloud with quantized positions to glTF") {
 }
 
 TEST_CASE("Converts point cloud with normals to glTF") {
-  std::filesystem::path path = testFilePath / "pointCloudNormals.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudNormals.pnts";
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 3;
 
@@ -641,7 +641,7 @@ TEST_CASE("Converts point cloud with normals to glTF") {
 
 TEST_CASE("Converts point cloud with oct-encoded normals to glTF") {
   std::filesystem::path path =
-      testFilePath / "pointCloudNormalsOctEncoded.pnts";
+      testDataPath / "pointCloudNormalsOctEncoded.pnts";
   const int32_t pointsLength = 8;
   const int32_t expectedAttributeCount = 3;
 
@@ -717,7 +717,7 @@ getUniqueBufferIds(const std::vector<BufferView>& bufferViews) {
 
 TEST_CASE("Converts point cloud with batch IDs to glTF with "
           "EXT_structural_metadata") {
-  std::filesystem::path path = testFilePath / "pointCloudBatched.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudBatched.pnts";
   const int32_t pointsLength = 8;
 
   GltfConverterResult result = ConvertTileToGltf::fromPnts(path);
@@ -796,7 +796,7 @@ TEST_CASE("Converts point cloud with batch IDs to glTF with "
 TEST_CASE("Converts point cloud with per-point properties to glTF with "
           "EXT_structural_metadata") {
   std::filesystem::path path =
-      testFilePath / "pointCloudWithPerPointProperties.pnts";
+      testDataPath / "pointCloudWithPerPointProperties.pnts";
   const int32_t pointsLength = 8;
 
   GltfConverterResult result = ConvertTileToGltf::fromPnts(path);
@@ -854,7 +854,7 @@ TEST_CASE("Converts point cloud with per-point properties to glTF with "
 }
 
 TEST_CASE("Converts point cloud with Draco compression to glTF") {
-  std::filesystem::path path = testFilePath / "pointCloudDraco.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudDraco.pnts";
   const int32_t pointsLength = 8;
 
   GltfConverterResult result = ConvertTileToGltf::fromPnts(path);
@@ -1003,7 +1003,7 @@ TEST_CASE("Converts point cloud with Draco compression to glTF") {
 }
 
 TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
-  std::filesystem::path path = testFilePath / "pointCloudDracoPartial.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudDracoPartial.pnts";
   const int32_t pointsLength = 8;
 
   GltfConverterResult result = ConvertTileToGltf::fromPnts(path);
@@ -1144,7 +1144,7 @@ TEST_CASE("Converts point cloud with partial Draco compression to glTF") {
 }
 
 TEST_CASE("Converts batched point cloud with Draco compression to glTF") {
-  std::filesystem::path path = testFilePath / "pointCloudDracoBatched.pnts";
+  std::filesystem::path path = testDataPath / "pointCloudDracoBatched.pnts";
   const int32_t pointsLength = 8;
 
   GltfConverterResult result = ConvertTileToGltf::fromPnts(path);
@@ -1310,11 +1310,11 @@ TEST_CASE("Rejects PNTS sections that extend past the declared byte length") {
   std::filesystem::path path;
 
   SUBCASE("feature table") {
-    path = testFilePath / "invalidFeatureTableSectionLength.pnts";
+    path = testDataPath / "invalidFeatureTableSectionLength.pnts";
   }
 
   SUBCASE("batch table") {
-    path = testFilePath / "invalidBatchTableSectionLength.pnts";
+    path = testDataPath / "invalidBatchTableSectionLength.pnts";
   }
 
   GltfConverterResult result = ConvertTileToGltf::fromPnts(path);

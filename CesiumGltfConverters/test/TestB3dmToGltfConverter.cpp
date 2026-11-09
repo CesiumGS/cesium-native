@@ -17,14 +17,14 @@ using namespace CesiumGltfConverters;
 using namespace CesiumGltf;
 
 namespace {
-auto testFilePath =
+auto testDataPath =
     std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1" /
     "BatchTables";
 }
 
 TEST_CASE("B3dmToGltfConverter") {
   SUBCASE("includes CESIUM_RTC extension in extensionsUsed") {
-    std::filesystem::path path = testFilePath / "batchedWithJson.b3dm";
+    std::filesystem::path path = testDataPath / "batchedWithJson.b3dm";
 
     GltfConverterResult result = ConvertTileToGltf::fromB3dm(path);
 
@@ -38,7 +38,7 @@ TEST_CASE("B3dmToGltfConverter") {
 
   SUBCASE("Index bufferViews created from Draco are valid") {
     std::filesystem::path path =
-        testFilePath / "batchedWithBatchTable-draco.b3dm";
+        testDataPath / "batchedWithBatchTable-draco.b3dm";
 
     GltfConverterResult result = ConvertTileToGltf::fromB3dm(path);
     REQUIRE(result.model);
