@@ -54,6 +54,12 @@ using namespace CesiumUtility;
 using namespace CesiumTilesetJson;
 using namespace CesiumNativeTests;
 
+namespace {
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1" /
+    "Groups";
+} // namespace
+
 class GroupSelectorDelegate : public ViewStateVisibilityDelegate {
 public:
   GroupSelectorDelegate(int64_t group_) : group(group_) {}
@@ -160,8 +166,6 @@ static ViewState zoomToTileset(const Tileset& tileset, int64_t group = -1) {
 TEST_CASE("Test additive refinement with groups sanity check") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "Groups";
   std::vector<std::string> files{
       "tileset-nogroup.json",
       "tileset2.json",
@@ -343,8 +347,6 @@ TEST_CASE("Test additive refinement with groups sanity check") {
 TEST_CASE("Test additive refinement with groups") {
   CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "Groups";
   std::vector<std::string> files{
       "tileset.json",
       "tileset2.json",

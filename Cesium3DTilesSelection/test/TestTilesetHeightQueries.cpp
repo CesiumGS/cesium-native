@@ -27,9 +27,8 @@ using namespace CesiumNativeTests;
 using namespace CesiumUtility;
 
 namespace {
-
-std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
 }
 
 TEST_CASE("Tileset height queries") {
@@ -205,10 +204,10 @@ TEST_CASE("Tileset height queries") {
 
   SUBCASE("Instanced model is not yet supported") {
     std::string url =
-        "file://" +
-        Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
-            (testDataPath / "i3dm" / "InstancedWithBatchTable" / "tileset.json")
-                .u8string()));
+        "file://" + Uri::nativePathToUriPath(StringHelpers::toStringUtf8(
+                        (testDataPath / "Instanced" /
+                         "InstancedWithBatchTable" / "tileset.json")
+                            .u8string()));
 
     Tileset tileset(externals, url);
 
