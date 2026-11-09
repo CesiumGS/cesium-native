@@ -24,9 +24,9 @@ auto testDataPath =
 
 TEST_CASE("B3dmToGltfConverter") {
   SUBCASE("includes CESIUM_RTC extension in extensionsUsed") {
-    std::filesystem::path testFilePath = testDataPath / "batchedWithJson.b3dm";
+    std::filesystem::path path = testDataPath / "batchedWithJson.b3dm";
 
-    GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
+    GltfConverterResult result = ConvertTileToGltf::fromB3dm(path);
 
     REQUIRE(result.model);
 
@@ -37,10 +37,10 @@ TEST_CASE("B3dmToGltfConverter") {
   }
 
   SUBCASE("Index bufferViews created from Draco are valid") {
-    std::filesystem::path testFilePath =
+    std::filesystem::path path =
         testDataPath / "batchedWithBatchTable-draco.b3dm";
 
-    GltfConverterResult result = ConvertTileToGltf::fromB3dm(testFilePath);
+    GltfConverterResult result = ConvertTileToGltf::fromB3dm(path);
     REQUIRE(result.model);
 
     Model& gltf = *result.model;
