@@ -204,6 +204,30 @@ public:
   TileRasterOverlayStatus
   updateTileOverlays(Tile& tile, const TilesetOptions& tilesetOptions) noexcept;
 
+  /**
+   * @brief Updates the raster overlays mapped to a tile after the tile's
+   * content has been replaced, such as by a @ref GltfModifier.
+   *
+   * The tile's existing mappings must already be detached from its previous
+   * content, and its @ref TileRenderContent must already hold the new content
+   * and its @ref CesiumRasterOverlays::RasterOverlayDetails.
+   *
+   * Mapped raster overlay tiles that still cover the new content are kept, so
+   * that they can be reattached right away. Other overlays are mapped to the
+   * tile again, which may require loading new raster overlay tiles. If the new
+   * content is empty, all raster overlays are removed from the tile.
+   *
+   * This method does not attach any raster overlay tiles. They will be
+   * attached by the next call to @ref updateTileOverlays.
+   *
+   * @param tile The tile whose content was replaced.
+   * @param maximumScreenSpaceError The maximum screen-space error of the
+   * tileset to which the tile belongs.
+   */
+  void updateTileOverlaysForReplacedContent(
+      Tile& tile,
+      double maximumScreenSpaceError) noexcept;
+
 private:
   struct GetOverlayFunctor;
 

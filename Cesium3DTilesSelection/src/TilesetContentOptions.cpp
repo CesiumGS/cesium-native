@@ -9,6 +9,7 @@ TilesetContentOptions::toGltfReaderOptions() const {
   options.ktx2TranscodeTargets = this->ktx2TranscodeTargets;
   options.applyTextureTransform = this->applyTextureTransform;
   options.primitiveModeOptions = this->primitiveModeOptions;
+  options.spzDecoderOptions = this->spzDecoderOptions;
   return options;
 }
 

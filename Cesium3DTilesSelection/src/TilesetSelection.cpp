@@ -120,6 +120,15 @@ TraversalDetails visitTileIfNeeded(
     Tile& tile,
     ViewUpdateResult& result);
 
+bool isContentVisible(const TilesetFrameState& frameState, const Tile& tile) {
+  return std::any_of(
+      frameState.frustums.begin(),
+      frameState.frustums.end(),
+      [&tile](const ViewState& viewState) {
+        return viewState.isContentVisible(tile);
+      });
+}
+
 } // namespace
 
 void selectTiles(
@@ -301,9 +310,17 @@ void addTileToLoadQueue(
       context.externals.pGltfModifier);
 }
 
-void addTileToRender(ViewUpdateResult& result, Tile& tile, double sse) {
-  result.tilesToRenderThisFrame.emplace_back(&tile);
-  result.tileScreenSpaceErrorThisFrame.emplace_back(sse);
+bool addTileToRenderIfContentIsVisible(
+    const TilesetFrameState& frameState,
+    ViewUpdateResult& result,
+    Tile& tile,
+    double sse) {
+  if (isContentVisible(frameState, tile)) {
+    result.tilesToRenderThisFrame.emplace_back(&tile);
+    result.tileScreenSpaceErrorThisFrame.emplace_back(sse);
+    return true;
+  }
+  return false;
 }
 
 double computeSse(
@@ -605,9 +622,11 @@ TraversalDetails renderLeaf(
     double tilePriority,
     double tileSse,
     ViewUpdateResult& result) {
+  if (!addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse)) {
+    return TraversalDetails{};
+  }
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  addTileToRender(result, tile, tileSse);
   addTileToLoadQueue(
       context,
       frameState,
@@ -628,7 +647,7 @@ TraversalDetails renderInnerTile(
       result);
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  addTileToRender(result, tile, tileSse);
+  addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
   return createTraversalDetailsForSingleTile(frameState, tile);
 }
 
@@ -661,7 +680,7 @@ bool loadAndRenderAdditiveRefinedTile(
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
-    addTileToRender(result, tile, tileSse);
+    addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
     if (!queuedForLoad) {
       addTileToLoadQueue(
           context,
@@ -728,7 +747,7 @@ bool kickDescendantsAndRenderTile(
       sseList.end());
 
   if (tile.getRefine() != TileRefine::Add) {
-    addTileToRender(result, tile, tileSse);
+    addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
   }
 
   traversalState.currentState() =
@@ -946,14 +965,18 @@ TraversalDetails visitTile(
   TilesetViewGroup::LoadQueueCheckpoint loadQueueBeforeChildren =
       frameState.viewGroup.saveTileLoadQueueCheckpoint();
 
-  TraversalDetails traversalDetails = visitVisibleChildrenNearToFar(
-      context,
-      frameState,
-      depth,
-      ancestorMeetsSse,
-      tile,
-      result);
-
+  TraversalDetails traversalDetails;
+  if (!tile.isExternalContent() ||
+      tile.getContent().getExternalContent()->isImplicit ||
+      isContentVisible(frameState, tile)) {
+    traversalDetails = visitVisibleChildrenNearToFar(
+        context,
+        frameState,
+        depth,
+        ancestorMeetsSse,
+        tile,
+        result);
+  }
   // Zero or more descendant tiles were added to the render list.
   // The traversalDetails tell us what happened while visiting the children.
 
