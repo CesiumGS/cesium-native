@@ -84,11 +84,11 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
     byteStride = accessor.computeByteStride(model);
   }
 
-  const int64_t bufferSize = static_cast<int64_t>(pBuffer->cesium.data.size());
+  int64_t bufferSize = int64_t(pBuffer->cesium.data.size());
 
   if (pBufferView->byteOffset < 0 || accessor.byteOffset < 0 ||
       accessor.count <= 0 || byteStride <= 0 ||
-      static_cast<int64_t>(sizeof(T) * N) > byteStride) {
+      int64_t(sizeof(T) * N) > byteStride) {
     return;
   }
 
@@ -99,7 +99,7 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
     return;
   }
 
-  const int64_t sourceLength = accessor.count * byteStride;
+  int64_t sourceLength = accessor.count * byteStride;
 
   // Phrased as subtractions so the offsets and length are never summed; those
   // additions can themselves overflow.
@@ -110,12 +110,12 @@ void dequantizeAccessor(Model& model, Accessor& accessor) {
     return;
   }
 
-  constexpr int64_t outputStride = static_cast<int64_t>(N * sizeof(float));
+  constexpr int64_t outputStride = int64_t(N * sizeof(float));
   if (accessor.count > std::numeric_limits<int64_t>::max() / outputStride) {
     return;
   }
 
-  const int64_t byteLength = accessor.count * outputStride;
+  int64_t byteLength = accessor.count * outputStride;
 
   std::vector<std::byte> data;
   data.resize(static_cast<size_t>(byteLength));

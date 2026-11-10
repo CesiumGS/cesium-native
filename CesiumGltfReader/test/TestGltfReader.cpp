@@ -378,9 +378,9 @@ std::vector<std::byte> writeQuantizedGltf(
     const std::string& accessorType = "VEC2",
     const std::string& accessorBounds = "") {
   // Little-endian unsigned shorts 1 through 16.
-  const std::string dataUri = "data:application/octet-stream;base64,"
-                              "AQACAAMABAAFAAYABwAIAAkACgALAAwADQAOAA8AEAA=";
-  const std::string gltf = fmt::format(
+  std::string dataUri = "data:application/octet-stream;base64,"
+                        "AQACAAMABAAFAAYABwAIAAkACgALAAwADQAOAA8AEAA=";
+  std::string gltf = fmt::format(
       R"(
         {{
           "asset":{{
