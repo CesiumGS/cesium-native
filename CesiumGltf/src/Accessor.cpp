@@ -56,6 +56,35 @@ Accessor::computeByteSizeOfComponent(int32_t componentType) noexcept {
   }
 }
 
+/*static*/ std::string
+Accessor::getComponentTypeAsString(int32_t componentType) noexcept {
+  switch (componentType) {
+  case CesiumGltf::Accessor::ComponentType::BYTE:
+    return "BYTE";
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_BYTE:
+    return "UNSIGNED_BYTE";
+  case CesiumGltf::Accessor::ComponentType::SHORT:
+    return "SHORT";
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_SHORT:
+    return "UNSIGNED_SHORT";
+  case CesiumGltf::Accessor::ComponentType::INT:
+    return "INT";
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_INT:
+    return "UNSIGNED_INT";
+  case CesiumGltf::Accessor::ComponentType::FLOAT:
+    return "FLOAT";
+  case CesiumGltf::Accessor::ComponentType::INT64:
+    return "INT64";
+  case CesiumGltf::Accessor::ComponentType::UNSIGNED_INT64:
+    return "UNSIGNED_INT64";
+  case CesiumGltf::Accessor::ComponentType::DOUBLE:
+    return "DOUBLE";
+  default:
+    // TODO Print a warning here!
+    return "INVALID";
+  }
+}
+
 int8_t Accessor::computeNumberOfComponents() const noexcept {
   return Accessor::computeNumberOfComponents(this->type);
 }

@@ -22,6 +22,7 @@ if(DOXYGEN_FOUND)
         ../CesiumITwinClient/include
         ../CesiumJsonReader/include
         ../CesiumJsonWriter/include
+        ../CesiumMetadata/include
         ../CesiumQuantizedMeshTerrain/include
         ../CesiumQuantizedMeshTerrain/generated/include
         ../CesiumRasterOverlays/include
@@ -69,6 +70,7 @@ if(DOXYGEN_FOUND)
         "CESIUMITWINCLIENT_API"
         "CESIUMJSONREADER_API"
         "CESIUMJSONWRITER_API"
+        "CESIUMMETADATA_API"
         "CESIUMQUANTIZEDMESHTERRAIN_API"
         "CESIUMRASTEROVERLAYS_API"
         "CESIUMTILESETJSON_API"

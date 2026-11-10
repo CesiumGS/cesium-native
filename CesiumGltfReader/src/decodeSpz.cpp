@@ -8,7 +8,6 @@
 #include <CesiumGltf/Mesh.h>
 #include <CesiumGltf/MeshPrimitive.h>
 #include <CesiumGltf/Model.h>
-#include <CesiumGltf/PropertyType.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/JsonValue.h>
@@ -279,9 +278,8 @@ void coerceToFloatAndWarn(
   if (accessor.componentType != CesiumGltf::Accessor::ComponentType::FLOAT) {
     if (!options.forceFloatAccessors) {
       const std::string prevComponentTypeName =
-          CesiumGltf::convertPropertyComponentTypeToString(
-              CesiumGltf::convertAccessorComponentTypeToPropertyComponentType(
-                  accessor.componentType));
+          CesiumGltf::Accessor::getComponentTypeAsString(
+              accessor.componentType);
       readGltf.warnings.push_back(fmt::format(
           "SPZ glTF {} accessor is "
           "unsupported type {} - changing type to FLOAT",
@@ -522,8 +520,8 @@ void decodePrimitive(
       primitive,
       "KHR_gaussian_splatting:OPACITY");
   if (!pOpacityAccessor) {
-    // Attribute is required by spec and we want runtimes to be able to count on
-    // having raw alpha data available.
+    // Attribute is required by spec and we want runtimes to be able to count
+    // on having raw alpha data available.
     pOpacityAccessor = addAccessor(
         model,
         primitive,
@@ -560,8 +558,8 @@ void decodePrimitive(
       primitive,
       "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0");
   if (!pDegree0Accessor) {
-    // Attribute is required by spec and we want runtimes to be able to count on
-    // having raw SH0 data.
+    // Attribute is required by spec and we want runtimes to be able to count
+    // on having raw SH0 data.
     pDegree0Accessor = addAccessor(
         model,
         primitive,
@@ -581,13 +579,14 @@ void decodePrimitive(
         "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0",
         *pDegree0Accessor);
 
-    // Just being defensive here. Without this, we might start the for loop on a
-    // valid index that doesn't have a complete set of RGB components, and
+    // Just being defensive here. Without this, we might start the for loop on
+    // a valid index that doesn't have a complete set of RGB components, and
     // memcpy to somewhere we don't intend to.
     const size_t rem = gaussian->colors.size() % 3;
     if (rem > 0) {
       readGltf.warnings.emplace_back(fmt::format(
-          "SPZ glTF KHR_gaussian_splatting:SH_DEGREE_0_COEF_0 accessor has {} "
+          "SPZ glTF KHR_gaussian_splatting:SH_DEGREE_0_COEF_0 accessor has "
+          "{} "
           "extra color components that will be ignored",
           rem));
     }

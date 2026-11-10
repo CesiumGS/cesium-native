@@ -79,6 +79,7 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | **CesiumITwinClient**          | Functions to access the [Bentley iTwin](https://www.bentley.com/software/itwin-platform/) platform.             |
 | **CesiumJsonReader**           | Reads JSON from a buffer into statically-typed classes.                                                         |
 | **CesiumJsonWriter**           | Writes JSON from statically-typed classes into a buffer.                                                        |
+| **CesiumMetadata**             | Classes that streamline access of metadata in glTF and 3D Tiles.                                                |
 | **CesiumQuantizedMeshTerrain** | Classes for accessing terrain in the [quantized-mesh-1.0](https://github.com/CesiumGS/quantized-mesh) format.   |
 | **CesiumTilesetJson**          | Classes to represent a `tileset.json` from [3D Tiles 1.1](https://github.com/CesiumGS/3d-tiles).                |
 | **CesiumTilesetJsonReader**    | 3D Tiles 1.1 `tileset.json` deserialization, including 3D Tiles extension support.                              |

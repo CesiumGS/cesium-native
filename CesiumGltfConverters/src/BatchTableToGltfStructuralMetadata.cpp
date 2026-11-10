@@ -20,10 +20,10 @@
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/PropertyTable.h>
 #include <CesiumGltf/PropertyTableProperty.h>
-#include <CesiumGltf/PropertyType.h>
-#include <CesiumGltf/PropertyTypeTraits.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfConverters/GltfConverterUtility.h>
+#include <CesiumMetadata/PropertyType.h>
+#include <CesiumMetadata/PropertyTypeTraits.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/JsonValue.h>
@@ -53,6 +53,7 @@
 
 using namespace CesiumGltf;
 using namespace CesiumGltfConverters::CesiumImpl;
+using namespace CesiumMetadata;
 using namespace CesiumUtility;
 
 namespace CesiumGltfConverters {
@@ -75,7 +76,7 @@ struct MaskedType {
   bool isFloat64;
   bool isBool;
 
-  MaskedType() : MaskedType(true){};
+  MaskedType() : MaskedType(true) {};
 
   MaskedType(bool defaultValue)
       : isInt8(defaultValue),
@@ -131,12 +132,12 @@ struct MaskedArrayType {
   uint32_t minArrayCount;
   uint32_t maxArrayCount;
 
-  MaskedArrayType() : MaskedArrayType(true){};
+  MaskedArrayType() : MaskedArrayType(true) {};
 
   MaskedArrayType(bool defaultValue)
       : elementType(defaultValue),
         minArrayCount(std::numeric_limits<uint32_t>::max()),
-        maxArrayCount(std::numeric_limits<uint32_t>::min()){};
+        maxArrayCount(std::numeric_limits<uint32_t>::min()) {};
 
   MaskedArrayType(
       MaskedType inElementType,
@@ -205,10 +206,10 @@ private:
   bool _canUseNullStringSentinel = true;
 
 public:
-  CompatibleTypes() : _type(){};
-  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType){};
+  CompatibleTypes() : _type() {};
+  CompatibleTypes(const MaskedType& maskedType) : _type(maskedType) {};
   CompatibleTypes(const MaskedArrayType& maskedArrayType)
-      : _type(maskedArrayType){};
+      : _type(maskedArrayType) {};
 
   /**
    * Whether this is exclusively compatible with array types. This indicates an

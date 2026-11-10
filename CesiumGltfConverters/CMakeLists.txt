@@ -54,6 +54,7 @@ target_link_libraries(CesiumGltfConverters
         CesiumGltf
         CesiumGltfContent
         CesiumGltfReader
+        CesiumMetadata
         CesiumUtility
     PRIVATE
         draco::draco

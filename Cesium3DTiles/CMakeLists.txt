@@ -56,6 +56,7 @@ target_link_libraries(Cesium3DTiles
         CesiumGltfContent
         CesiumGltfReader
         CesiumJsonReader
+        CesiumMetadata
         CesiumTilesetJson
         CesiumTilesetJsonReader
         CesiumUtility

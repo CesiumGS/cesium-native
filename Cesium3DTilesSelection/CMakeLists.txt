@@ -49,6 +49,7 @@ target_link_libraries(Cesium3DTilesSelection
         CesiumGltfConverters
         CesiumGltfReader
         CesiumImage
+        CesiumMetadata
         CesiumQuantizedMeshTerrain
         CesiumRasterOverlays
         CesiumTilesetJson
