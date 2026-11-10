@@ -235,8 +235,8 @@ private:
 class ImplicitTilingUtilities {
 public:
   /**
-   * @brief Resolves a templatized implicit tiling URL with a quadtree tile ID.
-   * This expects the URL to contain `{x}` and `{y}` as template parameters.
+   * @brief Resolves a templatized implicit tiling URL with the given quadtree
+   * tile ID. This expects the URL to contain `{x}` and `{y}` template parameters.
    *
    * @param baseUrl The base URL that is used to resolve the urlTemplate if it
    * is a relative path.
@@ -251,8 +251,9 @@ public:
       const CesiumGeometry::QuadtreeTileID& quadtreeID);
 
   /**
-   * @brief Resolves a templatized implicit tiling URL with an octree tile ID.
-   * This expects the URL to contain `{x}`, `{y}`, and `{z}` as template parameters.
+   * @brief Resolves a templatized implicit tiling URL with the given octree
+   * tile ID. This expects the URL to contain `{x}`, `{y}`, and `{z}` template
+   * parameters.
    *
    * @param baseUrl The base URL that is used to resolve the urlTemplate if it
    * is a relative path.

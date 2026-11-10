@@ -75,12 +75,12 @@ private:
    * @brief The axis that is used as the "up-axis" for glTF content loaded
    * through @ref TilesetGltfLoader.
    *
-   * When a tileset is represented in glTF, it may be y-up (for a local tileset)
-   * or z-up (for a tileset with @ref ExtensionExtGeospatialCrs). In a local
-   * tileset, it is sufficient to transform the root tile from y-up to z-up; all
-   * children tiles will then be z-up as well. Thus, it's simpler to hardcode
-   * this as z-up, provided that the correct transform is added to the root
-   * tile.
+   * A glTF tileset may be y-up (following glTF standard) or z-up (through a
+   * coordinate system specified in @ref CesiumGltf::ExtensionExtGeospatialCrs).
+   * In the former, it is sufficient to apply a one-time transform to the root
+   * tile, since all its children will inherit the transform. Thus, the loader's
+   * axis is hardcoded and the correct transform is applied during loader
+   * creation.
    */
   static const CesiumGeometry::Axis _upAxis = CesiumGeometry::Axis::Z;
 };

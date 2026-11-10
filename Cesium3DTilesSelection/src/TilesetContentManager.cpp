@@ -789,13 +789,11 @@ TilesetContentManager::createFromUrl(
                 return asyncSystem.createResolvedFuture(std::move(result));
               }
 
-              const auto& responseData = pResponse->data();
+              const std::span<const std::byte>& responseData =
+                  pResponse->data();
 
-              // 3D Tiles 2.0 supports both glTF and glb tilesets. Attempting to
-              // parse a JSON from a glb will fail, so go off of the file
-              // extension first.
+              // Go off of the file extension to detect glTF tilesets.
               if (url.ends_with(".gltf") || url.ends_with(".glb")) {
-
                 CesiumGltfReader::GltfReader gltfReader;
                 CesiumGltfReader::GltfReaderResult gltfResult =
                     gltfReader.readGltf(responseData);
@@ -838,7 +836,7 @@ TilesetContentManager::createFromUrl(
                 return asyncSystem.createResolvedFuture(std::move(result));
               }
 
-              // Check if the json is a 3D Tiles 1.1 tileset.json.
+              // Check if the json is a tileset.json.
               const auto rootIt = tilesetJson.FindMember("root");
               if (rootIt != tilesetJson.MemberEnd()) {
                 return TilesetJsonLoader::createLoader(

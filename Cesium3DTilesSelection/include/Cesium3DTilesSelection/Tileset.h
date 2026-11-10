@@ -40,8 +40,8 @@ class TilesetFrameState;
  * Tiles tileset</a>, used for streaming massive heterogeneous 3D geospatial
  * datasets.
  *
- * This supports both `tileset.json` (3D Tiles 1.0) and `*.tileset.gltf` (3D
- * Tiles 2.0) assets, as well as `layer.json` quantized-mesh assets.
+ * This supports both `tileset.json` and `*.tileset.gltf` assets, as well as
+ * `layer.json` quantized-mesh assets.
  */
 class CESIUM3DTILESSELECTION_API Tileset final {
 public:

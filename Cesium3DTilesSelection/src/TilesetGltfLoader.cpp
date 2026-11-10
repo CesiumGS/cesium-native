@@ -93,10 +93,9 @@ inline CesiumGeometry::Axis obtainUpAxis(const CesiumGltf::Model& model) {
  * - `{up}` becomes `{z}`
  *
  * This does not replace any computation required to resolve the difference
- * between the glTF's up axis (y-up in standard) and @ref
- * Cesium3DTiles::ImplicitTilingUtilities (z-up). Such a transform, if
- * necessary, should be applied to the associated @ref
- * Cesium3DTiles::BoundingVolume before using it with @ref
+ * between the glTF's up axis and @ref Cesium3DTiles::ImplicitTilingUtilities
+ * (z-up). Such a transform, if necessary, should be applied to the associated
+ * @ref Cesium3DTiles::BoundingVolume before using it with @ref
  * Cesium3DTiles::ImplicitTilingUtilities::computeBoundingVolume.
  *
  * @param uriTemplate The original URI template from the glTF.
@@ -232,7 +231,6 @@ std::optional<Tile> parseGltfNodeRecursively(
     const CesiumGltf::Node& node,
     const glm::dmat4& parentTransform,
     Cesium3DTiles::TileRefine parentRefine,
-    double /*parentGeometricError*/,
     TilesetGltfLoader& currentLoader,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
   const auto* pTilesetExtension =
@@ -307,15 +305,10 @@ std::optional<Tile> parseGltfNodeRecursively(
   }
 
   // Parse the external asset to determine tile content URL, if present.
-  const CesiumGltf::File* pFile = nullptr;
-  const CesiumGltf::ExternalAsset* pExternalAsset =
-      model.getSafe(&model.externalAssets, node.externalAsset);
-  if (pExternalAsset) {
-    pFile = model.getSafe(&model.files, pExternalAsset->file);
-  }
-
-  const char* contentUri = pFile && pFile->uri ? pFile->uri->c_str() : nullptr;
-  // TODO: what about file bufferview?
+  const CesiumGltf::ExternalAsset& externalAsset =
+      model.getSafe(model.externalAssets, node.externalAsset);
+  const CesiumGltf::File& file = model.getSafe(model.files, externalAsset.file);
+  const std::optional<std::string>& contentUri = file.uri;
 
   if (const auto* pImplicitTiling =
           node.getExtension<CesiumGltf::Extension3dTilesImplicitTiling>()) {
@@ -371,7 +364,6 @@ std::optional<Tile> parseGltfNodeRecursively(
         *pChild,
         tileTransform,
         tileRefine,
-        tileGeometricError,
         currentLoader,
         ellipsoid);
 
@@ -381,7 +373,7 @@ std::optional<Tile> parseGltfNodeRecursively(
   }
 
   Tile tile{&currentLoader};
-  tile.setTileID(contentUri ? contentUri : std::string{});
+  tile.setTileID(contentUri.value_or(std::string{}));
   tile.setTransform(tileTransform);
   tile.setBoundingVolume(tileBoundingVolume);
   tile.setGeometricError(tileGeometricError);
@@ -421,7 +413,6 @@ TilesetContentLoaderResult<TilesetGltfLoader> parseTilesetGltf(
         *pRootNode,
         parentTransform,
         parentRefine,
-        10000000.0,
         *pLoader,
         ellipsoid);
 
@@ -451,29 +442,18 @@ void parseTilesetMetadata(
   metadata.extras = std::move(tilesetGltf.extras);
 
   // "Downgrade" to older format.
-  // TODO: Rework TilesetMetadata to be more generic.
-  // CesiumTilesetJson::Asset asset;
-  // asset.extensions = std::move(tilesetGltf.asset.extensions);
-  // asset.version = tilesetGltf.asset.version;
-  //// TODO: copyright
-  // metadata.asset = asset;
+  CesiumTilesetJson::Asset asset;
+  asset.extensions = std::move(tilesetGltf.asset.extensions);
+  asset.version = tilesetGltf.asset.version;
+  if (tilesetGltf.asset.copyright) {
+    // For now include this as an extra.
+    asset.extras.emplace("copyright", *tilesetGltf.asset.copyright);
+  }
+  metadata.asset = asset;
 
-  // const auto* pMetadataExtension =
-  //     tilesetGltf
-  //         .getExtension<CesiumGltf::ExtensionModelExtStructuralMetadata>();
-  // if (pMetadataExtension) {
-  // }
-  // metadata.geometricError = tileset.geometricError;
-  // metadata.groups = std::move(tileset.groups);
-  // metadata.metadata = std::move(tileset.metadata);
-  // metadata.properties = std::move(tileset.properties);
-  // metadata.schema = std::move(tileset.schema);
-  // if (tileset.schemaUri) {
-  //   metadata.schemaUri =
-  //       CesiumUtility::Uri::resolve(baseUrl, *tileset.schemaUri);
-  // }
-  // metadata.statistics = std::move(tileset.statistics);
-  // metadata.unknownProperties = std::move(tilesetGltf.unknownProperties);
+  // In the future, rework TilesetMetadata to be less tied to the 3D
+  // Tiles 1.1 spec so the other properties from EXT_structural_metadata can be
+  // converted.
 }
 
 TileLoadResult parseExternalTilesetInWorkerThread(
@@ -890,12 +870,12 @@ const std::string& TilesetGltfLoader::getBaseUrl() const noexcept {
 }
 
 CesiumGeometry::Axis TilesetGltfLoader::getUpAxis() const noexcept {
-  return _upAxis;
+  return this->_upAxis;
 }
 
 const CesiumUtility::IntrusivePointer<CesiumGltf::Schema>&
 TilesetGltfLoader::getExternalSchema() const noexcept {
-  return _pExternalSchema;
+  return this->_pExternalSchema;
 }
 
 void TilesetGltfLoader::addChildLoader(
