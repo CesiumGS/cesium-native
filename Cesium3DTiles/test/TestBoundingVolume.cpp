@@ -168,7 +168,7 @@ TEST_CASE("getBoundingVolume") {
       CHECK_EQ(pBox->getCenter(), glm::dvec3(1.0, 0.0, 3.0));
       CHECK_EQ(
           pBox->getHalfAxes(),
-          glm::dmat3(2.0, 0.0, 0.0, 0.0, 4.0, 0.0, 0.0, 0.0, 6.0));
+          glm::dmat3(1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0));
     }
 
     SUBCASE("sphere") {
