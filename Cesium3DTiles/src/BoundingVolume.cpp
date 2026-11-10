@@ -180,9 +180,9 @@ CesiumUtility::Result<BoundingVolume> getBoundingVolume(
     CesiumGeometry::OrientedBoundingBox box(
         glm::dvec3(0.0),
         glm::dmat3(
-            size[0], 0.0, 0.0,
-            0.0, size[1], 0.0,
-            0.0, 0.0, size[2]));
+            0.5 * size[0], 0.0, 0.0,
+            0.0, 0.5 * size[1], 0.0,
+            0.0, 0.0, 0.5 * size[2]));
     // clang-format on
     return CesiumUtility::Result<BoundingVolume>(
         transformBoundingVolume(*transform, box));
