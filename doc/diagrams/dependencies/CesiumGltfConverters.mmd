@@ -13,6 +13,7 @@ graph TD
   CesiumGltfConverters[CesiumGltfConverters] --> CesiumGltfContent[CesiumGltfContent]
   CesiumGltfConverters[CesiumGltfConverters] --> CesiumGltfReader[CesiumGltfReader]
   CesiumGltfConverters[CesiumGltfConverters] --> CesiumUtility[CesiumUtility]
-  CesiumGltfConverters[CesiumGltfConverters] --> libmorton_libmorton{{libmorton::libmorton}}
-  class libmorton_libmorton dependencyNode
+  CesiumGltfConverters[CesiumGltfConverters] --> draco_draco{{draco::draco}}
+  CesiumGltfConverters[CesiumGltfConverters] --> glm_glm{{glm::glm}}
+  class draco_draco,glm_glm dependencyNode
   class CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfReader,CesiumUtility,CesiumGltfConverters libraryNode
