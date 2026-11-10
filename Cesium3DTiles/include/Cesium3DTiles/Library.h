@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @brief Classes for using [3D Tiles](https://github.com/CesiumGS/3d-tiles).
+ * @brief Classes that represent or enable fundamental elements of 3D Tiles.
  *
  * @mermaid-interactive{dependencies/Cesium3DTiles}
  */

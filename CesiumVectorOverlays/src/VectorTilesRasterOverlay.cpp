@@ -1,4 +1,4 @@
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTilesSelection/IPrepareRendererResources.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -62,6 +62,7 @@
 #include <variant>
 #include <vector>
 
+using namespace Cesium3DTiles;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumRasterOverlays;
 using namespace CesiumUtility;
@@ -849,10 +850,14 @@ public:
             pCreator,
             parameters,
             CesiumGeospatial::GeographicProjection(
-                CesiumGeospatial::Ellipsoid::WGS84),
+                (parameters.pOwner ? parameters.pOwner : pCreator)
+                    ->getOptions()
+                    .ellipsoid),
             projectRectangleSimple(
                 CesiumGeospatial::GeographicProjection(
-                    CesiumGeospatial::Ellipsoid::WGS84),
+                    (parameters.pOwner ? parameters.pOwner : pCreator)
+                        ->getOptions()
+                        .ellipsoid),
                 CesiumGeospatial::GlobeRectangle::MAXIMUM)),
         _options(),
         _pPrepareRendererResources(

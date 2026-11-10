@@ -1,11 +1,11 @@
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/ITileExcluder.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadTask.h>
 #include <Cesium3DTilesSelection/TileOcclusionRendererProxy.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TileSelectionState.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetFrameState.h>
@@ -36,6 +36,7 @@
 #include <span>
 #include <vector>
 
+using namespace Cesium3DTiles;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
 using namespace CesiumRasterOverlays;
@@ -119,6 +120,15 @@ TraversalDetails visitTileIfNeeded(
     bool ancestorMeetsSse,
     Tile& tile,
     ViewUpdateResult& result);
+
+bool isContentVisible(const TilesetFrameState& frameState, const Tile& tile) {
+  return std::any_of(
+      frameState.frustums.begin(),
+      frameState.frustums.end(),
+      [&tile](const ViewState& viewState) {
+        return viewState.isContentVisible(tile);
+      });
+}
 
 } // namespace
 
@@ -278,7 +288,6 @@ void computeDistances(
     const std::vector<ViewState>& frustums,
     std::vector<double>& distances) {
   const BoundingVolume& boundingVolume = tile.getBoundingVolume();
-  distances.clear();
   distances.resize(frustums.size());
   std::transform(
       frustums.begin(),
@@ -302,37 +311,36 @@ void addTileToLoadQueue(
       context.externals.pGltfModifier);
 }
 
-void addTileToRender(ViewUpdateResult& result, Tile& tile, double sse) {
-  result.tilesToRenderThisFrame.emplace_back(&tile);
-  result.tileScreenSpaceErrorThisFrame.emplace_back(sse);
+bool addTileToRenderIfContentIsVisible(
+    const TilesetFrameState& frameState,
+    ViewUpdateResult& result,
+    Tile& tile,
+    double sse) {
+  if (isContentVisible(frameState, tile)) {
+    result.tilesToRenderThisFrame.emplace_back(&tile);
+    result.tileScreenSpaceErrorThisFrame.emplace_back(sse);
+    return true;
+  }
+  return false;
 }
 
 double computeSse(
     const TileSelectionContext& context,
     const TilesetFrameState& frameState,
-    const Tile& tile) noexcept {
+    const Tile& tile,
+    uint32_t depth) noexcept {
   double largestSse = 0.0;
   const auto& frustums = frameState.frustums;
   const auto& distances = context.scratchDistances;
   CESIUM_ASSERT(frustums.size() == distances.size());
   for (size_t i = 0; i < frustums.size(); ++i) {
-    const double sse = frustums[i].computeScreenSpaceError(
-        tile.getGeometricError(),
-        distances[i]);
+    const double sse =
+        frustums[i].computeScreenSpaceError(tile, distances[i], depth);
     if (sse > largestSse) {
       largestSse = sse;
     }
   }
   return largestSse;
-}
-
-bool meetsGeometricErrorThreshold(
-    const TileSelectionContext& context,
-    double geometricErrorThreshold,
-    bool culled,
-    const Tile& tile) {
-  return culled ? !context.options.enforceCulledScreenSpaceError
-                : tile.getGeometricError() < geometricErrorThreshold;
 }
 
 bool meetsSseThreshold(
@@ -615,9 +623,11 @@ TraversalDetails renderLeaf(
     double tilePriority,
     double tileSse,
     ViewUpdateResult& result) {
+  if (!addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse)) {
+    return TraversalDetails{};
+  }
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  addTileToRender(result, tile, tileSse);
   addTileToLoadQueue(
       context,
       frameState,
@@ -638,7 +648,7 @@ TraversalDetails renderInnerTile(
       result);
   frameState.viewGroup.getTraversalState().currentState() =
       TileSelectionState(TileSelectionState::Result::Rendered);
-  addTileToRender(result, tile, tileSse);
+  addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
   return createTraversalDetailsForSingleTile(frameState, tile);
 }
 
@@ -671,7 +681,7 @@ bool loadAndRenderAdditiveRefinedTile(
   // If this tile uses additive refinement, we need to render this tile in
   // addition to its children.
   if (tile.getRefine() == TileRefine::Add) {
-    addTileToRender(result, tile, tileSse);
+    addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
     if (!queuedForLoad) {
       addTileToLoadQueue(
           context,
@@ -738,7 +748,7 @@ bool kickDescendantsAndRenderTile(
       sseList.end());
 
   if (tile.getRefine() != TileRefine::Add) {
-    addTileToRender(result, tile, tileSse);
+    addTileToRenderIfContentIsVisible(frameState, result, tile, tileSse);
   }
 
   traversalState.currentState() =
@@ -956,14 +966,18 @@ TraversalDetails visitTile(
   TilesetViewGroup::LoadQueueCheckpoint loadQueueBeforeChildren =
       frameState.viewGroup.saveTileLoadQueueCheckpoint();
 
-  TraversalDetails traversalDetails = visitVisibleChildrenNearToFar(
-      context,
-      frameState,
-      depth,
-      ancestorMeetsSse,
-      tile,
-      result);
-
+  TraversalDetails traversalDetails;
+  if (!tile.isExternalContent() ||
+      tile.getContent().getExternalContent()->isImplicit ||
+      isContentVisible(frameState, tile)) {
+    traversalDetails = visitVisibleChildrenNearToFar(
+        context,
+        frameState,
+        depth,
+        ancestorMeetsSse,
+        tile,
+        result);
+  }
   // Zero or more descendant tiles were added to the render list.
   // The traversalDetails tell us what happened while visiting the children.
 
@@ -1134,36 +1148,9 @@ TraversalDetails visitTileIfNeeded(
     ++result.culledTilesVisited;
   }
 
-  double tileSse = computeSse(context, frameState, tile);
-  auto minGeoErrorThresholdIt = std::min_element(
-      frameState.frustums.begin(),
-      frameState.frustums.end(),
-      [](const ViewState& a, const ViewState& b) {
-        std::optional<double> aThreshold = a.getGeometricErrorThreshold();
-        std::optional<double> bThreshold = b.getGeometricErrorThreshold();
-        if (!aThreshold && !bThreshold) {
-          return false;
-        }
-        if (!aThreshold) {
-          return true;
-        }
-        if (!bThreshold) {
-          return false;
-        }
-        return *aThreshold < *bThreshold;
-      });
-  bool meetsSse = false;
-  std::optional<double> geometricErrorThreshold =
-      minGeoErrorThresholdIt->getGeometricErrorThreshold();
-  if (geometricErrorThreshold) {
-    meetsSse = meetsGeometricErrorThreshold(
-        context,
-        *geometricErrorThreshold,
-        cullResult.culled,
-        tile);
-  } else {
-    meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
-  }
+  double tileSse = computeSse(context, frameState, tile, depth);
+  bool meetsSse = meetsSseThreshold(context, tileSse, cullResult.culled);
+
   TraversalDetails details = visitTile(
       context,
       frameState,

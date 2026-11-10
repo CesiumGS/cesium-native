@@ -4,17 +4,76 @@
 
 ##### Breaking Changes :mega:
 
-- Moved metadata-related structs, classes, and functions from `CesiumGltf` to a new `CesiumMetadata` library:
+- `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter` have been renamed to `CesiumTilesetJson`, `CesiumTilesetJsonReader`, and `CesiumTilesetJsonWriter` respectively.
+- `Cesium3DTilesContent::GltfConverters` and its related classes have been moved to the new `CesiumGltfConverters` library.
+  - `registerAllTileContentTypes` has been renamed to `registerAllConverterTypes`.
+- `Cesium3DTilesContent` has been renamed to `Cesium3DTiles`.
+- `BoundingVolume` and `TileRefine` have been moved from `Cesium3DTilesSelection` to `Cesium3DTiles`.
+- `Cesium3DTiles::SubtreeAvailability` now follows the `3DTILES_subtree` extension in glTF 2.1:
+  - The `SubtreeAvailability` constructor now takes a single `AvailabilityView` for content availability and a `CesiumGltf::Model` to represent the subtree.
+  - `getSubtree` has been replaced by `getModel` to retrieve the underlying glTF representation of the subtree.
+  - Removed `contentId` from the `isContentAvailable` and `setContentAvailable` overloads.
+- Moved the following metadata-related structs, classes, and functions from `CesiumGltf` to a new `CesiumMetadata` library:
   - `PropertyType`, `PropertyTypeTraits`, `MetadataConversions`
   - `PropertyView`, `PropertyArrayView`,  `PropertyTransformations`
   - `PropertyTablePropertyView`, `PropertyTexturePropertyView`, `PropertyAttributePropertyView`
   - `PropertyTableView`, `PropertyTextureView`, `PropertyAttributeView`
   - `getOffsetFromOffsetsBuffer`
+- `ViewStateMeasureDelegate::computeSelectionMeasure` now takes the view state as an argument.
+- SPZ color components are no longer automatically converted to the `FLOAT` component type when read. To replicate the previous behavior, set `options.spzDecoderOptions.forceFloatAccessors` to `true` on `GltfReaderOptions`.
+
 
 ##### Additions :tada:
 
-- The `CesiumVectorOverlays::VectorTilesRasterOverlay` now supports styling via specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
+- Added support for loading glTF 2.1 models as tilesets through `Cesium3DTilesSelection::Tileset`.
+- Added `fromGltf` method to `Cesium3DTilesSelection::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
+- Added `getBoundingVolumeTransform` and `setBoundingVolumeTransform` to `CesiumGltfContent::GltfUtilities` to interact with transforms on `CesiumGltf::BoundingVolume`s.
+- Added `Cesium3DTiles::getBoundingVolume` methods to create a `Cesium3DTiles::BoundingVolume` from either `CesiumTilesetJson::BoundingVolume` or `CesiumGltf::BoundingVolume`.
+- Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
+- Added `Cesium3DTilesSelection::ViewStateVisibilityDelegate`, which can be specified on a `ViewState` for conditional control over whether to display a tile's content.
+- Added `RasterOverlayCollection::updateTileOverlaysForReplacedContent` and `RasterMappedTo3DTile::prepareForReplacedContent`, which update a tile's raster overlay mappings after its content is replaced, such as by a `GltfModifier`.
+- SPZ decoder now matches the `KHR_gaussian_splatting` specification more accurately, including support for `KHR_gaussian_splatting:OPACITY` and `KHR_gaussian_splatting:SH_DEGREE_0_COEF_0` attributes, and component types other than `FLOAT` where allowed by the specification.
 - Added `CesiumGltf::Accessor::getComponentTypeAsString` to get the corresponding semantic string for an integer component type.
+
+##### Fixes :wrench:
+
+- Fixed `CesiumCurl::CurlAssetAccessor` ignoring `allowDirectoryCreation` on macOS, causing uploads to `file:` URLs in missing directories to fail.
+- `CesiumVectorOverlays::VectorTilesRasterOverlay` now builds its geographic projection from the overlay ellipsoid instead of a hardcoded WGS84 ellipsoid. A hardcoded ellipsoid can disagree with the one stored by the host, which creates an extra texture-coordinate set and can crash when this overlay is combined with another geographic overlay.
+- Fixed bugs and potential crashes when using the `GltfModifier` on a tileset with raster overlays (such as cartographic polygons).
+
+### v0.66.0 - 2026-11-02
+
+##### Breaking Changes :mega:
+
+- The classes associated with `KHR_implicit_shapes` have been renamed from `Shape`, `Box`, `Capsule`, `Cylinder`, `Sphere` to `ExtensionKhrImplicitShapesShape`, `ExtensionKhrImplicitShapesBox`, `ExtensionKhrImplicitShapesCapsule`, `ExtensionKhrImplicitShapesCylinder`, `ExtensionKhrImplicitShapesSphere` to deconflict with the shape classes generated for glTF 2.1.
+
+##### Additions :tada:
+
+- Added experimental support for glTF 2.1 and 3D Tiles 2.0 in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+- Added a `CESIUM_DISABLE_SPZ` CMake option to build Cesium Native without Niantic SPZ support.
+- Added support for the new `statistics` property under `ExtensionModelExtStructuralMetadata` in `CesiumGltf`, `CesiumGltfReader`, and `CesiumGltfWriter`.
+
+##### Fixes :wrench:
+
+- Fixed potential integer overflow and out-of-bounds write while decoding glTFs using `EXT_meshopt_compression`.
+- Fixed a heap overflow when decoding Draco-compressed glTFs whose attributes declare a different number of components than the corresponding accessor.
+- Fixed decoding of Draco-compressed glTFs with invalid index accessor component types or incorrectly normalized index accessors.
+
+### v0.65.0 - 2026-10-01
+
+##### Breaking Changes :mega:
+
+- `Cesium3DTilesSelection::ViewState` can be supplied a delegate that computes a general tile error measure. The interface for setting a fixed geometric error in the `ViewState` object has been removed; that functionality can be implemented instead using the delegate.
+
+##### Additions :tada:
+
+- Added support for the `GS_3DT` reality data type in `ITwinRealityDataContentLoader`.
+- Added support for styling on `CesiumVectorOverlays::VectorTilesRasterOverlay` by specifying a `VectorStylingProvider` through the `pStylingProvider` parameter in `VectorTilesRasterOverlayOptions`.
+
+##### Fixes :wrench:
+
+- Fixed PNTS conversion to reject section lengths that exceed the declared tile byte length.
+- Fixed potential out-of-bounds access while decoding Draco-compressed glTFs.
 
 ### v0.64.0 - 2026-09-01
 

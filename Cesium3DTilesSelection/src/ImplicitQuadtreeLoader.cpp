@@ -2,11 +2,10 @@
 
 #include "logTileLoadResult.h"
 
-#include <Cesium3DTilesContent/GltfConverterResult.h>
-#include <Cesium3DTilesContent/GltfConverters.h>
-#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/ImplicitTileSubdivisionScheme.h>
+#include <Cesium3DTiles/ImplicitTilingUtilities.h>
+#include <Cesium3DTiles/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -19,8 +18,15 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltfConverters/GltfConverterResult.h>
+#include <CesiumGltfConverters/GltfConverters.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -38,9 +44,39 @@
 #include <variant>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
+using namespace CesiumGltfConverters;
 
 namespace Cesium3DTilesSelection {
+
+std::optional<ImplicitQuadtreeBoundingVolume>
+getAsImplicitQuadtreeBoundingVolume(
+    const Cesium3DTiles::BoundingVolume& boundingVolume) {
+  if (const auto* pRegion =
+          std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume)) {
+    return ImplicitQuadtreeBoundingVolume(*pRegion);
+  }
+
+  if (const auto* pBox =
+          std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume)) {
+    return ImplicitQuadtreeBoundingVolume(*pBox);
+  }
+
+  if (const auto* pS2Cell = std::get_if<CesiumGeospatial::S2CellBoundingVolume>(
+          &boundingVolume)) {
+    return ImplicitQuadtreeBoundingVolume(*pS2Cell);
+  }
+
+  if (const auto* pCylinder =
+          std::get_if<CesiumGeometry::BoundingCylinderRegion>(
+              &boundingVolume)) {
+    return ImplicitQuadtreeBoundingVolume(*pCylinder);
+  }
+
+  // Quadtree does not support bounding sphere subdivision.
+  return std::nullopt;
+}
+
 namespace {
 struct BoundingVolumeSubdivision {
 
@@ -128,8 +164,7 @@ std::vector<Tile> populateSubtree(
               relativeChildMortonID)) {
         if (subtreeAvailability.isContentAvailable(
                 relativeChildLevel,
-                relativeChildMortonID,
-                0)) {
+                relativeChildMortonID)) {
           children.emplace_back(&loader, childID);
         } else {
           children.emplace_back(&loader, childID, TileEmptyContent{});
@@ -160,7 +195,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
         pSharedAssetSystem,
     const glm::dmat4& tileTransform,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    const CesiumGeometry::Axis upAxis) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
       .thenInWorkerThread([ellipsoid,
                            pLogger,
@@ -169,9 +205,9 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                            asyncSystem,
                            pAssetAccessor,
                            tileTransform,
-                           requestHeaders](
-                              std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                                  pCompletedRequest) mutable {
+                           requestHeaders,
+                           upAxis](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                       pCompletedRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse =
             pCompletedRequest->response();
         auto fail = [&]() {
@@ -220,34 +256,34 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               tileUrl,
               tileTransform,
               requestHeaders,
-              CesiumGeometry::Axis::Y};
+              upAxis};
           return converter(responseData, gltfOptions, assetFetcher)
-              .thenImmediately(
-                  [ellipsoid,
-                   pLogger,
-                   tileUrl,
-                   pAssetAccessor,
-                   pCompletedRequest](GltfConverterResult&& result) mutable {
-                    // Report any errors if there are any
-                    logTileLoadResult(pLogger, tileUrl, result.errors);
-                    if (result.errors || !result.model) {
-                      return TileLoadResult::createFailedResult(
-                          pAssetAccessor,
-                          std::move(pCompletedRequest));
-                    }
+              .thenImmediately([ellipsoid,
+                                pLogger,
+                                tileUrl,
+                                pAssetAccessor,
+                                pCompletedRequest,
+                                upAxis](GltfConverterResult&& result) mutable {
+                // Report any errors if there are any
+                logTileLoadResult(pLogger, tileUrl, result.errors);
+                if (result.errors || !result.model) {
+                  return TileLoadResult::createFailedResult(
+                      pAssetAccessor,
+                      std::move(pCompletedRequest));
+                }
 
-                    return TileLoadResult{
-                        std::move(*result.model),
-                        CesiumGeometry::Axis::Y,
-                        std::nullopt,
-                        std::nullopt,
-                        std::nullopt,
-                        pAssetAccessor,
-                        std::move(pCompletedRequest),
-                        {},
-                        TileLoadResultState::Success,
-                        ellipsoid};
-                  });
+                return TileLoadResult{
+                    std::move(*result.model),
+                    upAxis,
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    pAssetAccessor,
+                    std::move(pCompletedRequest),
+                    {},
+                    TileLoadResultState::Success,
+                    ellipsoid};
+              });
         }
         // content type is not supported
         return fail();
@@ -354,11 +390,11 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // subtree is available, so check if tile has content or not. If it has, then
   // request it
-  if (!subtreeIt->second.isContentAvailable(subtreeID, *pQuadtreeID, 0)) {
+  if (!subtreeIt->second.isContentAvailable(subtreeID, *pQuadtreeID)) {
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
-        CesiumGeometry::Axis::Y,
+        this->_upAxis,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -382,7 +418,8 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions,
       loadInput.pSharedAssetSystem,
       tile.getTransform(),
-      ellipsoid);
+      ellipsoid,
+      this->_upAxis);
 }
 
 TileChildrenResult ImplicitQuadtreeLoader::createTileChildren(

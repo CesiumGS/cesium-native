@@ -131,6 +131,7 @@ enum class RealityDataType {
   RealityMesh3DTiles,
   Terrain3DTiles,
   Pnts,
+  GS_3DT,
   Unsupported
 };
 
@@ -173,6 +174,8 @@ parseRealityDataDetails(const rapidjson::Document& jsonDocument) {
     details.type = RealityDataType::RealityMesh3DTiles;
   } else if (typeStr == "Terrain3DTiles") {
     details.type = RealityDataType::Terrain3DTiles;
+  } else if (typeStr == "GS_3DT") {
+    details.type = RealityDataType::GS_3DT;
   } else {
     details.type = RealityDataType::Unsupported;
   }

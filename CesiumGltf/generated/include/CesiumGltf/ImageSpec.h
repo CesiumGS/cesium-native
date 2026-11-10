@@ -11,7 +11,7 @@
 
 namespace CesiumGltf {
 /**
- * @brief Image data used to create a texture. Image **MAY** be referenced by an
+ * @brief Image data used to create a texture. Image **MAY** be referenced by a
  * URI (or IRI) or a buffer view index.
  */
 struct CESIUMGLTF_API ImageSpec : public CesiumGltf::NamedObject {

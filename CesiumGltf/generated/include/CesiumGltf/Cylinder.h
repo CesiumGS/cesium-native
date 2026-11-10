@@ -7,7 +7,11 @@
 
 namespace CesiumGltf {
 /**
- * @brief Parameters describing a cylinder shape.
+ * @brief A cylinder, centered at the origin in local space with potentially
+ * different radii at each end, equivalent to the convex hull of two circles in
+ * the X/Z plane positioned along the Y axis at a specified distance, with the
+ * top cap normal facing along the +Y axis, the bottom cap normal facing along
+ * the -Y axis, and the side normals facing outwards along the X/Z plane.
  */
 struct CESIUMGLTF_API Cylinder final : public CesiumUtility::ExtensibleObject {
   /**
@@ -18,18 +22,18 @@ struct CESIUMGLTF_API Cylinder final : public CesiumUtility::ExtensibleObject {
   /**
    * @brief The height of the cylinder, centered along the Y axis.
    */
-  double height = 0.5;
+  double height = 2;
 
   /**
-   * @brief The radius of the bottom of the cylinder (the disk located along
+   * @brief The radius of the bottom of the cylinder (the disc located along
    * -Y.)
    */
-  double radiusBottom = 0.25;
+  double radiusBottom = 0.5;
 
   /**
-   * @brief The radius of the top of the cylinder (the disk located along +Y.)
+   * @brief The radius of the top of the cylinder (the disc located along +Y.)
    */
-  double radiusTop = 0.25;
+  double radiusTop = 0.5;
 
   /**
    * @brief Calculates the size in bytes of this object, including the contents

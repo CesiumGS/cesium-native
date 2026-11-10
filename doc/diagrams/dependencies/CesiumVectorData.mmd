@@ -6,16 +6,16 @@ title: CesiumVectorData Dependency Graph
 graph TD
   classDef dependencyNode fill:#fff,stroke:#ccc,color:#666,font-weight:bold,font-size:28px
   classDef libraryNode fill:#9f9,font-weight:bold,font-size:28px
-  CesiumVectorData[CesiumVectorData] --> Cesium3DTilesReader[Cesium3DTilesReader]
   CesiumVectorData[CesiumVectorData] --> CesiumAsync[CesiumAsync]
   CesiumVectorData[CesiumVectorData] --> CesiumGeometry[CesiumGeometry]
   CesiumVectorData[CesiumVectorData] --> CesiumGeospatial[CesiumGeospatial]
   CesiumVectorData[CesiumVectorData] --> CesiumGltf[CesiumGltf]
   CesiumVectorData[CesiumVectorData] --> CesiumGltfContent[CesiumGltfContent]
   CesiumVectorData[CesiumVectorData] --> CesiumImage[CesiumImage]
+  CesiumVectorData[CesiumVectorData] --> CesiumTilesetJsonReader[CesiumTilesetJsonReader]
   CesiumVectorData[CesiumVectorData] --> CesiumUtility[CesiumUtility]
   CesiumVectorData[CesiumVectorData] --> asmjit_asmjit{{asmjit::asmjit}}
   CesiumVectorData[CesiumVectorData] --> blend2d_blend2d{{blend2d::blend2d}}
   CesiumVectorData[CesiumVectorData] --> earcut{{earcut}}
   class asmjit_asmjit,blend2d_blend2d,earcut dependencyNode
-  class Cesium3DTilesReader,CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumImage,CesiumUtility,CesiumVectorData libraryNode
+  class CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumImage,CesiumTilesetJsonReader,CesiumUtility,CesiumVectorData libraryNode

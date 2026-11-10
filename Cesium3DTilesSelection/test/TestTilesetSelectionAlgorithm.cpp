@@ -1,9 +1,5 @@
 #include "SimplePrepareRendererResource.h"
 
-#include <Cesium3DTiles/GroupMetadata.h>
-#include <Cesium3DTiles/MetadataQuery.h>
-#include <Cesium3DTiles/Schema.h>
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -20,11 +16,15 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumTilesetJson/GroupMetadata.h>
+#include <CesiumTilesetJson/MetadataQuery.h>
+#include <CesiumTilesetJson/Schema.h>
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
@@ -52,6 +52,11 @@ using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
 using namespace CesiumNativeTests;
+
+namespace {
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
+}
 
 static bool doesTileMeetSSE(
     const ViewState& viewState,
@@ -137,7 +142,7 @@ static ViewState zoomToTileset(const Tileset& tileset) {
 }
 
 TEST_CASE("Test replace refinement for render") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   // initialize REPLACE tileset
   //
@@ -147,8 +152,7 @@ TEST_CASE("Test replace refinement for render") {
   //
   // ll_ll.b3dm
   //
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "ReplaceTileset";
+  std::filesystem::path path = testDataPath / "ReplaceTileset";
   std::vector<std::string> files{
       "tileset.json",
       "parent.b3dm",
@@ -167,7 +171,7 @@ TEST_CASE("Test replace refinement for render") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -583,10 +587,9 @@ TEST_CASE("Test replace refinement for render") {
 }
 
 TEST_CASE("Test additive refinement") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "AddTileset";
+  std::filesystem::path path = testDataPath / "AddTileset";
   std::vector<std::string> files{
       "tileset.json",
       "tileset2.json",
@@ -605,7 +608,7 @@ TEST_CASE("Test additive refinement") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -759,10 +762,9 @@ TEST_CASE("Test additive refinement") {
 
 TEST_CASE("Render any tiles even when one of children can't be rendered for "
           "additive refinement") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "ErrorChildrenAddTileset";
+  std::filesystem::path path = testDataPath / "ErrorChildrenAddTileset";
   std::vector<std::string> files{
       "tileset.json",
       "parent.b3dm",
@@ -779,7 +781,7 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -862,10 +864,9 @@ TEST_CASE("Render any tiles even when one of children can't be rendered for "
 }
 
 TEST_CASE("Test multiple frustums") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "ReplaceTileset";
+  std::filesystem::path path = testDataPath / "ReplaceTileset";
   std::vector<std::string> files{
       "tileset.json",
       "parent.b3dm",
@@ -884,7 +885,7 @@ TEST_CASE("Test multiple frustums") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1208,10 +1209,9 @@ TEST_CASE("Can load example tileset.json from 3DTILES_bounding_volume_S2 "
 }
 
 TEST_CASE("Makes metadata available once root tile is loaded") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "WithMetadata";
+  std::filesystem::path path = testDataPath / "WithMetadata";
   std::vector<std::string> files{
       "tileset.json",
       "external-tileset.json",
@@ -1229,7 +1229,7 @@ TEST_CASE("Makes metadata available once root tile is loaded") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1259,16 +1259,15 @@ TEST_CASE("Makes metadata available once root tile is loaded") {
   REQUIRE(pExternal);
 
   const TilesetMetadata& metadata = pExternal->metadata;
-  const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
+  const std::optional<CesiumTilesetJson::Schema>& schema = metadata.schema;
   REQUIRE(schema);
   CHECK(schema->id == "foo");
 }
 
 TEST_CASE("Makes metadata available on external tilesets") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "WithMetadata";
+  std::filesystem::path path = testDataPath / "WithMetadata";
   std::vector<std::string> files{
       "tileset.json",
       "external-tileset.json",
@@ -1286,7 +1285,7 @@ TEST_CASE("Makes metadata available on external tilesets") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1337,10 +1336,9 @@ TEST_CASE("Makes metadata available on external tilesets") {
 }
 
 TEST_CASE("Allows access to material variants") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "MaterialVariants";
+  std::filesystem::path path = testDataPath / "MaterialVariants";
   std::vector<std::string> files{"tileset.json", "parent.b3dm"};
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
@@ -1351,7 +1349,7 @@ TEST_CASE("Allows access to material variants") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1378,8 +1376,8 @@ TEST_CASE("Allows access to material variants") {
   REQUIRE(pMetadata->schema);
   REQUIRE(pMetadata->metadata);
 
-  std::optional<Cesium3DTiles::FoundMetadataProperty> found1 =
-      Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+  std::optional<CesiumTilesetJson::FoundMetadataProperty> found1 =
+      CesiumTilesetJson::MetadataQuery::findFirstPropertyWithSemantic(
           *pMetadata->schema,
           *pMetadata->metadata,
           "MATERIAL_VARIANTS");
@@ -1401,9 +1399,9 @@ TEST_CASE("Allows access to material variants") {
   CHECK(variants[3] == "BBB");
 
   std::vector<std::vector<std::string>> variantsByGroup;
-  for (const Cesium3DTiles::GroupMetadata& group : pMetadata->groups) {
-    std::optional<Cesium3DTiles::FoundMetadataProperty> found2 =
-        Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+  for (const CesiumTilesetJson::GroupMetadata& group : pMetadata->groups) {
+    std::optional<CesiumTilesetJson::FoundMetadataProperty> found2 =
+        CesiumTilesetJson::MetadataQuery::findFirstPropertyWithSemantic(
             *pMetadata->schema,
             group,
             "MATERIAL_VARIANTS");
@@ -1421,10 +1419,9 @@ TEST_CASE("Allows access to material variants") {
 }
 
 TEST_CASE("Allows access to material variants in an external schema") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "MaterialVariants";
+  std::filesystem::path path = testDataPath / "MaterialVariants";
   std::vector<std::string> files{
       "tileset-external-schema.json",
       "schema.json",
@@ -1438,7 +1435,7 @@ TEST_CASE("Allows access to material variants in an external schema") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1469,8 +1466,8 @@ TEST_CASE("Allows access to material variants in an external schema") {
         REQUIRE(pMetadata->schema);
         REQUIRE(pMetadata->metadata);
 
-        std::optional<Cesium3DTiles::FoundMetadataProperty> found1 =
-            Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+        std::optional<CesiumTilesetJson::FoundMetadataProperty> found1 =
+            CesiumTilesetJson::MetadataQuery::findFirstPropertyWithSemantic(
                 *pMetadata->schema,
                 *pMetadata->metadata,
                 "MATERIAL_VARIANTS");
@@ -1492,9 +1489,10 @@ TEST_CASE("Allows access to material variants in an external schema") {
         CHECK(variants[3] == "BBB");
 
         std::vector<std::vector<std::string>> variantsByGroup;
-        for (const Cesium3DTiles::GroupMetadata& group : pMetadata->groups) {
-          std::optional<Cesium3DTiles::FoundMetadataProperty> found2 =
-              Cesium3DTiles::MetadataQuery::findFirstPropertyWithSemantic(
+        for (const CesiumTilesetJson::GroupMetadata& group :
+             pMetadata->groups) {
+          std::optional<CesiumTilesetJson::FoundMetadataProperty> found2 =
+              CesiumTilesetJson::MetadataQuery::findFirstPropertyWithSemantic(
                   *pMetadata->schema,
                   group,
                   "MATERIAL_VARIANTS");
@@ -1517,10 +1515,9 @@ TEST_CASE("Allows access to material variants in an external schema") {
 }
 
 TEST_CASE("Future from loadSchema rejects if schemaUri can't be loaded") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "MaterialVariants";
+  std::filesystem::path path = testDataPath / "MaterialVariants";
   std::vector<std::string> files{"tileset-external-schema.json", "parent.b3dm"};
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
@@ -1531,7 +1528,7 @@ TEST_CASE("Future from loadSchema rejects if schemaUri can't be loaded") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1739,10 +1736,9 @@ TEST_CASE("An unconditionally-refined tile is not rendered") {
 }
 
 TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "AdditiveThreeLevels";
+  std::filesystem::path path = testDataPath / "AdditiveThreeLevels";
   std::vector<std::string> files{"tileset.json", "content.b3dm"};
 
   std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
@@ -1753,7 +1749,7 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
             static_cast<uint16_t>(200),
             "doesn't matter",
             CesiumAsync::HttpHeaders{},
-            readFile(testDataPath / file));
+            readFile(path / file));
     mockCompletedRequests.insert(
         {file,
          std::make_shared<SimpleAssetRequest>(
@@ -1810,4 +1806,92 @@ TEST_CASE("Additive-refined tiles are added to the tilesFadingOut array") {
   // two are fading out.
   CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
   CHECK(updateResult.tilesFadingOut.size() == 2);
+}
+
+class FixedDepthDelegate
+    : public Cesium3DTilesSelection::ViewStateMeasureDelegate {
+public:
+  FixedDepthDelegate(uint32_t depthLimit)
+      : depthErrorMeasure(std::exp2(-int32_t(depthLimit))) {}
+  double
+  computeSelectionMeasure(const ViewState&, const Tile&, double, uint32_t depth)
+      const override {
+    return std::exp2(-int32_t(depth));
+  }
+  double depthErrorMeasure;
+};
+
+TEST_CASE("Test ErrorMeasureHandler") {
+  CesiumGltfConverters::registerAllConverterTypes();
+
+  std::filesystem::path path = testDataPath / "AdditiveThreeLevels";
+  std::vector<std::string> files{"tileset.json", "content.b3dm"};
+
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
+      mockCompletedRequests;
+  for (const auto& file : files) {
+    std::unique_ptr<SimpleAssetResponse> mockCompletedResponse =
+        std::make_unique<SimpleAssetResponse>(
+            static_cast<uint16_t>(200),
+            "doesn't matter",
+            CesiumAsync::HttpHeaders{},
+            readFile(path / file));
+    mockCompletedRequests.insert(
+        {file,
+         std::make_shared<SimpleAssetRequest>(
+             "GET",
+             file,
+             CesiumAsync::HttpHeaders{},
+             std::move(mockCompletedResponse))});
+  }
+
+  std::shared_ptr<SimpleAssetAccessor> mockAssetAccessor =
+      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
+  TilesetExternals tilesetExternals{
+      mockAssetAccessor,
+      std::make_shared<SimplePrepareRendererResource>(),
+      AsyncSystem(std::make_shared<SimpleTaskProcessor>()),
+      nullptr};
+
+  // Load until complete
+  BoundingRegion viewStateRegion(
+      GlobeRectangle(-1.4, .7, -1.2, .5),
+      0.0,
+      100.0,
+      Ellipsoid::WGS84);
+  auto loadTiles = [&](Tileset& tileset, ViewState& viewState) {
+    ViewUpdateResult updateResult;
+    do {
+      updateResult =
+          tileset.updateViewGroup(tileset.getDefaultViewGroup(), {viewState});
+      tilesetExternals.asyncSystem.dispatchMainThreadTasks();
+      tileset.loadTiles();
+    } while (tileset.getNumberOfTilesLoaded() == 0 ||
+             tileset.computeLoadProgress() < 100.0f);
+    return updateResult;
+  };
+  {
+    // create tileset and call updateView() to give it a chance to load
+    auto pFixedDepthDelegate = std::make_shared<FixedDepthDelegate>(0);
+    TilesetOptions options{};
+    options.maximumScreenSpaceError = pFixedDepthDelegate->depthErrorMeasure;
+
+    Tileset tileset(tilesetExternals, "tileset.json", options);
+    // create tileset and call updateView() to give it a chance to load
+    initializeTileset(tileset);
+    ViewState viewState{viewStateRegion, pFixedDepthDelegate};
+    ViewUpdateResult updateResult = loadTiles(tileset, viewState);
+    CHECK(updateResult.tilesToRenderThisFrame.size() == 2);
+  }
+  {
+    // create tileset and call updateView() to give it a chance to load
+    auto pFixedDepthDelegate = std::make_shared<FixedDepthDelegate>(1);
+    TilesetOptions options{};
+    options.maximumScreenSpaceError = pFixedDepthDelegate->depthErrorMeasure;
+    Tileset tileset(tilesetExternals, "tileset.json", options);
+    initializeTileset(tileset);
+    ViewState viewState{viewStateRegion, pFixedDepthDelegate};
+    ViewUpdateResult updateResult = loadTiles(tileset, viewState);
+    CHECK(updateResult.tilesToRenderThisFrame.size() == 3);
+  }
 }

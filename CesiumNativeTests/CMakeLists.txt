@@ -6,15 +6,13 @@ configure_cesium_library(cesium-native-tests)
 # properties.
 set(cesium_native_targets
     Cesium3DTiles
-    Cesium3DTilesContent
-    Cesium3DTilesReader
     Cesium3DTilesSelection
-    Cesium3DTilesWriter
     CesiumAsync
     CesiumGeometry
     CesiumGeospatial
     CesiumGltf
     CesiumGltfContent
+    CesiumGltfConverters
     CesiumGltfReader
     CesiumGltfWriter
     CesiumIonClient
@@ -26,6 +24,9 @@ set(cesium_native_targets
     CesiumVectorOverlays
     CesiumQuantizedMeshTerrain
     CesiumRasterOverlays
+    CesiumTilesetJson
+    CesiumTilesetJsonReader
+    CesiumTilesetJsonWriter
     CesiumUtility
 )
 

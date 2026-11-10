@@ -1,4 +1,3 @@
-#include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/AccessorUtility.h>
 #include <CesiumGltf/AccessorView.h>
@@ -10,6 +9,7 @@
 #include <CesiumGltf/Node.h>
 #include <CesiumMetadata/PropertyTableView.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumTilesetJsonReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
@@ -158,7 +158,7 @@ TEST_CASE("Convert GeoJSON schema") {
   SUBCASE("Verify schema") {
     std::filesystem::path dir(
         std::filesystem::path(CesiumVectorData_TEST_DATA_DIR));
-    Cesium3DTilesReader::ExtensionSchemaMaxarContentGeoJsonReader
+    CesiumTilesetJsonReader::ExtensionSchemaMaxarContentGeoJsonReader
         maxarSchemaReader;
     auto schemaReadResult =
         maxarSchemaReader.readFromJson(readFile(dir / "sample-schema.json"));

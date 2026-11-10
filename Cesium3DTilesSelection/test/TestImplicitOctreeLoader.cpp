@@ -1,16 +1,17 @@
 #include "ImplicitOctreeLoader.h"
 
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTiles/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -36,7 +37,7 @@
 #include <vector>
 
 using namespace doctest;
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -44,11 +45,12 @@ using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 
 namespace {
-std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
 }
 
 TEST_CASE("Test implicit octree loader") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -61,7 +63,8 @@ TEST_CASE("Test implicit octree loader") {
       "subtrees/{level}.{x}.{y}.{z}.json",
       5,
       5,
-      OrientedBoundingBox(glm::dvec3(0.0), glm::dmat3(20.0))};
+      OrientedBoundingBox(glm::dvec3(0.0), glm::dmat3(20.0)),
+      CesiumGeometry::Axis::Y};
 
   SUBCASE("Load tile that does not have quadtree ID") {
     Tile tile(&loader);
@@ -246,7 +249,7 @@ findTile(const std::vector<Tile>& children, const OctreeTileID& tileID) {
 } // namespace
 
 TEST_CASE("Test tile subdivision for implicit octree loader") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -261,7 +264,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
         "subtrees/{level}.{x}.{y}.{z}.json",
         5,
         5,
-        loaderBoundingVolume};
+        loaderBoundingVolume,
+        CesiumGeometry::Axis::Y};
 
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
@@ -463,7 +467,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
         "subtrees/{level}.{x}.{y}.{z}.json",
         5,
         5,
-        loaderBoundingVolume};
+        loaderBoundingVolume,
+        CesiumGeometry::Axis::Y};
 
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
@@ -717,7 +722,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
         "subtrees/{level}.{x}.{y}.{z}.json",
         5,
         5,
-        loaderBoundingVolume};
+        loaderBoundingVolume,
+        CesiumGeometry::Axis::Y};
 
     // add subtree with all tiles, but no content available.
     std::optional<SubtreeAvailability> maybeAvailability =
@@ -732,7 +738,6 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
     availability.setContentAvailable(
         OctreeTileID{0, 0, 0, 0},
         OctreeTileID{1, 1, 1, 1},
-        0,
         true);
     loader.addSubtreeAvailability(
         OctreeTileID{0, 0, 0, 0},

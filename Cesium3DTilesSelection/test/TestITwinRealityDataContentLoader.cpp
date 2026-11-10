@@ -253,4 +253,26 @@ TEST_CASE("ITwinRealityDataContentLoader") {
         "Accept",
         "application/vnd.bentley.itwin-platform.v1+json"));
   }
+
+  SUBCASE("GS_3DT type is supported") {
+    accessor->metadataJson =
+        "{\"realityData\":{\"id\":\"" + testRealityDataId +
+        "\",\"rootDocument\":\"tileset.json\",\"type\":\"GS_3DT\"}}";
+
+    auto loader = run(testITwinId);
+
+    CHECK(!loader.errors);
+    CHECK(loader.pLoader != nullptr);
+  }
+
+  SUBCASE("Unsupported type fails to create a loader") {
+    accessor->metadataJson =
+        "{\"realityData\":{\"id\":\"" + testRealityDataId +
+        "\",\"rootDocument\":\"tileset.json\",\"type\":\"NotARealType\"}}";
+
+    auto loader = run(testITwinId);
+
+    CHECK(loader.errors);
+    CHECK(loader.pLoader == nullptr);
+  }
 }

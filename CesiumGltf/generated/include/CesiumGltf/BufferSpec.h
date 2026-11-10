@@ -20,6 +20,15 @@ struct CESIUMGLTF_API BufferSpec : public CesiumGltf::NamedObject {
   static constexpr const char* TypeName = "Buffer";
 
   /**
+   * @brief The index of the chunk that contains the buffer data.
+   *
+   * If neither `chunk` nor `uri` is defined on buffer 0, then buffer 0
+   * implicitly refers to chunk 1. There is no default chunk index for other
+   * buffers.
+   */
+  int32_t chunk = -1;
+
+  /**
    * @brief The URI (or IRI) of the buffer.
    *
    * Relative paths are relative to the current glTF asset.  Instead of

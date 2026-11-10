@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
+#include <Cesium3DTiles/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
@@ -19,6 +20,9 @@ using ImplicitOctreeBoundingVolume = std::variant<
     CesiumGeometry::OrientedBoundingBox,
     CesiumGeometry::BoundingCylinderRegion>;
 
+std::optional<ImplicitOctreeBoundingVolume> getAsImplicitOctreeBoundingVolume(
+    const Cesium3DTiles::BoundingVolume& boundingVolume);
+
 class ImplicitOctreeLoader : public TilesetContentLoader {
 public:
   template <typename ImplicitBoundingVolumeType>
@@ -28,13 +32,15 @@ public:
       const std::string& subtreeUrlTemplate,
       uint32_t subtreeLevels,
       uint32_t availableLevels,
-      ImplicitBoundingVolumeType&& volume)
+      ImplicitBoundingVolumeType&& volume,
+      CesiumGeometry::Axis upAxis)
       : _baseUrl{baseUrl},
         _contentUrlTemplate{contentUrlTemplate},
         _subtreeUrlTemplate{subtreeUrlTemplate},
         _subtreeLevels{subtreeLevels},
         _availableLevels{availableLevels},
         _boundingVolume{std::forward<ImplicitBoundingVolumeType>(volume)},
+        _upAxis{upAxis},
         _loadedSubtrees(static_cast<size_t>(std::ceil(
             static_cast<float>(availableLevels) /
             static_cast<float>(subtreeLevels)))) {}
@@ -55,7 +61,7 @@ public:
 
   void addSubtreeAvailability(
       const CesiumGeometry::OctreeTileID& subtreeID,
-      Cesium3DTilesContent::SubtreeAvailability&& subtreeAvailability);
+      Cesium3DTiles::SubtreeAvailability&& subtreeAvailability);
 
 private:
   std::string _baseUrl;
@@ -64,8 +70,9 @@ private:
   uint32_t _subtreeLevels;
   uint32_t _availableLevels;
   ImplicitOctreeBoundingVolume _boundingVolume;
-  std::vector<
-      std::unordered_map<uint64_t, Cesium3DTilesContent::SubtreeAvailability>>
+  CesiumGeometry::Axis _upAxis;
+
+  std::vector<std::unordered_map<uint64_t, Cesium3DTiles::SubtreeAvailability>>
       _loadedSubtrees;
 };
 } // namespace Cesium3DTilesSelection

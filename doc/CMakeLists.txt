@@ -4,11 +4,6 @@ if(DOXYGEN_FOUND)
     set(
         LIB_DIRS
         ../Cesium3DTiles/include
-        ../Cesium3DTiles/generated/include
-        ../Cesium3DTilesContent/include
-        ../Cesium3DTilesReader/include
-        ../Cesium3DTilesReader/generated/include
-        ../Cesium3DTilesWriter/include
         ../Cesium3DTilesSelection/include
         ../CesiumAsync/include
         ../CesiumClientCommon/include
@@ -18,6 +13,7 @@ if(DOXYGEN_FOUND)
         ../CesiumGltf/include
         ../CesiumGltf/generated/include
         ../CesiumGltfContent/include
+        ../CesiumGltfConverters/include
         ../CesiumGltfReader/include
         ../CesiumGltfReader/generated/include
         ../CesiumGltfWriter/include
@@ -30,6 +26,11 @@ if(DOXYGEN_FOUND)
         ../CesiumQuantizedMeshTerrain/include
         ../CesiumQuantizedMeshTerrain/generated/include
         ../CesiumRasterOverlays/include
+        ../CesiumTilesetJson/include
+        ../CesiumTilesetJson/generated/include
+        ../CesiumTilesetJsonReader/include
+        ../CesiumTilesetJsonReader/generated/include
+        ../CesiumTilesetJsonWriter/include
         ../CesiumUtility/include
         ../CesiumVectorData/include
         ../CesiumVectorOverlays/include
@@ -53,10 +54,7 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_EXPAND_ONLY_PREDEF NO)
     set(DOXYGEN_PREDEFINED
         "CESIUM3DTILES_API"
-        "CESIUM3DTILESCONTENT_API"
-        "CESIUM3DTILESREADER_API"
         "CESIUM3DTILESSELECTION_API"
-        "CESIUM3DTILESWRITER_API"
         "CESIUMASYNC_API"
         "CESIUMCURL_API"
         "CESIUMCLIENTCOMMON_API"
@@ -64,6 +62,7 @@ if(DOXYGEN_FOUND)
         "CESIUMGEOSPATIAL_API"
         "CESIUMGLTF_API"
         "CESIUMGLTFCONTENT_API"
+        "CESIUMGLTFCONVERTERS_API"
         "CESIUMGLTFREADER_API"
         "CESIUMGLTFWRITER_API"
         "CESIUMIMAGE_API"
@@ -74,6 +73,9 @@ if(DOXYGEN_FOUND)
         "CESIUMMETADATA_API"
         "CESIUMQUANTIZEDMESHTERRAIN_API"
         "CESIUMRASTEROVERLAYS_API"
+        "CESIUMTILESETJSON_API"
+        "CESIUMTILESETJSONREADER_API"
+        "CESIUMTILESETJSONWRITER_API"
         "CESIUMUTILITY_API"
         "CESIUMVECTORDATA_API"
         "CESIUMVECTOROVERLAYS_API"
