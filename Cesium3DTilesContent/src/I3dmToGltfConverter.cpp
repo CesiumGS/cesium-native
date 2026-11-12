@@ -622,19 +622,21 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
   auto getGltf = [&]() -> CesiumAsync::Future<GltfConverterResult> {
     if (header.gltfFormat == 0) {
       // Recursively fetch and read the glTF content.
+      AssetFetcher gltfAssetFetcher(assetFetcher);
+      gltfAssetFetcher.baseUrl = baseUri;
       return assetFetcher.get(baseUri).thenImmediately(
-          [options, assetFetcher](AssetFetcherResult&& assetFetcherResult)
+          [options, gltfAssetFetcher](AssetFetcherResult&& assetFetcherResult)
               -> CesiumAsync::Future<GltfConverterResult> {
             if (assetFetcherResult.errorList.hasErrors()) {
               GltfConverterResult errorResult;
               errorResult.errors.merge(assetFetcherResult.errorList);
-              return assetFetcher.asyncSystem.createResolvedFuture(
+              return gltfAssetFetcher.asyncSystem.createResolvedFuture(
                   std::move(errorResult));
             }
             return BinaryToGltfConverter::convert(
                 assetFetcherResult.bytes,
                 options,
-                assetFetcher);
+                gltfAssetFetcher);
           });
     } else {
       return BinaryToGltfConverter::convert(gltfData, options, assetFetcher);
