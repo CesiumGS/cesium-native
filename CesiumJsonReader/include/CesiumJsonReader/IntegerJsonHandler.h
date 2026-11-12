@@ -12,8 +12,10 @@ namespace CesiumJsonReader {
 /**
  * @brief \ref IJsonHandler for reading integer values.
  */
-template <typename T>
-  requires std::integral<T> && (!std::same_as<T, bool>)
+template <
+    typename T,
+    typename =
+        std::enable_if_t<std::is_integral_v<T> && !std::is_same_v<T, bool>>>
 class CESIUMJSONREADER_API IntegerJsonHandler : public JsonHandler {
 public:
   IntegerJsonHandler() noexcept : JsonHandler() {}
