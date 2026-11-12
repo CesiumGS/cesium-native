@@ -211,17 +211,13 @@ public:
   void setOwner(TilesetContentManager& owner) noexcept;
 
   /**
-   * @brief Store a glTF schema object that will be used to parse metadata in a
-   * loader and its children.
+   * @brief Gets the glTF schema this loader uses for `MAXAR_content_geojson`
+   * feature metadata.
    *
-   * @param schema pointer to Schema.
-   */
-  virtual void setExternalSchema(CesiumGltf::Schema* schema);
-
-  /**
-   * @brief Get the external glTF schema object.
+   * The schema is a shared asset. Loaders that resolve the same schema URL
+   * receive the same object.
    *
-   * @return A pointer to the Schema.
+   * @return The shared schema, or nullptr when this loader has no schema.
    */
   virtual CesiumUtility::IntrusivePointer<CesiumGltf::Schema>
   getExternalSchema();

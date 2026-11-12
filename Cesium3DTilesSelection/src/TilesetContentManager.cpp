@@ -813,7 +813,8 @@ TilesetContentManager::createFromUrl(
                            url,
                            pCompletedRequest->headers(),
                            std::move(tilesetJson),
-                           ellipsoid)
+                           ellipsoid,
+                           externals.pSharedAssetSystem)
                     .thenImmediately(
                         [](TilesetContentLoaderResult<TilesetContentLoader>&&
                                result) { return std::move(result); });
