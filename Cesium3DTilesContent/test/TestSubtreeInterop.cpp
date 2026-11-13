@@ -49,11 +49,12 @@ TEST_CASE("Test SubtreeInterop") {
       buffer.cesium.data = data;
       buffer.byteLength = int64_t(data.size());
 
-      CesiumGltf::Buffer result =
+      CesiumUtility::Result<CesiumGltf::Buffer> result =
           SubtreeInterop::convertBuffer(std::move(buffer));
-      CHECK_EQ(result.name, "test");
-      CHECK_EQ(result.cesium.data, data);
-      CHECK_EQ(result.byteLength, int64_t(data.size()));
+      REQUIRE_UNARY(result.value);
+      CHECK_EQ(result.value->name, "test");
+      CHECK_EQ(result.value->cesium.data, data);
+      CHECK_EQ(result.value->byteLength, int64_t(data.size()));
     }
 
     SUBCASE("from glTF to 3D Tiles 1.1") {

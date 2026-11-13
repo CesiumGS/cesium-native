@@ -42,24 +42,26 @@ convertBufferCesium(CesiumGltf::BufferCesium&& buffer) {
 inline void moveCommonProperties(
     CesiumUtility::ExtensibleObject& destination,
     CesiumUtility::ExtensibleObject& source) {
-  destination.extensions = std::move(source.extensions);
+  // Extensions are omitted, since they are not necessarily
+  // transferable between 3D Tiles 1.1 and 2.0.
   destination.extras = std::move(source.extras);
   destination.unknownProperties = std::move(source.unknownProperties);
 }
 } // namespace
 
-CesiumGltf::Buffer
+CesiumUtility::Result<CesiumGltf::Buffer>
 SubtreeInterop::convertBuffer(CesiumTilesetJson::Buffer&& buffer) {
   CesiumGltf::Buffer result;
   moveCommonProperties(result, buffer);
   if (buffer.name) {
     result.name = std::move(*buffer.name);
   }
-  result.uri = buffer.uri;
+  result.uri = std::move(buffer.uri);
   result.byteLength = buffer.byteLength;
   result.cesium = convertBufferCesium(std::move(buffer.cesium));
 
-  return result;
+  return Result(result);
+  ;
 }
 
 CesiumUtility::Result<CesiumTilesetJson::Buffer>
@@ -69,7 +71,7 @@ SubtreeInterop::convertBuffer(CesiumGltf::Buffer&& buffer) {
   if (buffer.name.size() > 0) {
     result.name.emplace(std::move(buffer.name));
   }
-  result.uri = buffer.uri;
+  result.uri = std::move(buffer.uri);
   result.byteLength = buffer.byteLength;
   result.cesium = convertBufferCesium(std::move(buffer.cesium));
 
@@ -79,10 +81,10 @@ SubtreeInterop::convertBuffer(CesiumGltf::Buffer&& buffer) {
     CesiumUtility::ErrorList errors;
     errors.emplaceError("Input glTF 2.1 buffer specifies a `chunk` index that "
                         "has not been resolved and is thus missing data.");
-    return Result<CesiumTilesetJson::Buffer>(std::move(errors));
+    return Result<CesiumTilesetJson::Buffer>(errors);
   }
 
-  return Result(std::move(result));
+  return Result(result);
 }
 
 CesiumUtility::Result<CesiumGltf::BufferView>
@@ -99,7 +101,7 @@ SubtreeInterop::convertBufferView(CesiumTilesetJson::BufferView&& bufferView) {
     errors.emplaceError(
         "Input 3D Tiles 1.1 buffer view specifies a buffer index that is too "
         "large to represent in cesium-native's glTF implementation.");
-    return Result<CesiumGltf::BufferView>(std::move(errors));
+    return Result<CesiumGltf::BufferView>(errors);
   }
 
   result.buffer = static_cast<int32_t>(bufferView.buffer);
@@ -131,7 +133,7 @@ SubtreeInterop::convertBufferView(CesiumGltf::BufferView&& bufferView) {
     result.unknownProperties.emplace("byteStride", *bufferView.byteStride);
   }
 
-  return Result(std::move(result), std::move(errors));
+  return Result(result, errors);
 }
 
 CesiumGltf::Availability SubtreeInterop::convertAvailability(
@@ -323,14 +325,18 @@ SubtreeInterop::convertToGltfModel(CesiumTilesetJson::Subtree&& subtree) {
   // doing anything else in the subtree.
   CesiumUtility::ErrorList errors = mergeContentAvailability(subtree);
   if (errors.hasErrors()) {
-    return Result<CesiumGltf::Model>(std::move(errors));
+    return Result<CesiumGltf::Model>(errors);
   }
 
   const size_t bufferCount = subtree.buffers.size();
   model.buffers.resize(bufferCount);
   for (size_t i = 0; i < bufferCount; i++) {
-    CesiumGltf::Buffer buffer = convertBuffer(std::move(subtree.buffers[i]));
-    model.buffers[i] = std::move(buffer);
+    CesiumUtility::Result<CesiumGltf::Buffer> bufferResult =
+        convertBuffer(std::move(subtree.buffers[i]));
+    if (bufferResult.value) {
+      model.buffers[i] = std::move(*bufferResult.value);
+    }
+    errors.merge(std::move(bufferResult.errors));
   }
 
   const size_t bufferViewCount = subtree.bufferViews.size();
@@ -361,7 +367,7 @@ SubtreeInterop::convertToGltfModel(CesiumTilesetJson::Subtree&& subtree) {
         convertAvailability(std::move(subtree.contentAvailability[0]));
   }
 
-  return Result(std::move(model), std::move(errors));
+  return Result(model, errors);
 }
 
 CesiumUtility::Result<CesiumTilesetJson::Subtree>
@@ -372,7 +378,7 @@ SubtreeInterop::convertToTilesetJsonSubtree(CesiumGltf::Model&& model) {
   if (!pSubtreeExtension) {
     errors.emplaceError("Input glTF model did not contain `3DTILES_subtree` "
                         "extension.");
-    return Result<CesiumTilesetJson::Subtree>(std::move(errors));
+    return Result<CesiumTilesetJson::Subtree>(errors);
   }
 
   CesiumTilesetJson::Subtree subtree;
@@ -407,9 +413,7 @@ SubtreeInterop::convertToTilesetJsonSubtree(CesiumGltf::Model&& model) {
     errors.merge(std::move(bufferViewResult.errors));
   }
 
-  return Result<CesiumTilesetJson::Subtree>(
-      std::move(subtree),
-      std::move(errors));
+  return Result<CesiumTilesetJson::Subtree>(subtree, errors);
 }
 
 } // namespace Cesium3DTilesContent

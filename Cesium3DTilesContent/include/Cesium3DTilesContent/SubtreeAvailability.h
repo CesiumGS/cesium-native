@@ -79,7 +79,7 @@ public:
    * @brief Asynchronously loads a subtree from a URL. The resource
    * downloaded from the URL may be:
    *
-   * - A 3D Tiles 1.1 subtree, as either a JSON or ainary subtree file.
+   * - A 3D Tiles 1.1 subtree, as either a JSON or binary subtree file.
    * - A 3D Tiles 2.0 subtree (glTF 2.1), as either a JSON or binary glTF.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree.
