@@ -20,6 +20,8 @@
 - Fixed `CesiumCurl::CurlAssetAccessor` ignoring `allowDirectoryCreation` on macOS, causing uploads to `file:` URLs in missing directories to fail.
 - `CesiumVectorOverlays::VectorTilesRasterOverlay` now builds its geographic projection from the overlay ellipsoid instead of a hardcoded WGS84 ellipsoid. A hardcoded ellipsoid can disagree with the one stored by the host, which creates an extra texture-coordinate set and can crash when this overlay is combined with another geographic overlay.
 - Fixed bugs and potential crashes when using the `GltfModifier` on a tileset with raster overlays (such as cartographic polygons).
+- Fixed potential integer overflow and out-of-bounds write while dequantizing glTFs using `KHR_mesh_quantization`.
+- Fixed potential integer overflow and out-of-bounds write while decoding JPEG images.
 
 ### v0.66.0 - 2026-11-02
 
