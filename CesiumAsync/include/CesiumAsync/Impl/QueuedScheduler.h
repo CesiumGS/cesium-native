@@ -44,6 +44,10 @@ public:
     // By setting the atomic `isDone` flag before calling `unblock`, we ensure
     // that the loop termination condition is satisfied before the main thread
     // is awoken, avoiding the potential deadlock.
+    //
+    // `waitAndDispatchOne` re-checks `isDone` while holding the mutex before it
+    // waits, so a completion that lands between the loop's check and the wait
+    // is not missed.
 
     std::atomic<bool> isDone = false;
     async::task<T> unblockTask = task.then(
@@ -55,7 +59,7 @@ public:
         });
 
     while (!isDone) {
-      this->dispatchInternal(true);
+      this->waitAndDispatchOne(isDone);
     }
 
     return std::move(unblockTask).get();
@@ -63,26 +67,22 @@ public:
 
   template <typename T>
   T dispatchUntilTaskCompletes(const async::shared_task<T>& task) {
-    // Set up a continuation to unblock the blocking dispatch when this task
-    // completes. This case is simpler than the one above because a SharedFuture
-    // supports multiple continuations. We can use readiness of the _original_
-    // task to terminate the loop while unblocking in a separate continuation
-    // guaranteed to run only after that termination condition is satisfied.
-    async::task<void> unblockTask = task.then(
+    // Convert to a regular task so that the overload above handles the wait.
+    return this->dispatchUntilTaskCompletes(task.then(
         async::inline_scheduler(),
-        [this](const async::shared_task<T>&) { this->unblock(); });
-
-    while (!task.ready()) {
-      this->dispatchInternal(true);
-    }
-
-    return task.get();
+        [](const async::shared_task<T>& sharedTask) {
+          return sharedTask.get();
+        }));
   }
 
   ImmediateScheduler<QueuedScheduler> immediate{this};
 
 private:
-  bool dispatchInternal(bool blockIfNoTasks);
+  // Blocks until a task is queued or `stopWaiting` becomes true, then runs at
+  // most one queued task.
+  void waitAndDispatchOne(const std::atomic<bool>& stopWaiting);
+
+  bool runTask(async::task_run_handle t);
   void unblock();
 
   struct Impl;

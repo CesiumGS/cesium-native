@@ -2,6 +2,7 @@
 
 #include <async++.h>
 
+#include <atomic>
 #include <condition_variable>
 #include <cstddef>
 #include <memory>
@@ -57,6 +58,8 @@ public:
       return async::task_run_handle::from_void_ptr(x);
     }
   }
+
+  bool empty() const { return head == tail; }
 };
 
 } // namespace
@@ -86,27 +89,43 @@ void QueuedScheduler::dispatchQueuedContinuations() {
 }
 
 bool QueuedScheduler::dispatchZeroOrOneContinuation() {
-  return this->dispatchInternal(false);
-}
-
-bool QueuedScheduler::dispatchInternal(bool blockIfNoTasks) {
   async::task_run_handle t;
 
   {
     std::unique_lock<std::mutex> guard(this->_pImpl->mutex);
     t = this->_pImpl->queue.pop();
-    if (blockIfNoTasks && !t) {
-      this->_pImpl->conditionVariable.wait(guard);
-    }
   }
 
-  if (t) {
-    auto scope = this->immediate.scope();
-    t.run();
-    return true;
-  } else {
+  return this->runTask(std::move(t));
+}
+
+void QueuedScheduler::waitAndDispatchOne(const std::atomic<bool>& stopWaiting) {
+  async::task_run_handle t;
+
+  {
+    std::unique_lock<std::mutex> guard(this->_pImpl->mutex);
+
+    // Check the flag while holding the mutex. `unblock` also takes the mutex,
+    // so a completion that happens after the caller's own check can't slip in
+    // before this wait and have its notification lost.
+    this->_pImpl->conditionVariable.wait(guard, [this, &stopWaiting] {
+      return !this->_pImpl->queue.empty() || stopWaiting;
+    });
+
+    t = this->_pImpl->queue.pop();
+  }
+
+  this->runTask(std::move(t));
+}
+
+bool QueuedScheduler::runTask(async::task_run_handle t) {
+  if (!t) {
     return false;
   }
+
+  auto scope = this->immediate.scope();
+  t.run();
+  return true;
 }
 
 void QueuedScheduler::unblock() {
