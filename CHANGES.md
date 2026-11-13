@@ -21,6 +21,7 @@
 - Fixed bugs and potential crashes when using the `GltfModifier` on a tileset with raster overlays (such as cartographic polygons).
 - Fixed potential integer overflow and out-of-bounds write while dequantizing glTFs using `KHR_mesh_quantization`.
 - Fixed potential integer overflow and out-of-bounds write while decoding JPEG images.
+- Blend2D runtime will now always be initialized before use, resolving access violation issues when Cesium Native was built with static linking and aggressive unused code optimization (particularly Unity WebGL builds).
 
 ### v0.66.0 - 2026-11-02
 

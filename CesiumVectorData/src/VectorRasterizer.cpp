@@ -34,6 +34,14 @@ using namespace CesiumImage;
 
 namespace CesiumVectorData {
 namespace {
+// The Blend2D runtime needs to be initialized before any Blend2D instances are
+// created, as they refer to static data initialized by bl_runtime_init. Blend2D
+// will call bl_runtime_init from a static constructor, but this static
+// constructor can be skipped by dead code optimization, leading to crashes.
+// BLRuntimeInitializer handles calling bl_runtime_init and bl_runtime_shutdown
+// via RAII.
+static BLRuntimeInitializer blRuntimeInitializer;
+
 BLPoint radiansToPoint(
     double longitude,
     double latitude,
