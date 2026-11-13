@@ -9,6 +9,7 @@
   - The `SubtreeAvailability` constructor now takes a single `AvailabilityView` for content availability and a `CesiumGltf::Model` to represent the subtree.
   - `getSubtree` has been replaced by `getModel` to retrieve the underlying glTF representation of the subtree.
   - Removed `contentId` from the `isContentAvailable` and `setContentAvailable` overloads.
+- `SubtreeAvailability::fromSubtree` and `SubtreeAvailability::loadSubtree` now use `CesiumUtility::Result` instead of `std::optional`.
 - `ViewStateMeasureDelegate::computeSelectionMeasure` now takes the view state as an argument.
 - SPZ color components are no longer automatically converted to the `FLOAT` component type when read. To replicate the previous behavior, set `options.spzDecoderOptions.forceFloatAccessors` to `true` on `GltfReaderOptions`.
 
