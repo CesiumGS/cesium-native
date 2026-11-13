@@ -1,17 +1,23 @@
+#include <Cesium3DTilesContent/GltfConverters.h>
+#include <Cesium3DTilesContent/ImplicitTileSubdivisionScheme.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
+#include <Cesium3DTilesContent/SubtreeInterop.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
+#include <CesiumGltf/Extension3dTilesSubtree.h>
+#include <CesiumGltf/Model.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumJsonReader/JsonReader.h>
-#include <CesiumTilesetJson/Availability.h>
-#include <CesiumTilesetJson/Buffer.h>
-#include <CesiumTilesetJson/BufferView.h>
 #include <CesiumTilesetJson/Subtree.h>
 #include <CesiumTilesetJsonReader/SubtreeFileReader.h>
+#include <CesiumTilesetJsonReader/SubtreeReader.h>
 #include <CesiumUtility/Assert.h>
+#include <CesiumUtility/Result.h>
 #include <CesiumUtility/joinToString.h>
 
 #include <spdlog/logger.h>
@@ -28,115 +34,154 @@
 #include <variant>
 #include <vector>
 
-using namespace CesiumTilesetJson;
 using namespace CesiumTilesetJsonReader;
 using namespace CesiumJsonReader;
 
 namespace Cesium3DTilesContent {
 
-namespace {
-
-std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
-    const CesiumTilesetJson::Availability& availability,
-    std::vector<CesiumTilesetJson::Buffer>& buffers,
-    std::vector<CesiumTilesetJson::BufferView>& bufferViews) {
-  if (availability.constant) {
-    return SubtreeAvailability::SubtreeConstantAvailability{
-        *availability.constant ==
-        CesiumTilesetJson::Availability::Constant::AVAILABLE};
-  }
-
-  int64_t bufferViewIndex = -1;
-
-  if (availability.bitstream) {
-    bufferViewIndex = *availability.bitstream;
-  } else {
-    // old version uses bufferView property instead of bitstream. Same semantic
-    // either way
-    auto bufferViewIt = availability.unknownProperties.find("bufferView");
-    if (bufferViewIt != availability.unknownProperties.end()) {
-      bufferViewIndex =
-          bufferViewIt->second.getSafeNumberOrDefault<int64_t>(-1);
-    }
-  }
-
-  if (bufferViewIndex >= 0 &&
-      bufferViewIndex < static_cast<int64_t>(bufferViews.size())) {
-    const CesiumTilesetJson::BufferView& bufferView =
-        bufferViews[size_t(bufferViewIndex)];
-
-    if (bufferView.buffer >= 0 &&
-        bufferView.buffer < static_cast<int64_t>(buffers.size())) {
-      CesiumTilesetJson::Buffer& buffer = buffers[size_t(bufferView.buffer)];
-      std::vector<std::byte>& data = buffer.cesium.data;
-      int64_t bufferSize =
-          std::min(static_cast<int64_t>(data.size()), buffer.byteLength);
-      if (bufferView.byteLength >= 0 &&
-          bufferView.byteOffset + bufferView.byteLength <= bufferSize) {
-        return SubtreeAvailability::SubtreeBufferViewAvailability{
-            std::span<std::byte>(
-                data.data() + bufferView.byteOffset,
-                size_t(bufferView.byteLength))};
-      }
-    }
-  }
-
-  return std::nullopt;
-}
-
-} // namespace
-
-/*static*/ std::optional<SubtreeAvailability> SubtreeAvailability::fromSubtree(
+/*static*/ CesiumUtility::Result<SubtreeAvailability>
+SubtreeAvailability::fromSubtree(
     ImplicitTileSubdivisionScheme subdivisionScheme,
     uint32_t levelsInSubtree,
     CesiumTilesetJson::Subtree&& subtree) noexcept {
-  std::optional<SubtreeAvailability::AvailabilityView> maybeTileAvailability =
-      parseAvailabilityView(
-          subtree.tileAvailability,
-          subtree.buffers,
-          subtree.bufferViews);
-  if (!maybeTileAvailability)
-    return std::nullopt;
+  CesiumUtility::Result<CesiumGltf::Model> maybeModel =
+      SubtreeInterop::convertToGltfModel(std::move(subtree));
 
-  std::optional<SubtreeAvailability::AvailabilityView>
-      maybeChildSubtreeAvailability = parseAvailabilityView(
-          subtree.childSubtreeAvailability,
-          subtree.buffers,
-          subtree.bufferViews);
-  if (!maybeChildSubtreeAvailability)
-    return std::nullopt;
+  if (!maybeModel.value) {
+    std::string errors = "Errors upgrading 3D Tiles 1.1 subtree to 2.0: \n -";
+    errors += CesiumUtility::joinToString(maybeModel.errors.errors, "\n -");
+    return CesiumUtility::Result<SubtreeAvailability>(
+        CesiumUtility::ErrorList::error(errors));
+  }
 
-  // At least one element is required in contentAvailability.
-  if (subtree.contentAvailability.empty())
-    return std::nullopt;
+  return SubtreeAvailability::fromGltf(
+      subdivisionScheme,
+      levelsInSubtree,
+      std::move(*maybeModel.value));
+}
 
-  std::vector<SubtreeAvailability::AvailabilityView> contentAvailability;
-  contentAvailability.reserve(subtree.contentAvailability.size());
+namespace {
+CesiumUtility::Result<SubtreeAvailability::AvailabilityView>
+parseAvailabilityView(
+    CesiumGltf::Model& model,
+    const CesiumGltf::Availability& availability) {
+  if (availability.constant) {
+    SubtreeAvailability::SubtreeConstantAvailability constantAvailability{
+        *availability.constant ==
+        CesiumTilesetJson::Availability::Constant::AVAILABLE};
+    return CesiumUtility::Result<SubtreeAvailability::AvailabilityView>(
+        constantAvailability);
+  }
 
-  for (const auto& availabilityDesc : subtree.contentAvailability) {
-    auto maybeAvailability = parseAvailabilityView(
-        availabilityDesc,
-        subtree.buffers,
-        subtree.bufferViews);
-    if (maybeAvailability) {
-      contentAvailability.emplace_back(std::move(*maybeAvailability));
-    }
+  CesiumGltf::BufferView* pBufferView =
+      model.getSafe(&model.bufferViews, availability.bitstream);
+  if (!pBufferView) {
+    std::string error = fmt::format(
+        "Availability has invalid bitstream {}",
+        availability.bitstream);
+    return CesiumUtility::Result<SubtreeAvailability::AvailabilityView>(
+        CesiumUtility::ErrorList::error(error));
+  }
+
+  CesiumGltf::Buffer* pBuffer =
+      model.getSafe(&model.buffers, pBufferView->buffer);
+  if (!pBuffer) {
+    std::string error = fmt::format(
+        "Availability bitstream has invalid buffer {}",
+        pBufferView->buffer);
+    return CesiumUtility::Result<SubtreeAvailability::AvailabilityView>(
+        CesiumUtility::ErrorList::error(error));
+  }
+
+  std::vector<std::byte>& data = pBuffer->cesium.data;
+  int64_t bufferSize =
+      std::min(static_cast<int64_t>(data.size()), pBuffer->byteLength);
+  if (pBufferView->byteLength >= 0 && pBufferView->byteOffset >= 0 &&
+      bufferSize - pBufferView->byteLength <= pBufferView->byteOffset) {
+    SubtreeAvailability::SubtreeBufferViewAvailability bufferViewAvailability{
+        std::span<std::byte>(
+            data.data() + pBufferView->byteOffset,
+            size_t(pBufferView->byteLength))};
+    return CesiumUtility::Result<SubtreeAvailability::AvailabilityView>(
+        bufferViewAvailability);
+  }
+
+  std::string error = "Availability bitstream does not have a valid view on "
+                      "its specified buffer";
+  return CesiumUtility::Result<SubtreeAvailability::AvailabilityView>(
+      CesiumUtility::ErrorList::error(error));
+}
+} // namespace
+
+/*static*/ CesiumUtility::Result<SubtreeAvailability>
+SubtreeAvailability::fromGltf(
+    ImplicitTileSubdivisionScheme subdivisionScheme,
+    uint32_t levelsInSubtree,
+    CesiumGltf::Model&& model) noexcept {
+  const auto* pSubtreeExtension =
+      model.getExtension<CesiumGltf::Extension3dTilesSubtree>();
+  if (!pSubtreeExtension) {
+    std::string error =
+        "Input glTF model does not contain the 3DTILES_subtree extension.";
+    return CesiumUtility::Result<SubtreeAvailability>(
+        CesiumUtility::ErrorList::error(error));
+  }
+  CesiumUtility::Result<SubtreeAvailability::AvailabilityView>
+      tileAvailability =
+          parseAvailabilityView(model, pSubtreeExtension->tileAvailability);
+  if (!tileAvailability.value) {
+    std::string errors = "Errors parsing tileAvailability: \n -";
+    errors += CesiumUtility::joinToString(tileAvailability.errors, "\n -");
+    return CesiumUtility::Result<SubtreeAvailability>(
+        CesiumUtility::ErrorList::error(errors));
+  }
+
+  CesiumUtility::Result<SubtreeAvailability::AvailabilityView>
+      childSubtreeAvailability = parseAvailabilityView(
+          model,
+          pSubtreeExtension->childSubtreeAvailability);
+  if (!childSubtreeAvailability.value) {
+    std::string errors = "Errors parsing childSubtreeAvailability: \n -";
+    errors +=
+        CesiumUtility::joinToString(childSubtreeAvailability.errors, "\n -");
+    return CesiumUtility::Result<SubtreeAvailability>(
+        CesiumUtility::ErrorList::error(errors));
+  }
+
+  // Fall back on an empty availability.
+
+  CesiumUtility::Result<SubtreeAvailability::AvailabilityView>
+      contentAvailability(
+          SubtreeAvailability::SubtreeConstantAvailability{false});
+  if (pSubtreeExtension->contentAvailability) {
+    contentAvailability =
+        parseAvailabilityView(model, *pSubtreeExtension->contentAvailability);
+  }
+
+  if (!contentAvailability.value) {
+    // Only happens if something went wrong while parsing the
+    // contentAvailability view.
+    std::string errors = "Errors parsing contentAvailability: \n -";
+    errors += CesiumUtility::joinToString(contentAvailability.errors, "\n -");
+    return CesiumUtility::Result<SubtreeAvailability>(
+        CesiumUtility::ErrorList::error(errors));
   }
 
   return SubtreeAvailability(
       subdivisionScheme,
       levelsInSubtree,
-      *maybeTileAvailability,
-      *maybeChildSubtreeAvailability,
-      std::move(contentAvailability),
-      std::move(subtree));
+      *tileAvailability.value,
+      *childSubtreeAvailability.value,
+      *contentAvailability.value,
+      std::move(model));
 }
 
-/*static*/ std::optional<SubtreeAvailability> SubtreeAvailability::createEmpty(
+/*static*/ CesiumUtility::Result<SubtreeAvailability>
+SubtreeAvailability::createEmpty(
     ImplicitTileSubdivisionScheme subdivisionScheme,
     uint32_t levelsInSubtree,
     bool setTilesAvailable) noexcept {
-  Subtree subtree;
+  CesiumTilesetJson::Subtree subtree;
   subtree.tileAvailability.constant =
       setTilesAvailable
           ? CesiumTilesetJson::Availability::Constant::AVAILABLE
@@ -152,7 +197,7 @@ std::optional<SubtreeAvailability::AvailabilityView> parseAvailabilityView(
       std::move(subtree));
 }
 
-/*static*/ CesiumAsync::Future<std::optional<SubtreeAvailability>>
+/*static*/ CesiumAsync::Future<CesiumUtility::Result<SubtreeAvailability>>
 SubtreeAvailability::loadSubtree(
     ImplicitTileSubdivisionScheme subdivisionScheme,
     uint32_t levelsInSubtree,
@@ -161,35 +206,123 @@ SubtreeAvailability::loadSubtree(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& subtreeUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
-  auto pReader = std::make_shared<SubtreeFileReader>();
-  return pReader->load(asyncSystem, pAssetAccessor, subtreeUrl, requestHeaders)
-      .thenInMainThread(
-          [pLogger, subtreeUrl, subdivisionScheme, levelsInSubtree, pReader](
-              ReadJsonResult<Subtree>&& subtree)
-              -> std::optional<SubtreeAvailability> {
-            if (!subtree.errors.empty()) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Errors while loading subtree from {}:\n- {}",
-                  subtreeUrl,
-                  CesiumUtility::joinToString(subtree.errors, "\n- "));
-            }
-            if (!subtree.warnings.empty()) {
-              SPDLOG_LOGGER_WARN(
-                  pLogger,
-                  "Warnings while loading subtree from {}:\n- {}",
-                  subtreeUrl,
-                  CesiumUtility::joinToString(subtree.warnings, "\n- "));
+  return pAssetAccessor->get(asyncSystem, subtreeUrl, requestHeaders)
+      .thenInWorkerThread(
+          [pLogger,
+           asyncSystem,
+           pAssetAccessor,
+           subtreeUrl,
+           requestHeaders,
+           subdivisionScheme,
+           levelsInSubtree](const std::shared_ptr<CesiumAsync::IAssetRequest>&
+                                pCompletedRequest)
+              -> CesiumAsync::Future<
+                  CesiumUtility::Result<SubtreeAvailability>> {
+            // Check if request is successful
+            const CesiumAsync::IAssetResponse* pResponse =
+                pCompletedRequest->response();
+            const std::string& url = pCompletedRequest->url();
+            if (!pResponse) {
+              std::string error =
+                  "Did not receive a valid response for subtree at" + url;
+              return asyncSystem.createResolvedFuture<
+                  CesiumUtility::Result<SubtreeAvailability>>(
+                  CesiumUtility::ErrorList::error(error));
             }
 
-            if (!subtree.value) {
-              return std::nullopt;
+            uint16_t statusCode = pResponse->statusCode();
+            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+              std::string error = fmt::format(
+                  "Received status code {} for subtree {}",
+                  statusCode,
+                  url);
+              return asyncSystem.createResolvedFuture<
+                  CesiumUtility::Result<SubtreeAvailability>>(
+                  CesiumUtility::ErrorList::error(error));
             }
 
-            return SubtreeAvailability::fromSubtree(
-                subdivisionScheme,
-                levelsInSubtree,
-                std::move(*subtree.value));
+            // Determine whether this is a 3D Tiles 1.1 or 2.0 subtree to apply
+            // the appropriate reader.
+            bool isGltf = false;
+            rapidjson::Document json;
+            std::span<const std::byte> binary = pResponse->data();
+
+            std::string magic(reinterpret_cast<const char*>(binary.data()), 4);
+            if (magic == "glTF") {
+              isGltf = true;
+            } else if (magic != "subt") {
+              json.Parse(
+                  reinterpret_cast<const char*>(binary.data()),
+                  binary.size());
+              if (json.HasParseError()) {
+                std::string error = fmt::format(
+                    "Error when parsing subtree file as JSON, code "
+                    "{} at byte offset {}",
+                    json.GetParseError(),
+                    json.GetErrorOffset());
+                return asyncSystem.createResolvedFuture<
+                    CesiumUtility::Result<SubtreeAvailability>>(
+                    CesiumUtility::ErrorList::error(error));
+              }
+
+              // "asset" exists in glTF but not 3D Tiles 1.1 subtrees.
+              isGltf = json.FindMember("asset") != json.MemberEnd();
+            }
+
+            if (isGltf) {
+              auto pReader = std::make_shared<CesiumGltfReader::GltfReader>();
+              return pReader
+                  ->loadGltf(
+                      asyncSystem,
+                      subtreeUrl,
+                      requestHeaders,
+                      pAssetAccessor)
+                  .thenImmediately(
+                      [pLogger, subtreeUrl, subdivisionScheme, levelsInSubtree](
+                          CesiumGltfReader::GltfReaderResult&& result)
+                          -> CesiumUtility::Result<SubtreeAvailability> {
+                        if (!result.model) {
+                          CesiumUtility::ErrorList errors;
+                          errors.errors = std::move(result.errors);
+                          errors.warnings = std::move(result.warnings);
+                          return CesiumUtility::Result<SubtreeAvailability>(
+                              errors);
+                        }
+
+                        return SubtreeAvailability::fromGltf(
+                            subdivisionScheme,
+                            levelsInSubtree,
+                            std::move(*result.model));
+                      });
+            }
+
+            auto pReader =
+                std::make_shared<CesiumTilesetJsonReader::SubtreeFileReader>();
+            return pReader
+                ->load(
+                    asyncSystem,
+                    pAssetAccessor,
+                    subtreeUrl,
+                    requestHeaders,
+                    binary)
+                .thenImmediately(
+                    [pLogger, subtreeUrl, subdivisionScheme, levelsInSubtree](
+                        CesiumJsonReader::ReadJsonResult<
+                            CesiumTilesetJson::Subtree>&& result)
+                        -> CesiumUtility::Result<SubtreeAvailability> {
+                      if (!result.value) {
+                        CesiumUtility::ErrorList errors;
+                        errors.errors = std::move(result.errors);
+                        errors.warnings = std::move(result.warnings);
+                        return CesiumUtility::Result<SubtreeAvailability>(
+                            errors);
+                      }
+
+                      return SubtreeAvailability::fromSubtree(
+                          subdivisionScheme,
+                          levelsInSubtree,
+                          std::move(*result.value));
+                    });
           });
 }
 
@@ -198,20 +331,25 @@ SubtreeAvailability::SubtreeAvailability(
     uint32_t levelsInSubtree,
     AvailabilityView tileAvailability,
     AvailabilityView subtreeAvailability,
-    std::vector<AvailabilityView>&& contentAvailability,
-    CesiumTilesetJson::Subtree&& subtree)
+    AvailabilityView contentAvailability,
+    CesiumGltf::Model&& model)
     : _powerOf2{subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 2U : 3U},
       _levelsInSubtree{levelsInSubtree},
-      _subtree{std::move(subtree)},
       _childCount{
           subdivisionScheme == ImplicitTileSubdivisionScheme::Quadtree ? 4U
                                                                        : 8U},
+      _model{std::move(model)},
+      _pSubtree{
+          this->_model.getExtension<CesiumGltf::Extension3dTilesSubtree>()},
       _tileAvailability{tileAvailability},
       _subtreeAvailability{subtreeAvailability},
-      _contentAvailability{std::move(contentAvailability)} {
+      _contentAvailability{contentAvailability} {
   CESIUM_ASSERT(
       (this->_childCount == 4 || this->_childCount == 8) &&
-      "Only support quadtree and octree");
+      "SubtreeAvailability only supports quadtrees and octrees.");
+  CESIUM_ASSERT(
+      this->_pSubtree &&
+      "Input model MUST have the `3DTILES_subtree` extension");
 }
 
 bool SubtreeAvailability::isTileAvailable(
@@ -275,87 +413,74 @@ void SubtreeAvailability::setTileAvailable(
       relativeTileLevel,
       relativeTileMortonId,
       this->_tileAvailability,
-      this->_subtree.tileAvailability,
+      this->_pSubtree->tileAvailability,
       isAvailable);
 }
 
 bool SubtreeAvailability::isContentAvailable(
     const CesiumGeometry::QuadtreeTileID& subtreeId,
-    const CesiumGeometry::QuadtreeTileID& tileId,
-    size_t contentId) const noexcept {
+    const CesiumGeometry::QuadtreeTileID& tileId) const noexcept {
   uint64_t relativeTileMortonIdx =
       ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   return this->isContentAvailable(
       tileId.level - subtreeId.level,
-      relativeTileMortonIdx,
-      contentId);
+      relativeTileMortonIdx);
 }
 
 bool SubtreeAvailability::isContentAvailable(
     const CesiumGeometry::OctreeTileID& subtreeId,
-    const CesiumGeometry::OctreeTileID& tileId,
-    size_t contentId) const noexcept {
+    const CesiumGeometry::OctreeTileID& tileId) const noexcept {
   uint64_t relativeTileMortonIdx =
       ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   return this->isContentAvailable(
       tileId.level - subtreeId.level,
-      relativeTileMortonIdx,
-      contentId);
+      relativeTileMortonIdx);
 }
 
 bool SubtreeAvailability::isContentAvailable(
     uint32_t relativeTileLevel,
-    uint64_t relativeTileMortonId,
-    size_t contentId) const noexcept {
-  if (contentId >= this->_contentAvailability.size())
-    return false;
+    uint64_t relativeTileMortonId) const noexcept {
   return isAvailable(
       relativeTileLevel,
       relativeTileMortonId,
-      this->_contentAvailability[contentId]);
+      this->_contentAvailability);
 }
 
 void SubtreeAvailability::setContentAvailable(
     const CesiumGeometry::QuadtreeTileID& subtreeId,
     const CesiumGeometry::QuadtreeTileID& tileId,
-    size_t contentId,
     bool isAvailable) noexcept {
   uint64_t relativeTileMortonIdx =
       ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   this->setContentAvailable(
       tileId.level - subtreeId.level,
       relativeTileMortonIdx,
-      contentId,
       isAvailable);
 }
 
 void SubtreeAvailability::setContentAvailable(
     const CesiumGeometry::OctreeTileID& subtreeId,
     const CesiumGeometry::OctreeTileID& tileId,
-    size_t contentId,
     bool isAvailable) noexcept {
   uint64_t relativeTileMortonIdx =
       ImplicitTilingUtilities::computeRelativeMortonIndex(subtreeId, tileId);
   this->setContentAvailable(
       tileId.level - subtreeId.level,
       relativeTileMortonIdx,
-      contentId,
       isAvailable);
 }
 
 void SubtreeAvailability::setContentAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId,
-    size_t contentId,
     bool isAvailable) noexcept {
-  if (contentId < this->_contentAvailability.size()) {
-    this->setAvailable(
-        relativeTileLevel,
-        relativeTileMortonId,
-        this->_contentAvailability[contentId],
-        this->_subtree.contentAvailability[contentId],
-        isAvailable);
-  }
+  CESIUM_ASSERT(this->_pSubtree->contentAvailability);
+  this->setAvailable(
+      relativeTileLevel,
+      relativeTileMortonId,
+      this->_contentAvailability,
+      *this->_pSubtree->contentAvailability,
+      isAvailable);
 }
 
 bool SubtreeAvailability::isSubtreeAvailable(
@@ -402,10 +527,10 @@ void SubtreeAvailability::setSubtreeAvailable(
           uint64_t(1) << (this->_powerOf2 * this->_levelsInSubtree);
 
       convertConstantAvailabilityToBitstream(
-          this->_subtree,
+          this->_model,
           numberOfTilesInNextLevel,
           this->_subtreeAvailability,
-          this->_subtree.childSubtreeAvailability);
+          this->_pSubtree->childSubtreeAvailability);
     }
   }
 
@@ -467,7 +592,7 @@ void SubtreeAvailability::setAvailable(
     uint32_t relativeTileLevel,
     uint64_t relativeTileMortonId,
     AvailabilityView& availabilityView,
-    Availability& availability,
+    CesiumGltf::Availability& availability,
     bool isAvailable) noexcept {
   const SubtreeConstantAvailability* pConstantAvailability =
       std::get_if<SubtreeConstantAvailability>(&availabilityView);
@@ -482,7 +607,7 @@ void SubtreeAvailability::setAvailable(
           (numberOfTilesInNextLevel - 1U) / (this->_childCount - 1U);
 
       convertConstantAvailabilityToBitstream(
-          this->_subtree,
+          this->_model,
           numberOfTilesInSubtree,
           availabilityView,
           availability);
@@ -561,9 +686,9 @@ void SubtreeAvailability::setAvailableUsingBufferView(
 namespace {
 
 void updateAvailabilityView(
-    Subtree& subtree,
+    CesiumGltf::Model& model,
     SubtreeAvailability::AvailabilityView& availabilityView,
-    Availability& availability) {
+    CesiumGltf::Availability& availability) {
   if (!std::holds_alternative<
           SubtreeAvailability::SubtreeBufferViewAvailability>(
           availabilityView)) {
@@ -571,17 +696,17 @@ void updateAvailabilityView(
   }
 
   CESIUM_ASSERT(
-      availability.bitstream && *availability.bitstream >= 0 &&
-      size_t(*availability.bitstream) < subtree.bufferViews.size());
+      availability.bitstream >= 0 &&
+      size_t(availability.bitstream) < model.bufferViews.size());
 
-  const BufferView& bufferView =
-      subtree.bufferViews[size_t(*availability.bitstream)];
+  const CesiumGltf::BufferView& bufferView =
+      model.bufferViews[size_t(availability.bitstream)];
 
   CESIUM_ASSERT(
       bufferView.buffer >= 0 &&
-      size_t(bufferView.buffer) < subtree.buffers.size());
+      size_t(bufferView.buffer) < model.buffers.size());
 
-  Buffer& buffer = subtree.buffers[size_t(bufferView.buffer)];
+  CesiumGltf::Buffer& buffer = model.buffers[size_t(bufferView.buffer)];
 
   std::span<std::byte> view(
       buffer.cesium.data.data() + bufferView.byteOffset,
@@ -595,32 +720,27 @@ void updateAvailabilityView(
 
 void SubtreeAvailability::updateAvailabilityViews() {
   updateAvailabilityView(
-      this->_subtree,
+      this->_model,
       this->_tileAvailability,
-      this->_subtree.tileAvailability);
+      this->_pSubtree->tileAvailability);
 
   updateAvailabilityView(
-      this->_subtree,
+      this->_model,
       this->_subtreeAvailability,
-      this->_subtree.childSubtreeAvailability);
+      this->_pSubtree->childSubtreeAvailability);
 
-  CESIUM_ASSERT(
-      this->_contentAvailability.size() ==
-      this->_subtree.contentAvailability.size());
-
-  for (size_t i = 0; i < this->_contentAvailability.size(); ++i) {
-    updateAvailabilityView(
-        this->_subtree,
-        this->_contentAvailability[i],
-        this->_subtree.contentAvailability[i]);
-  }
+  CESIUM_ASSERT(this->_pSubtree->contentAvailability);
+  updateAvailabilityView(
+      this->_model,
+      this->_contentAvailability,
+      *this->_pSubtree->contentAvailability);
 }
 
 void SubtreeAvailability::convertConstantAvailabilityToBitstream(
-    Subtree& subtree,
+    CesiumGltf::Model& model,
     uint64_t numberOfTiles,
     SubtreeAvailability::AvailabilityView& availabilityView,
-    Availability& availability) {
+    CesiumGltf::Availability& availability) {
   const SubtreeAvailability::SubtreeConstantAvailability*
       pConstantAvailability =
           std::get_if<SubtreeAvailability::SubtreeConstantAvailability>(
@@ -634,12 +754,12 @@ void SubtreeAvailability::convertConstantAvailabilityToBitstream(
   if (numberOfBytes * 8 < numberOfTiles)
     ++numberOfBytes;
 
-  BufferView& bufferView = subtree.bufferViews.emplace_back();
+  CesiumGltf::BufferView& bufferView = model.bufferViews.emplace_back();
   bufferView.buffer = 0;
   bufferView.byteLength = int64_t(numberOfBytes);
 
-  Buffer& buffer = !subtree.buffers.empty() ? subtree.buffers[0]
-                                            : subtree.buffers.emplace_back();
+  CesiumGltf::Buffer& buffer =
+      !model.buffers.empty() ? model.buffers[0] : model.buffers.emplace_back();
 
   int64_t start = buffer.byteLength;
 
@@ -663,7 +783,7 @@ void SubtreeAvailability::convertConstantAvailabilityToBitstream(
       buffer.cesium.data.data() + end);
   availabilityView = SubtreeAvailability::SubtreeBufferViewAvailability{view};
 
-  availability.bitstream = int32_t(subtree.bufferViews.size() - 1);
+  availability.bitstream = int32_t(model.bufferViews.size() - 1);
   availability.constant.reset();
 
   // Fix spans that may have been invalidated when the buffer grew

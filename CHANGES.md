@@ -5,11 +5,17 @@
 ##### Breaking Changes :mega:
 
 - `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter` have been renamed to `CesiumTilesetJson`, `CesiumTilesetJsonReader`, and `CesiumTilesetJsonWriter` respectively.
+- `Cesium3DTilesSelection::SubtreeAvailability` now follows the `3DTILES_subtree` extension in glTF 2.1:
+  - The `SubtreeAvailability` constructor now takes a single `AvailabilityView` for content availability and a `CesiumGltf::Model` to represent the subtree.
+  - `getSubtree` has been replaced by `getModel` to retrieve the underlying glTF representation of the subtree.
+  - Removed `contentId` from the `isContentAvailable` and `setContentAvailable` overloads.
+- `SubtreeAvailability::fromSubtree` and `SubtreeAvailability::loadSubtree` now use `CesiumUtility::Result` instead of `std::optional`.
 - `ViewStateMeasureDelegate::computeSelectionMeasure` now takes the view state as an argument.
 - SPZ color components are no longer automatically converted to the `FLOAT` component type when read. To replicate the previous behavior, set `options.spzDecoderOptions.forceFloatAccessors` to `true` on `GltfReaderOptions`.
 
 ##### Additions :tada:
 
+- Added `fromGltf` method to `Cesium3DTilesSelection::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
 - Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
 - Added `Cesium3DTilesSelection::ViewStateVisibilityDelegate`, which can be specified on a `ViewState` for conditional control over whether to display a tile's content.
 - Added `RasterOverlayCollection::updateTileOverlaysForReplacedContent` and `RasterMappedTo3DTile::prepareForReplacedContent`, which update a tile's raster overlay mappings after its content is replaced, such as by a `GltfModifier`.
