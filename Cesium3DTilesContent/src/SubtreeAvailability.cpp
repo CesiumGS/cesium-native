@@ -322,13 +322,16 @@ SubtreeAvailability::SubtreeAvailability(
                                                                        : 8U},
       _model{std::move(model)},
       _pSubtree{
-          &this->_model.addExtension<CesiumGltf::Extension3dTilesSubtree>()},
+          this->_model.getExtension<CesiumGltf::Extension3dTilesSubtree>()},
       _tileAvailability{tileAvailability},
       _subtreeAvailability{subtreeAvailability},
       _contentAvailability{contentAvailability} {
   CESIUM_ASSERT(
       (this->_childCount == 4 || this->_childCount == 8) &&
       "SubtreeAvailability only supports quadtrees and octrees.");
+  CESIUM_ASSERT(
+      this->_pSubtree &&
+      "Input model MUST have the `3DTILES_subtree` extension");
 }
 
 bool SubtreeAvailability::isTileAvailable(

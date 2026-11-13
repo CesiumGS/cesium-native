@@ -147,8 +147,8 @@ public:
    * @param contentAvailability A view on the content availability. If
    * backed by a buffer, the buffer is expected to be in `model`.
    * @param model The glTF model with which this instance queries and modifies
-   * availability information. If the model does not contain @ref
-   * CesiumGltf::Extension3dTilesSubtree, the extension will be added.
+   * availability information. The model must contain the @ref
+   * CesiumGltf::Extension3dTilesSubtree extension.
    */
   SubtreeAvailability(
       ImplicitTileSubdivisionScheme subdivisionScheme,

@@ -392,6 +392,12 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
 
   return waitForFuture(asyncSystem, std::move(subtreeFuture));
 }
+
+CesiumGltf::Model createEmptySubtreeGltf() {
+  CesiumGltf::Model model;
+  model.addExtension<CesiumGltf::Extension3dTilesSubtree>();
+  return model;
+}
 } // namespace
 
 TEST_CASE("Test SubtreeAvailability methods") {
@@ -402,7 +408,7 @@ TEST_CASE("Test SubtreeAvailability methods") {
         SubtreeAvailability::SubtreeConstantAvailability{true},
         SubtreeAvailability::SubtreeConstantAvailability{false},
         {SubtreeAvailability::SubtreeConstantAvailability{false}},
-        {}};
+        createEmptySubtreeGltf()};
 
     SUBCASE("isTileAvailable()") {
       CesiumGeometry::QuadtreeTileID tileID{4, 3, 1};
@@ -473,6 +479,7 @@ TEST_CASE("Test SubtreeAvailability methods") {
         std::ceil(static_cast<double>(maxSubtreeTiles) / 8.0));
 
     CesiumGltf::Model model;
+    model.addExtension<CesiumGltf::Extension3dTilesSubtree>();
     model.buffers.resize(3);
     model.bufferViews.resize(3);
 

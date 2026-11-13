@@ -10,6 +10,7 @@
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltf/Extension3dTilesSubtree.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
@@ -45,7 +46,13 @@ using namespace CesiumNativeTests;
 
 namespace {
 std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+
+CesiumGltf::Model createEmptySubtreeGltf() {
+  CesiumGltf::Model model;
+  model.addExtension<CesiumGltf::Extension3dTilesSubtree>();
+  return model;
 }
+} // namespace
 
 TEST_CASE("Test implicit octree loader") {
   Cesium3DTilesContent::registerAllTileContentTypes();
@@ -92,8 +99,8 @@ TEST_CASE("Test implicit octree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{false}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            createEmptySubtreeGltf()});
 
     // check that this tile will have empty content
     Tile tile(&loader);
@@ -128,8 +135,8 @@ TEST_CASE("Test implicit octree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // mock tile content b3dm
     auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
@@ -181,8 +188,8 @@ TEST_CASE("Test implicit octree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // mock random tile content
     auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
@@ -271,8 +278,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // check subdivide root tile first
     Tile tile(&loader);
@@ -473,8 +480,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // check subdivide root tile first
     Tile tile(&loader);
