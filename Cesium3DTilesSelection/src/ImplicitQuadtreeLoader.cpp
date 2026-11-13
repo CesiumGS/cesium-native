@@ -195,7 +195,8 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
         pSharedAssetSystem,
     const glm::dmat4& tileTransform,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    const CesiumGeometry::Axis upAxis) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
       .thenInWorkerThread([ellipsoid,
                            pLogger,
@@ -204,9 +205,9 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
                            asyncSystem,
                            pAssetAccessor,
                            tileTransform,
-                           requestHeaders](
-                              std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                                  pCompletedRequest) mutable {
+                           requestHeaders,
+                           upAxis](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                       pCompletedRequest) mutable {
         const CesiumAsync::IAssetResponse* pResponse =
             pCompletedRequest->response();
         auto fail = [&]() {
@@ -255,34 +256,34 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
               tileUrl,
               tileTransform,
               requestHeaders,
-              CesiumGeometry::Axis::Y};
+              upAxis};
           return converter(responseData, gltfOptions, assetFetcher)
-              .thenImmediately(
-                  [ellipsoid,
-                   pLogger,
-                   tileUrl,
-                   pAssetAccessor,
-                   pCompletedRequest](GltfConverterResult&& result) mutable {
-                    // Report any errors if there are any
-                    logTileLoadResult(pLogger, tileUrl, result.errors);
-                    if (result.errors || !result.model) {
-                      return TileLoadResult::createFailedResult(
-                          pAssetAccessor,
-                          std::move(pCompletedRequest));
-                    }
+              .thenImmediately([ellipsoid,
+                                pLogger,
+                                tileUrl,
+                                pAssetAccessor,
+                                pCompletedRequest,
+                                upAxis](GltfConverterResult&& result) mutable {
+                // Report any errors if there are any
+                logTileLoadResult(pLogger, tileUrl, result.errors);
+                if (result.errors || !result.model) {
+                  return TileLoadResult::createFailedResult(
+                      pAssetAccessor,
+                      std::move(pCompletedRequest));
+                }
 
-                    return TileLoadResult{
-                        std::move(*result.model),
-                        CesiumGeometry::Axis::Y,
-                        std::nullopt,
-                        std::nullopt,
-                        std::nullopt,
-                        pAssetAccessor,
-                        std::move(pCompletedRequest),
-                        {},
-                        TileLoadResultState::Success,
-                        ellipsoid};
-                  });
+                return TileLoadResult{
+                    std::move(*result.model),
+                    upAxis,
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    pAssetAccessor,
+                    std::move(pCompletedRequest),
+                    {},
+                    TileLoadResultState::Success,
+                    ellipsoid};
+              });
         }
         // content type is not supported
         return fail();
@@ -393,7 +394,7 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
-        CesiumGeometry::Axis::Y,
+        this->_upAxis,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -417,7 +418,8 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions,
       loadInput.pSharedAssetSystem,
       tile.getTransform(),
-      ellipsoid);
+      ellipsoid,
+      this->_upAxis);
 }
 
 TileChildrenResult ImplicitQuadtreeLoader::createTileChildren(

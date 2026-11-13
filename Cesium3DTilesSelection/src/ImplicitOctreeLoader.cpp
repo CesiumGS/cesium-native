@@ -176,99 +176,100 @@ CesiumAsync::Future<TileLoadResult> requestTileContent(
     const CesiumUtility::IntrusivePointer<TilesetSharedAssetSystem>&
         pSharedAssetSystem,
     const glm::dmat4& tileTransform,
-    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+    const CesiumGeospatial::Ellipsoid& ellipsoid,
+    const CesiumGeometry::Axis upAxis) {
   return pAssetAccessor->get(asyncSystem, tileUrl, requestHeaders)
-      .thenInWorkerThread(
-          [pLogger,
-           contentOptions,
-           asyncSystem,
-           pAssetAccessor = pAssetAccessor,
-           pSharedAssetSystem,
-           tileTransform,
-           requestHeaders,
-           ellipsoid](std::shared_ptr<CesiumAsync::IAssetRequest>&&
-                          pCompletedRequest) mutable {
-            const CesiumAsync::IAssetResponse* pResponse =
-                pCompletedRequest->response();
-            auto fail = [&]() {
-              return asyncSystem.createResolvedFuture(
-                  TileLoadResult::createFailedResult(
+      .thenInWorkerThread([pLogger,
+                           contentOptions,
+                           asyncSystem,
+                           pAssetAccessor = pAssetAccessor,
+                           pSharedAssetSystem,
+                           tileTransform,
+                           requestHeaders,
+                           ellipsoid,
+                           upAxis](std::shared_ptr<CesiumAsync::IAssetRequest>&&
+                                       pCompletedRequest) mutable {
+        const CesiumAsync::IAssetResponse* pResponse =
+            pCompletedRequest->response();
+        auto fail = [&]() {
+          return asyncSystem.createResolvedFuture(
+              TileLoadResult::createFailedResult(
+                  std::move(pAssetAccessor),
+                  std::move(pCompletedRequest)));
+        };
+        const std::string& tileUrl = pCompletedRequest->url();
+        if (!pResponse) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Did not receive a valid response for tile content {}",
+              tileUrl);
+          return fail();
+        }
+
+        uint16_t statusCode = pResponse->statusCode();
+        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+          SPDLOG_LOGGER_ERROR(
+              pLogger,
+              "Received status code {} for tile content {}",
+              statusCode,
+              tileUrl);
+          return fail();
+        }
+
+        // find gltf converter
+        const auto& responseData = pResponse->data();
+        auto converter = GltfConverters::getConverterByMagic(responseData);
+        if (!converter) {
+          converter = GltfConverters::getConverterByFileExtension(
+              pCompletedRequest->url());
+        }
+
+        if (converter) {
+          // Convert to gltf
+          CesiumGltfReader::GltfReaderOptions gltfOptions =
+              contentOptions.toGltfReaderOptions();
+          if (pSharedAssetSystem) {
+            gltfOptions.pSharedAssetSystem = pSharedAssetSystem;
+          }
+
+          AssetFetcher assetFetcher{
+              asyncSystem,
+              pAssetAccessor,
+              tileUrl,
+              tileTransform,
+              requestHeaders,
+              upAxis};
+          return converter(responseData, gltfOptions, assetFetcher)
+              .thenImmediately([pAssetAccessor = std::move(pAssetAccessor),
+                                pLogger,
+                                tileUrl,
+                                pCompletedRequest,
+                                ellipsoid,
+                                upAxis](GltfConverterResult&& result) mutable {
+                // Report any errors if there are any
+                logTileLoadResult(pLogger, tileUrl, result.errors);
+                if (result.errors || !result.model) {
+                  return TileLoadResult::createFailedResult(
                       std::move(pAssetAccessor),
-                      std::move(pCompletedRequest)));
-            };
-            const std::string& tileUrl = pCompletedRequest->url();
-            if (!pResponse) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Did not receive a valid response for tile content {}",
-                  tileUrl);
-              return fail();
-            }
+                      std::move(pCompletedRequest));
+                }
 
-            uint16_t statusCode = pResponse->statusCode();
-            if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-              SPDLOG_LOGGER_ERROR(
-                  pLogger,
-                  "Received status code {} for tile content {}",
-                  statusCode,
-                  tileUrl);
-              return fail();
-            }
-
-            // find gltf converter
-            const auto& responseData = pResponse->data();
-            auto converter = GltfConverters::getConverterByMagic(responseData);
-            if (!converter) {
-              converter = GltfConverters::getConverterByFileExtension(
-                  pCompletedRequest->url());
-            }
-
-            if (converter) {
-              // Convert to gltf
-              CesiumGltfReader::GltfReaderOptions gltfOptions =
-                  contentOptions.toGltfReaderOptions();
-              if (pSharedAssetSystem) {
-                gltfOptions.pSharedAssetSystem = pSharedAssetSystem;
-              }
-
-              AssetFetcher assetFetcher{
-                  asyncSystem,
-                  pAssetAccessor,
-                  tileUrl,
-                  tileTransform,
-                  requestHeaders,
-                  CesiumGeometry::Axis::Y};
-              return converter(responseData, gltfOptions, assetFetcher)
-                  .thenImmediately(
-                      [pAssetAccessor = std::move(pAssetAccessor),
-                       pLogger,
-                       tileUrl,
-                       pCompletedRequest,
-                       ellipsoid](GltfConverterResult&& result) mutable {
-                        // Report any errors if there are any
-                        logTileLoadResult(pLogger, tileUrl, result.errors);
-                        if (result.errors || !result.model) {
-                          return TileLoadResult::createFailedResult(
-                              std::move(pAssetAccessor),
-                              std::move(pCompletedRequest));
-                        }
-
-                        return TileLoadResult{
-                            std::move(*result.model),
-                            CesiumGeometry::Axis::Y,
-                            std::nullopt,
-                            std::nullopt,
-                            std::nullopt,
-                            std::move(pAssetAccessor),
-                            std::move(pCompletedRequest),
-                            {},
-                            TileLoadResultState::Success,
-                            ellipsoid};
-                      });
-            }
-            // content type is not supported
-            return fail();
-          });
+                return TileLoadResult{
+                    std::move(*result.model),
+                    upAxis,
+                    std::nullopt,
+                    std::nullopt,
+                    std::nullopt,
+                    std::move(pAssetAccessor),
+                    std::move(pCompletedRequest),
+                    {},
+                    TileLoadResultState::Success,
+                    ellipsoid};
+              });
+        }
+        // content type is not supported
+        return fail();
+      });
 }
 } // namespace
 
@@ -344,7 +345,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},
-        CesiumGeometry::Axis::Y,
+        this->_upAxis,
         std::nullopt,
         std::nullopt,
         std::nullopt,
@@ -368,7 +369,8 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
       contentOptions,
       loadInput.pSharedAssetSystem,
       tile.getTransform(),
-      ellipsoid);
+      ellipsoid,
+      this->_upAxis);
 }
 
 TileChildrenResult ImplicitOctreeLoader::createTileChildren(

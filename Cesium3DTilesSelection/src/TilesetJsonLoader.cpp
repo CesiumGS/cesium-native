@@ -1,5 +1,6 @@
 #include "TilesetJsonLoader.h"
 
+#include "ExternalContentInitializer.h"
 #include "ImplicitOctreeLoader.h"
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
@@ -75,35 +76,6 @@ using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
-struct ExternalContentInitializer {
-  // Have to use shared_ptr here to make this functor copyable. Otherwise,
-  // std::function won't work with move-only type as it's a type-erasured
-  // container. Unfortunately, std::move_only_function is scheduled for C++23.
-  std::shared_ptr<TilesetContentLoaderResult<TilesetJsonLoader>>
-      pExternalTilesetLoaders;
-  TilesetJsonLoader* tilesetJsonLoader;
-  TileExternalContent externalContent;
-
-  void operator()(Tile& tile) {
-    TileExternalContent* pExternalContent =
-        tile.getContent().getExternalContent();
-    if (pExternalContent) {
-      *pExternalContent = std::move(externalContent);
-      std::unique_ptr<Tile>& pExternalRoot = pExternalTilesetLoaders->pRootTile;
-      if (pExternalRoot) {
-        // propagate all the external tiles to be the children of this tile
-        std::vector<Tile> children;
-        children.emplace_back(std::move(*pExternalRoot));
-        tile.createChildTiles(std::move(children));
-
-        // save the loader of the external tileset in this loader
-        tilesetJsonLoader->addChildLoader(
-            std::move(pExternalTilesetLoaders->pLoader));
-      }
-    }
-  }
-};
-
 /**
  * @brief Obtains the up-axis that should be used for glTF content of the
  * tileset.
@@ -248,7 +220,8 @@ void createImplicitQuadtreeLoader(
       subtreeUriTemplate,
       subtreeLevels,
       availableLevels,
-      *quadtreeBoundingVolume);
+      *quadtreeBoundingVolume,
+      currentLoader.getUpAxis());
 
   TilesetContentLoader* pImplicitLoader = pLoader.get();
   currentLoader.addChildLoader(std::move(pLoader));
@@ -283,7 +256,8 @@ void createImplicitOctreeLoader(
       subtreeUriTemplate,
       subtreeLevels,
       availableLevels,
-      *octreeBoundingVolume);
+      *octreeBoundingVolume,
+      currentLoader.getUpAxis());
 
   TilesetContentLoader* pImplicitLoader = pLoader.get();
   currentLoader.addChildLoader(std::move(pLoader));
@@ -672,7 +646,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
-    ExternalContentInitializer&& externalContentInitializer,
+    ExternalContentInitializer<TilesetJsonLoader>&& externalContentInitializer,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     rapidjson::Document&& tilesetJson) {
   const auto& tileUrl = pCompletedRequest->url();
@@ -734,7 +708,7 @@ TileLoadResult parseJsonContentInWorkerThread(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
-    ExternalContentInitializer&& externalContentInitializer,
+    ExternalContentInitializer<TilesetJsonLoader>&& externalContentInitializer,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const IntrusivePointer<CesiumGltf::Schema>& pExternalSchema) {
   const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
@@ -1051,7 +1025,10 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const glm::dmat4& tileTransform = tile.getTransform();
   Cesium3DTiles::TileRefine tileRefine = tile.getRefine();
 
-  ExternalContentInitializer externalContentInitializer{nullptr, this, {}};
+  ExternalContentInitializer<TilesetJsonLoader> externalContentInitializer{
+      nullptr,
+      this,
+      {}};
 
   const auto& ellipsoid = this->_ellipsoid;
   const auto& asyncSystem = loadInput.asyncSystem;
