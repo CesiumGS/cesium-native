@@ -21,6 +21,10 @@ using ImplicitQuadtreeBoundingVolume = std::variant<
     CesiumGeometry::OrientedBoundingBox,
     CesiumGeometry::BoundingCylinderRegion>;
 
+std::optional<ImplicitQuadtreeBoundingVolume>
+getAsImplicitQuadtreeBoundingVolume(
+    const Cesium3DTiles::BoundingVolume& boundingVolume);
+
 class ImplicitQuadtreeLoader : public TilesetContentLoader {
 public:
   template <typename ImplicitBoundingVolumeType>

@@ -13,6 +13,7 @@
 #include <vector>
 
 namespace CesiumGltf {
+struct BoundingVolume;
 struct Buffer;
 struct Model;
 struct Node;
@@ -36,7 +37,7 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
    *
    * @param node The node from which to get the transformation matrix.
    * @return The transformation matrix, or std::nullopt if the node's
-   * transformation is invalid, .e.g, because it has a matrix with fewer than
+   * transformation is invalid, e.g., because it has a matrix with fewer than
    * 16 elements in it.
    */
   static std::optional<glm::dmat4x4>
@@ -54,6 +55,28 @@ struct CESIUMGLTFCONTENT_API GltfUtilities {
   static void
   setNodeTransform(CesiumGltf::Node& node, const glm::dmat4x4& newTransform);
 
+  /**
+   * @brief Gets the transformation matrix for a given bounding volume.
+   *
+   * @param boundingVolume The bounding volume from which to get the
+   * transformation matrix.
+   * @return The transformation matrix, or std::nullopt if the bounding volume's
+   * transformation is invalid, e.g., because one of its transform properties
+   * has too few elements in the array.
+   */
+  static std::optional<glm::dmat4x4>
+  getBoundingVolumeTransform(const CesiumGltf::BoundingVolume& boundingVolume);
+
+  /**
+   * @brief Sets the transformation matrix for a given bounding volume.
+   *
+   * @param boundingVolume The bounding volume on which to set the
+   * transformation matrix.
+   * @param newTransform The new transformation matrix.
+   */
+  static void setBoundingVolumeTransform(
+      CesiumGltf::BoundingVolume& boundingVolume,
+      const glm::dmat4x4& newTransform);
   /**
    * @brief Applies the glTF's RTC_CENTER, if any, to the given transform.
    *
