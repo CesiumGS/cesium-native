@@ -328,26 +328,30 @@ ImplicitQuadtreeLoader::loadTileContent(const TileLoadInput& loadInput) {
                this->_subtreeLevels,
                asyncSystem,
                pAssetAccessor,
-               pLogger,
                subtreeUrl,
                requestHeaders)
-        .thenInMainThread([this, pAssetAccessor = pAssetAccessor, subtreeID](
-                              std::optional<SubtreeAvailability>&&
+        .thenInMainThread([this, pAssetAccessor, subtreeID, pLogger](
+                              CesiumUtility::Result<SubtreeAvailability>&&
                                   subtreeAvailability) mutable {
-          if (subtreeAvailability) {
+          if (subtreeAvailability.value) {
             this->addSubtreeAvailability(
                 subtreeID,
-                std::move(*subtreeAvailability));
+                std::move(*subtreeAvailability.value));
 
             // tell client to retry later
             return TileLoadResult::createRetryLaterResult(
                 std::move(pAssetAccessor),
                 nullptr);
           } else {
+            std::string promptString = fmt::format(
+                "Encountered errors while loading subtree at level "
+                "{}, x = {}, y = {}:",
+                subtreeID.level,
+                subtreeID.x,
+                subtreeID.y);
+            subtreeAvailability.errors.log(pLogger, promptString);
             // Subtree load failed, so this tile fails, too.
-            return TileLoadResult::createFailedResult(
-                std::move(pAssetAccessor),
-                nullptr);
+            return TileLoadResult::createFailedResult(pAssetAccessor, nullptr);
           }
         });
   }

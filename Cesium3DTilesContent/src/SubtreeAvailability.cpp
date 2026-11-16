@@ -48,10 +48,7 @@ SubtreeAvailability::fromSubtree(
       SubtreeInterop::convertToGltfModel(std::move(subtree));
 
   if (!maybeModel.value) {
-    std::string errors = "Errors upgrading 3D Tiles 1.1 subtree to 2.0: \n -";
-    errors += CesiumUtility::joinToString(maybeModel.errors.errors, "\n -");
-    return CesiumUtility::Result<SubtreeAvailability>(
-        CesiumUtility::ErrorList::error(errors));
+    return CesiumUtility::Result<SubtreeAvailability>(maybeModel.errors);
   }
 
   return SubtreeAvailability::fromGltf(
@@ -97,7 +94,7 @@ parseAvailabilityView(
   int64_t bufferSize =
       std::min(static_cast<int64_t>(data.size()), pBuffer->byteLength);
   if (pBufferView->byteLength >= 0 && pBufferView->byteOffset >= 0 &&
-      bufferSize - pBufferView->byteLength <= pBufferView->byteOffset) {
+      bufferSize - pBufferView->byteLength >= pBufferView->byteOffset) {
     SubtreeAvailability::SubtreeBufferViewAvailability bufferViewAvailability{
         std::span<std::byte>(
             data.data() + pBufferView->byteOffset,
@@ -126,12 +123,14 @@ SubtreeAvailability::fromGltf(
     return CesiumUtility::Result<SubtreeAvailability>(
         CesiumUtility::ErrorList::error(error));
   }
+
   CesiumUtility::Result<SubtreeAvailability::AvailabilityView>
       tileAvailability =
           parseAvailabilityView(model, pSubtreeExtension->tileAvailability);
   if (!tileAvailability.value) {
     std::string errors = "Errors parsing tileAvailability: \n -";
-    errors += CesiumUtility::joinToString(tileAvailability.errors, "\n -");
+    errors +=
+        CesiumUtility::joinToString(tileAvailability.errors.errors, "\n -");
     return CesiumUtility::Result<SubtreeAvailability>(
         CesiumUtility::ErrorList::error(errors));
   }
@@ -142,14 +141,15 @@ SubtreeAvailability::fromGltf(
           pSubtreeExtension->childSubtreeAvailability);
   if (!childSubtreeAvailability.value) {
     std::string errors = "Errors parsing childSubtreeAvailability: \n -";
-    errors +=
-        CesiumUtility::joinToString(childSubtreeAvailability.errors, "\n -");
+    errors += CesiumUtility::joinToString(
+        childSubtreeAvailability.errors.errors,
+        "\n -");
     return CesiumUtility::Result<SubtreeAvailability>(
         CesiumUtility::ErrorList::error(errors));
   }
 
-  // Fall back on an empty availability.
-
+  // Fall back on an empty content availability since it is not required by the
+  // spec.
   CesiumUtility::Result<SubtreeAvailability::AvailabilityView>
       contentAvailability(
           SubtreeAvailability::SubtreeConstantAvailability{false});
@@ -162,7 +162,8 @@ SubtreeAvailability::fromGltf(
     // Only happens if something went wrong while parsing the
     // contentAvailability view.
     std::string errors = "Errors parsing contentAvailability: \n -";
-    errors += CesiumUtility::joinToString(contentAvailability.errors, "\n -");
+    errors +=
+        CesiumUtility::joinToString(contentAvailability.errors.errors, "\n -");
     return CesiumUtility::Result<SubtreeAvailability>(
         CesiumUtility::ErrorList::error(errors));
   }
@@ -203,13 +204,11 @@ SubtreeAvailability::loadSubtree(
     uint32_t levelsInSubtree,
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& subtreeUrl,
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders) {
   return pAssetAccessor->get(asyncSystem, subtreeUrl, requestHeaders)
       .thenInWorkerThread(
-          [pLogger,
-           asyncSystem,
+          [asyncSystem,
            pAssetAccessor,
            subtreeUrl,
            requestHeaders,
@@ -278,7 +277,7 @@ SubtreeAvailability::loadSubtree(
                       requestHeaders,
                       pAssetAccessor)
                   .thenImmediately(
-                      [pLogger, subtreeUrl, subdivisionScheme, levelsInSubtree](
+                      [subtreeUrl, subdivisionScheme, levelsInSubtree](
                           CesiumGltfReader::GltfReaderResult&& result)
                           -> CesiumUtility::Result<SubtreeAvailability> {
                         if (!result.model) {
@@ -306,7 +305,7 @@ SubtreeAvailability::loadSubtree(
                     requestHeaders,
                     binary)
                 .thenImmediately(
-                    [pLogger, subtreeUrl, subdivisionScheme, levelsInSubtree](
+                    [subtreeUrl, subdivisionScheme, levelsInSubtree](
                         CesiumJsonReader::ReadJsonResult<
                             CesiumTilesetJson::Subtree>&& result)
                         -> CesiumUtility::Result<SubtreeAvailability> {

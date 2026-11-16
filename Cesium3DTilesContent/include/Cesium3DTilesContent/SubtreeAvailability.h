@@ -85,13 +85,12 @@ public:
    * @param asyncSystem The async system with which to do background work.
    * @param pAssetAccessor The asset accessor to use to retrieve the subtree
    * resource from the URL.
-   * @param pLogger The logger to which to load errors and warnings that occur
-   * during subtree load.
    * @param subtreeUrl The URL from which to retrieve the subtree file.
    * @param requestHeaders HTTP headers to include in the request for the
    * subtree file.
-   * @return A future that resolves to a @ref SubtreeAvailability result for
-   * the subtree file.
+   * @return A future that resolves to a @ref SubtreeAvailability @ref
+   * CesiumUtility::Result for the subtree file. Any errors and warnings that
+   * occured during subtree load are stored in the Result.
    */
   static CesiumAsync::Future<CesiumUtility::Result<SubtreeAvailability>>
   loadSubtree(
@@ -99,7 +98,6 @@ public:
       uint32_t levelsInSubtree,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& subtreeUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 

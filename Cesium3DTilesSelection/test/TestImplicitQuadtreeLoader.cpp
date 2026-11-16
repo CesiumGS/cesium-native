@@ -585,13 +585,13 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
         loaderBoundingVolume};
 
     // add subtree with all tiles, but no content available.
-    std::optional<SubtreeAvailability> maybeAvailability =
+    CesiumUtility::Result<SubtreeAvailability> maybeAvailability =
         SubtreeAvailability::createEmpty(
             ImplicitTileSubdivisionScheme::Quadtree,
             5,
             true);
-    REQUIRE(maybeAvailability);
-    SubtreeAvailability availability = std::move(*maybeAvailability);
+    REQUIRE_UNARY(maybeAvailability.value);
+    SubtreeAvailability availability = std::move(*maybeAvailability.value);
 
     // Mark content for a tile available
     availability.setContentAvailable(
