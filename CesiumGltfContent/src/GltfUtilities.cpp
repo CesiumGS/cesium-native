@@ -192,7 +192,6 @@ GltfUtilities::getBoundingVolumeTransform(
       &rotation,
       &scale);
 
-  // Reset these fields to their default, indicating they're not to be used.
   boundingVolume.translation = {translation.x, translation.y, translation.z};
   boundingVolume.scale = {scale.x, scale.y, scale.z};
   boundingVolume.rotation = {rotation.x, rotation.y, rotation.z, rotation.w};

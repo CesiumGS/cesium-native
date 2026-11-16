@@ -10,6 +10,7 @@
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltf/Extension3dTilesSubtree.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
@@ -47,7 +48,13 @@ using namespace CesiumNativeTests;
 namespace {
 auto testDataPath =
     std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
+
+CesiumGltf::Model createEmptySubtreeGltf() {
+  CesiumGltf::Model model;
+  model.addExtension<CesiumGltf::Extension3dTilesSubtree>();
+  return model;
 }
+} // namespace
 
 TEST_CASE("Test implicit octree loader") {
   CesiumGltfConverters::registerAllConverterTypes();
@@ -95,8 +102,8 @@ TEST_CASE("Test implicit octree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{false}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            createEmptySubtreeGltf()});
 
     // check that this tile will have empty content
     Tile tile(&loader);
@@ -131,8 +138,8 @@ TEST_CASE("Test implicit octree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // mock tile content b3dm
     auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
@@ -184,8 +191,8 @@ TEST_CASE("Test implicit octree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // mock random tile content
     auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
@@ -275,8 +282,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // check subdivide root tile first
     Tile tile(&loader);
@@ -478,8 +485,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // check subdivide root tile first
     Tile tile(&loader);
@@ -726,13 +733,13 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
         CesiumGeometry::Axis::Y};
 
     // add subtree with all tiles, but no content available.
-    std::optional<SubtreeAvailability> maybeAvailability =
+    CesiumUtility::Result<SubtreeAvailability> maybeAvailability =
         SubtreeAvailability::createEmpty(
             ImplicitTileSubdivisionScheme::Octree,
             5,
             true);
-    REQUIRE(maybeAvailability);
-    SubtreeAvailability availability = std::move(*maybeAvailability);
+    REQUIRE_UNARY(maybeAvailability.value);
+    SubtreeAvailability availability = std::move(*maybeAvailability.value);
 
     // Mark content for a tile available
     availability.setContentAvailable(
