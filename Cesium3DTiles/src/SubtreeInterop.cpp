@@ -42,34 +42,37 @@ convertBufferCesium(CesiumGltf::BufferCesium&& buffer) {
 inline void moveCommonProperties(
     CesiumUtility::ExtensibleObject& destination,
     CesiumUtility::ExtensibleObject& source) {
-  destination.extensions = std::move(source.extensions);
+  // Extensions are omitted since they are not necessarily transferable between
+  // 3D Tiles 1.1 and 2.0.
   destination.extras = std::move(source.extras);
   destination.unknownProperties = std::move(source.unknownProperties);
 }
 } // namespace
 
-CesiumGltf::Buffer
+CesiumUtility::Result<CesiumGltf::Buffer>
 SubtreeInterop::convertBuffer(CesiumTilesetJson::Buffer&& buffer) {
   CesiumGltf::Buffer result;
-  moveCommonProperties(result, buffer);
+
   if (buffer.name) {
     result.name = std::move(*buffer.name);
   }
-  result.uri = buffer.uri;
+  result.uri = std::move(buffer.uri);
   result.byteLength = buffer.byteLength;
   result.cesium = convertBufferCesium(std::move(buffer.cesium));
 
-  return result;
+  moveCommonProperties(result, buffer);
+  return Result(result);
+  ;
 }
 
 CesiumUtility::Result<CesiumTilesetJson::Buffer>
 SubtreeInterop::convertBuffer(CesiumGltf::Buffer&& buffer) {
   CesiumTilesetJson::Buffer result;
-  moveCommonProperties(result, buffer);
+
   if (buffer.name.size() > 0) {
     result.name.emplace(std::move(buffer.name));
   }
-  result.uri = buffer.uri;
+  result.uri = std::move(buffer.uri);
   result.byteLength = buffer.byteLength;
   result.cesium = convertBufferCesium(std::move(buffer.cesium));
 
@@ -79,16 +82,16 @@ SubtreeInterop::convertBuffer(CesiumGltf::Buffer&& buffer) {
     CesiumUtility::ErrorList errors;
     errors.emplaceError("Input glTF 2.1 buffer specifies a `chunk` index that "
                         "has not been resolved and is thus missing data.");
-    return Result<CesiumTilesetJson::Buffer>(std::move(errors));
+    return Result<CesiumTilesetJson::Buffer>(errors);
   }
 
-  return Result(std::move(result));
+  moveCommonProperties(result, buffer);
+  return Result(result);
 }
 
 CesiumUtility::Result<CesiumGltf::BufferView>
 SubtreeInterop::convertBufferView(CesiumTilesetJson::BufferView&& bufferView) {
   CesiumGltf::BufferView result;
-  moveCommonProperties(result, bufferView);
 
   if (bufferView.name) {
     result.name = std::move(*bufferView.name);
@@ -99,20 +102,20 @@ SubtreeInterop::convertBufferView(CesiumTilesetJson::BufferView&& bufferView) {
     errors.emplaceError(
         "Input 3D Tiles 1.1 buffer view specifies a buffer index that is too "
         "large to represent in cesium-native's glTF implementation.");
-    return Result<CesiumGltf::BufferView>(std::move(errors));
+    return Result<CesiumGltf::BufferView>(errors);
   }
 
   result.buffer = static_cast<int32_t>(bufferView.buffer);
   result.byteLength = bufferView.byteLength;
   result.byteOffset = bufferView.byteOffset;
 
+  moveCommonProperties(result, bufferView);
   return result;
 }
 
 CesiumUtility::Result<CesiumTilesetJson::BufferView>
 SubtreeInterop::convertBufferView(CesiumGltf::BufferView&& bufferView) {
   CesiumTilesetJson::BufferView result;
-  moveCommonProperties(result, bufferView);
 
   if (bufferView.name.size() > 0) {
     result.name.emplace(std::move(bufferView.name));
@@ -121,6 +124,8 @@ SubtreeInterop::convertBufferView(CesiumGltf::BufferView&& bufferView) {
   result.buffer = bufferView.buffer;
   result.byteLength = bufferView.byteLength;
   result.byteOffset = bufferView.byteOffset;
+
+  moveCommonProperties(result, bufferView);
 
   CesiumUtility::ErrorList errors;
   if (bufferView.byteStride) {
@@ -131,26 +136,31 @@ SubtreeInterop::convertBufferView(CesiumGltf::BufferView&& bufferView) {
     result.unknownProperties.emplace("byteStride", *bufferView.byteStride);
   }
 
-  return Result(std::move(result), std::move(errors));
+  return Result(result, errors);
 }
+
+namespace {
+int32_t getBitstreamFromTilesetJsonAvailability(
+    CesiumTilesetJson::Availability& availability) {
+  if (!availability.bitstream) {
+    // An older version of the subtree format uses "bufferView" instead of
+    // "bitstream". Same semantic either way
+    auto bufferViewIt = availability.unknownProperties.find("bufferView");
+    if (bufferViewIt != availability.unknownProperties.end()) {
+      availability.bitstream =
+          bufferViewIt->second.getSafeNumberOrDefault<int32_t>(-1);
+      availability.unknownProperties.erase(bufferViewIt);
+    }
+  }
+  return static_cast<int32_t>(availability.bitstream.value_or(-1));
+}
+} // namespace
 
 CesiumGltf::Availability SubtreeInterop::convertAvailability(
     CesiumTilesetJson::Availability&& availability) {
   CesiumGltf::Availability result;
-  moveCommonProperties(result, availability);
 
-  if (availability.bitstream) {
-    result.bitstream = static_cast<int32_t>(*availability.bitstream);
-  } else {
-    // An older version of the subtree format uses "bufferView" instead of
-    // "bitstream". Same semantic either way
-    auto bufferViewIt = result.unknownProperties.find("bufferView");
-    if (bufferViewIt != result.unknownProperties.end()) {
-      result.bitstream =
-          bufferViewIt->second.getSafeNumberOrDefault<int32_t>(-1);
-      result.unknownProperties.erase(bufferViewIt);
-    }
-  }
+  result.bitstream = getBitstreamFromTilesetJsonAvailability(availability);
   result.availableCount = availability.availableCount;
 
   CESIUM_ASSERT(
@@ -161,13 +171,13 @@ CesiumGltf::Availability SubtreeInterop::convertAvailability(
       CesiumTilesetJson::Availability::Constant::AVAILABLE);
   result.constant = availability.constant;
 
+  moveCommonProperties(result, availability);
   return result;
 }
 
 CesiumTilesetJson::Availability
 SubtreeInterop::convertAvailability(CesiumGltf::Availability&& availability) {
   CesiumTilesetJson::Availability result;
-  moveCommonProperties(result, availability);
 
   if (availability.bitstream >= 0) {
     result.bitstream = availability.bitstream;
@@ -181,6 +191,8 @@ SubtreeInterop::convertAvailability(CesiumGltf::Availability&& availability) {
       CesiumGltf::Availability::Constant::AVAILABLE ==
       CesiumTilesetJson::Availability::Constant::AVAILABLE);
   result.constant = availability.constant;
+
+  moveCommonProperties(result, availability);
   return result;
 }
 
@@ -214,11 +226,7 @@ mergeContentAvailability(CesiumTilesetJson::Subtree& subtree) {
       }
     }
 
-    if (!availability.bitstream) {
-      continue;
-    }
-
-    int64_t bitstream = *availability.bitstream;
+    int32_t bitstream = getBitstreamFromTilesetJsonAvailability(availability);
     if (bitstream < 0 || size_t(bitstream) >= subtree.bufferViews.size()) {
       errors.emplaceError(
           "Invalid bitstream " + std::to_string(bitstream) +
@@ -323,14 +331,18 @@ SubtreeInterop::convertToGltfModel(CesiumTilesetJson::Subtree&& subtree) {
   // doing anything else in the subtree.
   CesiumUtility::ErrorList errors = mergeContentAvailability(subtree);
   if (errors.hasErrors()) {
-    return Result<CesiumGltf::Model>(std::move(errors));
+    return Result<CesiumGltf::Model>(errors);
   }
 
   const size_t bufferCount = subtree.buffers.size();
   model.buffers.resize(bufferCount);
   for (size_t i = 0; i < bufferCount; i++) {
-    CesiumGltf::Buffer buffer = convertBuffer(std::move(subtree.buffers[i]));
-    model.buffers[i] = std::move(buffer);
+    CesiumUtility::Result<CesiumGltf::Buffer> bufferResult =
+        convertBuffer(std::move(subtree.buffers[i]));
+    if (bufferResult.value) {
+      model.buffers[i] = std::move(*bufferResult.value);
+    }
+    errors.merge(std::move(bufferResult.errors));
   }
 
   const size_t bufferViewCount = subtree.bufferViews.size();
@@ -361,7 +373,7 @@ SubtreeInterop::convertToGltfModel(CesiumTilesetJson::Subtree&& subtree) {
         convertAvailability(std::move(subtree.contentAvailability[0]));
   }
 
-  return Result(std::move(model), std::move(errors));
+  return Result(model, errors);
 }
 
 CesiumUtility::Result<CesiumTilesetJson::Subtree>
@@ -372,7 +384,7 @@ SubtreeInterop::convertToTilesetJsonSubtree(CesiumGltf::Model&& model) {
   if (!pSubtreeExtension) {
     errors.emplaceError("Input glTF model did not contain `3DTILES_subtree` "
                         "extension.");
-    return Result<CesiumTilesetJson::Subtree>(std::move(errors));
+    return Result<CesiumTilesetJson::Subtree>(errors);
   }
 
   CesiumTilesetJson::Subtree subtree;
@@ -407,9 +419,7 @@ SubtreeInterop::convertToTilesetJsonSubtree(CesiumGltf::Model&& model) {
     errors.merge(std::move(bufferViewResult.errors));
   }
 
-  return Result<CesiumTilesetJson::Subtree>(
-      std::move(subtree),
-      std::move(errors));
+  return Result<CesiumTilesetJson::Subtree>(subtree, errors);
 }
 
 } // namespace Cesium3DTiles
