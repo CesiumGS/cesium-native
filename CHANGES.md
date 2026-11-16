@@ -16,6 +16,7 @@
 
 ##### Fixes :wrench:
 
+- Fixed a crash in `TilesetJsonLoader` when a `.cmpt` tile failed to convert with only warnings and produced no glTF model. The tile now fails to load instead of dereferencing an empty `std::optional`.
 - Fixed `CesiumCurl::CurlAssetAccessor` ignoring `allowDirectoryCreation` on macOS, causing uploads to `file:` URLs in missing directories to fail.
 - `CesiumVectorOverlays::VectorTilesRasterOverlay` now builds its geographic projection from the overlay ellipsoid instead of a hardcoded WGS84 ellipsoid. A hardcoded ellipsoid can disagree with the one stored by the host, which creates an extra texture-coordinate set and can crash when this overlay is combined with another geographic overlay.
 - Fixed bugs and potential crashes when using the `GltfModifier` on a tileset with raster overlays (such as cartographic polygons).
