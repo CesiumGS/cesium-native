@@ -271,11 +271,12 @@ SubtreeAvailability::loadSubtree(
             if (isGltf) {
               auto pReader = std::make_shared<CesiumGltfReader::GltfReader>();
               return pReader
-                  ->loadGltf(
+                  ->readGltfAndExternalData(
+                      binary,
                       asyncSystem,
-                      subtreeUrl,
                       requestHeaders,
-                      pAssetAccessor)
+                      pAssetAccessor,
+                      subtreeUrl)
                   .thenImmediately(
                       [subtreeUrl, subdivisionScheme, levelsInSubtree](
                           CesiumGltfReader::GltfReaderResult&& result)
