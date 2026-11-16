@@ -29,9 +29,10 @@ public:
    * @ref CesiumGltf::Buffer.
    *
    * @param buffer The @ref CesiumTilesetJson::Buffer to convert.
-   * @returns The converted buffer.
+   * @returns The conversion result with potential warnings or errors.
    */
-  static CesiumGltf::Buffer convertBuffer(CesiumTilesetJson::Buffer&& buffer);
+  static CesiumUtility::Result<CesiumGltf::Buffer>
+  convertBuffer(CesiumTilesetJson::Buffer&& buffer);
 
   /**
    * @brief Converts a @ref CesiumGltf::Buffer to a @ref

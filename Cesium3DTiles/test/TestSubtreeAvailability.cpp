@@ -335,7 +335,7 @@ rapidjson::Document createSubtreeJson(
   return subtreeJson;
 }
 
-std::optional<SubtreeAvailability> mockLoadSubtreeJson(
+CesiumUtility::Result<SubtreeAvailability> mockLoadSubtreeJson(
     uint32_t levelsInSubtree,
     SubtreeContent&& subtreeContent,
     rapidjson::Document&& subtreeJson) {
@@ -386,11 +386,16 @@ std::optional<SubtreeAvailability> mockLoadSubtreeJson(
       levelsInSubtree,
       asyncSystem,
       pMockAssetAccessor,
-      spdlog::default_logger(),
       "test",
       {});
 
   return waitForFuture(asyncSystem, std::move(subtreeFuture));
+}
+
+CesiumGltf::Model createEmptySubtreeGltf() {
+  CesiumGltf::Model model;
+  model.addExtension<CesiumGltf::Extension3dTilesSubtree>();
+  return model;
 }
 } // namespace
 
@@ -402,7 +407,7 @@ TEST_CASE("Test SubtreeAvailability methods") {
         SubtreeAvailability::SubtreeConstantAvailability{true},
         SubtreeAvailability::SubtreeConstantAvailability{false},
         {SubtreeAvailability::SubtreeConstantAvailability{false}},
-        {}};
+        createEmptySubtreeGltf()};
 
     SUBCASE("isTileAvailable()") {
       CesiumGeometry::QuadtreeTileID tileID{4, 3, 1};
@@ -473,6 +478,7 @@ TEST_CASE("Test SubtreeAvailability methods") {
         std::ceil(static_cast<double>(maxSubtreeTiles) / 8.0));
 
     CesiumGltf::Model model;
+    model.addExtension<CesiumGltf::Extension3dTilesSubtree>();
     model.buffers.resize(3);
     model.bufferViews.resize(3);
 
@@ -658,33 +664,33 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
         maxSubtreeLevels,
         asyncSystem,
         pMockAssetAccessor,
-        spdlog::default_logger(),
         "test",
         {});
 
     asyncSystem.dispatchMainThreadTasks();
-    auto parsedSubtree = subtreeFuture.wait();
-    REQUIRE_UNARY(parsedSubtree);
+    auto result = subtreeFuture.wait();
+    REQUIRE_UNARY(result.value);
+    SubtreeAvailability& parsedSubtree = *result.value;
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
-      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isContentAvailable(tileID.level, mortonID));
     }
 
     for (const auto& tileID : unavailableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-      CHECK(!parsedSubtree->isTileAvailable(tileID.level, mortonID));
-      CHECK(!parsedSubtree->isContentAvailable(tileID.level, mortonID));
+      CHECK_FALSE(parsedSubtree.isTileAvailable(tileID.level, mortonID));
+      CHECK_FALSE(parsedSubtree.isContentAvailable(tileID.level, mortonID));
     }
 
     for (const auto& subtreeID : availableSubtreeIDs) {
-      CHECK(parsedSubtree->isSubtreeAvailable(
+      CHECK(parsedSubtree.isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
 
     for (const auto& subtreeID : unavailableSubtreeIDs) {
-      CHECK(!parsedSubtree->isSubtreeAvailable(
+      CHECK(!parsedSubtree.isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
   }
@@ -747,33 +753,33 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
         maxSubtreeLevels,
         asyncSystem,
         pMockAssetAccessor,
-        spdlog::default_logger(),
         "test",
         {});
 
     asyncSystem.dispatchMainThreadTasks();
-    auto parsedSubtree = subtreeFuture.wait();
-    REQUIRE_UNARY(parsedSubtree);
+    auto result = subtreeFuture.wait();
+    REQUIRE_UNARY(result.value);
+    SubtreeAvailability& parsedSubtree = *result.value;
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
-      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isContentAvailable(tileID.level, mortonID));
     }
 
     for (const auto& tileID : unavailableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
-      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isContentAvailable(tileID.level, mortonID));
     }
 
     for (const auto& subtreeID : availableSubtreeIDs) {
-      CHECK(parsedSubtree->isSubtreeAvailable(
+      CHECK(parsedSubtree.isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
 
     for (const auto& subtreeID : unavailableSubtreeIDs) {
-      CHECK(!parsedSubtree->isSubtreeAvailable(
+      CHECK_FALSE(parsedSubtree.isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
   }
@@ -831,33 +837,33 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
         maxSubtreeLevels,
         asyncSystem,
         pMockAssetAccessor,
-        spdlog::default_logger(),
         "test",
         {});
 
     asyncSystem.dispatchMainThreadTasks();
-    auto parsedSubtree = subtreeFuture.wait();
-    REQUIRE_UNARY(parsedSubtree);
+    auto result = subtreeFuture.wait();
+    REQUIRE_UNARY(result.value);
+    SubtreeAvailability& parsedSubtree = *result.value;
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
-      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isContentAvailable(tileID.level, mortonID));
     }
 
     for (const auto& tileID : unavailableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
-      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isContentAvailable(tileID.level, mortonID));
     }
 
     for (const auto& subtreeID : availableSubtreeIDs) {
-      CHECK(!parsedSubtree->isSubtreeAvailable(
+      CHECK_FALSE(parsedSubtree.isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
 
     for (const auto& subtreeID : unavailableSubtreeIDs) {
-      CHECK(!parsedSubtree->isSubtreeAvailable(
+      CHECK_FALSE(parsedSubtree.isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
   }
@@ -869,32 +875,33 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
         availableSubtreeIDs);
     auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
 
-    auto parsedSubtree = mockLoadSubtreeJson(
+    auto result = mockLoadSubtreeJson(
         maxSubtreeLevels,
         std::move(subtreeBuffers),
         std::move(subtreeJson));
 
-    REQUIRE_UNARY(parsedSubtree);
+    REQUIRE_UNARY(result.value);
+    SubtreeAvailability& parsedSubtree = *result.value;
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
-      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isContentAvailable(tileID.level, mortonID));
     }
 
     for (const auto& tileID : unavailableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-      CHECK(!parsedSubtree->isTileAvailable(tileID.level, mortonID));
-      CHECK(!parsedSubtree->isContentAvailable(tileID.level, mortonID));
+      CHECK_FALSE(parsedSubtree.isTileAvailable(tileID.level, mortonID));
+      CHECK_FALSE(parsedSubtree.isContentAvailable(tileID.level, mortonID));
     }
 
     for (const auto& subtreeID : availableSubtreeIDs) {
-      CHECK(parsedSubtree->isSubtreeAvailable(
+      CHECK(parsedSubtree.isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
 
     for (const auto& subtreeID : unavailableSubtreeIDs) {
-      CHECK(!parsedSubtree->isSubtreeAvailable(
+      CHECK_FALSE(parsedSubtree.isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
   }
@@ -904,32 +911,33 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
         createSubtreeContent(maxSubtreeLevels, availableTileIDs, false);
     auto subtreeJson = createSubtreeJson(subtreeBuffers, "buffer");
 
-    auto parsedSubtree = mockLoadSubtreeJson(
+    auto result = mockLoadSubtreeJson(
         maxSubtreeLevels,
         std::move(subtreeBuffers),
         std::move(subtreeJson));
 
-    REQUIRE_UNARY(parsedSubtree);
+    REQUIRE_UNARY(result.value);
+    SubtreeAvailability& parsedSubtree = *result.value;
 
     for (const auto& tileID : availableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-      CHECK(parsedSubtree->isTileAvailable(tileID.level, mortonID));
-      CHECK(parsedSubtree->isContentAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isTileAvailable(tileID.level, mortonID));
+      CHECK(parsedSubtree.isContentAvailable(tileID.level, mortonID));
     }
 
     for (const auto& tileID : unavailableTileIDs) {
       uint64_t mortonID = libmorton::morton2D_64_encode(tileID.x, tileID.y);
-      CHECK(!parsedSubtree->isTileAvailable(tileID.level, mortonID));
-      CHECK(!parsedSubtree->isContentAvailable(tileID.level, mortonID));
+      CHECK_FALSE(parsedSubtree.isTileAvailable(tileID.level, mortonID));
+      CHECK_FALSE(parsedSubtree.isContentAvailable(tileID.level, mortonID));
     }
 
     for (const auto& subtreeID : availableSubtreeIDs) {
-      CHECK(!parsedSubtree->isSubtreeAvailable(
+      CHECK_FALSE(parsedSubtree.isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
 
     for (const auto& subtreeID : unavailableSubtreeIDs) {
-      CHECK(!parsedSubtree->isSubtreeAvailable(
+      CHECK_FALSE(parsedSubtree.isSubtreeAvailable(
           libmorton::morton2D_64_encode(subtreeID.x, subtreeID.y)));
     }
   }
@@ -943,41 +951,41 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
 
     SUBCASE("Subtree json has no tileAvailability field") {
       subtreeJson.RemoveMember("tileAvailability");
-      CHECK(
-          mockLoadSubtreeJson(
-              maxSubtreeLevels,
-              std::move(subtreeBuffers),
-              std::move(subtreeJson)) == std::nullopt);
+      CHECK_UNARY_FALSE(mockLoadSubtreeJson(
+                            maxSubtreeLevels,
+                            std::move(subtreeBuffers),
+                            std::move(subtreeJson))
+                            .value);
     }
 
     SUBCASE("Subtree json has no childSubtreeAvailability field") {
       subtreeJson.RemoveMember("childSubtreeAvailability");
-      CHECK(
-          mockLoadSubtreeJson(
-              maxSubtreeLevels,
-              std::move(subtreeBuffers),
-              std::move(subtreeJson)) == std::nullopt);
+      CHECK_UNARY_FALSE(mockLoadSubtreeJson(
+                            maxSubtreeLevels,
+                            std::move(subtreeBuffers),
+                            std::move(subtreeJson))
+                            .value);
     }
 
     SUBCASE("Subtree json has no buffers though availability points to buffer "
             "view") {
       subtreeJson.RemoveMember("buffers");
-      CHECK(
-          mockLoadSubtreeJson(
-              maxSubtreeLevels,
-              std::move(subtreeBuffers),
-              std::move(subtreeJson)) == std::nullopt);
+      CHECK_UNARY_FALSE(mockLoadSubtreeJson(
+                            maxSubtreeLevels,
+                            std::move(subtreeBuffers),
+                            std::move(subtreeJson))
+                            .value);
     }
 
     SUBCASE("Buffer does not have byteLength field") {
       auto bufferIt = subtreeJson.FindMember("buffers");
       auto bufferObj = bufferIt->value.GetArray().Begin();
       bufferObj->RemoveMember("byteLength");
-      CHECK(
-          mockLoadSubtreeJson(
-              maxSubtreeLevels,
-              std::move(subtreeBuffers),
-              std::move(subtreeJson)) == std::nullopt);
+      CHECK_UNARY_FALSE(mockLoadSubtreeJson(
+                            maxSubtreeLevels,
+                            std::move(subtreeBuffers),
+                            std::move(subtreeJson))
+                            .value);
     }
 
     SUBCASE("Buffer does not have string uri field") {
@@ -985,21 +993,21 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
       auto bufferObj = bufferIt->value.GetArray().Begin();
       bufferObj->RemoveMember("uri");
       bufferObj->AddMember("uri", 12, subtreeJson.GetAllocator());
-      CHECK(
-          mockLoadSubtreeJson(
-              maxSubtreeLevels,
-              std::move(subtreeBuffers),
-              std::move(subtreeJson)) == std::nullopt);
+      CHECK_UNARY_FALSE(mockLoadSubtreeJson(
+                            maxSubtreeLevels,
+                            std::move(subtreeBuffers),
+                            std::move(subtreeJson))
+                            .value);
     }
 
     SUBCASE("Subtree json has no buffer views though availability points to "
             "buffer view") {
       subtreeJson.RemoveMember("bufferViews");
-      CHECK(
-          mockLoadSubtreeJson(
-              maxSubtreeLevels,
-              std::move(subtreeBuffers),
-              std::move(subtreeJson)) == std::nullopt);
+      CHECK_UNARY_FALSE(mockLoadSubtreeJson(
+                            maxSubtreeLevels,
+                            std::move(subtreeBuffers),
+                            std::move(subtreeJson))
+                            .value);
     }
   }
 }
@@ -1054,25 +1062,24 @@ TEST_CASE("Test SubtreeAvailability::loadSubtree for glTF") {
       3,
       asyncSystem,
       pMockAssetAccessor,
-      spdlog::default_logger(),
       "test.subtree.gltf",
       {});
 
   asyncSystem.dispatchMainThreadTasks();
   auto parsedSubtree = subtreeFuture.wait();
-  REQUIRE_UNARY(parsedSubtree);
+  REQUIRE_UNARY(parsedSubtree.value);
 }
 
 TEST_CASE("Test SubtreeAvailability::createEmpty") {
   SUBCASE("With no tiles available") {
-    std::optional<SubtreeAvailability> maybeAvailability =
+    CesiumUtility::Result<SubtreeAvailability> maybeAvailability =
         SubtreeAvailability::createEmpty(
             ImplicitTileSubdivisionScheme::Quadtree,
             5,
             false);
-    REQUIRE(maybeAvailability);
+    REQUIRE_UNARY(maybeAvailability.value);
 
-    SubtreeAvailability& availability = *maybeAvailability;
+    SubtreeAvailability& availability = *maybeAvailability.value;
 
     CHECK_FALSE(availability.isTileAvailable(
         QuadtreeTileID(0, 0, 0),
@@ -1083,14 +1090,14 @@ TEST_CASE("Test SubtreeAvailability::createEmpty") {
   }
 
   SUBCASE("With all tiles available") {
-    std::optional<SubtreeAvailability> maybeAvailability =
+    CesiumUtility::Result<SubtreeAvailability> maybeAvailability =
         SubtreeAvailability::createEmpty(
             ImplicitTileSubdivisionScheme::Quadtree,
             5,
             true);
-    REQUIRE(maybeAvailability);
+    REQUIRE_UNARY(maybeAvailability.value);
 
-    SubtreeAvailability& availability = *maybeAvailability;
+    SubtreeAvailability& availability = *maybeAvailability.value;
 
     CHECK(availability.isTileAvailable(
         QuadtreeTileID(0, 0, 0),
@@ -1102,14 +1109,14 @@ TEST_CASE("Test SubtreeAvailability::createEmpty") {
 }
 
 TEST_CASE("SubtreeAvailability modifications") {
-  std::optional<SubtreeAvailability> maybeAvailability =
+  CesiumUtility::Result<SubtreeAvailability> maybeAvailability =
       SubtreeAvailability::createEmpty(
           ImplicitTileSubdivisionScheme::Quadtree,
           5,
           true);
-  REQUIRE(maybeAvailability);
+  REQUIRE_UNARY(maybeAvailability.value);
 
-  SubtreeAvailability& availability = *maybeAvailability;
+  SubtreeAvailability& availability = *maybeAvailability.value;
   const CesiumGltf::Model& model = availability.getModel();
   const auto* pSubtreeExtension =
       model.getExtension<CesiumGltf::Extension3dTilesSubtree>();
