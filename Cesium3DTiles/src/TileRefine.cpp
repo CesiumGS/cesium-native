@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
-#include <utility>
 
 using namespace CesiumGltf;
 
