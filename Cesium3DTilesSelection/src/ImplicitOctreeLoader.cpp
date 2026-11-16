@@ -65,7 +65,8 @@ std::optional<ImplicitOctreeBoundingVolume> getAsImplicitOctreeBoundingVolume(
     return ImplicitOctreeBoundingVolume(*pCylinder);
   }
 
-  // Octree does not support bounding sphere or S2 subdivision.
+  // TODO: Support S2 octree subdivision.
+  // Octree does not support bounding sphere subdivision.
   return std::nullopt;
 }
 
