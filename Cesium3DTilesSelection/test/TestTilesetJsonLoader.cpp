@@ -740,6 +740,27 @@ TEST_CASE("Test loading individual tile of tileset json") {
                 "Received status code 404 for tile content nonexistent.b3dm"));
   }
 
+  SUBCASE("Tile with invalid composite content fails without crashing") {
+    auto loaderResult = createTilesetJsonLoader(
+        testDataPath / "MultipleKindsOfTilesets" /
+        "ErrorInvalidCmptTileset.json");
+    REQUIRE(loaderResult.pRootTile);
+    REQUIRE(loaderResult.pRootTile->getChildren().size() == 1);
+
+    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
+
+    const auto& tileID = std::get<std::string>(pRootTile->getTileID());
+    CHECK(tileID == "invalid.cmpt");
+
+    // The cmpt file is shorter than the 16-byte header, so the converter
+    // reports a warning and produces no model.
+    auto tileLoadResult = loadTileContent(
+        testDataPath / "MultipleKindsOfTilesets" / tileID,
+        *loaderResult.pLoader,
+        *pRootTile);
+    CHECK(tileLoadResult.state == TileLoadResultState::Failed);
+  }
+
   SUBCASE("Tile with complex structural metadata") {
     auto loaderResult =
         createTilesetJsonLoader(testDataPath / "ComplexTypes" / "tileset.json");
