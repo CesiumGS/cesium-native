@@ -1,4 +1,3 @@
-#include <Cesium3DTilesContent/GltfConverters.h>
 #include <Cesium3DTilesContent/ImplicitTileSubdivisionScheme.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
@@ -6,6 +5,7 @@
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
+#include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/OctreeTileID.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
@@ -20,8 +20,7 @@
 #include <CesiumUtility/Result.h>
 #include <CesiumUtility/joinToString.h>
 
-#include <spdlog/logger.h>
-#include <spdlog/spdlog.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 #include <cstddef>

@@ -25,7 +25,9 @@
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Result.h>
 
+#include <fmt/format.h>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
