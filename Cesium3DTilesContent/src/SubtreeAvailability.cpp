@@ -21,6 +21,7 @@
 #include <CesiumUtility/joinToString.h>
 
 #include <fmt/format.h>
+#include <rapidjson/document.h>
 
 #include <algorithm>
 #include <cstddef>
