@@ -4,6 +4,7 @@
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumUtility/Result.h>
 
 #include <optional>
 
@@ -37,10 +38,9 @@ public:
    * @param subdivisionScheme The subdivision scheme of the subtree.
    * @param levelsInSubtree The number of levels in this subtree.
    * @param subtree The subtree.
-   * @return The subtree availability, or std::nullopt if the subtree definition
-   * is invalid.
+   * @return The result of parsing the subtree availability.
    */
-  static std::optional<SubtreeAvailability> fromSubtree(
+  static CesiumUtility::Result<SubtreeAvailability> fromSubtree(
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
       CesiumTilesetJson::Subtree&& subtree) noexcept;
@@ -52,10 +52,9 @@ public:
    * @param subdivisionScheme The subdivision scheme of the subtree.
    * @param levelsInSubtree The number of levels in this subtree.
    * @param model The glTF model with the 3DTILES_subtree extension.
-   * @return The subtree availability, or std::nullopt if the subtree definition
-   * is invalid.
+   * @return The result of parsing the subtree availability.
    */
-  static std::optional<SubtreeAvailability> fromGltf(
+  static CesiumUtility::Result<SubtreeAvailability> fromGltf(
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
       CesiumGltf::Model&& model) noexcept;
@@ -67,10 +66,9 @@ public:
    * @param subdivisionScheme The subdivision scheme of the subtree.
    * @param levelsInSubtree The number of levels in this subtree.
    * @param setTilesAvailable Whether to make all tiles initially available.
-   * @return The subtree availability, or std::nullopt if the subtree definition
-   * is invalid.
+   * @return The result of creating the subtree availability.
    */
-  static std::optional<SubtreeAvailability> createEmpty(
+  static CesiumUtility::Result<SubtreeAvailability> createEmpty(
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
       bool setTilesAvailable) noexcept;
@@ -79,7 +77,7 @@ public:
    * @brief Asynchronously loads a subtree from a URL. The resource
    * downloaded from the URL may be:
    *
-   * - A 3D Tiles 1.1 subtree, as either a JSON or ainary subtree file.
+   * - A 3D Tiles 1.1 subtree, as either a JSON or binary subtree file.
    * - A 3D Tiles 2.0 subtree (glTF 2.1), as either a JSON or binary glTF.
    *
    * @param subdivisionScheme The subdivision scheme of the subtree.
@@ -87,20 +85,19 @@ public:
    * @param asyncSystem The async system with which to do background work.
    * @param pAssetAccessor The asset accessor to use to retrieve the subtree
    * resource from the URL.
-   * @param pLogger The logger to which to load errors and warnings that occur
-   * during subtree load.
    * @param subtreeUrl The URL from which to retrieve the subtree file.
    * @param requestHeaders HTTP headers to include in the request for the
    * subtree file.
-   * @return A future that resolves to a @ref SubtreeAvailability instance for
-   * the subtree file, or std::nullopt if something goes wrong.
+   * @return A future that resolves to a @ref SubtreeAvailability @ref
+   * CesiumUtility::Result for the subtree file. Any errors and warnings that
+   * occured during subtree load are stored in the Result.
    */
-  static CesiumAsync::Future<std::optional<SubtreeAvailability>> loadSubtree(
+  static CesiumAsync::Future<CesiumUtility::Result<SubtreeAvailability>>
+  loadSubtree(
       ImplicitTileSubdivisionScheme subdivisionScheme,
       uint32_t levelsInSubtree,
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
-      const std::shared_ptr<spdlog::logger>& pLogger,
       const std::string& subtreeUrl,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders);
 
@@ -147,8 +144,8 @@ public:
    * @param contentAvailability A view on the content availability. If
    * backed by a buffer, the buffer is expected to be in `model`.
    * @param model The glTF model with which this instance queries and modifies
-   * availability information. If the model does not contain @ref
-   * CesiumGltf::Extension3dTilesSubtree, the extension will be added.
+   * availability information. The model must contain the @ref
+   * CesiumGltf::Extension3dTilesSubtree extension.
    */
   SubtreeAvailability(
       ImplicitTileSubdivisionScheme subdivisionScheme,

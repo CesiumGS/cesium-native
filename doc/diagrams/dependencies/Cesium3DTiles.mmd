@@ -10,12 +10,12 @@ graph TD
   Cesium3DTiles[Cesium3DTiles] --> CesiumGeometry[CesiumGeometry]
   Cesium3DTiles[Cesium3DTiles] --> CesiumGeospatial[CesiumGeospatial]
   Cesium3DTiles[Cesium3DTiles] --> CesiumGltf[CesiumGltf]
-  Cesium3DTiles[Cesium3DTiles] --> CesiumGltfContent[CesiumGltfContent]
-  Cesium3DTiles[Cesium3DTiles] --> CesiumGltfConverters[CesiumGltfConverters]
   Cesium3DTiles[Cesium3DTiles] --> CesiumGltfReader[CesiumGltfReader]
+  Cesium3DTiles[Cesium3DTiles] --> CesiumJsonReader[CesiumJsonReader]
   Cesium3DTiles[Cesium3DTiles] --> CesiumTilesetJson[CesiumTilesetJson]
   Cesium3DTiles[Cesium3DTiles] --> CesiumTilesetJsonReader[CesiumTilesetJsonReader]
   Cesium3DTiles[Cesium3DTiles] --> CesiumUtility[CesiumUtility]
+  Cesium3DTiles[Cesium3DTiles] --> glm_glm{{glm::glm}}
   Cesium3DTiles[Cesium3DTiles] --> libmorton_libmorton{{libmorton::libmorton}}
-  class libmorton_libmorton dependencyNode
-  class CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfContent,CesiumGltfConverters,CesiumGltfReader,CesiumTilesetJson,CesiumTilesetJsonReader,CesiumUtility,Cesium3DTiles libraryNode
+  class glm_glm,libmorton_libmorton dependencyNode
+  class CesiumAsync,CesiumGeometry,CesiumGeospatial,CesiumGltf,CesiumGltfReader,CesiumJsonReader,CesiumTilesetJson,CesiumTilesetJsonReader,CesiumUtility,Cesium3DTiles libraryNode
