@@ -57,7 +57,7 @@ GltfConverterResult ConvertTileToGltf::fromPnts(
 GltfConverterResult ConvertTileToGltf::fromI3dm(
     const std::filesystem::path& filePath,
     const CesiumGltfReader::GltfReaderOptions& options) {
-  AssetFetcher assetFetcher = makeAssetFetcher("");
+  AssetFetcher assetFetcher = makeAssetFetcher("file://" + filePath.string());
   auto bytes = readFile(filePath);
   auto future = I3dmToGltfConverter::convert(bytes, options, assetFetcher);
   return future.wait();

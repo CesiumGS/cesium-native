@@ -1,0 +1,72 @@
+{
+  "asset": {
+    "version": "1.1"
+  },
+  "geometricError": 4096,
+  "root": {
+    "boundingVolume": {
+      "box": [
+        0.5,
+        0,
+        1,
+        1.5,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    },
+    "geometricError": 1024,
+    "children": [
+      {
+        "boundingVolume": {
+          "box": [
+            0.5,
+            0,
+            1,
+            1.5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        "geometricError": 512,
+        "content": {
+          "uri": "i3dm/I3dmWithGlbWithExternalTexture.i3dm"
+        }
+      },
+      {
+        "boundingVolume": {
+          "box": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "geometricError": 512,
+        "content": {
+          "uri": "tileset.json"
+        }
+      }
+    ],
+    "refine": "ADD"
+  }
+}
