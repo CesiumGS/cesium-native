@@ -3,6 +3,8 @@
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/Result.h>
 
+#include <fmt/format.h>
+
 #include <algorithm>
 #include <cctype>
 #include <string>
