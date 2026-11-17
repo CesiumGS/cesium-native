@@ -1730,13 +1730,13 @@ TEST_CASE("Decode buffer with data URI whose length does match the buffer's "
 }
 
 namespace {
-struct MockExternals {
+struct TestContext {
   std::shared_ptr<SimpleTaskProcessor> pMockTaskProcessor;
   CesiumAsync::AsyncSystem asyncSystem;
   std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor;
   std::string url;
 
-  MockExternals(std::string subdirectory, std::string gltfFilename)
+  TestContext(std::string subdirectory, std::string gltfFilename)
       : pMockTaskProcessor(std::make_shared<SimpleTaskProcessor>()),
         asyncSystem(pMockTaskProcessor),
         pMockAssetAccessor(nullptr),
@@ -1775,7 +1775,7 @@ struct MockExternals {
 } // namespace
 
 TEST_CASE("GltfReader::readGltfAndExternalData") {
-  MockExternals externals("BoxTexturedWebp", "BoxTexturedWebp.gltf");
+  TestContext context("BoxTexturedWebp", "BoxTexturedWebp.gltf");
   using namespace std::string_literals;
 
   std::string s = R"(
@@ -1822,22 +1822,22 @@ TEST_CASE("GltfReader::readGltfAndExternalData") {
   SUBCASE("from binary data") {
     Future<GltfReaderResult> future = reader.readGltfAndExternalData(
         std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
-        externals.asyncSystem,
+        context.asyncSystem,
         CesiumAsync::HttpHeaders{},
-        externals.pMockAssetAccessor,
-        externals.url);
-    result = waitForFuture(externals.asyncSystem, std::move(future));
+        context.pMockAssetAccessor,
+        context.url);
+    result = waitForFuture(context.asyncSystem, std::move(future));
   }
   SUBCASE("from JSON document") {
     rapidjson::Document document;
     document.Parse(s.c_str());
     Future<GltfReaderResult> future = reader.readGltfAndExternalData(
         document,
-        externals.asyncSystem,
+        context.asyncSystem,
         CesiumAsync::HttpHeaders{},
-        externals.pMockAssetAccessor,
-        externals.url);
-    result = waitForFuture(externals.asyncSystem, std::move(future));
+        context.pMockAssetAccessor,
+        context.url);
+    result = waitForFuture(context.asyncSystem, std::move(future));
   }
 
   CHECK(result.errors.empty());
