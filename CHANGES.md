@@ -23,6 +23,7 @@
 - Fixed a rare lost wakeup in `Future::waitInMainThread` and `SharedFuture::waitInMainThread` that could cause them to hang if the future resolved just as the wait began.
 - Fixed potential integer overflow and out-of-bounds write while dequantizing glTFs using `KHR_mesh_quantization`.
 - Fixed potential integer overflow and out-of-bounds write while decoding JPEG images.
+- Blend2D runtime will now always be initialized before use, resolving access violation issues when Cesium Native was built with static linking and aggressive unused code optimization (particularly Unity WebGL builds).
 
 ### v0.66.0 - 2026-11-02
 
