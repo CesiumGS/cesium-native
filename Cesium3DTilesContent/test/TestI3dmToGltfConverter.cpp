@@ -176,10 +176,9 @@ TEST_CASE("I3dmToGltfConverter") {
   SUBCASE("Read an i3dm file whose glb had relative paths") {
     std::filesystem::path testFilePath = Cesium3DTilesSelection_TEST_DATA_DIR;
     testFilePath = testFilePath / "i3dm" / "InstancedRelativeTextures" /
-                       "i3dm" / "I3dmWithGlbWithExternalTexture.i3dm";
+                   "i3dm" / "I3dmWithGlbWithExternalTexture.i3dm";
     GltfConverterResult result = ConvertTileToGltf::fromI3dm(testFilePath);
     REQUIRE(!result.errors.hasErrors());
     REQUIRE(result.model.has_value());
-    
   }
 }
