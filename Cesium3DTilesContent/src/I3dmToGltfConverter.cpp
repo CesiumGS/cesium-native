@@ -621,7 +621,8 @@ CesiumAsync::Future<ConvertedI3dm> convertI3dmContent(
 
   auto getGltf = [&]() -> CesiumAsync::Future<GltfConverterResult> {
     if (header.gltfFormat == 0) {
-      // Recursively fetch and read the glTF content.
+      // Recursively fetch and read the glTF content. Ensure that the base url
+      // is the glTF file so that relative references in it resolve correctly.
       AssetFetcher gltfAssetFetcher(assetFetcher);
       gltfAssetFetcher.baseUrl = baseUri;
       return assetFetcher.get(baseUri).thenImmediately(

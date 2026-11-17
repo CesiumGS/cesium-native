@@ -24,7 +24,9 @@ namespace Cesium3DTilesContent {
 CesiumAsync::AsyncSystem ConvertTileToGltf::asyncSystem(
     std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
 
-AssetFetcher ConvertTileToGltf::makeAssetFetcher(const std::string& baseUrl) {
+AssetFetcher
+ConvertTileToGltf::makeAssetFetcher(const std::string& baseFilePath) {
+  std::string baseUrl = "file://" + baseFilePath;
   auto fileAccessor = std::make_shared<CesiumNativeTests::FileAccessor>();
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
   return AssetFetcher(
@@ -39,7 +41,7 @@ AssetFetcher ConvertTileToGltf::makeAssetFetcher(const std::string& baseUrl) {
 GltfConverterResult ConvertTileToGltf::fromB3dm(
     const std::filesystem::path& filePath,
     const CesiumGltfReader::GltfReaderOptions& options) {
-  AssetFetcher assetFetcher = makeAssetFetcher("");
+  AssetFetcher assetFetcher = makeAssetFetcher(filePath);
   auto bytes = readFile(filePath);
   auto future = B3dmToGltfConverter::convert(bytes, options, assetFetcher);
   return future.wait();
@@ -48,7 +50,7 @@ GltfConverterResult ConvertTileToGltf::fromB3dm(
 GltfConverterResult ConvertTileToGltf::fromPnts(
     const std::filesystem::path& filePath,
     const CesiumGltfReader::GltfReaderOptions& options) {
-  AssetFetcher assetFetcher = makeAssetFetcher("");
+  AssetFetcher assetFetcher = makeAssetFetcher(filePath);
   auto bytes = readFile(filePath);
   auto future = PntsToGltfConverter::convert(bytes, options, assetFetcher);
   return future.wait();
@@ -57,7 +59,7 @@ GltfConverterResult ConvertTileToGltf::fromPnts(
 GltfConverterResult ConvertTileToGltf::fromI3dm(
     const std::filesystem::path& filePath,
     const CesiumGltfReader::GltfReaderOptions& options) {
-  AssetFetcher assetFetcher = makeAssetFetcher("file://" + filePath.string());
+  AssetFetcher assetFetcher = makeAssetFetcher(filePath);
   auto bytes = readFile(filePath);
   auto future = I3dmToGltfConverter::convert(bytes, options, assetFetcher);
   return future.wait();
