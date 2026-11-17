@@ -1729,6 +1729,131 @@ TEST_CASE("Decode buffer with data URI whose length does match the buffer's "
   CHECK(size_t(buffer.byteLength) == buffer.cesium.data.size());
 }
 
+namespace {
+struct MockExternals {
+  std::shared_ptr<SimpleTaskProcessor> pMockTaskProcessor;
+  CesiumAsync::AsyncSystem asyncSystem;
+  std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor;
+  std::string url;
+
+  MockExternals(std::string subdirectory, std::string gltfFilename)
+      : pMockTaskProcessor(std::make_shared<SimpleTaskProcessor>()),
+        asyncSystem(pMockTaskProcessor),
+        pMockAssetAccessor(nullptr),
+        url() {
+    std::filesystem::path dataDir(CesiumGltfReader_TEST_DATA_DIR);
+    std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest;
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(
+             dataDir / subdirectory)) {
+      if (!entry.is_regular_file())
+        continue;
+      auto pResponse = std::make_unique<SimpleAssetResponse>(
+          uint16_t(200),
+          "application/binary",
+          CesiumAsync::HttpHeaders{},
+          readFile(entry.path()));
+      std::string uri = "file:///" + StringHelpers::toStringUtf8(
+                                         entry.path().generic_u8string());
+      auto pRequest = std::make_unique<SimpleAssetRequest>(
+          "GET",
+          uri,
+          CesiumAsync::HttpHeaders{},
+          std::move(pResponse));
+      mapUrlToRequest[uri] = std::move(pRequest);
+    }
+
+    pMockAssetAccessor =
+        std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
+
+    url = "file:///" +
+          StringHelpers::toStringUtf8(std::filesystem::directory_entry(
+                                          dataDir / subdirectory / gltfFilename)
+                                          .path()
+                                          .generic_u8string());
+  }
+};
+} // namespace
+
+TEST_CASE("GltfReader::readGltfAndExternalData") {
+  MockExternals externals("BoxTexturedWebp", "BoxTexturedWebp.gltf");
+  using namespace std::string_literals;
+
+  std::string s = R"(
+    {
+      "accessors": [
+        {
+          "count": 4,
+          "componentType": 5121,
+          "type": "VEC2",
+          "max": [
+            1,
+            2.2,
+            3.3
+          ],
+          "min": [
+            0,
+            -1.2
+          ]
+        }
+      ],
+      "meshes": [
+        {
+          "primitives": [
+            {
+              "attributes": {
+                "POSITION": 0
+              }
+            }
+          ]
+        }
+      ],
+      "buffers": [
+        {
+          "byteLength": 840,
+          "uri": "BoxTextured0.bin"
+        }
+      ]
+    }
+  )";
+
+  GltfReader reader;
+  GltfReaderResult result;
+
+  SUBCASE("from binary data") {
+    Future<GltfReaderResult> future = reader.readGltfAndExternalData(
+        std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
+        externals.asyncSystem,
+        CesiumAsync::HttpHeaders{},
+        externals.pMockAssetAccessor,
+        externals.url);
+    result = waitForFuture(externals.asyncSystem, std::move(future));
+  }
+  SUBCASE("from JSON document") {
+    rapidjson::Document document;
+    document.Parse(s.c_str());
+    Future<GltfReaderResult> future = reader.readGltfAndExternalData(
+        document,
+        externals.asyncSystem,
+        CesiumAsync::HttpHeaders{},
+        externals.pMockAssetAccessor,
+        externals.url);
+    result = waitForFuture(externals.asyncSystem, std::move(future));
+  }
+
+  CHECK(result.errors.empty());
+  REQUIRE_UNARY(result.model);
+
+  Model& model = *result.model;
+  REQUIRE_EQ(model.meshes.size(), 1);
+  REQUIRE_EQ(model.meshes[0].primitives.size(), 1);
+  CHECK_EQ(model.meshes[0].primitives[0].attributes["POSITION"], 0);
+
+  REQUIRE_EQ(model.buffers.size(), 1);
+  REQUIRE_EQ(model.buffers[0].cesium.data.size(), 840);
+  REQUIRE_UNARY_FALSE(model.buffers[0].uri);
+  CHECK_EQ(model.accessors.size(), 1);
+}
+
 TEST_CASE("GltfReader::loadGltf") {
   auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
   CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
