@@ -259,7 +259,7 @@ SubtreeAvailability::loadSubtree(
             const std::string& url = pCompletedRequest->url();
             if (!pResponse) {
               std::string error =
-                  "Did not receive a valid response for subtree at" + url;
+                  "Did not receive a valid response for subtree at " + url;
               return asyncSystem.createResolvedFuture<
                   CesiumUtility::Result<SubtreeAvailability>>(
                   CesiumUtility::ErrorList::error(error));
@@ -284,7 +284,7 @@ SubtreeAvailability::loadSubtree(
             // the appropriate reader.
             std::span<const std::byte> binary = pResponse->data();
             std::string magic(reinterpret_cast<const char*>(binary.data()), 4);
-            if (magic == "subt") { 
+            if (magic == "subt") {
               return pSubtreeReader
                   ->load(
                       asyncSystem,
@@ -340,11 +340,11 @@ SubtreeAvailability::loadSubtree(
                   CesiumUtility::ErrorList::error(error));
             }
 
-              // "asset" exists in glTF but not 3D Tiles 1.1 subtrees.
+            // "asset" exists in glTF but not 3D Tiles 1.1 subtrees.
             if (json.FindMember("asset") != json.MemberEnd()) {
               return pGltfReader
                   ->readGltfAndExternalData(
-                      binary,
+                      json,
                       asyncSystem,
                       CesiumAsync::HttpHeaders(
                           requestHeaders.begin(),

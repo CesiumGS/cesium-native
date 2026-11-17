@@ -3,8 +3,8 @@
 
 #include <memory>
 
-namespace CesiumNativeTests { 
-  std::unique_ptr<SimpleAssetRequest> createSuccessfulRequest(
+namespace CesiumNativeTests {
+std::unique_ptr<SimpleAssetRequest> createSuccessfulRequest(
     const std::string& method,
     const std::string& url,
     const CesiumAsync::HttpHeaders& headers,
@@ -19,7 +19,7 @@ namespace CesiumNativeTests {
           headers,
           std::move(data)));
 }
- 
+
 std::unique_ptr<SimpleAssetRequest> createFailedRequest(
     const std::string& method,
     const std::string& url,

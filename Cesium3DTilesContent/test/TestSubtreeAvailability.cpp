@@ -156,10 +156,10 @@ TEST_CASE("Test SubtreeAvailability methods") {
         CesiumGeometry::QuadtreeTileID{5, 11, 12}};
 
     // setup tile availability buffer
-    uint64_t maxSubtreeLevels = 5;
-    uint64_t numTiles = getTotalNumberOfTilesForQuadtree(maxSubtreeLevels);
+    uint64_t maxSubtreeLevel = 5;
+    uint64_t numTiles = getTotalNumberOfTilesForQuadtree(maxSubtreeLevel);
 
-    uint64_t maxSubtreeTiles = uint64_t(1) << (2 * (maxSubtreeLevels));
+    uint64_t maxSubtreeTiles = uint64_t(1) << (2 * (maxSubtreeLevel));
     uint64_t bufferSize =
         static_cast<uint64_t>(std::ceil(static_cast<double>(numTiles) / 8.0));
     uint64_t subtreeBufferSize = static_cast<uint64_t>(
@@ -210,7 +210,7 @@ TEST_CASE("Test SubtreeAvailability methods") {
 
     SubtreeAvailability quadtreeAvailability(
         ImplicitTileSubdivisionScheme::Quadtree,
-        static_cast<uint32_t>(maxSubtreeLevels),
+        static_cast<uint32_t>(maxSubtreeLevel),
         tileAvailability,
         subtreeAvailability,
         contentAvailability,
@@ -259,7 +259,7 @@ TEST_CASE("Test SubtreeAvailability methods") {
 }
 
 TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
-  uint32_t maxSubtreeLevels = 5;
+  uint32_t maxSubtreeLevel = 5;
 
   std::vector<CesiumGeometry::QuadtreeTileID> availableTileIDs{
       CesiumGeometry::QuadtreeTileID{0, 0, 0},
@@ -293,37 +293,8 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
       CesiumGeometry::QuadtreeTileID{5, 11, 12}};
 
   SUBCASE("Parse binary subtree") {
-    // create subtree json
     auto subtreeContent =
-        SubtreeContent(maxSubtreeLevels, availableTileIDs, availableSubtreeIDs);
-    auto subtreeJson = subtreeContent.toJson("");
-
-    // serialize it into binary subtree format
-    rapidjson::StringBuffer subtreeJsonBuffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(subtreeJsonBuffer);
-    subtreeJson.Accept(writer);
-
-    SubtreeHeader subtreeHeader;
-    subtreeHeader.magic[0] = 's';
-    subtreeHeader.magic[1] = 'u';
-    subtreeHeader.magic[2] = 'b';
-    subtreeHeader.magic[3] = 't';
-    subtreeHeader.version = 1U;
-    subtreeHeader.jsonByteLength = subtreeJsonBuffer.GetSize();
-    subtreeHeader.binaryByteLength = subtreeContent.buffers.size();
-
-    std::vector<std::byte> buffer(size_t(
-        sizeof(subtreeHeader) + subtreeHeader.jsonByteLength +
-        subtreeHeader.binaryByteLength));
-    std::memcpy(buffer.data(), &subtreeHeader, sizeof(subtreeHeader));
-    std::memcpy(
-        buffer.data() + sizeof(subtreeHeader),
-        subtreeJsonBuffer.GetString(),
-        size_t(subtreeHeader.jsonByteLength));
-    std::memcpy(
-        buffer.data() + sizeof(subtreeHeader) + subtreeHeader.jsonByteLength,
-        subtreeContent.buffers.data(),
-        size_t(subtreeHeader.binaryByteLength));
+        SubtreeContent(maxSubtreeLevel, availableTileIDs, availableSubtreeIDs);
 
     std::map<std::string, std::shared_ptr<SimpleAssetRequest>> requestMap{
         {"test",
@@ -331,12 +302,12 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
              "GET",
              "test",
              CesiumAsync::HttpHeaders{},
-             std::move(buffer))}};
+             subtreeContent.toBinary())}};
     TestContext<SimpleTaskProcessor> context(std::move(requestMap));
 
     auto subtreeFuture = SubtreeAvailability::loadSubtree(
         ImplicitTileSubdivisionScheme::Quadtree,
-        maxSubtreeLevels,
+        maxSubtreeLevel,
         context.asyncSystem,
         context.pAssetAccessor,
         "test",
@@ -372,35 +343,7 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
 
   SUBCASE("Parse binary subtree with mixed availability types") {
     auto subtreeContent =
-        SubtreeContent(maxSubtreeLevels, true, availableSubtreeIDs);
-    auto subtreeJson = subtreeContent.toJson("");
-
-    // serialize it into binary subtree format
-    rapidjson::StringBuffer subtreeJsonBuffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(subtreeJsonBuffer);
-    subtreeJson.Accept(writer);
-
-    SubtreeHeader subtreeHeader;
-    subtreeHeader.magic[0] = 's';
-    subtreeHeader.magic[1] = 'u';
-    subtreeHeader.magic[2] = 'b';
-    subtreeHeader.magic[3] = 't';
-    subtreeHeader.version = 1U;
-    subtreeHeader.jsonByteLength = subtreeJsonBuffer.GetSize();
-    subtreeHeader.binaryByteLength = subtreeContent.buffers.size();
-
-    std::vector<std::byte> buffer(size_t(
-        sizeof(subtreeHeader) + subtreeHeader.jsonByteLength +
-        subtreeHeader.binaryByteLength));
-    std::memcpy(buffer.data(), &subtreeHeader, sizeof(subtreeHeader));
-    std::memcpy(
-        buffer.data() + sizeof(subtreeHeader),
-        subtreeJsonBuffer.GetString(),
-        size_t(subtreeHeader.jsonByteLength));
-    std::memcpy(
-        buffer.data() + sizeof(subtreeHeader) + subtreeHeader.jsonByteLength,
-        subtreeContent.buffers.data(),
-        size_t(subtreeHeader.binaryByteLength));
+        SubtreeContent(maxSubtreeLevel, true, availableSubtreeIDs);
 
     std::map<std::string, std::shared_ptr<SimpleAssetRequest>> requestMap{
         {"test",
@@ -408,12 +351,12 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
              "GET",
              "test",
              CesiumAsync::HttpHeaders{},
-             std::move(buffer))}};
+             subtreeContent.toBinary())}};
     TestContext<SimpleTaskProcessor> context(std::move(requestMap));
 
     auto subtreeFuture = SubtreeAvailability::loadSubtree(
         ImplicitTileSubdivisionScheme::Quadtree,
-        maxSubtreeLevels,
+        maxSubtreeLevel,
         context.asyncSystem,
         context.pAssetAccessor,
         "test",
@@ -449,31 +392,7 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
 
   SUBCASE("Parse binary subtree with constant availability only") {
     // create subtree json
-    auto subtreeContent = SubtreeContent(maxSubtreeLevels, true, false);
-    auto subtreeJson = subtreeContent.toJson("");
-
-    // serialize it into binary subtree format
-    rapidjson::StringBuffer subtreeJsonBuffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(subtreeJsonBuffer);
-    subtreeJson.Accept(writer);
-
-    SubtreeHeader subtreeHeader;
-    subtreeHeader.magic[0] = 's';
-    subtreeHeader.magic[1] = 'u';
-    subtreeHeader.magic[2] = 'b';
-    subtreeHeader.magic[3] = 't';
-    subtreeHeader.version = 1U;
-    subtreeHeader.jsonByteLength = subtreeJsonBuffer.GetSize();
-    subtreeHeader.binaryByteLength = 0;
-
-    std::vector<std::byte> buffer(size_t(
-        sizeof(subtreeHeader) + subtreeHeader.jsonByteLength +
-        subtreeHeader.binaryByteLength));
-    std::memcpy(buffer.data(), &subtreeHeader, sizeof(subtreeHeader));
-    std::memcpy(
-        buffer.data() + sizeof(subtreeHeader),
-        subtreeJsonBuffer.GetString(),
-        size_t(subtreeHeader.jsonByteLength));
+    auto subtreeContent = SubtreeContent(maxSubtreeLevel, true, false);
 
     std::map<std::string, std::shared_ptr<SimpleAssetRequest>> requestMap{
         {"test",
@@ -481,12 +400,12 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
              "GET",
              "test",
              CesiumAsync::HttpHeaders{},
-             std::move(buffer))}};
+             subtreeContent.toBinary())}};
     TestContext<SimpleTaskProcessor> context(std::move(requestMap));
 
     auto subtreeFuture = SubtreeAvailability::loadSubtree(
         ImplicitTileSubdivisionScheme::Quadtree,
-        maxSubtreeLevels,
+        maxSubtreeLevel,
         context.asyncSystem,
         context.pAssetAccessor,
         "test",
@@ -522,11 +441,11 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
 
   SUBCASE("Parse json subtree") {
     auto subtreeContent =
-        SubtreeContent(maxSubtreeLevels, availableTileIDs, availableSubtreeIDs);
+        SubtreeContent(maxSubtreeLevel, availableTileIDs, availableSubtreeIDs);
     auto subtreeJson = subtreeContent.toJson("buffer");
 
     auto result = mockLoadSubtreeJson(
-        maxSubtreeLevels,
+        maxSubtreeLevel,
         std::move(subtreeContent),
         std::move(subtreeJson));
 
@@ -558,11 +477,11 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
 
   SUBCASE("Parse json subtree with mixed availability types") {
     auto subtreeContent =
-        SubtreeContent(maxSubtreeLevels, availableTileIDs, false);
+        SubtreeContent(maxSubtreeLevel, availableTileIDs, false);
     auto subtreeJson = subtreeContent.toJson("buffer");
 
     auto result = mockLoadSubtreeJson(
-        maxSubtreeLevels,
+        maxSubtreeLevel,
         std::move(subtreeContent),
         std::move(subtreeJson));
 
@@ -594,13 +513,13 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
 
   SUBCASE("Subtree json has ill form format") {
     auto subtreeContent =
-        SubtreeContent(maxSubtreeLevels, availableTileIDs, availableSubtreeIDs);
+        SubtreeContent(maxSubtreeLevel, availableTileIDs, availableSubtreeIDs);
     auto subtreeJson = subtreeContent.toJson("buffer");
 
     SUBCASE("Subtree json has no tileAvailability field") {
       subtreeJson.RemoveMember("tileAvailability");
       CHECK_UNARY_FALSE(mockLoadSubtreeJson(
-                            maxSubtreeLevels,
+                            maxSubtreeLevel,
                             std::move(subtreeContent),
                             std::move(subtreeJson))
                             .value);
@@ -609,7 +528,7 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
     SUBCASE("Subtree json has no childSubtreeAvailability field") {
       subtreeJson.RemoveMember("childSubtreeAvailability");
       CHECK_UNARY_FALSE(mockLoadSubtreeJson(
-                            maxSubtreeLevels,
+                            maxSubtreeLevel,
                             std::move(subtreeContent),
                             std::move(subtreeJson))
                             .value);
@@ -619,7 +538,7 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
             "view") {
       subtreeJson.RemoveMember("buffers");
       CHECK_UNARY_FALSE(mockLoadSubtreeJson(
-                            maxSubtreeLevels,
+                            maxSubtreeLevel,
                             std::move(subtreeContent),
                             std::move(subtreeJson))
                             .value);
@@ -630,7 +549,7 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
       auto bufferObj = bufferIt->value.GetArray().Begin();
       bufferObj->RemoveMember("byteLength");
       CHECK_UNARY_FALSE(mockLoadSubtreeJson(
-                            maxSubtreeLevels,
+                            maxSubtreeLevel,
                             std::move(subtreeContent),
                             std::move(subtreeJson))
                             .value);
@@ -642,7 +561,7 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
       bufferObj->RemoveMember("uri");
       bufferObj->AddMember("uri", 12, subtreeJson.GetAllocator());
       CHECK_UNARY_FALSE(mockLoadSubtreeJson(
-                            maxSubtreeLevels,
+                            maxSubtreeLevel,
                             std::move(subtreeContent),
                             std::move(subtreeJson))
                             .value);
@@ -652,7 +571,7 @@ TEST_CASE("Test parsing 3D Tiles 1.1 subtree") {
             "buffer view") {
       subtreeJson.RemoveMember("bufferViews");
       CHECK_UNARY_FALSE(mockLoadSubtreeJson(
-                            maxSubtreeLevels,
+                            maxSubtreeLevel,
                             std::move(subtreeContent),
                             std::move(subtreeJson))
                             .value);

@@ -36,18 +36,27 @@ struct SubtreeContent {
       contentAvailability;
 
   SubtreeContent(
-      uint32_t maxSubtreeLevels,
+      uint32_t maxSubtreeLevel,
       const Input& tileAvailabilities,
       const Input& subtreeAvailabilities);
 
-  rapidjson::Document toJson(const std::string& bufferUrl);
+  /**
+   * @brief Outputs the subtree content as a JSON document.
+   */
+  rapidjson::Document toJson(const std::string& bufferUrl) const;
+
+  /**
+   * @brief Outputs the subtree content as a binary subtree file from 3D
+   * Tiles 1.1.
+   */
+  std::vector<std::byte> toBinary() const;
 };
 
 /**
  * @brief Computes the total number of tiles under a quadtree with the specified
- * level count.
+ * maximum level.
  */
-uint64_t getTotalNumberOfTilesForQuadtree(uint64_t subtreeLevels);
+uint64_t getTotalNumberOfTilesForQuadtree(uint64_t maximumLevel);
 
 /**
  * @brief Marks the tile at the specified ID as available in the specified

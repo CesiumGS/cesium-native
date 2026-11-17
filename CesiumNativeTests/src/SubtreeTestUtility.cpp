@@ -4,6 +4,8 @@
 
 #include <libmorton/morton.h>
 #include <rapidjson/document.h>
+#include <rapidjson/memorybuffer.h>
+#include <rapidjson/writer.h>
 
 #include <cmath>
 #include <cstddef>
@@ -16,10 +18,17 @@ namespace CesiumNativeTests {
 
 using namespace Cesium3DTilesContent;
 
-uint64_t getTotalNumberOfTilesForQuadtree(uint64_t subtreeLevels) {
-  return static_cast<uint64_t>(
-      (std::pow(4.0, static_cast<double>(subtreeLevels)) - 1) /
-      (static_cast<double>(subtreeLevels) - 1));
+uint64_t getTotalNumberOfTilesForQuadtree(uint64_t maximumLevel) {
+  switch (maximumLevel) {
+  case 0:
+    return 1;
+  case 1:
+    return 5;
+  default:
+    return static_cast<uint64_t>(
+        (std::pow(4.0, static_cast<double>(maximumLevel)) - 1) /
+        (static_cast<double>(maximumLevel) - 1));
+  }
 }
 
 void markTileAvailable(
@@ -81,7 +90,7 @@ struct GetAvailabilityView {
 
 } // namespace
 SubtreeContent::SubtreeContent(
-    uint32_t maxSubtreeLevels,
+    uint32_t maxSubtreeLevel,
     const Input& tileAvailabilities,
     const Input& subtreeAvailabilities)
     : buffers(),
@@ -95,8 +104,8 @@ SubtreeContent::SubtreeContent(
       std::visit(NeedsAvailabilityBuffer{}, subtreeAvailabilities);
 
   // Create and populate the availability buffers.
-  uint64_t numTiles = getTotalNumberOfTilesForQuadtree(maxSubtreeLevels);
-  uint64_t maxSubtreeTiles = uint64_t(1) << (2 * (maxSubtreeLevels));
+  uint64_t numTiles = getTotalNumberOfTilesForQuadtree(maxSubtreeLevel);
+  uint64_t maxSubtreeTiles = uint64_t(1) << (2 * (maxSubtreeLevel));
 
   uint64_t bufferSize = needsTileAvailabilityBuffer
                             ? static_cast<uint64_t>(std::ceil(
@@ -132,7 +141,7 @@ SubtreeContent::SubtreeContent(
       subtreeAvailabilities);
 }
 
-rapidjson::Document SubtreeContent::toJson(const std::string& bufferUrl) {
+rapidjson::Document SubtreeContent::toJson(const std::string& bufferUrl) const {
   rapidjson::Document subtreeJson;
   subtreeJson.SetObject();
 
@@ -291,6 +300,37 @@ rapidjson::Document SubtreeContent::toJson(const std::string& bufferUrl) {
       subtreeJson.GetAllocator());
 
   return subtreeJson;
+}
+
+std::vector<std::byte> SubtreeContent::toBinary() const {
+  auto subtreeJson = this->toJson("");
+
+  rapidjson::StringBuffer subtreeJsonBuffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(subtreeJsonBuffer);
+  subtreeJson.Accept(writer);
+
+  SubtreeHeader subtreeHeader;
+  subtreeHeader.magic[0] = 's';
+  subtreeHeader.magic[1] = 'u';
+  subtreeHeader.magic[2] = 'b';
+  subtreeHeader.magic[3] = 't';
+  subtreeHeader.version = 1U;
+  subtreeHeader.jsonByteLength = subtreeJsonBuffer.GetSize();
+  subtreeHeader.binaryByteLength = this->buffers.size();
+
+  std::vector<std::byte> buffer(size_t(
+      sizeof(subtreeHeader) + subtreeHeader.jsonByteLength +
+      subtreeHeader.binaryByteLength));
+  std::memcpy(buffer.data(), &subtreeHeader, sizeof(subtreeHeader));
+  std::memcpy(
+      buffer.data() + sizeof(subtreeHeader),
+      subtreeJsonBuffer.GetString(),
+      size_t(subtreeHeader.jsonByteLength));
+  std::memcpy(
+      buffer.data() + sizeof(subtreeHeader) + subtreeHeader.jsonByteLength,
+      this->buffers.data(),
+      size_t(subtreeHeader.binaryByteLength));
+  return buffer;
 }
 
 } // namespace CesiumNativeTests
