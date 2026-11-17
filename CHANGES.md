@@ -23,6 +23,7 @@
 - Fixed a rare lost wakeup in `Future::waitInMainThread` and `SharedFuture::waitInMainThread` that could cause them to hang if the future resolved just as the wait began.
 - Fixed potential integer overflow and out-of-bounds write while dequantizing glTFs using `KHR_mesh_quantization`.
 - Fixed potential integer overflow and out-of-bounds write while decoding JPEG images.
+- Fixed treatment of relative paths to external assets in i3dm files' .glb content.
 
 ### v0.66.0 - 2026-11-02
 
