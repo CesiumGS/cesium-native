@@ -87,7 +87,11 @@ using namespace CesiumNativeTests;
 using namespace CesiumRasterOverlays;
 
 namespace {
-std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+auto test3dTilesPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
+auto testTerrainPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) /
+    "quantized-mesh";
 
 class SimpleTilesetContentLoader : public TilesetContentLoader {
 public:
@@ -372,7 +376,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     // create mock request
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"tileset.json",
-         createMockRequest(testDataPath / "Tileset" / "tileset.json")});
+         createMockRequest(test3dTilesPath / "Tileset" / "tileset.json")});
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =
@@ -398,9 +402,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     // create mock request
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json",
-         createMockRequest(
-             testDataPath / "CesiumTerrainTileJson" /
-             "QuantizedMesh.tile.json")});
+         createMockRequest(testTerrainPath / "QuantizedMesh.tile.json")});
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =
@@ -429,9 +431,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
   SUBCASE("Initialize manager with wrong format") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json",
-         createMockRequest(
-             testDataPath / "CesiumTerrainTileJson" /
-             "WithAttribution.tile.json")});
+         createMockRequest(testTerrainPath / "WithAttribution.tile.json")});
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =
@@ -945,7 +945,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   SUBCASE("Resolve external buffers") {
     // create mock loader
     CesiumGltfReader::GltfReader gltfReader;
-    std::filesystem::path boxPath = testDataPath / "gltf" / "box";
+    std::filesystem::path boxPath = test3dTilesPath / "gltf" / "box";
     std::string fileName = (boxPath / "Box.gltf").string();
     std::vector<std::byte> gltfBoxFile = readFile(fileName);
     auto modelReadResult = gltfReader.readGltf(gltfBoxFile);
@@ -1049,7 +1049,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           "normal") {
     CesiumGltfReader::GltfReader gltfReader;
     std::vector<std::byte> gltfBoxFile =
-        readFile(testDataPath / "gltf" / "embedded_box" / "Box.glb");
+        readFile(test3dTilesPath / "gltf" / "embedded_box" / "Box.glb");
     auto modelReadResult = gltfReader.readGltf(gltfBoxFile);
     CHECK(modelReadResult.errors.empty());
     CHECK(modelReadResult.model);
@@ -1740,7 +1740,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   }
 
   SUBCASE("Resolve external images, with deduplication") {
-    std::filesystem::path dirPath(testDataPath / "SharedImages");
+    std::filesystem::path dirPath(test3dTilesPath / "SharedImages");
 
     // mock the requests for all files
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {

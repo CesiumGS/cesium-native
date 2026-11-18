@@ -22,7 +22,7 @@
     },
     "geometricError": 512,
     "content": {
-      "uri": "cesiumNativeIssue1127.i3dm"
+      "uri": "invalidFeatureTable.i3dm"
     },
     "refine": "ADD"
   }

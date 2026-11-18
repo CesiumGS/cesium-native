@@ -45,7 +45,8 @@ using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 
 namespace {
-std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
 
 CesiumGltf::Model createEmptySubtreeGltf() {
   CesiumGltf::Model model;

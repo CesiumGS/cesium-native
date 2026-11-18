@@ -47,7 +47,9 @@ using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 
 namespace {
-std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) /
+    "quantized-mesh";
 
 std::shared_ptr<SimpleAssetRequest>
 createMockAssetRequest(const std::filesystem::path& requestContentPath) {
@@ -122,8 +124,7 @@ TEST_CASE("Test create layer json terrain loader") {
       pMockedCreditSystem};
 
   SUBCASE("Create layer json loader") {
-    auto layerJsonPath =
-        testDataPath / "CesiumTerrainTileJson" / "QuantizedMesh.tile.json";
+    auto layerJsonPath = testDataPath / "QuantizedMesh.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
@@ -207,8 +208,7 @@ TEST_CASE("Test create layer json terrain loader") {
   }
 
   SUBCASE("Load error layer json with empty tiles array") {
-    auto layerJsonPath =
-        testDataPath / "CesiumTerrainTileJson" / "EmptyTilesArray.tile.json";
+    auto layerJsonPath = testDataPath / "EmptyTilesArray.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
@@ -227,8 +227,7 @@ TEST_CASE("Test create layer json terrain loader") {
   }
 
   SUBCASE("Load error layer json with no tiles field") {
-    auto layerJsonPath =
-        testDataPath / "CesiumTerrainTileJson" / "NoTiles.tile.json";
+    auto layerJsonPath = testDataPath / "NoTiles.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
@@ -247,8 +246,7 @@ TEST_CASE("Test create layer json terrain loader") {
   }
 
   SUBCASE("Load layer json with metadataAvailability field") {
-    auto layerJsonPath = testDataPath / "CesiumTerrainTileJson" /
-                         "MetadataAvailability.tile.json";
+    auto layerJsonPath = testDataPath / "MetadataAvailability.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
@@ -277,8 +275,7 @@ TEST_CASE("Test create layer json terrain loader") {
   }
 
   SUBCASE("Load layer json with OctVertexNormals extension") {
-    auto layerJsonPath =
-        testDataPath / "CesiumTerrainTileJson" / "OctVertexNormals.tile.json";
+    auto layerJsonPath = testDataPath / "OctVertexNormals.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
@@ -316,13 +313,11 @@ TEST_CASE("Test create layer json terrain loader") {
   }
 
   SUBCASE("Load multiple layers") {
-    auto layerJsonPath =
-        testDataPath / "CesiumTerrainTileJson" / "ParentUrl.tile.json";
+    auto layerJsonPath = testDataPath / "ParentUrl.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
-    auto parentJsonPath =
-        testDataPath / "CesiumTerrainTileJson" / "Parent.tile.json";
+    auto parentJsonPath = testDataPath / "Parent.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"Parent/layer.json", createMockAssetRequest(parentJsonPath)});
 
@@ -355,8 +350,7 @@ TEST_CASE("Test create layer json terrain loader") {
   }
 
   SUBCASE("Load layer json with partial availability") {
-    auto layerJsonPath = testDataPath / "CesiumTerrainTileJson" /
-                         "PartialAvailability.tile.json";
+    auto layerJsonPath = testDataPath / "PartialAvailability.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
@@ -378,8 +372,7 @@ TEST_CASE("Test create layer json terrain loader") {
   }
 
   SUBCASE("Load layer json with attribution") {
-    auto layerJsonPath =
-        testDataPath / "CesiumTerrainTileJson" / "WithAttribution.tile.json";
+    auto layerJsonPath = testDataPath / "WithAttribution.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
@@ -398,8 +391,7 @@ TEST_CASE("Test create layer json terrain loader") {
   }
 
   SUBCASE("Load layer json with watermask") {
-    auto layerJsonPath =
-        testDataPath / "CesiumTerrainTileJson" / "WaterMask.tile.json";
+    auto layerJsonPath = testDataPath / "WaterMask.tile.json";
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json", createMockAssetRequest(layerJsonPath)});
 
@@ -487,12 +479,9 @@ TEST_CASE("Test create layer json terrain loader") {
     };
 
     // Setup mock files
-    auto layerJsonPath =
-        testDataPath / "CesiumTerrainTileJson" / "ParentUrl.tile.json";
-    auto parentJsonPath =
-        testDataPath / "CesiumTerrainTileJson" / "Parent.tile.json";
-    auto tileContentPath =
-        testDataPath / "CesiumTerrainTileJson" / "tile.terrain";
+    auto layerJsonPath = testDataPath / "ParentUrl.tile.json";
+    auto parentJsonPath = testDataPath / "Parent.tile.json";
+    auto tileContentPath = testDataPath / "tile.terrain";
 
     auto pHeaderTrackingAccessor =
         std::make_shared<HeaderTrackingAssetAccessor>(
@@ -630,8 +619,7 @@ TEST_CASE("Test load layer json tile content") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"0.0.0/1.0.0.terrain?extensions=one-two",
          createMockAssetRequest(
-             testDataPath / "CesiumTerrainTileJson" /
-             "tile.metadataavailability.terrain")});
+             testDataPath / "tile.metadataavailability.terrain")});
 
     // check tile availability before loading
     const auto& loaderLayers = loader.getLayers();
@@ -681,8 +669,7 @@ TEST_CASE("Test load layer json tile content") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"0.0.0/1.0.0.terrain?param=some_parameter_here&extensions=one-two",
          createMockAssetRequest(
-             testDataPath / "CesiumTerrainTileJson" /
-             "tile.metadataavailability.terrain")});
+             testDataPath / "tile.metadataavailability.terrain")});
 
     // check the load result
     auto tileLoadResultFuture = loadTile(
@@ -717,8 +704,7 @@ TEST_CASE("Test load layer json tile content") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"0.0.0/1.0.0.terrain",
          createMockAssetRequest(
-             testDataPath / "CesiumTerrainTileJson" /
-             "tile.metadataavailability.terrain")});
+             testDataPath / "tile.metadataavailability.terrain")});
 
     // check tile availability before loading
     const auto& loaderLayers = loader.getLayers();
@@ -791,8 +777,7 @@ TEST_CASE("Test load layer json tile content") {
     LayerJsonTerrainLoader loader{tilingScheme, projection, std::move(layers)};
 
     // mock tile content request
-    auto pMockRequest = createMockAssetRequest(
-        testDataPath / "CesiumTerrainTileJson" / "tile.terrain");
+    auto pMockRequest = createMockAssetRequest(testDataPath / "tile.terrain");
 
     // load tile from the first layer
     pMockedAssetAccessor->mockCompletedRequests.insert(
@@ -867,8 +852,7 @@ TEST_CASE("Test load layer json tile content") {
 
     // mock tile content request
     auto pMockRequest = createMockAssetRequest(
-        testDataPath / "CesiumTerrainTileJson" /
-        "tile.metadataavailability.terrain");
+        testDataPath / "tile.metadataavailability.terrain");
 
     // load tile from the first layer. But the tile from the second layer
     // will be loaded as well to add the availability to the second layer
@@ -943,8 +927,7 @@ TEST_CASE("Test load layer json tile content") {
     // mock tile content request
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"0.0.0/1.0.0.terrain",
-         createMockAssetRequest(
-             testDataPath / "CesiumTerrainTileJson" / "nonexistent.terrain")});
+         createMockAssetRequest(testDataPath / "nonexistent.terrain")});
 
     // check the load result
     auto tileLoadResultFuture = loadTile(
