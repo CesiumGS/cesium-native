@@ -11,6 +11,7 @@
 #include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>
+#include <rapidjson/document.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -115,6 +116,22 @@ Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
     return this
         ->loadJson(asyncSystem, pAssetAccessor, url, requestHeaders, data);
   }
+}
+
+Future<ReadJsonResult<Subtree>> SubtreeFileReader::load(
+    const AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::string& url,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+    const rapidjson::Document& document) const noexcept {
+  if (document.IsNull()) {
+    CesiumJsonReader::ReadJsonResult<Subtree> result;
+    result.errors.emplace_back("Input rapidjson::Document is null.");
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
+
+  return this
+      ->loadJson(asyncSystem, pAssetAccessor, url, requestHeaders, document);
 }
 
 namespace {
@@ -226,6 +243,21 @@ CesiumAsync::Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadJson(
     const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
     const std::span<const std::byte>& data) const noexcept {
   ReadJsonResult<Subtree> result = this->_reader.readFromJson(data);
+  return postprocess(
+      asyncSystem,
+      pAssetAccessor,
+      url,
+      requestHeaders,
+      std::move(result));
+}
+
+CesiumAsync::Future<ReadJsonResult<Subtree>> SubtreeFileReader::loadJson(
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<IAssetAccessor>& pAssetAccessor,
+    const std::string& url,
+    const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+    const rapidjson::Document& document) const noexcept {
+  ReadJsonResult<Subtree> result = this->_reader.readFromJson(document);
   return postprocess(
       asyncSystem,
       pAssetAccessor,
