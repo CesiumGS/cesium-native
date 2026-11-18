@@ -21,6 +21,7 @@
 - Fixed bugs and potential crashes when using the `GltfModifier` on a tileset with raster overlays (such as cartographic polygons).
 - Fixed potential integer overflow and out-of-bounds write while dequantizing glTFs using `KHR_mesh_quantization`.
 - Fixed potential integer overflow and out-of-bounds write while decoding JPEG images.
+- Fixed potential integer overflow and out-of-bounds write while combining quadtree raster overlay tiles with inconsistent image dimensions.
 
 ### v0.66.0 - 2026-11-02
 

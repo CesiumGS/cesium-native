@@ -453,7 +453,9 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
       .all(std::move(tiles))
       .thenInWorkerThread(
           [projection = this->getProjection(),
-           rectangle = overlayTile.getRectangle()](
+           rectangle = overlayTile.getRectangle(),
+           maximumTextureSize =
+               this->getOwner().getOptions().maximumTextureSize](
               std::vector<ResultPointer<LoadedQuadtreeImage>>&& images) {
             // This set of images is only "useful" if at least one actually has
             // image data, and that image data is _not_ from an ancestor. We can
@@ -490,7 +492,8 @@ QuadtreeRasterOverlayTileProvider::loadTileImage(
             return QuadtreeRasterOverlayTileProvider::combineImages(
                 rectangle,
                 projection,
-                std::move(images));
+                std::move(images),
+                maximumTextureSize);
           });
 }
 
@@ -601,17 +604,24 @@ QuadtreeRasterOverlayTileProvider::measureCombinedImage(
   }
 
   // Compute the pixel dimensions needed for the combined image.
-  const int32_t combinedWidthPixels = static_cast<int32_t>(Math::roundUp(
+  double combinedWidthPixels = Math::roundUp(
       combinedRectangle->computeWidth() / projectedWidthPerPixel,
-      pixelTolerance));
-  const int32_t combinedHeightPixels = static_cast<int32_t>(Math::roundUp(
+      pixelTolerance);
+  double combinedHeightPixels = Math::roundUp(
       combinedRectangle->computeHeight() / projectedHeightPerPixel,
-      pixelTolerance));
+      pixelTolerance);
+
+  // Width and height resolutions come from different images, so may not fit.
+  constexpr double maxPixels = double(std::numeric_limits<int32_t>::max());
+  if (!(combinedWidthPixels >= 0.0 && combinedWidthPixels <= maxPixels) ||
+      !(combinedHeightPixels >= 0.0 && combinedHeightPixels <= maxPixels)) {
+    return CombinedImageMeasurements{targetRectangle, 0, 0, 0, 0};
+  }
 
   return CombinedImageMeasurements{
       *combinedRectangle,
-      combinedWidthPixels,
-      combinedHeightPixels,
+      int32_t(combinedWidthPixels),
+      int32_t(combinedHeightPixels),
       channels,
       bytesPerChannel};
 }
@@ -620,7 +630,8 @@ QuadtreeRasterOverlayTileProvider::measureCombinedImage(
 QuadtreeRasterOverlayTileProvider::combineImages(
     const Rectangle& targetRectangle,
     const Projection& /* projection */,
-    std::vector<ResultPointer<LoadedQuadtreeImage>>&& images) {
+    std::vector<ResultPointer<LoadedQuadtreeImage>>&& images,
+    int32_t maximumTextureSize) {
   ErrorList errors;
   for (ResultPointer<LoadedQuadtreeImage>& image : images) {
     if (image.pValue && image.pValue->pLoaded) {
@@ -634,10 +645,14 @@ QuadtreeRasterOverlayTileProvider::combineImages(
           targetRectangle,
           images);
 
-  const int32_t targetImageBytes =
-      measurements.widthPixels * measurements.heightPixels *
-      measurements.channels * measurements.bytesPerChannel;
-  if (targetImageBytes <= 0) {
+  // Loaded images can be larger than the tile size used to pick tiles.
+  int32_t widthPixels = glm::min(measurements.widthPixels, maximumTextureSize);
+  int32_t heightPixels =
+      glm::min(measurements.heightPixels, maximumTextureSize);
+  int64_t bytesPerPixel =
+      int64_t(measurements.channels) * measurements.bytesPerChannel;
+
+  if (widthPixels <= 0 || heightPixels <= 0 || bytesPerPixel <= 0) {
     // Target image has no pixels, so our work here is done.
     return LoadedRasterOverlayImage{
         nullptr,
@@ -648,6 +663,23 @@ QuadtreeRasterOverlayTileProvider::combineImages(
     };
   }
 
+  // Divide so that no product is computed before it's known to fit.
+  constexpr int64_t maxBytes = std::numeric_limits<int64_t>::max();
+  if (bytesPerPixel > maxBytes / heightPixels ||
+      bytesPerPixel * heightPixels > maxBytes / widthPixels) {
+    errors.emplaceError(
+        "Combined raster overlay image is too large to allocate.");
+    return LoadedRasterOverlayImage{
+        nullptr,
+        targetRectangle,
+        {},
+        std::move(errors),
+        true};
+  }
+
+  int64_t targetImageBytes =
+      int64_t(widthPixels) * (int64_t(heightPixels) * bytesPerPixel);
+
   LoadedRasterOverlayImage result;
   result.rectangle = measurements.rectangle;
   result.moreDetailAvailable = false;
@@ -656,10 +688,9 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   ImageAsset& target = result.pImage.emplace();
   target.bytesPerChannel = measurements.bytesPerChannel;
   target.channels = measurements.channels;
-  target.width = measurements.widthPixels;
-  target.height = measurements.heightPixels;
-  target.pixelData.resize(size_t(
-      target.width * target.height * target.channels * target.bytesPerChannel));
+  target.width = widthPixels;
+  target.height = heightPixels;
+  target.pixelData.resize(size_t(targetImageBytes));
 
   for (const auto& image : images) {
     if (!image.pValue) {
