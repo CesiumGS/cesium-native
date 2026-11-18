@@ -19,7 +19,8 @@
 
 ##### Additions :tada:
 
-- Added `fromGltf` method to `Cesium3DTilesSelection::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
+- Added `fromGltf` method to `Cesium3DTiles::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
+- Added overloads to `SubtreeFileReader::load` and `GltfReader::readGltfAndExternalData` to accept JSONs that have been already parsed as `rapidjson::Document`s.
 - Added `getBoundingVolumeTransform` and `setBoundingVolumeTransform` to `CesiumGltfContent::GltfUtilities` to interact with transforms on `CesiumGltf::BoundingVolume`s.
 - Added `Cesium3DTiles::getBoundingVolume` methods to create a `Cesium3DTiles::BoundingVolume` from either `CesiumTilesetJson::BoundingVolume` or `CesiumGltf::BoundingVolume`.
 - Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
