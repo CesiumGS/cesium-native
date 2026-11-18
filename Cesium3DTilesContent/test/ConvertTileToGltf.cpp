@@ -25,8 +25,8 @@ CesiumAsync::AsyncSystem ConvertTileToGltf::asyncSystem(
     std::make_shared<CesiumNativeTests::SimpleTaskProcessor>());
 
 AssetFetcher
-ConvertTileToGltf::makeAssetFetcher(const std::string& baseFilePath) {
-  std::string baseUrl = "file://" + baseFilePath;
+ConvertTileToGltf::makeAssetFetcher(const std::filesystem::path& baseFilePath) {
+  std::string baseUrl = "file://" + baseFilePath.string();
   auto fileAccessor = std::make_shared<CesiumNativeTests::FileAccessor>();
   std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders;
   return AssetFetcher(
