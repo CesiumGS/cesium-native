@@ -3,7 +3,7 @@
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 
-#include <rapidjson/Document.h>
+#include <rapidjson/document.h>
 
 #include <cstddef>
 #include <span>
@@ -23,17 +23,11 @@ struct SubtreeHeader {
 };
 
 /**
- * @brief A representation of the content of a 3D Tiles subtree.
+ * @brief A representation of the content of a 3D Tiles subtree. Content
+ * availability is treated as one-to-one with tile availability.
  */
 struct SubtreeContent {
   using Input = std::variant<bool, std::vector<CesiumGeometry::QuadtreeTileID>>;
-
-  std::vector<std::byte> buffers;
-  Cesium3DTilesContent::SubtreeAvailability::AvailabilityView tileAvailability;
-  Cesium3DTilesContent::SubtreeAvailability::AvailabilityView
-      subtreeAvailability;
-  Cesium3DTilesContent::SubtreeAvailability::AvailabilityView
-      contentAvailability;
 
   SubtreeContent(
       uint32_t maxSubtreeLevel,
@@ -50,6 +44,20 @@ struct SubtreeContent {
    * Tiles 1.1.
    */
   std::vector<std::byte> toBinary() const;
+
+private:
+  void initialize(
+      uint32_t maxSubtreeLevel,
+      const Input& tileAvailabilities,
+      const Input& subtreeAvailabilities);
+
+public:
+  std::vector<std::byte> buffers;
+  Cesium3DTilesContent::SubtreeAvailability::AvailabilityView tileAvailability;
+  Cesium3DTilesContent::SubtreeAvailability::AvailabilityView
+      subtreeAvailability;
+  Cesium3DTilesContent::SubtreeAvailability::AvailabilityView
+      contentAvailability;
 };
 
 /**

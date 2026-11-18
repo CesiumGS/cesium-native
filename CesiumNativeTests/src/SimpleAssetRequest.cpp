@@ -1,7 +1,12 @@
+#include <CesiumAsync/HttpHeaders.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <string>
+#include <utility>
 
 namespace CesiumNativeTests {
 std::unique_ptr<SimpleAssetRequest> createSuccessfulRequest(

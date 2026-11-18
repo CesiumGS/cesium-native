@@ -4,58 +4,20 @@
 
 #include <libmorton/morton.h>
 #include <rapidjson/document.h>
-#include <rapidjson/memorybuffer.h>
+#include <rapidjson/rapidjson.h>
+#include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
 #include <cmath>
 #include <cstddef>
-#include <span>
+#include <cstdint>
 #include <string>
+#include <utility>
 #include <variant>
-#include <vector>
-
-namespace CesiumNativeTests {
 
 using namespace Cesium3DTilesContent;
 
-uint64_t getTotalNumberOfTilesForQuadtree(uint64_t maximumLevel) {
-  switch (maximumLevel) {
-  case 0:
-    return 1;
-  case 1:
-    return 5;
-  default:
-    return static_cast<uint64_t>(
-        (std::pow(4.0, static_cast<double>(maximumLevel)) - 1) /
-        (static_cast<double>(maximumLevel) - 1));
-  }
-}
-
-void markTileAvailable(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    std::span<std::byte> available) {
-  // This function assumes that subtree tile ID is (0, 0, 0).
-  // TileID must be within the subtree
-  uint64_t numOfTilesFromRootToParentLevel =
-      static_cast<uint64_t>(((1 << (2 * tileID.level)) - 1) / 3);
-  uint64_t availabilityBitIndex =
-      numOfTilesFromRootToParentLevel +
-      libmorton::morton2D_64_encode(tileID.x, tileID.y);
-  const size_t byteIndex = size_t(availabilityBitIndex / 8);
-  const size_t bitIndex = size_t(availabilityBitIndex % 8);
-  available[byteIndex] |= std::byte(1 << bitIndex);
-}
-
-void markSubtreeAvailable(
-    const CesiumGeometry::QuadtreeTileID& tileID,
-    std::span<std::byte> available) {
-  uint64_t availabilityBitIndex =
-      libmorton::morton2D_64_encode(tileID.x, tileID.y);
-  const uint64_t byteIndex = availabilityBitIndex / 8;
-  const uint64_t bitIndex = availabilityBitIndex % 8;
-  available[(size_t)byteIndex] |= std::byte(1 << bitIndex);
-}
-
+namespace CesiumNativeTests {
 namespace {
 struct NeedsAvailabilityBuffer {
   bool operator()(bool) { return false; }
@@ -89,6 +51,7 @@ struct GetAvailabilityView {
 };
 
 } // namespace
+
 SubtreeContent::SubtreeContent(
     uint32_t maxSubtreeLevel,
     const Input& tileAvailabilities,
@@ -97,7 +60,13 @@ SubtreeContent::SubtreeContent(
       tileAvailability(),
       subtreeAvailability(),
       contentAvailability() {
+  this->initialize(maxSubtreeLevel, tileAvailabilities, subtreeAvailabilities);
+}
 
+void SubtreeContent::initialize(
+    uint32_t maxSubtreeLevel,
+    const Input& tileAvailabilities,
+    const Input& subtreeAvailabilities) {
   bool needsTileAvailabilityBuffer =
       std::visit(NeedsAvailabilityBuffer{}, tileAvailabilities);
   bool needsSubtreeAvailabilityBuffer =
@@ -331,6 +300,44 @@ std::vector<std::byte> SubtreeContent::toBinary() const {
       this->buffers.data(),
       size_t(subtreeHeader.binaryByteLength));
   return buffer;
+}
+
+uint64_t getTotalNumberOfTilesForQuadtree(uint64_t maximumLevel) {
+  switch (maximumLevel) {
+  case 0:
+    return 1;
+  case 1:
+    return 5;
+  default:
+    return static_cast<uint64_t>(
+        (std::pow(4.0, static_cast<double>(maximumLevel)) - 1) /
+        (static_cast<double>(maximumLevel) - 1));
+  }
+}
+
+void markTileAvailable(
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    std::span<std::byte> available) {
+  // This function assumes that subtree tile ID is (0, 0, 0).
+  // TileID must be within the subtree
+  uint64_t numOfTilesFromRootToParentLevel =
+      static_cast<uint64_t>(((1 << (2 * tileID.level)) - 1) / 3);
+  uint64_t availabilityBitIndex =
+      numOfTilesFromRootToParentLevel +
+      libmorton::morton2D_64_encode(tileID.x, tileID.y);
+  const size_t byteIndex = size_t(availabilityBitIndex / 8);
+  const size_t bitIndex = size_t(availabilityBitIndex % 8);
+  available[byteIndex] |= std::byte(1 << bitIndex);
+}
+
+void markSubtreeAvailable(
+    const CesiumGeometry::QuadtreeTileID& tileID,
+    std::span<std::byte> available) {
+  uint64_t availabilityBitIndex =
+      libmorton::morton2D_64_encode(tileID.x, tileID.y);
+  const uint64_t byteIndex = availabilityBitIndex / 8;
+  const uint64_t bitIndex = availabilityBitIndex % 8;
+  available[(size_t)byteIndex] |= std::byte(1 << bitIndex);
 }
 
 } // namespace CesiumNativeTests
