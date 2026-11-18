@@ -2,13 +2,13 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumNativeTests/SubtreeTestUtility.h>
 
-#include <assert.h>
 #include <libmorton/morton.h>
 #include <rapidjson/document.h>
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
