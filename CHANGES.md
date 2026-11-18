@@ -23,6 +23,7 @@
 - Fixed a rare lost wakeup in `Future::waitInMainThread` and `SharedFuture::waitInMainThread` that could cause them to hang if the future resolved just as the wait began.
 - Fixed potential integer overflow and out-of-bounds write while dequantizing glTFs using `KHR_mesh_quantization`.
 - Fixed potential integer overflow and out-of-bounds write while decoding JPEG images.
+- Blend2D runtime will now always be initialized before use, resolving access violation issues when Cesium Native was built with static linking and aggressive unused code optimization (particularly Unity WebGL builds).
 - Fixed treatment of relative paths to external assets in i3dm files' .glb content.
 
 ### v0.66.0 - 2026-11-02
@@ -42,6 +43,7 @@
 - Fixed potential integer overflow and out-of-bounds write while decoding glTFs using `EXT_meshopt_compression`.
 - Fixed a heap overflow when decoding Draco-compressed glTFs whose attributes declare a different number of components than the corresponding accessor.
 - Fixed decoding of Draco-compressed glTFs with invalid index accessor component types or incorrectly normalized index accessors.
+- Fixed a dangling `VectorStyle` reference in `GeoJsonDocumentRasterOverlay` when the GeoJSON root object is a single `Feature`, which could cause features to be rendered with the wrong style or crash.
 
 ### v0.65.0 - 2026-10-01
 
