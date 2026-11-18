@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace CesiumNativeTests {
 std::unique_ptr<SimpleAssetRequest> createSuccessfulRequest(

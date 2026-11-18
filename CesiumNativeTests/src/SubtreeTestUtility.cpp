@@ -2,6 +2,7 @@
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumNativeTests/SubtreeTestUtility.h>
 
+#include <assert.h>
 #include <libmorton/morton.h>
 #include <rapidjson/document.h>
 #include <rapidjson/rapidjson.h>
@@ -11,9 +12,12 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <span>
 #include <string>
 #include <utility>
 #include <variant>
+#include <vector>
 
 using namespace Cesium3DTilesContent;
 
