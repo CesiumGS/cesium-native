@@ -1,4 +1,4 @@
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
+#include <Cesium3DTiles/SubtreeAvailability.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 #include <CesiumNativeTests/SubtreeTestUtility.h>
 
@@ -19,7 +19,7 @@
 #include <variant>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
 
 namespace CesiumNativeTests {
 namespace {

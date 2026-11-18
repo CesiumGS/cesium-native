@@ -19,7 +19,7 @@
 
 ##### Additions :tada:
 
-- Added `fromGltf` method to `Cesium3DTilesSelection::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
+- Added `fromGltf` method to `Cesium3DTiles::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
 - Added overloads to `SubtreeFileReader::load` and `GltfReader::readGltfAndExternalData` to accept JSONs that have been already parsed as `rapidjson::Document`s.
 - Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
 - Added `Cesium3DTilesSelection::ViewStateVisibilityDelegate`, which can be specified on a `ViewState` for conditional control over whether to display a tile's content.
