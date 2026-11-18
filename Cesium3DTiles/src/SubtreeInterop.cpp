@@ -296,6 +296,8 @@ mergeContentAvailability(CesiumTilesetJson::Subtree& subtree) {
   } else if (bitstreamData.size() > 0) {
     int64_t availableCount = 0;
     for (const std::byte& byte : bitstreamData) {
+      // popcount works here because the spec requires that trailing bits of
+      // availability bitstreams be set to zero.
       availableCount += std::popcount(uint8_t(byte));
     }
 

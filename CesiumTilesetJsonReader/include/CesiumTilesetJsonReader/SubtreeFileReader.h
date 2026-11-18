@@ -6,6 +6,8 @@
 #include <CesiumTilesetJsonReader/Library.h>
 #include <CesiumTilesetJsonReader/SubtreeReader.h>
 
+#include <rapidjson/document.h>
+
 namespace CesiumTilesetJsonReader {
 
 /**
@@ -87,7 +89,7 @@ public:
       const noexcept;
 
   /**
-   * @brief Asynchronously loads loads a subtree from data obtained from a URL.
+   * @brief Asynchronously loads a subtree from data obtained from a URL.
    *
    * \attention Please note that the `SubtreeFileReader` instance must remain
    * valid until the returned future resolves or rejects. Destroying it earlier
@@ -114,6 +116,35 @@ public:
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       const std::span<const std::byte>& data) const noexcept;
 
+  /**
+   * @brief Asynchronously loads a subtree from a `rapidjson::Document` obtained
+   * from a URL.
+   *
+   * \attention Please note that the `SubtreeFileReader` instance must remain
+   * valid until the returned future resolves or rejects. Destroying it earlier
+   * will result in undefined behavior. One easy way to achieve this is to
+   * construct the reader with `std::make_shared` and capture the
+   * `std::shared_ptr` in the continuation lambda.
+   *
+   * @param asyncSystem The AsyncSystem used to do asynchronous work.
+   * @param pAssetAccessor The accessor used to retrieve the URL and any other
+   * required resources.
+   * @param url The URL from which the subtree file was obtained.
+   * @param requestHeaders Headers that were included in the request for the
+   * initial subtree file and should be included for any additional resources
+   * that are required.
+   * @param document The JSON document that was obtained.
+   * @return A future that resolves to the result of loading the subtree.
+   */
+  CesiumAsync::Future<
+      CesiumJsonReader::ReadJsonResult<CesiumTilesetJson::Subtree>>
+  load(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& url,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+      const rapidjson::Document& document) const noexcept;
+
 private:
   CesiumAsync::Future<
       CesiumJsonReader::ReadJsonResult<CesiumTilesetJson::Subtree>>
@@ -131,6 +162,14 @@ private:
       const std::string& url,
       const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
       const std::span<const std::byte>& data) const noexcept;
+  CesiumAsync::Future<
+      CesiumJsonReader::ReadJsonResult<CesiumTilesetJson::Subtree>>
+  loadJson(
+      const CesiumAsync::AsyncSystem& asyncSystem,
+      const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+      const std::string& url,
+      const std::vector<CesiumAsync::IAssetAccessor::THeader>& requestHeaders,
+      const rapidjson::Document& document) const noexcept;
   CesiumAsync::Future<
       CesiumJsonReader::ReadJsonResult<CesiumTilesetJson::Subtree>>
   postprocess(
