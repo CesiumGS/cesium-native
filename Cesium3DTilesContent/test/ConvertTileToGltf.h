@@ -23,6 +23,7 @@ public:
 
 private:
   static CesiumAsync::AsyncSystem asyncSystem;
-  static AssetFetcher makeAssetFetcher(const std::filesystem::path& baseFilePath);
+  static AssetFetcher
+  makeAssetFetcher(const std::filesystem::path& baseFilePath);
 };
 } // namespace Cesium3DTilesContent
