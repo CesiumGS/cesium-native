@@ -41,6 +41,7 @@
 #include <CesiumUtility/joinToString.h>
 
 #include <fmt/format.h>
+#include <rapidjson/document.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -93,6 +94,22 @@ GltfReaderResult readJsonGltf(
   ModelJsonHandler modelHandler(context);
   CesiumJsonReader::ReadJsonResult<Model> jsonResult =
       CesiumJsonReader::JsonReader::readJson(data, modelHandler);
+
+  return GltfReaderResult{
+      std::move(jsonResult.value),
+      std::move(jsonResult.errors),
+      std::move(jsonResult.warnings)};
+}
+
+GltfReaderResult readJsonGltf(
+    const CesiumJsonReader::JsonReaderOptions& context,
+    const rapidjson::Document& document) {
+
+  CESIUM_TRACE("CesiumGltfReader::GltfReader::readJsonGltf");
+
+  ModelJsonHandler modelHandler(context);
+  CesiumJsonReader::ReadJsonResult<Model> jsonResult =
+      CesiumJsonReader::JsonReader::readJson(document, modelHandler);
 
   return GltfReaderResult{
       std::move(jsonResult.value),
@@ -445,10 +462,36 @@ CesiumAsync::Future<GltfReaderResult> GltfReader::readGltfAndExternalData(
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::string& baseUrl,
     const GltfReaderOptions& options) const {
-
   const CesiumJsonReader::JsonReaderOptions& context = this->getExtensions();
   GltfReaderResult result = isBinaryGltf(data) ? readBinaryGltf(context, data)
                                                : readJsonGltf(context, data);
+
+  if (!result.model) {
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
+
+  return resolveExternalData(
+             asyncSystem,
+             baseUrl,
+             headers,
+             pAssetAccessor,
+             options,
+             std::move(result))
+      .thenInWorkerThread([options](GltfReaderResult&& result) {
+        postprocess(result, options);
+        return std::move(result);
+      });
+}
+
+CesiumAsync::Future<GltfReaderResult> GltfReader::readGltfAndExternalData(
+    const rapidjson::Document& document,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const CesiumAsync::HttpHeaders& headers,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::string& baseUrl,
+    const GltfReaderOptions& options) const {
+  const CesiumJsonReader::JsonReaderOptions& context = this->getExtensions();
+  GltfReaderResult result = readJsonGltf(context, document);
 
   if (!result.model) {
     return asyncSystem.createResolvedFuture(std::move(result));

@@ -1,8 +1,5 @@
 #include "SimplePrepareRendererResource.h"
 
-#include <Cesium3DTiles/GroupMetadata.h>
-#include <Cesium3DTiles/MetadataQuery.h>
-#include <Cesium3DTiles/Schema.h>
 #include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -25,6 +22,9 @@
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumTilesetJson/GroupMetadata.h>
+#include <CesiumTilesetJson/MetadataQuery.h>
+#include <CesiumTilesetJson/Schema.h>
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
@@ -51,6 +51,7 @@ using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
+using namespace CesiumTilesetJson;
 using namespace CesiumNativeTests;
 
 class GroupSelectorDelegate : public ViewStateVisibilityDelegate {

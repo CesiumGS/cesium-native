@@ -4,6 +4,7 @@
 
 #include <Cesium3DTilesContent/GltfConverterResult.h>
 #include <Cesium3DTilesContent/GltfConverters.h>
+#include <Cesium3DTilesContent/ImplicitTileSubdivisionScheme.h>
 #include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
 #include <Cesium3DTilesContent/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/BoundingVolume.h>
@@ -24,7 +25,9 @@
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Result.h>
 
+#include <fmt/format.h>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
@@ -118,8 +121,7 @@ std::vector<Tile> populateSubtree(
               relativeChildMortonID)) {
         if (subtreeAvailability.isContentAvailable(
                 relativeChildLevel,
-                relativeChildMortonID,
-                0)) {
+                relativeChildMortonID)) {
           children.emplace_back(&loader, childID);
         } else {
           children.emplace_back(&loader, childID, TileEmptyContent{});
@@ -290,22 +292,29 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
                this->_subtreeLevels,
                asyncSystem,
                pAssetAccessor,
-               pLogger,
                subtreeUrl,
                requestHeaders)
-        .thenInMainThread([this, pAssetAccessor, subtreeID](
-                              std::optional<SubtreeAvailability>&&
+        .thenInMainThread([this, pAssetAccessor, subtreeID, pLogger](
+                              CesiumUtility::Result<SubtreeAvailability>&&
                                   subtreeAvailability) mutable {
-          if (subtreeAvailability) {
+          if (subtreeAvailability.value) {
             this->addSubtreeAvailability(
                 subtreeID,
-                std::move(*subtreeAvailability));
+                std::move(*subtreeAvailability.value));
 
             // tell client to retry later
             return TileLoadResult::createRetryLaterResult(
                 pAssetAccessor,
                 nullptr);
           } else {
+            std::string promptString = fmt::format(
+                "Encountered errors while loading subtree at level "
+                "{}, x = {}, y = {}, z = {}:",
+                subtreeID.level,
+                subtreeID.x,
+                subtreeID.y,
+                subtreeID.z);
+            subtreeAvailability.errors.log(pLogger, promptString);
             // Subtree load failed, so this tile fails, too.
             return TileLoadResult::createFailedResult(pAssetAccessor, nullptr);
           }
@@ -314,7 +323,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // subtree is available, so check if tile has content or not. If it has, then
   // request it
-  if (!subtreeIt->second.isContentAvailable(subtreeID, *pOctreeID, 0)) {
+  if (!subtreeIt->second.isContentAvailable(subtreeID, *pOctreeID)) {
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},

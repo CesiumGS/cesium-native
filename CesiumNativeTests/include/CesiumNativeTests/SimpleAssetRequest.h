@@ -37,4 +37,22 @@ public:
   CesiumAsync::HttpHeaders requestHeaders;
   std::unique_ptr<SimpleAssetResponse> pResponse;
 };
+
+/**
+ * @brief Creates a successful asset request with the given parameters.
+ */
+std::unique_ptr<SimpleAssetRequest> createSuccessfulRequest(
+    const std::string& method,
+    const std::string& url,
+    const CesiumAsync::HttpHeaders& headers,
+    std::vector<std::byte>&& data);
+
+/**
+ * @brief Creates a failed asset request with the given parameters.
+ */
+std::unique_ptr<SimpleAssetRequest> createFailedRequest(
+    const std::string& method,
+    const std::string& url,
+    const CesiumAsync::HttpHeaders& headers);
+
 } // namespace CesiumNativeTests
