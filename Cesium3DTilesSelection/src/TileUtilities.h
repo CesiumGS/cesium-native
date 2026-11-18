@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
 #include <CesiumGeospatial/CartographicPolygon.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 
@@ -11,13 +11,12 @@ namespace CesiumImpl {
 /**
  * @brief Returns whether the tile is completely inside a polygon.
  *
- * @param boundingVolume The @ref Cesium3DTilesSelection::BoundingVolume of the
- * tile.
+ * @param boundingVolume The @ref Cesium3DTiles::BoundingVolume of the tile.
  * @param cartographicPolygons The list of polygons to check.
  * @return Whether the tile is completely inside a polygon.
  */
 bool withinPolygons(
-    const BoundingVolume& boundingVolume,
+    const Cesium3DTiles::BoundingVolume& boundingVolume,
     const std::vector<CesiumGeospatial::CartographicPolygon>&
         cartographicPolygons,
     const CesiumGeospatial::Ellipsoid& ellipsoid
@@ -26,13 +25,12 @@ bool withinPolygons(
 /**
  * @brief Returns whether the tile is completely outside all the polygons.
  *
- * @param boundingVolume The @ref Cesium3DTilesSelection::BoundingVolume of the
- * tile.
+ * @param boundingVolume The @ref Cesium3DTiles::BoundingVolume of the tile.
  * @param cartographicPolygons The list of polygons to check.
  * @return Whether the tile is completely outside all the polygons.
  */
 bool outsidePolygons(
-    const BoundingVolume& boundingVolume,
+    const Cesium3DTiles::BoundingVolume& boundingVolume,
     const std::vector<CesiumGeospatial::CartographicPolygon>&
         cartographicPolygons,
     const CesiumGeospatial::Ellipsoid& ellipsoid

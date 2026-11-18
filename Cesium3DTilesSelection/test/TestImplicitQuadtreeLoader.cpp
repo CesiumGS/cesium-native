@@ -1,7 +1,6 @@
 #include "ImplicitQuadtreeLoader.h"
 
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTiles/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -14,6 +13,7 @@
 #include <CesiumGeospatial/S2CellID.h>
 #include <CesiumGltf/Extension3dTilesSubtree.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -39,7 +39,7 @@
 #include <vector>
 
 using namespace doctest;
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -57,7 +57,7 @@ CesiumGltf::Model createEmptySubtreeGltf() {
 } // namespace
 
 TEST_CASE("Test implicit quadtree loader") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -256,7 +256,7 @@ findTile(const std::vector<Tile>& children, const QuadtreeTileID& tileID) {
 } // namespace
 
 TEST_CASE("Test tile subdivision for implicit quadtree loader") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});

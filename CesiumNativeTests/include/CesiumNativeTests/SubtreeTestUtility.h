@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
+#include <Cesium3DTiles/SubtreeAvailability.h>
 #include <CesiumGeometry/QuadtreeTileID.h>
 
 #include <rapidjson/document.h>
@@ -53,11 +53,9 @@ private:
 
 public:
   std::vector<std::byte> buffers;
-  Cesium3DTilesContent::SubtreeAvailability::AvailabilityView tileAvailability;
-  Cesium3DTilesContent::SubtreeAvailability::AvailabilityView
-      subtreeAvailability;
-  Cesium3DTilesContent::SubtreeAvailability::AvailabilityView
-      contentAvailability;
+  Cesium3DTiles::SubtreeAvailability::AvailabilityView tileAvailability;
+  Cesium3DTiles::SubtreeAvailability::AvailabilityView subtreeAvailability;
+  Cesium3DTiles::SubtreeAvailability::AvailabilityView contentAvailability;
 };
 
 /**

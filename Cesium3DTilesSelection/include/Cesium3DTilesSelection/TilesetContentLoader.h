@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/BoundingVolume.h>
 #include <Cesium3DTilesSelection/Library.h>
 #include <Cesium3DTilesSelection/SampleHeightResult.h>
 #include <Cesium3DTilesSelection/TileContent.h>

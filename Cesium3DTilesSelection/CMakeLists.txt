@@ -41,11 +41,12 @@ cesium_target_include_directories(
 
 target_link_libraries(Cesium3DTilesSelection
     PUBLIC
-        Cesium3DTilesContent
+        Cesium3DTiles
         CesiumAsync
         CesiumGeospatial
         CesiumGeometry
         CesiumGltf
+        CesiumGltfConverters
         CesiumGltfReader
         CesiumImage
         CesiumQuantizedMeshTerrain

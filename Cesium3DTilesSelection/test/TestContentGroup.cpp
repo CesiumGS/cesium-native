@@ -1,6 +1,5 @@
 #include "SimplePrepareRendererResource.h"
 
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -17,6 +16,7 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -158,7 +158,7 @@ static ViewState zoomToTileset(const Tileset& tileset, int64_t group = -1) {
 }
 
 TEST_CASE("Test additive refinement with groups sanity check") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "Groups";
@@ -341,7 +341,7 @@ TEST_CASE("Test additive refinement with groups sanity check") {
 }
 
 TEST_CASE("Test additive refinement with groups") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
   testDataPath = testDataPath / "Groups";
