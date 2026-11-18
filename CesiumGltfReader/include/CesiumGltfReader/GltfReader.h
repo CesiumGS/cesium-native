@@ -273,8 +273,8 @@ public:
       const GltfReaderOptions& options = GltfReaderOptions()) const;
 
   /**
-   * @brief Read a glTF or binary glTF (GLB) from a `rapidjson::Document` and
-   * then resolve external references.
+   * @brief Read a glTF from a `rapidjson::Document` and then resolve external
+   * references.
    *
    * @param document The `rapidjson::Document`.
    * @param asyncSystem The async system to use for resolving external data.

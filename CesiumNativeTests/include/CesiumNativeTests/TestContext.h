@@ -15,12 +15,12 @@ namespace CesiumNativeTests {
 template <typename TTaskProcessor> struct TestContext {
   using RequestMap = std::map<std::string, std::shared_ptr<SimpleAssetRequest>>;
 
-  std::shared_ptr<SimpleAssetAccessor> pAssetAccessor;
-  CesiumAsync::AsyncSystem asyncSystem;
-
   TestContext(RequestMap&& requests = {})
       : pAssetAccessor(
             std::make_shared<SimpleAssetAccessor>(std::move(requests))),
         asyncSystem(std::make_shared<TTaskProcessor>()) {}
+
+  std::shared_ptr<SimpleAssetAccessor> pAssetAccessor;
+  CesiumAsync::AsyncSystem asyncSystem;
 };
 } // namespace CesiumNativeTests

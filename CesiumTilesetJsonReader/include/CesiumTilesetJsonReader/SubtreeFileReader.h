@@ -133,7 +133,7 @@ public:
    * @param requestHeaders Headers that were included in the request for the
    * initial subtree file and should be included for any additional resources
    * that are required.
-   * @param data The subtree file data that was obtained.
+   * @param document The JSON document that was obtained.
    * @return A future that resolves to the result of loading the subtree.
    */
   CesiumAsync::Future<

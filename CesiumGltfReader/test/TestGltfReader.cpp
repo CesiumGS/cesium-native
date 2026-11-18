@@ -24,6 +24,7 @@
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
+#include <CesiumNativeTests/TestContext.h>
 #include <CesiumNativeTests/readFile.h>
 #include <CesiumNativeTests/waitForFuture.h>
 #include <CesiumUtility/JsonValue.h>
@@ -1730,52 +1731,57 @@ TEST_CASE("Decode buffer with data URI whose length does match the buffer's "
 }
 
 namespace {
-struct TestContext {
-  std::shared_ptr<SimpleTaskProcessor> pMockTaskProcessor;
-  CesiumAsync::AsyncSystem asyncSystem;
-  std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor;
+struct GltfReaderTestContext : public TestContext<SimpleTaskProcessor> {
+private:
+  GltfReaderTestContext(const std::string& url_, RequestMap&& requestMap = {})
+      : TestContext(std::move(requestMap)), url(url_) {}
+
+public:
+  static GltfReaderTestContext createForFile(
+      const std::string& subdirectory,
+      const std::string& gltfFilename);
+
   std::string url;
-
-  TestContext(std::string subdirectory, std::string gltfFilename)
-      : pMockTaskProcessor(std::make_shared<SimpleTaskProcessor>()),
-        asyncSystem(pMockTaskProcessor),
-        pMockAssetAccessor(nullptr),
-        url() {
-    std::filesystem::path dataDir(CesiumGltfReader_TEST_DATA_DIR);
-    std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest;
-    for (const auto& entry : std::filesystem::recursive_directory_iterator(
-             dataDir / subdirectory)) {
-      if (!entry.is_regular_file())
-        continue;
-      auto pResponse = std::make_unique<SimpleAssetResponse>(
-          uint16_t(200),
-          "application/binary",
-          CesiumAsync::HttpHeaders{},
-          readFile(entry.path()));
-      std::string uri = "file:///" + StringHelpers::toStringUtf8(
-                                         entry.path().generic_u8string());
-      auto pRequest = std::make_unique<SimpleAssetRequest>(
-          "GET",
-          uri,
-          CesiumAsync::HttpHeaders{},
-          std::move(pResponse));
-      mapUrlToRequest[uri] = std::move(pRequest);
-    }
-
-    pMockAssetAccessor =
-        std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
-
-    url = "file:///" +
-          StringHelpers::toStringUtf8(std::filesystem::directory_entry(
-                                          dataDir / subdirectory / gltfFilename)
-                                          .path()
-                                          .generic_u8string());
-  }
 };
+
+/*static*/ GltfReaderTestContext GltfReaderTestContext::createForFile(
+    const std::string& subdirectory,
+    const std::string& gltfFilename) {
+  std::filesystem::path dataDir(CesiumGltfReader_TEST_DATA_DIR);
+  std::map<std::string, std::shared_ptr<SimpleAssetRequest>> requestMap;
+  for (const auto& entry :
+       std::filesystem::recursive_directory_iterator(dataDir / subdirectory)) {
+    if (!entry.is_regular_file())
+      continue;
+    auto pResponse = std::make_unique<SimpleAssetResponse>(
+        uint16_t(200),
+        "application/binary",
+        CesiumAsync::HttpHeaders{},
+        readFile(entry.path()));
+    std::string uri = "file:///" + StringHelpers::toStringUtf8(
+                                       entry.path().generic_u8string());
+    auto pRequest = std::make_unique<SimpleAssetRequest>(
+        "GET",
+        uri,
+        CesiumAsync::HttpHeaders{},
+        std::move(pResponse));
+    requestMap[uri] = std::move(pRequest);
+  }
+
+  std::string url = "file:///" + StringHelpers::toStringUtf8(
+                                     std::filesystem::directory_entry(
+                                         dataDir / subdirectory / gltfFilename)
+                                         .path()
+                                         .generic_u8string());
+
+  return GltfReaderTestContext(url, std::move(requestMap));
+}
 } // namespace
 
 TEST_CASE("GltfReader::readGltfAndExternalData") {
-  TestContext context("BoxTexturedWebp", "BoxTexturedWebp.gltf");
+  auto context = GltfReaderTestContext::createForFile(
+      "BoxTexturedWebp",
+      "BoxTexturedWebp.gltf");
   using namespace std::string_literals;
 
   std::string s = R"(
@@ -1824,18 +1830,20 @@ TEST_CASE("GltfReader::readGltfAndExternalData") {
         std::span(reinterpret_cast<const std::byte*>(s.c_str()), s.size()),
         context.asyncSystem,
         CesiumAsync::HttpHeaders{},
-        context.pMockAssetAccessor,
+        context.pAssetAccessor,
         context.url);
     result = waitForFuture(context.asyncSystem, std::move(future));
   }
   SUBCASE("from JSON document") {
     rapidjson::Document document;
     document.Parse(s.c_str());
+    REQUIRE_FALSE(document.IsNull());
+
     Future<GltfReaderResult> future = reader.readGltfAndExternalData(
         document,
         context.asyncSystem,
         CesiumAsync::HttpHeaders{},
-        context.pMockAssetAccessor,
+        context.pAssetAccessor,
         context.url);
     result = waitForFuture(context.asyncSystem, std::move(future));
   }
@@ -1855,47 +1863,19 @@ TEST_CASE("GltfReader::readGltfAndExternalData") {
 }
 
 TEST_CASE("GltfReader::loadGltf") {
-  auto pMockTaskProcessor = std::make_shared<SimpleTaskProcessor>();
-  CesiumAsync::AsyncSystem asyncSystem{pMockTaskProcessor};
-
-  std::filesystem::path dataDir(CesiumGltfReader_TEST_DATA_DIR);
-
-  std::map<std::string, std::shared_ptr<SimpleAssetRequest>> mapUrlToRequest;
-
-  for (const auto& entry : std::filesystem::recursive_directory_iterator(
-           dataDir / "DracoCompressed")) {
-    if (!entry.is_regular_file())
-      continue;
-    auto pResponse = std::make_unique<SimpleAssetResponse>(
-        uint16_t(200),
-        "application/binary",
-        CesiumAsync::HttpHeaders{},
-        readFile(entry.path()));
-    std::string url = "file:///" + StringHelpers::toStringUtf8(
-                                       entry.path().generic_u8string());
-    auto pRequest = std::make_unique<SimpleAssetRequest>(
-        "GET",
-        url,
-        CesiumAsync::HttpHeaders{},
-        std::move(pResponse));
-    mapUrlToRequest[url] = std::move(pRequest);
-  }
-
-  auto pMockAssetAccessor =
-      std::make_shared<SimpleAssetAccessor>(std::move(mapUrlToRequest));
-
-  std::string uri =
-      "file:///" + StringHelpers::toStringUtf8(
-                       std::filesystem::directory_entry(
-                           dataDir / "DracoCompressed" / "CesiumMilkTruck.gltf")
-                           .path()
-                           .generic_u8string());
+  GltfReaderTestContext context = GltfReaderTestContext::createForFile(
+      "DracoCompressed",
+      "CesiumMilkTruck.gltf");
 
   SUBCASE("loads glTF") {
     GltfReader reader{};
-    Future<GltfReaderResult> future =
-        reader.loadGltf(asyncSystem, uri, {}, pMockAssetAccessor);
-    GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
+    Future<GltfReaderResult> future = reader.loadGltf(
+        context.asyncSystem,
+        context.url,
+        {},
+        context.pAssetAccessor);
+    GltfReaderResult result =
+        waitForFuture(context.asyncSystem, std::move(future));
     REQUIRE(result.model);
     CHECK(result.errors.empty());
     // There will be warnings, because this model has accessors that don't
@@ -1921,9 +1901,14 @@ TEST_CASE("GltfReader::loadGltf") {
     GltfReaderOptions options;
     options.resolveExternalImages = false;
     GltfReader reader{};
-    Future<GltfReaderResult> future =
-        reader.loadGltf(asyncSystem, uri, {}, pMockAssetAccessor, options);
-    GltfReaderResult result = waitForFuture(asyncSystem, std::move(future));
+    Future<GltfReaderResult> future = reader.loadGltf(
+        context.asyncSystem,
+        context.url,
+        {},
+        context.pAssetAccessor,
+        options);
+    GltfReaderResult result =
+        waitForFuture(context.asyncSystem, std::move(future));
     REQUIRE(result.model);
     CHECK(result.errors.empty());
     // There will be warnings, because this model has accessors that don't
