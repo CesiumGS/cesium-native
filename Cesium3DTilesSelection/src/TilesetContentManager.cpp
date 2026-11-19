@@ -748,9 +748,9 @@ namespace {
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetContentLoader>>
 createTilesetGltfLoader(
     CesiumGltfReader::GltfReaderResult&& gltfResult,
-    CesiumAsync::AsyncSystem asyncSystem,
-    const std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
-    const std::shared_ptr<spdlog::logger> pLogger,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<spdlog::logger>& pLogger,
     const std::string& url,
     const CesiumAsync::HttpHeaders& headers,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
