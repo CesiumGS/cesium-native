@@ -61,6 +61,7 @@
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <rapidjson/document.h>
+#include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
