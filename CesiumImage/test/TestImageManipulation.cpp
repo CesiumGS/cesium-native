@@ -332,4 +332,26 @@ TEST_CASE("ImageManipulation::blitImage") {
         false);
     verifyTargetUnchanged();
   }
+
+  SUBCASE("returns false when target pixel data is smaller than its "
+          "dimensions") {
+    // Enough bytes for the copied rows, but not for the rows they start after.
+    target.pixelData.resize(size_t(
+        targetRect.height * target.width * target.channels *
+        target.bytesPerChannel));
+    CHECK(
+        ImageManipulation::blitImage(target, targetRect, source, sourceRect) ==
+        false);
+  }
+
+  SUBCASE("returns false when source pixel data is smaller than its "
+          "dimensions") {
+    source.pixelData.resize(size_t(
+        sourceRect.height * source.width * source.channels *
+        source.bytesPerChannel));
+    CHECK(
+        ImageManipulation::blitImage(target, targetRect, source, sourceRect) ==
+        false);
+    verifyTargetUnchanged();
+  }
 }

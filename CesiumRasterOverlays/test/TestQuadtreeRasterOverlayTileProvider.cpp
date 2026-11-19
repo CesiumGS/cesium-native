@@ -72,6 +72,14 @@ public:
   // The tiles that will return an error from loadQuadtreeTileImage.
   std::vector<QuadtreeTileID> errorTiles;
 
+  // Tiles that will return an image of a size other than the declared one.
+  struct TileImageSize {
+    QuadtreeTileID tileID;
+    int32_t width;
+    int32_t height;
+  };
+  std::vector<TileImageSize> tileImageSizes;
+
   virtual CesiumAsync::Future<LoadedRasterOverlayImage>
   loadQuadtreeTileImage(const QuadtreeTileID& tileID) const {
     LoadedRasterOverlayImage result;
@@ -81,15 +89,29 @@ public:
         errorTiles.end()) {
       result.errorList.emplaceError("Tile errored.");
     } else {
+      int32_t width = int32_t(this->getWidth());
+      int32_t height = int32_t(this->getHeight());
+
+      auto sizeIt = std::find_if(
+          this->tileImageSizes.begin(),
+          this->tileImageSizes.end(),
+          [&tileID](const TileImageSize& size) {
+            return size.tileID == tileID;
+          });
+      if (sizeIt != this->tileImageSizes.end()) {
+        width = sizeIt->width;
+        height = sizeIt->height;
+      }
+
       // Return an image where every component of every pixel is equal to the
       // tile level.
       result.pImage.emplace();
-      result.pImage->width = int32_t(this->getWidth());
-      result.pImage->height = int32_t(this->getHeight());
+      result.pImage->width = width;
+      result.pImage->height = height;
       result.pImage->bytesPerChannel = 1;
       result.pImage->channels = 4;
       result.pImage->pixelData.resize(
-          static_cast<size_t>(this->getWidth() * this->getHeight() * 4),
+          size_t(width) * size_t(height) * 4,
           std::byte(tileID.level));
     }
 
@@ -244,5 +266,70 @@ TEST_CASE("QuadtreeRasterOverlayTileProvider getTile") {
         image.pixelData.begin(),
         image.pixelData.end(),
         [](std::byte b) { return b == std::byte(8); }));
+  }
+
+  SUBCASE("bounds the combined image when tiles report inconsistent "
+          "dimensions") {
+    glm::dvec2 center(0.1, 0.2);
+
+    TestTileProvider* pTestProvider =
+        static_cast<TestTileProvider*>(pActivated->getTileProvider());
+
+    // Select a rectangle that spans four tiles at tile level 8.
+    uint32_t expectedLevel = 8;
+    std::optional<QuadtreeTileID> centerTileID =
+        pTestProvider->getTilingScheme().positionToTile(center, expectedLevel);
+    REQUIRE(centerTileID);
+
+    Rectangle centerRectangle =
+        pTestProvider->getTilingScheme().tileToRectangle(*centerTileID);
+    Rectangle tileRectangle(
+        centerRectangle.minimumX - centerRectangle.computeWidth() * 0.5,
+        centerRectangle.minimumY - centerRectangle.computeHeight() * 0.5,
+        centerRectangle.maximumX + centerRectangle.computeWidth() * 0.5,
+        centerRectangle.maximumY + centerRectangle.computeHeight() * 0.5);
+
+    uint32_t rasterSSE = 2;
+    glm::dvec2 targetScreenPixels = glm::dvec2(
+        pTestProvider->getWidth() * 2 * rasterSSE,
+        pTestProvider->getHeight() * 2 * rasterSSE);
+
+    // A very wide tile and a very tall tile set the two resolutions apart.
+    std::optional<QuadtreeTileID> southwestID =
+        pTestProvider->getTilingScheme().positionToTile(
+            tileRectangle.getLowerLeft(),
+            expectedLevel);
+    REQUIRE(southwestID);
+
+    std::optional<QuadtreeTileID> northeastID =
+        pTestProvider->getTilingScheme().positionToTile(
+            tileRectangle.getUpperRight(),
+            expectedLevel);
+    REQUIRE(northeastID);
+
+    pTestProvider->tileImageSizes.push_back({*southwestID, 32768, 1});
+    pTestProvider->tileImageSizes.push_back({*northeastID, 1, 32769});
+
+    IntrusivePointer<RasterOverlayTile> pTile =
+        pActivated->getTile(tileRectangle, targetScreenPixels);
+    pActivated->loadTile(*pTile);
+
+    while (pTile->getState() != RasterOverlayTile::LoadState::Loaded) {
+      asyncSystem.dispatchMainThreadTasks();
+    }
+
+    REQUIRE(pTile->getImage());
+
+    int32_t maximumTextureSize = pOverlay->getOptions().maximumTextureSize;
+
+    const ImageAsset& image = *pTile->getImage();
+    size_t expectedBytes = size_t(image.width) * size_t(image.height) *
+                           size_t(image.channels) *
+                           size_t(image.bytesPerChannel);
+    CHECK(image.width > 0);
+    CHECK(image.height > 0);
+    CHECK(image.width <= maximumTextureSize);
+    CHECK(image.height <= maximumTextureSize);
+    CHECK(image.pixelData.size() == expectedBytes);
   }
 }
