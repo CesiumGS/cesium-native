@@ -452,7 +452,7 @@ void parseTilesetMetadata(
   }
   metadata.asset = asset;
 
-  // In the future, rework TilesetMetadata to be less tied to the 3D
+  // Future TODO: rework TilesetMetadata to be less tied to the 3D
   // Tiles 1.1 spec so the other properties from EXT_structural_metadata can be
   // converted.
 }

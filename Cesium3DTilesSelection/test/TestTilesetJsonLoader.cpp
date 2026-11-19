@@ -656,7 +656,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
 
     // The cmpt file is shorter than the 16-byte header, so the converter
     // reports a warning and produces no model.
-    auto tileLoadResult = loadTileContent(
+    auto tileLoadResult = mockLoadTileContent(
         testDataPath / "MultipleKindsOfTilesets" / tileID,
         *loaderResult.pLoader,
         *pRootTile);

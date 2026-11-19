@@ -6,6 +6,7 @@
 #include "logTileLoadResult.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/FileFormat.h>
 #include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -69,6 +70,7 @@
 #include <variant>
 #include <vector>
 
+using namespace Cesium3DTiles;
 using namespace CesiumGltfConverters;
 using namespace CesiumTilesetJson;
 using namespace CesiumTilesetJsonReader;
@@ -728,52 +730,51 @@ TileLoadResult parseJsonContentInWorkerThread(
         pAssetAccessor,
         std::move(pCompletedRequest));
   }
-  if (const auto typeIt = jsonContent.FindMember("type");
-      typeIt != jsonContent.MemberEnd()) {
+
+  auto format = FileFormat::getBestFittingFormat(jsonContent);
+  if (format == FileFormat::Type::GeoJson) {
     auto geoJson = CesiumVectorData::GeoJsonDocument::fromGeoJson(jsonContent);
-    if (!geoJson.value.has_value() || geoJson.errors.hasErrors()) {
+    if (!geoJson.value || geoJson.errors.hasErrors()) {
       SPDLOG_LOGGER_ERROR(pLogger, "Error parsing GeoJson document");
       return TileLoadResult::createFailedResult(
           pAssetAccessor,
           std::move(pCompletedRequest));
-    } else {
-      CesiumVectorData::ConverterResult converterResult =
-          CesiumVectorData::GltfConverter::convert(
-              *geoJson.value,
-              ellipsoid,
-              pExternalSchema);
-      if (converterResult.value.has_value() &&
-          !converterResult.errors.hasErrors()) {
-        return TileLoadResult{
-            std::move(*converterResult.value),
-            CesiumGeometry::Axis::Y,
-            std::nullopt,
-            std::nullopt,
-            std::nullopt,
-            pAssetAccessor,
-            std::move(pCompletedRequest),
-            {},
-            TileLoadResultState::Success,
-            ellipsoid};
-      } else {
-        SPDLOG_LOGGER_ERROR(pLogger, "Error converting GeoJson to glTF");
-        return TileLoadResult::createFailedResult(
-            pAssetAccessor,
-            std::move(pCompletedRequest));
-      }
     }
-  } else {
-    return parseExternalTilesetInWorkerThread(
-        tileTransform,
-        upAxis,
-        tileRefine,
-        pLogger,
+
+    CesiumVectorData::ConverterResult converterResult =
+        CesiumVectorData::GltfConverter::convert(
+            *geoJson.value,
+            ellipsoid,
+            pExternalSchema);
+    if (converterResult.value && !converterResult.errors.hasErrors()) {
+      return TileLoadResult{
+          std::move(*converterResult.value),
+          CesiumGeometry::Axis::Y,
+          std::nullopt,
+          std::nullopt,
+          std::nullopt,
+          pAssetAccessor,
+          std::move(pCompletedRequest),
+          {},
+          TileLoadResultState::Success,
+          ellipsoid};
+    }
+    SPDLOG_LOGGER_ERROR(pLogger, "Error converting GeoJson to glTF");
+    return TileLoadResult::createFailedResult(
         pAssetAccessor,
-        std::move(pCompletedRequest),
-        std::move(externalContentInitializer),
-        ellipsoid,
-        std::move(jsonContent));
+        std::move(pCompletedRequest));
   }
+
+  return parseExternalTilesetInWorkerThread(
+      tileTransform,
+      upAxis,
+      tileRefine,
+      pLogger,
+      pAssetAccessor,
+      std::move(pCompletedRequest),
+      std::move(externalContentInitializer),
+      ellipsoid,
+      std::move(jsonContent));
 }
 } // namespace
 
