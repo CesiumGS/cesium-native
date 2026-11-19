@@ -1,6 +1,7 @@
 #include "TilesetContentManager.h"
 #include "TilesetHeightQuery.h"
 
+#include <Cesium3DTiles/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/ITileExcluder.h>
 #include <Cesium3DTilesSelection/LoadedTileEnumerator.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
@@ -14,7 +15,6 @@
 #include <Cesium3DTilesSelection/TilesetContentLoaderFactory.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetFrameState.h>
-#include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
 #include <Cesium3DTilesSelection/TilesetSelection.h>
 #include <Cesium3DTilesSelection/TilesetViewGroup.h>
@@ -43,6 +43,7 @@
 #include <utility>
 #include <vector>
 
+using namespace Cesium3DTiles;
 using namespace CesiumAsync;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;

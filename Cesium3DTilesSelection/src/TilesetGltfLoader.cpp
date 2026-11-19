@@ -7,6 +7,7 @@
 
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/TileRefine.h>
+#include <Cesium3DTiles/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileID.h>
@@ -15,7 +16,6 @@
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetContentOptions.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
-#include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -435,7 +435,7 @@ void parseTilesetMetadata(
     const std::string& /*baseUrl*/,
     CesiumGltf::Model&& tilesetGltf,
     TileExternalContent& externalContent) {
-  Cesium3DTilesSelection::TilesetMetadata& metadata = externalContent.metadata;
+  Cesium3DTiles::TilesetMetadata& metadata = externalContent.metadata;
 
   metadata.extensions = std::move(tilesetGltf.extensions);
   metadata.extensionsRequired = std::move(tilesetGltf.extensionsRequired);
@@ -675,7 +675,7 @@ TilesetGltfLoader::createLoader(
 
             // 3DTILES_content_voxels requires the tileset's schema to be
             // loaded.
-            TilesetMetadata& metadata = pExternal->metadata;
+            Cesium3DTiles::TilesetMetadata& metadata = pExternal->metadata;
             if (!metadata.schemaUri) {
               // No schema URI, so this is ready to go.
               return asyncSystem.createResolvedFuture(std::move(result));

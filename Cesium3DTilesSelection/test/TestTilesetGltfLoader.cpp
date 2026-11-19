@@ -2,12 +2,12 @@
 #include "TilesetLoaderTestUtility.h"
 
 #include <Cesium3DTiles/TileRefine.h>
+#include <Cesium3DTiles/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
-#include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/BoundingSphere.h>

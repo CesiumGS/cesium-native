@@ -147,7 +147,7 @@ bool GltfModifier::needsMainThreadModification(const Tile& tile) const {
 
 CesiumAsync::Future<void> GltfModifier::onRegister(
     TilesetContentManager& contentManager,
-    const TilesetMetadata& tilesetMetadata,
+    const Cesium3DTiles::TilesetMetadata& tilesetMetadata,
     const Tile& rootTile) {
   this->_pRootTile = &rootTile;
   contentManager.registerTileRequester(*this);
@@ -171,7 +171,7 @@ CesiumAsync::Future<void> GltfModifier::onRegister(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& /* pAssetAccessor */,
     const std::shared_ptr<spdlog::logger>& /* pLogger */,
-    const TilesetMetadata& /* tilesetMetadata */,
+    const Cesium3DTiles::TilesetMetadata& /* tilesetMetadata */,
     const Tile& /* rootTile */) {
   return asyncSystem.createResolvedFuture();
 }

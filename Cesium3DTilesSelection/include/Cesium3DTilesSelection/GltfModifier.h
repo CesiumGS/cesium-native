@@ -18,9 +18,12 @@ class IAssetAccessor;
 
 } // namespace CesiumAsync
 
+namespace Cesium3DTiles {
+class TilesetMetadata;
+}
+
 namespace Cesium3DTilesSelection {
 
-class TilesetMetadata;
 class TilesetContentManager;
 
 /**
@@ -198,7 +201,7 @@ protected:
       const CesiumAsync::AsyncSystem& asyncSystem,
       const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
       const std::shared_ptr<spdlog::logger>& pLogger,
-      const TilesetMetadata& tilesetMetadata,
+      const Cesium3DTiles::TilesetMetadata& tilesetMetadata,
       const Tile& rootTile);
 
 private:
@@ -211,7 +214,7 @@ private:
    */
   CesiumAsync::Future<void> onRegister(
       TilesetContentManager& contentManager,
-      const TilesetMetadata& tilesetMetadata,
+      const Cesium3DTiles::TilesetMetadata& tilesetMetadata,
       const Tile& rootTile);
 
   /**

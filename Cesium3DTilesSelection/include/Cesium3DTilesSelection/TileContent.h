@@ -1,8 +1,8 @@
 #pragma once
 
+#include <Cesium3DTiles/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/Library.h>
-#include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
@@ -68,7 +68,7 @@ struct CESIUM3DTILESSELECTION_API TileExternalContent
   /**
    * @brief The metadata associated with this tileset.
    */
-  TilesetMetadata metadata;
+  Cesium3DTiles::TilesetMetadata metadata;
 
   /**
    * @brief Indicates that the tile is the root of an implicit tileset.

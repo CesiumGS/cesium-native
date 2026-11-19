@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesSelection/Library.h>
+#include <Cesium3DTiles/Library.h>
 #include <CesiumAsync/SharedFuture.h>
 #include <CesiumTilesetJson/Asset.h>
 #include <CesiumTilesetJson/GroupMetadata.h>
@@ -19,14 +19,14 @@ class AsyncSystem;
 class IAssetAccessor;
 } // namespace CesiumAsync
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTiles {
 
 /**
  * @brief Holds the metadata associated with a @ref Tileset or an external
  * tileset. This holds all of the fields of @ref CesiumTilesetJson::Tileset
  * except for the root tile.
  */
-class CESIUM3DTILESSELECTION_API TilesetMetadata
+class CESIUM3DTILES_API TilesetMetadata
     : public CesiumUtility::ExtensibleObject {
 public:
   ~TilesetMetadata() noexcept;
@@ -113,4 +113,4 @@ private:
   std::shared_ptr<bool> _pLoadingCanceled;
 };
 
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTiles

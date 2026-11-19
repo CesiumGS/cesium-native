@@ -8,6 +8,7 @@
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/FileFormat.h>
 #include <Cesium3DTiles/TileRefine.h>
+#include <Cesium3DTiles/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileID.h>
@@ -16,7 +17,6 @@
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetContentOptions.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
-#include <Cesium3DTilesSelection/TilesetMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/HttpHeaders.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -619,8 +619,7 @@ void removeRootPropertyAndParseTilesetMetadata(
 
   if (tilesetResult.value) {
     CesiumTilesetJson::Tileset& tileset = *tilesetResult.value;
-    Cesium3DTilesSelection::TilesetMetadata& metadata =
-        externalContent.metadata;
+    Cesium3DTiles::TilesetMetadata& metadata = externalContent.metadata;
 
     metadata.asset = std::move(tileset.asset);
     metadata.extensions = std::move(tileset.extensions);

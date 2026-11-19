@@ -9,6 +9,7 @@
 #include <Cesium3DTiles/BoundingVolume.h>
 #include <Cesium3DTiles/FileFormat.h>
 #include <Cesium3DTiles/TileRefine.h>
+#include <Cesium3DTiles/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierState.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>

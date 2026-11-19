@@ -1,4 +1,4 @@
-#include <Cesium3DTilesSelection/TilesetMetadata.h>
+#include <Cesium3DTiles/TilesetMetadata.h>
 #include <CesiumAsync/AsyncSystem.h>
 #include <CesiumAsync/Future.h>
 #include <CesiumAsync/IAssetAccessor.h>
@@ -21,7 +21,7 @@ using namespace CesiumAsync;
 using namespace CesiumTilesetJsonReader;
 using namespace CesiumUtility;
 
-namespace Cesium3DTilesSelection {
+namespace Cesium3DTiles {
 
 TilesetMetadata::~TilesetMetadata() noexcept {
   if (this->_pLoadingCanceled) {
@@ -102,4 +102,4 @@ SharedFuture<void>& TilesetMetadata::loadSchemaUri(
   return *this->_loadingFuture;
 }
 
-} // namespace Cesium3DTilesSelection
+} // namespace Cesium3DTiles

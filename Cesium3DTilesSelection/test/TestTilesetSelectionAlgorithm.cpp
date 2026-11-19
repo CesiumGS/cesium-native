@@ -1,5 +1,6 @@
 #include "SimplePrepareRendererResource.h"
 
+#include <Cesium3DTiles/TilesetMetadata.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -48,6 +49,7 @@
 #include <vector>
 
 using namespace CesiumAsync;
+using namespace Cesium3DTiles;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;

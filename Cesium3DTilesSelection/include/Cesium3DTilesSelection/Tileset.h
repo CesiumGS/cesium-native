@@ -24,10 +24,13 @@
 #include <string>
 #include <vector>
 
+namespace Cesium3DTiles {
+class TilesetMetadata;
+}
+
 namespace Cesium3DTilesSelection {
 
 class TilesetContentManager;
-class TilesetMetadata;
 class TilesetHeightQuery;
 struct TilesetHeightRequest;
 class TilesetSharedAssetSystem;
@@ -336,7 +339,8 @@ public:
    * main tileset.json is returned.
    * @return The found metadata, or nullptr if the root tile is not yet loaded.
    */
-  const TilesetMetadata* getMetadata(const Tile* pTile = nullptr) const;
+  const Cesium3DTiles::TilesetMetadata*
+  getMetadata(const Tile* pTile = nullptr) const;
 
   /**
    * @brief Asynchronously loads the metadata associated with the main
@@ -353,7 +357,7 @@ public:
    * future resolves, @ref getMetadata can be used to synchronously obtain
    * the same metadata instance.
    */
-  CesiumAsync::Future<const TilesetMetadata*> loadMetadata();
+  CesiumAsync::Future<const Cesium3DTiles::TilesetMetadata*> loadMetadata();
 
   /**
    * @brief Initiates an asynchronous query for the height of this tileset at a
