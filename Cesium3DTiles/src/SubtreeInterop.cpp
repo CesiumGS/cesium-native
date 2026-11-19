@@ -1,3 +1,5 @@
+#include "moveExtensibleObjectProperties.h"
+
 #include <Cesium3DTiles/SubtreeInterop.h>
 #include <CesiumGltf/Availability.h>
 #include <CesiumGltf/Buffer.h>
@@ -38,21 +40,11 @@ inline CesiumTilesetJson::BufferCesium
 convertBufferCesium(CesiumGltf::BufferCesium&& buffer) {
   return CesiumTilesetJson::BufferCesium{std::move(buffer.data)};
 }
-
-inline void moveCommonProperties(
-    CesiumUtility::ExtensibleObject& destination,
-    CesiumUtility::ExtensibleObject& source) {
-  // Extensions are omitted since they are not necessarily transferable between
-  // 3D Tiles 1.1 and 2.0.
-  destination.extras = std::move(source.extras);
-  destination.unknownProperties = std::move(source.unknownProperties);
-}
 } // namespace
 
 CesiumUtility::Result<CesiumGltf::Buffer>
 SubtreeInterop::convertBuffer(CesiumTilesetJson::Buffer&& buffer) {
   CesiumGltf::Buffer result;
-
   if (buffer.name) {
     result.name = std::move(*buffer.name);
   }
@@ -60,7 +52,7 @@ SubtreeInterop::convertBuffer(CesiumTilesetJson::Buffer&& buffer) {
   result.byteLength = buffer.byteLength;
   result.cesium = convertBufferCesium(std::move(buffer.cesium));
 
-  moveCommonProperties(result, buffer);
+  moveExtensibleObjectProperties(result, buffer);
   return Result(result);
   ;
 }
@@ -68,7 +60,6 @@ SubtreeInterop::convertBuffer(CesiumTilesetJson::Buffer&& buffer) {
 CesiumUtility::Result<CesiumTilesetJson::Buffer>
 SubtreeInterop::convertBuffer(CesiumGltf::Buffer&& buffer) {
   CesiumTilesetJson::Buffer result;
-
   if (buffer.name.size() > 0) {
     result.name.emplace(std::move(buffer.name));
   }
@@ -85,7 +76,7 @@ SubtreeInterop::convertBuffer(CesiumGltf::Buffer&& buffer) {
     return Result<CesiumTilesetJson::Buffer>(errors);
   }
 
-  moveCommonProperties(result, buffer);
+  moveExtensibleObjectProperties(result, buffer);
   return Result(result);
 }
 
@@ -109,7 +100,7 @@ SubtreeInterop::convertBufferView(CesiumTilesetJson::BufferView&& bufferView) {
   result.byteLength = bufferView.byteLength;
   result.byteOffset = bufferView.byteOffset;
 
-  moveCommonProperties(result, bufferView);
+  moveExtensibleObjectProperties(result, bufferView);
   return result;
 }
 
@@ -125,7 +116,7 @@ SubtreeInterop::convertBufferView(CesiumGltf::BufferView&& bufferView) {
   result.byteLength = bufferView.byteLength;
   result.byteOffset = bufferView.byteOffset;
 
-  moveCommonProperties(result, bufferView);
+  moveExtensibleObjectProperties(result, bufferView);
 
   CesiumUtility::ErrorList errors;
   if (bufferView.byteStride) {
@@ -171,7 +162,7 @@ CesiumGltf::Availability SubtreeInterop::convertAvailability(
       CesiumTilesetJson::Availability::Constant::AVAILABLE);
   result.constant = availability.constant;
 
-  moveCommonProperties(result, availability);
+  moveExtensibleObjectProperties(result, availability);
   return result;
 }
 
@@ -192,7 +183,7 @@ SubtreeInterop::convertAvailability(CesiumGltf::Availability&& availability) {
       CesiumTilesetJson::Availability::Constant::AVAILABLE);
   result.constant = availability.constant;
 
-  moveCommonProperties(result, availability);
+  moveExtensibleObjectProperties(result, availability);
   return result;
 }
 
@@ -326,7 +317,7 @@ mergeContentAvailability(CesiumTilesetJson::Subtree& subtree) {
 CesiumUtility::Result<CesiumGltf::Model>
 SubtreeInterop::convertToGltfModel(CesiumTilesetJson::Subtree&& subtree) {
   CesiumGltf::Model model;
-  moveCommonProperties(model, subtree);
+  moveExtensibleObjectProperties(model, subtree);
 
   // Content availability requires more effort to convert due to multiple
   // contents in 3D Tiles 1.1. Merge it into a single availability object before
