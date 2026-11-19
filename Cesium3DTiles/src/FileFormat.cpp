@@ -1,6 +1,11 @@
 #include <Cesium3DTiles/FileFormat.h>
 
+#include <rapidjson/document.h>
+
+#include <cstddef>
+#include <span>
 #include <string>
+#include <unordered_map>
 
 namespace Cesium3DTiles {
 /*static*/ std::unordered_map<std::string, FileFormat::Type>

@@ -24,6 +24,7 @@
 - Added overloads to `SubtreeFileReader::load` and `GltfReader::readGltfAndExternalData` to accept JSONs that have been already parsed as `rapidjson::Document`s.
 - Added `getBoundingVolumeTransform` and `setBoundingVolumeTransform` to `CesiumGltfContent::GltfUtilities` to interact with transforms on `CesiumGltf::BoundingVolume`s.
 - Added `Cesium3DTiles::getBoundingVolume` methods to create a `Cesium3DTiles::BoundingVolume` from either `CesiumTilesetJson::BoundingVolume` or `CesiumGltf::BoundingVolume`.
+- Added `Cesium3DTiles::FileFormat`, which provides utility for inferring supported 3D Tiles content types from binary and JSON payloads.
 - Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
 - Added `Cesium3DTilesSelection::ViewStateVisibilityDelegate`, which can be specified on a `ViewState` for conditional control over whether to display a tile's content.
 - Added `RasterOverlayCollection::updateTileOverlaysForReplacedContent` and `RasterMappedTo3DTile::prepareForReplacedContent`, which update a tile's raster overlay mappings after its content is replaced, such as by a `GltfModifier`.

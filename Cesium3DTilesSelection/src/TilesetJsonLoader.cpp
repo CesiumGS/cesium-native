@@ -732,6 +732,7 @@ TileLoadResult parseJsonContentInWorkerThread(
   }
 
   auto format = FileFormat::getBestFittingFormat(jsonContent);
+
   if (format == FileFormat::Type::GeoJson) {
     auto geoJson = CesiumVectorData::GeoJsonDocument::fromGeoJson(jsonContent);
     if (!geoJson.value || geoJson.errors.hasErrors()) {

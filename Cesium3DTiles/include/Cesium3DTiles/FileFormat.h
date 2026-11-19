@@ -69,7 +69,7 @@ public:
     LayerJson,
     /**
      * @brief A GeoJSON file, supported in 3D Tiles through @ref
-     * CesiumTilesetJson::ExtensionMaxarContentGeojson
+     * CesiumTilesetJson::ExtensionTilesetMaxarContentGeojson.
      */
     GeoJson
   };

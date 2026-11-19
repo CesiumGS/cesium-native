@@ -746,7 +746,37 @@ TilesetContentManager::createFromLoader(
 
 namespace {
 CesiumAsync::Future<TilesetContentLoaderResult<TilesetContentLoader>>
-getTilesetGltfLoader() {}
+createTilesetGltfLoader(
+    CesiumGltfReader::GltfReaderResult&& gltfResult,
+    CesiumAsync::AsyncSystem asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor> pAssetAccessor,
+    const std::shared_ptr<spdlog::logger> pLogger,
+    const std::string& url,
+    const CesiumAsync::HttpHeaders& headers,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  if (!gltfResult.model) {
+    std::string error = "Errors while trying to read glTF: ";
+    for (const std::string& e : gltfResult.errors) {
+      error += "- " + e + "\n";
+    }
+    TilesetContentLoaderResult<TilesetContentLoader> result;
+    result.errors.emplaceError(error);
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
+
+  return TilesetGltfLoader::createLoader(
+             asyncSystem,
+             pAssetAccessor,
+             pLogger,
+             url,
+             headers,
+             std::move(*gltfResult.model),
+             ellipsoid)
+      .thenImmediately(
+          [](TilesetContentLoaderResult<TilesetContentLoader>&& result) {
+            return std::move(result);
+          });
+}
 } // namespace
 
 /* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
@@ -807,28 +837,14 @@ TilesetContentManager::createFromUrl(
             CesiumGltfReader::GltfReaderResult gltfResult = gltfReader.readGltf(
                 responseData,
                 contentOptions.toGltfReaderOptions());
-
-            if (!gltfResult.model) {
-              std::string error = "Errors while trying to read glTF: ";
-              for (const std::string& e : gltfResult.errors) {
-                error += "- " + e + "\n";
-              }
-              TilesetContentLoaderResult<TilesetContentLoader> result;
-              result.errors.emplaceError(error);
-              return asyncSystem.createResolvedFuture(std::move(result));
-            }
-
-            return TilesetGltfLoader::createLoader(
-                       asyncSystem,
-                       pAssetAccessor,
-                       pLogger,
-                       url,
-                       pCompletedRequest->headers(),
-                       std::move(*gltfResult.model),
-                       ellipsoid)
-                .thenImmediately(
-                    [](TilesetContentLoaderResult<TilesetContentLoader>&&
-                           result) { return std::move(result); });
+            return createTilesetGltfLoader(
+                std::move(gltfResult),
+                asyncSystem,
+                pAssetAccessor,
+                pLogger,
+                url,
+                pCompletedRequest->headers(),
+                ellipsoid);
           }
 
           // Fall back on JSON and find the best fitting type.
@@ -858,36 +874,23 @@ TilesetContentManager::createFromUrl(
                     pAssetAccessor,
                     url,
                     contentOptions.toGltfReaderOptions())
-                .thenImmediately([asyncSystem,
-                                  pAssetAccessor,
-                                  pLogger,
-                                  url,
-                                  headers = pCompletedRequest->headers(),
-                                  ellipsoid](
-                                     CesiumGltfReader::GltfReaderResult&&
-                                         gltfResult) {
-                  if (!gltfResult.model) {
-                    std::string error = "Errors while trying to read glTF: ";
-                    for (const std::string& e : gltfResult.errors) {
-                      error += "- " + e + "\n";
-                    }
-                    TilesetContentLoaderResult<TilesetContentLoader> result;
-                    result.errors.emplaceError(error);
-                    return asyncSystem.createResolvedFuture(std::move(result));
-                  }
-
-                  return TilesetGltfLoader::createLoader(
-                             asyncSystem,
-                             pAssetAccessor,
-                             pLogger,
-                             url,
-                             headers,
-                             std::move(*gltfResult.model),
-                             ellipsoid)
-                      .thenImmediately(
-                          [](TilesetContentLoaderResult<TilesetContentLoader>&&
-                                 result) { return std::move(result); });
-                });
+                .thenImmediately(
+                    [asyncSystem,
+                     pAssetAccessor,
+                     pLogger,
+                     url,
+                     headers = pCompletedRequest->headers(),
+                     ellipsoid](
+                        CesiumGltfReader::GltfReaderResult&& gltfResult) {
+                      return createTilesetGltfLoader(
+                          std::move(gltfResult),
+                          asyncSystem,
+                          pAssetAccessor,
+                          pLogger,
+                          url,
+                          headers,
+                          ellipsoid);
+                    });
           }
 
           if (type == FileFormat::Type::TilesetJson) {
