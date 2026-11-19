@@ -2,11 +2,10 @@
 
 #include "logTileLoadResult.h"
 
-#include <Cesium3DTilesContent/GltfConverterResult.h>
-#include <Cesium3DTilesContent/GltfConverters.h>
-#include <Cesium3DTilesContent/ImplicitTilingUtilities.h>
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
-#include <Cesium3DTilesSelection/BoundingVolume.h>
+#include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/ImplicitTileSubdivisionScheme.h>
+#include <Cesium3DTiles/ImplicitTilingUtilities.h>
+#include <Cesium3DTiles/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -19,12 +18,19 @@
 #include <CesiumAsync/IAssetRequest.h>
 #include <CesiumAsync/IAssetResponse.h>
 #include <CesiumGeometry/Axis.h>
+#include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/OctreeTileID.h>
+#include <CesiumGeometry/OrientedBoundingBox.h>
+#include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
+#include <CesiumGltfConverters/GltfConverterResult.h>
+#include <CesiumGltfConverters/GltfConverters.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/IntrusivePointer.h>
+#include <CesiumUtility/Result.h>
 
+#include <fmt/format.h>
 #include <glm/ext/matrix_double4x4.hpp>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
@@ -37,9 +43,33 @@
 #include <variant>
 #include <vector>
 
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
+using namespace CesiumGltfConverters;
 
 namespace Cesium3DTilesSelection {
+std::optional<ImplicitOctreeBoundingVolume> getAsImplicitOctreeBoundingVolume(
+    const Cesium3DTiles::BoundingVolume& boundingVolume) {
+  if (const auto* pRegion =
+          std::get_if<CesiumGeospatial::BoundingRegion>(&boundingVolume)) {
+    return ImplicitOctreeBoundingVolume(*pRegion);
+  }
+
+  if (const auto* pBox =
+          std::get_if<CesiumGeometry::OrientedBoundingBox>(&boundingVolume)) {
+    return ImplicitOctreeBoundingVolume(*pBox);
+  }
+
+  if (const auto* pCylinder =
+          std::get_if<CesiumGeometry::BoundingCylinderRegion>(
+              &boundingVolume)) {
+    return ImplicitOctreeBoundingVolume(*pCylinder);
+  }
+
+  // TODO: Support S2 octree subdivision.
+  // Octree does not support bounding sphere subdivision.
+  return std::nullopt;
+}
+
 namespace {
 struct BoundingVolumeSubdivision {
   BoundingVolume operator()(const CesiumGeospatial::BoundingRegion& region) {
@@ -118,8 +148,7 @@ std::vector<Tile> populateSubtree(
               relativeChildMortonID)) {
         if (subtreeAvailability.isContentAvailable(
                 relativeChildLevel,
-                relativeChildMortonID,
-                0)) {
+                relativeChildMortonID)) {
           children.emplace_back(&loader, childID);
         } else {
           children.emplace_back(&loader, childID, TileEmptyContent{});
@@ -290,22 +319,29 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
                this->_subtreeLevels,
                asyncSystem,
                pAssetAccessor,
-               pLogger,
                subtreeUrl,
                requestHeaders)
-        .thenInMainThread([this, pAssetAccessor, subtreeID](
-                              std::optional<SubtreeAvailability>&&
+        .thenInMainThread([this, pAssetAccessor, subtreeID, pLogger](
+                              CesiumUtility::Result<SubtreeAvailability>&&
                                   subtreeAvailability) mutable {
-          if (subtreeAvailability) {
+          if (subtreeAvailability.value) {
             this->addSubtreeAvailability(
                 subtreeID,
-                std::move(*subtreeAvailability));
+                std::move(*subtreeAvailability.value));
 
             // tell client to retry later
             return TileLoadResult::createRetryLaterResult(
                 pAssetAccessor,
                 nullptr);
           } else {
+            std::string promptString = fmt::format(
+                "Encountered errors while loading subtree at level "
+                "{}, x = {}, y = {}, z = {}:",
+                subtreeID.level,
+                subtreeID.x,
+                subtreeID.y,
+                subtreeID.z);
+            subtreeAvailability.errors.log(pLogger, promptString);
             // Subtree load failed, so this tile fails, too.
             return TileLoadResult::createFailedResult(pAssetAccessor, nullptr);
           }
@@ -314,7 +350,7 @@ ImplicitOctreeLoader::loadTileContent(const TileLoadInput& loadInput) {
 
   // subtree is available, so check if tile has content or not. If it has, then
   // request it
-  if (!subtreeIt->second.isContentAvailable(subtreeID, *pOctreeID, 0)) {
+  if (!subtreeIt->second.isContentAvailable(subtreeID, *pOctreeID)) {
     // check if tile has empty content
     return asyncSystem.createResolvedFuture(TileLoadResult{
         TileEmptyContent{},

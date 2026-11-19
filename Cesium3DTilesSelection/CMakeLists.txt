@@ -42,16 +42,17 @@ cesium_target_include_directories(
 target_link_libraries(Cesium3DTilesSelection
     PUBLIC
         Cesium3DTiles
-        Cesium3DTilesContent
-        Cesium3DTilesReader
         CesiumAsync
         CesiumGeospatial
         CesiumGeometry
         CesiumGltf
+        CesiumGltfConverters
         CesiumGltfReader
         CesiumImage
         CesiumQuantizedMeshTerrain
         CesiumRasterOverlays
+        CesiumTilesetJson
+        CesiumTilesetJsonReader
         CesiumUtility
         CesiumVectorData
         spdlog::spdlog

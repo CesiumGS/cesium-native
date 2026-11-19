@@ -3,14 +3,14 @@
 #include "TilesetContentManager.h"
 #include "TilesetJsonLoader.h"
 
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierVersionExtension.h>
 #include <Cesium3DTilesSelection/RasterMappedTo3DTile.h>
 #include <Cesium3DTilesSelection/RasterOverlayCollection.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetExternals.h>
 #include <Cesium3DTilesSelection/TilesetOptions.h>
@@ -35,6 +35,7 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Node.h>
 #include <CesiumGltf/Scene.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumGltfReader/GltfReader.h>
 #include <CesiumImage/ImageAsset.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
@@ -77,6 +78,7 @@
 #include <vector>
 
 using namespace doctest;
+using namespace Cesium3DTiles;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumGeometry;
@@ -85,7 +87,11 @@ using namespace CesiumNativeTests;
 using namespace CesiumRasterOverlays;
 
 namespace {
-std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+auto test3dTilesPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
+auto testTerrainPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) /
+    "quantized-mesh";
 
 class SimpleTilesetContentLoader : public TilesetContentLoader {
 public:
@@ -350,7 +356,7 @@ CesiumGltf::Model createSparseMesh(const GlobeRectangle& rectangle) {
 } // namespace
 
 TEST_CASE("Test the manager can be initialized with correct loaders") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -370,7 +376,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     // create mock request
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"tileset.json",
-         createMockRequest(testDataPath / "Tileset" / "tileset.json")});
+         createMockRequest(test3dTilesPath / "Tileset" / "tileset.json")});
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =
@@ -396,9 +402,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
     // create mock request
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json",
-         createMockRequest(
-             testDataPath / "CesiumTerrainTileJson" /
-             "QuantizedMesh.tile.json")});
+         createMockRequest(testTerrainPath / "QuantizedMesh.tile.json")});
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =
@@ -427,9 +431,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
   SUBCASE("Initialize manager with wrong format") {
     pMockedAssetAccessor->mockCompletedRequests.insert(
         {"layer.json",
-         createMockRequest(
-             testDataPath / "CesiumTerrainTileJson" /
-             "WithAttribution.tile.json")});
+         createMockRequest(testTerrainPath / "WithAttribution.tile.json")});
 
     // construct manager with tileset.json format
     IntrusivePointer<TilesetContentManager> pManager =
@@ -448,7 +450,7 @@ TEST_CASE("Test the manager can be initialized with correct loaders") {
 }
 
 TEST_CASE("Test tile state machine") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -924,7 +926,7 @@ TEST_CASE("Test tile state machine") {
 }
 
 TEST_CASE("Test the tileset content manager's post processing for gltf") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -943,7 +945,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   SUBCASE("Resolve external buffers") {
     // create mock loader
     CesiumGltfReader::GltfReader gltfReader;
-    std::filesystem::path boxPath = testDataPath / "gltf" / "box";
+    std::filesystem::path boxPath = test3dTilesPath / "gltf" / "box";
     std::string fileName = (boxPath / "Box.gltf").string();
     std::vector<std::byte> gltfBoxFile = readFile(fileName);
     auto modelReadResult = gltfReader.readGltf(gltfBoxFile);
@@ -1047,7 +1049,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
           "normal") {
     CesiumGltfReader::GltfReader gltfReader;
     std::vector<std::byte> gltfBoxFile =
-        readFile(testDataPath / "gltf" / "embedded_box" / "Box.glb");
+        readFile(test3dTilesPath / "gltf" / "embedded_box" / "Box.glb");
     auto modelReadResult = gltfReader.readGltf(gltfBoxFile);
     CHECK(modelReadResult.errors.empty());
     CHECK(modelReadResult.model);
@@ -1738,7 +1740,7 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
   }
 
   SUBCASE("Resolve external images, with deduplication") {
-    std::filesystem::path dirPath(testDataPath / "SharedImages");
+    std::filesystem::path dirPath(test3dTilesPath / "SharedImages");
 
     // mock the requests for all files
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
@@ -1906,7 +1908,7 @@ TEST_CASE("IPrepareRendererResources::prepareInLoadThread parameters") {
 }
 
 TEST_CASE("Test glTF modifier state machine") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   // create mock tileset externals
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
@@ -2054,7 +2056,7 @@ TEST_CASE("Test glTF modifier state machine") {
 }
 
 TEST_CASE("Test glTF modifier reapplies raster overlay attributes") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -2280,7 +2282,7 @@ TEST_CASE("Test glTF modifier preserves raster overlay mappings") {
     }
   };
 
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
   auto pRenderer = std::make_shared<RecordingRenderer>();
   auto pModifier = std::make_shared<ReplacementModifier>();
   TilesetExternals externals{

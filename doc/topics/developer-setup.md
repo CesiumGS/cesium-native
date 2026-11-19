@@ -142,7 +142,7 @@ Unit tests can also be run from this solution, under the cesium-native-tests pro
 
 ## Regenerate glTF and 3D Tiles classes
 
-Much of the code in `CesiumGltf`, `Cesium3DTiles`, `CesiumGltfReader`, `CesiumGltfWriter`, `Cesium3DTilesReader`, `Cesium3DTilesWriter`, and `CesiumQuantizedMeshTerrain` is generated from the standards' JSON Schema specifications. To regenerate the code:
+Much of the code in `CesiumGltf`, `CesiumTilesetJson`, `CesiumGltfReader`, `CesiumGltfWriter`, `CesiumTilesetJsonReader`, `CesiumTilesetJsonWriter`, and `CesiumQuantizedMeshTerrain` is generated from the standards' JSON Schema specifications. To regenerate the code:
 
 * Make sure you have a relatively recent version of Node.js installed.
 * Install dependencies by running:

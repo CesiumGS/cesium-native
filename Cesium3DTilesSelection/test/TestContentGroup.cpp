@@ -1,9 +1,5 @@
 #include "SimplePrepareRendererResource.h"
 
-#include <Cesium3DTiles/GroupMetadata.h>
-#include <Cesium3DTiles/MetadataQuery.h>
-#include <Cesium3DTiles/Schema.h>
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
@@ -20,11 +16,15 @@
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/GlobeRectangle.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumTilesetJson/GroupMetadata.h>
+#include <CesiumTilesetJson/MetadataQuery.h>
+#include <CesiumTilesetJson/Schema.h>
 #include <CesiumUtility/Math.h>
 
 #include <doctest/doctest.h>
@@ -51,7 +51,14 @@ using namespace CesiumAsync;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeospatial;
 using namespace CesiumUtility;
+using namespace CesiumTilesetJson;
 using namespace CesiumNativeTests;
+
+namespace {
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1" /
+    "Groups";
+} // namespace
 
 class GroupSelectorDelegate : public ViewStateVisibilityDelegate {
 public:
@@ -157,10 +164,8 @@ static ViewState zoomToTileset(const Tileset& tileset, int64_t group = -1) {
 }
 
 TEST_CASE("Test additive refinement with groups sanity check") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "Groups";
   std::vector<std::string> files{
       "tileset-nogroup.json",
       "tileset2.json",
@@ -340,10 +345,8 @@ TEST_CASE("Test additive refinement with groups sanity check") {
 }
 
 TEST_CASE("Test additive refinement with groups") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
-  std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-  testDataPath = testDataPath / "Groups";
   std::vector<std::string> files{
       "tileset.json",
       "tileset2.json",

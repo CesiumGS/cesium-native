@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
+#include <Cesium3DTiles/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumGeometry/BoundingCylinderRegion.h>
 #include <CesiumGeometry/OctreeTileID.h>
@@ -18,6 +18,9 @@ using ImplicitOctreeBoundingVolume = std::variant<
     CesiumGeospatial::BoundingRegion,
     CesiumGeometry::OrientedBoundingBox,
     CesiumGeometry::BoundingCylinderRegion>;
+
+std::optional<ImplicitOctreeBoundingVolume> getAsImplicitOctreeBoundingVolume(
+    const Cesium3DTiles::BoundingVolume& boundingVolume);
 
 class ImplicitOctreeLoader : public TilesetContentLoader {
 public:
@@ -55,7 +58,7 @@ public:
 
   void addSubtreeAvailability(
       const CesiumGeometry::OctreeTileID& subtreeID,
-      Cesium3DTilesContent::SubtreeAvailability&& subtreeAvailability);
+      Cesium3DTiles::SubtreeAvailability&& subtreeAvailability);
 
 private:
   std::string _baseUrl;
@@ -64,8 +67,7 @@ private:
   uint32_t _subtreeLevels;
   uint32_t _availableLevels;
   ImplicitOctreeBoundingVolume _boundingVolume;
-  std::vector<
-      std::unordered_map<uint64_t, Cesium3DTilesContent::SubtreeAvailability>>
+  std::vector<std::unordered_map<uint64_t, Cesium3DTiles::SubtreeAvailability>>
       _loadedSubtrees;
 };
 } // namespace Cesium3DTilesSelection

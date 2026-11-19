@@ -1,4 +1,3 @@
-#include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumGeometry/Transforms.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/BoundingRegionBuilder.h>
@@ -22,6 +21,7 @@
 #include <CesiumGltf/Scene.h>
 #include <CesiumGltf/Schema.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumTilesetJsonReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumUtility/Assert.h>
 #include <CesiumUtility/ErrorList.h>
 #include <CesiumUtility/IntrusivePointer.h>
@@ -851,7 +851,7 @@ ConverterResult GltfConverter::convert(
 }
 
 ConvertSchemaResult GltfConverter::convertSchema(
-    const Cesium3DTiles::ExtensionSchemaMaxarContentGeoJson& maxarSchema) {
+    const CesiumTilesetJson::ExtensionSchemaMaxarContentGeoJson& maxarSchema) {
   IntrusivePointer<Schema> pSchema;
   Schema& schema = pSchema.emplace();
   schema.id = "default";
