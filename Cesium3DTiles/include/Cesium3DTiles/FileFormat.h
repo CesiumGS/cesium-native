@@ -119,7 +119,7 @@ public:
    * not be deduced.
    */
   static CESIUM3DTILES_API Type
-  getBestFittingFormat(rapidjson::Document& document);
+  getBestFittingFormat(const rapidjson::Document& document);
 
   /**
    * @brief Infers the file format that best fits the given data buffer based on

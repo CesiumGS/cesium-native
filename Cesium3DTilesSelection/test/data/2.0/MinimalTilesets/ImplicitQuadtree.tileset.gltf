@@ -28,7 +28,7 @@
           "subdivisionScheme": "QUADTREE",
           "subtreeLevels": 2,
           "availableLevels": 6,
-          "subtreesUri": "subtrees/{level}/{x}/{y}.subtree.gltf",
+          "subtreeUri": "subtrees/{level}/{x}/{y}.subtree.gltf",
           "contentUri": "content/{level}/{x}/{y}.gltf"
         }
       },

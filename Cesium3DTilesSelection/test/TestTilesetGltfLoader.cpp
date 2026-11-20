@@ -265,24 +265,6 @@ TEST_CASE("Test TilesetGltfLoader") {
     CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
   }
 
-  SUBCASE("Scales geometric error with tile transform") {
-    auto loaderResult = createTilesetGltfLoader(
-        testDataPath / "MinimalTilesets" / "ScaleGeometricError.tileset.gltf");
-
-    CHECK_FALSE(loaderResult.errors.hasErrors());
-    REQUIRE(loaderResult.pRootTile);
-    REQUIRE_EQ(loaderResult.pRootTile->getChildren().size(), 1);
-
-    auto pRootTile = &loaderResult.pRootTile->getChildren()[0];
-    CHECK_EQ(pRootTile->getGeometricError(), Approx(210.0));
-    CHECK_EQ(pRootTile->getChildren().size(), 4);
-    for (const Tile& child : pRootTile->getChildren()) {
-      CHECK_EQ(child.getGeometricError(), Approx(15.0));
-    }
-
-    CHECK_EQ(loaderResult.pLoader->getUpAxis(), CesiumGeometry::Axis::Z);
-  }
-
   SUBCASE("Loads tile with render content") {
     auto loaderResult = createTilesetGltfLoader(
         testDataPath / "ReplacementTileset" / "root.tileset.gltf");

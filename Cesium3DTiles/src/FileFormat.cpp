@@ -46,8 +46,8 @@ FileFormat::getTypeFromMagic(const std::string& magic) {
 }
 
 /*static*/ FileFormat::Type
-FileFormat::getBestFittingFormat(rapidjson::Document& document) {
-  if (document.IsNull()) {
+FileFormat::getBestFittingFormat(const rapidjson::Document& document) {
+  if (document.IsNull() || !document.IsObject()) {
     return Type::Unknown;
   }
 

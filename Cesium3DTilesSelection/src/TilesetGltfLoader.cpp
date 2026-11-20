@@ -29,6 +29,7 @@
 #include <CesiumGltf/Extension3dTilesTilesetVoxels.h>
 #include <CesiumGltf/ExtensionExtGeospatialCrs.h>
 #include <CesiumGltf/ExtensionModel3dTilesTileset.h>
+#include <CesiumGltf/ExtensionModelExtStructuralMetadata.h>
 #include <CesiumGltf/ExtensionNode3dTilesTileset.h>
 #include <CesiumGltf/ExternalAsset.h>
 #include <CesiumGltf/File.h>
@@ -273,18 +274,9 @@ std::optional<Tile> parseGltfNodeRecursively(
   auto tileBoundingVolume =
       Cesium3DTiles::transformBoundingVolume(tileTransform, boundingVolume);
 
-  // Parse geometric error
+  // Parse geometric error and tile refinement
   double geometricError = pTilesetExtension->geometricError;
 
-  const glm::dvec3 scale = glm::dvec3(
-      glm::length(tileTransform[0]),
-      glm::length(tileTransform[1]),
-      glm::length(tileTransform[2]));
-  const double maxScaleComponent =
-      glm::max(scale.x, glm::max(scale.y, scale.z));
-  double tileGeometricError = geometricError * maxScaleComponent;
-
-  // Parse tile refinement
   Cesium3DTiles::TileRefine tileRefine = parentRefine;
   if (pTilesetExtension->refine) {
     CesiumUtility::Result<Cesium3DTiles::TileRefine> parsedRefine =
@@ -292,17 +284,14 @@ std::optional<Tile> parseGltfNodeRecursively(
     if (parsedRefine.value) {
       tileRefine = *parsedRefine.value;
     } else {
-      for (const std::string& error : parsedRefine.errors.errors) {
-        SPDLOG_LOGGER_WARN(pLogger, error);
-      }
-      SPDLOG_LOGGER_WARN(
+      parsedRefine.errors.logError(
           pLogger,
           "Found errors while parsing tile's refine value. The parent value "
           "will be used instead.");
     }
-    for (const std::string& error : parsedRefine.errors.warnings) {
-      SPDLOG_LOGGER_WARN(pLogger, error);
-    }
+    parsedRefine.errors.logWarning(
+        pLogger,
+        "Found warnings while parsing tile's refine value.");
   }
 
   // Parse the external asset to determine tile content URL, if present.
@@ -327,7 +316,7 @@ std::optional<Tile> parseGltfNodeRecursively(
     Tile tile{&currentLoader, TileID(), std::move(pExternalContent)};
     tile.setTransform(tileTransform);
     tile.setBoundingVolume(tileBoundingVolume);
-    tile.setGeometricError(tileGeometricError);
+    tile.setGeometricError(geometricError);
     tile.setRefine(tileRefine);
 
     parseImplicitTileset(*pImplicitTiling, tile, currentLoader);
@@ -377,7 +366,7 @@ std::optional<Tile> parseGltfNodeRecursively(
   tile.setTileID(contentUri.value_or(std::string{}));
   tile.setTransform(tileTransform);
   tile.setBoundingVolume(tileBoundingVolume);
-  tile.setGeometricError(tileGeometricError);
+  tile.setGeometricError(geometricError);
   tile.setRefine(tileRefine);
   tile.setContentBoundingVolume(tileContentBoundingVolume);
   tile.createChildTiles(std::move(childTiles));
@@ -393,6 +382,13 @@ TilesetContentLoaderResult<TilesetGltfLoader> parseTilesetGltf(
     const glm::dmat4& parentTransform,
     Cesium3DTiles::TileRefine parentRefine,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  if (!model.hasExtension<CesiumGltf::ExtensionModel3dTilesTileset>()) {
+    TilesetContentLoaderResult<TilesetGltfLoader> failedResult;
+    failedResult.errors.emplaceError("Input glTF model did not contain a "
+                                     "top-level `3DTILES_tileset` extension.");
+    return failedResult;
+  }
+
   auto pLoader = std::make_unique<TilesetGltfLoader>(baseUrl, ellipsoid);
 
   int32_t sceneIndex = std::max(model.scene, 0);
@@ -437,14 +433,11 @@ void parseTilesetMetadata(
     TileExternalContent& externalContent) {
   Cesium3DTilesSelection::TilesetMetadata& metadata = externalContent.metadata;
 
-  metadata.extensions = std::move(tilesetGltf.extensions);
-  metadata.extensionsRequired = std::move(tilesetGltf.extensionsRequired);
-  metadata.extensionsUsed = std::move(tilesetGltf.extensionsUsed);
-  metadata.extras = std::move(tilesetGltf.extras);
-
   // "Downgrade" to older format.
   CesiumTilesetJson::Asset asset;
   asset.extensions = std::move(tilesetGltf.asset.extensions);
+  asset.extras = std::move(tilesetGltf.extras);
+  asset.unknownProperties = std::move(tilesetGltf.unknownProperties);
   asset.version = tilesetGltf.asset.version;
   if (tilesetGltf.asset.copyright) {
     // For now include this as an extra.
@@ -452,9 +445,26 @@ void parseTilesetMetadata(
   }
   metadata.asset = asset;
 
-  // Future TODO: rework TilesetMetadata to be less tied to the 3D
-  // Tiles 1.1 spec so the other properties from EXT_structural_metadata can be
-  // converted.
+  const auto* pTilesetExtension =
+      tilesetGltf.getExtension<CesiumGltf::ExtensionModel3dTilesTileset>();
+
+  // The model must have had this extension to even get here.
+  CESIUM_ASSERT(pTilesetExtension);
+  metadata.geometricError = pTilesetExtension->geometricError;
+
+  if (const auto* pMetadataExtension =
+          tilesetGltf.getExtension<
+              CesiumGltf::ExtensionModelExtStructuralMetadata>()) {
+    metadata.schemaUri = pMetadataExtension->schemaUri;
+    // Future TODO: rework TilesetMetadata to be less tied to the 3D
+    // Tiles 1.1 spec so the other properties from EXT_structural_metadata can
+    // be converted.
+  }
+
+  metadata.extensions = std::move(tilesetGltf.extensions);
+  metadata.extensionsRequired = std::move(tilesetGltf.extensionsRequired);
+  metadata.extensionsUsed = std::move(tilesetGltf.extensionsUsed);
+  metadata.extras = std::move(tilesetGltf.extras);
 }
 
 TileLoadResult parseExternalTilesetInWorkerThread(
