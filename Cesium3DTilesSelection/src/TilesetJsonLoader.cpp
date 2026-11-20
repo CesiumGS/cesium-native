@@ -1,10 +1,12 @@
 #include "TilesetJsonLoader.h"
 
+#include "ExternalContentInitializer.h"
 #include "ImplicitOctreeLoader.h"
 #include "ImplicitQuadtreeLoader.h"
 #include "logTileLoadResult.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/FileFormat.h>
 #include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
@@ -68,6 +70,7 @@
 #include <variant>
 #include <vector>
 
+using namespace Cesium3DTiles;
 using namespace CesiumGltfConverters;
 using namespace CesiumTilesetJson;
 using namespace CesiumTilesetJsonReader;
@@ -75,35 +78,6 @@ using namespace CesiumUtility;
 
 namespace Cesium3DTilesSelection {
 namespace {
-struct ExternalContentInitializer {
-  // Have to use shared_ptr here to make this functor copyable. Otherwise,
-  // std::function won't work with move-only type as it's a type-erasured
-  // container. Unfortunately, std::move_only_function is scheduled for C++23.
-  std::shared_ptr<TilesetContentLoaderResult<TilesetJsonLoader>>
-      pExternalTilesetLoaders;
-  TilesetJsonLoader* tilesetJsonLoader;
-  TileExternalContent externalContent;
-
-  void operator()(Tile& tile) {
-    TileExternalContent* pExternalContent =
-        tile.getContent().getExternalContent();
-    if (pExternalContent) {
-      *pExternalContent = std::move(externalContent);
-      std::unique_ptr<Tile>& pExternalRoot = pExternalTilesetLoaders->pRootTile;
-      if (pExternalRoot) {
-        // propagate all the external tiles to be the children of this tile
-        std::vector<Tile> children;
-        children.emplace_back(std::move(*pExternalRoot));
-        tile.createChildTiles(std::move(children));
-
-        // save the loader of the external tileset in this loader
-        tilesetJsonLoader->addChildLoader(
-            std::move(pExternalTilesetLoaders->pLoader));
-      }
-    }
-  }
-};
-
 /**
  * @brief Obtains the up-axis that should be used for glTF content of the
  * tileset.
@@ -248,7 +222,8 @@ void createImplicitQuadtreeLoader(
       subtreeUriTemplate,
       subtreeLevels,
       availableLevels,
-      *quadtreeBoundingVolume);
+      *quadtreeBoundingVolume,
+      currentLoader.getUpAxis());
 
   TilesetContentLoader* pImplicitLoader = pLoader.get();
   currentLoader.addChildLoader(std::move(pLoader));
@@ -283,7 +258,8 @@ void createImplicitOctreeLoader(
       subtreeUriTemplate,
       subtreeLevels,
       availableLevels,
-      *octreeBoundingVolume);
+      *octreeBoundingVolume,
+      currentLoader.getUpAxis());
 
   TilesetContentLoader* pImplicitLoader = pLoader.get();
   currentLoader.addChildLoader(std::move(pLoader));
@@ -672,7 +648,7 @@ TileLoadResult parseExternalTilesetInWorkerThread(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
-    ExternalContentInitializer&& externalContentInitializer,
+    ExternalContentInitializer<TilesetJsonLoader>&& externalContentInitializer,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     rapidjson::Document&& tilesetJson) {
   const auto& tileUrl = pCompletedRequest->url();
@@ -734,7 +710,7 @@ TileLoadResult parseJsonContentInWorkerThread(
     const std::shared_ptr<spdlog::logger>& pLogger,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     std::shared_ptr<CesiumAsync::IAssetRequest>&& pCompletedRequest,
-    ExternalContentInitializer&& externalContentInitializer,
+    ExternalContentInitializer<TilesetJsonLoader>&& externalContentInitializer,
     const CesiumGeospatial::Ellipsoid& ellipsoid,
     const IntrusivePointer<CesiumGltf::Schema>& pExternalSchema) {
   const CesiumAsync::IAssetResponse* pResponse = pCompletedRequest->response();
@@ -754,52 +730,52 @@ TileLoadResult parseJsonContentInWorkerThread(
         pAssetAccessor,
         std::move(pCompletedRequest));
   }
-  if (const auto typeIt = jsonContent.FindMember("type");
-      typeIt != jsonContent.MemberEnd()) {
+
+  auto format = FileFormat::getBestFittingFormat(jsonContent);
+
+  if (format == FileFormat::Type::GeoJson) {
     auto geoJson = CesiumVectorData::GeoJsonDocument::fromGeoJson(jsonContent);
-    if (!geoJson.value.has_value() || geoJson.errors.hasErrors()) {
+    if (!geoJson.value || geoJson.errors.hasErrors()) {
       SPDLOG_LOGGER_ERROR(pLogger, "Error parsing GeoJson document");
       return TileLoadResult::createFailedResult(
           pAssetAccessor,
           std::move(pCompletedRequest));
-    } else {
-      CesiumVectorData::ConverterResult converterResult =
-          CesiumVectorData::GltfConverter::convert(
-              *geoJson.value,
-              ellipsoid,
-              pExternalSchema);
-      if (converterResult.value.has_value() &&
-          !converterResult.errors.hasErrors()) {
-        return TileLoadResult{
-            std::move(*converterResult.value),
-            CesiumGeometry::Axis::Y,
-            std::nullopt,
-            std::nullopt,
-            std::nullopt,
-            pAssetAccessor,
-            std::move(pCompletedRequest),
-            {},
-            TileLoadResultState::Success,
-            ellipsoid};
-      } else {
-        SPDLOG_LOGGER_ERROR(pLogger, "Error converting GeoJson to glTF");
-        return TileLoadResult::createFailedResult(
-            pAssetAccessor,
-            std::move(pCompletedRequest));
-      }
     }
-  } else {
-    return parseExternalTilesetInWorkerThread(
-        tileTransform,
-        upAxis,
-        tileRefine,
-        pLogger,
+
+    CesiumVectorData::ConverterResult converterResult =
+        CesiumVectorData::GltfConverter::convert(
+            *geoJson.value,
+            ellipsoid,
+            pExternalSchema);
+    if (converterResult.value && !converterResult.errors.hasErrors()) {
+      return TileLoadResult{
+          std::move(*converterResult.value),
+          CesiumGeometry::Axis::Y,
+          std::nullopt,
+          std::nullopt,
+          std::nullopt,
+          pAssetAccessor,
+          std::move(pCompletedRequest),
+          {},
+          TileLoadResultState::Success,
+          ellipsoid};
+    }
+    SPDLOG_LOGGER_ERROR(pLogger, "Error converting GeoJson to glTF");
+    return TileLoadResult::createFailedResult(
         pAssetAccessor,
-        std::move(pCompletedRequest),
-        std::move(externalContentInitializer),
-        ellipsoid,
-        std::move(jsonContent));
+        std::move(pCompletedRequest));
   }
+
+  return parseExternalTilesetInWorkerThread(
+      tileTransform,
+      upAxis,
+      tileRefine,
+      pLogger,
+      pAssetAccessor,
+      std::move(pCompletedRequest),
+      std::move(externalContentInitializer),
+      ellipsoid,
+      std::move(jsonContent));
 }
 } // namespace
 
@@ -1051,7 +1027,10 @@ TilesetJsonLoader::loadTileContent(const TileLoadInput& loadInput) {
   const glm::dmat4& tileTransform = tile.getTransform();
   Cesium3DTiles::TileRefine tileRefine = tile.getRefine();
 
-  ExternalContentInitializer externalContentInitializer{nullptr, this, {}};
+  ExternalContentInitializer<TilesetJsonLoader> externalContentInitializer{
+      nullptr,
+      this,
+      {}};
 
   const auto& ellipsoid = this->_ellipsoid;
   const auto& asyncSystem = loadInput.asyncSystem;

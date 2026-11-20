@@ -3,9 +3,11 @@
 #include "LayerJsonTerrainLoader.h"
 #include "RasterOverlayUpsampler.h"
 #include "TileContentLoadInfo.h"
+#include "TilesetGltfLoader.h"
 #include "TilesetJsonLoader.h"
 
 #include <Cesium3DTiles/BoundingVolume.h>
+#include <Cesium3DTiles/FileFormat.h>
 #include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/GltfModifier.h>
 #include <Cesium3DTilesSelection/GltfModifierState.h>
@@ -40,6 +42,7 @@
 #include <CesiumGeospatial/Projection.h>
 #include <CesiumGltf/Image.h>
 #include <CesiumGltfContent/GltfUtilities.h>
+#include <CesiumGltfReader/GltfReader.h>
 #include <CesiumRasterOverlays/ActivatedRasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlay.h>
 #include <CesiumRasterOverlays/RasterOverlayDetails.h>
@@ -58,6 +61,7 @@
 #include <glm/common.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <rapidjson/document.h>
+#include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
@@ -741,6 +745,41 @@ TilesetContentManager::createFromLoader(
   return pManager;
 }
 
+namespace {
+CesiumAsync::Future<TilesetContentLoaderResult<TilesetContentLoader>>
+createTilesetGltfLoader(
+    CesiumGltfReader::GltfReaderResult&& gltfResult,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    const std::string& url,
+    const CesiumAsync::HttpHeaders& headers,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  if (!gltfResult.model) {
+    std::string error = "Errors while trying to read glTF: ";
+    for (const std::string& e : gltfResult.errors) {
+      error += "- " + e + "\n";
+    }
+    TilesetContentLoaderResult<TilesetContentLoader> result;
+    result.errors.emplaceError(error);
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
+
+  return TilesetGltfLoader::createLoader(
+             asyncSystem,
+             pAssetAccessor,
+             pLogger,
+             url,
+             headers,
+             std::move(*gltfResult.model),
+             ellipsoid)
+      .thenImmediately(
+          [](TilesetContentLoaderResult<TilesetContentLoader>&& result) {
+            return std::move(result);
+          });
+}
+} // namespace
+
 /* static */ CesiumUtility::IntrusivePointer<TilesetContentManager>
 TilesetContentManager::createFromUrl(
     const TilesetExternals& externals,
@@ -756,99 +795,143 @@ TilesetContentManager::createFromUrl(
 
     externals.pAssetAccessor
         ->get(externals.asyncSystem, url, pManager->_requestHeaders)
-        .thenInWorkerThread(
-            [externals,
-             ellipsoid,
-             pLogger = externals.pLogger,
-             asyncSystem = externals.asyncSystem,
-             pAssetAccessor = externals.pAssetAccessor,
-             contentOptions = tilesetOptions.contentOptions](
-                const std::shared_ptr<CesiumAsync::IAssetRequest>&
-                    pCompletedRequest) {
-              // Check if request is successful
-              const CesiumAsync::IAssetResponse* pResponse =
-                  pCompletedRequest->response();
-              const std::string& url = pCompletedRequest->url();
-              if (!pResponse) {
-                TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError(fmt::format(
-                    "Did not receive a valid response for tileset {}",
-                    url));
-                return asyncSystem.createResolvedFuture(std::move(result));
-              }
+        .thenInWorkerThread([externals,
+                             ellipsoid,
+                             pLogger = externals.pLogger,
+                             asyncSystem = externals.asyncSystem,
+                             pAssetAccessor = externals.pAssetAccessor,
+                             contentOptions = tilesetOptions.contentOptions](
+                                const std::shared_ptr<
+                                    CesiumAsync::IAssetRequest>&
+                                    pCompletedRequest) {
+          // Check if request is successful
+          const CesiumAsync::IAssetResponse* pResponse =
+              pCompletedRequest->response();
+          const std::string& url = pCompletedRequest->url();
+          if (!pResponse) {
+            TilesetContentLoaderResult<TilesetContentLoader> result;
+            result.errors.emplaceError(fmt::format(
+                "Did not receive a valid response for tileset {}",
+                url));
+            return asyncSystem.createResolvedFuture(std::move(result));
+          }
 
-              uint16_t statusCode = pResponse->statusCode();
-              if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
-                TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError(fmt::format(
-                    "Received status code {} for tileset {}",
-                    statusCode,
-                    url));
-                return asyncSystem.createResolvedFuture(std::move(result));
-              }
+          uint16_t statusCode = pResponse->statusCode();
+          if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+            TilesetContentLoaderResult<TilesetContentLoader> result;
+            result.errors.emplaceError(fmt::format(
+                "Received status code {} for tileset {}",
+                statusCode,
+                url));
+            return asyncSystem.createResolvedFuture(std::move(result));
+          }
 
-              // Parse Json response
-              std::span<const std::byte> tilesetJsonBinary = pResponse->data();
-              rapidjson::Document tilesetJson;
-              tilesetJson.Parse(
-                  reinterpret_cast<const char*>(tilesetJsonBinary.data()),
-                  tilesetJsonBinary.size());
-              if (tilesetJson.HasParseError()) {
-                TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError(fmt::format(
-                    "Error when parsing tileset JSON, error code {} at byte "
-                    "offset {}",
-                    tilesetJson.GetParseError(),
-                    tilesetJson.GetErrorOffset()));
-                return asyncSystem.createResolvedFuture(std::move(result));
-              }
+          const std::span<const std::byte>& responseData = pResponse->data();
 
-              // Check if the json is a tileset.json format or layer.json format
-              // and create corresponding loader
-              const auto rootIt = tilesetJson.FindMember("root");
-              if (rootIt != tilesetJson.MemberEnd()) {
-                return TilesetJsonLoader::createLoader(
-                           asyncSystem,
-                           pAssetAccessor,
-                           pLogger,
-                           url,
-                           pCompletedRequest->headers(),
-                           std::move(tilesetJson),
-                           ellipsoid)
-                    .thenImmediately(
-                        [](TilesetContentLoaderResult<TilesetContentLoader>&&
-                               result) { return std::move(result); });
-              } else {
-                const auto formatIt = tilesetJson.FindMember("format");
-                bool isLayerJsonFormat = formatIt != tilesetJson.MemberEnd() &&
-                                         formatIt->value.IsString();
-                isLayerJsonFormat = isLayerJsonFormat &&
-                                    std::string(formatIt->value.GetString()) ==
-                                        "quantized-mesh-1.0";
-                if (isLayerJsonFormat) {
-                  const CesiumAsync::HttpHeaders& completedRequestHeaders =
-                      pCompletedRequest->headers();
-                  std::vector<CesiumAsync::IAssetAccessor::THeader> flatHeaders(
-                      completedRequestHeaders.begin(),
-                      completedRequestHeaders.end());
-                  return LayerJsonTerrainLoader::createLoader(
-                             asyncSystem,
-                             pAssetAccessor,
-                             contentOptions,
-                             url,
-                             flatHeaders,
-                             tilesetJson,
-                             ellipsoid)
-                      .thenImmediately(
-                          [](TilesetContentLoaderResult<TilesetContentLoader>&&
-                                 result) { return std::move(result); });
-                }
+          // Determine what format this is in to apply the correct reader
+          // and loader.
+          FileFormat::Type type =
+              FileFormat::getBestFittingFormat(responseData);
 
-                TilesetContentLoaderResult<TilesetContentLoader> result;
-                result.errors.emplaceError("tileset json has unsupport format");
-                return asyncSystem.createResolvedFuture(std::move(result));
-              }
-            })
+          if (type == FileFormat::Type::GltfBinary) {
+            CesiumGltfReader::GltfReader gltfReader;
+            CesiumGltfReader::GltfReaderResult gltfResult = gltfReader.readGltf(
+                responseData,
+                contentOptions.toGltfReaderOptions());
+            return createTilesetGltfLoader(
+                std::move(gltfResult),
+                asyncSystem,
+                pAssetAccessor,
+                pLogger,
+                url,
+                pCompletedRequest->headers(),
+                ellipsoid);
+          }
+
+          // Fall back on JSON and find the best fitting type.
+          rapidjson::Document json;
+          json.Parse(
+              reinterpret_cast<const char*>(responseData.data()),
+              responseData.size());
+          if (json.HasParseError()) {
+            TilesetContentLoaderResult<TilesetContentLoader> result;
+            result.errors.emplaceError(fmt::format(
+                "Error when parsing tileset JSON, error code {} at byte offset "
+                "{}",
+                json.GetParseError(),
+                json.GetErrorOffset()));
+            return asyncSystem.createResolvedFuture(std::move(result));
+          }
+
+          type = FileFormat::getBestFittingFormat(json);
+
+          if (type == FileFormat::Type::GltfJson) {
+            CesiumGltfReader::GltfReader gltfReader;
+            return gltfReader
+                .readGltfAndExternalData(
+                    json,
+                    asyncSystem,
+                    pCompletedRequest->headers(),
+                    pAssetAccessor,
+                    url,
+                    contentOptions.toGltfReaderOptions())
+                .thenImmediately(
+                    [asyncSystem,
+                     pAssetAccessor,
+                     pLogger,
+                     url,
+                     headers = pCompletedRequest->headers(),
+                     ellipsoid](
+                        CesiumGltfReader::GltfReaderResult&& gltfResult) {
+                      return createTilesetGltfLoader(
+                          std::move(gltfResult),
+                          asyncSystem,
+                          pAssetAccessor,
+                          pLogger,
+                          url,
+                          headers,
+                          ellipsoid);
+                    });
+          }
+
+          if (type == FileFormat::Type::TilesetJson) {
+            return TilesetJsonLoader::createLoader(
+                       asyncSystem,
+                       pAssetAccessor,
+                       pLogger,
+                       url,
+                       pCompletedRequest->headers(),
+                       std::move(json),
+                       ellipsoid)
+                .thenImmediately(
+                    [](TilesetContentLoaderResult<TilesetContentLoader>&&
+                           result) { return std::move(result); });
+          }
+
+          if (type == FileFormat::Type::LayerJson) {
+            const CesiumAsync::HttpHeaders& completedRequestHeaders =
+                pCompletedRequest->headers();
+            std::vector<CesiumAsync::IAssetAccessor::THeader> flatHeaders(
+                completedRequestHeaders.begin(),
+                completedRequestHeaders.end());
+            return LayerJsonTerrainLoader::createLoader(
+                       asyncSystem,
+                       pAssetAccessor,
+                       contentOptions,
+                       url,
+                       flatHeaders,
+                       json,
+                       ellipsoid)
+                .thenImmediately(
+                    [](TilesetContentLoaderResult<TilesetContentLoader>&&
+                           result) { return std::move(result); });
+          }
+
+          TilesetContentLoaderResult<TilesetContentLoader> result;
+          result.errors.emplaceError(
+              "Tileset URL points to an asset with an unsupported format");
+          return asyncSystem.createResolvedFuture(std::move(result));
+        })
         .thenInMainThread(
             [pManager](
                 TilesetContentLoaderResult<TilesetContentLoader>&& result) {

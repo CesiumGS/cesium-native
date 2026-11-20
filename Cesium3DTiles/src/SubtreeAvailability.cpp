@@ -1,3 +1,4 @@
+#include <Cesium3DTiles/FileFormat.h>
 #include <Cesium3DTiles/ImplicitTileSubdivisionScheme.h>
 #include <Cesium3DTiles/ImplicitTilingUtilities.h>
 #include <Cesium3DTiles/SubtreeAvailability.h>
@@ -283,8 +284,9 @@ SubtreeAvailability::loadSubtree(
             // Determine whether this is a 3D Tiles 1.1 or 2.0 subtree to apply
             // the appropriate reader.
             std::span<const std::byte> binary = pResponse->data();
-            std::string magic(reinterpret_cast<const char*>(binary.data()), 4);
-            if (magic == "subt") {
+
+            FileFormat::Type type = FileFormat::getBestFittingFormat(binary);
+            if (type == FileFormat::Type::SubtreeBinary) {
               return pSubtreeReader
                   ->load(
                       asyncSystem,
@@ -303,7 +305,7 @@ SubtreeAvailability::loadSubtree(
                       });
             }
 
-            if (magic == "glTF") {
+            if (type == FileFormat::Type::GltfBinary) {
               return pGltfReader
                   ->readGltfAndExternalData(
                       binary,
@@ -340,8 +342,9 @@ SubtreeAvailability::loadSubtree(
                   CesiumUtility::ErrorList::error(error));
             }
 
-            // "asset" exists in glTF but not 3D Tiles 1.1 subtrees.
-            if (json.FindMember("asset") != json.MemberEnd()) {
+            type = FileFormat::getBestFittingFormat(json);
+
+            if (type == FileFormat::Type::GltfJson) {
               return pGltfReader
                   ->readGltfAndExternalData(
                       json,
@@ -361,21 +364,29 @@ SubtreeAvailability::loadSubtree(
                       });
             }
 
-            return pSubtreeReader
-                ->load(
-                    asyncSystem,
-                    pAssetAccessor,
-                    subtreeUrl,
-                    requestHeaders,
-                    json)
-                .thenImmediately([subdivisionScheme, levelsInSubtree](
-                                     CesiumJsonReader::ReadJsonResult<
-                                         CesiumTilesetJson::Subtree>&& result) {
-                  return passThroughResult(
-                      subdivisionScheme,
-                      levelsInSubtree,
-                      std::move(result));
-                });
+            if (type == FileFormat::Type::SubtreeJson) {
+              return pSubtreeReader
+                  ->load(
+                      asyncSystem,
+                      pAssetAccessor,
+                      subtreeUrl,
+                      requestHeaders,
+                      json)
+                  .thenImmediately(
+                      [subdivisionScheme,
+                       levelsInSubtree](CesiumJsonReader::ReadJsonResult<
+                                        CesiumTilesetJson::Subtree>&& result) {
+                        return passThroughResult(
+                            subdivisionScheme,
+                            levelsInSubtree,
+                            std::move(result));
+                      });
+            }
+
+            return asyncSystem.createResolvedFuture<
+                CesiumUtility::Result<SubtreeAvailability>>(
+                CesiumUtility::ErrorList::error(
+                    "File cannot be read as a 3D Tiles subtree."));
           });
 }
 

@@ -6,6 +6,7 @@
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
@@ -69,7 +70,8 @@ TEST_CASE("Test implicit octree loader") {
       "subtrees/{level}.{x}.{y}.{z}.json",
       5,
       5,
-      OrientedBoundingBox(glm::dvec3(0.0), glm::dmat3(20.0))};
+      OrientedBoundingBox(glm::dvec3(0.0), glm::dmat3(20.0)),
+      CesiumGeometry::Axis::Y};
 
   SUBCASE("Load tile that does not have quadtree ID") {
     Tile tile(&loader);
@@ -269,7 +271,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
         "subtrees/{level}.{x}.{y}.{z}.json",
         5,
         5,
-        loaderBoundingVolume};
+        loaderBoundingVolume,
+        CesiumGeometry::Axis::Y};
 
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
@@ -471,7 +474,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
         "subtrees/{level}.{x}.{y}.{z}.json",
         5,
         5,
-        loaderBoundingVolume};
+        loaderBoundingVolume,
+        CesiumGeometry::Axis::Y};
 
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
@@ -725,7 +729,8 @@ TEST_CASE("Test tile subdivision for implicit octree loader") {
         "subtrees/{level}.{x}.{y}.{z}.json",
         5,
         5,
-        loaderBoundingVolume};
+        loaderBoundingVolume,
+        CesiumGeometry::Axis::Y};
 
     // add subtree with all tiles, but no content available.
     CesiumUtility::Result<SubtreeAvailability> maybeAvailability =
