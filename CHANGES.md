@@ -12,6 +12,7 @@
 - Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
 - Added `Cesium3DTilesSelection::ViewStateVisibilityDelegate`, which can be specified on a `ViewState` for conditional control over whether to display a tile's content.
 - Added `RasterOverlayCollection::updateTileOverlaysForReplacedContent` and `RasterMappedTo3DTile::prepareForReplacedContent`, which update a tile's raster overlay mappings after its content is replaced, such as by a `GltfModifier`.
+- Added `CesiumVectorData::GeoJsonSpatialIndex`, which finds the geometry and features of a `GeoJsonDocument` at a position or within a rectangle. Picking at a position includes the drawn width of lines, polygon outlines and points, given in meters or pixels by their styles.
 - SPZ decoder now matches the `KHR_gaussian_splatting` specification more accurately, including support for `KHR_gaussian_splatting:OPACITY` and `KHR_gaussian_splatting:SH_DEGREE_0_COEF_0` attributes, and component types other than `FLOAT` where allowed by the specification.
 
 ##### Fixes :wrench:
