@@ -1,16 +1,12 @@
-#include "TestTilesetJsonLoader.h"
-
 #include "ImplicitQuadtreeLoader.h"
 #include "SimplePrepareRendererResource.h"
 #include "TilesetJsonLoader.h"
+#include "TilesetLoaderTestUtility.h"
 
-#include <Cesium3DTiles/ExtensionContent3dTilesContentVoxels.h>
-#include <Cesium3DTiles/Schema.h>
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTiles/TileRefine.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
-#include <Cesium3DTilesSelection/TileRefine.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <Cesium3DTilesSelection/TilesetContentLoaderResult.h>
 #include <Cesium3DTilesSelection/TilesetMetadata.h>
@@ -24,11 +20,14 @@
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/PropertyTablePropertyView.h>
 #include <CesiumGltf/PropertyTableView.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
 #include <CesiumNativeTests/SimpleTaskProcessor.h>
 #include <CesiumNativeTests/readFile.h>
+#include <CesiumTilesetJson/ExtensionContent3dTilesContentVoxels.h>
+#include <CesiumTilesetJson/Schema.h>
 #include <CesiumUtility/CreditSystem.h>
 
 #include <doctest/doctest.h>
@@ -51,116 +50,19 @@
 
 using namespace doctest;
 using namespace CesiumAsync;
+using namespace Cesium3DTiles;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGltf;
 using namespace CesiumNativeTests;
 using namespace CesiumUtility;
 
 namespace {
-std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
-
-TileLoadResult loadTileContent(
-    const std::filesystem::path& tilePath,
-    TilesetContentLoader& loader,
-    Tile& tile) {
-  std::unique_ptr<SimpleAssetResponse> pMockCompletedResponse;
-  if (std::filesystem::exists(tilePath)) {
-    pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
-        static_cast<uint16_t>(200),
-        "doesn't matter",
-        CesiumAsync::HttpHeaders{},
-        readFile(tilePath));
-  } else {
-    pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
-        static_cast<uint16_t>(404),
-        "doesn't matter",
-        CesiumAsync::HttpHeaders{},
-        std::vector<std::byte>{});
-  }
-  auto pMockCompletedRequest = std::make_shared<SimpleAssetRequest>(
-      "GET",
-      tilePath.filename().string(),
-      CesiumAsync::HttpHeaders{},
-      std::move(pMockCompletedResponse));
-
-  std::map<std::string, std::shared_ptr<SimpleAssetRequest>>
-      mockCompletedRequests;
-  mockCompletedRequests.insert(
-      {tilePath.filename().string(), std::move(pMockCompletedRequest)});
-
-  std::shared_ptr<SimpleAssetAccessor> pMockAssetAccessor =
-      std::make_shared<SimpleAssetAccessor>(std::move(mockCompletedRequests));
-
-  AsyncSystem asyncSystem{std::make_shared<SimpleTaskProcessor>()};
-
-  TileLoadInput loadInput{
-      tile,
-      {},
-      asyncSystem,
-      pMockAssetAccessor,
-      spdlog::default_logger(),
-      {}};
-
-  auto tileLoadResultFuture = loader.loadTileContent(loadInput);
-
-  asyncSystem.dispatchMainThreadTasks();
-
-  return tileLoadResultFuture.wait();
-}
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
 } // namespace
 
-Cesium3DTilesSelection::TilesetContentLoaderResult<TilesetJsonLoader>
-Cesium3DTilesSelection::createTilesetJsonLoader(
-    const std::filesystem::path& tilesetPath) {
-  std::string tilesetPathStr = tilesetPath.string();
-  auto pAccessor = std::make_shared<SimpleAssetAccessor>(
-      std::map<std::string, std::shared_ptr<SimpleAssetRequest>>());
-  auto externals = createMockJsonTilesetExternals(tilesetPathStr, pAccessor);
-  auto loaderResultFuture =
-      TilesetJsonLoader::createLoader(externals, tilesetPathStr, {});
-  externals.asyncSystem.dispatchMainThreadTasks();
-
-  return loaderResultFuture.wait();
-}
-Cesium3DTilesSelection::TilesetExternals
-Cesium3DTilesSelection::createMockJsonTilesetExternals(
-    const std::string& tilesetPath,
-    std::shared_ptr<CesiumNativeTests::SimpleAssetAccessor>& pAssetAccessor) {
-  auto tilesetContent = readFile(tilesetPath);
-  auto pMockCompletedResponse =
-      std::make_unique<CesiumNativeTests::SimpleAssetResponse>(
-          static_cast<uint16_t>(200),
-          "doesn't matter",
-          CesiumAsync::HttpHeaders{},
-          std::move(tilesetContent));
-
-  auto pMockCompletedRequest =
-      std::make_shared<CesiumNativeTests::SimpleAssetRequest>(
-          "GET",
-          "tileset.json",
-          CesiumAsync::HttpHeaders{},
-          std::move(pMockCompletedResponse));
-
-  pAssetAccessor->mockCompletedRequests.insert(
-      {tilesetPath, std::move(pMockCompletedRequest)});
-
-  auto pMockPrepareRendererResource =
-      std::make_shared<SimplePrepareRendererResource>();
-
-  auto pMockCreditSystem = std::make_shared<CesiumUtility::CreditSystem>();
-
-  CesiumAsync::AsyncSystem asyncSystem{
-      std::make_shared<CesiumNativeTests::SimpleTaskProcessor>()};
-
-  return TilesetExternals{
-      std::move(pAssetAccessor),
-      std::move(pMockPrepareRendererResource),
-      std::move(asyncSystem),
-      std::move(pMockCreditSystem)};
-}
-
 TEST_CASE("Test creating tileset json loader") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   SUBCASE("Create valid tileset json with REPLACE refinement") {
     auto loaderResult = createTilesetJsonLoader(
@@ -482,7 +384,7 @@ TEST_CASE("Test creating tileset json loader") {
     REQUIRE(pExternal);
 
     const TilesetMetadata& metadata = pExternal->metadata;
-    const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
+    const std::optional<CesiumTilesetJson::Schema>& schema = metadata.schema;
     REQUIRE(schema);
     CHECK(schema->id == "foo");
   }
@@ -499,17 +401,17 @@ TEST_CASE("Test creating tileset json loader") {
         loaderResult.pRootTile->getContent().getExternalContent();
     REQUIRE(pExternal);
     CHECK(pExternal->hasExtension<
-          Cesium3DTiles::ExtensionContent3dTilesContentVoxels>());
+          CesiumTilesetJson::ExtensionContent3dTilesContentVoxels>());
 
     const TilesetMetadata& metadata = pExternal->metadata;
-    const std::optional<Cesium3DTiles::Schema>& schema = metadata.schema;
+    const std::optional<CesiumTilesetJson::Schema>& schema = metadata.schema;
     REQUIRE(schema);
     CHECK(schema->id == "voxel");
   }
 }
 
 TEST_CASE("Test loading individual tile of tileset json") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   SUBCASE("Load tile that has render content") {
     auto loaderResult = createTilesetJsonLoader(
@@ -523,7 +425,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     CHECK(tileID == "parent.b3dm");
 
     // check tile content
-    auto tileLoadResult = loadTileContent(
+    auto tileLoadResult = mockLoadTileContent(
         testDataPath / "ReplaceTileset" / tileID,
         *loaderResult.pLoader,
         *pRootTile);
@@ -548,7 +450,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     CHECK(tileID == "tileset2.json");
 
     // check tile content
-    auto tileLoadResult = loadTileContent(
+    auto tileLoadResult = mockLoadTileContent(
         testDataPath / "AddTileset" / tileID,
         *loaderResult.pLoader,
         *pRootTile);
@@ -725,7 +627,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     CHECK(tileID == "nonexistent.b3dm");
 
     // check tile content
-    auto tileLoadResult = loadTileContent(
+    auto tileLoadResult = mockLoadTileContent(
         testDataPath / "MultipleKindsOfTilesets" / tileID,
         *loaderResult.pLoader,
         *pRootTile);
@@ -754,7 +656,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
 
     // The cmpt file is shorter than the 16-byte header, so the converter
     // reports a warning and produces no model.
-    auto tileLoadResult = loadTileContent(
+    auto tileLoadResult = mockLoadTileContent(
         testDataPath / "MultipleKindsOfTilesets" / tileID,
         *loaderResult.pLoader,
         *pRootTile);
@@ -773,7 +675,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     CHECK(tileID == "ComplexTypes.gltf");
 
     // check tile content
-    auto tileLoadResult = loadTileContent(
+    auto tileLoadResult = mockLoadTileContent(
         testDataPath / "ComplexTypes" / tileID,
         *loaderResult.pLoader,
         *pRootTile);
@@ -934,7 +836,7 @@ TEST_CASE("Test loading individual tile of tileset json") {
     CHECK(tileID == "1.geojson");
 
     // check tile content
-    auto tileLoadResult = loadTileContent(
+    auto tileLoadResult = mockLoadTileContent(
         testDataPath / "ContentGeojson" / tileID,
         *loaderResult.pLoader,
         childTile);

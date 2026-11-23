@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Cesium3DTilesReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGltf/Model.h>
 #include <CesiumGltf/Schema.h>
+#include <CesiumTilesetJsonReader/ExtensionSchemaMaxarContentGeoJsonReader.h>
 #include <CesiumUtility/IntrusivePointer.h>
 #include <CesiumUtility/Result.h>
 #include <CesiumVectorData/GeoJsonDocument.h>
@@ -52,6 +52,6 @@ public:
    * @returns A result object that includes the converted schema and any errors.
    */
   static ConvertSchemaResult convertSchema(
-      const Cesium3DTiles::ExtensionSchemaMaxarContentGeoJson& maxarSchema);
+      const CesiumTilesetJson::ExtensionSchemaMaxarContentGeoJson& maxarSchema);
 };
 } // namespace CesiumVectorData
