@@ -67,6 +67,7 @@ createAndWrapTilesetGltfLoader(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<spdlog::logger>& pLogger,
+    std::string endpointUrl,
     IonLoaderParameters ionLoaderParameters,
     std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
@@ -84,7 +85,7 @@ createAndWrapTilesetGltfLoader(
              asyncSystem,
              pAssetAccessor,
              pLogger,
-             ionLoaderParameters.url,
+             endpointUrl,
              CesiumAsync::HttpHeaders(
                  requestHeaders.begin(),
                  requestHeaders.end()),
@@ -128,6 +129,7 @@ createAndWrapTilesetJsonLoader(
     const CesiumAsync::AsyncSystem& asyncSystem,
     const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
     const std::shared_ptr<spdlog::logger>& pLogger,
+    std::string endpointUrl,
     IonLoaderParameters ionLoaderParameters,
     std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders,
     const CesiumGeospatial::Ellipsoid& ellipsoid) {
@@ -135,7 +137,7 @@ createAndWrapTilesetJsonLoader(
              asyncSystem,
              pAssetAccessor,
              pLogger,
-             ionLoaderParameters.url,
+             endpointUrl,
              CesiumAsync::HttpHeaders(
                  requestHeaders.begin(),
                  requestHeaders.end()),
@@ -206,6 +208,7 @@ mainThreadLoad3dTilesFromAssetEndpoint(
       ->get(externals.asyncSystem, endpoint.url, requestHeaders)
       .thenInWorkerThread([ellipsoid,
                            contentOptions,
+                           endpointUrl = endpoint.url,
                            pLogger = externals.pLogger,
                            asyncSystem = externals.asyncSystem,
                            pAssetAccessor = externals.pAssetAccessor,
@@ -260,6 +263,7 @@ mainThreadLoad3dTilesFromAssetEndpoint(
               asyncSystem,
               pAssetAccessor,
               pLogger,
+              std::move(endpointUrl),
               std::move(ionLoaderParameters),
               requestHeaders,
               ellipsoid);
@@ -296,6 +300,7 @@ mainThreadLoad3dTilesFromAssetEndpoint(
                   [asyncSystem,
                    pAssetAccessor,
                    pLogger,
+                   endpointUrl = std::move(endpointUrl),
                    ionLoaderParameters = std::move(ionLoaderParameters),
                    requestHeaders,
                    ellipsoid](CesiumGltfReader::GltfReaderResult&& gltfResult) {
@@ -304,6 +309,7 @@ mainThreadLoad3dTilesFromAssetEndpoint(
                         asyncSystem,
                         pAssetAccessor,
                         pLogger,
+                        std::move(endpointUrl),
                         std::move(ionLoaderParameters),
                         requestHeaders,
                         ellipsoid);
@@ -316,6 +322,7 @@ mainThreadLoad3dTilesFromAssetEndpoint(
               asyncSystem,
               pAssetAccessor,
               pLogger,
+              std::move(endpointUrl),
               std::move(ionLoaderParameters),
               requestHeaders,
               ellipsoid);
