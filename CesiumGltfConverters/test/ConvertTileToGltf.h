@@ -23,6 +23,7 @@ public:
 
 private:
   static CesiumAsync::AsyncSystem asyncSystem;
-  static AssetFetcher makeAssetFetcher(const std::string& baseUrl);
+  static AssetFetcher
+  makeAssetFetcher(const std::filesystem::path& baseFilePath);
 };
 } // namespace CesiumGltfConverters

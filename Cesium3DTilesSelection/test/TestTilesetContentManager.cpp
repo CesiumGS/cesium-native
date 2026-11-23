@@ -1778,6 +1778,14 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     pManager->waitUntilIdle(5000.0);
 
+    // There's only one shared asset system for the whole test run, and other
+    // tests (may) have already used it by e.g. loading glTF files.
+    int64_t startInactiveSize = pManager->getSharedAssetSystem()
+                                    ->pImage->getInactiveAssetTotalSizeBytes();
+    size_t startInactiveCount =
+        pManager->getSharedAssetSystem()->pImage->getInactiveAssetCount();
+    size_t startAssetCount =
+        pManager->getSharedAssetSystem()->pImage->getAssetCount();
     for (auto& child : containerTile.getChildren()) {
       pManager->loadTileContent(child, {});
       externals.asyncSystem.dispatchMainThreadTasks();
@@ -1793,11 +1801,14 @@ TEST_CASE("Test the tileset content manager's post processing for gltf") {
 
     CHECK(
         pManager->getSharedAssetSystem()
-            ->pImage->getInactiveAssetTotalSizeBytes() == 0);
-    CHECK(pManager->getSharedAssetSystem()->pImage->getAssetCount() == 2);
+            ->pImage->getInactiveAssetTotalSizeBytes() == startInactiveSize);
+    CHECK(
+        pManager->getSharedAssetSystem()->pImage->getAssetCount() ==
+        startAssetCount + 2);
     CHECK(pManager->getSharedAssetSystem()->pImage->getActiveAssetCount() == 2);
     CHECK(
-        pManager->getSharedAssetSystem()->pImage->getInactiveAssetCount() == 0);
+        pManager->getSharedAssetSystem()->pImage->getInactiveAssetCount() ==
+        startInactiveCount);
 
     // unload the tile content
     for (auto& child : containerTile.getChildren()) {
