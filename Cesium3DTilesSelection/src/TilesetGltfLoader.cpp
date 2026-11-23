@@ -45,10 +45,7 @@
 #include <CesiumUtility/Uri.h>
 
 #include <fmt/format.h>
-#include <glm/common.hpp>
 #include <glm/ext/matrix_double4x4.hpp>
-#include <glm/ext/vector_double3.hpp>
-#include <glm/geometric.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
