@@ -21,7 +21,7 @@ std::unique_ptr<SimpleAssetRequest> createSuccessfulRequest(
       headers,
       std::make_unique<SimpleAssetResponse>(
           uint16_t(200),
-          method,
+          "",
           headers,
           std::move(data)));
 }
@@ -36,7 +36,7 @@ std::unique_ptr<SimpleAssetRequest> createFailedRequest(
       headers,
       std::make_unique<SimpleAssetResponse>(
           uint16_t(404),
-          method,
+          "",
           headers,
           std::vector<std::byte>{}));
 }

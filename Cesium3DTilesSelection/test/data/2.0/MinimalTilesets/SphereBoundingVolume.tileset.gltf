@@ -31,7 +31,7 @@
   ],
   "shapes": [
     {
-      "type": "box",
+      "type": "sphere",
       "sphere": {
         "radius": 141.4214
       }

@@ -28,7 +28,7 @@
           "subdivisionScheme": "OCTREE",
           "subtreeLevels": 2,
           "availableLevels": 6,
-          "subtreesUri": "subtrees/{level}/{x}/{y}/{z}.subtree.gltf",
+          "subtreeUri": "subtrees/{level}/{x}/{y}/{z}.subtree.gltf",
           "contentUri": "content/{level}/{x}/{y}/{z}.gltf"
         }
       },
