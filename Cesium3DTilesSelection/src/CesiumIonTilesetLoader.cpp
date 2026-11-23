@@ -1,8 +1,10 @@
 #include "CesiumIonTilesetLoader.h"
 
 #include "LayerJsonTerrainLoader.h"
+#include "TilesetGltfLoader.h"
 #include "TilesetJsonLoader.h"
 
+#include <Cesium3DTiles/FileFormat.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
@@ -34,6 +36,8 @@
 
 namespace Cesium3DTilesSelection {
 
+using namespace Cesium3DTiles;
+
 namespace {
 struct AssetEndpointAttribution {
   std::string html;
@@ -47,11 +51,132 @@ struct AssetEndpoint {
   std::vector<AssetEndpointAttribution> attributions;
 };
 
+struct IonLoaderParameters {
+  std::string url;
+  std::string accessToken;
+  CesiumIonTilesetLoader::AuthorizationHeaderChangeListener
+      headerChangeListener;
+  std::vector<LoaderCreditResult> credits;
+};
+
 std::unordered_map<std::string, AssetEndpoint> endpointCache;
 
 CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
-mainThreadLoadTilesetJsonFromAssetEndpoint(
+createAndWrapTilesetGltfLoader(
+    CesiumGltfReader::GltfReaderResult&& gltfResult,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    IonLoaderParameters ionLoaderParameters,
+    std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  if (!gltfResult.model) {
+    std::string error = "Errors while trying to read glTF: ";
+    for (const std::string& e : gltfResult.errors) {
+      error += "- " + e + "\n";
+    }
+    TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
+    result.errors.emplaceError(error);
+    return asyncSystem.createResolvedFuture(std::move(result));
+  }
+
+  return TilesetGltfLoader::createLoader(
+             asyncSystem,
+             pAssetAccessor,
+             pLogger,
+             ionLoaderParameters.url,
+             CesiumAsync::HttpHeaders(
+                 requestHeaders.begin(),
+                 requestHeaders.end()),
+             std::move(*gltfResult.model),
+             ellipsoid)
+      .thenImmediately([ionLoaderParameters = std::move(ionLoaderParameters),
+                        requestHeaders,
+                        ellipsoid](
+                           TilesetContentLoaderResult<TilesetGltfLoader>&&
+                               tilesetGltfResult) mutable {
+        if (tilesetGltfResult.credits.empty()) {
+          tilesetGltfResult.credits = std::move(ionLoaderParameters.credits);
+        } else {
+          tilesetGltfResult.credits.insert(
+              tilesetGltfResult.credits.end(),
+              ionLoaderParameters.credits.begin(),
+              ionLoaderParameters.credits.end());
+        }
+
+        TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
+        if (!tilesetGltfResult.errors) {
+          result.pLoader = std::make_unique<CesiumIonTilesetLoader>(
+              std::move(ionLoaderParameters.url),
+              std::move(ionLoaderParameters.accessToken),
+              std::move(tilesetGltfResult.pLoader),
+              std::move(ionLoaderParameters.headerChangeListener),
+              ellipsoid);
+          result.pRootTile = std::move(tilesetGltfResult.pRootTile);
+          result.credits = std::move(tilesetGltfResult.credits);
+          result.requestHeaders = std::move(requestHeaders);
+        }
+        result.errors = std::move(tilesetGltfResult.errors);
+        result.statusCode = tilesetGltfResult.statusCode;
+        return result;
+      });
+}
+
+CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
+createAndWrapTilesetJsonLoader(
+    rapidjson::Document&& tilesetJson,
+    const CesiumAsync::AsyncSystem& asyncSystem,
+    const std::shared_ptr<CesiumAsync::IAssetAccessor>& pAssetAccessor,
+    const std::shared_ptr<spdlog::logger>& pLogger,
+    IonLoaderParameters ionLoaderParameters,
+    std::vector<CesiumAsync::IAssetAccessor::THeader> requestHeaders,
+    const CesiumGeospatial::Ellipsoid& ellipsoid) {
+  return TilesetJsonLoader::createLoader(
+             asyncSystem,
+             pAssetAccessor,
+             pLogger,
+             ionLoaderParameters.url,
+             CesiumAsync::HttpHeaders(
+                 requestHeaders.begin(),
+                 requestHeaders.end()),
+             std::move(tilesetJson),
+             ellipsoid)
+      .thenImmediately([requestHeaders,
+                        ionLoaderParameters = std::move(ionLoaderParameters),
+                        ellipsoid](
+                           TilesetContentLoaderResult<TilesetJsonLoader>&&
+                               tilesetJsonResult) mutable {
+        if (tilesetJsonResult.credits.empty()) {
+          tilesetJsonResult.credits = std::move(ionLoaderParameters.credits);
+        } else {
+          tilesetJsonResult.credits.insert(
+              tilesetJsonResult.credits.end(),
+              ionLoaderParameters.credits.begin(),
+              ionLoaderParameters.credits.end());
+        }
+
+        TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
+        if (!tilesetJsonResult.errors) {
+          result.pLoader = std::make_unique<CesiumIonTilesetLoader>(
+              std::move(ionLoaderParameters.url),
+              std::move(ionLoaderParameters.accessToken),
+              std::move(tilesetJsonResult.pLoader),
+              std::move(ionLoaderParameters.headerChangeListener),
+              ellipsoid);
+          result.pRootTile = std::move(tilesetJsonResult.pRootTile);
+          result.credits = std::move(tilesetJsonResult.credits);
+          result.requestHeaders = std::move(requestHeaders);
+        }
+        result.errors = std::move(tilesetJsonResult.errors);
+        result.statusCode = tilesetJsonResult.statusCode;
+        return result;
+      });
+}
+
+CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
+mainThreadLoad3dTilesFromAssetEndpoint(
     const TilesetExternals& externals,
+    const TilesetContentOptions& contentOptions,
     const AssetEndpoint& endpoint,
     std::string ionUrl,
     std::string ionAccessToken,
@@ -77,44 +202,133 @@ mainThreadLoadTilesetJsonFromAssetEndpoint(
         "Bearer " + endpoint.accessToken);
   }
 
-  return TilesetJsonLoader::createLoader(
-             externals,
-             endpoint.url,
-             requestHeaders,
-             ellipsoid)
-      .thenImmediately(
-          [credits = std::move(credits),
-           requestHeaders,
-           ionAccessToken = std::move(ionAccessToken),
-           ionUrl = std::move(ionUrl),
-           headerChangeListener = std::move(headerChangeListener),
-           ellipsoid](TilesetContentLoaderResult<TilesetJsonLoader>&&
-                          tilesetJsonResult) mutable {
-            if (tilesetJsonResult.credits.empty()) {
-              tilesetJsonResult.credits = std::move(credits);
-            } else {
-              tilesetJsonResult.credits.insert(
-                  tilesetJsonResult.credits.end(),
-                  credits.begin(),
-                  credits.end());
-            }
+  return externals.pAssetAccessor
+      ->get(externals.asyncSystem, endpoint.url, requestHeaders)
+      .thenInWorkerThread([ellipsoid,
+                           contentOptions,
+                           pLogger = externals.pLogger,
+                           asyncSystem = externals.asyncSystem,
+                           pAssetAccessor = externals.pAssetAccessor,
+                           credits = std::move(credits),
+                           requestHeaders,
+                           ionAccessToken = std::move(ionAccessToken),
+                           ionUrl = std::move(ionUrl),
+                           headerChangeListener =
+                               std::move(headerChangeListener)](
+                              const std::shared_ptr<CesiumAsync::IAssetRequest>&
+                                  pCompletedRequest) {
+        const CesiumAsync::IAssetResponse* pResponse =
+            pCompletedRequest->response();
+        const std::string& requestUrl = pCompletedRequest->url();
+        if (!pResponse) {
+          TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
+          result.errors.emplaceError(fmt::format(
+              "Did not receive a valid response for requested content {}",
+              requestUrl));
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
 
-            TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
-            if (!tilesetJsonResult.errors) {
-              result.pLoader = std::make_unique<CesiumIonTilesetLoader>(
-                  std::move(ionUrl),
-                  std::move(ionAccessToken),
-                  std::move(tilesetJsonResult.pLoader),
-                  std::move(headerChangeListener),
-                  ellipsoid);
-              result.pRootTile = std::move(tilesetJsonResult.pRootTile);
-              result.credits = std::move(tilesetJsonResult.credits);
-              result.requestHeaders = std::move(requestHeaders);
-            }
-            result.errors = std::move(tilesetJsonResult.errors);
-            result.statusCode = tilesetJsonResult.statusCode;
-            return result;
-          });
+        uint16_t statusCode = pResponse->statusCode();
+        if (statusCode != 0 && (statusCode < 200 || statusCode >= 300)) {
+          TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
+          result.errors.emplaceError(fmt::format(
+              "Received status code {} for requested content {}",
+              statusCode,
+              requestUrl));
+          result.statusCode = statusCode;
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
+
+        IonLoaderParameters ionLoaderParameters{
+            std::move(ionUrl),
+            std::move(ionAccessToken),
+            std::move(headerChangeListener),
+            std::move(credits)};
+        const std::span<const std::byte>& responseData = pResponse->data();
+
+        // Determine what format this is in to apply the correct reader
+        // and loader.
+        FileFormat::Type type = FileFormat::getBestFittingFormat(responseData);
+
+        if (type == FileFormat::Type::GltfBinary) {
+          CesiumGltfReader::GltfReader gltfReader;
+          CesiumGltfReader::GltfReaderResult gltfResult = gltfReader.readGltf(
+              responseData,
+              contentOptions.toGltfReaderOptions());
+          return createAndWrapTilesetGltfLoader(
+              std::move(gltfResult),
+              asyncSystem,
+              pAssetAccessor,
+              pLogger,
+              std::move(ionLoaderParameters),
+              requestHeaders,
+              ellipsoid);
+        }
+
+        // Fall back on JSON and find the best fitting type.
+        rapidjson::Document json;
+        json.Parse(
+            reinterpret_cast<const char*>(responseData.data()),
+            responseData.size());
+        if (json.HasParseError()) {
+          TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
+          result.errors.emplaceError(fmt::format(
+              "Error when parsing tileset JSON, error code {} at byte offset "
+              "{}",
+              json.GetParseError(),
+              json.GetErrorOffset()));
+          return asyncSystem.createResolvedFuture(std::move(result));
+        }
+
+        type = FileFormat::getBestFittingFormat(json);
+
+        if (type == FileFormat::Type::GltfJson) {
+          CesiumGltfReader::GltfReader gltfReader;
+          return gltfReader
+              .readGltfAndExternalData(
+                  json,
+                  asyncSystem,
+                  pCompletedRequest->headers(),
+                  pAssetAccessor,
+                  requestUrl,
+                  contentOptions.toGltfReaderOptions())
+              .thenImmediately(
+                  [asyncSystem,
+                   pAssetAccessor,
+                   pLogger,
+                   ionLoaderParameters = std::move(ionLoaderParameters),
+                   requestHeaders,
+                   ellipsoid](CesiumGltfReader::GltfReaderResult&& gltfResult) {
+                    return createAndWrapTilesetGltfLoader(
+                        std::move(gltfResult),
+                        asyncSystem,
+                        pAssetAccessor,
+                        pLogger,
+                        std::move(ionLoaderParameters),
+                        requestHeaders,
+                        ellipsoid);
+                  });
+        }
+
+        if (type == FileFormat::Type::TilesetJson) {
+          return createAndWrapTilesetJsonLoader(
+              std::move(json),
+              asyncSystem,
+              pAssetAccessor,
+              pLogger,
+              std::move(ionLoaderParameters),
+              requestHeaders,
+              ellipsoid);
+        }
+
+        TilesetContentLoaderResult<CesiumIonTilesetLoader> result;
+        result.errors.emplaceError(fmt::format(
+            "Unsupported type for requested 3D Tiles content {}",
+            statusCode,
+            requestUrl));
+        result.statusCode = statusCode;
+        return asyncSystem.createResolvedFuture(std::move(result));
+      });
 }
 
 CesiumAsync::Future<TilesetContentLoaderResult<CesiumIonTilesetLoader>>
@@ -306,8 +520,9 @@ mainThreadHandleEndpointResponse(
     endpoint.url = url;
     endpoint.accessToken = accessToken;
     endpointCache[requestUrl] = endpoint;
-    return mainThreadLoadTilesetJsonFromAssetEndpoint(
+    return mainThreadLoad3dTilesFromAssetEndpoint(
         externals,
+        contentOptions,
         endpoint,
         std::move(ionUrl),
         std::move(ionAccessToken),
@@ -456,8 +671,9 @@ CesiumIonTilesetLoader::createLoader(
                     ellipsoid);
               });
     } else if (endpoint.type == "3DTILES") {
-      return mainThreadLoadTilesetJsonFromAssetEndpoint(
+      return mainThreadLoad3dTilesFromAssetEndpoint(
                  externals,
+                 contentOptions,
                  endpoint,
                  url,
                  ionAccessToken,
