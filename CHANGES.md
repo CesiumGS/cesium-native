@@ -19,7 +19,7 @@
 
 ##### Additions :tada:
 
-- Added support for loading glTF 2.1 models as tilesets through `Cesium3DTilesSelection::Tileset`.
+- Added support for loading glTF 2.1 models as tilesets through `Cesium3DTilesSelection::Tileset` via URL.
 - Added `fromGltf` method to `Cesium3DTiles::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
 - Added overloads to `SubtreeFileReader::load` and `GltfReader::readGltfAndExternalData` to accept JSONs that have been already parsed as `rapidjson::Document`s.
 - Added `getBoundingVolumeTransform` and `setBoundingVolumeTransform` to `CesiumGltfContent::GltfUtilities` to interact with transforms on `CesiumGltf::BoundingVolume`s.
