@@ -62,10 +62,7 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 
 | Library                        | Description                                                                                                     |
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| **Cesium3DTiles**              | Lightweight 3D Tiles classes.                                                                                   |
-| **Cesium3DTilesContent**       | Classes that support loading and converting 3D Tiles tile content.                                              |
-| **Cesium3DTilesReader**        | 3D Tiles deserialization, including 3D Tiles extension support.                                                 |
-| **Cesium3DTilesWriter**        | 3D Tiles serialization, including 3D Tiles extension support.                                                   |
+| **Cesium3DTiles**              | Classes that represent or enable fundamental elements of 3D Tiles.                                              |
 | **Cesium3DTilesSelection**     | Runtime streaming, level of detail selection, culling, cache management, and decoding of 3D Tiles.              |
 | **CesiumAsync**                | Classes for multi-threaded asynchronous tasks.                                                                  |
 | **CesiumClientCommon**         | Functionality shared between ion and iTwin client implementations, primarily shared authentication code.        |
@@ -74,14 +71,18 @@ Cesium Native powers Cesium's runtime integrations for [Cesium for Unreal](https
 | **CesiumGeospatial**           | 3D geospatial math types and functions for ellipsoids, transforms, projections.                                 |
 | **CesiumGltf**                 | Lightweight glTF processing and optimization functions.                                                         |
 | **CesiumGltfContent**          | Classes that support manipulating the content of a glTF.                                                        |
+| **CesiumGltfConverters**       | Classes that support conversion of various formats to glTF 2.1 content.                                         |
 | **CesiumGltfReader**           | glTF deserialization / decoding, including glTF extension support (`KHR_draco_mesh_compression` etc).           |
 | **CesiumGltfWriter**           | glTF serialization / encoding, including glTF extension support.                                                |
 | **CesiumIonClient**            | Functions to access [Cesium ion](https://cesium.com/cesium-ion/) accounts and 3D tilesets using ion's REST API. |
-| **CesiumImage**                | Classes that support reading, decoding, and manipulating images. |
+| **CesiumImage**                | Classes that support reading, decoding, and manipulating images.                                                |
 | **CesiumITwinClient**          | Functions to access the [Bentley iTwin](https://www.bentley.com/software/itwin-platform/) platform.             |
 | **CesiumJsonReader**           | Reads JSON from a buffer into statically-typed classes.                                                         |
 | **CesiumJsonWriter**           | Writes JSON from statically-typed classes into a buffer.                                                        |
 | **CesiumQuantizedMeshTerrain** | Classes for accessing terrain in the [quantized-mesh-1.0](https://github.com/CesiumGS/quantized-mesh) format.   |
+| **CesiumTilesetJson**          | Classes to represent a `tileset.json` from [3D Tiles 1.1](https://github.com/CesiumGS/3d-tiles).                |
+| **CesiumTilesetJsonReader**    | 3D Tiles 1.1 `tileset.json` deserialization, including 3D Tiles extension support.                              |
+| **CesiumTilesetJsonWriter**    | 3D Tiles 1.1 `tileset.json` serialization, including 3D Tiles extension support.                                |
 | **CesiumRasterOverlays**       | Classes for raster overlays, which allow draping massive 2D textures over a model.                              |
 | **CesiumUtility**              | Utility functions for JSON parsing, URI processing, credits, etc.                                               |
 | **CesiumVectorData**           | Classes for loading vector data such as GeoJSON.                                                                |

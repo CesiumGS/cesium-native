@@ -1,18 +1,20 @@
 #include "ImplicitQuadtreeLoader.h"
 
-#include <Cesium3DTilesContent/SubtreeAvailability.h>
-#include <Cesium3DTilesContent/registerAllTileContentTypes.h>
+#include <Cesium3DTiles/SubtreeAvailability.h>
 #include <Cesium3DTilesSelection/Tile.h>
 #include <Cesium3DTilesSelection/TileContent.h>
 #include <Cesium3DTilesSelection/TileLoadResult.h>
 #include <Cesium3DTilesSelection/TilesetContentLoader.h>
 #include <CesiumAsync/AsyncSystem.h>
+#include <CesiumGeometry/Axis.h>
 #include <CesiumGeometry/OrientedBoundingBox.h>
 #include <CesiumGeospatial/BoundingRegion.h>
 #include <CesiumGeospatial/Ellipsoid.h>
 #include <CesiumGeospatial/S2CellBoundingVolume.h>
 #include <CesiumGeospatial/S2CellID.h>
+#include <CesiumGltf/Extension3dTilesSubtree.h>
 #include <CesiumGltf/Model.h>
+#include <CesiumGltfConverters/registerAllConverterTypes.h>
 #include <CesiumNativeTests/SimpleAssetAccessor.h>
 #include <CesiumNativeTests/SimpleAssetRequest.h>
 #include <CesiumNativeTests/SimpleAssetResponse.h>
@@ -38,7 +40,7 @@
 #include <vector>
 
 using namespace doctest;
-using namespace Cesium3DTilesContent;
+using namespace Cesium3DTiles;
 using namespace Cesium3DTilesSelection;
 using namespace CesiumGeometry;
 using namespace CesiumGeospatial;
@@ -46,11 +48,18 @@ using namespace CesiumUtility;
 using namespace CesiumNativeTests;
 
 namespace {
-std::filesystem::path testDataPath = Cesium3DTilesSelection_TEST_DATA_DIR;
+auto testDataPath =
+    std::filesystem::path(Cesium3DTilesSelection_TEST_DATA_DIR) / "1.1";
+
+CesiumGltf::Model createEmptySubtreeGltf() {
+  CesiumGltf::Model model;
+  model.addExtension<CesiumGltf::Extension3dTilesSubtree>();
+  return model;
 }
+} // namespace
 
 TEST_CASE("Test implicit quadtree loader") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -63,7 +72,8 @@ TEST_CASE("Test implicit quadtree loader") {
       "subtrees/{level}.{x}.{y}.json",
       5,
       5,
-      OrientedBoundingBox(glm::dvec3(0.0), glm::dmat3(20.0))};
+      OrientedBoundingBox(glm::dvec3(0.0), glm::dmat3(20.0)),
+      CesiumGeometry::Axis::Y};
 
   SUBCASE("Load tile that does not have quadtree ID") {
     Tile tile(&loader);
@@ -94,8 +104,8 @@ TEST_CASE("Test implicit quadtree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{false}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{false},
+            createEmptySubtreeGltf()});
 
     // check that this tile will have empty content
     Tile tile(&loader);
@@ -130,8 +140,8 @@ TEST_CASE("Test implicit quadtree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // mock tile content b3dm
     auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
@@ -183,8 +193,8 @@ TEST_CASE("Test implicit quadtree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // mock tile content b3dm
     auto pMockCompletedResponse = std::make_unique<SimpleAssetResponse>(
@@ -249,7 +259,7 @@ findTile(const std::vector<Tile>& children, const QuadtreeTileID& tileID) {
 } // namespace
 
 TEST_CASE("Test tile subdivision for implicit quadtree loader") {
-  Cesium3DTilesContent::registerAllTileContentTypes();
+  CesiumGltfConverters::registerAllConverterTypes();
 
   auto pMockedAssetAccessor = std::make_shared<SimpleAssetAccessor>(
       std::map<std::string, std::shared_ptr<SimpleAssetRequest>>{});
@@ -264,7 +274,8 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
         "subtrees/{level}.{x}.{y}.json",
         5,
         5,
-        loaderBoundingVolume};
+        loaderBoundingVolume,
+        CesiumGeometry::Axis::Y};
 
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
@@ -274,8 +285,8 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // check subdivide root tile first
     Tile tile(&loader);
@@ -383,7 +394,8 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
         "subtrees/{level}.{x}.{y}.json",
         5,
         5,
-        loaderBoundingVolume};
+        loaderBoundingVolume,
+        CesiumGeometry::Axis::Y};
 
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
@@ -393,8 +405,8 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     // check subdivide root tile first
     Tile tile(&loader);
@@ -522,7 +534,8 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
         "subtrees/{level}.{x}.{y}.json",
         5,
         5,
-        loaderBoundingVolume};
+        loaderBoundingVolume,
+        CesiumGeometry::Axis::Y};
 
     // add subtree with all available tiles
     loader.addSubtreeAvailability(
@@ -532,8 +545,8 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
             5,
             SubtreeAvailability::SubtreeConstantAvailability{true},
             SubtreeAvailability::SubtreeConstantAvailability{false},
-            {SubtreeAvailability::SubtreeConstantAvailability{true}},
-            {}});
+            SubtreeAvailability::SubtreeConstantAvailability{true},
+            createEmptySubtreeGltf()});
 
     Tile tile(&loader);
     tile.setTileID(QuadtreeTileID(0, 0, 0));
@@ -575,22 +588,22 @@ TEST_CASE("Test tile subdivision for implicit quadtree loader") {
         "subtrees/{level}.{x}.{y}.json",
         5,
         5,
-        loaderBoundingVolume};
+        loaderBoundingVolume,
+        CesiumGeometry::Axis::Y};
 
     // add subtree with all tiles, but no content available.
-    std::optional<SubtreeAvailability> maybeAvailability =
+    CesiumUtility::Result<SubtreeAvailability> maybeAvailability =
         SubtreeAvailability::createEmpty(
             ImplicitTileSubdivisionScheme::Quadtree,
             5,
             true);
-    REQUIRE(maybeAvailability);
-    SubtreeAvailability availability = std::move(*maybeAvailability);
+    REQUIRE_UNARY(maybeAvailability.value);
+    SubtreeAvailability availability = std::move(*maybeAvailability.value);
 
     // Mark content for a tile available
     availability.setContentAvailable(
         QuadtreeTileID{0, 0, 0},
         QuadtreeTileID{1, 1, 1},
-        0,
         true);
     loader.addSubtreeAvailability(
         QuadtreeTileID{0, 0, 0},

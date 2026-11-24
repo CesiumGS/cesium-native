@@ -4,11 +4,27 @@
 
 ##### Breaking Changes :mega:
 
+- `Cesium3DTiles`, `Cesium3DTilesReader`, and `Cesium3DTilesWriter` have been renamed to `CesiumTilesetJson`, `CesiumTilesetJsonReader`, and `CesiumTilesetJsonWriter` respectively.
+- `Cesium3DTilesContent::GltfConverters` and its related classes have been moved to the new `CesiumGltfConverters` library.
+  - `registerAllTileContentTypes` has been renamed to `registerAllConverterTypes`.
+- `Cesium3DTilesContent` has been renamed to `Cesium3DTiles`.
+- `BoundingVolume` and `TileRefine` have been moved from `Cesium3DTilesSelection` to `Cesium3DTiles`.
+- `Cesium3DTiles::SubtreeAvailability` now follows the `3DTILES_subtree` extension in glTF 2.1:
+  - The `SubtreeAvailability` constructor now takes a single `AvailabilityView` for content availability and a `CesiumGltf::Model` to represent the subtree.
+  - `getSubtree` has been replaced by `getModel` to retrieve the underlying glTF representation of the subtree.
+  - Removed `contentId` from the `isContentAvailable` and `setContentAvailable` overloads.
+- `SubtreeAvailability::fromSubtree` and `SubtreeAvailability::loadSubtree` now use `CesiumUtility::Result` instead of `std::optional`.
 - `ViewStateMeasureDelegate::computeSelectionMeasure` now takes the view state as an argument.
 - SPZ color components are no longer automatically converted to the `FLOAT` component type when read. To replicate the previous behavior, set `options.spzDecoderOptions.forceFloatAccessors` to `true` on `GltfReaderOptions`.
 
 ##### Additions :tada:
 
+- Added support for loading glTF 2.1 models as tilesets through `Cesium3DTilesSelection::Tileset`.
+- Added `fromGltf` method to `Cesium3DTiles::SubtreeAvailability` to construct an instance from a glTF 2.1 subtree.
+- Added overloads to `SubtreeFileReader::load` and `GltfReader::readGltfAndExternalData` to accept JSONs that have been already parsed as `rapidjson::Document`s.
+- Added `getBoundingVolumeTransform` and `setBoundingVolumeTransform` to `CesiumGltfContent::GltfUtilities` to interact with transforms on `CesiumGltf::BoundingVolume`s.
+- Added `Cesium3DTiles::getBoundingVolume` methods to create a `Cesium3DTiles::BoundingVolume` from either `CesiumTilesetJson::BoundingVolume` or `CesiumGltf::BoundingVolume`.
+- Added `Cesium3DTiles::FileFormat`, which provides utility for inferring supported 3D Tiles content types from binary and JSON payloads.
 - Added the `group` property from a tile's content to `Cesium3DTilesSelection::Tile`.
 - Added `Cesium3DTilesSelection::ViewStateVisibilityDelegate`, which can be specified on a `ViewState` for conditional control over whether to display a tile's content.
 - Added `RasterOverlayCollection::updateTileOverlaysForReplacedContent` and `RasterMappedTo3DTile::prepareForReplacedContent`, which update a tile's raster overlay mappings after its content is replaced, such as by a `GltfModifier`.
@@ -24,6 +40,7 @@
 - Fixed potential integer overflow and out-of-bounds write while dequantizing glTFs using `KHR_mesh_quantization`.
 - Fixed potential integer overflow and out-of-bounds write while decoding JPEG images.
 - Blend2D runtime will now always be initialized before use, resolving access violation issues when Cesium Native was built with static linking and aggressive unused code optimization (particularly Unity WebGL builds).
+- Fixed treatment of relative paths to external assets in i3dm files' .glb content.
 - Fixed potential integer overflow and out-of-bounds write while combining quadtree raster overlay tiles with inconsistent image dimensions.
 
 ### v0.66.0 - 2026-11-02
