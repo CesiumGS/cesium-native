@@ -663,10 +663,10 @@ QuadtreeRasterOverlayTileProvider::combineImages(
 
   // Divide so that no product is computed before it's known to fit.
   constexpr size_t maxBytes = std::numeric_limits<size_t>::max();
-  const size_t width = size_t(widthPixels);
-  const size_t height = size_t(heightPixels);
-  const size_t channels = size_t(measurements.channels);
-  const size_t bytesPerChannel = size_t(measurements.bytesPerChannel);
+  size_t width = size_t(widthPixels);
+  size_t height = size_t(heightPixels);
+  size_t channels = size_t(measurements.channels);
+  size_t bytesPerChannel = size_t(measurements.bytesPerChannel);
   if (bytesPerChannel > maxBytes / channels ||
       channels * bytesPerChannel > maxBytes / height ||
       height * channels * bytesPerChannel > maxBytes / width) {
@@ -680,7 +680,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
         true};
   }
 
-  const size_t targetImageBytes = width * height * channels * bytesPerChannel;
+  size_t targetImageBytes = width * height * channels * bytesPerChannel;
 
   LoadedRasterOverlayImage result;
   result.rectangle = measurements.rectangle;

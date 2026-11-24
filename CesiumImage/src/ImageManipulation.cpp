@@ -24,8 +24,8 @@ bool pixelDataCoversImage(const ImageAsset& image) {
   }
 
   // Divide rather than multiply so that huge dimensions can't overflow.
-  const size_t pixels = image.pixelData.size() / size_t(image.channels) /
-                        size_t(image.bytesPerChannel);
+  size_t pixels = image.pixelData.size() / size_t(image.channels) /
+                  size_t(image.bytesPerChannel);
   return pixels / size_t(image.width) >= size_t(image.height);
 }
 } // namespace
