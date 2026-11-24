@@ -169,7 +169,8 @@ private:
   static LoadedRasterOverlayImage combineImages(
       const CesiumGeometry::Rectangle& targetRectangle,
       const CesiumGeospatial::Projection& projection,
-      std::vector<CesiumUtility::ResultPointer<LoadedQuadtreeImage>>&& images);
+      std::vector<CesiumUtility::ResultPointer<LoadedQuadtreeImage>>&& images,
+      int32_t maximumTextureSize);
 
   uint32_t _minimumLevel;
   uint32_t _maximumLevel;

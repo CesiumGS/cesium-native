@@ -12,6 +12,24 @@
 
 namespace CesiumImage {
 
+namespace {
+bool pixelDataCoversImage(const ImageAsset& image) {
+  if (image.width < 0 || image.height < 0 || image.channels <= 0 ||
+      image.bytesPerChannel <= 0) {
+    return false;
+  }
+
+  if (image.width == 0 || image.height == 0) {
+    return true;
+  }
+
+  // Divide rather than multiply so that huge dimensions can't overflow.
+  size_t pixels = image.pixelData.size() / size_t(image.channels) /
+                  size_t(image.bytesPerChannel);
+  return pixels / size_t(image.width) >= size_t(image.height);
+}
+} // namespace
+
 void ImageManipulation::unsafeBlitImage(
     std::byte* pTarget,
     size_t targetRowStride,
@@ -63,18 +81,16 @@ bool ImageManipulation::blitImage(
     return false;
   }
 
-  size_t bytesPerPixel = size_t(target.bytesPerChannel * target.channels);
-  const size_t bytesPerSourceRow = bytesPerPixel * size_t(source.width);
-  size_t bytesPerTargetRow = bytesPerPixel * size_t(target.width);
-
-  const size_t requiredTargetSize =
-      size_t(targetPixels.height) * bytesPerTargetRow;
-  const size_t requiredSourceSize =
-      size_t(sourcePixels.height) * bytesPerSourceRow;
-  if (target.pixelData.size() < requiredTargetSize ||
-      source.pixelData.size() < requiredSourceSize) {
+  if (!pixelDataCoversImage(target) || !pixelDataCoversImage(source)) {
+    // pixelData does not meet the required size for the blit.
     return false;
   }
+
+  // These can't overflow because pixelData holds at least this many bytes.
+  size_t bytesPerPixel =
+      size_t(target.bytesPerChannel) * size_t(target.channels);
+  const size_t bytesPerSourceRow = bytesPerPixel * size_t(source.width);
+  size_t bytesPerTargetRow = bytesPerPixel * size_t(target.width);
 
   // Position both pointers at the start of the first row.
   std::byte* pTarget = target.pixelData.data();

@@ -332,4 +332,50 @@ TEST_CASE("ImageManipulation::blitImage") {
         false);
     verifyTargetUnchanged();
   }
+
+  SUBCASE("returns false when target pixel data is smaller than its "
+          "dimensions") {
+    // Enough bytes for the copied rows, but not for the rows they start after.
+    target.pixelData.resize(size_t(
+        targetRect.height * target.width * target.channels *
+        target.bytesPerChannel));
+    CHECK(
+        ImageManipulation::blitImage(target, targetRect, source, sourceRect) ==
+        false);
+  }
+
+  SUBCASE("returns false when source pixel data is smaller than its "
+          "dimensions") {
+    source.pixelData.resize(size_t(
+        sourceRect.height * source.width * source.channels *
+        source.bytesPerChannel));
+    CHECK(
+        ImageManipulation::blitImage(target, targetRect, source, sourceRect) ==
+        false);
+    verifyTargetUnchanged();
+  }
+
+  SUBCASE("returns false when image dimensions overflow the size check") {
+    // 2^30 * 2^30 * 16 bytes wraps to zero in 64-bit arithmetic.
+    ImageAsset hugeTarget;
+    hugeTarget.width = 1 << 30;
+    hugeTarget.height = 1 << 30;
+    hugeTarget.channels = 4;
+    hugeTarget.bytesPerChannel = 4;
+    hugeTarget.pixelData.resize(16);
+
+    ImageAsset tinySource;
+    tinySource.width = 1;
+    tinySource.height = 1;
+    tinySource.channels = 4;
+    tinySource.bytesPerChannel = 4;
+    tinySource.pixelData.resize(16);
+
+    CHECK(
+        ImageManipulation::blitImage(
+            hugeTarget,
+            PixelRectangle{1, 0, 1, 1},
+            tinySource,
+            PixelRectangle{0, 0, 1, 1}) == false);
+  }
 }
