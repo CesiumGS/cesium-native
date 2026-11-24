@@ -649,10 +649,8 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   int32_t widthPixels = glm::min(measurements.widthPixels, maximumTextureSize);
   int32_t heightPixels =
       glm::min(measurements.heightPixels, maximumTextureSize);
-  int64_t bytesPerPixel =
-      int64_t(measurements.channels) * measurements.bytesPerChannel;
-
-  if (widthPixels <= 0 || heightPixels <= 0 || bytesPerPixel <= 0) {
+  if (widthPixels <= 0 || heightPixels <= 0 || measurements.channels <= 0 ||
+      measurements.bytesPerChannel <= 0) {
     // Target image has no pixels, so our work here is done.
     return LoadedRasterOverlayImage{
         nullptr,
@@ -664,9 +662,14 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   }
 
   // Divide so that no product is computed before it's known to fit.
-  constexpr int64_t maxBytes = std::numeric_limits<int64_t>::max();
-  if (bytesPerPixel > maxBytes / heightPixels ||
-      bytesPerPixel * heightPixels > maxBytes / widthPixels) {
+  constexpr size_t maxBytes = std::numeric_limits<size_t>::max();
+  const size_t width = size_t(widthPixels);
+  const size_t height = size_t(heightPixels);
+  const size_t channels = size_t(measurements.channels);
+  const size_t bytesPerChannel = size_t(measurements.bytesPerChannel);
+  if (bytesPerChannel > maxBytes / channels ||
+      channels * bytesPerChannel > maxBytes / height ||
+      height * channels * bytesPerChannel > maxBytes / width) {
     errors.emplaceError(
         "Combined raster overlay image is too large to allocate.");
     return LoadedRasterOverlayImage{
@@ -677,8 +680,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
         true};
   }
 
-  int64_t targetImageBytes =
-      int64_t(widthPixels) * (int64_t(heightPixels) * bytesPerPixel);
+  const size_t targetImageBytes = width * height * channels * bytesPerChannel;
 
   LoadedRasterOverlayImage result;
   result.rectangle = measurements.rectangle;
@@ -690,7 +692,7 @@ QuadtreeRasterOverlayTileProvider::combineImages(
   target.channels = measurements.channels;
   target.width = widthPixels;
   target.height = heightPixels;
-  target.pixelData.resize(size_t(targetImageBytes));
+  target.pixelData.resize(targetImageBytes);
 
   for (const auto& image : images) {
     if (!image.pValue) {

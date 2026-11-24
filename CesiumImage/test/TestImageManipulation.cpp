@@ -354,4 +354,28 @@ TEST_CASE("ImageManipulation::blitImage") {
         false);
     verifyTargetUnchanged();
   }
+
+  SUBCASE("returns false when image dimensions overflow the size check") {
+    // 2^30 * 2^30 * 16 bytes wraps to zero in 64-bit arithmetic.
+    ImageAsset hugeTarget;
+    hugeTarget.width = 1 << 30;
+    hugeTarget.height = 1 << 30;
+    hugeTarget.channels = 4;
+    hugeTarget.bytesPerChannel = 4;
+    hugeTarget.pixelData.resize(16);
+
+    ImageAsset tinySource;
+    tinySource.width = 1;
+    tinySource.height = 1;
+    tinySource.channels = 4;
+    tinySource.bytesPerChannel = 4;
+    tinySource.pixelData.resize(16);
+
+    CHECK(
+        ImageManipulation::blitImage(
+            hugeTarget,
+            PixelRectangle{1, 0, 1, 1},
+            tinySource,
+            PixelRectangle{0, 0, 1, 1}) == false);
+  }
 }
