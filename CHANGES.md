@@ -1,6 +1,6 @@
 # Change Log
 
-### ? - ?
+### v0.67.0 - 2026-12-01
 
 ##### Breaking Changes :mega:
 
